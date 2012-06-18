@@ -7,8 +7,8 @@ your web application.
 ## Philosophy
 
 We believe every application should have analytics in-grained into it. The
-more data and knowledge you have about how your system is being used, the more
-prepared you'll be to make product decisions. Your users will benefit.
+more data you have about your system and how its being used, the more
+prepared you'll be to make product and marketing decisions. Your users will benefit.
 
 A common misconception is that having analytics means tying yourself to a third
 party analytics service. This is not true, and only becomes the case when
@@ -20,7 +20,7 @@ in analytics.js, and we welcome implementations of any other providers that fit.
 
 ## The API
 
-We tried to keep the abstract API as simple as possible.
+We tried to keep the abstract API to be as simple as possible.
 You 1) recognize visitors, 2) track their actions.
 
 ### Identify
@@ -58,14 +58,14 @@ names, such as Bob "shared on facebook".
 
 ```javascript
 
-seg.track('Played a Song', {
+analytics.track('Played a Song', {
     'Title'       : 'Eleanor Rigby',
     'Artist'      : 'Beatles',
     'Playlist'    : 'Popular'
 });
 
 
-seg.track('Bought a t-shirt', {
+analytics.track('Bought a t-shirt', {
     'Product Title'  : 'Dinosaur Attack',
     'Size'           : 'Medium',
     'revenue'        : 15.99
@@ -122,7 +122,7 @@ of analytics.js:
 
 After you determine what traits and actions you want to track, add identify
 statements where you have access to the visitor object. Then, add
-track statement whenever the user performs actions that are important to you.
+track statement whenever the visitor performs actions that are important to you.
 
 If applicable, we recommend tracking actions such as:
 
@@ -133,7 +133,7 @@ If applicable, we recommend tracking actions such as:
 * Visitor upgrading a plan
 * VIsitor sharing on social service
 
-as well as any actions that show whether a user is engaged versus not. If you're
+as well as any actions that show whether a visitor is engaged versus not. If you're
 YouTube this would be "watched video", or if you're Amazon, it would be "bought an item".
 
 

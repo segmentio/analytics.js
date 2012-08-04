@@ -1,19 +1,16 @@
+availableProviders['Intercom'] = {
 
-var INTERCOM_IO = {
+    _settings : {},
 
-    settings: {
-        appId: '[YOUR API KEY HERE ex. hf20f6qu]'
-    },
-
-    setup: function (settings) {
-        // no setup here
+    initialize: function (settings) {
+        this._settings = settings;
     },
 
     identify: function (visitorId, traits) {
         window.intercomSettings = {
-            app_id: this.settings.appId,
-            email: visitorId,
-            created_at: (new Date()).getTime()
+            app_id     : this._settings.appId,
+            email      : visitorId,
+            created_at : (new Date()).getTime()
         };
 
         function async_load() {
@@ -29,10 +26,5 @@ var INTERCOM_IO = {
         } else {
             window.addEventListener('load', async_load, false);
         }
-    },
-
-    track: function (event, properties) {
-        // not supported
     }
-
 };

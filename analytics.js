@@ -52,6 +52,7 @@
                 initializedProviders.push(availableProviders[key]);
             }
             this.providers = initializedProviders;
+
             initialized = true;
         },
 
@@ -101,41 +102,24 @@
                 var clonedProperties = clone(properties);
                 provider.track(event, clonedProperties);
             }
-        },
-
-
-        // A/B
-        // ===
-
-        // To record which variation of an A/B test a user saw so you can figure
-        // out which variation performs better.
-        //
-        // `test` - the name of the test.
-        //
-        // `variation` - the name of the variation the user saw.
-        ab : function (test, variation) {
-            if (!initialized) return;
-            for (var i = 0, provider; provider = this.providers[i]; i++) {
-                if (!provider.ab) continue;
-                provider.ab(test, variation);
-            }
         }
+
     };
 
 
 
 
+    // Providers
+    // =========
+
+    // **Remove** the providers you don't want to use.
 
 
-
-
-
-
-
-
-    // TODO: Add these in by build script instead.
+    // Google Analytics
+    // ----------------
 
     availableProviders['Google Analytics'] = {
+
         initialize : function (settings) {
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', settings.apiKey]);
@@ -153,7 +137,12 @@
         }
     };
 
+
+    // Segment.io
+    // ----------
+
     availableProviders['Segment.io'] = {
+
         initialize : function (settings) {
             var seg=seg||[];seg.load=function(a){var b,c,d,e,f,g=document;b=g.createElement("script"),b.type="text/javascript",b.async=!0,b.src=a,c=g.getElementsByTagName("script")[0],c.parentNode.insertBefore(b,c),d=function(a){return function(){seg.push([a].concat(Array.prototype.slice.call(arguments,0)))}},e=["init","identify","track","callback","verbose"];for(f=0;f<e.length;f+=1)seg[e[f]]=d(e[f])};
             window.seg=seg;
@@ -162,12 +151,104 @@
             window.seg.init(settings.apiKey, settings.environment);
         },
 
-        identify: function (userId, traits) {
+        identify : function (userId, traits) {
             window.seg.identify(userId, traits);
         },
 
-        track: function (event, properties) {
+        track : function (event, properties) {
             window.seg.track(event, properties);
+        }
+    };
+
+
+    // KissMetrics
+    // -----------
+
+    availableProviders['KissMetrics'] = {
+
+        initialize : function (settings) {
+            var _kmq = _kmq || [];
+            window._kmq = _kmq;
+            function _kms(u){
+                setTimeout(function(){
+                    var d = document, f = d.getElementsByTagName('script')[0],
+                    s = d.createElement('script');
+                    s.type = 'text/javascript'; s.async = true; s.src = u;
+                    f.parentNode.insertBefore(s, f);
+                }, 1);
+            }
+            _kms('//i.kissmetrics.com/i.js');
+            _kms('//doug1izaerwt3.cloudfront.net/' + settings.apiKey + '.1.js');
+            _kmq.push(['record', 'Viewed page']);
+        },
+
+        identify : function (userId, traits) {
+            window._kmq.push(['identify', userId]);
+            window._kmq.push(['set', traits]);
+        },
+
+        track : function (event, properties) {
+            window._kmq.push(['record', event, properties]);
+        }
+    };
+
+
+    // Mixpanel
+    // --------
+
+    availableProviders['Mixpanel'] = {
+
+        usePeople : false,
+
+        initialize : function (settings) {
+            (function(d,c){var a,b,g,e;a=d.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===d.location.protocol?"https:":"http:")+'//api.mixpanel.com/site_media/js/api/mixpanel.2.js';b=d.getElementsByTagName("script")[0];b.parentNode.insertBefore(a,b);c._i=[];c.init=function(a,d,f){var b=c;"undefined"!==typeof f?b=c[f]=[]:f="mixpanel";g="disable track track_pageview track_links track_forms register register_once unregister identify name_tag set_config".split(" ");
+            for(e=0;e<g.length;e++)(function(a){b[a]=function(){b.push([a].concat(Array.prototype.slice.call(arguments,0)))}})(g[e]);c._i.push([a,d,f])};window.mixpanel=c})(document,[]);
+            window.mixpanel.init(settings.apiKey);
+        },
+
+        identify : function (userId, traits) {
+            window.mixpanel.identify(userId);
+            window.mixpanel.register(traits);
+            if (this.usePeople) window.mixpanel.people.set(traits);
+        },
+
+        track : function (event, properties) {
+            window.mixpanel.track(event, properties);
+        }
+    };
+
+
+    // Intercom
+    // --------
+
+    availableProviders['Intercom'] = {
+
+        _settings : {},
+
+        initialize: function (settings) {
+            this._settings = settings;
+        },
+
+        identify: function (visitorId, traits) {
+            window.intercomSettings = {
+                app_id     : this._settings.appId,
+                email      : visitorId,
+                created_at : (new Date()).getTime()
+            };
+
+            function async_load() {
+                var s = document.createElement('script');
+                s.type = 'text/javascript'; s.async = true;
+                s.src = 'https://api.intercom.io/api/js/library.js';
+                var x = document.getElementsByTagName('script')[0];
+                x.parentNode.insertBefore(s, x);
+            }
+
+            if (window.attachEvent) {
+                window.attachEvent('onload', async_load);
+            } else {
+                window.addEventListener('load', async_load, false);
+            }
         }
     };
 

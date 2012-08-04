@@ -1,157 +1,116 @@
 analytics.js
 ============
+**Every project needs analytics.** The more you know about how your system is being used, the better your product decisions will be. In the end your users will benefit.
 
-A reusable analytics pattern to abstract your analytics providers from
-your web application.
+But having analytics shouldn't mean your tying yourself to a single third-party analytics service and littering your codebase third-party-specific calls. Changing or adding new providers should be a snap. That's where **analytics.js** comes in. The APIs for most analytics services track the same sorts of metrics, so it's not hard to build an abstraction layer that fits most use cases. And that's what we did! We even use **analytics.js** in [Segment.io](https://segment.io).
 
-## Philosophy
+The API is dead simple. You won't want to go back to using some of those dated third-party APIs!
 
-We believe every application should have analytics in-grained into it. The
-more data you have about your system and how its being used, the more
-prepared you'll be to make product and marketing decisions. Your users will benefit.
 
-A common misconception is that having analytics means tying yourself to a third
-party analytics service. This is not true, and only becomes the case when
-an analytic providers API is so complicated that you have to write special
-logic to support them.
-
-Luckily, there are many analytics services that fit the abstraction we define
-in analytics.js, and we welcome implementations of any other providers that fit.
 
 ## The API
+Our goal for the API was to iron out the kinks that crop up in lots of third-party analytics services API's. Keep things simple!  With analytics you record two things: users and their actions.
 
-We tried to keep the abstract API to be as simple as possible.
-You 1) recognize visitors, 2) track their actions.
+### Initialize
+When you're ready to start using **analytics.js**, you make a call to initialize with the analytics providers you want to enable and the settings each one needs. That looks like this:
+
+```javascript
+analytics.initialize({
+    'Google Analytics' : {
+        apiKey : 'UA-XXXXXX-XX'
+    },
+    'Segment.io' : {
+        apiKey : 'mkS9qdwk12d7'
+    }
+});
+```
+
+Did we mention this means you never need to mess with analytics snippets again? Bonus!
+
 
 ### Identify
+Identify is how you tie a user to their actions. You **identify** your user with the `userId` you recognize them by, which is usually an email. The API looks like this:
 
 ```javascript
+analytics.identify(userId, traits);
+```
 
++ `userId` is the ID you refer to your user by.
++ `traits` is an _optional_ dictionary of things you know about the user. Things like: `Subscription Plan`, `Friend Count`, `Age`, etc.
+
+```javascript
+analytics.identify('achilles@segment.io', {
+    subscriptionPlan : 'Gold',
+    friendCount      : 29
+});
+```
+
+We usually recommend using a backend template to inject an identify with the `userId` straight into the footer of every page of your application. That way no matter what page the user lands on, the call is made.
+
+
+### Track
+Track is how you record events your users trigger. Whenever your using does something you want to record, **track** that event. The API looks like this:
+
+```javascript
 analytics.track(event, properties);
-
 ```
 
-You recognize a visitor on your site. You associate the visitor with specific
-traits unique to them.
++ `event` is the name of the event.
++ `properties` is an _optional_ dictionary of properties for the event. If the event was `Added to Shopping Cart`, it might have properties like `Price`, `Product Category`, etc.
 
 ```javascript
-
-analytics.identify('visitor@gmail.com', {
-    'Subscription Plan'   : 'Free',
-    'age'                 : 26
+analytics.track('Complete Purchase', {
+    price          : 40.20,
+    shippingMethod : '2-day'
 });
-
-
-```
-
-## Track
-
-```javascript
-
-analytics.track(event, properties);
-
-```
-
-A visitor performs an action on your site. You associate specific event properties
-with that particular event. It's best to keep the event names as human readable
-names, such as Bob "shared on facebook".
-
-```javascript
-
-analytics.track('Played a Song', {
-    'Title'       : 'Eleanor Rigby',
-    'Artist'      : 'Beatles',
-    'Playlist'    : 'Popular'
-});
-
-
-analytics.track('Bought a t-shirt', {
-    'Product Title'  : 'Dinosaur Attack',
-    'Size'           : 'Medium',
-    'revenue'        : 15.99
-});
-
-```
-
-## How to Use
-
-### Add analytics.js to your web app
-
-Analytics.js is more of a pattern than a library, but feel free to drop
-analytics.js into your web application. You can then use the global
-window.analytics object in your web application to identify and track.
-
-### Choose your providers
-
-Simply copy the providers you want from the providers/ folder into your version
-of analytics.js. Make sure you add your application specific settings to each provider,
-such as apiKey.
-
-Also, add the provider implementation to the list of enabled providers on the bottom
-of analytics.js:
-
-```javascript
-
-    var analytics = {
-
-        /**
-         * Determines whether analytics is enabled in this session
-         * @type {Boolean}
-         */
-        enabled: true,
-
-        //
-        // ADD PROVIDERS HERE
-        //
-
-        providers: [
-
-            GOOGLE_ANALYTICS,
-            SEGMENT_IO,
-            KISSMETRICS,
-            MIXPANEL,
-            INTERCOM_IO
-
-        ]
-    };
-
 ```
 
 
-### Add identifies and tracks in your app code
+## Using analytics.js
 
-After you determine what traits and actions you want to track, add identify
-statements where you have access to the visitor object. Then, add
-track statement whenever the visitor performs actions that are important to you.
+1. Grab the latest version of **analytics.js** from this repo and add it to your project.
 
-If applicable, we recommend tracking actions such as:
+2. Open up **analytics.js**, scroll to the bottom, and choose the providers you want to keep (or add your own).
 
-* Visitor logging in
-* Visitor buying something
-* Visitor cancelling a plan
-* Visitor unsubscribing
-* Visitor upgrading a plan
-* VIsitor sharing on social service
+3. Initialize **analytics.js**.
 
-as well as any actions that show whether a visitor is engaged versus not. If you're
-YouTube this would be "watched video", or if you're Amazon, it would be "bought an item".
+4. Add an **identify** and some **track** calls to the things you want to record.
+
+5. Spend all day swapping your analytics providers in and out just because you can!
 
 
+## Questions
 
-## Dealing with Provider Inconsistencies
+### Where should I put the identify call?
+We usually recommend using a backend template to inject an identify with the `userId` straight into the footer of every page of your application. That way no matter what page the user lands on, the call is made.
 
-Google Analytics and Segment.io both track page loads automatically, while
-Mixpanel does not. Intercom.io only does identifies, etc.
+### What traits should I record?
+The single most important trait to record is something like `Membership Level` or `Subscription Type` or however you break your users into different tiers. That way, you can focus on getting people into the higher tiers.
 
-You'll want to make sure that you understand what each provider does to make
-sure you have all your bases covered.
+Other things you might want to **identify** are things like `Friend Count`, `Company`, `Business Type`, `Employee Count`, etc.
+
+### What events should I track?
+The best way to figure out what events to track is to ask your to questions: "what do I want my users to do more of?" and "what do i want my users to do less of?". For example:
+
++ Completed Purchase
++ Upgraded Plan
++ Shared on Facebook
++ Watched a Video
++ Invited a Friend
+
+or
+
++ Cancelled their Account
++ Unsuscribed
++ Downgraded Plan
++ Left Negative Review
+
+### Google Analytics doesn't have traits! ... Intercom doesn't have events!
+That's all right. If a provider doesn't handle a certain type of call, nothing will break. So you don't have to worry about anything.
 
 
-
-## Implementing New Providers
-
-Implementing new providers is fairly painless. Check the files in the providers/
-folder for examples, and send us a pull request once you're done.
+## Contributing
+We love contributions! If you have a provider you'd like to add, feel free to submit a pull request. You can check out the providers that we've already written for guidance. (Please make sure to add tests!)
 
 
 

@@ -76,12 +76,4 @@
         spy.restore();
     });
 
-
-    // A/B
-    // ---
-
-    test('ab sends test along');
-
-    test('ab sends variation along');
-
 }());

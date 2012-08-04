@@ -1,11 +1,87 @@
-/*global sinon, suite, beforeEach, test, expect */
-
+/*global sinon, suite, beforeEach, test, expect, analytics */
 (function () {
 
-    suite('spec');
-    beforeEach(function () {
-        return;
+    suite('analytics.js');
+
+    var providers = {
+        'Google Analytics' : {
+            apiKey : 'TEST'
+        },
+        'Segment.io' : {
+            apiKey      : 'TEST',
+            environment : 'production'
+        }
+    };
+
+
+    // Initialize
+    // ----------
+
+    test('initialize copies providers into this.providers', function () {
+        expect(analytics.providers).to.be.empty;
+        analytics.initialize(providers);
+        expect(analytics.providers.length).to.equal(2);
     });
 
-    test('');
+    test('initialize sends settings to provider\'s initialize method', function () {
+        var spy = sinon.spy(analytics.providers[1], 'initialize');
+        analytics.initialize(providers);
+        expect(spy).to.have.been.calledWith(providers['Segment.io']);
+        spy.restore();
+    });
+
+
+    // Identify
+    // --------
+
+    test('identify sends userId along', function () {
+        var spy = sinon.spy(analytics.providers[1], 'identify');
+        analytics.identify('ID');
+        expect(spy).to.have.been.calledWith('ID');
+        spy.restore();
+    });
+
+    test('identify sends a clone of traits along', function  () {
+        var spy = sinon.spy(analytics.providers[1], 'identify');
+        var traits = {
+            age  : 23,
+            name : 'Achilles'
+        };
+        analytics.identify('ID', traits);
+        expect(spy.args[0][1]).not.to.equal(traits);
+        expect(spy.args[0][1]).to.deep.equal(traits);
+        spy.restore();
+    });
+
+
+    // Track
+    // -----
+
+    test('track sends event name along', function () {
+        var spy = sinon.spy(analytics.providers[1], 'track');
+        analytics.track('party');
+        expect(spy).to.have.been.calledWith('party');
+        spy.restore();
+    });
+
+    test('track sends a clone of event properties along', function  () {
+        var spy = sinon.spy(analytics.providers[1], 'track');
+        var properties = {
+            level  : 'hard',
+            volume : 11
+        };
+        analytics.track('party', properties);
+        expect(spy.args[0][1]).not.to.equal(properties);
+        expect(spy.args[0][1]).to.deep.equal(properties);
+        spy.restore();
+    });
+
+
+    // A/B
+    // ---
+
+    test('ab sends test along');
+
+    test('ab sends variation along');
+
 }());

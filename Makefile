@@ -2,7 +2,7 @@ release:
 	sh release.sh
 
 test:
-	open spec/index.html
+	open test/index.html
 
 docs:
 	docco analytics.js

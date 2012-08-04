@@ -18,8 +18,8 @@
     // The `analytics` object that will be exposed to you on the global object.
     root.analytics = {
 
-        // A place to store providers that have been initialized.
-        providers : {},
+        // A list of providers that have been initialized.
+        providers : [],
 
 
         // Initialize
@@ -34,11 +34,11 @@
         // keys are the names of the providers and their values are the settings
         // they get passed on initialization.
         initialize : function (providers) {
-            var initializedProviders = {};
+            var initializedProviders = [];
             for (var key in providers) {
                 if (!availableProviders[key]) throw new Error('Couldn\'t find a provider named "'+key+'"');
-                initializedProviders[key] = availableProviders[key];
-                initializedProviders[key].init(providers[key]);
+                availableProviders[key].initialize(providers[key]);
+                initializedProviders.push(availableProviders[key]);
             }
             this.providers = initializedProviders;
             initialized = true;
@@ -70,7 +70,7 @@
         // Whenever a visitor triggers an event on your site that you're
         // interested in, you'll want to track it.
 
-        // `eventName` - the name of the event.
+        // `event` - the name of the event.
         //
         // `properties` - an optional dictionary of properties of the event.
         track : function (event, properties) {
@@ -89,14 +89,14 @@
         // To record which variation of an A/B test a user saw so you can figure
         // out which variation performs better.
 
-        // `testName` - the name of the test.
+        // `test` - the name of the test.
         //
-        // `variationName` - the name of the variation the user saw.
-        ab : function (testName, variationName) {
+        // `variation` - the name of the variation the user saw.
+        ab : function (test, variation) {
             if (!initialized) return;
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.ab) continue;
-                provider.ab(testName, variationName);
+                provider.ab(test, variation);
             }
         }
     };
@@ -115,7 +115,7 @@
     // TODO: Add these in by build script instead.
 
     availableProviders['Google Analytics'] = {
-        init : function (settings) {
+        initialize : function (settings) {
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', settings.apiKey]);
             _gaq.push(['_trackPageview']);
@@ -133,7 +133,7 @@
     };
 
     availableProviders['Segment.io'] = {
-        init : function (settings) {
+        initialize : function (settings) {
             var seg=seg||[];seg.load=function(a){var b,c,d,e,f,g=document;b=g.createElement("script"),b.type="text/javascript",b.async=!0,b.src=a,c=g.getElementsByTagName("script")[0],c.parentNode.insertBefore(b,c),d=function(a){return function(){seg.push([a].concat(Array.prototype.slice.call(arguments,0)))}},e=["init","identify","track","callback","verbose"];for(f=0;f<e.length;f+=1)seg[e[f]]=d(e[f])};
             window.seg=seg;
             seg.load(document.location.protocol+'//d47xnnr8b1rki.cloudfront.net/api/js/v2/segmentio.js');

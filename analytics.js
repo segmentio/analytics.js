@@ -23,7 +23,7 @@
 
 
         // Initialize
-        // ----------
+        // ==========
 
         // Call **initialize** to setup analytics.js before identifying or
         // tracking any users or events. It takes a list of providers that you
@@ -40,7 +40,7 @@
         //             environment : 'production'
         //         }
         //     });
-
+        //
         // `providers` - a dictionary of the providers you want to enabled. The
         // keys are the names of the providers and their values are the settings
         // they get passed on initialization.
@@ -57,7 +57,7 @@
 
 
         // Identify
-        // --------
+        // ========
 
         // Identifying a user ties all of their actions to an ID you recognize
         // and records properties about a user. An example identify:
@@ -66,7 +66,7 @@
         //         name : 'Achilles',
         //         age  : 23
         //     });
-
+        //
         // `userId` - the ID you recognize your user by, like an email.
         //
         // `traits` - an optional dictionary of properties to tie to a user.
@@ -81,7 +81,7 @@
 
 
         // Track
-        // -----
+        // =====
 
         // Whenever a visitor triggers an event on your site that you're
         // interested in, you'll want to track it. An example track:
@@ -90,7 +90,7 @@
         //         level  : 'hard',
         //         volume : 11
         //     });
-
+        //
         // `event` - the name of the event.
         //
         // `properties` - an optional dictionary of properties of the event.
@@ -105,11 +105,11 @@
 
 
         // A/B
-        // ---
+        // ===
 
         // To record which variation of an A/B test a user saw so you can figure
         // out which variation performs better.
-
+        //
         // `test` - the name of the test.
         //
         // `variation` - the name of the variation the user saw.

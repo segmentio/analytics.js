@@ -28,7 +28,18 @@
         // Call **initialize** to setup analytics.js before identifying or
         // tracking any users or events. It takes a list of providers that you
         // want to enable, along with settings for each provider. (Settings vary
-        // depending on the provider.)
+        // depending on the provider.) Here's what a call to **initialize**
+        // might look like:
+        //
+        //     analytics.initialize({
+        //         'Google Analytics' : {
+        //             apiKey : 'TEST'
+        //         },
+        //         'Segment.io' : {
+        //             apiKey      : 'TEST',
+        //             environment : 'production'
+        //         }
+        //     });
 
         // `providers` - a dictionary of the providers you want to enabled. The
         // keys are the names of the providers and their values are the settings
@@ -49,7 +60,12 @@
         // --------
 
         // Identifying a user ties all of their actions to an ID you recognize
-        // and records properties about a user.
+        // and records properties about a user. An example identify:
+        //
+        //     analytics.identify('user', {
+        //         name : 'Achilles',
+        //         age  : 23
+        //     });
 
         // `userId` - the ID you recognize your user by, like an email.
         //
@@ -68,7 +84,12 @@
         // -----
 
         // Whenever a visitor triggers an event on your site that you're
-        // interested in, you'll want to track it.
+        // interested in, you'll want to track it. An example track:
+        //
+        //     analytics.track('party', {
+        //         level  : 'hard',
+        //         volume : 11
+        //     });
 
         // `event` - the name of the event.
         //

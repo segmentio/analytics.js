@@ -9,7 +9,8 @@
         },
         'Segment.io' : {
             apiKey      : 'TEST',
-            environment : 'production'
+            environment : 'production',
+            verbose     : true
         }
     };
 

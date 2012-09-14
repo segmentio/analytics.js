@@ -20,7 +20,9 @@ analytics.initialize({
         apiKey : 'UA-XXXXXX-XX'
     },
     'Segment.io' : {
-        apiKey : 'mkS9qdwk12d7'
+        apiKey      : 'mkS9qdwk12d7',
+        environment : 'production',
+        verbose     : true
     }
 });
 ```

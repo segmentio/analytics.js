@@ -6,7 +6,6 @@ test:
 
 docs:
 	docco analytics.js
-	docco providers/*.js
 	open docs/analytics.html
 
 .PHONY: release test examples docs

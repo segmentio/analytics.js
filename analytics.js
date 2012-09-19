@@ -149,7 +149,6 @@
             var protocol = ('https:' == document.location.protocol ? 'https:' : 'http:');
             segment.load(protocol+'//d47xnnr8b1rki.cloudfront.net/api/js/v2/segmentio.js');
             window.segment.initialize(settings.apiKey, {
-                production: settings.environment === 'production',
                 verbose: settings.verbose === true
             });
         },

@@ -1,5 +1,5 @@
 release:
-	sh release.sh
+	uglifyjs -o analytics.min.js analytics.js
 
 test:
 	open test/analyticsjs.html

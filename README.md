@@ -137,7 +137,7 @@ Every provider takes an `apiKey` for your project. Other providers might take cu
 
 * `apiKey` - your environment's API key.
 
-_All other settings are passed directly to the second argument of Segment.io's `initialize` method._
+_All settings are passed directly to the second argument of Segment.io's `initialize` method._
 
 ### KISSmetrics
 
@@ -149,8 +149,8 @@ _All other settings are passed directly to the second argument of Segment.io's `
 
 * `people` - a _boolean_ of whether you want to use Mixpanel's "People" feature. Only set this to `true` if you do, otherwise they'll charge you for it.
 
-_All other settings are passed directly to the second argument of Mixpanel's `init` method._
+_All settings are passed directly to the second argument of Mixpanel's `init` method._
 
 ### Intercom
 
-* `apiKey` - your App's ID.
+* `apiKey` - your project's "app_id".

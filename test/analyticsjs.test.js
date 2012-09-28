@@ -8,9 +8,7 @@
             apiKey : 'TEST'
         },
         'Segment.io' : {
-            apiKey      : 'TEST',
-            environment : 'production',
-            verbose     : true
+            apiKey : 'TEST'
         }
     };
 
@@ -77,4 +75,7 @@
         spy.restore();
     });
 
-}());
+})();
+
+
+

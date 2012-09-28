@@ -117,18 +117,27 @@
 
     // Google Analytics
     // ----------------
+    // https://developers.google.com/analytics/devguides/collection/gajs/
+    // Last updated: September 27th, 2012
 
     availableProviders['Google Analytics'] = {
 
         initialize : function (settings) {
+            this.settings = settings;
+
+            // Start Google Analytics snippet. Changes:
+            // * Add API to `_setAccount`.
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', settings.apiKey]);
             _gaq.push(['_trackPageview']);
+
             (function() {
                 var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
                 ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
                 var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
             })();
+            // End Google Analytics snippet.
+
             window._gaq = _gaq;
         },
 
@@ -140,17 +149,21 @@
 
     // Segment.io
     // ----------
+    // https://segment.io/docs/javascript-api
+    // Last updated: September 27th, 2012
 
     availableProviders['Segment.io'] = {
 
         initialize : function (settings) {
-            var segment=segment||[];segment.load=function(a){var b,c,d,e,f,g=document;b=g.createElement("script"),b.type="text/javascript",b.async=!0,b.src=a,c=g.getElementsByTagName("script")[0],c.parentNode.insertBefore(b,c),d=function(a){return function(){segment.push([a].concat(Array.prototype.slice.call(arguments,0)))}},e=["initialize","identify","track","callback","verbose"];for(f=0;f<e.length;f++)segment[e[f]]=d(e[f])};
-            window.segment=segment;
-            var protocol = ('https:' == document.location.protocol ? 'https:' : 'http:');
-            segment.load(protocol+'//d47xnnr8b1rki.cloudfront.net/api/js/v2/segmentio.js');
-            window.segment.initialize(settings.apiKey, {
-                verbose: settings.verbose === true
-            });
+            this.settings = settings;
+
+            // Start Segment.io snippet. Changes:
+            // * Add API key and settings to init.
+            var segment=segment||[];segment.load=function(a){var b=document.createElement("script");b.type="text/javascript";b.async=!0;b.src=a;a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(b,a);b=function(a){return function(){segment.push([a].concat(Array.prototype.slice.call(arguments,0)))}};a="init initialize identify track callback logLevel verbose".split(" ");for(i=0;i<a.length;i++)segment[a[i]]=b(a[i])};segment.load(("https:"===document.location.protocol?"https://":"http://")+"d47xnnr8b1rki.cloudfront.net/api/js/v2/segmentio.js");
+            segment.initialize(settings.apiKey, settings);
+            // End Segment.io snippet.
+
+            window.segment = segment;
         },
 
         identify : function (userId, traits) {
@@ -163,14 +176,19 @@
     };
 
 
-    // KissMetrics
+    // KISSmetrics
     // -----------
+    // http://support.kissmetrics.com/apis/javascript
+    // Last updated: September 27th, 2012
 
-    availableProviders['KissMetrics'] = {
+    availableProviders['KISSmetrics'] = {
 
         initialize : function (settings) {
+            this.settings = settings;
+
+            // Start KISSmetrics snippet. Changes:
+            // * Concatenate in API key.
             var _kmq = _kmq || [];
-            window._kmq = _kmq;
             function _kms(u){
                 setTimeout(function(){
                     var d = document, f = d.getElementsByTagName('script')[0],
@@ -180,10 +198,13 @@
                 }, 1);
             }
             _kms('//i.kissmetrics.com/i.js');
-            _kms('//doug1izaerwt3.cloudfront.net/' + settings.apiKey + '.1.js');
-            _kmq.push(['record', 'Viewed page']);
+            _kms('//doug1izaerwt3.cloudfront.net/'+ settings.apiKey +'.1.js'); // Add API key from settings.
+            // End KISSmetrics snippet.
+
+            window._kmq = _kmq;
         },
 
+        // KISSmetrics uses two separate methods for storing ID and traits.
         identify : function (userId, traits) {
             window._kmq.push(['identify', userId]);
             window._kmq.push(['set', traits]);
@@ -197,21 +218,45 @@
 
     // Mixpanel
     // --------
+    // https://mixpanel.com/docs/integration-libraries/javascript
+    // https://mixpanel.com/docs/people-analytics/javascript
+    // https://mixpanel.com/docs/integration-libraries/javascript-full-api
+    // Last updated: September 27th, 2012
 
     availableProviders['Mixpanel'] = {
 
-        usePeople : false,
-
         initialize : function (settings) {
-            (function(d,c){var a,b,g,e;a=d.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===d.location.protocol?"https:":"http:")+'//api.mixpanel.com/site_media/js/api/mixpanel.2.js';b=d.getElementsByTagName("script")[0];b.parentNode.insertBefore(a,b);c._i=[];c.init=function(a,d,f){var b=c;"undefined"!==typeof f?b=c[f]=[]:f="mixpanel";g="disable track track_pageview track_links track_forms register register_once unregister identify name_tag set_config".split(" ");
-            for(e=0;e<g.length;e++)(function(a){b[a]=function(){b.push([a].concat(Array.prototype.slice.call(arguments,0)))}})(g[e]);c._i.push([a,d,f])};window.mixpanel=c})(document,[]);
-            window.mixpanel.init(settings.apiKey);
+            this.settings = settings;
+
+            // Start Mixpanel snippet. Changes:
+            // * Use window for call to `init`.
+            // * Add API key and settings to `init`.
+            (function(c,a){window.mixpanel=a;var b,d,h,e;b=c.createElement("script");
+            b.type="text/javascript";b.async=!0;b.src=("https:"===c.location.protocol?"https:":"http:")+
+            '//cdn.mxpnl.com/libs/mixpanel-2.1.min.js';d=c.getElementsByTagName("script")[0];
+            d.parentNode.insertBefore(b,d);a._i=[];a.init=function(b,c,f){function d(a,b){
+            var c=b.split(".");2==c.length&&(a=a[c[0]],b=c[1]);a[b]=function(){a.push([b].concat(
+            Array.prototype.slice.call(arguments,0)))}}var g=a;"undefined"!==typeof f?g=a[f]=[]:
+            f="mixpanel";g.people=g.people||[];h=['disable','track','track_pageview','track_links',
+            'track_forms','register','register_once','unregister','identify','name_tag',
+            'set_config','people.identify','people.set','people.increment'];for(e=0;e<h.length;e++)d(g,h[e]);
+            a._i.push([b,c,f])};a.__SV=1.1;})(document,window.mixpanel||[]);
+            window.mixpanel.init(settings.apiKey, settings);
+            // End Mixpanel Snippet
         },
 
+
+        // Only use Mixpanel People if you opt-in because otherwise Mixpanel
+        // charges you for it.
         identify : function (userId, traits) {
             window.mixpanel.identify(userId);
+            window.mixpanel.name_tag(userId);
             window.mixpanel.register(traits);
-            if (this.usePeople) window.mixpanel.people.set(traits);
+
+            if (this.settings.people === true) {
+                window.mixpanel.people.identify(userId);
+                window.mixpanel.people.set(traits);
+            }
         },
 
         track : function (event, properties) {
@@ -222,20 +267,25 @@
 
     // Intercom
     // --------
+    // Last updated: September 27th, 2012
 
     availableProviders['Intercom'] = {
 
-        _settings : {},
-
+        // Intercom identifies when the script is loaded, so instead of
+        // initializing in `initialize`, we have to initialize in `identify`.
         initialize: function (settings) {
-            this._settings = settings;
+            this.settings = settings;
         },
 
-        identify: function (visitorId, traits) {
+        identify: function (userId, traits) {
+            // Start Intercom snippet. Changes:
+            // * Add apiKey from settings.
+            // * Add userId.
+            // * Add a unix timestamp.
             window.intercomSettings = {
-                app_id     : this._settings.appId,
-                email      : visitorId,
-                created_at : (new Date()).getTime()
+                app_id     : this.settings.apiKey,
+                email      : userId,
+                created_at : Math.round((new Date()).getTime() / 1000)
             };
 
             function async_load() {
@@ -245,12 +295,12 @@
                 var x = document.getElementsByTagName('script')[0];
                 x.parentNode.insertBefore(s, x);
             }
-
             if (window.attachEvent) {
                 window.attachEvent('onload', async_load);
             } else {
                 window.addEventListener('load', async_load, false);
             }
+            // End Intercom snippet.
         }
     };
 

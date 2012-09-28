@@ -33,11 +33,17 @@
         //
         //     analytics.initialize({
         //         'Google Analytics' : {
-        //             apiKey : 'TEST'
+        //             apiKey : 'UA-XXXXXXX-X'
         //         },
         //         'Segment.io' : {
-        //             apiKey      : 'TEST',
-        //             environment : 'production'
+        //             apiKey : 'XXXXXXXXXXX'
+        //         },
+        //         'KISSmetrics' : {
+        //             apiKey : 'XXXXXXXXXXX'
+        //         },
+        //         Mixpanel : {
+        //             apiKey : 'XXXXXXXXXXX',
+        //             people : true
         //         }
         //     });
         //
@@ -63,14 +69,15 @@
         // Identifying a user ties all of their actions to an ID you recognize
         // and records properties about a user. An example identify:
         //
-        //     analytics.identify('user', {
+        //     analytics.identify('user@example.com', {
         //         name : 'Achilles',
         //         age  : 23
         //     });
         //
         // `userId` - the ID you recognize your user by, like an email.
         //
-        // `traits` - an optional dictionary of properties to tie to a user.
+        // `traits` - an optional dictionary of traits to tie your user. Things
+        // like *Name*, *Age* or *Friend Count*.
         identify : function (userId, traits) {
             if (!initialized) return;
             for (var i = 0, provider; provider = this.providers[i]; i++) {
@@ -87,12 +94,14 @@
         // Whenever a visitor triggers an event on your site that you're
         // interested in, you'll want to track it. An example track:
         //
-        //     analytics.track('party', {
+        //     analytics.track('Added a Friend', {
         //         level  : 'hard',
         //         volume : 11
         //     });
         //
-        // `event` - the name of the event.
+        // `event` - the name of the event. The best event names are human-
+        // readable so that your whole team knows what they are when you analyze
+        // your data.
         //
         // `properties` - an optional dictionary of properties of the event.
         track : function (event, properties) {
@@ -112,21 +121,21 @@
     // Providers
     // =========
 
-    // **Remove** the providers you don't want to use.
-
 
     // Google Analytics
     // ----------------
+    // _Last updated: September 27th, 2012_
+    //
     // https://developers.google.com/analytics/devguides/collection/gajs/
-    // Last updated: September 27th, 2012
 
     availableProviders['Google Analytics'] = {
 
+        // Changes to the Google Analytics snippet:
+        //
+        // * Add `apiKey` to call to `_setAccount`.
         initialize : function (settings) {
             this.settings = settings;
 
-            // Start Google Analytics snippet. Changes:
-            // * Add API to `_setAccount`.
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', settings.apiKey]);
             _gaq.push(['_trackPageview']);
@@ -136,7 +145,6 @@
                 ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
                 var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
             })();
-            // End Google Analytics snippet.
 
             window._gaq = _gaq;
         },
@@ -149,19 +157,20 @@
 
     // Segment.io
     // ----------
+    // _Last updated: September 27th, 2012_
+    //
     // https://segment.io/docs/javascript-api
-    // Last updated: September 27th, 2012
 
     availableProviders['Segment.io'] = {
 
+        // Changes to the Segemnt.io snippet:
+        //
+        // * Add `apiKey` and `settings` args to call to `initialize`.
         initialize : function (settings) {
             this.settings = settings;
 
-            // Start Segment.io snippet. Changes:
-            // * Add API key and settings to init.
             var segment=segment||[];segment.load=function(a){var b=document.createElement("script");b.type="text/javascript";b.async=!0;b.src=a;a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(b,a);b=function(a){return function(){segment.push([a].concat(Array.prototype.slice.call(arguments,0)))}};a="init initialize identify track callback logLevel verbose".split(" ");for(i=0;i<a.length;i++)segment[a[i]]=b(a[i])};segment.load(("https:"===document.location.protocol?"https://":"http://")+"d47xnnr8b1rki.cloudfront.net/api/js/v2/segmentio.js");
             segment.initialize(settings.apiKey, settings);
-            // End Segment.io snippet.
 
             window.segment = segment;
         },
@@ -178,16 +187,18 @@
 
     // KISSmetrics
     // -----------
+    // _Last updated: September 27th, 2012_
+    //
     // http://support.kissmetrics.com/apis/javascript
-    // Last updated: September 27th, 2012
 
     availableProviders['KISSmetrics'] = {
 
+        // Changes to the KISSmetrics snippet:
+        //
+        // * Concatenate in the `apiKey`.
         initialize : function (settings) {
             this.settings = settings;
 
-            // Start KISSmetrics snippet. Changes:
-            // * Concatenate in API key.
             var _kmq = _kmq || [];
             function _kms(u){
                 setTimeout(function(){
@@ -199,12 +210,12 @@
             }
             _kms('//i.kissmetrics.com/i.js');
             _kms('//doug1izaerwt3.cloudfront.net/'+ settings.apiKey +'.1.js'); // Add API key from settings.
-            // End KISSmetrics snippet.
 
             window._kmq = _kmq;
         },
 
-        // KISSmetrics uses two separate methods for storing ID and traits.
+        // KISSmetrics uses two separate methods: `identify` for storing the
+        // `userId` and `set` for storing `traits`.
         identify : function (userId, traits) {
             window._kmq.push(['identify', userId]);
             window._kmq.push(['set', traits]);
@@ -218,19 +229,24 @@
 
     // Mixpanel
     // --------
+    // _Last updated: September 27th, 2012_
+    //
     // https://mixpanel.com/docs/integration-libraries/javascript
     // https://mixpanel.com/docs/people-analytics/javascript
     // https://mixpanel.com/docs/integration-libraries/javascript-full-api
-    // Last updated: September 27th, 2012
 
     availableProviders['Mixpanel'] = {
 
+        // Changes to the Mixpanel snippet:
+        //
+        // * Use window for call to `init`.
+        // * Add `apiKey` and `settings` args to call to `init`.
+        //
+        // Also, we don't need to set the `mixpanel` object on `window` because
+        // they already do that.
         initialize : function (settings) {
             this.settings = settings;
 
-            // Start Mixpanel snippet. Changes:
-            // * Use window for call to `init`.
-            // * Add API key and settings to `init`.
             (function(c,a){window.mixpanel=a;var b,d,h,e;b=c.createElement("script");
             b.type="text/javascript";b.async=!0;b.src=("https:"===c.location.protocol?"https:":"http:")+
             '//cdn.mxpnl.com/libs/mixpanel-2.1.min.js';d=c.getElementsByTagName("script")[0];
@@ -242,12 +258,11 @@
             'set_config','people.identify','people.set','people.increment'];for(e=0;e<h.length;e++)d(g,h[e]);
             a._i.push([b,c,f])};a.__SV=1.1;})(document,window.mixpanel||[]);
             window.mixpanel.init(settings.apiKey, settings);
-            // End Mixpanel Snippet
         },
 
 
-        // Only use Mixpanel People if you opt-in because otherwise Mixpanel
-        // charges you for it.
+        // Only identify with Mixpanel's People feature if you opt-in because
+        // otherwise Mixpanel charges you for it.
         identify : function (userId, traits) {
             window.mixpanel.identify(userId);
             window.mixpanel.name_tag(userId);
@@ -267,7 +282,7 @@
 
     // Intercom
     // --------
-    // Last updated: September 27th, 2012
+    // _Last updated: September 27th, 2012_
 
     availableProviders['Intercom'] = {
 
@@ -277,17 +292,17 @@
             this.settings = settings;
         },
 
+        // Changes to the Intercom snippet:
+        //
+        // * Add `apiKey` from stored `settings`.
+        // * Add `userId`.
+        // * Add a unix timestamp.
         identify: function (userId, traits) {
-            // Start Intercom snippet. Changes:
-            // * Add apiKey from settings.
-            // * Add userId.
-            // * Add a unix timestamp.
             window.intercomSettings = {
                 app_id     : this.settings.apiKey,
                 email      : userId,
                 created_at : Math.round((new Date()).getTime() / 1000)
             };
-
             function async_load() {
                 var s = document.createElement('script');
                 s.type = 'text/javascript'; s.async = true;
@@ -300,7 +315,6 @@
             } else {
                 window.addEventListener('load', async_load, false);
             }
-            // End Intercom snippet.
         }
     };
 

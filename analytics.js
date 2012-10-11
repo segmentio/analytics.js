@@ -39,7 +39,7 @@
 
 
     // The `analytics` object that will be exposed to you on the global object.
-    root.analytics = {
+    root.analytics || (root.analytics = {
 
         // A list of providers that have been initialized.
         providers : [],
@@ -136,7 +136,7 @@
             }
         }
 
-    };
+    });
 
 
 

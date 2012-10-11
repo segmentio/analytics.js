@@ -205,7 +205,7 @@
         spy.restore();
     });
 
-    test('calls people.identify on identify if usePeople is true', function () {
+    test('calls people.identify on identify if `people` setting is true', function () {
         analytics.providers[0].settings.people = true;
         var spy = sinon.spy(window.mixpanel.people, 'identify');
 
@@ -215,7 +215,7 @@
         spy.restore();
     });
 
-    test('doesnt call people.identify on identify if usePeople is false', function () {
+    test('doesnt call people.identify on identify if `people` setting is false', function () {
         analytics.providers[0].settings.people = false;
         var spy = sinon.spy(window.mixpanel.people, 'identify');
 
@@ -225,7 +225,7 @@
         spy.restore();
     });
 
-    test('calls people.set on identify if usePeople is true', function () {
+    test('calls people.set on identify if `people` setting is true', function () {
         analytics.providers[0].settings.people = true;
         var spy = sinon.spy(window.mixpanel.people, 'set');
 
@@ -235,7 +235,7 @@
         spy.restore();
     });
 
-    test('doesnt call people.set on identify if usePeople is false', function () {
+    test('doesnt call people.set on identify if `people` setting is false', function () {
         analytics.providers[0].settings.people = false;
         var spy = sinon.spy(window.mixpanel.people, 'set');
 
@@ -266,6 +266,58 @@
 
         identify();
         expect(window.intercomSettings).to.exist;
+    });
+
+
+    // Olark
+    // -----
+    // Last updated: October 11th, 2012
+
+    suite('Olark');
+
+    beforeEach(function () {
+        generateContext.call(this, 'Olark');
+    });
+
+    test('stores settings and adds olark.js on initialize', function () {
+        expect(window.olark).not.to.exist;
+
+        analytics.initialize(this.providers);
+        expect(window.olark).to.exist;
+        expect(analytics.providers[0].settings).to.equal(this.providers[this.provider]);
+    });
+
+    test('updates visitor nickname on identify', function () {
+        var spy = sinon.spy(window, 'olark');
+
+        identify();
+        expect(spy).to.have.been.calledWith('api.chat.updateVisitorNickname', sinon.match({
+            snippet : userId
+        }));
+
+        spy.restore();
+    });
+
+    test('logs event to operator on track if `track` setting is true', function () {
+        analytics.providers[0].settings.track = true;
+        var spy = sinon.spy(window, 'olark');
+
+        track();
+        expect(spy).to.have.been.calledWith('api.chat.sendNotificationToOperator', sinon.match({
+            body : 'Visitor triggered "'+event+'".'
+        }));
+
+        spy.restore();
+    });
+
+    test('doesnt log event to operator on track if `track` setting is false', function () {
+        analytics.providers[0].settings.track = false;
+        var spy = sinon.spy(window, 'olark');
+
+        track();
+        expect(spy).not.to.have.been.called;
+
+        spy.restore();
     });
 
 }());

@@ -159,10 +159,17 @@ _All settings are passed directly to the second argument of Segment.io's `initia
 
 * `apiKey` - your project's API key.
 
-* `people` - a _boolean_ of whether you want to use Mixpanel's "People" feature. Only set this to `true` if you do, or you might get charged for it.
+* `people` - a _boolean_ of whether you want to use Mixpanel's "People" feature. Only set this to `true` if you do, or you might get charged for it. Defaults to `false`.
 
 _All settings are passed directly to the second argument of Mixpanel's `init` method._
 
 ### Intercom
 
 * `apiKey` - your project's "app_id".
+
+### Olark
+No, Olark isn't an analytics provider. But if you have it installed, whenever you call `identify` the Olark chat will update the visitors name, so that you know who you're talking to!
+
+* `apiKey` - your "Site-ID".
+
+* `track` - whether to log every track call in the operator's Olark chat. This can be useful to know what your users are doing as you're chatting with them, but it can also be overwhelming. Defaults to `false`.

@@ -12,6 +12,11 @@
         }
     };
 
+    var terseProviders = {
+        'Google Analytics' : 'TERSE_TEST',
+        'Segment.io'       : 'TERSE_TEST'
+    };
+
 
     // Initialize
     // ----------
@@ -20,6 +25,18 @@
         expect(analytics.providers).to.be.empty;
         analytics.initialize(providers);
         expect(analytics.providers.length).to.equal(2);
+    });
+
+    test('initialize sends settings to each providers', function () {
+        analytics.initialize(providers);
+        expect(analytics.providers[0].settings).to.equal(providers['Google Analytics']);
+        expect(analytics.providers[1].settings).to.equal(providers['Segment.io']);
+    });
+
+    test('initialize allows for apiKey strings as settings', function () {
+        analytics.initialize(terseProviders);
+        expect(analytics.providers[0].settings.apiKey).to.equal('TERSE_TEST');
+        expect(analytics.providers[1].settings.apiKey).to.equal('TERSE_TEST');
     });
 
     test('initialize sends settings to provider\'s initialize method', function () {

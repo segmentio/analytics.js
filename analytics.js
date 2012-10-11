@@ -15,6 +15,29 @@
         return clone;
     };
 
+    var isString = function(obj) {
+        return Object.prototype.toString.call(obj) === '[object String]';
+    };
+
+    var isObject = function(obj) {
+        return obj === Object(obj);
+    };
+
+    // A helper to resolve a settings object. It allows for `settings` to be an
+    // `apiKey` string in the case of no additional settings being needed.
+    var resolveSettings = function (settings) {
+        if (!isString(settings) && !isObject(settings))
+            throw new Error('Encountered unresolvable settings value.');
+
+        if (isString(settings)) {
+            var apiKey = settings;
+            settings = {};
+            settings.apiKey = apiKey;
+        }
+        return settings;
+    };
+
+
     // The `analytics` object that will be exposed to you on the global object.
     root.analytics = {
 
@@ -134,7 +157,7 @@
         //
         // * Add `apiKey` to call to `_setAccount`.
         initialize : function (settings) {
-            this.settings = settings;
+            this.settings = resolveSettings(settings);
 
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', settings.apiKey]);
@@ -167,7 +190,7 @@
         //
         // * Add `apiKey` and `settings` args to call to `initialize`.
         initialize : function (settings) {
-            this.settings = settings;
+            this.settings = resolveSettings(settings);
 
             var segment=segment||[];segment.load=function(a){var b=document.createElement("script");b.type="text/javascript";b.async=!0;b.src=a;a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(b,a);b=function(a){return function(){segment.push([a].concat(Array.prototype.slice.call(arguments,0)))}};a="init initialize identify track callback logLevel verbose".split(" ");for(i=0;i<a.length;i++)segment[a[i]]=b(a[i])};segment.load(("https:"===document.location.protocol?"https://":"http://")+"d47xnnr8b1rki.cloudfront.net/api/js/v2/segmentio.js");
             segment.initialize(settings.apiKey, settings);
@@ -197,7 +220,7 @@
         //
         // * Concatenate in the `apiKey`.
         initialize : function (settings) {
-            this.settings = settings;
+            this.settings = resolveSettings(settings);
 
             var _kmq = _kmq || [];
             function _kms(u){
@@ -245,7 +268,7 @@
         // Also, we don't need to set the `mixpanel` object on `window` because
         // they already do that.
         initialize : function (settings) {
-            this.settings = settings;
+            this.settings = resolveSettings(settings);
 
             (function(c,a){window.mixpanel=a;var b,d,h,e;b=c.createElement("script");
             b.type="text/javascript";b.async=!0;b.src=("https:"===c.location.protocol?"https:":"http:")+
@@ -289,7 +312,7 @@
         // Intercom identifies when the script is loaded, so instead of
         // initializing in `initialize`, we have to initialize in `identify`.
         initialize: function (settings) {
-            this.settings = settings;
+            this.settings = resolveSettings(settings);
         },
 
         // Changes to the Intercom snippet:

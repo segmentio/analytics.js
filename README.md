@@ -39,7 +39,19 @@ analytics.initialize({
 });
 ```
 
-Every analytics provider takes an `apiKey` for your project. The other settings are provider-specific. Check out the [provider-specific](#provider-specific-settings) reference for details. Did we mention this means you never need to mess with analytics snippets again? Bonus!
+Every analytics provider takes an `apiKey` for your project. The other settings are provider-specific. Check out the [provider-specific](#provider-specific-settings) reference for details. 
+
+For an even terser syntax, if you're only passing an `apiKey` you can pass a string instead of an object:
+
+```javascript
+analytics.initialize({
+    'Google Analytics' : 'UA-XXXXXX-XX',
+    'Segment.io'       : 'XXXXXXXXXX',
+    'KISSmetrics'      : 'XXXXXXXXXX'
+});
+```
+
+Did we mention this means you never need to mess with analytics snippets again? Bonus!
 
 
 ### identify()
@@ -147,7 +159,7 @@ _All settings are passed directly to the second argument of Segment.io's `initia
 
 * `apiKey` - your project's API key.
 
-* `people` - a _boolean_ of whether you want to use Mixpanel's "People" feature. Only set this to `true` if you do, otherwise they'll charge you for it.
+* `people` - a _boolean_ of whether you want to use Mixpanel's "People" feature. Only set this to `true` if you do, or you might get charged for it.
 
 _All settings are passed directly to the second argument of Mixpanel's `init` method._
 

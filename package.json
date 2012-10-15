@@ -1,0 +1,16 @@
+{
+  "name" : "analytics",
+  "version" : "0.1.0",
+  "description" : "The way every project should use analytics.",
+  "keywords" : [
+    "analytics", "segment", "segmentio", "google", "kissmetrics", "mixpanel",
+    "intercom", "olark"
+  ],
+  "url" : "https://github.com/segmentio/analytics.js",
+  "repository" : {
+    "type" : "git",
+    "url" : "git://github.com/segmentio/analytics.js.git"
+  },
+  "main" : "analytics.js",
+  "author" : "Segmentio <friends@segment.io>"
+}

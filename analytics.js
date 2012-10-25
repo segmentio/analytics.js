@@ -56,7 +56,8 @@
         //
         //     analytics.initialize({
         //         'Google Analytics' : {
-        //             apiKey : 'UA-XXXXXXX-X'
+        //             apiKey : 'UA-XXXXXXX-X',
+		//             enhancedLinkAttribution : true
         //         },
         //         'Segment.io' : {
         //             apiKey : 'XXXXXXXXXXX'
@@ -147,7 +148,7 @@
 
     // Google Analytics
     // ----------------
-    // _Last updated: September 27th, 2012_
+    // _Last updated: October 25th, 2012_
     //
     // https://developers.google.com/analytics/devguides/collection/gajs/
 
@@ -160,6 +161,11 @@
             this.settings = settings = resolveSettings(settings);
 
             var _gaq = _gaq || [];
+            if ( settings.enhancedLinkAttribution === true )
+            {
+                var pluginUrl = (('https:' == document.location.protocol) ? 'https://ssl.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
+                _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
+            }
             _gaq.push(['_setAccount', settings.apiKey]);
             _gaq.push(['_trackPageview']);
 

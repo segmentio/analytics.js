@@ -24,7 +24,8 @@ analytics.identify(userId, [traits]);
 ```javascript
 analytics.initialize({
     'Google Analytics' : {
-        apiKey : 'UA-XXXXXX-XX'
+        apiKey : 'UA-XXXXXX-XX',
+		enhancedLinkAttribution : false
     },
     'Segment.io' : {
         apiKey : 'XXXXXXXXXXX'
@@ -144,6 +145,8 @@ Every provider takes an `apiKey` for your project. Other providers might take cu
 ### Google Analtyics
 
 * `apiKey` - your project's API key.
+
+* `enhancedLinkAttribution` - a _boolean_ of where or not to use Google Analytics "Enhanced Link Attribution" feature. Set this to `true` if you do. 
 
 ### Segment.io
 

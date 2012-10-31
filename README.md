@@ -26,7 +26,7 @@ analytics.initialize({
     'Google Analytics' : {
         apiKey : 'UA-XXXXXX-XX',
         enhancedLinkAttribution : false,
-        siteSpeedSampleRate: 10
+        siteSpeedSampleRate : 10
     },
     'Segment.io' : {
         apiKey : 'XXXXXXXXXXX'

@@ -2,6 +2,7 @@
 ==================
 
 * Added enhanced link attribution ability for Google Analytics
+* Added site speed sample rate for Google Analytics
 
 0.1.0 / 2012-10-11 
 ==================

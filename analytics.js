@@ -57,7 +57,8 @@
         //     analytics.initialize({
         //         'Google Analytics' : {
         //             apiKey : 'UA-XXXXXXX-X',
-		//             enhancedLinkAttribution : true
+	//             enhancedLinkAttribution : true,
+	//             siteSpeedSampleRate: 10
         //         },
         //         'Segment.io' : {
         //             apiKey : 'XXXXXXXXXXX'
@@ -148,7 +149,7 @@
 
     // Google Analytics
     // ----------------
-    // _Last updated: October 25th, 2012_
+    // _Last updated: October 31st, 2012_
     //
     // https://developers.google.com/analytics/devguides/collection/gajs/
 
@@ -156,17 +157,27 @@
 
         // Changes to the Google Analytics snippet:
         //
+        // * Added functionality to support `enhancedLinkAttribution`
+        //
+        // * Added functionality to support `siteSpeedSampleRate`
+        //
         // * Add `apiKey` to call to `_setAccount`.
         initialize : function (settings) {
             this.settings = settings = resolveSettings(settings);
 
             var _gaq = _gaq || [];
-            if ( settings.enhancedLinkAttribution === true )
+            _gaq.push(['_setAccount', settings.apiKey]);
+
+            if ( this.settings.enhancedLinkAttribution === true )
             {
                 var pluginUrl = (('https:' == document.location.protocol) ? 'https://ssl.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
                 _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
             }
-            _gaq.push(['_setAccount', settings.apiKey]);
+            if ( this.settings.siteSpeedSampleRate != null && typeof(this.settings.siteSpeedSampleRate) == 'number' )
+            {
+                _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
+            }
+
             _gaq.push(['_trackPageview']);
 
             (function() {

@@ -25,8 +25,8 @@ analytics.identify(userId, [traits]);
 analytics.initialize({
     'Google Analytics' : {
         apiKey : 'UA-XXXXXX-XX',
-	enhancedLinkAttribution : false,
-	siteSpeedSampleRate: 10
+        enhancedLinkAttribution : false,
+        siteSpeedSampleRate: 10
     },
     'Segment.io' : {
         apiKey : 'XXXXXXXXXXX'

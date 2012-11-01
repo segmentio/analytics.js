@@ -24,7 +24,9 @@ analytics.identify(userId, [traits]);
 ```javascript
 analytics.initialize({
     'Google Analytics' : {
-        apiKey : 'UA-XXXXXX-XX'
+        apiKey : 'UA-XXXXXX-XX',
+        enhancedLinkAttribution : false,
+        siteSpeedSampleRate : 10
     },
     'Segment.io' : {
         apiKey : 'XXXXXXXXXXX'
@@ -144,6 +146,10 @@ Every provider takes an `apiKey` for your project. Other providers might take cu
 ### Google Analtyics
 
 * `apiKey` - your project's API key.
+
+* `enhancedLinkAttribution` - a _boolean_ of where or not to use Google Analytics "Enhanced Link Attribution" feature. Set this to `true` if you do. 
+
+* `siteSpeedSampleRate` - an _integer_ between 1-100 (inclusive) of what percentage of requests you want Google to sample for your site speeds. Google's default is 1%.
 
 ### Segment.io
 

@@ -170,7 +170,7 @@
 
             if ( this.settings.enhancedLinkAttribution === true )
             {
-                var pluginUrl = (('https:' == document.location.protocol) ? 'https://ssl.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
+                var pluginUrl = (('https:' == document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
                 _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
             }
             if ( this.settings.siteSpeedSampleRate != null && typeof(this.settings.siteSpeedSampleRate) == 'number' )

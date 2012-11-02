@@ -157,9 +157,9 @@
 
         // Changes to the Google Analytics snippet:
         //
-        // * Added functionality to support `enhancedLinkAttribution`
+        // * Added optional support for `enhancedLinkAttribution`
         //
-        // * Added functionality to support `siteSpeedSampleRate`
+        // * Added optional support for `siteSpeedSampleRate`
         //
         // * Add `apiKey` to call to `_setAccount`.
         initialize : function (settings) {
@@ -168,13 +168,12 @@
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', settings.apiKey]);
 
-            if ( this.settings.enhancedLinkAttribution === true )
-            {
+            if (this.settings.enhancedLinkAttribution === true) {
                 var pluginUrl = (('https:' == document.location.protocol) ? 'https://ssl.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
                 _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
             }
-            if ( this.settings.siteSpeedSampleRate != null && typeof(this.settings.siteSpeedSampleRate) == 'number' )
-            {
+            if (this.settings.siteSpeedSampleRate != null &&
+                typeof(this.settings.siteSpeedSampleRate) === 'number') {
                 _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
             }
 

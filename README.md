@@ -1,4 +1,3 @@
-
 analytics.js
 ============
 **Every project needs analytics.** The more you know about how your system is being used, the better your product decisions will be. In the end your users will benefit.
@@ -21,6 +20,19 @@ analytics.identify(userId, [traits]);
 
 + `providers` _object_ - a list of analytics providers to enable.
 
+
+```javascript
+analytics.initialize({
+    'Google Analytics' : 'UA-XXXXXX-XX',
+    'Segment.io'       : 'XXXXXXXXXX',
+    'KISSmetrics'      : 'XXXXXXXXXX'
+});
+```
+
+Did we mention this means you never need to mess with analytics snippets again? Bonus!
+
+You can also choose to pass in extra options to providers. Every analytics provider takes an `apiKey` for your project. The other settings are provider-specific. Check out the [provider-specific](#provider-specific-settings) reference for details. 
+
 ```javascript
 analytics.initialize({
     'Google Analytics' : {
@@ -40,20 +52,6 @@ analytics.initialize({
     }
 });
 ```
-
-Every analytics provider takes an `apiKey` for your project. The other settings are provider-specific. Check out the [provider-specific](#provider-specific-settings) reference for details. 
-
-For an even terser syntax, if you're only passing an `apiKey` you can pass a string instead of an object:
-
-```javascript
-analytics.initialize({
-    'Google Analytics' : 'UA-XXXXXX-XX',
-    'Segment.io'       : 'XXXXXXXXXX',
-    'KISSmetrics'      : 'XXXXXXXXXX'
-});
-```
-
-Did we mention this means you never need to mess with analytics snippets again? Bonus!
 
 
 ### identify()

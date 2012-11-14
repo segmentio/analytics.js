@@ -15,7 +15,7 @@ Our goal for the API was to iron out the kinks that crop up in lots of third-par
 When you're ready to start using **analytics.js**, you make a call to initialize with the analytics providers you want to enable and the settings each one needs. That looks like this:
 
 ```javascript
-analytics.identify(userId, [traits]);
+analytics.initialize(providers);
 ```
 
 + `providers` _object_ - a list of analytics providers to enable.

@@ -96,7 +96,7 @@ analytics.track('Purchased an Item', {
 
 1. Grab the latest version of **analytics.js** from this repo and add it to your project.
 
-1. Initialize **analytics.js**.
+1. Initialize **analytics.js** with whichever providers you want to use.
 
 1. Add an **analytics.identify()** call to tag your user and some **analytics.track()** calls for the events you want to record.
 
@@ -116,18 +116,18 @@ Other things you might want to **identify** are things like **Friend Count**, **
 #### What events should I track?
 The best way to figure out what events to track is to ask your to questions: "what do I want my users to do more of?" and "what do i want my users to do less of?". For example:
 
-+ Completed Purchase
-+ Upgraded Plan
-+ Shared on Facebook
-+ Watched a Video
-+ Invited a Friend
++ Complete Purchase
++ Upgrade Plan
++ Share on Facebook
++ Watche a Video
++ Invite a Friend
 
 or
 
-+ Cancelled their Account
-+ Unsuscribed
-+ Downgraded Plan
-+ Left Negative Review
++ Cancel their Account
++ Unsuscribe
++ Downgrade Plan
++ Leave Negative Review
 
 #### Google Analytics doesn't have traits! ... Intercom doesn't have events!
 That's all right. If a provider doesn't handle a certain method, you can still call it and nothing will break. You don't have to worry about anything.

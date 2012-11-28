@@ -1,4 +1,3 @@
-
 analytics.js
 ============
 **Every project needs analytics.** The more you know about how your system is being used, the better your product decisions will be. In the end your users will benefit.
@@ -16,10 +15,23 @@ Our goal for the API was to iron out the kinks that crop up in lots of third-par
 When you're ready to start using **analytics.js**, you make a call to initialize with the analytics providers you want to enable and the settings each one needs. That looks like this:
 
 ```javascript
-analytics.identify(userId, [traits]);
+analytics.initialize(providers);
 ```
 
 + `providers` _object_ - a list of analytics providers to enable.
+
+
+```javascript
+analytics.initialize({
+    'Google Analytics' : 'UA-XXXXXX-XX',
+    'Segment.io'       : 'XXXXXXXXXX',
+    'KISSmetrics'      : 'XXXXXXXXXX'
+});
+```
+
+Did we mention this means you never need to mess with analytics snippets again? Bonus!
+
+You can also choose to pass in extra options to providers. Every analytics provider takes an `apiKey` for your project. The other settings are provider-specific. Check out the [provider-specific](#provider-specific-settings) reference for details. 
 
 ```javascript
 analytics.initialize({
@@ -40,20 +52,6 @@ analytics.initialize({
     }
 });
 ```
-
-Every analytics provider takes an `apiKey` for your project. The other settings are provider-specific. Check out the [provider-specific](#provider-specific-settings) reference for details. 
-
-For an even terser syntax, if you're only passing an `apiKey` you can pass a string instead of an object:
-
-```javascript
-analytics.initialize({
-    'Google Analytics' : 'UA-XXXXXX-XX',
-    'Segment.io'       : 'XXXXXXXXXX',
-    'KISSmetrics'      : 'XXXXXXXXXX'
-});
-```
-
-Did we mention this means you never need to mess with analytics snippets again? Bonus!
 
 
 ### identify()
@@ -98,7 +96,7 @@ analytics.track('Purchased an Item', {
 
 1. Grab the latest version of **analytics.js** from this repo and add it to your project.
 
-1. Initialize **analytics.js**.
+1. Initialize **analytics.js** with whichever providers you want to use.
 
 1. Add an **analytics.identify()** call to tag your user and some **analytics.track()** calls for the events you want to record.
 
@@ -118,18 +116,18 @@ Other things you might want to **identify** are things like **Friend Count**, **
 #### What events should I track?
 The best way to figure out what events to track is to ask your to questions: "what do I want my users to do more of?" and "what do i want my users to do less of?". For example:
 
-+ Completed Purchase
-+ Upgraded Plan
-+ Shared on Facebook
-+ Watched a Video
-+ Invited a Friend
++ Complete Purchase
++ Upgrade Plan
++ Share on Facebook
++ Watche a Video
++ Invite a Friend
 
 or
 
-+ Cancelled their Account
-+ Unsuscribed
-+ Downgraded Plan
-+ Left Negative Review
++ Cancel their Account
++ Unsuscribe
++ Downgrade Plan
++ Leave Negative Review
 
 #### Google Analytics doesn't have traits! ... Intercom doesn't have events!
 That's all right. If a provider doesn't handle a certain method, you can still call it and nothing will break. You don't have to worry about anything.
@@ -182,6 +180,19 @@ No, Olark isn't an analytics provider. But if you have it installed, whenever yo
 
 
 ## License (MIT)
+
+```
+WWWWWW||WWWWWW
+ W W W||W W W
+      ||
+    ( OO )__________
+     /  |           \
+    /o o|    MIT     \
+    \___/||_||__||_|| *
+         || ||  || ||
+        _||_|| _||_||
+       (__|__|(__|__|
+```
 
 Copyright (C) 2012 Segment.io
 

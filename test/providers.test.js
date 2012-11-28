@@ -320,4 +320,33 @@
         spy.restore();
     });
 
+
+    // Chartbeat
+    // ---------
+    // http://chartbeat.com/docs/adding_the_code/
+    // http://chartbeat.com/docs/configuration_variables/
+    // http://chartbeat.com/docs/handling_virtual_page_changes/
+    // Last updated: September 27th, 2012
+
+    suite('Chartbeat');
+
+    beforeEach(function () {
+        generateContext.call(this, 'Chartbeat');
+    });
+
+    test('stores settings and adds chartbeat.js on initialize', function (done) {
+        expect(window.pSUPERFLY).not.to.exist;
+
+        analytics.initialize(this.providers);
+
+        // We have to wait for the charbeat.js to come back and create the
+        // global variable on window...
+        var self = this;
+        setTimeout(function () {
+            expect(window.pSUPERFLY).to.exist;
+            expect(analytics.providers[0].settings).to.equal(self.providers[self.provider]);
+            done();
+        }, 50);
+    });
+
 }());

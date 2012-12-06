@@ -338,12 +338,10 @@
             //
             // * Add `apiKey` from stored `settings`.
             // * Add `userId`.
-            // * Add a unix timestamp.
             identify: function (userId, traits) {
                 window.intercomSettings = {
-                    app_id     : this.settings.apiKey,
-                    email      : userId,
-                    created_at : Math.round((new Date()).getTime() / 1000)
+                    app_id : this.settings.apiKey,
+                    email  : userId
                 };
                 function async_load() {
                     var s = document.createElement('script');
@@ -423,7 +421,7 @@
 
                 var _sf_async_config={};
                 /** CONFIGURATION START **/
-                _sf_async_config.uid = settings.apiKey;
+                _sf_async_config.uid    = settings.apiKey;
                 _sf_async_config.domain = settings.domain;
                 if (settings.path)         _sf_async_config.path         = settings.path;
                 if (settings.title)        _sf_async_config.title        = settings.title;

@@ -12,8 +12,7 @@
     var userId = 'user';
 
     var traits = {
-        name  : 'Zeus',
-        email : 'zeus@gmail.com' 
+        name  : 'Zeus'
     };
 
     var event = 'event';
@@ -340,7 +339,6 @@
         identify();
         expect(spy).to.have.been.calledWith({
             id    : userId,
-            email : traits.email,
             name  : traits.name
         });
 

@@ -347,9 +347,9 @@
                     app_id : this.settings.apiKey
                 };
 
-                if (traits.email)
+                if (traits.email !== undefined)
                     window.intercomSettings.email = traits.email;
-                else if (!traits.email && basicEmailRegex.test(userId))
+                else if (basicEmailRegex.test(userId))
                     window.intercomSettings.email = userId;
 
                 function async_load() {
@@ -400,7 +400,7 @@
             identify : function (userId, traits) {
                 var properties = clone(traits);
                 properties.id = userId;
-                if (!traits.email && basicEmailRegex.test(userId))
+                if (properties.email === undefined && basicEmailRegex.test(userId))
                     properties.email = userId;
                 window._cio.identify(properties);
             },

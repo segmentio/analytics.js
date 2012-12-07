@@ -30,29 +30,47 @@
     };
 
 
-    var basicEmailRegex = /.+\@.+\..+/gi;
-
-
     // Email Regex
     // -----------
 
-    test('basic email regex matches some valid emails', function () {
-        expect(basicEmailRegex.test('team@segmentio.com')).to.be.true;
-        expect(basicEmailRegex.test('team@segment.org')).to.be.true;
-        expect(basicEmailRegex.test('team+45@segment.io')).to.be.true;
-        expect(basicEmailRegex.test('georgeioaskdfjlaksdjflkasjdlkfjasldkfj@hap-py.com')).to.be.true;
-        expect(basicEmailRegex.test('lkj21lk2j3lk1j2+12lk31j+1k2j31@gmail.net')).to.be.true;
+    suite('Email Regex');
+
+    var basicEmailRegex;
+    beforeEach(function () {
+        basicEmailRegex = /.+\@.+\..+/gi;
     });
 
-    test('basic email regex denies some invalid emails', function () {
+    test('basic email regex matches a valid email', function () {
+        expect(basicEmailRegex.test('team@segmentio.com')).to.be.true;
+    });
+    test('basic email regex matches a valid email', function () {
+        expect(basicEmailRegex.test('team@segment.org')).to.be.true;
+    });
+    test('basic email regex matches a valid email', function () {
+        expect(basicEmailRegex.test('team+45@segment.io')).to.be.true;
+    });
+    test('basic email regex matches a valid email', function () {
+        expect(basicEmailRegex.test('georgeioaskdfjlaksdjflkasjdlkfjasldkfj@hap-py.com')).to.be.true;
+    });
+    test('basic email regex matches a valid email', function () {
+        expect(basicEmailRegex.test('lkj21lk2j3lk1j2+12lk31j1k2j31@gmail.net')).to.be.true;
+    });
+
+    test('basic email regex does not match invalid emails', function () {
         expect(basicEmailRegex.test('@segmentio.com')).to.be.false;
+    });
+    test('basic email regex does not match invalid emails', function () {
         expect(basicEmailRegex.test('team@.org')).to.be.false;
+    });
+    test('basic email regex does not match invalid emails', function () {
         expect(basicEmailRegex.test('team+45.io')).to.be.false;
+    });
+    test('basic email regex does not match invalid emails', function () {
         expect(basicEmailRegex.test('georgeioaskdfjlaksdjflkasjdlkfjasldkfj@hap-pycom')).to.be.false;
+    });
+    test('basic email regex does not match invalid emails', function () {
         expect(basicEmailRegex.test('lkj21lk2j3lk1j2+12lk31j+1k2j31gmail.net')).to.be.false;
     });
-
-
 
 
     // Google Analytics

@@ -30,6 +30,31 @@
     };
 
 
+    var basicEmailRegex = /.+\@.+\..+/gi;
+
+
+    // Email Regex
+    // -----------
+
+    test('basic email regex matches some valid emails', function () {
+        expect(basicEmailRegex.test('team@segmentio.com')).to.be.true;
+        expect(basicEmailRegex.test('team@segment.org')).to.be.true;
+        expect(basicEmailRegex.test('team+45@segment.io')).to.be.true;
+        expect(basicEmailRegex.test('georgeioaskdfjlaksdjflkasjdlkfjasldkfj@hap-py.com')).to.be.true;
+        expect(basicEmailRegex.test('lkj21lk2j3lk1j2+12lk31j+1k2j31@gmail.net')).to.be.true;
+    });
+
+    test('basic email regex denies some invalid emails', function () {
+        expect(basicEmailRegex.test('@segmentio.com')).to.be.false;
+        expect(basicEmailRegex.test('team@.org')).to.be.false;
+        expect(basicEmailRegex.test('team+45.io')).to.be.false;
+        expect(basicEmailRegex.test('georgeioaskdfjlaksdjflkasjdlkfjasldkfj@hap-pycom')).to.be.false;
+        expect(basicEmailRegex.test('lkj21lk2j3lk1j2+12lk31j+1k2j31gmail.net')).to.be.false;
+    });
+
+
+
+
     // Google Analytics
     // ----------------
     // https://developers.google.com/analytics/devguides/collection/gajs/
@@ -266,6 +291,69 @@
 
         identify();
         expect(window.intercomSettings).to.exist;
+    });
+
+
+    // Customer.io
+    // ----------
+    // http://customer.io/docs/api/javascript.html
+    // Last updated: December 6th, 2012
+
+    suite('Customer.io');
+
+    beforeEach(function () {
+        generateContext.call(this, 'Customer.io');
+    });
+
+    test('stores settings and adds customer.io\'s track.js on initialize', function () {
+        expect(window._cio).not.to.exist;
+
+        analytics.initialize(this.providers);
+        expect(window._cio).to.exist;
+        expect(analytics.providers[0].settings).to.equal(this.providers[this.provider]);
+    });
+
+    test('calls initialize on initialize');
+
+    test('calls identify on identify', function () {
+        var spy = sinon.spy(window._cio, 'identify');
+
+        identify();
+        expect(spy).to.have.been.calledWith(userId, traits);
+
+        spy.restore();
+    });
+
+    test('calls track on track', function () {
+        var spy = sinon.spy(window._cio, 'track');
+
+        track();
+        expect(spy).to.have.been.calledWith(event, properties);
+
+        spy.restore();
+    });
+
+
+    // CrazyEgg
+    // ----------
+    // http://crazyegg.com
+    // Last updated: December 6th, 2012
+
+    suite('CrazyEgg');
+
+    beforeEach(function () {
+        generateContext.call(this, 'CrazyEgg');
+    });
+
+    test('stores settings and adds crazyeggs javascript on initialize', function () {
+
+        // Not sure how to test this!?
+
+        /*expect(window._cio).not.to.exist;
+
+        analytics.initialize(this.providers);
+        expect(window._cio).to.exist;
+        expect(analytics.providers[0].settings).to.equal(this.providers[this.provider]);*/
     });
 
 

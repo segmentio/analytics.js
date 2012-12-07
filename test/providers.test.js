@@ -12,7 +12,8 @@
     var userId = 'user';
 
     var traits = {
-        name : 'Zeus'
+        name  : 'Zeus',
+        email : 'zeus@gmail.com' 
     };
 
     var event = 'event';
@@ -337,7 +338,11 @@
         var spy = sinon.spy(window._cio, 'identify');
 
         identify();
-        expect(spy).to.have.been.calledWith(userId, traits);
+        expect(spy).to.have.been.calledWith({
+            id    : userId,
+            email : traits.email,
+            name  : traits.name
+        });
 
         spy.restore();
     });

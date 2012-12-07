@@ -34,6 +34,9 @@
         return Object.prototype.toString.call(obj) === '[object Function]';
     };
 
+    // Email detection helper
+    var basicEmailRegex = /.+\@.+\..+/gi;
+
     // A helper to resolve a settings object. It allows for `settings` to be an
     // `apiKey` string in the case of no additional settings being needed.
     var resolveSettings = function (settings) {
@@ -339,10 +342,16 @@
             // * Add `apiKey` from stored `settings`.
             // * Add `userId`.
             identify: function (userId, traits) {
+
                 window.intercomSettings = {
-                    app_id : this.settings.apiKey,
-                    email  : userId
+                    app_id : this.settings.apiKey
                 };
+
+                if (traits.email !== undefined)
+                    window.intercomSettings.email = traits.email;
+                else if (basicEmailRegex.test(userId))
+                    window.intercomSettings.email = userId;
+
                 function async_load() {
                     var s = document.createElement('script');
                     s.type = 'text/javascript'; s.async = true;
@@ -357,6 +366,71 @@
                 }
             }
         },
+
+
+        // Customer.io
+        // ----------
+        // _Last updated: December 6th, 2012_
+        //
+        // [Documentation](http://customer.io/docs/api/javascript.html).
+
+        'Customer.io' : {
+
+            initialize : function (settings) {
+                this.settings = settings = resolveSettings(settings);
+
+                var _cio = _cio || [];
+
+                (function() {
+                    var a,b,c;a=function(f){return function(){_cio.push([f].
+                    concat(Array.prototype.slice.call(arguments,0)))}};b=["identify",
+                    "track"];for(c=0;c<b.length;c++){_cio[b[c]]=a(b[c])};
+                    var t = document.createElement('script'),
+                        s = document.getElementsByTagName('script')[0];
+                    t.async = true;
+                    t.id    = 'cio-tracker';
+                    t.setAttribute('data-site-id', settings.apiKey);
+                    t.src = 'https://assets.customer.io/assets/track.js';
+                    s.parentNode.insertBefore(t, s);
+                })();
+
+                window._cio = _cio;
+            },
+
+            identify : function (userId, traits) {
+                var properties = clone(traits);
+                properties.id = userId;
+                if (properties.email === undefined && basicEmailRegex.test(userId))
+                    properties.email = userId;
+                window._cio.identify(properties);
+            },
+
+            track : function (event, properties) {
+                window._cio.track(event, properties);
+            }
+        },
+
+
+        // CrazyEgg.com
+        // ----------
+        // _Last updated: December 6th, 2012_
+        // API Key is the xxxx/xxxx in "//dnn506yrbagrg.cloudfront.net/pages/scripts/xxxx/xxxx.js"
+        // [Documentation](www.crazyegg.com).
+
+        'CrazyEgg' : {
+
+            initialize : function (settings) {
+                this.settings = settings = resolveSettings(settings);
+
+                (function(){
+                    var a=document.createElement("script");
+                    var b=document.getElementsByTagName("script")[0];
+                    a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+settings.apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
+                    a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b);
+                })();
+            }
+        },
+
 
 
         // Olark

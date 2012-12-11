@@ -334,7 +334,7 @@
             // Intercom identifies when the script is loaded, so instead of
             // initializing in `initialize`, we have to initialize in `identify`.
             initialize: function (settings) {
-                this.settings = settings = resolveSettings(settings);
+                this.settings = resolveSettings(settings);
             },
 
             // Changes to the Intercom snippet:
@@ -347,7 +347,7 @@
                     app_id : this.settings.apiKey
                 };
 
-                if (traits.email !== undefined)
+                if (traits && traits.email)
                     window.intercomSettings.email = traits.email;
                 else if (basicEmailRegex.test(userId))
                     window.intercomSettings.email = userId;

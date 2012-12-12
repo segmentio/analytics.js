@@ -7,14 +7,14 @@
         'Google Analytics' : {
             apiKey : 'TEST'
         },
-        'Segment.io' : {
+        'Mixpanel' : {
             apiKey : 'TEST'
         }
     };
 
     var terseProviders = {
         'Google Analytics' : 'TERSE_TEST',
-        'Segment.io'       : 'TERSE_TEST'
+        'Mixpanel'       : 'TERSE_TEST'
     };
 
 
@@ -30,7 +30,7 @@
     test('initialize sends settings to each providers', function () {
         analytics.initialize(providers);
         expect(analytics.providers[0].settings).to.equal(providers['Google Analytics']);
-        expect(analytics.providers[1].settings).to.equal(providers['Segment.io']);
+        expect(analytics.providers[1].settings).to.equal(providers['Mixpanel']);
     });
 
     test('initialize allows for apiKey strings as settings', function () {
@@ -42,7 +42,7 @@
     test('initialize sends settings to provider\'s initialize method', function () {
         var spy = sinon.spy(analytics.providers[1], 'initialize');
         analytics.initialize(providers);
-        expect(spy).to.have.been.calledWith(providers['Segment.io']);
+        expect(spy).to.have.been.calledWith(providers['Mixpanel']);
         spy.restore();
     });
 

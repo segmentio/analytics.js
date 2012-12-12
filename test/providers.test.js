@@ -2,6 +2,7 @@
 (function () {
 
     var generateContext = function (provider) {
+        analytics.userId = null;
         this.provider = provider;
         this.providers = {};
         this.providers[provider] = {
@@ -21,8 +22,10 @@
         count : 42
     };
 
-    var identify = function () {
-        window.analytics.identify(userId, traits);
+    var identify = {
+        full   : function () { window.analytics.identify(userId, traits); },
+        traits : function () { window.analytics.identify(traits); },
+        userId : function () { window.analytics.identify(userId); }
     };
 
     var track = function () {
@@ -35,10 +38,7 @@
 
     suite('Email Regex');
 
-    var basicEmailRegex;
-    beforeEach(function () {
-        basicEmailRegex = /.+\@.+\..+/gi;
-    });
+    var basicEmailRegex = /.+\@.+\..+/;
 
     test('basic email regex matches a valid email', function () {
         expect(basicEmailRegex.test('team@segmentio.com')).to.be.true;
@@ -100,46 +100,6 @@
     });
 
 
-    // Segment.io
-    // ----------
-    // https://segment.io/docs/javascript-api
-    // Last updated: September 27th, 2012
-
-    suite('Segment.io');
-
-    beforeEach(function () {
-        generateContext.call(this, 'Segment.io');
-    });
-
-    test('stores settings and adds segmentio.js on initialize', function () {
-        expect(window.segment).not.to.exist;
-
-        analytics.initialize(this.providers);
-        expect(window.segment).to.exist;
-        expect(analytics.providers[0].settings).to.equal(this.providers[this.provider]);
-    });
-
-    test('calls initialize on initialize');
-
-    test('calls identify on identify', function () {
-        var spy = sinon.spy(window.segment, 'identify');
-
-        identify();
-        expect(spy).to.have.been.calledWith(userId, traits);
-
-        spy.restore();
-    });
-
-    test('calls track on track', function () {
-        var spy = sinon.spy(window.segment, 'track');
-
-        track();
-        expect(spy).to.have.been.calledWith(event, properties);
-
-        spy.restore();
-    });
-
-
     // KISSmetrics
     // -----------
     // http://support.kissmetrics.com/apis/javascript
@@ -162,7 +122,15 @@
     test('pushes "_identify" on identify', function () {
         var spy = sinon.spy(window._kmq, 'push');
 
-        identify();
+        identify.traits();
+        expect(spy).to.have.not.been.calledWith(['identify', userId]);
+        spy.reset();
+
+        identify.userId();
+        expect(spy).to.have.been.calledWith(['identify', userId]);
+        spy.reset();
+
+        identify.full();
         expect(spy).to.have.been.calledWith(['identify', userId]);
 
         spy.restore();
@@ -171,11 +139,18 @@
     test('pushes "_set" on identify', function () {
         var spy = sinon.spy(window._kmq, 'push');
 
-        identify();
+        identify.traits();
+        expect(spy).to.have.been.calledWith(['set', traits]);
+        spy.reset();
+
+        identify.userId();
+        expect(spy).to.have.not.been.calledWith(['set', traits]);
+        spy.reset();
+
+        identify.full();
         expect(spy).to.have.been.calledWith(['set', traits]);
 
         spy.restore();
-
     });
 
     test('pushes "_record" on track', function () {
@@ -214,7 +189,15 @@
     test('calls identify on identify', function () {
         var spy = sinon.spy(window.mixpanel, 'identify');
 
-        identify();
+        identify.traits();
+        expect(spy).to.have.not.been.called;
+        spy.reset();
+
+        identify.userId();
+        expect(spy).to.have.been.calledWith(userId);
+        spy.reset();
+
+        identify.full();
         expect(spy).to.have.been.calledWith(userId);
 
         spy.restore();
@@ -223,7 +206,15 @@
     test('calls register on identify', function () {
         var spy = sinon.spy(window.mixpanel, 'register');
 
-        identify();
+        identify.traits();
+        expect(spy).to.have.been.calledWith(traits);
+        spy.reset();
+
+        identify.userId();
+        expect(spy).to.have.not.been.called;
+        spy.reset();
+
+        identify.full();
         expect(spy).to.have.been.calledWith(traits);
 
         spy.restore();
@@ -232,7 +223,15 @@
     test('calls name_tag on identify', function () {
         var spy = sinon.spy(window.mixpanel, 'name_tag');
 
-        identify();
+        identify.traits();
+        expect(spy).to.have.not.been.called;
+        spy.reset();
+
+        identify.userId();
+        expect(spy).to.have.been.calledWith(userId);
+        spy.reset();
+
+        identify.full();
         expect(spy).to.have.been.calledWith(userId);
 
         spy.restore();
@@ -252,7 +251,15 @@
         analytics.providers[0].settings.people = true;
         var spy = sinon.spy(window.mixpanel.people, 'identify');
 
-        identify();
+        identify.traits();
+        expect(spy).to.have.not.been.called;
+        spy.reset();
+
+        identify.userId();
+        expect(spy).to.have.been.calledWith(userId);
+        spy.reset();
+
+        identify.full();
         expect(spy).to.have.been.calledWith(userId);
 
         spy.restore();
@@ -262,7 +269,7 @@
         analytics.providers[0].settings.people = false;
         var spy = sinon.spy(window.mixpanel.people, 'identify');
 
-        identify();
+        identify.full();
         expect(spy).not.to.have.been.called;
 
         spy.restore();
@@ -272,7 +279,11 @@
         analytics.providers[0].settings.people = true;
         var spy = sinon.spy(window.mixpanel.people, 'set');
 
-        identify();
+        identify.traits();
+        expect(spy).to.have.been.calledWith(traits);
+        spy.reset();
+
+        identify.full();
         expect(spy).to.have.been.calledWith(traits);
 
         spy.restore();
@@ -282,7 +293,7 @@
         analytics.providers[0].settings.people = false;
         var spy = sinon.spy(window.mixpanel.people, 'set');
 
-        identify();
+        identify.full();
         expect(spy).not.to.have.been.called;
 
         spy.restore();
@@ -307,8 +318,14 @@
     test('adds intercom javascript on identify', function () {
         expect(window.intercomSettings).not.to.exist;
 
-        identify();
+        identify.full();
         expect(window.intercomSettings).to.exist;
+    });
+
+    test('does not add javascript on track', function () {
+        delete window.intercomSettings;
+        track();
+        expect(window.intercomSettings).not.to.exist;
     });
 
 
@@ -336,7 +353,11 @@
     test('calls identify on identify', function () {
         var spy = sinon.spy(window._cio, 'identify');
 
-        identify();
+        identify.traits();
+        expect(spy).to.not.have.been.called;
+        spy.reset();
+
+        identify.full();
         expect(spy).to.have.been.calledWith({
             id    : userId,
             name  : traits.name
@@ -399,7 +420,11 @@
     test('updates visitor nickname on identify', function () {
         var spy = sinon.spy(window, 'olark');
 
-        identify();
+        identify.traits();
+        expect(spy).to.have.not.been.called;
+        spy.reset();
+
+        identify.full();
         expect(spy).to.have.been.calledWith('api.chat.updateVisitorNickname', sinon.match({
             snippet : userId
         }));

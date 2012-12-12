@@ -35,7 +35,7 @@
     };
 
     // Email detection helper
-    var basicEmailRegex = /.+\@.+\..+/gi;
+    var basicEmailRegex = /.+\@.+\..+/;
 
     // A helper to resolve a settings object. It allows for `settings` to be an
     // `apiKey` string in the case of no additional settings being needed.
@@ -57,6 +57,9 @@
 
         // A list of providers that have been initialized.
         providers : [],
+
+        // UserId to save
+        userId : null,
 
 
         // Initialize
@@ -101,12 +104,24 @@
         //         age  : 23
         //     });
         //
-        // `userId` - the ID you recognize your user by, like an email.
+        // `userId` - [optional] the ID you recognize your user by, like an email.
         //
         // `traits` - an optional dictionary of traits to tie your user. Things
         // like *Name*, *Age* or *Friend Count*.
         identify : function (userId, traits) {
             if (!initialized) return;
+
+            if (isObject(userId)) {
+                traits = userId;
+                userId = null;
+            }
+
+            // Save it for future use, or use saved userId.
+            if (userId !== null)
+                this.userId = userId;
+            else
+                userId = this.userId;
+
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.identify) continue;
                 var clonedTraits = clone(traits);
@@ -230,8 +245,10 @@
             // KISSmetrics uses two separate methods: `identify` for storing the
             // `userId` and `set` for storing `traits`.
             identify : function (userId, traits) {
-                window._kmq.push(['identify', userId]);
-                window._kmq.push(['set', traits]);
+                if (userId)
+                  window._kmq.push(['identify', userId]);
+                if (traits)
+                  window._kmq.push(['set', traits]);
             },
 
             track : function (event, properties) {
@@ -277,13 +294,19 @@
             // Only identify with Mixpanel's People feature if you opt-in because
             // otherwise Mixpanel charges you for it.
             identify : function (userId, traits) {
-                window.mixpanel.identify(userId);
-                window.mixpanel.name_tag(userId);
-                window.mixpanel.register(traits);
+                if (userId) {
+                    window.mixpanel.identify(userId);
+                    window.mixpanel.name_tag(userId);
+                }
+
+                if (traits)
+                    window.mixpanel.register(traits);
 
                 if (this.settings.people === true) {
-                    window.mixpanel.people.identify(userId);
-                    window.mixpanel.people.set(traits);
+                    if (userId)
+                        window.mixpanel.people.identify(userId);
+                    if (traits)
+                        window.mixpanel.people.set(traits);
                 }
             },
 
@@ -313,9 +336,13 @@
             // * Add `userId`.
             identify: function (userId, traits) {
 
+                if (!userId)
+                  return; // don't do anything if we just have traits.
+
                 window.intercomSettings = {
-                    app_id : this.settings.appId,
-                    email  : userId
+                    app_id      : this.settings.appId,
+                    user_id     : userId,
+                    custom_data : traits || {}
                 };
 
                 if (traits && traits.email)
@@ -369,6 +396,11 @@
             },
 
             identify : function (userId, traits) {
+
+                if (!userId) // don't do anything if we have no userId
+                    return;
+
+                traits = traits || {};
                 var properties = clone(traits);
                 properties.id = userId;
                 if (properties.email === undefined && basicEmailRegex.test(userId))
@@ -425,6 +457,9 @@
             },
 
             identify : function (userId, traits) {
+                if (!userId)
+                    return;
+
                 window.olark('api.chat.updateVisitorNickname', {
                     snippet : userId
                 });

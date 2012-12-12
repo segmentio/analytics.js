@@ -1,4 +1,4 @@
-@import url(https://fonts.googleapis.com/css?family=Lato:300italic,700italic,300,700);
+@import url(https://fonts.googleapis.com/css?family=Lato:400italic,700italic,400,700);
 
 body {
   padding:50px;
@@ -25,10 +25,12 @@ h1 {
 }
 
 h2 {
+  margin-top: .5em;
   color:#393939;
 }
 
 h3, h4, h5, h6 {
+  margin-top: .25em;
   color:#494949;
 }
 

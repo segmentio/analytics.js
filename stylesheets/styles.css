@@ -3,8 +3,8 @@
 body {
   padding:50px;
   font:17px/1.5 Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  color:#777;
-  font-weight:300;
+  color:#555;
+  font-weight:400;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -46,7 +46,7 @@ a small {
 }
 
 .wrapper {
-  width: 760px;
+  width: 700px;
   margin:0 auto;
 }
 
@@ -96,9 +96,7 @@ img {
 }
 
 header {
-  width:270px;
-  float:left;
-  position:fixed;
+  position:relative;
 }
 
 header ul {
@@ -177,12 +175,6 @@ hr {
 @media print, screen and (max-width: 960px) {}
 
 
-
-header, section, footer {
-  float:none;
-  position:static;
-  width:auto;
-}
 
 header {
   padding-right:320px;

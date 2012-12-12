@@ -14,7 +14,7 @@
 
     var terseProviders = {
         'Google Analytics' : 'TERSE_TEST',
-        'Mixpanel'       : 'TERSE_TEST'
+        'Mixpanel'         : 'TERSE_TEST'
     };
 
 

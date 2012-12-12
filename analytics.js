@@ -39,8 +39,11 @@
         return Object.prototype.toString.call(obj) === '[object Function]';
     };
 
-    // Email detection helper
+    // Email detection helper.
     var basicEmailRegex = /.+\@.+\..+/;
+    var isEmail = function (input) {
+        return basicEmailRegex.test(input);
+    };
 
     // A helper to resolve a settings object. It allows for `settings` to be an
     // `fieldName` string in the case of no additional settings being needed.
@@ -64,7 +67,7 @@
         // A list of providers that have been initialized.
         providers : [],
 
-        // UserId to save
+        // A `userId` to save.
         userId : null,
 
 
@@ -87,13 +90,12 @@
         // keys are the names of the providers and their values are the settings
         // they get passed on initialization.
         initialize : function (providers) {
-            var initializedProviders = [];
+            this.providers = [];
             for (var key in providers) {
                 if (!availableProviders[key]) throw new Error('Couldn\'t find a provider named "'+key+'"');
                 availableProviders[key].initialize(providers[key]);
-                initializedProviders.push(availableProviders[key]);
+                this.providers.push(availableProviders[key]);
             }
-            this.providers = initializedProviders;
 
             initialized = true;
         },
@@ -305,7 +307,7 @@
                     window.mixpanel.identify(userId);
                     window.mixpanel.name_tag(userId);
 
-                    if (basicEmailRegex.test(userId)) {
+                    if (isEmail(userId)) {
                         traits = traits || {};
                         traits.email = userId;
                     }
@@ -377,9 +379,8 @@
             // * Add `appId` from stored `settings`.
             // * Add `userId`.
             identify: function (userId, traits) {
-
-                if (!userId)
-                  return; // don't do anything if we just have traits.
+                // Don't do anything if we just have traits.
+                if (!userId) return;
 
                 window.intercomSettings = {
                     app_id      : this.settings.appId,
@@ -392,12 +393,11 @@
                         window.intercomSettings.email = traits.email;
                     if (traits.name)
                         window.intercomSettings.name = traits.name;
-                    if (traits.createdAt) {
+                    if (traits.createdAt)
                         window.intercomSettings.created_at = getSeconds(traits.createdAt);
-                    }
-
-                } else if (basicEmailRegex.test(userId))
+                } else if (isEmail(userId)) {
                     window.intercomSettings.email = userId;
+                }
 
                 function async_load() {
                     var s = document.createElement('script');
@@ -445,14 +445,13 @@
             },
 
             identify : function (userId, traits) {
-
-                if (!userId) // don't do anything if we have no userId
-                    return;
+                // Don't do anything if we just have traits.
+                if (!userId) return;
 
                 traits = traits || {};
                 var properties = clone(traits);
                 properties.id = userId;
-                if (properties.email === undefined && basicEmailRegex.test(userId))
+                if (properties.email === undefined && isEmail(userId))
                     properties.email = userId;
 
                 if (properties.createdAt) {
@@ -511,8 +510,7 @@
             },
 
             identify : function (userId, traits) {
-                if (!userId)
-                    return;
+                if (!userId) return;
 
                 window.olark('api.chat.updateVisitorNickname', {
                     snippet : userId

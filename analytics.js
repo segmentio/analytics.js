@@ -14,6 +14,11 @@
         if (isFunction(oldonload)) oldonload();
     };
 
+
+    var getSeconds = function (time) {
+        return Math.floor((new Date(time)) / 1000);
+    };
+
     // A helper to shallow-ly clone objects, so that they don't get mangled or
     // added to by different analytics providers because of the reference.
     var clone = function (obj) {
@@ -305,6 +310,7 @@
                 }
 
                 if (traits) {
+                    this.aliasTraits(traits);
                     window.mixpanel.register(traits);
                 }
 
@@ -324,15 +330,23 @@
                 }
 
                 if (traits.name) {
-                    var firstName = traits.name.split(' ', 1);
-                    traits['$first_name'] = firstName;
-                    traits['$last_name']  = traits.name.substr(firstName.length + 1);
+                    traits['$name']  = traits.name;
                     delete traits.name;
                 }
 
                 if (traits.username) {
                     traits['$username'] = traits.username;
                     delete traits.username;
+                }
+
+                if (traits.lastSeen) {
+                    traits['$last_login'] = traits.lastSeen;
+                    delete traits.lastSeen;
+                }
+
+                if (traits.createdAt) {
+                    traits['$created'] = traits.createdAt;
+                    delete traits.createdAt;
                 }
             },
 
@@ -368,12 +382,19 @@
                 window.intercomSettings = {
                     app_id      : this.settings.appId,
                     user_id     : userId,
-                    custom_data : traits || {}
+                    custom_data : traits || {},
                 };
 
-                if (traits && traits.email)
-                    window.intercomSettings.email = traits.email;
-                else if (basicEmailRegex.test(userId))
+                if (traits) {
+                    if (traits.email)
+                        window.intercomSettings.email = traits.email;
+                    if (traits.name)
+                        window.intercomSettings.name = traits.name;
+                    if (traits.createdAt) {
+                        window.intercomSettings.created_at = getSeconds(traits.createdAt);
+                    }
+
+                } else if (basicEmailRegex.test(userId))
                     window.intercomSettings.email = userId;
 
                 function async_load() {
@@ -431,6 +452,9 @@
                 properties.id = userId;
                 if (properties.email === undefined && basicEmailRegex.test(userId))
                     properties.email = userId;
+                if (properties.lastSeen)
+                    properties.created_at = getSeconds(properties.lastSeen);
+
                 window._cio.identify(properties);
             },
 

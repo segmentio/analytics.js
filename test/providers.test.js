@@ -490,4 +490,54 @@
         }, 50);
     });
 
+    // Klaviyo
+    // --------
+    // Last updated: December 12th, 2012
+
+    suite('Klaviyo');
+
+    beforeEach(function () {
+        generateContext.call(this, 'Klaviyo');
+    });
+
+    test('stores settings and adds kissmetrics javascript on initialize', function () {
+        expect(window._learnq).not.to.exist;
+
+        analytics.initialize(this.providers);
+        expect(window._learnq).to.exist;
+        expect(analytics.providers[0].settings).to.equal(this.providers[this.provider]);
+    });
+
+    test('pushes "_identify" on identify', function () {
+        var spy = sinon.spy(window._learnq, 'push');
+
+        identify.traits();
+        expect(spy).to.have.been.calledWith(['identify', traits]);
+        spy.reset();
+
+        identify.userId();
+        expect(spy).to.have.been.calledWith(['identify', { $id: userId }]);
+        spy.reset();
+
+        // TODO: Make this better.
+        //
+        // traits['$id'] = userId;
+        //
+        // identify.full();
+        // expect(spy).to.have.been.calledWith(['identify', traits]);
+        //
+        // delete traits['$id'];
+
+        spy.restore();
+    });
+
+    test('pushes "_track" on track', function () {
+        var spy = sinon.spy(window._learnq, 'push');
+
+        track();
+        expect(spy).to.have.been.calledWith(['track', event, properties]);
+
+        spy.restore();
+    });
+
 }());

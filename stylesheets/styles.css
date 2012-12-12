@@ -21,15 +21,15 @@ h1, h2, h3 {
 }
 
 h1 {
-  font-size:28px;
+  font-size:1.5em;
 }
 
 h2 {
-  margin-top: .5em;
+  margin-top: 2em;
 }
 
 h3, h4, h5, h6 {
-  margin-top: 2em;
+  margin-top: 1.7em;
 }
 
 a {

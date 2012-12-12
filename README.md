@@ -1,12 +1,9 @@
 analytics.js
 ============
-**Every project needs analytics.** The more you know about how your system is being used, the better your product decisions will be. In the end your users will benefit.
 
-But having analytics shouldn't mean your tying yourself to a single third-party analytics service and littering your codebase third-party-specific calls. Changing or adding new providers should be a snap. That's where **analytics.js** comes in. The APIs for most analytics services track the same sorts of metrics, so it's not hard to build an abstraction layer that fits most use cases. And that's what we did! We even use **analytics.js** on [Segment.io](https://segment.io).
+The hassle-free way to integrate analytics into any web application. [See the docs.](http://segmentio.github.com/analytics.js/)
 
-The API is dead simple. You won't want to go back to using some of those unfriendly third-party APIs!
-
-
+Looking for an _even_ easier way to setup analytics on your website? [Checkout out analyticsjs.com!](http://analyticsjs.com) It's a hosted solution that lets you add analytics services without touching any code at all.
 
 ## The API
 Our goal for the API was to iron out the kinks that crop up in lots of third-party analytics services API's. Keep things clean!
@@ -190,6 +187,8 @@ No, Olark isn't an analytics provider. But if you have it installed, whenever yo
 * `track` - whether to log every track call in the operator's Olark chat. This can be useful to know what your users are doing as you're chatting with them, but it can also be overwhelming. Defaults to `false`.
 
 
+=======
+>>>>>>> c49fb20de8fdaf05e0f28eea14f59deeff7d4a0e
 ## License (MIT)
 
 ```

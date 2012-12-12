@@ -305,8 +305,10 @@
                     window.mixpanel.identify(userId);
                     window.mixpanel.name_tag(userId);
 
-                    if (basicEmailRegex.test(userId))
+                    if (basicEmailRegex.test(userId)) {
+                        traits = traits || {};
                         traits.email = userId;
+                    }
                 }
 
                 if (traits) {

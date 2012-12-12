@@ -452,9 +452,11 @@
                 properties.id = userId;
                 if (properties.email === undefined && basicEmailRegex.test(userId))
                     properties.email = userId;
-                if (properties.lastSeen)
-                    properties.created_at = getSeconds(properties.lastSeen);
 
+                if (properties.createdAt) {
+                    properties.created_at = getSeconds(properties.createdAt);
+                    delete properties.createdAt;
+                }
                 window._cio.identify(properties);
             },
 

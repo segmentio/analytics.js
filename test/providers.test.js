@@ -13,7 +13,13 @@
     var userId = 'user';
 
     var traits = {
-        name  : 'Zeus'
+        name      : 'Zeus',
+        createdAt : new Date('12/30/1989')
+    };
+
+    var mixpaneledTraits = {
+        $name    : 'Zeus',
+        $created : new Date('12/30/1989')
     };
 
     var event = 'event';
@@ -207,7 +213,7 @@
         var spy = sinon.spy(window.mixpanel, 'register');
 
         identify.traits();
-        expect(spy).to.have.been.calledWith(traits);
+        expect(spy).to.have.been.calledWith(mixpaneledTraits);
         spy.reset();
 
         identify.userId();
@@ -215,7 +221,7 @@
         spy.reset();
 
         identify.full();
-        expect(spy).to.have.been.calledWith(traits);
+        expect(spy).to.have.been.calledWith(mixpaneledTraits);
 
         spy.restore();
     });
@@ -280,11 +286,11 @@
         var spy = sinon.spy(window.mixpanel.people, 'set');
 
         identify.traits();
-        expect(spy).to.have.been.calledWith(traits);
+        expect(spy).to.have.been.calledWith(mixpaneledTraits);
         spy.reset();
 
         identify.full();
-        expect(spy).to.have.been.calledWith(traits);
+        expect(spy).to.have.been.calledWith(mixpaneledTraits);
 
         spy.restore();
     });
@@ -359,8 +365,9 @@
 
         identify.full();
         expect(spy).to.have.been.calledWith({
-            id    : userId,
-            name  : traits.name
+            id         : userId,
+            name       : traits.name,
+            created_at : Math.floor((new Date('12/30/1989')).getTime() / 1000)
         });
 
         spy.restore();

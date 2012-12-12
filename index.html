@@ -46,26 +46,26 @@
 
 <div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">initialize</span><span class="p">({</span>
     <span class="s1">'Google Analytics'</span> <span class="o">:</span> <span class="s1">'UA-XXXXXX-XX'</span><span class="p">,</span>
-    <span class="s1">'Segment.io'</span>       <span class="o">:</span> <span class="s1">'XXXXXXXXXX'</span><span class="p">,</span>
+    <span class="s1">'Mixpanel'</span>         <span class="o">:</span> <span class="s1">'XXXXXXXXXX'</span><span class="p">,</span>
     <span class="s1">'KISSmetrics'</span>      <span class="o">:</span> <span class="s1">'XXXXXXXXXX'</span>
 <span class="p">});</span>
 </pre></div>
 
 <p>Did we mention this means you never need to mess with analytics snippets again? Bonus!</p>
 
-<p>You can also choose to pass in extra, service-specific options to enable certain advanced features. Check out the <a href="#service-specific-settings">service-specific</a> reference for details. That looks like this:</p>
+<p>You can also choose to pass in extra, service-specific options to enable certain advanced features. Check out the <a href="#service-specific-settings">Service-Specific Reference</a> for details. That looks like this:</p>
 
 <div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">initialize</span><span class="p">({</span>
     <span class="s1">'Google Analytics'</span> <span class="o">:</span> <span class="p">{</span>
-        <span class="nx">tracking_id</span> <span class="o">:</span> <span class="s1">'UA-XXXXXX-XX'</span><span class="p">,</span>
-        <span class="nx">enhanced_link_attribution</span> <span class="o">:</span> <span class="kc">false</span>
-    <span class="p">},</span>
-    <span class="s1">'KISSmetrics'</span> <span class="o">:</span> <span class="p">{</span>
-        <span class="nx">api_key</span> <span class="o">:</span> <span class="s1">'XXXXXXXXXXX'</span>
+        <span class="nx">trackingId</span>              <span class="o">:</span> <span class="s1">'UA-XXXXXX-XX'</span><span class="p">,</span>
+        <span class="nx">enhancedLinkAttribution</span> <span class="o">:</span> <span class="kc">false</span>
     <span class="p">},</span>
     <span class="s1">'Mixpanel'</span> <span class="o">:</span> <span class="p">{</span>
-        <span class="nx">token</span> <span class="o">:</span> <span class="s1">'XXXXXXXXXXX'</span><span class="p">,</span>
+        <span class="nx">token</span>  <span class="o">:</span> <span class="s1">'XXXXXXXXXXX'</span><span class="p">,</span>
         <span class="nx">people</span> <span class="o">:</span> <span class="kc">true</span>
+    <span class="p">},</span>
+    <span class="s1">'KISSmetrics'</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">apiKey</span> <span class="o">:</span> <span class="s1">'XXXXXXXXXXX'</span>
     <span class="p">}</span>
 <span class="p">});</span>
 </pre></div>
@@ -75,8 +75,8 @@
 <p>Identify is how you tie a user to their actions:</p>
 
 <div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">identify</span><span class="p">(</span><span class="s1">'achilles@segment.io'</span><span class="p">,</span> <span class="p">{</span>
-    <span class="nx">subscription_plan</span> <span class="o">:</span> <span class="s1">'Gold'</span><span class="p">,</span>
-    <span class="nx">friend_count</span>      <span class="o">:</span> <span class="mi">29</span>
+    <span class="nx">subscriptionPlan</span> <span class="o">:</span> <span class="s1">'Gold'</span><span class="p">,</span>
+    <span class="nx">friendCount</span>      <span class="o">:</span> <span class="mi">29</span>
 <span class="p">});</span>
 </pre></div>
 
@@ -85,15 +85,15 @@
 <code>userId</code> <em>string</em> - is the ID you refer to your user by.</li>
 <li>
 <code>traits</code> <em>object, optional</em> - is an <em>optional</em> dictionary of things you know about the user. Things like: <strong>Subscription Plan</strong>, <strong>Friend Count</strong>, <strong>Age</strong>, etc.</li>
-</ul><p>We usually recommend using a backend template to inject an identify with the <code>userId</code> straight into the footer of every page of your application. That way no matter what page the user lands on, the call is made.</p>
+</ul><p>We usually recommend using a backend template to inject an <code>identify</code> with a <code>userId</code> straight into the footer of every page of your application. That way no matter what page the user lands on, the call is made.</p>
 
 <h3>track()</h3>
 
-<p>Track is how you record the actions your users take. Whenever your using does something you want to record, <code>track</code> that event. The API looks like this:</p>
+<p>Track is how you record the actions your users perform. Whenever a user does something you want to record, <code>track</code> that event. The API looks like this:</p>
 
 <div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">track</span><span class="p">(</span><span class="s1">'Purchased an Item'</span><span class="p">,</span> <span class="p">{</span>
-    <span class="nx">price</span>           <span class="o">:</span> <span class="mf">40.20</span><span class="p">,</span>
-    <span class="nx">shipping_method</span> <span class="o">:</span> <span class="s1">'2-day'</span>
+    <span class="nx">price</span>          <span class="o">:</span> <span class="mf">40.20</span><span class="p">,</span>
+    <span class="nx">shippingMethod</span> <span class="o">:</span> <span class="s1">'2-day'</span>
 <span class="p">});</span>
 </pre></div>
 
@@ -113,11 +113,11 @@
 
 <h4>Where should I put the identify call?</h4>
 
-<p>We usually recommend using a backend template to inject an identify with the <code>userId</code> straight into the footer of every page of your application. That way no matter what page the user lands on, the call is made.</p>
+<p>We usually recommend using a backend template to inject an <code>identify</code> call with a <code>userId</code> straight into the footer of every page of your application. That way no matter what page the user lands on, the call is made.</p>
 
 <h4>What traits should I record?</h4>
 
-<p>The single most important trait to record is something like <strong>Membership Level</strong> or <strong>Subscription Type</strong> or however you break your users into different tiers. That way, you can focus on getting people into the higher tiers.</p>
+<p>The single most important trait to record is something like <code>membershipLevel</code> or <code>subscriptionType</code> or however you break your users into different tiers. That way, you can focus on getting people into the higher tiers.</p>
 
 <p>Other things you might want to <strong>identify</strong> are things like <strong>Friend Count</strong>, <strong>Company</strong>, <strong>Business Type</strong>, <strong>Employee Count</strong>, etc.</p>
 
@@ -142,11 +142,22 @@
 
 <p>That's all right. If a provider doesn't handle a certain method, you can still call it and nothing will break. You don't have to worry about anything.</p>
 
-<h2>Contributing</h2>
+<h2>Special User Traits</h2>
 
-<p>We love contributions! If you have a provider you'd like to add, feel free to submit a pull request. Providers are community maintained! You can check out the providers that we've already written for guidance. (Make sure to add tests!)</p>
+<p>Some special user traits have semantic meaning and are used for specific purposes by different analytics services. (eg. Intercom relies on <code>email</code> for messaging). These special traits should only be used for their agreed semantics:</p>
 
-<h2>Provider-specific Settings</h2>
+<ul>
+<li>
+<code>email</code> - the email address of the user. This gets sent to providers that require an email like Customer.io or Intercom. (We'll automatically pass Mixpanel the <code>$email</code> it needs if you use <code>email</code>, so don't worry about the dollar signs anymore!)</li>
+<li>
+<code>name</code> - the name of the user. (Auto-aliases to Mixpanel's <code>$first_name</code> and <code>$last_name</code>.)</li>
+<li>
+<code>username</code> - the screen name of the user. (Auto-aliases to Mixpanel's <code>$username</code>.)</li>
+<li>
+<code>createdAt</code> - the date of when the user's account was created. The date format is a <a href="http://en.wikipedia.org/wiki/Unix_time">Unix Timestamp</a> (seconds, not milliseconds!).</li>
+<li>
+<code>lastSeen</code> - The last time the user visited your site. (Auto-aliases to Mixpanel's <code>$last_seen</code>.)</li>
+</ul><h2>Provider-specific Settings</h2>
 
 <h3>Google Analtyics</h3>
 
@@ -191,6 +202,10 @@
 <li>
 <code>uid</code> <em>string</em> - your project's "User ID".</li>
 </ul><p><em>All of Chartbeat's <a href="http://chartbeat.com/docs/configuration_variables">Configuration Variables</a> (<code>path</code>, <code>title</code>, <code>domain</code>, <code>useCanonical</code>, <code>sections</code>, <code>authors</code>, <code>noCookies</code>) are also passed directly to Chartbeat's configuration.</em></p>
+
+<h2>Contributing</h2>
+
+<p>We love contributions! If you have a provider you'd like to add, feel free to submit a pull request. Providers are community maintained! You can check out the providers that we've already written for guidance. (Make sure to add tests!)</p>
 
 <h2>License (MIT)</h2>
 

@@ -38,15 +38,16 @@
     var basicEmailRegex = /.+\@.+\..+/;
 
     // A helper to resolve a settings object. It allows for `settings` to be an
-    // `apiKey` string in the case of no additional settings being needed.
-    var resolveSettings = function (settings) {
+    // `fieldName` string in the case of no additional settings being needed.
+    // Field name is the setting for the api key for our shorthand.
+    var resolveSettings = function (settings, fieldName) {
         if (!isString(settings) && !isObject(settings))
             throw new Error('Encountered unresolvable settings value.');
 
         if (isString(settings)) {
             var apiKey = settings;
             settings = {};
-            settings.apiKey = apiKey;
+            settings[fieldName] = apiKey;
         }
         return settings;
     };
@@ -182,10 +183,10 @@
             //
             // * Add `apiKey` to call to `_setAccount`.
             initialize : function (settings) {
-                this.settings = settings = resolveSettings(settings);
+                this.settings = settings = resolveSettings(settings, 'trackingId');
 
                 var _gaq = _gaq || [];
-                _gaq.push(['_setAccount', settings.apiKey]);
+                _gaq.push(['_setAccount', settings.trackingId]);
 
                 if (this.settings.enhancedLinkAttribution === true) {
                     var pluginUrl = (('https:' == document.location.protocol) ? 'https://ssl.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
@@ -225,7 +226,7 @@
             //
             // * Concatenate in the `apiKey`.
             initialize : function (settings) {
-                this.settings = settings = resolveSettings(settings);
+                this.settings = settings = resolveSettings(settings, 'apiKey');
 
                 var _kmq = _kmq || [];
                 function _kms(u){
@@ -275,7 +276,7 @@
             // Also, we don't need to set the `mixpanel` object on `window` because
             // they already do that.
             initialize : function (settings) {
-                this.settings = settings = resolveSettings(settings);
+                this.settings = settings = resolveSettings(settings, 'token');
 
                 (function(c,a){window.mixpanel=a;var b,d,h,e;b=c.createElement("script");
                 b.type="text/javascript";b.async=!0;b.src=("https:"===c.location.protocol?"https:":"http:")+
@@ -287,26 +288,51 @@
                 'track_forms','register','register_once','unregister','identify','name_tag',
                 'set_config','people.identify','people.set','people.increment'];for(e=0;e<h.length;e++)d(g,h[e]);
                 a._i.push([b,c,f])};a.__SV=1.1;})(document,window.mixpanel||[]);
-                window.mixpanel.init(settings.apiKey, settings);
+                window.mixpanel.init(settings.token, settings);
             },
 
 
             // Only identify with Mixpanel's People feature if you opt-in because
             // otherwise Mixpanel charges you for it.
+            // Alias email -> $email
             identify : function (userId, traits) {
                 if (userId) {
                     window.mixpanel.identify(userId);
                     window.mixpanel.name_tag(userId);
+
+                    if (basicEmailRegex.test(userId))
+                        traits.email = userId;
                 }
 
-                if (traits)
+                if (traits) {
                     window.mixpanel.register(traits);
+                }
 
                 if (this.settings.people === true) {
                     if (userId)
                         window.mixpanel.people.identify(userId);
                     if (traits)
                         window.mixpanel.people.set(traits);
+                }
+            },
+
+
+            aliasTraits : function (traits) {
+                if (traits.email) {
+                    traits['$email'] = traits.email;
+                    delete traits.email;
+                }
+
+                if (traits.name) {
+                    var firstName = traits.name.split(' ', 1);
+                    traits['$first_name'] = firstName;
+                    traits['$last_name']  = traits.name.substr(firstName.length + 1);
+                    delete traits.name;
+                }
+
+                if (traits.username) {
+                    traits['$username'] = traits.username;
+                    delete traits.username;
                 }
             },
 
@@ -327,7 +353,7 @@
             // Intercom identifies when the script is loaded, so instead of
             // initializing in `initialize`, we have to initialize in `identify`.
             initialize: function (settings) {
-                this.settings = resolveSettings(settings);
+                this.settings = resolveSettings(settings, 'appId');
             },
 
             // Changes to the Intercom snippet:
@@ -375,7 +401,7 @@
         'Customer.io' : {
 
             initialize : function (settings) {
-                this.settings = settings = resolveSettings(settings);
+                this.settings = settings = resolveSettings(settings, 'siteId');
 
                 var _cio = _cio || [];
 
@@ -387,7 +413,7 @@
                         s = document.getElementsByTagName('script')[0];
                     t.async = true;
                     t.id    = 'cio-tracker';
-                    t.setAttribute('data-site-id', settings.apiKey);
+                    t.setAttribute('data-site-id', settings.siteId);
                     t.src = 'https://assets.customer.io/assets/track.js';
                     s.parentNode.insertBefore(t, s);
                 })();
@@ -423,7 +449,7 @@
         'CrazyEgg' : {
 
             initialize : function (settings) {
-                this.settings = settings = resolveSettings(settings);
+                this.settings = settings = resolveSettings(settings, 'apiKey');
 
                 (function(){
                     var a=document.createElement("script");
@@ -450,7 +476,7 @@
             // * Add `siteId` from stored `settings`.
             // * Added `window.` before `olark.identify`.
             initialize : function (settings) {
-                this.settings = settings = resolveSettings(settings);
+                this.settings = settings = resolveSettings(settings, 'siteId');
 
                 window.olark||(function(c){var f=window,d=document,l=f.location.protocol=="https:"?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while(q--){(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={0:+new Date};a.P=function(u){a.p[u]=new Date-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if(!m){return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if(/MSIE[ ]+6/.test(navigator.userAgent)){b.src="javascript:false"}b.allowTransparency="true";v[j](b);try{b.contentWindow[g].open()}catch(w){c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try{var t=b.contentWindow[g];t.write(p());t.close()}catch(x){b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({loader: "static.olark.com/jsclient/loader0.js",name:"olark",methods:["configure","extend","declare","identify"]});
                 window.olark.identify(settings.siteId);
@@ -497,12 +523,12 @@
             // Also, we don't need to set the `mixpanel` object on `window` because
             // they already do that.
             initialize : function (settings) {
-                this.settings = settings = resolveSettings(settings);
+                this.settings = settings = resolveSettings(settings, 'uid');
 
                 var _sf_async_config={};
                 /** CONFIGURATION START **/
-                _sf_async_config.uid    = settings.apiKey;
-                _sf_async_config.domain = settings.domain;
+                _sf_async_config.uid    = settings.uid;
+                _sf_async_config.domain = settings.domain || window.location.host;
                 if (settings.path)         _sf_async_config.path         = settings.path;
                 if (settings.title)        _sf_async_config.title        = settings.title;
                 if (settings.useCanonical) _sf_async_config.useCanonical = settings.useCanonical;

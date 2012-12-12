@@ -77,7 +77,7 @@
 <li>
 <code>userId</code> <em>string</em> - is the ID you refer to your user by.</li>
 <li>
-<code>traits</code> <em>object, optional</em> - is an <em>optional</em> dictionary of things you know about the user. Things like: <strong>Subscription Plan</strong>, <strong>Friend Count</strong>, <strong>Age</strong>, etc.</li>
+<code>traits</code> <em>object, optional</em> - is an <em>optional</em> dictionary of things you know about the user. Things like: <code>subscriptionPlan</code>, <code>friendCount</code>, <code>age</code>, etc.</li>
 </ul><p>We usually recommend using a backend template to inject an <code>identify</code> with a <code>userId</code> straight into the footer of every page of your application. That way no matter what page the user lands on, the call is made.</p>
 
 <h3>track()</h3>
@@ -94,7 +94,7 @@
 <li>
 <code>event</code> <em>string</em> - is the name of the event.</li>
 <li>
-<code>properties</code> <em>object, optional</em> - is an <em>optional</em> dictionary of properties for the event. If the event was <strong>Added to Shopping Cart</strong>, it might have properties like <strong>Price</strong>, <strong>Product Category</strong>, etc.</li>
+<code>properties</code> <em>object, optional</em> - is an <em>optional</em> dictionary of properties for the event. If the event was <code>Added to Shopping Cart</code>, it might have properties like <code>price</code>, <code>productCategory</code>, etc.</li>
 </ul><h2>How to use analytics.js</h2>
 
 <ol>
@@ -112,7 +112,7 @@
 
 <p>The single most important trait to record is something like <code>membershipLevel</code> or <code>subscriptionType</code> or however you break your users into different tiers. That way, you can focus on getting people into the higher tiers.</p>
 
-<p>Other things you might want to <strong>identify</strong> are things like <strong>Friend Count</strong>, <strong>Company</strong>, <strong>Business Type</strong>, <strong>Employee Count</strong>, etc.</p>
+<p>Also check out the <a href="#special-user-traits">Special Users Traits</a> that have semantic meaning to different services.</p>
 
 <h4>What events should I track?</h4>
 
@@ -135,7 +135,7 @@
 
 <p>That's all right. If a provider doesn't handle a certain method, you can still call it and nothing will break. You don't have to worry about anything.</p>
 
-<h2>Special User Traits</h2>
+<h2 id="special-user-traits">Special User Traits</h2>
 
 <p>Some special user traits have semantic meaning and are used for specific purposes by different analytics services. (eg. Intercom relies on <code>email</code> for messaging). These special traits should only be used for their agreed semantics:</p>
 

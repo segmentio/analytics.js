@@ -195,36 +195,6 @@
         },
 
 
-        // Segment.io
-        // ----------
-        // _Last updated: September 27th, 2012_
-        //
-        // [Documentation](https://segment.io/docs/javascript-api).
-
-        'Segment.io' : {
-
-            // Changes to the Segemnt.io snippet:
-            //
-            // * Add `apiKey` and `settings` args to call to `initialize`.
-            initialize : function (settings) {
-                this.settings = settings = resolveSettings(settings);
-
-                var segment=segment||[];segment.load=function(a){var b=document.createElement("script");b.type="text/javascript";b.async=!0;b.src=a;a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(b,a);b=function(a){return function(){segment.push([a].concat(Array.prototype.slice.call(arguments,0)))}};a="init initialize identify track callback logLevel verbose".split(" ");for(i=0;i<a.length;i++)segment[a[i]]=b(a[i])};segment.load(("https:"===document.location.protocol?"https://":"http://")+"d47xnnr8b1rki.cloudfront.net/api/js/v2/segmentio.js");
-                segment.initialize(settings.apiKey, settings);
-
-                window.segment = segment;
-            },
-
-            identify : function (userId, traits) {
-                window.segment.identify(userId, traits);
-            },
-
-            track : function (event, properties) {
-                window.segment.track(event, properties);
-            }
-        },
-
-
         // KISSmetrics
         // -----------
         // _Last updated: September 27th, 2012_
@@ -336,11 +306,11 @@
 
             // Changes to the Intercom snippet:
             //
-            // * Add `apiKey` from stored `settings`.
+            // * Add `appId` from stored `settings`.
             // * Add `userId`.
             identify: function (userId, traits) {
                 window.intercomSettings = {
-                    app_id : this.settings.apiKey,
+                    app_id : this.settings.appId,
                     email  : userId
                 };
                 function async_load() {
@@ -370,13 +340,13 @@
             // Changes to the Olark snippet:
             //
             // * Removed `CDATA` tags.
-            // * Add `apiKey` from stored `settings`.
+            // * Add `siteId` from stored `settings`.
             // * Added `window.` before `olark.identify`.
             initialize : function (settings) {
                 this.settings = settings = resolveSettings(settings);
 
                 window.olark||(function(c){var f=window,d=document,l=f.location.protocol=="https:"?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while(q--){(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={0:+new Date};a.P=function(u){a.p[u]=new Date-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if(!m){return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if(/MSIE[ ]+6/.test(navigator.userAgent)){b.src="javascript:false"}b.allowTransparency="true";v[j](b);try{b.contentWindow[g].open()}catch(w){c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try{var t=b.contentWindow[g];t.write(p());t.close()}catch(x){b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({loader: "static.olark.com/jsclient/loader0.js",name:"olark",methods:["configure","extend","declare","identify"]});
-                window.olark.identify(settings.apiKey);
+                window.olark.identify(settings.siteId);
             },
 
             identify : function (userId, traits) {

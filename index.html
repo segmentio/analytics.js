@@ -136,6 +136,7 @@
 <p>That's all right. If a provider doesn't handle a certain method, you can still call it and nothing will break. You don't have to worry about anything.</p>
 
 <h2 id="special-user-traits">Special User Traits</h2>
+<!-- https://mixpanel.com/docs/people-analytics/special-properties -->
 
 <p>Some special user traits have semantic meaning and are used for specific purposes by different analytics services. (eg. Intercom relies on <code>email</code> for messaging). These special traits should only be used for their agreed semantics:</p>
 
@@ -143,13 +144,13 @@
 <li>
 <code>email</code> - the email address of the user. This gets sent to providers that require an email like Customer.io or Intercom. (We'll automatically pass Mixpanel the <code>$email</code> it needs if you use <code>email</code>, so don't worry about the dollar signs anymore!)</li>
 <li>
-<code>name</code> - the name of the user. (Auto-aliases to Mixpanel's <code>$first_name</code> and <code>$last_name</code>.)</li>
+<code>name</code> - the name of the user. (Auto-aliases to Mixpanel's <code>$name</code>.)</li>
 <li>
 <code>username</code> - the screen name of the user. (Auto-aliases to Mixpanel's <code>$username</code>.)</li>
 <li>
-<code>createdAt</code> - the date of when the user's account was created. The date format is a <a href="http://en.wikipedia.org/wiki/Unix_time">Unix Timestamp</a> (seconds, not milliseconds!).</li>
+<code>createdAt</code> - the date of when the user's account was created. (Auto-aliases to Mixpanel's <code>$created</code>.)</li>
 <li>
-<code>lastSeen</code> - The last time the user visited your site. (Auto-aliases to Mixpanel's <code>$last_seen</code>.)</li>
+<code>lastSeen</code> - The last time the user visited your site. (Auto-aliases to Mixpanel's <code>$last_login</code>.)</li>
 </ul><h2 id="service-specific-settings">Service-Specific Settings</h2>
 
 <h3>Google Analtyics</h3>
@@ -180,7 +181,17 @@
 <ul>
 <li>
 <code>appId</code> <em>string</em> - your project's "App ID".</li>
-</ul><h3>Olark</h3>
+
+</ul>
+
+<h3>Customer.io</h3>
+<ul>
+  <li>
+    <code>siteId</code> <em>string</em> - your projects "Site ID".
+  </li>
+</ul>
+
+<h3>Olark</h3>
 
 <p>No, Olark isn't an analytics provider. But if you have it installed, whenever you call <code>identify</code> the Olark chat will update the visitors name, so that you know who you're talking to!</p>
 

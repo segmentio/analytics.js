@@ -85,7 +85,7 @@
 <p>Track is how you record the actions your users perform. Whenever a user does something you want to record, <code>track</code> that event. The API looks like this:</p>
 
 <div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">track</span><span class="p">(</span><span class="s1">'Purchased an Item'</span><span class="p">,</span> <span class="p">{</span>
-    <span class="nx">price</span>          <span class="o">:</span> <span class="mf">40.20</span><span class="p">,</span>
+    <span class="nx">price</span>          <span class="o">:</span> <span class="mf">39.95</span><span class="p">,</span>
     <span class="nx">shippingMethod</span> <span class="o">:</span> <span class="s1">'2-day'</span>
 <span class="p">});</span>
 </pre></div>
@@ -98,9 +98,9 @@
 </ul><h2>How to use analytics.js</h2>
 
 <ol>
-<li><p>Grab the latest version of <strong>analytics.js</strong> from this repo and add it to your project.</p></li>
+<li><p>Grab the latest version of <strong>analytics.js</strong> add it to your project.</p></li>
 <li><p>Initialize <strong>analytics.js</strong> with the services you want to use.</p></li>
-<li><p>Add an <code>analytics.identify()</code> call to tag your user and some <code>analytics.track()</code> calls for the events you want to record.</p></li>
+<li><p>Add an <code>analytics.identify()</code> call and a few <code>analytics.track()</code> calls.</p></li>
 <li><p>That's it! You're recording data to all your providers!</p></li>
 </ol><h2>Questions</h2>
 
@@ -116,7 +116,7 @@
 
 <h4>What events should I track?</h4>
 
-<p>The best way to figure out what events to track is to ask your to questions: "what do I want my users to do more of?" and "what do i want my users to do less of?". For example:</p>
+<p>The best way to figure out what events to track is to ask your to questions: "what do I want my users to do more of?" and "what do I want my users to do less of?". For example:</p>
 
 <ul>
 <li>Complete Purchase</li>

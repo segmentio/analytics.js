@@ -3,7 +3,7 @@
 body {
   padding:50px;
   font:19px/1.5 Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  color:#444;
+  color:#333;
   font-weight:300;
 }
 
@@ -57,7 +57,7 @@ blockquote {
 }
 
 code {
-  font-size:15px;
+  font-size:17px;
 }
 
 code, pre {

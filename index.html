@@ -1,56 +1,53 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
+
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Analytics.js by segmentio</title>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Analytics.js : The hassle-free way to integrate analytics into any web application." />
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Analytics.js</title>
   </head>
+
   <body>
-    <div class="wrapper">
-      <header>
-        <h1>Analytics.js</h1>
-        <p>The hassle-free way to integrate analytics into any web application.</p>
 
-        <p class="view"><a href="https://github.com/segmentio/analytics.js">View the Project on GitHub <small>segmentio/analytics.js</small></a></p>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/segmentio/analytics.js">View on GitHub</a>
 
+          <h1 id="project_title">Analytics.js</h1>
+          <h2 id="project_tagline">The hassle-free way to integrate analytics into any web application.</h2>
 
-        <ul>
-          <li><a href="https://github.com/segmentio/analytics.js/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/segmentio/analytics.js/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/segmentio/analytics.js">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/segmentio/analytics.js/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/segmentio/analytics.js/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
         <h1>analytics.js</h1>
 
-<p><strong>Every project needs analytics.</strong> The more you know about how your system is being used, the better your product decisions will be. In the end your users will benefit.</p>
+<p><strong>Every project needs analytics.</strong> But having analytics shouldn't mean your tying yourself to a single third-party analytics service and littering your codebase third-party-specific calls. </p>
 
-<p>But having analytics shouldn't mean your tying yourself to a single third-party analytics service and littering your codebase third-party-specific calls. Changing or adding new providers should be a snap. That's where <strong>analytics.js</strong> comes in. The APIs for most analytics services track the same sorts of metrics, so it's not hard to build an abstraction layer that fits most use cases. And that's what we did! We even use <strong>analytics.js</strong> on <a href="https://segment.io">Segment.io</a>.</p>
+<p>Changing or adding new providers should be a snap. That's where <strong>analytics.js</strong> comes in! Instead of adding hooks for every single analytics service you integrate, you add a single set of provider-agnostic hooks that then route to any analytics service you want!</p>
 
-<p>The API is dead simple. You won't want to go back to using some of those unfriendly third-party APIs!</p>
+<p>The API is dead simple—you definitely won't want to go back to using those unfriendly third-party APIs!</p>
 
 <h2>The API</h2>
 
-<p>Our goal for the API was to iron out the kinks that crop up in lots of third-party analytics services API's. Keep things clean!</p>
+<p>Our goal for the API was to pave over the small differences in all your analytics services to give you a single calls.</p>
 
 <h3>initialize()</h3>
 
-<p>When you're ready to start using <strong>analytics.js</strong>, you make a call to initialize with the analytics providers you want to enable and the settings each one needs. That looks like this:</p>
+<p>To start using <strong>analytics.js</strong>, call <code>initialize</code> with the analytics services you want to enable. That looks like this:</p>
 
-<div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">initialize</span><span class="p">(</span><span class="nx">providers</span><span class="p">);</span>
-</pre></div>
-
-<ul>
-<li>
-<code>providers</code> <em>object</em> - a list of analytics providers to enable.</li>
-</ul><div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">initialize</span><span class="p">({</span>
+<div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">initialize</span><span class="p">({</span>
     <span class="s1">'Google Analytics'</span> <span class="o">:</span> <span class="s1">'UA-XXXXXX-XX'</span><span class="p">,</span>
     <span class="s1">'Segment.io'</span>       <span class="o">:</span> <span class="s1">'XXXXXXXXXX'</span><span class="p">,</span>
     <span class="s1">'KISSmetrics'</span>      <span class="o">:</span> <span class="s1">'XXXXXXXXXX'</span>
@@ -59,22 +56,18 @@
 
 <p>Did we mention this means you never need to mess with analytics snippets again? Bonus!</p>
 
-<p>You can also choose to pass in extra options to providers. Every analytics provider takes an <code>apiKey</code> for your project. The other settings are provider-specific. Check out the <a href="#provider-specific-settings">provider-specific</a> reference for details. </p>
+<p>You can also choose to pass in extra, service-specific options to enable certain advanced features. Check out the <a href="#service-specific-settings">service-specific</a> reference for details. That looks like this:</p>
 
 <div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">initialize</span><span class="p">({</span>
     <span class="s1">'Google Analytics'</span> <span class="o">:</span> <span class="p">{</span>
-        <span class="nx">apiKey</span> <span class="o">:</span> <span class="s1">'UA-XXXXXX-XX'</span><span class="p">,</span>
-        <span class="nx">enhancedLinkAttribution</span> <span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
-        <span class="nx">siteSpeedSampleRate</span> <span class="o">:</span> <span class="mi">10</span>
-    <span class="p">},</span>
-    <span class="s1">'Segment.io'</span> <span class="o">:</span> <span class="p">{</span>
-        <span class="nx">apiKey</span> <span class="o">:</span> <span class="s1">'XXXXXXXXXXX'</span>
+        <span class="nx">tracking_id</span> <span class="o">:</span> <span class="s1">'UA-XXXXXX-XX'</span><span class="p">,</span>
+        <span class="nx">enhanced_link_attribution</span> <span class="o">:</span> <span class="kc">false</span>
     <span class="p">},</span>
     <span class="s1">'KISSmetrics'</span> <span class="o">:</span> <span class="p">{</span>
-        <span class="nx">apiKey</span> <span class="o">:</span> <span class="s1">'XXXXXXXXXXX'</span>
+        <span class="nx">api_key</span> <span class="o">:</span> <span class="s1">'XXXXXXXXXXX'</span>
     <span class="p">},</span>
     <span class="s1">'Mixpanel'</span> <span class="o">:</span> <span class="p">{</span>
-        <span class="nx">apiKey</span> <span class="o">:</span> <span class="s1">'XXXXXXXXXXX'</span><span class="p">,</span>
+        <span class="nx">token</span> <span class="o">:</span> <span class="s1">'XXXXXXXXXXX'</span><span class="p">,</span>
         <span class="nx">people</span> <span class="o">:</span> <span class="kc">true</span>
     <span class="p">}</span>
 <span class="p">});</span>
@@ -82,9 +75,12 @@
 
 <h3>identify()</h3>
 
-<p>Identify is how you tie a user to their actions. You <strong>identify</strong> your user with the <code>userId</code> you recognize them by, which is usually an email. The API looks like this:</p>
+<p>Identify is how you tie a user to their actions:</p>
 
-<div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">identify</span><span class="p">(</span><span class="nx">userId</span><span class="p">,</span> <span class="p">[</span><span class="nx">traits</span><span class="p">]);</span>
+<div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">identify</span><span class="p">(</span><span class="s1">'achilles@segment.io'</span><span class="p">,</span> <span class="p">{</span>
+    <span class="nx">subscription_plan</span> <span class="o">:</span> <span class="s1">'Gold'</span><span class="p">,</span>
+    <span class="nx">friend_count</span>      <span class="o">:</span> <span class="mi">29</span>
+<span class="p">});</span>
 </pre></div>
 
 <ul>
@@ -92,19 +88,16 @@
 <code>userId</code> <em>string</em> - is the ID you refer to your user by.</li>
 <li>
 <code>traits</code> <em>object, optional</em> - is an <em>optional</em> dictionary of things you know about the user. Things like: <strong>Subscription Plan</strong>, <strong>Friend Count</strong>, <strong>Age</strong>, etc.</li>
-</ul><div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">identify</span><span class="p">(</span><span class="s1">'achilles@segment.io'</span><span class="p">,</span> <span class="p">{</span>
-    <span class="s1">'Subscription Plan'</span> <span class="o">:</span> <span class="s1">'Gold'</span><span class="p">,</span>
-    <span class="s1">'Friend Count'</span>      <span class="o">:</span> <span class="mi">29</span>
-<span class="p">});</span>
-</pre></div>
-
-<p>We usually recommend using a backend template to inject an identify with the <code>userId</code> straight into the footer of every page of your application. That way no matter what page the user lands on, the call is made.</p>
+</ul><p>We usually recommend using a backend template to inject an identify with the <code>userId</code> straight into the footer of every page of your application. That way no matter what page the user lands on, the call is made.</p>
 
 <h3>track()</h3>
 
-<p>Track is how you record events your users trigger. Whenever your using does something you want to record, <strong>track</strong> that event. The API looks like this:</p>
+<p>Track is how you record the actions your users take. Whenever your using does something you want to record, <code>track</code> that event. The API looks like this:</p>
 
-<div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">track</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="p">[</span><span class="nx">properties</span><span class="p">]);</span>
+<div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">track</span><span class="p">(</span><span class="s1">'Purchased an Item'</span><span class="p">,</span> <span class="p">{</span>
+    <span class="nx">price</span>           <span class="o">:</span> <span class="mf">40.20</span><span class="p">,</span>
+    <span class="nx">shipping_method</span> <span class="o">:</span> <span class="s1">'2-day'</span>
+<span class="p">});</span>
 </pre></div>
 
 <ul>
@@ -112,19 +105,13 @@
 <code>event</code> <em>string</em> - is the name of the event.</li>
 <li>
 <code>properties</code> <em>object, optional</em> - is an <em>optional</em> dictionary of properties for the event. If the event was <strong>Added to Shopping Cart</strong>, it might have properties like <strong>Price</strong>, <strong>Product Category</strong>, etc.</li>
-</ul><div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">track</span><span class="p">(</span><span class="s1">'Purchased an Item'</span><span class="p">,</span> <span class="p">{</span>
-    <span class="s1">'Price'</span>    <span class="o">:</span> <span class="mf">40.20</span><span class="p">,</span>
-    <span class="s1">'Shipping'</span> <span class="o">:</span> <span class="s1">'2-day'</span>
-<span class="p">});</span>
-</pre></div>
-
-<h2>How to use analytics.js</h2>
+</ul><h2>How to use analytics.js</h2>
 
 <ol>
 <li><p>Grab the latest version of <strong>analytics.js</strong> from this repo and add it to your project.</p></li>
-<li><p>Initialize <strong>analytics.js</strong> with whichever providers you want to use.</p></li>
-<li><p>Add an <strong>analytics.identify()</strong> call to tag your user and some <strong>analytics.track()</strong> calls for the events you want to record.</p></li>
-<li><p>Spend all day swapping your analytics providers in and out just because you can! Woo!</p></li>
+<li><p>Initialize <strong>analytics.js</strong> with the services you want to use.</p></li>
+<li><p>Add an <code>analytics.identify()</code> call to tag your user and some <code>analytics.track()</code> calls for the events you want to record.</p></li>
+<li><p>That's it! You're recording data to all your providers!</p></li>
 </ol><h2>Questions</h2>
 
 <h4>Where should I put the identify call?</h4>
@@ -164,46 +151,51 @@
 
 <h2>Provider-specific Settings</h2>
 
-<p>Every provider takes an <code>apiKey</code> for your project. Other providers might take custom settings.</p>
-
 <h3>Google Analtyics</h3>
 
 <ul>
-<li><p><code>apiKey</code> - your project's API key.</p></li>
-<li><p><code>enhancedLinkAttribution</code> - a <em>boolean</em> of where or not to use Google Analytics "Enhanced Link Attribution" feature. Set this to <code>true</code> if you do. </p></li>
-<li><p><code>siteSpeedSampleRate</code> - an <em>integer</em> between 1-100 (inclusive) of what percentage of requests you want Google to sample for your site speeds. Google's default is 1%.</p></li>
-</ul><h3>Segment.io</h3>
+<li>
+<code>trackingId</code> <em>string</em> - your project's "Tracking ID".</li>
+<li>
+<code>enhancedLinkAttribution</code> <em>boolean, optional</em> - whether or not to use Google Analytics' <a href="http://support.google.com/analytics/bin/answer.py?hl=en&amp;answer=2558867">Enhanced Link Attribution</a> feature. Defaults to <code>false</code>.</li>
+<li>
+<code>siteSpeedSampleRate</code> <em>integer, optional</em> - the value to use for Google Analytics' <a href="https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setSiteSpeedSampleRate">Site Speed Sample Rate</a> feature. Google's default is 1%.</li>
+</ul><h3>KISSmetrics</h3>
 
 <ul>
 <li>
-<code>apiKey</code> - your environment's API key.</li>
-</ul><p><em>All settings are passed directly to the second argument of Segment.io's <code>initialize</code> method.</em></p>
-
-<h3>KISSmetrics</h3>
-
-<ul>
-<li>
-<code>apiKey</code> - your project's API key.</li>
+<code>apiKey</code> - your project's "API key".</li>
 </ul><h3>Mixpanel</h3>
 
 <ul>
-<li><p><code>apiKey</code> - your project's API key.</p></li>
-<li><p><code>people</code> - a <em>boolean</em> of whether you want to use Mixpanel's "People" feature. Only set this to <code>true</code> if you do, or you might get charged for it. Defaults to <code>false</code>.</p></li>
-</ul><p><em>All settings are passed directly to the second argument of Mixpanel's <code>init</code> method.</em></p>
+<li>
+<code>token</code> <em>string</em> - your project's "token".</li>
+<li>
+<code>people</code> <em>boolean, optional</em> - whether you want to use Mixpanel's <a href="https://mixpanel.com/people/">People</a> feature. Defaults to <code>false</code>.</li>
+</ul><p><em>All settings are also passed directly to the second argument of Mixpanel's <code>init</code> method.</em></p>
 
 <h3>Intercom</h3>
 
 <ul>
 <li>
-<code>apiKey</code> - your project's "app_id".</li>
+<code>appId</code> <em>string</em> - your project's "App ID".</li>
 </ul><h3>Olark</h3>
 
 <p>No, Olark isn't an analytics provider. But if you have it installed, whenever you call <code>identify</code> the Olark chat will update the visitors name, so that you know who you're talking to!</p>
 
 <ul>
-<li><p><code>apiKey</code> - your "Site-ID".</p></li>
-<li><p><code>track</code> - whether to log every track call in the operator's Olark chat. This can be useful to know what your users are doing as you're chatting with them, but it can also be overwhelming. Defaults to <code>false</code>.</p></li>
-</ul><h2>License (MIT)</h2>
+<li>
+<code>siteId</code> <em>string</em> - your project's "Site-ID".</li>
+<li>
+<code>track</code> <em>boolean, optional</em> - whether to log every track call in the operator's Olark chat. This can be useful to know what your users are doing as you're chatting with them, but it can also be overwhelming. Defaults to <code>false</code>.</li>
+</ul><h3>Chartbeat</h3>
+
+<ul>
+<li>
+<code>uid</code> <em>string</em> - your project's "User ID".</li>
+</ul><p><em>All of Chartbeat's <a href="http://chartbeat.com/docs/configuration_variables">Configuration Variables</a> (<code>path</code>, <code>title</code>, <code>domain</code>, <code>useCanonical</code>, <code>sections</code>, <code>authors</code>, <code>noCookies</code>) are also passed directly to Chartbeat's configuration.</em></p>
+
+<h2>License (MIT)</h2>
 
 <pre><code>WWWWWW||WWWWWW
  W W W||W W W
@@ -225,12 +217,17 @@
 
 <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
       </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/segmentio">segmentio</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Analytics.js maintained by <a href="https://github.com/segmentio">segmentio</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
-    <script src="javascripts/scale.fix.js"></script>
+
     
+
   </body>
 </html>

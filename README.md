@@ -61,7 +61,7 @@ Identify is how you tie a user to their actions. You **identify** your user with
 analytics.identify(userId, [traits]);
 ```
 
-+ `userId` _string_ - is the ID you refer to your user by.
++ `userId` _string, optional by service_ - is the ID you refer to your user by.
 + `traits` _object, optional_ - is an _optional_ dictionary of things you know about the user. Things like: **Subscription Plan**, **Friend Count**, **Age**, etc.
 
 ```javascript
@@ -70,6 +70,17 @@ analytics.identify('achilles@segment.io', {
     'Friend Count'      : 29
 });
 ```
+
+If you've previously identified a user by name on that page, we'll keep track of them for you!
+
+```javascript
+analytics.identify('achilles@segment.io');
+analytics.identify({
+    'Subscription Plan' : 'Gold',
+    'Friend Count'      : 29
+});
+```
+
 
 We usually recommend using a backend template to inject an identify with the `userId` straight into the footer of every page of your application. That way no matter what page the user lands on, the call is made.
 

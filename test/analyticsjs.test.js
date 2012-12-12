@@ -5,10 +5,10 @@
 
     var providers = {
         'Google Analytics' : {
-            apiKey : 'TEST'
+            trackingId : 'TEST'
         },
         'Mixpanel' : {
-            apiKey : 'TEST'
+            token : 'TEST'
         }
     };
 
@@ -35,8 +35,8 @@
 
     test('initialize allows for apiKey strings as settings', function () {
         analytics.initialize(terseProviders);
-        expect(analytics.providers[0].settings.apiKey).to.equal('TERSE_TEST');
-        expect(analytics.providers[1].settings.apiKey).to.equal('TERSE_TEST');
+        expect(analytics.providers[0].settings.trackingId).to.equal('TERSE_TEST');
+        expect(analytics.providers[1].settings.token).to.equal('TERSE_TEST');
     });
 
     test('initialize sends settings to provider\'s initialize method', function () {
@@ -65,7 +65,8 @@
         };
         analytics.identify('ID', traits);
         expect(spy.args[0][1]).not.to.equal(traits);
-        expect(spy.args[0][1]).to.deep.equal(traits);
+        expect(spy.args[0][1]).to.deep.equal({ $name : 'Achilles'
+                                             , age   : 23 });
         spy.restore();
     });
 

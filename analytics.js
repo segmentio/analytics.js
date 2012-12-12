@@ -577,6 +577,29 @@
             }
 
             // TODO: Add virtual page API.
+        },
+
+        // GoSquared
+        // ----------
+        // _Last updated: December 12th, 2012_
+        // Site token can be found at https://www.gosquared.com/home/developer"
+        // [Documentation](www.gosquared.com/support).
+
+        'GoSquared' : {
+            // changes to the GoSquared tracking code:
+            //
+            // * window.GoSquared
+            // * no longer need to wait for pageload - removed unnecessary functions
+            // * use settings.site_token
+
+            initialize : function (settings) {
+                this.settings = settings = resolveSettings(settings, 'site_token');
+                window.GoSquared={};
+                GoSquared.acct = settings.site_token;
+                window._gstc_lt=+(new Date); var d=document;
+                var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
+                var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
+            }
         }
     };
 

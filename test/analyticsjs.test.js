@@ -88,7 +88,6 @@
         };
         analytics.track('party', properties);
         expect(spy.args[0][1]).not.to.equal(properties);
-        expect(spy.args[0][1]).to.deep.equal(properties);
         spy.restore();
     });
 

@@ -22,6 +22,7 @@ h1, h2, h3 {
 
 h1 {
   font-size:1.5em;
+  margin-bottom:17px;
 }
 
 h2 {
@@ -157,6 +158,7 @@ header ul a strong {
   font-size:14px;
   display:block;
   color:#222;
+  margin-top:3px;
 }
 
 section {

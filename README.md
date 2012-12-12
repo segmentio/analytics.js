@@ -72,6 +72,8 @@ If you've previously identified a user by name on that page, we'll keep track of
 
 ```javascript
 analytics.identify('achilles@segment.io');
+
+// Still sends to providers as 'achilles@segment.io'
 analytics.identify({
     'Subscription Plan' : 'Gold',
     'Friend Count'      : 29
@@ -188,7 +190,6 @@ No, Olark isn't an analytics provider. But if you have it installed, whenever yo
 
 
 =======
->>>>>>> c49fb20de8fdaf05e0f28eea14f59deeff7d4a0e
 ## License (MIT)
 
 ```

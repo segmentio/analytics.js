@@ -177,7 +177,7 @@ hr {
 
 
 header {
-  padding-right:320px;
+  padding-right:100px;
 }
 
 
@@ -187,8 +187,8 @@ header a small {
 
 header ul {
   position:absolute;
-  right:50px;
-  top:52px;
+  right:0;
+  top:42px;
 }
 
 section {

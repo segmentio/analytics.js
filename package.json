@@ -4,7 +4,7 @@
   "description" : "The way every project should use analytics.",
   "keywords" : [
     "analytics", "segment", "segmentio", "google", "kissmetrics", "mixpanel",
-    "intercom", "olark"
+    "intercom", "olark", "chartbeat", "crazyegg"
   ],
   "url" : "https://github.com/segmentio/analytics.js",
   "repository" : {

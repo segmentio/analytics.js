@@ -1,12 +1,24 @@
+//     Analytics.js 0.2.0
+
+//     (c) 2012 Segment.io Inc.
+//     Analytics.js may be freely distributed under the MIT license.
+
 (function () {
+
     // A reference to the global object.
     var root = this;
+
     // Whether analytics.js has been initialized.
     var initialized = false;
-    // Store the date when the page loaded, for analytics that depend on that.
+
+    // Store the date when the page loaded, for services that depend on it.
     var date = new Date();
-    // Store window.onload state so that analytics that rely on it (ffs) can be
-    // loaded even after it has happened.
+
+    // Regex to loosely validate emails.
+    var emailRegExp = /.+\@.+\..+/;
+
+    // Store window.onload state so that analytics that rely on it can be loaded
+    // even after onload fires.
     var loaded = false;
     var oldonload = window.onload;
     window.onload = function () {
@@ -15,51 +27,9 @@
     };
 
 
-    var getSeconds = function (time) {
-        return Math.floor((new Date(time)) / 1000);
-    };
 
-    // A helper to shallow-ly clone objects, so that they don't get mangled or
-    // added to by different analytics providers because of the reference.
-    var clone = function (obj) {
-        if (!obj) return;
-        var clone = {};
-        for (var prop in obj) clone[prop] = obj[prop];
-        return clone;
-    };
-
-    // Type detection helpers, copied from [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L928-L938).
-    var isObject = function (obj) {
-        return obj === Object(obj);
-    };
-    var isString = function (obj) {
-        return Object.prototype.toString.call(obj) === '[object String]';
-    };
-    var isFunction = function (obj) {
-        return Object.prototype.toString.call(obj) === '[object Function]';
-    };
-
-    // Email detection helper.
-    var basicEmailRegex = /.+\@.+\..+/;
-    var isEmail = function (input) {
-        return basicEmailRegex.test(input);
-    };
-
-    // A helper to resolve a settings object. It allows for `settings` to be an
-    // `fieldName` string in the case of no additional settings being needed.
-    // Field name is the setting for the api key for our shorthand.
-    var resolveSettings = function (settings, fieldName) {
-        if (!isString(settings) && !isObject(settings))
-            throw new Error('Encountered unresolvable settings value.');
-
-        if (isString(settings)) {
-            var apiKey = settings;
-            settings = {};
-            settings[fieldName] = apiKey;
-        }
-        return settings;
-    };
-
+    // Analytics
+    // =========
 
     // The `analytics` object that will be exposed to you on the global object.
     root.analytics || (root.analytics = {
@@ -92,9 +62,12 @@
         initialize : function (providers) {
             this.providers = [];
             for (var key in providers) {
-                if (!availableProviders[key]) throw new Error('Couldn\'t find a provider named "'+key+'"');
-                availableProviders[key].initialize(providers[key]);
-                this.providers.push(availableProviders[key]);
+                var provider = availableProviders[key];
+
+                if (!provider) throw new Error('Could not find a provider named "'+key+'"');
+
+                provider.initialize(providers[key]);
+                this.providers.push(provider);
             }
 
             initialized = true;
@@ -132,8 +105,7 @@
 
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.identify) continue;
-                var clonedTraits = clone(traits);
-                provider.identify(userId, clonedTraits);
+                provider.identify(userId, clone(traits));
             }
         },
 
@@ -156,15 +128,14 @@
         // `properties` - an optional dictionary of properties of the event.
         track : function (event, properties) {
             if (!initialized) return;
+
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.track) continue;
-                var clonedProperties = clone(properties);
-                provider.track(event, clonedProperties);
+                provider.track(event, clone(properties));
             }
         }
 
     });
-
 
 
 
@@ -174,10 +145,10 @@
     // A list of available providers that _can_ be initialized by you.
     var availableProviders = {
 
+
         // Google Analytics
         // ----------------
-        // _Last updated: October 31st, 2012_
-        //
+        // Last updated: October 31st, 2012
         // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
 
         'Google Analytics' : {
@@ -185,9 +156,8 @@
             // Changes to the Google Analytics snippet:
             //
             // * Added optional support for `enhancedLinkAttribution`
-            //
             // * Added optional support for `siteSpeedSampleRate`
-            //
+            // * Added optional support for `anonymizeIp`
             // * Add `apiKey` to call to `_setAccount`.
             initialize : function (settings) {
                 this.settings = settings = resolveSettings(settings, 'trackingId');
@@ -202,6 +172,9 @@
                 if (this.settings.siteSpeedSampleRate != null &&
                     typeof(this.settings.siteSpeedSampleRate) === 'number') {
                     _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
+                }
+                if(this.settings.anonymizeIp === true) {
+                    _gaq.push(['_gat._anonymizeIp']);
                 }
 
                 _gaq.push(['_trackPageview']);
@@ -223,15 +196,14 @@
 
         // KISSmetrics
         // -----------
-        // _Last updated: September 27th, 2012_
-        //
+        // Last updated: December 12th, 2012
         // [Documentation](http://support.kissmetrics.com/apis/javascript).
 
         'KISSmetrics' : {
 
             // Changes to the KISSmetrics snippet:
             //
-            // * Concatenate in the `apiKey`.
+            // * Concatenate the `apiKey` into the URL.
             initialize : function (settings) {
                 this.settings = settings = resolveSettings(settings, 'apiKey');
 
@@ -245,7 +217,7 @@
                     }, 1);
                 }
                 _kms('//i.kissmetrics.com/i.js');
-                _kms('//doug1izaerwt3.cloudfront.net/'+ settings.apiKey +'.1.js'); // Add API key from settings.
+                _kms('//doug1izaerwt3.cloudfront.net/'+ settings.apiKey +'.1.js');
 
                 window._kmq = _kmq;
             },
@@ -267,8 +239,7 @@
 
         // Mixpanel
         // --------
-        // _Last updated: September 27th, 2012_
-        //
+        // Last updated: September 27th, 2012
         // [Documentation](https://mixpanel.com/docs/integration-libraries/javascript),
         // [documentation](https://mixpanel.com/docs/people-analytics/javascript),
         // [documentation](https://mixpanel.com/docs/integration-libraries/javascript-full-api).
@@ -308,7 +279,7 @@
                     window.mixpanel.name_tag(userId);
 
                     if (isEmail(userId)) {
-                        traits = traits || {};
+                        traits || (traits = {});
                         traits.email = userId;
                     }
                 }
@@ -319,35 +290,28 @@
                 }
 
                 if (this.settings.people === true) {
-                    if (userId)
-                        window.mixpanel.people.identify(userId);
-                    if (traits)
-                        window.mixpanel.people.set(traits);
+                    if (userId) window.mixpanel.people.identify(userId);
+                    if (traits) window.mixpanel.people.set(traits);
                 }
             },
-
 
             aliasTraits : function (traits) {
                 if (traits.email) {
                     traits['$email'] = traits.email;
                     delete traits.email;
                 }
-
                 if (traits.name) {
-                    traits['$name']  = traits.name;
+                    traits['$name'] = traits.name;
                     delete traits.name;
                 }
-
                 if (traits.username) {
                     traits['$username'] = traits.username;
                     delete traits.username;
                 }
-
                 if (traits.lastSeen) {
                     traits['$last_login'] = traits.lastSeen;
                     delete traits.lastSeen;
                 }
-
                 if (traits.createdAt) {
                     traits['$created'] = traits.createdAt;
                     delete traits.createdAt;
@@ -362,8 +326,7 @@
 
         // Intercom
         // --------
-        // _Last updated: September 27th, 2012_
-        //
+        // Last updated: December 12th, 2012
         // [Documentation](http://docs.intercom.io/).
 
         'Intercom' : {
@@ -417,8 +380,7 @@
 
         // Customer.io
         // ----------
-        // _Last updated: December 6th, 2012_
-        //
+        // Last updated: December 6th, 2012
         // [Documentation](http://customer.io/docs/api/javascript.html).
 
         'Customer.io' : {
@@ -448,7 +410,7 @@
                 // Don't do anything if we just have traits.
                 if (!userId) return;
 
-                traits = traits || {};
+                traits || (traits = {});
                 var properties = clone(traits);
                 properties.id = userId;
                 if (properties.email === undefined && isEmail(userId))
@@ -469,12 +431,14 @@
 
         // CrazyEgg.com
         // ----------
-        // _Last updated: December 6th, 2012_
-        // API Key is the xxxx/xxxx in "//dnn506yrbagrg.cloudfront.net/pages/scripts/xxxx/xxxx.js"
+        // Last updated: December 6th, 2012
         // [Documentation](www.crazyegg.com).
 
         'CrazyEgg' : {
 
+            // Changes to the CrazyEgg snippet:
+            //
+            // * API Key is the xxxx/xxxx in the url.
             initialize : function (settings) {
                 this.settings = settings = resolveSettings(settings, 'apiKey');
 
@@ -491,8 +455,7 @@
 
         // Olark
         // -----
-        // _Last updated: October 11th, 2012_
-        //
+        // Last updated: October 11th, 2012
         // [Documentation](http://www.olark.com/documentation).
 
         'Olark' : {
@@ -530,8 +493,7 @@
 
         // Chartbeat
         // ---------
-        // _Last updated: November 27th, 2012_
-        //
+        // Last updated: November 27th, 2012
         // [Documentation](http://chartbeat.com/docs/adding_the_code/),
         // [documentation](http://chartbeat.com/docs/configuration_variables/),
         // [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
@@ -611,7 +573,103 @@
                 if (!window.GoSquared.q) window.GoSquared.q = [];
                 window.GoSquared.q.push(['TrackEvent', event, properties]);
             }
+        },
+
+        // HubSpot
+        // -------
+        // Last updated: December 13th, 2012
+        // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
+
+        'HubSpot' : {
+
+            // Changes to the HubSpot snippet:
+            //
+            // * Adding HubSpot snippet
+
+            // Use the `portalId` to setup the HubSpot tracking code.
+            initialize : function (settings) {
+                this.settings = settings = resolveSettings(settings, 'portalId');
+                (function(d,s,i,r) {
+                    if (d.getElementById(i)){return;}
+                    var n=d.createElement(s),e=d.getElementsByTagName(s)[0];
+                    n.id=i;n.src='https://js.hubspot.com/analytics/'+(Math.ceil(new Date()/r)*r)+'/' + settings.portalId + '.js';
+                    e.parentNode.insertBefore(n, e);
+                })(document,"script","hs-analytics",300000);
+            },
+
+            // HubSpot does not use a userId, but the email address is required
+            // on the traits object. Other traits fields correspond to Contacts
+            // record fields (including custom fields) and will update those
+            // fields for the given contact.
+            identify : function (userId, traits) {
+                if (traits) {
+                    window._hsq.push(["identify", traits]);
+                }
+            },
+
+            // Event Tracking is available to HubSpot Enterprise customers only.
+            // In addition to adding any unique event name, you can also use the
+            // id of an existing custom event as the event variable.
+            track : function (event, properties) {
+                window._hsq.push(["trackEvent", event, properties]);
+            }
         }
+    };
+
+
+
+    // Helpers
+    // =======
+
+    // Given a timestamp, return its value in seconds. For providers that rely
+    // on Unix time instead of millis.
+    var getSeconds = function (time) {
+        return Math.floor((new Date(time)) / 1000);
+    };
+
+    // A helper to shallow-ly clone objects, so that they don't get mangled by
+    // different analytics providers because of the reference.
+    var clone = function (obj) {
+        if (!obj) return;
+        var clone = {};
+        for (var prop in obj) clone[prop] = obj[prop];
+        return clone;
+    };
+
+    // Type detection helpers, copied from
+    // [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L928-L938).
+    var isObject = function (obj) {
+        return obj === Object(obj);
+    };
+    var isString = function (obj) {
+        return Object.prototype.toString.call(obj) === '[object String]';
+    };
+    var isFunction = function (obj) {
+        return Object.prototype.toString.call(obj) === '[object Function]';
+    };
+
+    // Email detection helper.
+    var isEmail = function (input) {
+        return emailRegExp.test(input);
+    };
+
+    // A helper to resolve a settings object. It allows for `settings` to be a
+    // string in the case of using the shorthand where just an api key is
+    // passed. `fieldName` is what the provider calls their api key.
+    var resolveSettings = function (settings, fieldName) {
+        if (!isString(settings) && !isObject(settings))
+            throw new Error('Could not resolve settings.');
+        if (!fieldName)
+            throw new Error('You must provide an api key field name.');
+
+        // Settings is just an api key.
+        if (isString(settings)) {
+            var apiKey = settings;
+            settings = {};
+            settings[fieldName] = apiKey;
+        }
+
+        return settings;
     };
 
 

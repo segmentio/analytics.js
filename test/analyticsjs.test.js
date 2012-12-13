@@ -39,10 +39,11 @@
         expect(analytics.providers[1].settings.token).to.equal('TERSE_TEST');
     });
 
-    test('initialize sends settings to provider\'s initialize method', function () {
+    test('initialize sends settings to providers initialize method', function () {
         var spy = sinon.spy(analytics.providers[1], 'initialize');
         analytics.initialize(providers);
         expect(spy).to.have.been.calledWith(providers['Mixpanel']);
+
         spy.restore();
     });
 
@@ -54,6 +55,7 @@
         var spy = sinon.spy(analytics.providers[1], 'identify');
         analytics.identify('ID');
         expect(spy).to.have.been.calledWith('ID');
+
         spy.restore();
     });
 
@@ -65,8 +67,35 @@
         };
         analytics.identify('ID', traits);
         expect(spy.args[0][1]).not.to.equal(traits);
-        expect(spy.args[0][1]).to.deep.equal({ $name : 'Achilles'
-                                             , age   : 23 });
+        expect(spy.args[0][1]).to.deep.equal({
+            $name : 'Achilles',
+            age   : 23
+        });
+
+        spy.restore();
+    });
+
+    test('identify recognizes email userIds', function () {
+        var spy = sinon.spy(window.mixpanel, 'register');
+        analytics.identify('team@segment.io');
+        expect(spy.args[0][0]).to.deep.equal({ $email : 'team@segment.io' });
+
+        spy.reset();
+        analytics.identify('t-eam+34@segme-ntio.com');
+        expect(spy.args[0][0]).to.deep.equal({ $email : 't-eam+34@segme-ntio.com' });
+
+        spy.reset();
+        analytics.identify('team@.org');
+        expect(spy).not.to.have.been.called;
+
+        spy.reset();
+        analytics.identify('team+45.io');
+        expect(spy).not.to.have.been.called;
+
+        spy.reset();
+        analytics.identify('@segmentio.com');
+        expect(spy).not.to.have.been.called;
+
         spy.restore();
     });
 
@@ -78,6 +107,7 @@
         var spy = sinon.spy(analytics.providers[1], 'track');
         analytics.track('party');
         expect(spy).to.have.been.calledWith('party');
+
         spy.restore();
     });
 
@@ -89,6 +119,7 @@
         };
         analytics.track('party', properties);
         expect(spy.args[0][1]).not.to.equal(properties);
+
         spy.restore();
     });
 

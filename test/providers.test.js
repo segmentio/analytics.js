@@ -461,4 +461,66 @@
         expect(spy).to.have.been.calledWith(['trackEvent', event, properties]);
     });
 
+    // GoSquared
+    // ---------
+    // https://www.gosquared.com/support
+    // https://www.gosquared.com/support/articles/621030-visitor-tagging
+    // NOTE: some tests will fail while testing local files (file:// protocol)
+    // Last updated: December 12th, 2012
+    suite('GoSquared');
+
+    beforeEach(function () {
+        generateContext.call(this, 'GoSquared');
+    });
+
+    test('stores settings and adds GoSquared js on initialize', function () {
+        expect(window.GoSquared).not.to.exist;
+
+        analytics.initialize(this.providers);
+
+        expect(window.GoSquared).to.exist;
+        expect(analytics.providers[0].settings).to.equal(this.providers[this.provider]);
+
+    });
+
+    test('GoSquared tracker finishes loading', function (done) {
+        // use the GoSquared.load function...
+        window.GoSquared.load = function(tracker) {
+            expect(window.GoSquared.DefaultTracker).to.equal(tracker);
+            done();
+        };
+    });
+
+    test('correctly identifies the user', function () {
+
+        expect(window.GoSquared.UserName).not.to.exist;
+        expect(window.GoSquared.Visitor).not.to.exist;
+        identify.traits();
+        expect(window.GoSquared.Visitor).to.exist;
+
+        window.GoSquared.Visitor = undefined;
+
+        expect(window.GoSquared.UserName).not.to.exist;
+        expect(window.GoSquared.Visitor).not.to.exist;
+        identify.userId();
+        expect(window.GoSquared.UserName).to.exist;
+
+        window.GoSquared.UserName = undefined;
+
+        expect(window.GoSquared.UserName).not.to.exist;
+        expect(window.GoSquared.Visitor).not.to.exist;
+        identify.full();
+        expect(window.GoSquared.Visitor).to.exist;
+        expect(window.GoSquared.UserName).to.exist;;
+
+    });
+
+    test('pushes "TrackEvent" on track', function () {
+        var spy = sinon.spy(window.GoSquared.q, 'push');
+
+        track();
+        properties.gs_evt_name = event; // expect gs_evt_name to be the event name
+        expect(spy).to.have.been.calledWith([event, properties]);
+    });
+
 }());

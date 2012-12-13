@@ -28,6 +28,9 @@
 
 
 
+    // Analytics
+    // =========
+
     // The `analytics` object that will be exposed to you on the global object.
     root.analytics || (root.analytics = {
 
@@ -136,7 +139,6 @@
 
 
 
-
     // Providers
     // =========
 
@@ -146,8 +148,7 @@
 
         // Google Analytics
         // ----------------
-        // _Last updated: October 31st, 2012_
-        //
+        // Last updated: October 31st, 2012
         // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
 
         'Google Analytics' : {
@@ -156,6 +157,7 @@
             //
             // * Added optional support for `enhancedLinkAttribution`
             // * Added optional support for `siteSpeedSampleRate`
+            // * Added optional support for `anonymizeIp`
             // * Add `apiKey` to call to `_setAccount`.
             initialize : function (settings) {
                 this.settings = settings = resolveSettings(settings, 'trackingId');
@@ -170,6 +172,9 @@
                 if (this.settings.siteSpeedSampleRate != null &&
                     typeof(this.settings.siteSpeedSampleRate) === 'number') {
                     _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
+                }
+                if(this.settings.anonymizeIp === true) {
+                    _gaq.push(['_gat._anonymizeIp']);
                 }
 
                 _gaq.push(['_trackPageview']);
@@ -191,8 +196,7 @@
 
         // KISSmetrics
         // -----------
-        // _Last updated: December 12th, 2012_
-        //
+        // Last updated: December 12th, 2012
         // [Documentation](http://support.kissmetrics.com/apis/javascript).
 
         'KISSmetrics' : {
@@ -235,8 +239,7 @@
 
         // Mixpanel
         // --------
-        // _Last updated: September 27th, 2012_
-        //
+        // Last updated: September 27th, 2012
         // [Documentation](https://mixpanel.com/docs/integration-libraries/javascript),
         // [documentation](https://mixpanel.com/docs/people-analytics/javascript),
         // [documentation](https://mixpanel.com/docs/integration-libraries/javascript-full-api).
@@ -323,8 +326,7 @@
 
         // Intercom
         // --------
-        // _Last updated: December 12th, 2012_
-        //
+        // Last updated: December 12th, 2012
         // [Documentation](http://docs.intercom.io/).
 
         'Intercom' : {
@@ -378,8 +380,7 @@
 
         // Customer.io
         // ----------
-        // _Last updated: December 6th, 2012_
-        //
+        // Last updated: December 6th, 2012
         // [Documentation](http://customer.io/docs/api/javascript.html).
 
         'Customer.io' : {
@@ -430,8 +431,7 @@
 
         // CrazyEgg.com
         // ----------
-        // _Last updated: December 6th, 2012_
-        //
+        // Last updated: December 6th, 2012
         // [Documentation](www.crazyegg.com).
 
         'CrazyEgg' : {
@@ -455,8 +455,7 @@
 
         // Olark
         // -----
-        // _Last updated: October 11th, 2012_
-        //
+        // Last updated: October 11th, 2012
         // [Documentation](http://www.olark.com/documentation).
 
         'Olark' : {
@@ -494,8 +493,7 @@
 
         // Chartbeat
         // ---------
-        // _Last updated: November 27th, 2012_
-        //
+        // Last updated: November 27th, 2012
         // [Documentation](http://chartbeat.com/docs/adding_the_code/),
         // [documentation](http://chartbeat.com/docs/configuration_variables/),
         // [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
@@ -546,8 +544,7 @@
 
         // HubSpot
         // -------
-        // _Last updated: December 13th, 2012_
-        //
+        // Last updated: December 13th, 2012
         // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
 
         'HubSpot' : {
@@ -589,7 +586,7 @@
 
 
     // Helpers
-    // -------
+    // =======
 
     // Given a timestamp, return its value in seconds. For providers that rely
     // on Unix time instead of millis.

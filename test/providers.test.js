@@ -6,7 +6,8 @@
         this.provider = provider;
         this.providers = {};
         this.providers[provider] = {
-            apiKey : 'TEST'
+            apiKey : 'TEST',
+            portalId: '62515'
         };
     };
 
@@ -432,6 +433,52 @@
             expect(analytics.providers[0].settings).to.equal(self.providers[self.provider]);
             done();
         }, 50);
+    });
+
+    // HubSpot
+    // ----------------
+    // Last updated: December 13th, 2012
+
+    suite('HubSpot');
+
+    beforeEach(function () {
+        generateContext.call(this, 'HubSpot');
+    });
+
+    test('stores settings and adds hubspot js on initialize', function (done) {
+        expect(window._hsq).not.to.exist;
+
+        analytics.initialize(this.providers);
+        var self = this;
+        setTimeout(function () {
+            expect(window._hsq).to.exist;
+            expect(analytics.providers[0].settings).to.equal(self.providers[self.provider]);
+            done();
+        }, 100);
+    });
+
+    test('pushes "identify" on identify', function () {
+        var spy = sinon.spy(window._hsq, 'push');
+
+        identify.traits();
+        expect(spy).to.have.been.calledWith(['identify', traits]);
+        spy.reset();
+
+        identify.userId();
+        expect(spy).to.not.have.been.calledWith(['identify', userId]);
+        spy.reset();
+
+        identify.full();
+        expect(spy).to.have.been.calledWith(['identify', traits]);
+
+        spy.restore();
+    });
+
+    test('pushes "trackEvent" on track', function () {
+        var spy = sinon.spy(window._hsq, 'push');
+
+        track();
+        expect(spy).to.have.been.calledWith(['trackEvent', event, properties]);
     });
 
 }());

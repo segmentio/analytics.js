@@ -414,7 +414,7 @@
             expect(window.pSUPERFLY).to.exist;
             expect(analytics.providers[0].settings).to.equal(self.providers[self.provider]);
             done();
-        }, 50);
+        }, 100);
     });
 
 

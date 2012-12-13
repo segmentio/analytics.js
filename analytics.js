@@ -583,6 +583,7 @@
         // ----------
         // _Last updated: December 12th, 2012_
         // Site token can be found at https://www.gosquared.com/home/developer"
+        // Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat)
         // [Documentation](www.gosquared.com/support).
 
         'GoSquared' : {
@@ -599,6 +600,16 @@
                 window._gstc_lt=+(new Date); var d=document;
                 var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
                 var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
+            },
+
+            identify : function (userId, traits) {
+                if (userId) window.GoSquared.UserName = userId;
+                if (traits) window.GoSquared.Visitor = traits;
+            },
+
+            track : function (event, properties) {
+                if (!window.GoSquared.q) window.GoSquared.q = [];
+                window.GoSquared.q.push(['TrackEvent', event, properties]);
             }
         }
     };

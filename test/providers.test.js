@@ -39,46 +39,6 @@
     };
 
 
-    // Email Regex
-    // -----------
-
-    suite('Email Regex');
-
-    var basicEmailRegex = /.+\@.+\..+/;
-
-    test('basic email regex matches a valid email', function () {
-        expect(basicEmailRegex.test('team@segmentio.com')).to.be.true;
-    });
-    test('basic email regex matches a valid email', function () {
-        expect(basicEmailRegex.test('team@segment.org')).to.be.true;
-    });
-    test('basic email regex matches a valid email', function () {
-        expect(basicEmailRegex.test('team+45@segment.io')).to.be.true;
-    });
-    test('basic email regex matches a valid email', function () {
-        expect(basicEmailRegex.test('georgeioaskdfjlaksdjflkasjdlkfjasldkfj@hap-py.com')).to.be.true;
-    });
-    test('basic email regex matches a valid email', function () {
-        expect(basicEmailRegex.test('lkj21lk2j3lk1j2+12lk31j1k2j31@gmail.net')).to.be.true;
-    });
-
-    test('basic email regex does not match invalid emails', function () {
-        expect(basicEmailRegex.test('@segmentio.com')).to.be.false;
-    });
-    test('basic email regex does not match invalid emails', function () {
-        expect(basicEmailRegex.test('team@.org')).to.be.false;
-    });
-    test('basic email regex does not match invalid emails', function () {
-        expect(basicEmailRegex.test('team+45.io')).to.be.false;
-    });
-    test('basic email regex does not match invalid emails', function () {
-        expect(basicEmailRegex.test('georgeioaskdfjlaksdjflkasjdlkfjasldkfj@hap-pycom')).to.be.false;
-    });
-    test('basic email regex does not match invalid emails', function () {
-        expect(basicEmailRegex.test('lkj21lk2j3lk1j2+12lk31j+1k2j31gmail.net')).to.be.false;
-    });
-
-
     // Google Analytics
     // ----------------
     // https://developers.google.com/analytics/devguides/collection/gajs/
@@ -127,15 +87,14 @@
 
     test('pushes "_identify" on identify', function () {
         var spy = sinon.spy(window._kmq, 'push');
-
         identify.traits();
         expect(spy).to.have.not.been.calledWith(['identify', userId]);
-        spy.reset();
 
+        spy.reset();
         identify.userId();
         expect(spy).to.have.been.calledWith(['identify', userId]);
-        spy.reset();
 
+        spy.reset();
         identify.full();
         expect(spy).to.have.been.calledWith(['identify', userId]);
 
@@ -144,15 +103,14 @@
 
     test('pushes "_set" on identify', function () {
         var spy = sinon.spy(window._kmq, 'push');
-
         identify.traits();
         expect(spy).to.have.been.calledWith(['set', traits]);
-        spy.reset();
 
+        spy.reset();
         identify.userId();
         expect(spy).to.have.not.been.calledWith(['set', traits]);
-        spy.reset();
 
+        spy.reset();
         identify.full();
         expect(spy).to.have.been.calledWith(['set', traits]);
 
@@ -161,7 +119,6 @@
 
     test('pushes "_record" on track', function () {
         var spy = sinon.spy(window._kmq, 'push');
-
         track();
         expect(spy).to.have.been.calledWith(['record', event, properties]);
 
@@ -194,15 +151,14 @@
 
     test('calls identify on identify', function () {
         var spy = sinon.spy(window.mixpanel, 'identify');
-
         identify.traits();
         expect(spy).to.have.not.been.called;
-        spy.reset();
 
+        spy.reset();
         identify.userId();
         expect(spy).to.have.been.calledWith(userId);
-        spy.reset();
 
+        spy.reset();
         identify.full();
         expect(spy).to.have.been.calledWith(userId);
 
@@ -211,15 +167,14 @@
 
     test('calls register on identify', function () {
         var spy = sinon.spy(window.mixpanel, 'register');
-
         identify.traits();
         expect(spy).to.have.been.calledWith(mixpaneledTraits);
-        spy.reset();
 
+        spy.reset();
         identify.userId();
         expect(spy).to.have.not.been.called;
-        spy.reset();
 
+        spy.reset();
         identify.full();
         expect(spy).to.have.been.calledWith(mixpaneledTraits);
 
@@ -228,15 +183,14 @@
 
     test('calls name_tag on identify', function () {
         var spy = sinon.spy(window.mixpanel, 'name_tag');
-
         identify.traits();
         expect(spy).to.have.not.been.called;
-        spy.reset();
 
+        spy.reset();
         identify.userId();
         expect(spy).to.have.been.calledWith(userId);
-        spy.reset();
 
+        spy.reset();
         identify.full();
         expect(spy).to.have.been.calledWith(userId);
 
@@ -245,7 +199,6 @@
 
     test('calls track on track', function () {
         var spy = sinon.spy(window.mixpanel, 'track');
-
         track();
         // Mixpanel adds custom properties, so we need to have a loose match.
         expect(spy).to.have.been.calledWith(event, sinon.match(properties));
@@ -256,15 +209,14 @@
     test('calls people.identify on identify if `people` setting is true', function () {
         analytics.providers[0].settings.people = true;
         var spy = sinon.spy(window.mixpanel.people, 'identify');
-
         identify.traits();
         expect(spy).to.have.not.been.called;
-        spy.reset();
 
+        spy.reset();
         identify.userId();
         expect(spy).to.have.been.calledWith(userId);
-        spy.reset();
 
+        spy.reset();
         identify.full();
         expect(spy).to.have.been.calledWith(userId);
 
@@ -274,7 +226,6 @@
     test('doesnt call people.identify on identify if `people` setting is false', function () {
         analytics.providers[0].settings.people = false;
         var spy = sinon.spy(window.mixpanel.people, 'identify');
-
         identify.full();
         expect(spy).not.to.have.been.called;
 
@@ -284,11 +235,10 @@
     test('calls people.set on identify if `people` setting is true', function () {
         analytics.providers[0].settings.people = true;
         var spy = sinon.spy(window.mixpanel.people, 'set');
-
         identify.traits();
         expect(spy).to.have.been.calledWith(mixpaneledTraits);
-        spy.reset();
 
+        spy.reset();
         identify.full();
         expect(spy).to.have.been.calledWith(mixpaneledTraits);
 
@@ -298,7 +248,6 @@
     test('doesnt call people.set on identify if `people` setting is false', function () {
         analytics.providers[0].settings.people = false;
         var spy = sinon.spy(window.mixpanel.people, 'set');
-
         identify.full();
         expect(spy).not.to.have.been.called;
 
@@ -358,11 +307,10 @@
 
     test('calls identify on identify', function () {
         var spy = sinon.spy(window._cio, 'identify');
-
         identify.traits();
         expect(spy).to.not.have.been.called;
-        spy.reset();
 
+        spy.reset();
         identify.full();
         expect(spy).to.have.been.calledWith({
             id         : userId,
@@ -375,7 +323,6 @@
 
     test('calls track on track', function () {
         var spy = sinon.spy(window._cio, 'track');
-
         track();
         expect(spy).to.have.been.calledWith(event, properties);
 
@@ -426,11 +373,10 @@
 
     test('updates visitor nickname on identify', function () {
         var spy = sinon.spy(window, 'olark');
-
         identify.traits();
         expect(spy).to.have.not.been.called;
-        spy.reset();
 
+        spy.reset();
         identify.full();
         expect(spy).to.have.been.calledWith('api.chat.updateVisitorNickname', sinon.match({
             snippet : userId
@@ -442,7 +388,6 @@
     test('logs event to operator on track if `track` setting is true', function () {
         analytics.providers[0].settings.track = true;
         var spy = sinon.spy(window, 'olark');
-
         track();
         expect(spy).to.have.been.calledWith('api.chat.sendNotificationToOperator', sinon.match({
             body : 'Visitor triggered "'+event+'".'
@@ -454,7 +399,6 @@
     test('doesnt log event to operator on track if `track` setting is false', function () {
         analytics.providers[0].settings.track = false;
         var spy = sinon.spy(window, 'olark');
-
         track();
         expect(spy).not.to.have.been.called;
 

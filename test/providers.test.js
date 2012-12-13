@@ -42,8 +42,6 @@
 
     // Google Analytics
     // ----------------
-    // https://developers.google.com/analytics/devguides/collection/gajs/
-    // Last updated: September 27th, 2012
 
     suite('Google Analytics');
 
@@ -69,8 +67,6 @@
 
     // KISSmetrics
     // -----------
-    // http://support.kissmetrics.com/apis/javascript
-    // Last updated: September 27th, 2012
 
     suite('KISSmetrics');
 
@@ -129,10 +125,6 @@
 
     // Mixpanel
     // --------
-    // https://mixpanel.com/docs/integration-libraries/javascript
-    // https://mixpanel.com/docs/people-analytics/javascript
-    // https://mixpanel.com/docs/integration-libraries/javascript-full-api
-    // Last updated: September 27th, 2012
 
     suite('Mixpanel');
 
@@ -258,7 +250,6 @@
 
     // Intercom
     // --------
-    // Last updated: September 27th, 2012
 
     suite('Intercom');
 
@@ -286,9 +277,7 @@
 
 
     // Customer.io
-    // ----------
-    // http://customer.io/docs/api/javascript.html
-    // Last updated: December 6th, 2012
+    // -----------
 
     suite('Customer.io');
 
@@ -332,9 +321,7 @@
 
 
     // CrazyEgg
-    // ----------
-    // http://crazyegg.com
-    // Last updated: December 6th, 2012
+    // --------
 
     suite('CrazyEgg');
 
@@ -356,7 +343,6 @@
 
     // Olark
     // -----
-    // Last updated: October 11th, 2012
 
     suite('Olark');
 
@@ -409,10 +395,6 @@
 
     // Chartbeat
     // ---------
-    // http://chartbeat.com/docs/adding_the_code/
-    // http://chartbeat.com/docs/configuration_variables/
-    // http://chartbeat.com/docs/handling_virtual_page_changes/
-    // Last updated: September 27th, 2012
 
     suite('Chartbeat');
 
@@ -435,9 +417,9 @@
         }, 50);
     });
 
+
     // HubSpot
-    // ----------------
-    // Last updated: December 13th, 2012
+    // -------
 
     suite('HubSpot');
 
@@ -459,15 +441,14 @@
 
     test('pushes "identify" on identify', function () {
         var spy = sinon.spy(window._hsq, 'push');
-
         identify.traits();
         expect(spy).to.have.been.calledWith(['identify', traits]);
-        spy.reset();
 
+        spy.reset();
         identify.userId();
         expect(spy).to.not.have.been.calledWith(['identify', userId]);
-        spy.reset();
 
+        spy.reset();
         identify.full();
         expect(spy).to.have.been.calledWith(['identify', traits]);
 
@@ -476,7 +457,6 @@
 
     test('pushes "trackEvent" on track', function () {
         var spy = sinon.spy(window._hsq, 'push');
-
         track();
         expect(spy).to.have.been.calledWith(['trackEvent', event, properties]);
     });

@@ -545,7 +545,7 @@
 
 
         // HubSpot
-        // ---------
+        // -------
         // _Last updated: December 13th, 2012_
         //
         // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
@@ -556,7 +556,7 @@
             //
             // * Adding HubSpot snippet
 
-            // Use the portalId to setup the HubSpot tracking code
+            // Use the `portalId` to setup the HubSpot tracking code.
             initialize : function (settings) {
                 this.settings = settings = resolveSettings(settings, 'portalId');
                 (function(d,s,i,r) {
@@ -567,9 +567,10 @@
                 })(document,"script","hs-analytics",300000);
             },
 
-            // HubSpot does not use a userId, but the email address is required on the traits
-            // object. Other traits fields correspond to Contacts record fields (including custom fields)
-            // and will update those fields for the given contact.
+            // HubSpot does not use a userId, but the email address is required
+            // on the traits object. Other traits fields correspond to Contacts
+            // record fields (including custom fields) and will update those
+            // fields for the given contact.
             identify : function (userId, traits) {
                 if (traits) {
                     window._hsq.push(["identify", traits]);
@@ -577,8 +578,8 @@
             },
 
             // Event Tracking is available to HubSpot Enterprise customers only.
-            // In addition to adding any unique event name, you can also use the id of
-            // an existing custom event as the event variable
+            // In addition to adding any unique event name, you can also use the
+            // id of an existing custom event as the event variable.
             track : function (event, properties) {
                 window._hsq.push(["trackEvent", event, properties]);
             }

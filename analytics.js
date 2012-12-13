@@ -577,6 +577,40 @@
             }
 
             // TODO: Add virtual page API.
+        },
+
+
+        // HubSpot
+        // ---------
+        // _Last updated: December 13th, 2012_
+        //
+        // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
+
+        'HubSpot' : {
+
+            // Changes to the HubSpot snippet:
+            //
+            // * Adding HubSpot snippet
+
+            initialize : function (settings) {
+                this.settings = settings = resolveSettings(settings, 'portalId');
+                (function(d,s,i,r) {
+                    if (d.getElementById(i)){return;}
+                    var n=d.createElement(s),e=d.getElementsByTagName(s)[0];
+                    n.id=i;n.src='https://js.hubspot.com/analytics/'+(Math.ceil(new Date()/r)*r)+'/' + settings.portalId + '.js';
+                    e.parentNode.insertBefore(n, e);
+                })(document,"script","hs-analytics",300000);
+            },
+
+            identify : function (userId, traits) {
+                if (traits) {
+                    window._hsq.push(["identify", traits]);
+                }
+            },
+
+            track : function (event, properties) {
+                window._hsq.push(["trackEvent", event, properties]);
+            }
         }
     };
 

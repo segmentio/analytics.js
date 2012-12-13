@@ -494,6 +494,7 @@
     // ---------
     // https://www.gosquared.com/support
     // https://www.gosquared.com/support/articles/621030-visitor-tagging
+    // NOTE: some tests will fail while testing local files (file:// protocol)
     // Last updated: December 12th, 2012
     suite('GoSquared');
 

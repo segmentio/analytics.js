@@ -451,7 +451,31 @@
             }
         },
 
+        // torbit.com
+        // ----------
+        // _Last updated: December 12th, 2012_
+        // No API Key needed to use Torbit Insight
+        // [Documentation](www.torbit.com).
+        'Torbit' : {
 
+            initialize : function (settings) {
+
+                var TBRUM=window.TBRUM||{};
+                TBRUM.q=window.TBRUM.q||[];
+                TBRUM.q.push(['mark','firstbyte',(new Date).getTime()]);
+
+                (function(){
+                    var a=document.createElement('script');
+                    a.type='text/javascript';
+                    a.async=true;
+                    a.src=document.location.protocol+'//insight.torbit.com/v1/insight.min.js';
+                    var b=document.getElementsByTagName('script')[0];
+                    b.parentNode.insertBefore(a,b);
+                })();
+
+                window.TBRUM = TBRUM;
+            }
+        },
 
         // Olark
         // -----
@@ -638,6 +662,5 @@
 
         return settings;
     };
-
 
 }).call(this);

@@ -158,6 +158,7 @@
             //
             // * Added optional support for `enhancedLinkAttribution`
             // * Added optional support for `siteSpeedSampleRate`
+            // * Added optional support for `anonymizeIp`
             // * Add `apiKey` to call to `_setAccount`.
             initialize : function (settings) {
                 this.settings = settings = resolveSettings(settings, 'trackingId');
@@ -172,6 +173,9 @@
                 if (this.settings.siteSpeedSampleRate != null &&
                     typeof(this.settings.siteSpeedSampleRate) === 'number') {
                     _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
+                }
+                if(this.settings.anonymizeIp === true) {
+                    _gaq.push(['_gat._anonymizeIp']);
                 }
 
                 _gaq.push(['_trackPageview']);

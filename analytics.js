@@ -580,6 +580,64 @@
             track : function (event, properties) {
                 window._hsq.push(["trackEvent", event, properties]);
             }
+        },
+
+        // Piwik
+        // ----------------
+        // Last updated: December 14, 2012
+        // [Documentation](http://piwik.org/docs/javascript-tracking/).
+
+        'Piwik' : {
+
+            // Changes to the Piwik snippet:
+            //
+            // * Created it
+            //
+            // Piwik requires the `pwBaseURL` and `siteID` values to be set.
+            //
+            initialize : function (settings) {
+                var Piwik = Piwik || {};
+                var piwikTracker = null;
+
+                this.settings = settings;
+
+                // Piwik requires the `pwBaseURL`
+                // which is the base URL to your Piwik install
+                if(!settings.pwBaseURL) return;
+                var piwikBaseURL = settings.pwBaseURL;
+
+                // The Piwik Site ID can be found in your Piwik Settings
+                // under the Websites tab
+                if(!settings.siteID) return;
+                var siteID = settings.siteID;
+                
+
+                if("https:" == document.location.protocol) piwikBaseURL = piwikBaseURL.replace('http:','https:');
+                if(piwikBaseURL.substr(piwikBaseURL.length-1) !== "/") piwikBaseURL =+ '/';
+
+                (function(){
+                    var a=document.createElement("script");
+                    var b=document.getElementsByTagName("script")[0];
+                    a.src=piwikBaseURL+'piwik.js';
+                    a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b);
+                })();
+
+                try {
+                    piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", siteID);
+                    piwikTracker.trackPageView();
+                    piwikTracker.enableLinkTracking();
+                } catch( err ) {}
+
+                window.Piwik = Piwik;
+                this.piwikTracker = piwikTracker;
+            },
+
+            track : function (event, properties) {
+                if(this.piwikTracker && this.piwikTracker.trackPageView)
+                {
+                    this.piwikTracker.trackPageView(event);
+                }
+            }
         }
     };
 

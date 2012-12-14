@@ -11,6 +11,9 @@
     "type" : "git",
     "url" : "git://github.com/segmentio/analytics.js.git"
   },
+  "devDependencies:" {
+    "reunion": "0.0.1"
+  },
   "main" : "analytics.js",
   "author" : "Segmentio <friends@segment.io>"
 }

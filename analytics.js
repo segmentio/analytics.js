@@ -558,6 +558,7 @@
                 this.settings = settings = resolveSettings(settings, 'portalId');
                 (function(d,s,i,r) {
                     if (d.getElementById(i)){return;}
+                    window._hsq = window._hsq || []; // for calls pre-load
                     var n=d.createElement(s),e=d.getElementsByTagName(s)[0];
                     n.id=i;n.src='https://js.hubspot.com/analytics/'+(Math.ceil(new Date()/r)*r)+'/' + settings.portalId + '.js';
                     e.parentNode.insertBefore(n, e);

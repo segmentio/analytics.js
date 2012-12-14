@@ -431,9 +431,13 @@
         expect(window._hsq).not.to.exist;
 
         analytics.initialize(this.providers);
+        expect(window._hsq).to.exist;
+        expect(window._hsq.push).to.equal(Array.prototype.push);
+
         var self = this;
         setTimeout(function () {
             expect(window._hsq).to.exist;
+            expect(window._hsq).to.not.equal(Array.prototype.push);
             expect(analytics.providers[0].settings).to.equal(self.providers[self.provider]);
             done();
         }, 100);

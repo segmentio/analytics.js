@@ -7,7 +7,9 @@
         this.providers = {};
         this.providers[provider] = {
             apiKey : 'TEST',
-            portalId: '62515'
+            portalId: '62515',
+            pwBaseURL: 'http://demo.piwik.org/',
+            siteID: '1'
         };
     };
 
@@ -459,6 +461,31 @@
         var spy = sinon.spy(window._hsq, 'push');
         track();
         expect(spy).to.have.been.calledWith(['trackEvent', event, properties]);
+    });
+
+
+    // Piwik
+    // ---------
+
+    suite('Piwik');
+
+    beforeEach(function () {
+        generateContext.call(this, 'Piwik');
+    });
+
+    test('stores settings and adds piwik.js on initialize', function (done) {
+        expect(window.Piwik).not.to.exist;
+
+        analytics.initialize(this.providers);
+
+        // We have to wait for the piwik.js to come back and create the
+        // global variable on window...
+        var self = this;
+        setTimeout(function () {
+            expect(window.Piwik).to.exist;
+            expect(analytics.providers[0].settings).to.equal(self.providers[self.provider]);
+            done();
+        }, 100);
     });
 
 }());

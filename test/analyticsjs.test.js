@@ -17,29 +17,39 @@
         'Mixpanel'         : 'TERSE_TEST'
     };
 
+    // Clear providers, some break on multiple inclusions.
+    function clearProviders() {
+        delete window._gaq;
+        delete window.mixpanel;
+    }
+
 
     // Initialize
     // ----------
 
     test('initialize copies providers into this.providers', function () {
+        clearProviders();
         expect(analytics.providers).to.be.empty;
         analytics.initialize(providers);
         expect(analytics.providers.length).to.equal(2);
     });
 
     test('initialize sends settings to each providers', function () {
+        clearProviders();
         analytics.initialize(providers);
         expect(analytics.providers[0].settings).to.equal(providers['Google Analytics']);
         expect(analytics.providers[1].settings).to.equal(providers['Mixpanel']);
     });
 
     test('initialize allows for apiKey strings as settings', function () {
+        clearProviders();
         analytics.initialize(terseProviders);
         expect(analytics.providers[0].settings.trackingId).to.equal('TERSE_TEST');
         expect(analytics.providers[1].settings.token).to.equal('TERSE_TEST');
     });
 
     test('initialize sends settings to providers initialize method', function () {
+        clearProviders();
         var spy = sinon.spy(analytics.providers[1], 'initialize');
         analytics.initialize(providers);
         expect(spy).to.have.been.calledWith(providers['Mixpanel']);

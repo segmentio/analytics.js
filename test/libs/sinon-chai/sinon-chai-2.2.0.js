@@ -60,8 +60,8 @@
         });
     }
 
-    function exceptionalSinonMethod(chaiName, sinonName, action, nonNegatedSuffix) {
-        utils.addMethod(chai.Assertion.prototype, chaiName, function () {
+    function createSinonMethodHandler(sinonName, action, nonNegatedSuffix) {
+        return function () {
             assertCanWorkWith(this);
 
             var alwaysSinonMethod = "always" + sinonName[0].toUpperCase() + sinonName.substring(1);
@@ -70,7 +70,17 @@
 
             var messages = getMessages(this._obj, action, nonNegatedSuffix, shouldBeAlways, slice.call(arguments));
             this.assert(this._obj[sinonMethod].apply(this._obj, arguments), messages.affirmative, messages.negative);
-        });
+        };
+    }
+
+    function sinonMethodAsProperty(name, action, nonNegatedSuffix) {
+        var handler = createSinonMethodHandler(name, action, nonNegatedSuffix);
+        utils.addProperty(chai.Assertion.prototype, name, handler);
+    }
+
+    function exceptionalSinonMethod(chaiName, sinonName, action, nonNegatedSuffix) {
+        var handler = createSinonMethodHandler(sinonName, action, nonNegatedSuffix);
+        utils.addMethod(chai.Assertion.prototype, chaiName, handler);
     }
 
     function sinonMethod(name, action, nonNegatedSuffix) {
@@ -85,11 +95,13 @@
     sinonProperty("calledOnce", "been called exactly once", ", but it was called %c%C");
     sinonProperty("calledTwice", "been called exactly twice", ", but it was called %c%C");
     sinonProperty("calledThrice", "been called exactly thrice", ", but it was called %c%C");
+    sinonMethodAsProperty("calledWithNew", "been called with new");
     sinonMethod("calledBefore", "been called before %1");
     sinonMethod("calledAfter", "been called after %1");
     sinonMethod("calledOn", "been called with %1 as this", ", but it was called with %t instead");
     sinonMethod("calledWith", "been called with arguments %*", "%C");
     sinonMethod("calledWithExactly", "been called with exact arguments %*", "%C");
+    sinonMethod("calledWithMatch", "been called with matching arguments %*", "%C");
     sinonMethod("returned", "returned %1");
     exceptionalSinonMethod("thrown", "threw", "thrown %1");
 }));

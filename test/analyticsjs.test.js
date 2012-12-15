@@ -1,136 +1,144 @@
 /*global sinon, suite, beforeEach, test, expect, analytics */
 (function () {
 
-    suite('analytics.js');
-
-    var providers = {
-        'Google Analytics' : {
-            trackingId : 'TEST'
-        },
-        'Mixpanel' : {
-            token : 'TEST'
-        }
+    var provider = {
+        initialize : function (settings) {},
+        identify : function (userId, traits) {},
+        track : function (event, properties) {}
     };
-
-    var terseProviders = {
-        'Google Analytics' : 'TERSE_TEST',
-        'Mixpanel'         : 'TERSE_TEST'
-    };
-
-    // Clear providers, some break on multiple inclusions.
-    function clearProviders() {
-        delete window._gaq;
-        delete window.mixpanel;
-    }
+    analytics.addProvider('test', provider);
 
 
-    // Initialize
-    // ----------
+    suite('initialize');
 
     test('initialize copies providers into this.providers', function () {
-        clearProviders();
         expect(analytics.providers).to.be.empty;
-        analytics.initialize(providers);
-        expect(analytics.providers.length).to.equal(2);
-    });
 
-    test('initialize sends settings to each providers', function () {
-        clearProviders();
-        analytics.initialize(providers);
-        expect(analytics.providers[0].settings).to.equal(providers['Google Analytics']);
-        expect(analytics.providers[1].settings).to.equal(providers['Mixpanel']);
-    });
-
-    test('initialize allows for apiKey strings as settings', function () {
-        clearProviders();
-        analytics.initialize(terseProviders);
-        expect(analytics.providers[0].settings.trackingId).to.equal('TERSE_TEST');
-        expect(analytics.providers[1].settings.token).to.equal('TERSE_TEST');
+        analytics.initialize({
+            'test' : 'x'
+        });
+        expect(analytics.providers[0]).to.equal(provider);
     });
 
     test('initialize sends settings to providers initialize method', function () {
-        clearProviders();
-        var spy = sinon.spy(analytics.providers[1], 'initialize');
-        analytics.initialize(providers);
-        expect(spy).to.have.been.calledWith(providers['Mixpanel']);
+        var spy = sinon.spy(provider, 'initialize');
+        analytics.initialize({
+            'test' : 'x'
+        });
+        expect(spy).to.have.been.calledWith('x');
 
         spy.restore();
     });
 
 
-    // Identify
-    // --------
+    suite('identify');
 
     test('identify sends userId along', function () {
-        var spy = sinon.spy(analytics.providers[1], 'identify');
-        analytics.identify('ID');
-        expect(spy).to.have.been.calledWith('ID');
+        var spy = sinon.spy(provider, 'identify');
+        analytics.identify('id');
+        expect(spy).to.have.been.calledWith('id');
 
         spy.restore();
     });
 
     test('identify sends a clone of traits along', function  () {
-        var spy = sinon.spy(analytics.providers[1], 'identify');
+        var spy = sinon.spy(provider, 'identify');
         var traits = {
             age  : 23,
             name : 'Achilles'
         };
-        analytics.identify('ID', traits);
+        analytics.identify('id', traits);
         expect(spy.args[0][1]).not.to.equal(traits);
-        expect(spy.args[0][1]).to.deep.equal({
-            $name : 'Achilles',
-            age   : 23
-        });
-
-        spy.restore();
-    });
-
-    test('identify recognizes email userIds', function () {
-        var spy = sinon.spy(window.mixpanel, 'register');
-        analytics.identify('team@segment.io');
-        expect(spy.args[0][0]).to.deep.equal({ $email : 'team@segment.io' });
-
-        spy.reset();
-        analytics.identify('t-eam+34@segme-ntio.com');
-        expect(spy.args[0][0]).to.deep.equal({ $email : 't-eam+34@segme-ntio.com' });
-
-        spy.reset();
-        analytics.identify('team@.org');
-        expect(spy).not.to.have.been.called;
-
-        spy.reset();
-        analytics.identify('team+45.io');
-        expect(spy).not.to.have.been.called;
-
-        spy.reset();
-        analytics.identify('@segmentio.com');
-        expect(spy).not.to.have.been.called;
+        expect(spy.args[0][1]).to.deep.equal(traits);
 
         spy.restore();
     });
 
 
-    // Track
-    // -----
+    suite('track');
 
     test('track sends event name along', function () {
-        var spy = sinon.spy(analytics.providers[1], 'track');
+        var spy = sinon.spy(provider, 'track');
         analytics.track('party');
         expect(spy).to.have.been.calledWith('party');
 
         spy.restore();
     });
 
-    test('track sends a clone of event properties along', function  () {
-        var spy = sinon.spy(analytics.providers[1], 'track');
+    test('track sends a clone of properties along', function  () {
+        var spy = sinon.spy(provider, 'track');
         var properties = {
             level  : 'hard',
             volume : 11
         };
         analytics.track('party', properties);
         expect(spy.args[0][1]).not.to.equal(properties);
+        expect(spy.args[0][1]).to.deep.equal(properties);
 
         spy.restore();
+    });
+
+
+    suite('utils');
+
+    test('resolveSettings...');
+
+    test('clone returns a copy of an object', function () {
+        var object = {
+            thing : 1
+        };
+        expect(analytics.utils.clone(object)).not.to.equal(object);
+        expect(analytics.utils.clone(object)).to.deep.equal(object);
+    });
+
+    test('getSeconds returns the seconds of a date', function () {
+        var date = new Date(1355548865865);
+        expect(analytics.utils.getSeconds(date)).to.equal(1355548865);
+    });
+
+    test('isEmail matches emails', function () {
+        var isEmail = analytics.utils.isEmail;
+        expect(isEmail('team@segment.io')).to.be.true;
+        expect(isEmail('t-eam+34@segme-ntio.com')).to.be.true;
+        expect(isEmail('team@.org')).to.be.false;
+        expect(isEmail('team+45.io')).to.be.false;
+        expect(isEmail('@segmentio.com')).to.be.false;
+    });
+
+    test('isObject matches objects', function () {
+        var isObject = analytics.utils.isObject;
+        expect(isObject({})).to.be.true;
+        expect(isObject([])).to.be.true;
+        expect(isObject(function () {})).to.be.true;
+        expect(isObject('string')).to.be.false;
+        expect(isObject(0)).to.be.false;
+    });
+
+    test('isFunction matches functions', function () {
+        var isFunction = analytics.utils.isFunction;
+        expect(isFunction(function () {})).to.be.true;
+        expect(isFunction({})).to.be.false;
+        expect(isFunction([])).to.be.false;
+        expect(isFunction('string')).to.be.false;
+        expect(isFunction(0)).to.be.false;
+    });
+
+    test('isNumber matches numbers', function () {
+        var isNumber = analytics.utils.isNumber;
+        expect(isNumber(0)).to.be.true;
+        expect(isNumber({})).to.be.false;
+        expect(isNumber([])).to.be.false;
+        expect(isNumber('string')).to.be.false;
+        expect(isNumber(function () {})).to.be.false;
+    });
+
+    test('isString matches strings', function () {
+        var isString = analytics.utils.isString;
+        expect(isString('string')).to.be.true;
+        expect(isString({})).to.be.false;
+        expect(isString([])).to.be.false;
+        expect(isString(0)).to.be.false;
+        expect(isString(function () {})).to.be.false;
     });
 
 })();

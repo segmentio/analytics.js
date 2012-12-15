@@ -22,12 +22,12 @@
         // even after onload fires.
         loaded : false,
 
+        // Whether analytics.js has been initialized with providers.
+        initialized : false,
+
 
         // Providers
         // =========
-
-        // Whether analytics.js has been initialized with providers.
-        initialized : false,
 
         // A dictionary of analytics providers that _can_ be initialized.
         availableProviders : {},
@@ -63,6 +63,8 @@
             this.providers = [];
             this.userId = null;
 
+            // Initialize each provider with the proper settings, and copy the
+            // provider into `this.providers`.
             for (var key in providers) {
                 var provider = this.availableProviders[key];
                 if (!provider) throw new Error('Could not find a provider named "'+key+'"');
@@ -70,6 +72,7 @@
                 this.providers.push(provider);
             }
 
+            // Update the initialized state that other methods rely on.
             this.initialized = true;
         },
 
@@ -105,6 +108,7 @@
             else
                 userId = this.userId;
 
+            // Call `identify` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.identify) continue;
                 provider.identify(userId, this.utils.clone(traits));
@@ -131,6 +135,7 @@
         track : function (event, properties) {
             if (!this.initialized) return;
 
+            // Call `track` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.track) continue;
                 provider.track(event, this.utils.clone(properties));
@@ -189,7 +194,9 @@
                 if (!fieldName)
                     throw new Error('You must provide an api key field name.');
 
-                // Allor for settings to just be an API key.
+                // Allow for settings to just be an API key, for example:
+                //
+                //     { 'Google Analytics : 'UA-XXXXXXX-X' }
                 if (this.isString(settings)) {
                     var apiKey = settings;
                     settings = {};

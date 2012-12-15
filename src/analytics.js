@@ -22,12 +22,12 @@
         // even after onload fires.
         loaded : false,
 
+        // Whether analytics.js has been initialized with providers.
+        initialized : false,
+
 
         // Providers
         // =========
-
-        // Whether analytics.js has been initialized with providers.
-        initialized : false,
 
         // A dictionary of analytics providers that _can_ be initialized.
         availableProviders : {},

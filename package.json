@@ -1,10 +1,12 @@
 {
   "name" : "analytics",
-  "version" : "0.1.2",
-  "description" : "The way every project should use analytics.",
+  "author" : "Segmentio <friends@segment.io>",
+  "version" : "0.2.0",
+  "description" : "The hassle-free way to integrate analytics into any web application.",
   "keywords" : [
-    "analytics", "segment", "segmentio", "google", "kissmetrics", "mixpanel",
-    "intercom", "olark", "chartbeat", "crazyegg", "klaviyo"
+    "analytics", "analytics.js", "analyticsjs", "segment", "segmentio", "segment.io",
+    "chartbeat", "crazyegg", "customer.io", "google analytics", "hubspot",
+    "intercom", "kissmetrics", "klaviyo", "mixpanel", "olark"
   ],
   "url" : "https://github.com/segmentio/analytics.js",
   "repository" : {
@@ -12,5 +14,5 @@
     "url" : "git://github.com/segmentio/analytics.js.git"
   },
   "main" : "analytics.js",
-  "author" : "Segmentio <friends@segment.io>"
+  "license" : "MIT"
 }

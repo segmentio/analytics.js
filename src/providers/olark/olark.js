@@ -24,6 +24,7 @@ analytics.addProvider('Olark', {
     identify : function (userId, traits) {
         // Choose the best name for the user that we can get.
         var name = userId;
+        if (traits && traits.email) name = traits.email;
         if (traits && traits.name) name = traits.name;
 
         // If we ended up with no name after all that, get out of there.
@@ -44,3 +45,5 @@ analytics.addProvider('Olark', {
     }
 
 });
+
+

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
 
-    <title>Providers Tests</title>
+    <title>Analytics.js Tests</title>
 
     <link rel="stylesheet" href="libs/mocha/mocha-1.3.0.css">
     <script src="libs/underscore/underscore-1.4.3.js"></script>
@@ -17,17 +17,9 @@
         window.expect = window.chai.expect;
     </script>
 
-    <script src="../src/analytics.js"></script>
-    <script src="../src/providers/chartbeat/chartbeat.js"></script>
-    <script src="../src/providers/customerio/customerio.js"></script>
-    <script src="../src/providers/ga/ga.js"></script>
-    <script src="../src/providers/hubspot/hubspot.js"></script>
-    <script src="../src/providers/intercom/intercom.js"></script>
-    <script src="../src/providers/kissmetrics/kissmetrics.js"></script>
-    <script src="../src/providers/klaviyo/klaviyo.js"></script>
-    <script src="../src/providers/mixpanel/mixpanel.js"></script>
-    <script src="../src/providers/olark/olark.js"></script>
+    <script src="../analytics.min.js"></script>
 
+    <script src="../src/analytics-test.js"></script>
     <script src="../src/providers/chartbeat/chartbeat-test.js"></script>
     <script src="../src/providers/customerio/customerio-test.js"></script>
     <script src="../src/providers/ga/ga-test.js"></script>
@@ -39,7 +31,7 @@
     <script src="../src/providers/olark/olark-test.js"></script>
 </head>
 <body>
-    <h1>Providers Test</h1>
+    <h1>Minified Test</h1>
     <div id="mocha"></div>
     <script>$(function () { window.mocha.run() });</script>
 </body>

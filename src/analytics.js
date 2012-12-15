@@ -59,7 +59,9 @@
         // keys are the names of the providers and their values are either an
         // api key, or dictionary of extra settings (including the api key).
         initialize : function (providers) {
+            // Reset our state.
             this.providers = [];
+            this.userId = null;
 
             for (var key in providers) {
                 var provider = this.availableProviders[key];
@@ -182,13 +184,13 @@
             // api key is passed. `fieldName` is what the provider calls their
             // api key.
             resolveSettings : function (settings, fieldName) {
-                if (!this.utils.isString(settings) && !this.utils.isObject(settings))
+                if (!this.isString(settings) && !this.isObject(settings))
                     throw new Error('Could not resolve settings.');
                 if (!fieldName)
                     throw new Error('You must provide an api key field name.');
 
                 // Allor for settings to just be an API key.
-                if (this.utils.isString(settings)) {
+                if (this.isString(settings)) {
                     var apiKey = settings;
                     settings = {};
                     settings[fieldName] = apiKey;

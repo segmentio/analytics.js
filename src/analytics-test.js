@@ -30,6 +30,8 @@
         spy.restore();
     });
 
+    test('initialize resets providers and userId');
+
 
     suite('identify');
 

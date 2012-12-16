@@ -7,6 +7,11 @@
 
 analytics.addProvider('Chartbeat', {
 
+    settings : {
+        domain : null,
+        uid    : null
+    },
+
     // Changes to the Chartbeat snippet:
     //
     // * Add `apiKey` and `domain` variables to config.
@@ -16,10 +21,11 @@ analytics.addProvider('Chartbeat', {
     // they already do that.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'uid');
+        analytics.utils.extend(this.settings, settings);
 
         // Since all the custom settings just get passed through, update the
         // Chartbeat `_sf_async_config` variable with settings.
-        var _sf_async_config = settings || {};
+        var _sf_async_config = this.settings || {};
 
         (function(){
             // Use the stored date from when we were loaded.

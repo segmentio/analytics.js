@@ -7,6 +7,12 @@
 
 analytics.addProvider('Mixpanel', {
 
+    settings : {
+        nameTag : true,
+        people  : false,
+        token   : null
+    },
+
     // Changes to the Mixpanel snippet:
     //
     // * Use window for call to `init`.
@@ -16,9 +22,7 @@ analytics.addProvider('Mixpanel', {
     // they already do that.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'token');
-
-        // Store settings for later.
-        this.settings = settings;
+        analytics.utils.extend(this.settings, settings);
 
         (function(c,a){window.mixpanel=a;var b,d,h,e;b=c.createElement("script");
         b.type="text/javascript";b.async=!0;b.src=("https:"===c.location.protocol?"https:":"http:")+
@@ -32,13 +36,13 @@ analytics.addProvider('Mixpanel', {
         a._i.push([b,c,f])};a.__SV=1.1;})(document,window.mixpanel||[]);
 
         // Directly pass in settings to Mixpanel as the second argument.
-        window.mixpanel.init(settings.token, settings);
+        window.mixpanel.init(this.settings.token, this.settings);
     },
 
     identify : function (userId, traits) {
         if (userId) {
             window.mixpanel.identify(userId);
-            window.mixpanel.name_tag(userId);
+            if (this.settings.nameTag) window.mixpanel.name_tag(userId);
             if (analytics.utils.isEmail(userId)) {
                 traits || (traits = {});
                 traits.email = userId;

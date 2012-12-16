@@ -30,7 +30,20 @@
         spy.restore();
     });
 
-    test('initialize resets providers and userId');
+    test('initialize resets providers and userId', function () {
+        analytics.initialize({
+            'test' : 'x'
+        });
+        analytics.identify('user');
+        expect(analytics.providers.length).to.equal(1);
+        expect(analytics.userId).to.equal('user');
+
+        analytics.initialize({
+            'test' : 'x'
+        });
+        expect(analytics.providers.length).to.equal(1);
+        expect(analytics.userId).to.be.null;
+    });
 
 
     suite('identify');
@@ -91,6 +104,33 @@
         };
         expect(analytics.utils.clone(object)).not.to.equal(object);
         expect(analytics.utils.clone(object)).to.deep.equal(object);
+    });
+
+    test('extend properly augments an object', function () {
+        var object = {
+            one : 1
+        };
+        analytics.utils.extend(object, { two: 2 });
+        expect(object).to.deep.equal({
+            one : 1,
+            two : 2
+        });
+
+        analytics.utils.extend(object, { three: 3 }, { four: 4 });
+        expect(object).to.deep.equal({
+            one   : 1,
+            two   : 2,
+            three : 3,
+            four  : 4
+        });
+
+        analytics.utils.extend(object, { one : 2 });
+        expect(object).to.deep.equal({
+            one   : 2,
+            two   : 2,
+            three : 3,
+            four  : 4
+        });
     });
 
     test('getSeconds returns the seconds of a date', function () {

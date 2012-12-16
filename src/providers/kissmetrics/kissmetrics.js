@@ -5,11 +5,16 @@
 
 analytics.addProvider('KISSmetrics', {
 
+    settings : {
+        apiKey : null
+    },
+
     // Changes to the KISSmetrics snippet:
     //
     // * Concatenate the `apiKey` into the URL.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
+        analytics.utils.extend(this.settings, settings);
 
         var _kmq = _kmq || [];
         function _kms(u){
@@ -21,7 +26,7 @@ analytics.addProvider('KISSmetrics', {
             }, 1);
         }
         _kms('//i.kissmetrics.com/i.js');
-        _kms('//doug1izaerwt3.cloudfront.net/'+settings.apiKey+'.1.js');
+        _kms('//doug1izaerwt3.cloudfront.net/'+this.settings.apiKey+'.1.js');
 
         window._kmq = _kmq;
     },

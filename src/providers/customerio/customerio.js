@@ -5,8 +5,15 @@
 
 analytics.addProvider('Customer.io', {
 
+    settings : {
+        siteId : null
+    },
+
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
 
         var _cio = _cio || [];
         (function() {
@@ -17,7 +24,7 @@ analytics.addProvider('Customer.io', {
                 s = document.getElementsByTagName('script')[0];
             t.async = true;
             t.id    = 'cio-tracker';
-            t.setAttribute('data-site-id', settings.siteId);
+            t.setAttribute('data-site-id', self.settings.siteId);
             t.src = 'https://assets.customer.io/assets/track.js';
             s.parentNode.insertBefore(t, s);
         })();
@@ -40,7 +47,7 @@ analytics.addProvider('Customer.io', {
         }
 
         // Swap the `createdAt` trait to the `created_at` that Customer.io
-        // needs.
+        // needs (in seconds).
         if (traits.createdAt) {
             traits.created_at = analytics.utils.getSeconds(traits.createdAt);
             delete traits.createdAt;

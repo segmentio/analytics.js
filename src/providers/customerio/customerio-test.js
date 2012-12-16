@@ -23,6 +23,7 @@
             'Customer.io' : 'x'
         });
         expect(window._cio).to.exist;
+        expect(analytics.providers[0].settings.siteId).to.equal('x');
     });
 
     test('calls identify on identify', function () {

@@ -1,4 +1,4 @@
-release:
+analytics.js:
 	cat \
 		src/analytics.js \
 		src/providers/chartbeat/chartbeat.js \
@@ -12,13 +12,9 @@ release:
 		src/providers/mixpanel/mixpanel.js \
 		src/providers/olark/olark.js \
 		> analytics.js
-	uglifyjs -o analytics.min.js analytics.js
-	make docs
 
-test:
-	open test/min.html
-	open test/providers.html
-	open test/analytics.html
+min:
+	uglifyjs -o analytics.min.js analytics.js
 
 docs:
 	docco \
@@ -35,4 +31,15 @@ docs:
 		src/providers/olark/olark.js
 	open docs/analytics.html
 
-.PHONY: release test docs
+test:
+	open test/min.html
+	open test/providers.html
+	open test/core.html
+
+release:
+	make analytics.js
+	make min
+	make docs
+	make test
+
+.PHONY: analytics.js min release test docs

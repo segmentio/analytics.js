@@ -164,6 +164,19 @@
                 return clone;
             },
 
+            // A helper to extend objects with properties from other objects.
+            // Based off of the [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L763)
+            // method.
+            extend : function (obj) {
+                var args = Array.prototype.slice.call(arguments, 1);
+                for (var i = 0, source; source = args[i]; i++) {
+                    for (var property in source) {
+                        obj[property] = source[property];
+                    }
+                }
+                return obj;
+            },
+
             // Type detection helpers, copied from
             // [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L928-L938).
             isObject : function (obj) {

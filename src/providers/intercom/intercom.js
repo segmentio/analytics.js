@@ -5,11 +5,16 @@
 
 analytics.addProvider('Intercom', {
 
+    settings : {
+        appId : null
+    },
+
     // Intercom identifies when the script is loaded, so instead of initializing
     // in `initialize`, we have to store the settings for later and initialize
     // in `identify`.
     initialize: function (settings) {
-        this.settings = analytics.utils.resolveSettings(settings, 'appId');
+        settings = analytics.utils.resolveSettings(settings, 'appId');
+        analytics.utils.extend(this.settings, settings);
     },
 
     // Changes to the Intercom snippet:

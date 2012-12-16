@@ -164,6 +164,19 @@
                 return clone;
             },
 
+            // A helper to extend objects with properties from other objects.
+            // Based off of the [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L763)
+            // method.
+            extend : function (obj) {
+                var args = Array.prototype.slice.call(arguments, 1);
+                for (var i = 0, source; source = args[i]; i++) {
+                    for (var property in source) {
+                        obj[property] = source[property];
+                    }
+                }
+                return obj;
+            },
+
             // Type detection helpers, copied from
             // [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L928-L938).
             isObject : function (obj) {
@@ -229,6 +242,11 @@
 
 analytics.addProvider('Chartbeat', {
 
+    settings : {
+        domain : null,
+        uid    : null
+    },
+
     // Changes to the Chartbeat snippet:
     //
     // * Add `apiKey` and `domain` variables to config.
@@ -238,10 +256,11 @@ analytics.addProvider('Chartbeat', {
     // they already do that.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'uid');
+        analytics.utils.extend(this.settings, settings);
 
         // Since all the custom settings just get passed through, update the
         // Chartbeat `_sf_async_config` variable with settings.
-        var _sf_async_config = settings || {};
+        var _sf_async_config = this.settings || {};
 
         (function(){
             // Use the stored date from when we were loaded.
@@ -270,16 +289,21 @@ analytics.addProvider('Chartbeat', {
 
 analytics.addProvider('CrazyEgg', {
 
+    settings : {
+        apiKey : null
+    },
+
     // Changes to the CrazyEgg snippet:
     //
     // * Concatenate the API key into the URL.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
+        analytics.utils.extend(this.settings, settings);
 
         (function(){
             var a=document.createElement("script");
             var b=document.getElementsByTagName("script")[0];
-            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+settings.apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
+            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+this.settings.apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
             a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b);
         })();
     }
@@ -294,8 +318,15 @@ analytics.addProvider('CrazyEgg', {
 
 analytics.addProvider('Customer.io', {
 
+    settings : {
+        siteId : null
+    },
+
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
 
         var _cio = _cio || [];
         (function() {
@@ -306,7 +337,7 @@ analytics.addProvider('Customer.io', {
                 s = document.getElementsByTagName('script')[0];
             t.async = true;
             t.id    = 'cio-tracker';
-            t.setAttribute('data-site-id', settings.siteId);
+            t.setAttribute('data-site-id', self.settings.siteId);
             t.src = 'https://assets.customer.io/assets/track.js';
             s.parentNode.insertBefore(t, s);
         })();
@@ -329,7 +360,7 @@ analytics.addProvider('Customer.io', {
         }
 
         // Swap the `createdAt` trait to the `created_at` that Customer.io
-        // needs.
+        // needs (in seconds).
         if (traits.createdAt) {
             traits.created_at = analytics.utils.getSeconds(traits.createdAt);
             delete traits.createdAt;
@@ -352,6 +383,13 @@ analytics.addProvider('Customer.io', {
 
 analytics.addProvider('Google Analytics', {
 
+    settings : {
+        anonymizeIp             : false,
+        enhancedLinkAttribution : false,
+        siteSpeedSampleRate     : null,
+        trackingId              : null
+    },
+
     // Changes to the Google Analytics snippet:
     //
     // * Added `trackingId`.
@@ -360,17 +398,18 @@ analytics.addProvider('Google Analytics', {
     // * Added optional support for `anonymizeIp`
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'trackingId');
+        analytics.utils.extend(this.settings, settings);
 
         var _gaq = _gaq || [];
-        _gaq.push(['_setAccount', settings.trackingId]);
-        if (settings.enhancedLinkAttribution) {
+        _gaq.push(['_setAccount', this.settings.trackingId]);
+        if (this.settings.enhancedLinkAttribution) {
             var pluginUrl = (('https:' == document.location.protocol) ? 'https://ssl.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
             _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
         }
-        if (analytics.utils.isNumber(settings.siteSpeedSampleRate)) {
-            _gaq.push(['_setSiteSpeedSampleRate', settings.siteSpeedSampleRate]);
+        if (analytics.utils.isNumber(this.settings.siteSpeedSampleRate)) {
+            _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
         }
-        if(settings.anonymizeIp) {
+        if(this.settings.anonymizeIp) {
             _gaq.push(['_gat._anonymizeIp']);
         }
         _gaq.push(['_trackPageview']);
@@ -397,6 +436,10 @@ analytics.addProvider('Google Analytics', {
 
 analytics.addProvider('HubSpot', {
 
+    settings : {
+        portalId : null
+    },
+
     // Changes to the HubSpot snippet:
     //
     // * Adding HubSpot snippet
@@ -404,12 +447,15 @@ analytics.addProvider('HubSpot', {
     // Use the `portalId` to setup the HubSpot tracking code.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'portalId');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
 
         (function(d,s,i,r) {
             if (d.getElementById(i)){return;}
             window._hsq = window._hsq || []; // for calls pre-load
             var n=d.createElement(s),e=d.getElementsByTagName(s)[0];
-            n.id=i;n.src='https://js.hubspot.com/analytics/'+(Math.ceil(new Date()/r)*r)+'/' + settings.portalId + '.js';
+            n.id=i;n.src='https://js.hubspot.com/analytics/'+(Math.ceil(new Date()/r)*r)+'/' + self.settings.portalId + '.js';
             e.parentNode.insertBefore(n, e);
         })(document,"script","hs-analytics",300000);
     },
@@ -439,11 +485,16 @@ analytics.addProvider('HubSpot', {
 
 analytics.addProvider('Intercom', {
 
+    settings : {
+        appId : null
+    },
+
     // Intercom identifies when the script is loaded, so instead of initializing
     // in `initialize`, we have to store the settings for later and initialize
     // in `identify`.
     initialize: function (settings) {
-        this.settings = analytics.utils.resolveSettings(settings, 'appId');
+        settings = analytics.utils.resolveSettings(settings, 'appId');
+        analytics.utils.extend(this.settings, settings);
     },
 
     // Changes to the Intercom snippet:
@@ -493,11 +544,16 @@ analytics.addProvider('Intercom', {
 
 analytics.addProvider('KISSmetrics', {
 
+    settings : {
+        apiKey : null
+    },
+
     // Changes to the KISSmetrics snippet:
     //
     // * Concatenate the `apiKey` into the URL.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
+        analytics.utils.extend(this.settings, settings);
 
         var _kmq = _kmq || [];
         function _kms(u){
@@ -509,7 +565,7 @@ analytics.addProvider('KISSmetrics', {
             }, 1);
         }
         _kms('//i.kissmetrics.com/i.js');
-        _kms('//doug1izaerwt3.cloudfront.net/'+settings.apiKey+'.1.js');
+        _kms('//doug1izaerwt3.cloudfront.net/'+this.settings.apiKey+'.1.js');
 
         window._kmq = _kmq;
     },
@@ -536,11 +592,16 @@ analytics.addProvider('KISSmetrics', {
 
 analytics.addProvider('Klaviyo', {
 
+    settings : {
+        apiKey : null
+    },
+
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
+        analytics.utils.extend(this.settings, settings);
 
         var _learnq = _learnq || [];
-        _learnq.push(['account', settings.apiKey]);
+        _learnq.push(['account', this.settings.apiKey]);
         (function () {
             var b = document.createElement('script'); b.type = 'text/javascript'; b.async = true;
             b.src = ('https:' == document.location.protocol ? 'https://' : 'http://') +
@@ -576,6 +637,12 @@ analytics.addProvider('Klaviyo', {
 
 analytics.addProvider('Mixpanel', {
 
+    settings : {
+        nameTag : true,
+        people  : false,
+        token   : null
+    },
+
     // Changes to the Mixpanel snippet:
     //
     // * Use window for call to `init`.
@@ -585,9 +652,7 @@ analytics.addProvider('Mixpanel', {
     // they already do that.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'token');
-
-        // Store settings for later.
-        this.settings = settings;
+        analytics.utils.extend(this.settings, settings);
 
         (function(c,a){window.mixpanel=a;var b,d,h,e;b=c.createElement("script");
         b.type="text/javascript";b.async=!0;b.src=("https:"===c.location.protocol?"https:":"http:")+
@@ -601,13 +666,13 @@ analytics.addProvider('Mixpanel', {
         a._i.push([b,c,f])};a.__SV=1.1;})(document,window.mixpanel||[]);
 
         // Directly pass in settings to Mixpanel as the second argument.
-        window.mixpanel.init(settings.token, settings);
+        window.mixpanel.init(this.settings.token, this.settings);
     },
 
     identify : function (userId, traits) {
         if (userId) {
             window.mixpanel.identify(userId);
-            window.mixpanel.name_tag(userId);
+            if (this.settings.nameTag) window.mixpanel.name_tag(userId);
             if (analytics.utils.isEmail(userId)) {
                 traits || (traits = {});
                 traits.email = userId;
@@ -667,6 +732,11 @@ analytics.addProvider('Mixpanel', {
 
 analytics.addProvider('Olark', {
 
+    settings : {
+        siteId : null,
+        track  : false
+    },
+
     // Changes to the Olark snippet:
     //
     // * Removed `CDATA` tags.
@@ -674,13 +744,10 @@ analytics.addProvider('Olark', {
     // * Added `window.` before `olark.identify`.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
-
-        // Store settings for later as well, so that we know whether to track
-        // or not.
-        this.settings = settings;
+        analytics.utils.extend(this.settings, settings);
 
         window.olark||(function(c){var f=window,d=document,l=f.location.protocol=="https:"?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while(q--){(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={0:+new Date};a.P=function(u){a.p[u]=new Date-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if(!m){return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if(/MSIE[ ]+6/.test(navigator.userAgent)){b.src="javascript:false"}b.allowTransparency="true";v[j](b);try{b.contentWindow[g].open()}catch(w){c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try{var t=b.contentWindow[g];t.write(p());t.close()}catch(x){b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({loader: "static.olark.com/jsclient/loader0.js",name:"olark",methods:["configure","extend","declare","identify"]});
-        window.olark.identify(settings.siteId);
+        window.olark.identify(this.settings.siteId);
     },
 
     identify : function (userId, traits) {

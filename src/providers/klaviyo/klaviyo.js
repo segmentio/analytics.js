@@ -6,11 +6,16 @@
 
 analytics.addProvider('Klaviyo', {
 
+    settings : {
+        apiKey : null
+    },
+
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
+        analytics.utils.extend(this.settings, settings);
 
         var _learnq = _learnq || [];
-        _learnq.push(['account', settings.apiKey]);
+        _learnq.push(['account', this.settings.apiKey]);
         (function () {
             var b = document.createElement('script'); b.type = 'text/javascript'; b.async = true;
             b.src = ('https:' == document.location.protocol ? 'https://' : 'http://') +

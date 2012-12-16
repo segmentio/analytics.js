@@ -24,13 +24,15 @@
     test('stores settings and adds mixpanel.js on initialize', function () {
         expect(window.mixpanel).not.to.exist;
 
-        var settings = {
-            token  : 'x',
-            people : true
-        };
-        analytics.initialize({ 'Mixpanel' : settings });
+        analytics.initialize({
+            'Mixpanel' : {
+                token  : 'x',
+                people : true
+            }
+        });
         expect(window.mixpanel).to.exist;
-        expect(analytics.providers[0].settings).to.equal(settings);
+        expect(analytics.providers[0].settings.token).to.equal('x');
+        expect(analytics.providers[0].settings.people).to.be.true;
     });
 
     test('calls init on initialize');
@@ -72,6 +74,8 @@
 
         spy.restore();
     });
+
+    // TODO name tag with settings flag
 
     test('calls name_tag on identify', function () {
         // Reset internal `userId` state from any previous identifies.

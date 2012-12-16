@@ -23,9 +23,7 @@
             'Olark' : 'x'
         });
         expect(window.olark).to.exist;
-        expect(analytics.providers[0].settings).to.deep.equal({
-            'siteId' : 'x'
-        });
+        expect(analytics.providers[0].settings.siteId).to.equal('x');
     });
 
     test('updates visitor nickname on identify with the best name', function () {

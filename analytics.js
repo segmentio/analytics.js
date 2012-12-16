@@ -5,6 +5,9 @@
 
 (function () {
 
+    // Setup
+    // -----
+
     // A reference to the global object, `window` in the browser, `global` on
     // the server.
     var root = this;
@@ -27,23 +30,23 @@
 
 
         // Providers
-        // =========
+        // ---------
 
         // A dictionary of analytics providers that _can_ be initialized.
-        availableProviders : {},
+        initializableProviders : {},
 
-        // A list of analytics providers that are initialized.
+        // An array of analytics providers that are initialized.
         providers : [],
 
         // Adds a provider to the list of available providers that can be
         // initialized.
         addProvider : function (name, provider) {
-            this.availableProviders[name] = provider;
+            this.initializableProviders[name] = provider;
         },
 
 
         // Initialize
-        // ==========
+        // ----------
 
         // Call **initialize** to setup analytics.js before identifying or
         // tracking any users or events. Here's what a call to **initialize**
@@ -55,9 +58,9 @@
         //         'KISSmetrics'      : 'XXXXXXXXXXX'
         //     });
         //
-        // `providers` - a dictionary of the providers you want to enabled. The
-        // keys are the names of the providers and their values are either an
-        // api key, or dictionary of extra settings (including the api key).
+        // * `providers` is a dictionary of the providers you want to enabled.
+        // The keys are the names of the providers and their values are either
+        // an api key, or dictionary of extra settings (including the api key).
         initialize : function (providers) {
             // Reset our state.
             this.providers = [];
@@ -66,9 +69,10 @@
             // Initialize each provider with the proper settings, and copy the
             // provider into `this.providers`.
             for (var key in providers) {
-                var provider = this.availableProviders[key];
+                var provider = this.initializableProviders[key];
+                var settings = providers[key];
                 if (!provider) throw new Error('Could not find a provider named "'+key+'"');
-                provider.initialize(providers[key]);
+                provider.initialize(settings);
                 this.providers.push(provider);
             }
 
@@ -78,25 +82,28 @@
 
 
         // Identify
-        // ========
+        // --------
 
         // Identifying a user ties all of their actions to an ID you recognize
         // and records properties about a user. An example identify:
         //
-        //     analytics.identify('user@example.com', {
-        //         name : 'Achilles',
-        //         age  : 23
+        //     analytics.identify('4d3ed089fb60ab534684b7e0', {
+        //         name  : 'Achilles',
+        //         email : 'achilles@segment.io',
+        //         age   : 23
         //     });
         //
-        // `userId` - [optional] the ID you know the user by, like an email.
-        //
-        // `traits` - [optional] a dictionary of traits to tie your user. Things
-        // like *Name*, *Age* or *Friend Count*.
+        // * `userId` (optional) is the ID you know the user by. Ideally this
+        // isn't an email, because the user might be able to change their email
+        // and you don't want that to affect your analytics.
+        // * `traits` (optional) is a dictionary of traits to tie your user.
+        // Things like `name`, `age` or `friendCount`. If you have them, you
+        // should always store a `name` and `email`.
         identify : function (userId, traits) {
             if (!this.initialized) return;
 
             // Allow for identifying traits without setting a `userId`, for
-            // anonymous users whose trait you know.
+            // anonymous users whose traits you learn.
             if (this.utils.isObject(userId)) {
                 traits = userId;
                 userId = null;
@@ -117,7 +124,7 @@
 
 
         // Track
-        // =====
+        // -----
 
         // Whenever a visitor triggers an event on your site that you're
         // interested in, you'll want to track it. An example track:
@@ -127,11 +134,12 @@
         //         volume : 11
         //     });
         //
-        // `event` - the name of the event. The best event names are human-
-        // readable so that your whole team knows what they are when you analyze
-        // your data.
-        //
-        // `properties` - [optional] a dictionary of properties of the event.
+        // * `event` is the name of the event. The best names are human-readable
+        // so that your whole team knows what they mean when they analyze your
+        // data.
+        // * `properties` (optional) is a dictionary of properties of the event.
+        // Property keys are all camelCase (we'll alias to non-camelCase for
+        // you automatically for providers that require it).
         track : function (event, properties) {
             if (!this.initialized) return;
 
@@ -144,7 +152,7 @@
 
 
         // Utils
-        // =====
+        // -----
 
         utils : {
 
@@ -175,6 +183,19 @@
                     }
                 }
                 return obj;
+            },
+
+            // A helper to alias certain object's keys to different key names.
+            // Useful for abstracting over providers that require specific key
+            // names.
+            alias : function (obj, aliases) {
+                for (var prop in aliases) {
+                    var alias = aliases[prop];
+                    if (obj[prop] !== undefined) {
+                        obj[alias] = obj[prop];
+                        delete obj[prop];
+                    }
+                }
             },
 
             // Type detection helpers, copied from
@@ -233,9 +254,6 @@
 }).call(this);
 
 
-// Chartbeat
-// ---------
-// Last updated: November 27th, 2012
 // [Documentation](http://chartbeat.com/docs/adding_the_code/),
 // [documentation](http://chartbeat.com/docs/configuration_variables/),
 // [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
@@ -247,13 +265,14 @@ analytics.addProvider('Chartbeat', {
         uid    : null
     },
 
+
+    // Initialize
+    // ----------
+
     // Changes to the Chartbeat snippet:
     //
-    // * Add `apiKey` and `domain` variables to config.
+    // * Pass `settings` directly as the config object.
     // * Replaced the date with our stored `date` variable.
-    //
-    // Also, we don't need to set the `mixpanel` object on `window` because
-    // they already do that.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'uid');
         analytics.utils.extend(this.settings, settings);
@@ -282,9 +301,6 @@ analytics.addProvider('Chartbeat', {
 });
 
 
-// CrazyEgg.com
-// ----------
-// Last updated: December 6th, 2012
 // [Documentation](www.crazyegg.com).
 
 analytics.addProvider('CrazyEgg', {
@@ -293,9 +309,13 @@ analytics.addProvider('CrazyEgg', {
         apiKey : null
     },
 
+
+    // Initialize
+    // ----------
+
     // Changes to the CrazyEgg snippet:
     //
-    // * Concatenate the API key into the URL.
+    // * Concatenate `apiKey` into the URL.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
@@ -311,9 +331,6 @@ analytics.addProvider('CrazyEgg', {
 });
 
 
-// Customer.io
-// ----------
-// Last updated: December 6th, 2012
 // [Documentation](http://customer.io/docs/api/javascript.html).
 
 analytics.addProvider('Customer.io', {
@@ -322,6 +339,13 @@ analytics.addProvider('Customer.io', {
         siteId : null
     },
 
+
+    // Initialize
+    // ----------
+
+    // Changes to the Chartbeat snippet:
+    //
+    // * Add `siteId`.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
         analytics.utils.extend(this.settings, settings);
@@ -343,6 +367,10 @@ analytics.addProvider('Customer.io', {
         })();
         window._cio = _cio;
     },
+
+
+    // Identify
+    // --------
 
     identify : function (userId, traits) {
         // Don't do anything if we just have traits, because Customer.io
@@ -369,6 +397,10 @@ analytics.addProvider('Customer.io', {
         window._cio.identify(traits);
     },
 
+
+    // Track
+    // -----
+
     track : function (event, properties) {
         window._cio.track(event, properties);
     }
@@ -376,9 +408,6 @@ analytics.addProvider('Customer.io', {
 });
 
 
-// Google Analytics
-// ----------------
-// Last updated: October 31st, 2012
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
 
 analytics.addProvider('Google Analytics', {
@@ -389,6 +418,10 @@ analytics.addProvider('Google Analytics', {
         siteSpeedSampleRate     : null,
         trackingId              : null
     },
+
+
+    // Initialize
+    // ----------
 
     // Changes to the Google Analytics snippet:
     //
@@ -422,6 +455,10 @@ analytics.addProvider('Google Analytics', {
         window._gaq = _gaq;
     },
 
+
+    // Track
+    // -----
+
     track : function (event, properties) {
         window._gaq.push(['_trackEvent', 'All', event]);
     }
@@ -429,9 +466,6 @@ analytics.addProvider('Google Analytics', {
 });
 
 
-// HubSpot
-// -------
-// Last updated: December 13th, 2012
 // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
 
 analytics.addProvider('HubSpot', {
@@ -440,11 +474,13 @@ analytics.addProvider('HubSpot', {
         portalId : null
     },
 
+
+    // Initialize
+    // ----------
+
     // Changes to the HubSpot snippet:
     //
-    // * Adding HubSpot snippet
-
-    // Use the `portalId` to setup the HubSpot tracking code.
+    // * Concatenate `portalId` into the URL.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'portalId');
         analytics.utils.extend(this.settings, settings);
@@ -460,6 +496,10 @@ analytics.addProvider('HubSpot', {
         })(document,"script","hs-analytics",300000);
     },
 
+
+    // Identify
+    // --------
+
     identify : function (userId, traits) {
         // HubSpot does not use a userId, but the email address is required on
         // the traits object.
@@ -467,6 +507,10 @@ analytics.addProvider('HubSpot', {
 
         window._hsq.push(["identify", traits]);
     },
+
+
+    // Track
+    // -----
 
     // Event Tracking is available to HubSpot Enterprise customers only. In
     // addition to adding any unique event name, you can also use the id of an
@@ -478,9 +522,6 @@ analytics.addProvider('HubSpot', {
 });
 
 
-// Intercom
-// --------
-// Last updated: December 12th, 2012
 // [Documentation](http://docs.intercom.io/).
 
 analytics.addProvider('Intercom', {
@@ -489,13 +530,21 @@ analytics.addProvider('Intercom', {
         appId : null
     },
 
+
+    // Initialize
+    // ----------
+
     // Intercom identifies when the script is loaded, so instead of initializing
-    // in `initialize`, we have to store the settings for later and initialize
-    // in `identify`.
+    // in `initialize`, we store the settings for later and initialize in
+    // `identify`.
     initialize: function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'appId');
         analytics.utils.extend(this.settings, settings);
     },
+
+
+    // Identify
+    // --------
 
     // Changes to the Intercom snippet:
     //
@@ -505,18 +554,22 @@ analytics.addProvider('Intercom', {
         // Don't do anything if we just have traits.
         if (!userId) return;
 
+        // Pass traits directly in to Intercom's `custom_data`.
         window.intercomSettings = {
             app_id      : this.settings.appId,
             user_id     : userId,
             custom_data : traits || {},
         };
 
+        // Augment `intercomSettings` with some of the special traits.
         if (traits) {
             window.intercomSettings.email = traits.email;
             window.intercomSettings.name = traits.name;
             window.intercomSettings.created_at = analytics.utils.getSeconds(traits.createdAt);
         }
-        if (analytics.utils.isEmail(userId) && !traits.email) {
+
+        // If they didn't pass an email, check to see if the `userId` qualifies.
+        if (analytics.utils.isEmail(userId) && (traits && !traits.email)) {
             window.intercomSettings.email = userId;
         }
 
@@ -537,9 +590,6 @@ analytics.addProvider('Intercom', {
 });
 
 
-// KISSmetrics
-// -----------
-// Last updated: December 12th, 2012
 // [Documentation](http://support.kissmetrics.com/apis/javascript).
 
 analytics.addProvider('KISSmetrics', {
@@ -547,6 +597,10 @@ analytics.addProvider('KISSmetrics', {
     settings : {
         apiKey : null
     },
+
+
+    // Initialize
+    // ----------
 
     // Changes to the KISSmetrics snippet:
     //
@@ -570,12 +624,20 @@ analytics.addProvider('KISSmetrics', {
         window._kmq = _kmq;
     },
 
+
+    // Identify
+    // --------
+
     // KISSmetrics uses two separate methods: `identify` for storing the
-    // `userId` and `set` for storing `traits`.
+    // `userId`, and `set` for storing `traits`.
     identify : function (userId, traits) {
         if (userId) window._kmq.push(['identify', userId]);
         if (traits) window._kmq.push(['set', traits]);
     },
+
+
+    // Track
+    // -----
 
     track : function (event, properties) {
         window._kmq.push(['record', event, properties]);
@@ -584,9 +646,6 @@ analytics.addProvider('KISSmetrics', {
 });
 
 
-// Klaviyo
-// --------
-// Last updated: December 12th, 2012
 // [Documentation](https://www.klaviyo.com/docs).
 // [Documentation](https://www.klaviyo.com/docs/http-api).
 
@@ -596,6 +655,13 @@ analytics.addProvider('Klaviyo', {
         apiKey : null
     },
 
+
+    // Initialize
+    // ----------
+
+    // Changes to the Google Analytics snippet:
+    //
+    // * Added `apiKey`.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
@@ -612,14 +678,21 @@ analytics.addProvider('Klaviyo', {
         window._learnq = _learnq;
     },
 
-    identify : function (userId, traits) {
-        traits || (traits = {});
 
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
         // Klaviyo takes the user ID on the traits object itself.
+        traits || (traits = {});
         if (userId) traits.$id = userId;
 
         window._learnq.push(['identify', traits]);
     },
+
+
+    // Track
+    // -----
 
     track : function (event, properties) {
         window._learnq.push(['track', event, properties]);
@@ -628,9 +701,6 @@ analytics.addProvider('Klaviyo', {
 });
 
 
-// Mixpanel
-// --------
-// Last updated: September 27th, 2012
 // [Documentation](https://mixpanel.com/docs/integration-libraries/javascript),
 // [documentation](https://mixpanel.com/docs/people-analytics/javascript),
 // [documentation](https://mixpanel.com/docs/integration-libraries/javascript-full-api).
@@ -643,12 +713,16 @@ analytics.addProvider('Mixpanel', {
         token   : null
     },
 
+
+    // Initialize
+    // ----------
+
     // Changes to the Mixpanel snippet:
     //
     // * Use window for call to `init`.
-    // * Add `apiKey` and `settings` args to call to `init`.
+    // * Add `token` and `settings` args to call to `init`.
     //
-    // Also, we don't need to set the `mixpanel` object on `window` because
+    // We don't need to set the `mixpanel` object on `window` ourselves because
     // they already do that.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'token');
@@ -665,69 +739,56 @@ analytics.addProvider('Mixpanel', {
         'set_config','people.identify','people.set','people.increment'];for(e=0;e<h.length;e++)d(g,h[e]);
         a._i.push([b,c,f])};a.__SV=1.1;})(document,window.mixpanel||[]);
 
-        // Directly pass in settings to Mixpanel as the second argument.
+        // Pass settings directly to `init` as the second argument.
         window.mixpanel.init(this.settings.token, this.settings);
     },
 
+
+    // Identify
+    // --------
+
     identify : function (userId, traits) {
+        // If we have an email and no email trait, set the email trait.
+        if (userId && analytics.utils.isEmail(userId) && (traits && !traits.email)) {
+            traits || (traits = {});
+            traits.email = userId;
+        }
+
+        // Alias the traits' keys with dollar signs for Mixpanel's API.
+        if (traits) {
+            analytics.utils.alias(traits, {
+                'email'     : '$email',
+                'name'      : '$name',
+                'username'  : '$username',
+                'lastSeen'  : '$lastSeen',
+                'createdAt' : '$created'
+            });
+        }
+
+        // Finally, call all of the identify equivalents. Verify certain calls
+        // against settings to make sure they're enabled.
         if (userId) {
             window.mixpanel.identify(userId);
             if (this.settings.nameTag) window.mixpanel.name_tag(userId);
-            if (analytics.utils.isEmail(userId)) {
-                traits || (traits = {});
-                traits.email = userId;
-            }
+            if (this.settings.people) window.mixpanel.people.identify(userId);
         }
-
         if (traits) {
-            // Properly alias the traits for Mixpanel's API.
-            this.aliasTraits(traits);
             window.mixpanel.register(traits);
-        }
-
-        // Only use people if they have it turned on, because it's charged
-        // separately.
-        if (this.settings.people === true) {
-            if (userId) window.mixpanel.people.identify(userId);
-            if (traits) window.mixpanel.people.set(traits);
+            if (this.settings.people) window.mixpanel.people.set(traits);
         }
     },
+
+
+    // Track
+    // -----
 
     track : function (event, properties) {
         window.mixpanel.track(event, properties);
-    },
-
-    // Mixpanel takes special traits with dollar signs in front of them, so we
-    // convert normal trait keys into their special keys.
-    aliasTraits : function (traits) {
-        if (traits.email) {
-            traits['$email'] = traits.email;
-            delete traits.email;
-        }
-        if (traits.name) {
-            traits['$name'] = traits.name;
-            delete traits.name;
-        }
-        if (traits.username) {
-            traits['$username'] = traits.username;
-            delete traits.username;
-        }
-        if (traits.lastSeen) {
-            traits['$last_login'] = traits.lastSeen;
-            delete traits.lastSeen;
-        }
-        if (traits.createdAt) {
-            traits['$created'] = traits.createdAt;
-            delete traits.createdAt;
-        }
     }
 
 });
 
 
-// Olark
-// -----
-// Last updated: October 11th, 2012
 // [Documentation](http://www.olark.com/documentation).
 
 analytics.addProvider('Olark', {
@@ -737,11 +798,14 @@ analytics.addProvider('Olark', {
         track  : false
     },
 
+
+    // Initialize
+    // ----------
+
     // Changes to the Olark snippet:
     //
     // * Removed `CDATA` tags.
     // * Add `siteId` from stored `settings`.
-    // * Added `window.` before `olark.identify`.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
         analytics.utils.extend(this.settings, settings);
@@ -750,6 +814,12 @@ analytics.addProvider('Olark', {
         window.olark.identify(this.settings.siteId);
     },
 
+
+    // Identify
+    // --------
+
+    // Olark isn't an analytics service, but we can use the `userId` and
+    // `traits` to tag the user with their real name in the chat console.
     identify : function (userId, traits) {
         // Choose the best name for the user that we can get.
         var name = userId;
@@ -764,6 +834,12 @@ analytics.addProvider('Olark', {
         });
     },
 
+
+    // Track
+    // -----
+
+    // Again, all we're doing is logging events the user triggers to the chat
+    // console, if you so desire it.
     track : function (event, properties) {
         // Check the `track` setting to know whether log events or not.
         if (!this.settings.track) return;

@@ -133,6 +133,29 @@
         });
     });
 
+    test('alias properly changes props to their aliases', function () {
+        var traits = {
+            name  : 'Medusa',
+            email : 'medusa@segment.io'
+        };
+
+        analytics.utils.alias(traits, {
+            email : '$email'
+        });
+        expect(traits).to.deep.equal({
+            name   : 'Medusa',
+            $email : 'medusa@segment.io'
+        });
+
+        analytics.utils.alias(traits, {
+            createdAt : 'created_at'
+        });
+        expect(traits).to.deep.equal({
+            name   : 'Medusa',
+            $email : 'medusa@segment.io'
+        });
+    });
+
     test('getSeconds returns the seconds of a date', function () {
         var date = new Date(1355548865865);
         expect(analytics.utils.getSeconds(date)).to.equal(1355548865);

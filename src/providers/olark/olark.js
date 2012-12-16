@@ -1,6 +1,3 @@
-// Olark
-// -----
-// Last updated: October 11th, 2012
 // [Documentation](http://www.olark.com/documentation).
 
 analytics.addProvider('Olark', {
@@ -10,11 +7,14 @@ analytics.addProvider('Olark', {
         track  : false
     },
 
+
+    // Initialize
+    // ----------
+
     // Changes to the Olark snippet:
     //
     // * Removed `CDATA` tags.
     // * Add `siteId` from stored `settings`.
-    // * Added `window.` before `olark.identify`.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
         analytics.utils.extend(this.settings, settings);
@@ -23,6 +23,12 @@ analytics.addProvider('Olark', {
         window.olark.identify(this.settings.siteId);
     },
 
+
+    // Identify
+    // --------
+
+    // Olark isn't an analytics service, but we can use the `userId` and
+    // `traits` to tag the user with their real name in the chat console.
     identify : function (userId, traits) {
         // Choose the best name for the user that we can get.
         var name = userId;
@@ -37,6 +43,12 @@ analytics.addProvider('Olark', {
         });
     },
 
+
+    // Track
+    // -----
+
+    // Again, all we're doing is logging events the user triggers to the chat
+    // console, if you so desire it.
     track : function (event, properties) {
         // Check the `track` setting to know whether log events or not.
         if (!this.settings.track) return;

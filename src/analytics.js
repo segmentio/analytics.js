@@ -5,6 +5,9 @@
 
 (function () {
 
+    // Setup
+    // -----
+
     // A reference to the global object, `window` in the browser, `global` on
     // the server.
     var root = this;
@@ -27,23 +30,23 @@
 
 
         // Providers
-        // =========
+        // ---------
 
         // A dictionary of analytics providers that _can_ be initialized.
-        availableProviders : {},
+        initializableProviders : {},
 
-        // A list of analytics providers that are initialized.
+        // An array of analytics providers that are initialized.
         providers : [],
 
         // Adds a provider to the list of available providers that can be
         // initialized.
         addProvider : function (name, provider) {
-            this.availableProviders[name] = provider;
+            this.initializableProviders[name] = provider;
         },
 
 
         // Initialize
-        // ==========
+        // ----------
 
         // Call **initialize** to setup analytics.js before identifying or
         // tracking any users or events. Here's what a call to **initialize**
@@ -55,9 +58,9 @@
         //         'KISSmetrics'      : 'XXXXXXXXXXX'
         //     });
         //
-        // `providers` - a dictionary of the providers you want to enabled. The
-        // keys are the names of the providers and their values are either an
-        // api key, or dictionary of extra settings (including the api key).
+        // * `providers` is a dictionary of the providers you want to enabled.
+        // The keys are the names of the providers and their values are either
+        // an api key, or dictionary of extra settings (including the api key).
         initialize : function (providers) {
             // Reset our state.
             this.providers = [];
@@ -66,9 +69,10 @@
             // Initialize each provider with the proper settings, and copy the
             // provider into `this.providers`.
             for (var key in providers) {
-                var provider = this.availableProviders[key];
+                var provider = this.initializableProviders[key];
+                var settings = providers[key];
                 if (!provider) throw new Error('Could not find a provider named "'+key+'"');
-                provider.initialize(providers[key]);
+                provider.initialize(settings);
                 this.providers.push(provider);
             }
 
@@ -78,25 +82,28 @@
 
 
         // Identify
-        // ========
+        // --------
 
         // Identifying a user ties all of their actions to an ID you recognize
         // and records properties about a user. An example identify:
         //
-        //     analytics.identify('user@example.com', {
-        //         name : 'Achilles',
-        //         age  : 23
+        //     analytics.identify('4d3ed089fb60ab534684b7e0', {
+        //         name  : 'Achilles',
+        //         email : 'achilles@segment.io',
+        //         age   : 23
         //     });
         //
-        // `userId` - [optional] the ID you know the user by, like an email.
-        //
-        // `traits` - [optional] a dictionary of traits to tie your user. Things
-        // like *Name*, *Age* or *Friend Count*.
+        // * `userId` (optional) is the ID you know the user by. Ideally this
+        // isn't an email, because the user might be able to change their email
+        // and you don't want that to affect your analytics.
+        // * `traits` (optional) is a dictionary of traits to tie your user.
+        // Things like `name`, `age` or `friendCount`. If you have them, you
+        // should always store a `name` and `email`.
         identify : function (userId, traits) {
             if (!this.initialized) return;
 
             // Allow for identifying traits without setting a `userId`, for
-            // anonymous users whose trait you know.
+            // anonymous users whose traits you learn.
             if (this.utils.isObject(userId)) {
                 traits = userId;
                 userId = null;
@@ -117,7 +124,7 @@
 
 
         // Track
-        // =====
+        // -----
 
         // Whenever a visitor triggers an event on your site that you're
         // interested in, you'll want to track it. An example track:
@@ -127,11 +134,12 @@
         //         volume : 11
         //     });
         //
-        // `event` - the name of the event. The best event names are human-
-        // readable so that your whole team knows what they are when you analyze
-        // your data.
-        //
-        // `properties` - [optional] a dictionary of properties of the event.
+        // * `event` is the name of the event. The best names are human-readable
+        // so that your whole team knows what they mean when they analyze your
+        // data.
+        // * `properties` (optional) is a dictionary of properties of the event.
+        // Property keys are all camelCase (we'll alias to non-camelCase for
+        // you automatically for providers that require it).
         track : function (event, properties) {
             if (!this.initialized) return;
 
@@ -144,7 +152,7 @@
 
 
         // Utils
-        // =====
+        // -----
 
         utils : {
 
@@ -175,6 +183,19 @@
                     }
                 }
                 return obj;
+            },
+
+            // A helper to alias certain object's keys to different key names.
+            // Useful for abstracting over providers that require specific key
+            // names.
+            alias : function (obj, aliases) {
+                for (var prop in aliases) {
+                    var alias = aliases[prop];
+                    if (obj[prop] !== undefined) {
+                        obj[alias] = obj[prop];
+                        delete obj[prop];
+                    }
+                }
             },
 
             // Type detection helpers, copied from

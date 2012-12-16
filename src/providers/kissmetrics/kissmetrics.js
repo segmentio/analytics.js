@@ -1,6 +1,3 @@
-// KISSmetrics
-// -----------
-// Last updated: December 12th, 2012
 // [Documentation](http://support.kissmetrics.com/apis/javascript).
 
 analytics.addProvider('KISSmetrics', {
@@ -8,6 +5,10 @@ analytics.addProvider('KISSmetrics', {
     settings : {
         apiKey : null
     },
+
+
+    // Initialize
+    // ----------
 
     // Changes to the KISSmetrics snippet:
     //
@@ -31,12 +32,20 @@ analytics.addProvider('KISSmetrics', {
         window._kmq = _kmq;
     },
 
+
+    // Identify
+    // --------
+
     // KISSmetrics uses two separate methods: `identify` for storing the
-    // `userId` and `set` for storing `traits`.
+    // `userId`, and `set` for storing `traits`.
     identify : function (userId, traits) {
         if (userId) window._kmq.push(['identify', userId]);
         if (traits) window._kmq.push(['set', traits]);
     },
+
+
+    // Track
+    // -----
 
     track : function (event, properties) {
         window._kmq.push(['record', event, properties]);

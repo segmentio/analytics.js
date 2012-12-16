@@ -1,6 +1,3 @@
-// HubSpot
-// -------
-// Last updated: December 13th, 2012
 // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
 
 analytics.addProvider('HubSpot', {
@@ -9,11 +6,13 @@ analytics.addProvider('HubSpot', {
         portalId : null
     },
 
+
+    // Initialize
+    // ----------
+
     // Changes to the HubSpot snippet:
     //
-    // * Adding HubSpot snippet
-
-    // Use the `portalId` to setup the HubSpot tracking code.
+    // * Concatenate `portalId` into the URL.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'portalId');
         analytics.utils.extend(this.settings, settings);
@@ -29,6 +28,10 @@ analytics.addProvider('HubSpot', {
         })(document,"script","hs-analytics",300000);
     },
 
+
+    // Identify
+    // --------
+
     identify : function (userId, traits) {
         // HubSpot does not use a userId, but the email address is required on
         // the traits object.
@@ -36,6 +39,10 @@ analytics.addProvider('HubSpot', {
 
         window._hsq.push(["identify", traits]);
     },
+
+
+    // Track
+    // -----
 
     // Event Tracking is available to HubSpot Enterprise customers only. In
     // addition to adding any unique event name, you can also use the id of an

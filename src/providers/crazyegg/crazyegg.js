@@ -1,6 +1,3 @@
-// CrazyEgg.com
-// ----------
-// Last updated: December 6th, 2012
 // [Documentation](www.crazyegg.com).
 
 analytics.addProvider('CrazyEgg', {
@@ -9,9 +6,13 @@ analytics.addProvider('CrazyEgg', {
         apiKey : null
     },
 
+
+    // Initialize
+    // ----------
+
     // Changes to the CrazyEgg snippet:
     //
-    // * Concatenate the API key into the URL.
+    // * Concatenate `apiKey` into the URL.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);

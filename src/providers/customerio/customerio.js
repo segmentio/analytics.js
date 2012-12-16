@@ -1,6 +1,3 @@
-// Customer.io
-// ----------
-// Last updated: December 6th, 2012
 // [Documentation](http://customer.io/docs/api/javascript.html).
 
 analytics.addProvider('Customer.io', {
@@ -9,6 +6,13 @@ analytics.addProvider('Customer.io', {
         siteId : null
     },
 
+
+    // Initialize
+    // ----------
+
+    // Changes to the Chartbeat snippet:
+    //
+    // * Add `siteId`.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
         analytics.utils.extend(this.settings, settings);
@@ -30,6 +34,10 @@ analytics.addProvider('Customer.io', {
         })();
         window._cio = _cio;
     },
+
+
+    // Identify
+    // --------
 
     identify : function (userId, traits) {
         // Don't do anything if we just have traits, because Customer.io
@@ -55,6 +63,10 @@ analytics.addProvider('Customer.io', {
 
         window._cio.identify(traits);
     },
+
+
+    // Track
+    // -----
 
     track : function (event, properties) {
         window._cio.track(event, properties);

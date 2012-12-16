@@ -1,6 +1,3 @@
-// Google Analytics
-// ----------------
-// Last updated: October 31st, 2012
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
 
 analytics.addProvider('Google Analytics', {
@@ -11,6 +8,10 @@ analytics.addProvider('Google Analytics', {
         siteSpeedSampleRate     : null,
         trackingId              : null
     },
+
+
+    // Initialize
+    // ----------
 
     // Changes to the Google Analytics snippet:
     //
@@ -43,6 +44,10 @@ analytics.addProvider('Google Analytics', {
 
         window._gaq = _gaq;
     },
+
+
+    // Track
+    // -----
 
     track : function (event, properties) {
         window._gaq.push(['_trackEvent', 'All', event]);

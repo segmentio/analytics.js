@@ -1,6 +1,3 @@
-// Intercom
-// --------
-// Last updated: December 12th, 2012
 // [Documentation](http://docs.intercom.io/).
 
 analytics.addProvider('Intercom', {
@@ -9,13 +6,21 @@ analytics.addProvider('Intercom', {
         appId : null
     },
 
+
+    // Initialize
+    // ----------
+
     // Intercom identifies when the script is loaded, so instead of initializing
-    // in `initialize`, we have to store the settings for later and initialize
-    // in `identify`.
+    // in `initialize`, we store the settings for later and initialize in
+    // `identify`.
     initialize: function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'appId');
         analytics.utils.extend(this.settings, settings);
     },
+
+
+    // Identify
+    // --------
 
     // Changes to the Intercom snippet:
     //
@@ -25,18 +30,22 @@ analytics.addProvider('Intercom', {
         // Don't do anything if we just have traits.
         if (!userId) return;
 
+        // Pass traits directly in to Intercom's `custom_data`.
         window.intercomSettings = {
             app_id      : this.settings.appId,
             user_id     : userId,
             custom_data : traits || {},
         };
 
+        // Augment `intercomSettings` with some of the special traits.
         if (traits) {
             window.intercomSettings.email = traits.email;
             window.intercomSettings.name = traits.name;
             window.intercomSettings.created_at = analytics.utils.getSeconds(traits.createdAt);
         }
-        if (analytics.utils.isEmail(userId) && !traits.email) {
+
+        // If they didn't pass an email, check to see if the `userId` qualifies.
+        if (analytics.utils.isEmail(userId) && (traits && !traits.email)) {
             window.intercomSettings.email = userId;
         }
 

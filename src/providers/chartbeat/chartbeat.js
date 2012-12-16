@@ -1,6 +1,3 @@
-// Chartbeat
-// ---------
-// Last updated: November 27th, 2012
 // [Documentation](http://chartbeat.com/docs/adding_the_code/),
 // [documentation](http://chartbeat.com/docs/configuration_variables/),
 // [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
@@ -12,13 +9,14 @@ analytics.addProvider('Chartbeat', {
         uid    : null
     },
 
+
+    // Initialize
+    // ----------
+
     // Changes to the Chartbeat snippet:
     //
-    // * Add `apiKey` and `domain` variables to config.
+    // * Pass `settings` directly as the config object.
     // * Replaced the date with our stored `date` variable.
-    //
-    // Also, we don't need to set the `mixpanel` object on `window` because
-    // they already do that.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'uid');
         analytics.utils.extend(this.settings, settings);

@@ -1,6 +1,3 @@
-// Klaviyo
-// --------
-// Last updated: December 12th, 2012
 // [Documentation](https://www.klaviyo.com/docs).
 // [Documentation](https://www.klaviyo.com/docs/http-api).
 
@@ -10,6 +7,13 @@ analytics.addProvider('Klaviyo', {
         apiKey : null
     },
 
+
+    // Initialize
+    // ----------
+
+    // Changes to the Google Analytics snippet:
+    //
+    // * Added `apiKey`.
     initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
@@ -26,14 +30,21 @@ analytics.addProvider('Klaviyo', {
         window._learnq = _learnq;
     },
 
-    identify : function (userId, traits) {
-        traits || (traits = {});
 
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
         // Klaviyo takes the user ID on the traits object itself.
+        traits || (traits = {});
         if (userId) traits.$id = userId;
 
         window._learnq.push(['identify', traits]);
     },
+
+
+    // Track
+    // -----
 
     track : function (event, properties) {
         window._learnq.push(['track', event, properties]);

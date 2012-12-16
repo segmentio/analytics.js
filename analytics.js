@@ -304,13 +304,13 @@
                     traits['$name'] = traits.name;
                     delete traits.name;
                 }
-                if (traits.first_name) {
-                    traits['$first_name'] = traits.first_name;
-                    delete traits.first_name;
+                if (traits.firstName) {
+                    traits['$first_name'] = traits.firstName;
+                    delete traits.firstName;
                 }
-                if (traits.last_name) {
-                    traits['$last_name'] = traits.last_name;
-                    delete traits.last_name;
+                if (traits.lastName) {
+                    traits['$last_name'] = traits.lastName;
+                    delete traits.lastName;
                 }
                 if (traits.username) {
                     traits['$username'] = traits.username;
@@ -360,6 +360,7 @@
                 };
 
                 if (traits) {
+                    this.aliasTraits(traits);
                     if (traits.email)
                         window.intercomSettings.email = traits.email;
                     if (traits.name)
@@ -381,6 +382,17 @@
                     window.attachEvent('onload', async_load);
                 } else {
                     window.addEventListener('load', async_load, false);
+                }
+            },
+
+            aliasTraits : function (traits) {
+                if (traits.firstName) {
+                    traits['first_name'] = traits.firstName;
+                    delete traits.firstName;
+                }
+                if (traits.lastName) {
+                    traits['last_name'] = traits.lastName;
+                    delete traits.lastName;
                 }
             }
         },

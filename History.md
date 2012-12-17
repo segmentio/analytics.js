@@ -2,6 +2,7 @@
 ==================
 
 * Separated providers into separate files for easier maintenance
+* Changed special `createdAt` trait to `created` for cleanliness
 * Moved `utils` directly onto the analytics object
 * Added `extend` and `alias` utils
 * Added `settings` defaults for all providers

@@ -56,11 +56,11 @@ analytics.addProvider('Customer.io', {
             traits.email = userId;
         }
 
-        // Swap the `createdAt` trait to the `created_at` that Customer.io
-        // needs (in seconds).
-        if (traits.createdAt) {
-            traits.created_at = analytics.utils.getSeconds(traits.createdAt);
-            delete traits.createdAt;
+        // Swap the `created` trait to the `created_at` that Customer.io needs
+        // (in seconds).
+        if (traits.created) {
+            traits.created_at = analytics.utils.getSeconds(traits.created);
+            delete traits.created;
         }
 
         window._cio.identify(traits);

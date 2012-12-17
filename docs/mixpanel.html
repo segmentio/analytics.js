@@ -35,11 +35,11 @@ they already do that.</p>             </td>             <td class="code">       
             <span class="nx">traits</span><span class="p">.</span><span class="nx">email</span> <span class="o">=</span> <span class="nx">userId</span><span class="p">;</span>
         <span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>Alias the traits' keys with dollar signs for Mixpanel's API.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">if</span> <span class="p">(</span><span class="nx">traits</span><span class="p">)</span> <span class="p">{</span>
             <span class="nx">analytics</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">alias</span><span class="p">(</span><span class="nx">traits</span><span class="p">,</span> <span class="p">{</span>
-                <span class="s1">&#39;email&#39;</span>     <span class="o">:</span> <span class="s1">&#39;$email&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;name&#39;</span>      <span class="o">:</span> <span class="s1">&#39;$name&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;username&#39;</span>  <span class="o">:</span> <span class="s1">&#39;$username&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;lastSeen&#39;</span>  <span class="o">:</span> <span class="s1">&#39;$lastSeen&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;createdAt&#39;</span> <span class="o">:</span> <span class="s1">&#39;$created&#39;</span>
+                <span class="s1">&#39;email&#39;</span>    <span class="o">:</span> <span class="s1">&#39;$email&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;name&#39;</span>     <span class="o">:</span> <span class="s1">&#39;$name&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;username&#39;</span> <span class="o">:</span> <span class="s1">&#39;$username&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;lastSeen&#39;</span> <span class="o">:</span> <span class="s1">&#39;$lastSeen&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;created&#39;</span>  <span class="o">:</span> <span class="s1">&#39;$created&#39;</span>
             <span class="p">});</span>
         <span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-8">&#182;</a>               </div>               <p>Finally, call all of the identify equivalents. Verify certain calls
 against settings to make sure they're enabled.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">if</span> <span class="p">(</span><span class="nx">userId</span><span class="p">)</span> <span class="p">{</span>

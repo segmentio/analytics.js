@@ -393,11 +393,11 @@ analytics.addProvider('Customer.io', {
             traits.email = userId;
         }
 
-        // Swap the `createdAt` trait to the `created_at` that Customer.io
-        // needs (in seconds).
-        if (traits.createdAt) {
-            traits.created_at = analytics.utils.getSeconds(traits.createdAt);
-            delete traits.createdAt;
+        // Swap the `created` trait to the `created_at` that Customer.io needs
+        // (in seconds).
+        if (traits.created) {
+            traits.created_at = analytics.utils.getSeconds(traits.created);
+            delete traits.created;
         }
 
         window._cio.identify(traits);
@@ -635,7 +635,7 @@ analytics.addProvider('Intercom', {
         if (traits) {
             window.intercomSettings.email = traits.email;
             window.intercomSettings.name = traits.name;
-            window.intercomSettings.created_at = analytics.utils.getSeconds(traits.createdAt);
+            window.intercomSettings.created_at = analytics.utils.getSeconds(traits.created);
         }
 
         // If they didn't pass an email, check to see if the `userId` qualifies.
@@ -833,11 +833,11 @@ analytics.addProvider('Mixpanel', {
         // Alias the traits' keys with dollar signs for Mixpanel's API.
         if (traits) {
             analytics.utils.alias(traits, {
-                'email'     : '$email',
-                'name'      : '$name',
-                'username'  : '$username',
-                'lastSeen'  : '$lastSeen',
-                'createdAt' : '$created'
+                'email'    : '$email',
+                'name'     : '$name',
+                'username' : '$username',
+                'lastSeen' : '$lastSeen',
+                'created'  : '$created'
             });
         }
 

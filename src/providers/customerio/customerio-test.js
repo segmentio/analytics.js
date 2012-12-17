@@ -12,8 +12,8 @@
     var userId = 'user';
 
     var traits = {
-        name      : 'Zeus',
-        createdAt : new Date('12/30/1989')
+        name    : 'Zeus',
+        created : new Date('12/30/1989')
     };
 
     test('adds customer.io\'s track.js on initialize', function () {

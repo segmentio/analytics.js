@@ -43,7 +43,7 @@ analytics.addProvider('Intercom', {
         if (traits) {
             window.intercomSettings.email = traits.email;
             window.intercomSettings.name = traits.name;
-            window.intercomSettings.created_at = analytics.utils.getSeconds(traits.createdAt);
+            window.intercomSettings.created_at = analytics.utils.getSeconds(traits.created);
         }
 
         // If they didn't pass an email, check to see if the `userId` qualifies.

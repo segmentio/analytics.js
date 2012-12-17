@@ -151,10 +151,71 @@
         },
 
 
+        // Page
+        // ----
+
+        // Special properties:
+        //
+        // * `url`
+        // * `section`
+        // * `author`
+
+        // Name is optional, taking title instead.
+
+        page : function (name, properties) {
+            if (!this.initialized) return;
+
+            // Allow for an optional name, and use the document's title as a
+            // fallback.
+            if (this.utils.isObject(name)) {
+                properties = name;
+                name = document.title;
+            }
+
+            // Should we do this?
+            if (!name) return;
+
+            // Call `track` on all of our enabled providers that support it.
+            for (var i = 0, provider; provider = this.providers[i]; i++) {
+                if (!provider.page) continue;
+                provider.page(name, this.utils.clone(properties));
+            }
+        },
+
+        // !! These methods would be in their respective providers.
+        chartbeatPage : function (name, properties) {
+            var url = properties.url;
+
+            // Default to the current path, Chartbeat uses paths not whole URLs.
+            url || (url = window.location.pathname);
+
+            if (url) window.pSUPERFLY.virtualPage(url, name);
+        },
+
+        mixpanelPage : function (name, properties) {
+            var url = properties.url;
+
+            // For values of `stream` or true, track the page in the Mixpanel
+            // real-time stream.
+            if (this.settings.page) window.mixpanel.track_pageview(url);
+
+            // If it's actually true, that means they want to track pages as
+            // events as well.
+            if (this.settings.page === true) {
+                var event = this.utils.getPageEvent(name);
+                window.mixpanel.track(event, properties);
+            }
+        },
+
+
         // Utils
         // -----
 
         utils : {
+
+            getPageEvent : function (name) {
+                return 'View '+name+' Page';
+            },
 
             // Given a timestamp, return its value in seconds. For providers
             // that rely on Unix time instead of millis.

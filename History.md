@@ -12,16 +12,16 @@
 
 * Fixed bug with HubSpot calls pre-script load
 * Upgraded sinon-chai to use [callWithMatch version](https://github.com/obmarg/sinon-chai/blob/f7aa7eccd6c0c18a3e1fc524a246a50c1a29c916/lib/sinon-chai.js)
-* Klaviyo support added by @bialecki
-* HubSpot support added by @jessbrandi
-* GoSquared support added by @simontabor
+* Klaviyo support added by [@bialecki](https://github.com/bialecki)
+* HubSpot support added by [@jessbrandi](https://github.com/jessbrandi)
+* GoSquared support added by [@simontabor](https://github.com/simontabor)
 
 
 0.1.1 / 2012-10-25
 ==================
 
-* Enhanced Link Attribution added for Google Analytics by @nscott
-* Site Speed Sample Rate added for Google Analytics by @nscott
+* Enhanced Link Attribution added for Google Analytics by [@nscott](https://github.com/nscott)
+* Site Speed Sample Rate added for Google Analytics by [@nscott](https://github.com/nscott)
 
 
 0.1.0 / 2012-10-11 

@@ -14,5 +14,6 @@
     "url" : "git://github.com/segmentio/analytics.js.git"
   },
   "main" : "analytics.js",
-  "license" : "MIT"
+  "license" : "MIT",
+  "scripts" : { "test" : "make test" }
 }

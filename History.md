@@ -5,7 +5,7 @@
 * Upgraded sinon-chai to use [callWithMatch version](https://github.com/obmarg/sinon-chai/blob/f7aa7eccd6c0c18a3e1fc524a246a50c1a29c916/lib/sinon-chai.js)
 * Fixed analyticsjs test by clearing providers.
 * Klaviyo support added by @bialecki
-* GoSquared suppoert added by @simontabor
+* GoSquared support added by @simontabor
 
 0.1.1 / 2012-10-25
 ==================

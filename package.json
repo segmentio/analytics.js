@@ -6,7 +6,7 @@
   "keywords" : [
     "analytics", "analytics.js", "analyticsjs", "segment", "segmentio", "segment.io",
     "chartbeat", "crazyegg", "customer.io", "google analytics", "hubspot",
-    "intercom", "kissmetrics", "klaviyo", "mixpanel", "olark"
+    "gosquared", "intercom", "kissmetrics", "klaviyo", "mixpanel", "olark"
   ],
   "url" : "https://github.com/segmentio/analytics.js",
   "repository" : {

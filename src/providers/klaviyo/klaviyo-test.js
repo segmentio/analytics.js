@@ -23,6 +23,7 @@
             'Klaviyo' : 'x'
         });
         expect(window._learnq).to.exist;
+        expect(analytics.providers[0].settings.apiKey).to.equal('x');
     });
 
     test('pushes "_identify" on identify', function () {

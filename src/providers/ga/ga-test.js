@@ -7,9 +7,10 @@
         expect(window._gaq).not.to.exist;
 
         analytics.initialize({
-            'Google Analytics' : 'UA-XXXXXXX-X'
+            'Google Analytics' : 'x'
         });
         expect(window._gaq).to.exist;
+        expect(analytics.providers[0].settings.trackingId).to.equal('x');
     });
 
     test('pushes "_trackEvent" on track', function () {

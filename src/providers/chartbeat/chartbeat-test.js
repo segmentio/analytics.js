@@ -17,6 +17,8 @@
         var self = this;
         setTimeout(function () {
             expect(window.pSUPERFLY).to.exist;
+            expect(analytics.providers[0].settings.uid).to.equal('x');
+            expect(analytics.providers[0].settings.domain).to.equal('example.com');
             done();
         }, 100);
     });

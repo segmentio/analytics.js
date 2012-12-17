@@ -7,9 +7,7 @@
         analytics.initialize({
             'Intercom' : 'x'
         });
-        expect(analytics.providers[0].settings).to.deep.equal({
-            appId : 'x'
-        });
+        expect(analytics.providers[0].settings.appId).to.equal('x');
     });
 
     test('adds intercom javascript on identify', function () {

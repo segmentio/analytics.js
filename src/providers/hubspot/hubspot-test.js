@@ -24,6 +24,7 @@
         });
         expect(window._hsq).to.exist;
         expect(window._hsq.push).to.equal(Array.prototype.push);
+        expect(analytics.providers[0].settings.portalId).to.equal('x');
 
         // Once the hubspot JS file comes back, the array should be transformed.
         var self = this;

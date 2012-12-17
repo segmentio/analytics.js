@@ -436,7 +436,7 @@ analytics.addProvider('Google Analytics', {
         var _gaq = _gaq || [];
         _gaq.push(['_setAccount', this.settings.trackingId]);
         if (this.settings.enhancedLinkAttribution) {
-            var pluginUrl = (('https:' == document.location.protocol) ? 'https://ssl.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
+            var pluginUrl = (('https:' == document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
             _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
         }
         if (analytics.utils.isNumber(this.settings.siteSpeedSampleRate)) {
@@ -470,68 +470,9 @@ analytics.addProvider('Google Analytics', {
 
 analytics.addProvider('HubSpot', {
 
-<<<<<<< HEAD
     settings : {
         portalId : null
     },
-=======
-        // GoSquared
-        // ----------
-        // _Last updated: December 12th, 2012_
-        // Site token can be found at https://www.gosquared.com/home/developer"
-        // Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat)
-        // [Documentation](www.gosquared.com/support).
-
-        'GoSquared' : {
-            // changes to the GoSquared tracking code:
-            //
-            // * window.GoSquared
-            // * no longer need to wait for pageload - removed unnecessary functions
-            // * use settings.site_token
-
-            initialize : function (settings) {
-                this.settings = settings = resolveSettings(settings, 'site_token');
-                window.GoSquared={};
-                GoSquared.acct = settings.site_token;
-                window._gstc_lt=+(new Date); var d=document;
-                var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
-                var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
-            },
-
-            identify : function (userId, traits) {
-                if (userId) window.GoSquared.UserName = userId;
-                if (traits) window.GoSquared.Visitor = traits;
-            },
-
-            track : function (event, properties) {
-                if (!window.GoSquared.q) window.GoSquared.q = [];
-                window.GoSquared.q.push(['TrackEvent', event, properties]);
-            }
-        },
-
-        // HubSpot
-        // -------
-        // Last updated: December 13th, 2012
-        // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
-
-        'HubSpot' : {
-
-            // Changes to the HubSpot snippet:
-            //
-            // * Adding HubSpot snippet
-
-            // Use the `portalId` to setup the HubSpot tracking code.
-            initialize : function (settings) {
-                this.settings = settings = resolveSettings(settings, 'portalId');
-                (function(d,s,i,r) {
-                    if (d.getElementById(i)){return;}
-                    window._hsq = window._hsq || []; // for calls pre-load
-                    var n=d.createElement(s),e=d.getElementsByTagName(s)[0];
-                    n.id=i;n.src='https://js.hubspot.com/analytics/'+(Math.ceil(new Date()/r)*r)+'/' + settings.portalId + '.js';
-                    e.parentNode.insertBefore(n, e);
-                })(document,"script","hs-analytics",300000);
-            },
->>>>>>> master
 
 
     // Initialize
@@ -581,7 +522,60 @@ analytics.addProvider('HubSpot', {
 });
 
 
-// [Documentation](http://docs.intercom.io/).
+// [Documentation](www.gosquared.com/support).
+// Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat).
+
+analytics.addProvider('GoSquared', {
+
+    settings : {
+        siteToken : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    // Changes to the GoSquared tracking code:
+    //
+    // * Use `siteToken` from settings.
+    // * No longer need to wait for pageload, removed unnecessary functions.
+    // * Attach `GoSquared` to `window`.
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteToken');
+        analytics.utils.extend(this.settings, settings);
+
+        var GoSquared={};
+        GoSquared.acct = this.settings.siteToken;
+        window._gstc_lt=+(new Date); var d=document;
+        var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
+        var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
+
+        window.GoSquared = GoSquared;
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        // TODO figure out if this will actually work. Seems like GoSquared will
+        // never know these values are updated.
+        if (userId) window.GoSquared.UserName = userId;
+        if (traits) window.GoSquared.Visitor = traits;
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        // The queue isn't automatically created by the snippet.
+        if (!window.GoSquared.q) window.GoSquared.q = [];
+        window.GoSquared.q.push(['TrackEvent', event, properties]);
+    }
+
+});// [Documentation](http://docs.intercom.io/).
 
 analytics.addProvider('Intercom', {
 

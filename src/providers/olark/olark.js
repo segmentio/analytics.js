@@ -36,6 +36,7 @@ analytics.addProvider('Olark', {
         var name = userId;
         if (traits && traits.email) name = traits.email;
         if (traits && traits.name) name = traits.name;
+        if (traits && traits.name && traits.email) name += ' ('+traits.email+')';
 
         // If we ended up with no name after all that, get out of there.
         if (!name) return;

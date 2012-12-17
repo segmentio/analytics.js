@@ -37,16 +37,14 @@
         analytics.identify({
             email : 'zeus@segment.io'
         });
-        analytics.identify(userId, traits);
         expect(spy).to.have.been.calledWith('api.chat.updateVisitorNickname', sinon.match({
             snippet : 'zeus@segment.io'
         }));
 
         spy.reset();
         analytics.identify(traits);
-        analytics.identify(userId, traits);
         expect(spy).to.have.been.calledWith('api.chat.updateVisitorNickname', sinon.match({
-            snippet : 'Zeus'
+            snippet : 'Zeus (zeus@segment.io)'
         }));
 
         spy.reset();
@@ -58,7 +56,7 @@
         spy.reset();
         analytics.identify(userId, traits);
         expect(spy).to.have.been.calledWith('api.chat.updateVisitorNickname', sinon.match({
-            snippet : 'Zeus'
+            snippet : 'Zeus (zeus@segment.io)'
         }));
 
         spy.restore();

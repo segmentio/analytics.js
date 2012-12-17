@@ -1,3 +1,5 @@
+// HubSpot
+// -------
 // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
 
 analytics.addProvider('HubSpot', {

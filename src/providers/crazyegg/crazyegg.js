@@ -1,3 +1,5 @@
+// CrazyEgg
+// --------
 // [Documentation](www.crazyegg.com).
 
 analytics.addProvider('CrazyEgg', {

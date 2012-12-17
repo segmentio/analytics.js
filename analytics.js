@@ -254,6 +254,8 @@
 }).call(this);
 
 
+// Chartbeat
+// ---------
 // [Documentation](http://chartbeat.com/docs/adding_the_code/),
 // [documentation](http://chartbeat.com/docs/configuration_variables/),
 // [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
@@ -301,6 +303,8 @@ analytics.addProvider('Chartbeat', {
 });
 
 
+// CrazyEgg
+// --------
 // [Documentation](www.crazyegg.com).
 
 analytics.addProvider('CrazyEgg', {
@@ -331,6 +335,8 @@ analytics.addProvider('CrazyEgg', {
 });
 
 
+// Customer.io
+// -----------
 // [Documentation](http://customer.io/docs/api/javascript.html).
 
 analytics.addProvider('Customer.io', {
@@ -408,6 +414,8 @@ analytics.addProvider('Customer.io', {
 });
 
 
+// Google Analytics
+// ----------------
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
 
 analytics.addProvider('Google Analytics', {
@@ -466,6 +474,8 @@ analytics.addProvider('Google Analytics', {
 });
 
 
+// HubSpot
+// -------
 // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
 
 analytics.addProvider('HubSpot', {
@@ -522,6 +532,8 @@ analytics.addProvider('HubSpot', {
 });
 
 
+// GoSquared
+// ---------
 // [Documentation](www.gosquared.com/support).
 // Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat).
 
@@ -575,7 +587,12 @@ analytics.addProvider('GoSquared', {
         window.GoSquared.q.push(['TrackEvent', event, properties]);
     }
 
-});// [Documentation](http://docs.intercom.io/).
+});
+
+
+// Intercom
+// --------
+// [Documentation](http://docs.intercom.io/).
 
 analytics.addProvider('Intercom', {
 
@@ -643,6 +660,8 @@ analytics.addProvider('Intercom', {
 });
 
 
+// KISSmetrics
+// -----------
 // [Documentation](http://support.kissmetrics.com/apis/javascript).
 
 analytics.addProvider('KISSmetrics', {
@@ -699,6 +718,8 @@ analytics.addProvider('KISSmetrics', {
 });
 
 
+// Klaviyo
+// -------
 // [Documentation](https://www.klaviyo.com/docs).
 // [Documentation](https://www.klaviyo.com/docs/http-api).
 
@@ -754,6 +775,8 @@ analytics.addProvider('Klaviyo', {
 });
 
 
+// Mixpanel
+// --------
 // [Documentation](https://mixpanel.com/docs/integration-libraries/javascript),
 // [documentation](https://mixpanel.com/docs/people-analytics/javascript),
 // [documentation](https://mixpanel.com/docs/integration-libraries/javascript-full-api).
@@ -842,6 +865,8 @@ analytics.addProvider('Mixpanel', {
 });
 
 
+// Olark
+// -----
 // [Documentation](http://www.olark.com/documentation).
 
 analytics.addProvider('Olark', {

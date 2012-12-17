@@ -1,3 +1,5 @@
+// Mixpanel
+// --------
 // [Documentation](https://mixpanel.com/docs/integration-libraries/javascript),
 // [documentation](https://mixpanel.com/docs/people-analytics/javascript),
 // [documentation](https://mixpanel.com/docs/integration-libraries/javascript-full-api).

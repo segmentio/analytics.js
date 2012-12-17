@@ -1,3 +1,5 @@
+// Intercom
+// --------
 // [Documentation](http://docs.intercom.io/).
 
 analytics.addProvider('Intercom', {

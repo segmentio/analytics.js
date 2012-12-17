@@ -1,3 +1,5 @@
+// Customer.io
+// -----------
 // [Documentation](http://customer.io/docs/api/javascript.html).
 
 analytics.addProvider('Customer.io', {

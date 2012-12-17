@@ -1,3 +1,5 @@
+// Chartbeat
+// ---------
 // [Documentation](http://chartbeat.com/docs/adding_the_code/),
 // [documentation](http://chartbeat.com/docs/configuration_variables/),
 // [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).

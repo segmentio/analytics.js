@@ -1,3 +1,5 @@
+// KISSmetrics
+// -----------
 // [Documentation](http://support.kissmetrics.com/apis/javascript).
 
 analytics.addProvider('KISSmetrics', {

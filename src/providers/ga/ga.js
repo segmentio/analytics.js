@@ -1,3 +1,5 @@
+// Google Analytics
+// ----------------
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
 
 analytics.addProvider('Google Analytics', {

@@ -1,3 +1,5 @@
+// GoSquared
+// ---------
 // [Documentation](www.gosquared.com/support).
 // Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat).
 
@@ -52,3 +54,5 @@ analytics.addProvider('GoSquared', {
     }
 
 });
+
+

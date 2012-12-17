@@ -2,8 +2,7 @@ min:
 	uglifyjs -o analytics.min.js analytics.js
 
 test:
-	open test/analyticsjs.html
-	open test/providers.html
+	python -m SimpleHTTPServer 8000
 
 docs:
 	docco analytics.js

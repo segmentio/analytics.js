@@ -151,34 +151,25 @@
         },
 
 
-        // Page
-        // ----
+        // Pageview
+        // --------
 
-        // Special properties:
+        // For single-page applications where real page loads don't happen, the
+        // **pageview** method simulates a page loading event for all providers
+        // that track pageviews and support it. This is the equivalent of
+        // calling `_gaq.push(['trackPageview'])` in Google Analytics.
         //
-        // * `url`
-        // * `section`
-        // * `author`
-
-        // Name is optional, taking title instead.
-
-        page : function (name, properties) {
+        // **pageview** is _not_ for sending events about which pages in your
+        // app the user has loaded. For that, use a regular track call like:
+        // `analytics.track('View Signup Page')`. Or, if you think you've come
+        // up with a badass abstraction, submit a pull request!
+        pageview : function () {
             if (!this.initialized) return;
 
-            // Allow for an optional name, and use the document's title as a
-            // fallback.
-            if (this.utils.isObject(name)) {
-                properties = name;
-                name = document.title;
-            }
-
-            // Should we do this?
-            if (!name) return;
-
-            // Call `track` on all of our enabled providers that support it.
+            // Call `pageview` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
-                if (!provider.page) continue;
-                provider.page(name, this.utils.clone(properties));
+                if (!provider.pageview) continue;
+                provider.pageview();
             }
         },
 
@@ -219,10 +210,6 @@
         // -----
 
         utils : {
-
-            getPageEvent : function (name) {
-                return 'View '+name+' Page';
-            },
 
             // Given a timestamp, return its value in seconds. For providers
             // that rely on Unix time instead of millis.

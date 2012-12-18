@@ -16,6 +16,10 @@
         email : 'zeus@segment.io'
     };
 
+
+    // Initialize
+    // ----------
+
     test('stores settings and adds kissmetrics javascript on initialize', function () {
         expect(window._learnq).not.to.exist;
 
@@ -25,6 +29,10 @@
         expect(window._learnq).to.exist;
         expect(analytics.providers[0].settings.apiKey).to.equal('x');
     });
+
+
+    // Identify
+    // --------
 
     test('pushes "_identify" on identify', function () {
         var spy = sinon.spy(window._learnq, 'push');
@@ -42,6 +50,10 @@
 
         spy.restore();
     });
+
+
+    // Track
+    // -----
 
     test('pushes "_track" on track', function () {
         var spy = sinon.spy(window._learnq, 'push');

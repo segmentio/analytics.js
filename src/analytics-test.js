@@ -4,10 +4,14 @@
     var provider = {
         initialize : function (settings) {},
         identify : function (userId, traits) {},
-        track : function (event, properties) {}
+        track : function (event, properties) {},
+        pageview : function () {}
     };
     analytics.addProvider('test', provider);
 
+
+    // Initialize
+    // ----------
 
     suite('initialize');
 
@@ -46,7 +50,18 @@
     });
 
 
+    // Identify
+    // --------
+
     suite('identify');
+
+    test('identify is called on providers', function () {
+        var spy = sinon.spy(provider, 'identify');
+        analytics.identify();
+        expect(spy).to.have.been.called;
+
+        spy.restore();
+    });
 
     test('identify sends userId along', function () {
         var spy = sinon.spy(provider, 'identify');
@@ -70,7 +85,18 @@
     });
 
 
+    // Track
+    // -----
+
     suite('track');
+
+    test('track is called on providers', function () {
+        var spy = sinon.spy(provider, 'track');
+        analytics.track();
+        expect(spy).to.have.been.called;
+
+        spy.restore();
+    });
 
     test('track sends event name along', function () {
         var spy = sinon.spy(provider, 'track');
@@ -93,6 +119,23 @@
         spy.restore();
     });
 
+
+    // Pageview
+    // --------
+
+    suite('pageview');
+
+    test('pageview is called on providers', function () {
+        var spy = sinon.spy(provider, 'pageview');
+        analytics.pageview();
+        expect(spy).to.have.been.called;
+
+        spy.restore();
+    });
+
+
+    // Utils
+    // -----
 
     suite('utils');
 

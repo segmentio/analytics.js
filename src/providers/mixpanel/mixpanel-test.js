@@ -21,6 +21,10 @@
         $email : 'zeus@segment.io'
     };
 
+
+    // Initialize
+    // ----------
+
     test('stores settings and adds mixpanel.js on initialize', function () {
         expect(window.mixpanel).not.to.exist;
 
@@ -35,7 +39,11 @@
         expect(analytics.providers[0].settings.people).to.be.true;
     });
 
-    test('calls init on initialize');
+    test('calls init with settings on initialize');
+
+
+    // Identify
+    // --------
 
     test('calls identify on identify', function () {
         // Reset internal `userId` state from any previous identifies.
@@ -96,15 +104,6 @@
         spy.restore();
     });
 
-    test('calls track on track', function () {
-        var spy = sinon.spy(window.mixpanel, 'track');
-        analytics.track(event, properties);
-        // Mixpanel adds custom properties, so we need to have a loose match.
-        expect(spy).to.have.been.calledWith(event, sinon.match(properties));
-
-        spy.restore();
-    });
-
     test('calls people.identify on identify if `people` setting is true', function () {
         // Reset internal `userId` state from any previous identifies.
         analytics.userId = null;
@@ -161,6 +160,31 @@
         var spy = sinon.spy(window.mixpanel.people, 'set');
         analytics.identify(userId, traits);
         expect(spy).not.to.have.been.called;
+
+        spy.restore();
+    });
+
+
+    // Track
+    // -----
+
+    test('calls track on track', function () {
+        var spy = sinon.spy(window.mixpanel, 'track');
+        analytics.track(event, properties);
+        // Mixpanel adds custom properties, so we need to have a loose match.
+        expect(spy).to.have.been.calledWith(event, sinon.match(properties));
+
+        spy.restore();
+    });
+
+
+    // Pageview
+    // --------
+
+    test('calls track_pageview on pageview', function () {
+        var spy = sinon.spy(window.mixpanel, 'track_pageview');
+        analytics.pageview();
+        expect(spy).to.have.been.called;
 
         spy.restore();
     });

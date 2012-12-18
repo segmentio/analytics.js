@@ -83,6 +83,16 @@ analytics.addProvider('Mixpanel', {
 
     track : function (event, properties) {
         window.mixpanel.track(event, properties);
+    },
+
+
+    // Pageview
+    // --------
+
+    // Mixpanel doesn't actually track the pageviews, but they do show up in the
+    // Mixpanel stream.
+    pageview : function () {
+        window.mixpanel.track_pageview();
     }
 
 });

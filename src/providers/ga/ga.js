@@ -53,6 +53,14 @@ analytics.addProvider('Google Analytics', {
 
     track : function (event, properties) {
         window._gaq.push(['_trackEvent', 'All', event]);
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        window._gaq.push(['_trackPageview']);
     }
 
 });

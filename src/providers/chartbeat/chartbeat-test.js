@@ -3,6 +3,10 @@
 
     suite('Chartbeat');
 
+
+    // Initialize
+    // ----------
+
     test('stores settings and adds chartbeat.js on initialize', function (done) {
         expect(window.pSUPERFLY).not.to.exist;
 
@@ -21,6 +25,18 @@
             expect(analytics.providers[0].settings.domain).to.equal('example.com');
             done();
         }, 100);
+    });
+
+
+    // Pageview
+    // --------
+
+    test('calls virtualPage on pageview', function () {
+        var spy = sinon.spy(window.pSUPERFLY, 'virtualPage');
+        analytics.pageview();
+        expect(spy).to.have.been.calledWith(window.location.pathname);
+
+        spy.restore();
     });
 
 }());

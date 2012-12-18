@@ -151,25 +151,92 @@
         },
 
 
+        // Track Click
+        // -----------
+
+        // A helper for tracking outbound links that would normally leave the
+        // page before the track calls went out. It works by wrapping the calls
+        // in as short of a timeout as possible to fire the track call, because
+        // [response times matter](http://theixdlibrary.com/pdf/Miller1968.pdf).
+        //
+        // * `element` is either a single DOM element, or an array of DOM
+        // elements like jQuery would give you.
+        //
+        // * `event` and `properties` are passed directly to `analytics.track`
+        // and take the same options.
+        trackClick : function (element, event, properties) {
+            if (!element) return;
+            if (!this.utils.isArray(element)) element = [element];
+
+            // Listen to all the elements.
+            for (var i = 0, el; el = element[i]; i++) {
+                this.utils.bind(el, 'click', function (e) {
+
+                    // Fire a normal track call.
+                    this.track(event, properties);
+
+                    // To justify us preventing the default behavior we must:
+                    //
+                    // * Have an `href` to use.
+                    // * Not have any special keys pressed, because they might
+                    // be trying to open in a new tab, or window, or download
+                    // the asset.
+                    //
+                    // This might not cover all cases, but we'd rather throw out
+                    // an event than miss a case that breaks the experience.
+                    if (el.href && !this.utils.isMeta(e)) {
+
+                        // Navigate to the url after a small timeout to let the
+                        // event have time to fire.
+                        setTimeout(function () {
+                            window.location = el.href;
+                        }, 100);
+
+                        // Prevent the default.
+                        return false;
+                    }
+                });
+            }
+        },
+
+
         // Utils
         // -----
 
         utils : {
 
+            // Attach an event handler to a DOM element, even in IE.
+            bind : function (el, event, callback) {
+                if (el.addEventListener) {
+                    el.addEventListener(event, callback, false);
+                } else if (el.attachEvent) {
+                    el.attachEvent('on' + event, callback);
+                }
+            },
+
+            // Given a DOM event, tell us whether a meta key or button was
+            // pressed that would make a link open in a new tab, window,
+            // start a download, or anything else that wouldn't take the user to
+            // a new page.
+            isMeta : function (e) {
+                if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
+
+                // Logic that handles checks for the middle mouse button, based
+                // on [jQuery](https://github.com/jquery/jquery/blob/master/src/event.js#L466).
+                var which = e.which, button = e.button;
+                if (!which && button !== undefined) {
+                    return (!button & 1) && (!button & 2) && (button & 4);
+                } else if (which === 2) {
+                    return true;
+                }
+
+                return false;
+            },
+
             // Given a timestamp, return its value in seconds. For providers
             // that rely on Unix time instead of millis.
             getSeconds : function (time) {
                 return Math.floor((new Date(time)) / 1000);
-            },
-
-            // A helper to shallow-ly clone objects, so that they don't get
-            // mangled by different analytics providers because of the
-            // reference.
-            clone : function (obj) {
-                if (!obj) return;
-                var clone = {};
-                for (var prop in obj) clone[prop] = obj[prop];
-                return clone;
             },
 
             // A helper to extend objects with properties from other objects.
@@ -183,6 +250,14 @@
                     }
                 }
                 return obj;
+            },
+
+            // A helper to shallow-ly clone objects, so that they don't get
+            // mangled by different analytics providers because of the
+            // reference.
+            clone : function (obj) {
+                if (!obj) return;
+                return this.extend({}, obj);
             },
 
             // A helper to alias certain object's keys to different key names.
@@ -199,7 +274,13 @@
             },
 
             // Type detection helpers, copied from
-            // [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L928-L938).
+            // [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L926-L946).
+            isElement : function(obj) {
+                return !!(obj && obj.nodeType === 1);
+            },
+            isArray : Array.isArray || function (obj) {
+                return Object.prototype.toString.call(obj) === '[object Array]';
+            },
             isObject : function (obj) {
                 return obj === Object(obj);
             },

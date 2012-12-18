@@ -5,6 +5,7 @@
 * Added Travis-CI
 * Fixed window level objects in customerio and gosquared
 * Support added for Intercom's "secure" mode by [@buger](https://github.com/buger)
+* Removed root references
 
 
 0.2.0 / 2012-12-16

@@ -8,12 +8,8 @@
     // Setup
     // -----
 
-    // A reference to the global object, `window` in the browser, `global` on
-    // the server.
-    var root = this;
-
     // The `analytics` object that will be exposed to you on the global object.
-    root.analytics || (root.analytics = {
+    var analytics = {
 
         // Cache the `userId` when a user is identified.
         userId : null,
@@ -264,17 +260,18 @@
             }
         }
 
-    });
+    };
 
     // Wrap any existing `onload` function with our own that will cache the
     // loaded state of the page.
     var oldonload = window.onload;
     window.onload = function () {
-        root.analytics.loaded = true;
-        if (root.analytics.utils.isFunction(oldonload)) oldonload();
+        analytics.loaded = true;
+        if (analytics.utils.isFunction(oldonload)) oldonload();
     };
 
-}).call(this);
+    window.analytics = analytics;
+})();
 
 
 // Chartbeat
@@ -671,6 +668,7 @@ analytics.addProvider('Intercom', {
     //
     // * Add `appId` from stored `settings`.
     // * Add `userId`.
+    // * Add `userHash` for secure mode
     identify: function (userId, traits) {
         // Don't do anything if we just have traits.
         if (!userId) return;
@@ -679,6 +677,7 @@ analytics.addProvider('Intercom', {
         window.intercomSettings = {
             app_id      : this.settings.appId,
             user_id     : userId,
+            user_hash   : this.settings.userHash,
             custom_data : traits || {},
         };
 

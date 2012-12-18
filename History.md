@@ -6,6 +6,7 @@
 * Moved `utils` directly onto the analytics object
 * Added `extend` and `alias` utils
 * Added `settings` defaults for all providers
+* Added Travis-CI
 
 
 0.1.2 / 2012-12-14

@@ -1,6 +1,10 @@
 server:
 	node test/server.js &
 
+kill:
+	kill -9 `cat test/pid.txt`
+	rm test/pid.txt
+
 analytics.js:
 	cat \
 		src/analytics.js \
@@ -17,8 +21,10 @@ analytics.js:
 		src/providers/olark/olark.js \
 		> analytics.js
 
+
 min:
 	uglifyjs -o analytics.min.js analytics.js
+
 
 docs:
 	docco \
@@ -36,18 +42,19 @@ docs:
 		src/providers/olark/olark.js
 	open docs/analytics.html
 
+
 test:
 	open http://localhost:8000/test/min.html
 	open http://localhost:8000/test/providers.html
 	open http://localhost:8000/test/core.html
+
 
 travis: server
 	sleep 1
 	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/min.html
 	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/providers.html
 	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/core.html
-	kill -9 `cat test/pid.txt`
-	rm test/pid.txt
+	make kill
 
 
 release:

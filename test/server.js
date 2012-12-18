@@ -1,6 +1,6 @@
 /*
  * Simple connect server for phantom.js
- * Adapted from Modernizr
+ * Adapted from twitter bootstrap server.
  */
 
 var connect = require('connect')
@@ -9,9 +9,10 @@ var connect = require('connect')
   , path    = require('path')
   , app     = connect();
 
-app.use(connect.static(path.resolve(__dirname, '../')));
+var pidFile = path.resolve(__dirname, './pid.txt');
 
 http.createServer(app).listen(8000);
-console.log('listening on 8000');
 
-fs.writeFileSync(__dirname + '/pid.txt', process.pid, 'utf-8');
+app.use(connect.static(path.resolve(__dirname, '../')));
+
+fs.writeFileSync(pidFile, process.pid, 'utf-8');

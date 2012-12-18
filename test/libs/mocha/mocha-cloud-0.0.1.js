@@ -1,4 +1,6 @@
-
+/**
+ * Mocha cloud runner, adapted from visionmedia/mocha-cloud/client.js
+ */
 (function (global) {
 
   var mochaCloud = function (runner) {

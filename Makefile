@@ -1,5 +1,5 @@
 server:
-	python -m SimpleHTTPServer 8000
+	node test/server.js &
 
 analytics.js:
 	cat \
@@ -40,6 +40,15 @@ test:
 	open http://localhost:8000/test/min.html
 	open http://localhost:8000/test/providers.html
 	open http://localhost:8000/test/core.html
+
+travis: server
+	sleep 1
+	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/min.html
+	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/providers.html
+	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/core.html
+	kill -9 `cat test/pid.txt`
+	rm test/pid.txt
+
 
 release:
 	make analytics.js

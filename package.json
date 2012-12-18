@@ -15,5 +15,10 @@
   },
   "main" : "analytics.js",
   "license" : "MIT",
-  "scripts" : { "test" : "make test" }
+  "scripts" : { "test" : "make travis" },
+  "devDependencies": {
+      "mocha-cloud" : "0.0.1",
+      "mocha-phantomjs": "1.1.1",
+      "connect" : "2.7.1"
+  }
 }

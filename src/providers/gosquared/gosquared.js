@@ -49,7 +49,15 @@ analytics.addProvider('GoSquared', {
         // The queue isn't automatically created by the snippet.
         if (!window.GoSquared.q) window.GoSquared.q = [];
         window.GoSquared.q.push(['TrackEvent', event, properties]);
-    }
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        window.GoSquared.DefaultTracker.TrackView();
+    },
 
 });
 

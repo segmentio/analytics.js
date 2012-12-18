@@ -1,4 +1,4 @@
-//     Analytics.js 0.2.0
+//     Analytics.js 0.2.1
 
 //     (c) 2012 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -151,6 +151,29 @@
         },
 
 
+        // Pageview
+        // --------
+
+        // For single-page applications where real page loads don't happen, the
+        // **pageview** method simulates a page loading event for all providers
+        // that track pageviews and support it. This is the equivalent of
+        // calling `_gaq.push(['trackPageview'])` in Google Analytics.
+        //
+        // **pageview** is _not_ for sending events about which pages in your
+        // app the user has loaded. For that, use a regular track call like:
+        // `analytics.track('View Signup Page')`. Or, if you think you've come
+        // up with a badass abstraction, submit a pull request!
+        pageview : function () {
+            if (!this.initialized) return;
+
+            // Call `pageview` on all of our enabled providers that support it.
+            for (var i = 0, provider; provider = this.providers[i]; i++) {
+                if (!provider.pageview) continue;
+                provider.pageview();
+            }
+        },
+
+
         // Utils
         // -----
 
@@ -296,9 +319,15 @@ analytics.addProvider('Chartbeat', {
                 "js/chartbeat.js");
             document.body.appendChild(e);
         })();
-    }
+    },
 
-    // TODO: Add virtual page API.
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        window.pSUPERFLY.virtualPage(window.location.pathname);
+    }
 
 });
 
@@ -469,6 +498,14 @@ analytics.addProvider('Google Analytics', {
 
     track : function (event, properties) {
         window._gaq.push(['_trackEvent', 'All', event]);
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        window._gaq.push(['_trackPageview']);
     }
 
 });
@@ -527,6 +564,14 @@ analytics.addProvider('HubSpot', {
     // existing custom event as the event variable.
     track : function (event, properties) {
         window._hsq.push(["trackEvent", event, properties]);
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        // TODO http://performabledoc.hubspot.com/display/DOC/JavaScript+API
     }
 
 });
@@ -583,7 +628,15 @@ analytics.addProvider('GoSquared', {
         // The queue isn't automatically created by the snippet.
         if (!window.GoSquared.q) window.GoSquared.q = [];
         window.GoSquared.q.push(['TrackEvent', event, properties]);
-    }
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        window.GoSquared.DefaultTracker.TrackView();
+    },
 
 });
 
@@ -858,6 +911,16 @@ analytics.addProvider('Mixpanel', {
 
     track : function (event, properties) {
         window.mixpanel.track(event, properties);
+    },
+
+
+    // Pageview
+    // --------
+
+    // Mixpanel doesn't actually track the pageviews, but they do show up in the
+    // Mixpanel stream.
+    pageview : function () {
+        window.mixpanel.track_pageview();
     }
 
 });
@@ -870,8 +933,9 @@ analytics.addProvider('Mixpanel', {
 analytics.addProvider('Olark', {
 
     settings : {
-        siteId : null,
-        track  : false
+        siteId   : null,
+        track    : false,
+        pageview : true
     },
 
 
@@ -921,8 +985,26 @@ analytics.addProvider('Olark', {
         // Check the `track` setting to know whether log events or not.
         if (!this.settings.track) return;
 
+        // To stay consistent with olark's default messages, it's all lowercase.
         window.olark('api.chat.sendNotificationToOperator', {
-            body : 'Visitor triggered "'+event+'".'
+            body : 'visitor triggered "'+event+'"'
+        });
+    },
+
+
+    // Pageview
+    // --------
+
+    // Again, not analytics, but we can mimic the functionality Olark has for
+    // normal pageviews with pseudo-pageviews, telling the operator when a
+    // visitor changes pages.
+    pageview : function () {
+        // Check the `pageview` settings to know whether they want this or not.
+        if (!this.settings.pageview) return;
+
+        // To stay consistent with olark's default messages, it's all lowercase.
+        window.olark('api.chat.sendNotificationToOperator', {
+            body : 'looking at ' + window.location.href
         });
     }
 

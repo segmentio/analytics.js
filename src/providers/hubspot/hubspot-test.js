@@ -16,6 +16,10 @@
         email : 'zeus@segment.io'
     };
 
+
+    // Initialize
+    // ----------
+
     test('stores settings and adds hubspot js on initialize', function (done) {
         expect(window._hsq).not.to.exist;
 
@@ -35,6 +39,10 @@
         }, 100);
     });
 
+
+    // Identify
+    // --------
+
     test('pushes "identify" on identify', function () {
         var spy = sinon.spy(window._hsq, 'push');
         analytics.identify(traits);
@@ -50,6 +58,10 @@
 
         spy.restore();
     });
+
+
+    // Track
+    // -----
 
     test('pushes "trackEvent" on track', function () {
         var spy = sinon.spy(window._hsq, 'push');

@@ -51,6 +51,14 @@ analytics.addProvider('HubSpot', {
     // existing custom event as the event variable.
     track : function (event, properties) {
         window._hsq.push(["trackEvent", event, properties]);
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        // TODO http://performabledoc.hubspot.com/display/DOC/JavaScript+API
     }
 
 });

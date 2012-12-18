@@ -40,9 +40,15 @@ analytics.addProvider('Chartbeat', {
                 "js/chartbeat.js");
             document.body.appendChild(e);
         })();
-    }
+    },
 
-    // TODO: Add virtual page API.
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        window.pSUPERFLY.virtualPage(window.location.pathname);
+    }
 
 });
 

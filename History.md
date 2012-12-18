@@ -1,4 +1,10 @@
-0.2.0 / 2012-12-14
+0.2.1 / 2012-12-18
+==================
+
+* Added the `pageview` method for tracking virtual pageviews
+
+
+0.2.0 / 2012-12-16
 ==================
 
 * Separated providers into separate files for easier maintenance

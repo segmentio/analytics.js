@@ -173,38 +173,6 @@
             }
         },
 
-        // !! These methods would be in their respective providers.
-        gaPage : function (name, properties) {
-            var url = properties.url;
-
-            // The URL is optional for Google Analytics.
-            window._gaq.push(['_trackPageview', url]);
-        },
-
-        chartbeatPage : function (name, properties) {
-            var url = properties.url;
-
-            // Default to the current path, Chartbeat uses paths not whole URLs.
-            url || (url = window.location.pathname);
-
-            if (url) window.pSUPERFLY.virtualPage(url, name);
-        },
-
-        mixpanelPage : function (name, properties) {
-            var url = properties.url;
-
-            // For values of `stream` or true, track the page in the Mixpanel
-            // real-time stream.
-            if (this.settings.page) window.mixpanel.track_pageview(url);
-
-            // If it's actually true, that means they want to track pages as
-            // events as well.
-            if (this.settings.page === true) {
-                var event = this.utils.getPageEvent(name);
-                window.mixpanel.track(event, properties);
-            }
-        },
-
 
         // Utils
         // -----

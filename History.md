@@ -7,6 +7,7 @@
 * Added `extend` and `alias` utils
 * Added `settings` defaults for all providers
 * Added Travis-CI
+* Fixed window level objects in customerio and gosquared
 
 
 0.1.2 / 2012-12-14

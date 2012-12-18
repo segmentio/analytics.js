@@ -20,7 +20,7 @@
             expect(analytics.providers[0].settings.uid).to.equal('x');
             expect(analytics.providers[0].settings.domain).to.equal('example.com');
             done();
-        }, 100);
+        }, 400);
     });
 
 }());

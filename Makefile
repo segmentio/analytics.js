@@ -22,10 +22,8 @@ analytics.js:
 		src/providers/olark/olark.js \
 		> analytics.js
 
-
-min:
+min: analytics.js
 	uglifyjs -o analytics.min.js analytics.js
-
 
 docs:
 	docco \
@@ -43,20 +41,13 @@ docs:
 		src/providers/olark/olark.js
 	open docs/analytics.html
 
-# Simple user tests
-test:
-	open http://localhost:8000/test/min.html
-	open http://localhost:8000/test/providers.html
-	open http://localhost:8000/test/core.html
-
 # Runs travis tests
-travis: server
+test: server
 	sleep 1
 	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/min.html
 	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/providers.html
 	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/core.html
 	make kill
-
 
 release:
 	make analytics.js
@@ -64,4 +55,4 @@ release:
 	make docs
 	make test
 
-.PHONY: server analytics.js min docs release test
+.PHONY: analytics.js docs test

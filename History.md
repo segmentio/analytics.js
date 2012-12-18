@@ -4,6 +4,7 @@
 * Added the `pageview` method for tracking virtual pageviews
 * Added Travis-CI
 * Fixed window level objects in customerio and gosquared
+* Support added for Intercom's "secure" mode by [@buger](https://github.com/buger)
 
 
 0.2.0 / 2012-12-16

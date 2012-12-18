@@ -183,6 +183,13 @@
         },
 
         // !! These methods would be in their respective providers.
+        gaPage : function (name, properties) {
+            var url = properties.url;
+
+            // The URL is optional for Google Analytics.
+            window._gaq.push(['_trackPageview', url]);
+        },
+
         chartbeatPage : function (name, properties) {
             var url = properties.url;
 

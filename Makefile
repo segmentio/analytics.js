@@ -1,11 +1,3 @@
-server:
-	node test/server.js &
-
-# Kills the server
-kill:
-	kill -9 `cat test/pid.txt`
-	rm test/pid.txt
-
 analytics.js:
 	cat \
 		src/analytics.js \
@@ -39,7 +31,14 @@ docs:
 		src/providers/klaviyo/klaviyo.js \
 		src/providers/mixpanel/mixpanel.js \
 		src/providers/olark/olark.js
-	open docs/analytics.html
+
+server:
+	node test/server.js &
+
+# Kills the travis server
+kill:
+	kill -9 `cat test/pid.txt`
+	rm test/pid.txt
 
 # Runs travis tests
 test: server

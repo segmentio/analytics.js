@@ -11,8 +11,9 @@ var connect = require('connect')
 
 var pidFile = path.resolve(__dirname, './pid.txt');
 
-http.createServer(app).listen(8000);
-
 app.use(connect.static(path.resolve(__dirname, '../')));
 
-fs.writeFileSync(pidFile, process.pid, 'utf-8');
+http.createServer(app).listen(8000, function () {
+  fs.writeFileSync(pidFile, process.pid, 'utf-8');
+});
+

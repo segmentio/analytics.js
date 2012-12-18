@@ -1,6 +1,7 @@
 server:
 	node test/server.js &
 
+# Kills the server
 kill:
 	kill -9 `cat test/pid.txt`
 	rm test/pid.txt
@@ -42,13 +43,13 @@ docs:
 		src/providers/olark/olark.js
 	open docs/analytics.html
 
-
+# Simple user tests
 test:
 	open http://localhost:8000/test/min.html
 	open http://localhost:8000/test/providers.html
 	open http://localhost:8000/test/core.html
 
-
+# Runs travis tests
 travis: server
 	sleep 1
 	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/min.html

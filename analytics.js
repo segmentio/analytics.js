@@ -358,7 +358,7 @@ analytics.addProvider('Customer.io', {
 
         var self = this;
 
-        var _cio = _cio || [];
+        var _cio = window._cio = _cio || [];
         (function() {
             var a,b,c;a=function(f){return function(){_cio.push([f].
             concat(Array.prototype.slice.call(arguments,0)))}};b=["identify",
@@ -371,7 +371,7 @@ analytics.addProvider('Customer.io', {
             t.src = 'https://assets.customer.io/assets/track.js';
             s.parentNode.insertBefore(t, s);
         })();
-        window._cio = _cio;
+
     },
 
 
@@ -557,13 +557,11 @@ analytics.addProvider('GoSquared', {
         settings = analytics.utils.resolveSettings(settings, 'siteToken');
         analytics.utils.extend(this.settings, settings);
 
-        var GoSquared={};
+        var GoSquared = window.GoSquared = {};
         GoSquared.acct = this.settings.siteToken;
         window._gstc_lt=+(new Date); var d=document;
         var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
         var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
-
-        window.GoSquared = GoSquared;
     },
 
 

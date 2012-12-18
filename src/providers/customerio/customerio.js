@@ -21,7 +21,7 @@ analytics.addProvider('Customer.io', {
 
         var self = this;
 
-        var _cio = _cio || [];
+        var _cio = window._cio = _cio || [];
         (function() {
             var a,b,c;a=function(f){return function(){_cio.push([f].
             concat(Array.prototype.slice.call(arguments,0)))}};b=["identify",
@@ -34,7 +34,7 @@ analytics.addProvider('Customer.io', {
             t.src = 'https://assets.customer.io/assets/track.js';
             s.parentNode.insertBefore(t, s);
         })();
-        window._cio = _cio;
+
     },
 
 

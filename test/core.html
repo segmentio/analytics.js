@@ -26,8 +26,12 @@
     <h1>Core Test</h1>
     <div id="mocha"></div>
     <script>
-      $(function () { var runner = window.mochaPhantomJS || window.mocha;
-                      window.mochaCloud(runner.run()); });
+      $(function () {
+        if (window.mochaPhantomJS)
+          window.mochaPhantomJS.run();
+        else
+          window.mochaCloud(window.mocha.run());
+      });
     </script>
 </body>
 </html>

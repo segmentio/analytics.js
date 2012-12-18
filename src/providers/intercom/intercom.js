@@ -44,6 +44,7 @@ analytics.addProvider('Intercom', {
             window.intercomSettings.email = traits.email;
             window.intercomSettings.name = traits.name;
             window.intercomSettings.created_at = analytics.utils.getSeconds(traits.created);
+            window.intercomSettings.user_hash = traits.user_hash;
         }
 
         // If they didn't pass an email, check to see if the `userId` qualifies.

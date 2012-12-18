@@ -28,6 +28,7 @@ analytics.addProvider('Intercom', {
     //
     // * Add `appId` from stored `settings`.
     // * Add `userId`.
+    // * Add `userHash` for secure mode
     identify: function (userId, traits) {
         // Don't do anything if we just have traits.
         if (!userId) return;
@@ -36,6 +37,7 @@ analytics.addProvider('Intercom', {
         window.intercomSettings = {
             app_id      : this.settings.appId,
             user_id     : userId,
+            user_hash   : this.settings.userHash,
             custom_data : traits || {},
         };
 
@@ -44,7 +46,6 @@ analytics.addProvider('Intercom', {
             window.intercomSettings.email = traits.email;
             window.intercomSettings.name = traits.name;
             window.intercomSettings.created_at = analytics.utils.getSeconds(traits.created);
-            window.intercomSettings.user_hash = traits.user_hash;
         }
 
         // If they didn't pass an email, check to see if the `userId` qualifies.

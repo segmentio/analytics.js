@@ -76,7 +76,8 @@
             this.initialized = true;
 
             // Try to track any parameters from the url
-            this.utils.trackEventFromUrlParameter();
+            var event = this.utils.getEventFromUrlParameter(window.location.search);
+            if (event) this.track(event);
         },
 
 
@@ -263,12 +264,12 @@
             },
 
             // A helper to track events based on the 'anjs' url parameter
-            trackEventFromUrlParameter : function () {
-                var params = window.location.search.replace('?', '').split('&');
+            getEventFromUrlParameter : function (urlSearchParameter) {
+                var params = urlSearchParameter.replace('?', '').split('&');
                 for (var key in params) {
                     var param = params[key].split('=');
                     if (param.length === 2 && param[0] === 'anjs') {
-                        root.analytics.track(param[1]);
+                        return decodeURIComponent(param[1]);
                     }
                 }
             }

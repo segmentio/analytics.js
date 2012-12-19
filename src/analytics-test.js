@@ -204,6 +204,18 @@
         expect(analytics.utils.getSeconds(date)).to.equal(1355548865);
     });
 
+    test('get event from url parameter', function () {
+        var urlSearchParameter = '?anjs=Test%20Click%20Event&other=1239xxjkjkj';
+        var event = analytics.utils.getEventFromUrlParameter(urlSearchParameter);
+        expect(event).to.equal('Test Click Event');
+    });
+
+    test('get no event from url parameter with no event', function () {
+        var urlSearchParameter = '?val=Test%20Click%20Event&other=1239xxjkjkj';
+        var event = analytics.utils.getEventFromUrlParameter(urlSearchParameter);
+        expect(event).to.equal(undefined);
+    });
+
     test('isEmail matches emails', function () {
         var isEmail = analytics.utils.isEmail;
         expect(isEmail('team@segment.io')).to.be.true;

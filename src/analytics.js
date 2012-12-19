@@ -75,8 +75,10 @@
             // Update the initialized state that other methods rely on.
             this.initialized = true;
 
-            // Try to track any parameters from the url
-            var event = this.utils.getEventFromUrlParameter(window.location.search);
+            // Try to use id and event parameters from the url
+            var userId = this.utils.getUrlParameter(window.location.search, 'ajsid');
+            if (userId) this.identify(userId);
+            var event = this.utils.getUrlParameter(window.location.search, 'ajsevent');
             if (event) this.track(event);
         },
 
@@ -264,11 +266,11 @@
             },
 
             // A helper to track events based on the 'anjs' url parameter
-            getEventFromUrlParameter : function (urlSearchParameter) {
+            getUrlParameter : function (urlSearchParameter, paramKey) {
                 var params = urlSearchParameter.replace('?', '').split('&');
                 for (var key in params) {
                     var param = params[key].split('=');
-                    if (param.length === 2 && param[0] === 'anjs') {
+                    if (param.length === 2 && param[0] === paramKey) {
                         return decodeURIComponent(param[1]);
                     }
                 }

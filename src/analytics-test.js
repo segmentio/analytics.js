@@ -204,16 +204,17 @@
         expect(analytics.utils.getSeconds(date)).to.equal(1355548865);
     });
 
-    test('get event from url parameter', function () {
-        var urlSearchParameter = '?anjs=Test%20Click%20Event&other=1239xxjkjkj';
-        var event = analytics.utils.getEventFromUrlParameter(urlSearchParameter);
-        expect(event).to.equal('Test Click Event');
-    });
+    test('get parameter from url', function () {
+        var urlSearchParameter = '?ajsid=12k31k2j31k&ajsevent=Test%20Click%20Event&other=1239xxjkjkj&';
 
-    test('get no event from url parameter with no event', function () {
-        var urlSearchParameter = '?val=Test%20Click%20Event&other=1239xxjkjkj';
-        var event = analytics.utils.getEventFromUrlParameter(urlSearchParameter);
-        expect(event).to.equal(undefined);
+        var userId = analytics.utils.getUrlParameter(urlSearchParameter, 'ajsid');
+        expect(userId).to.equal('12k31k2j31k');
+
+        var event = analytics.utils.getUrlParameter(urlSearchParameter, 'ajsevent');
+        expect(event).to.equal('Test Click Event');
+
+        var nonexistent = analytics.utils.getUrlParameter(urlSearchParameter, 'variable');
+        expect(nonexistent).to.equal();
     });
 
     test('isEmail matches emails', function () {

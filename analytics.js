@@ -74,6 +74,9 @@
 
             // Update the initialized state that other methods rely on.
             this.initialized = true;
+
+            // Try to track any parameters from the url
+            this.utils.trackEventFromUrlParameter();
         },
 
 
@@ -257,6 +260,17 @@
                 }
 
                 return settings;
+            },
+
+            // A helper to track events based on the 'anjs' url parameter
+            trackEventFromUrlParameter : function () {
+                var params = window.location.search.replace('?', '').split('&');
+                for (var key in params) {
+                    var param = params[key].split('=');
+                    if (param.length === 2 && param[0] === 'anjs') {
+                        root.analytics.track(param[1]);
+                    }
+                }
             }
         }
 

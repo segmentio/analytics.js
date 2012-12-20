@@ -12,6 +12,7 @@ analytics.js:
 		src/providers/klaviyo/klaviyo.js \
 		src/providers/mixpanel/mixpanel.js \
 		src/providers/olark/olark.js \
+		src/providers/keen/keen.js \
 		> analytics.js
 
 min: analytics.js
@@ -30,7 +31,8 @@ docs:
 		src/providers/kissmetrics/kissmetrics.js \
 		src/providers/klaviyo/klaviyo.js \
 		src/providers/mixpanel/mixpanel.js \
-		src/providers/olark/olark.js
+		src/providers/olark/olark.js \
+		src/providers/keen/keen.js
 
 server:
 	node test/server.js &

@@ -72,10 +72,10 @@
         var augmentedProperties = { gs_evt_name: event };
         expect(spy).to.have.been.calledWith([event, sinon.match(augmentedProperties)]);
 
-        spy.restore();
+        spy.reset();
         analytics.track(event, properties);
         // GoSquared adds the event name to the properties hash.
-        augmentedProperties = _.extend(properties, { gs_evt_name: event });
+        augmentedProperties = _.extend({}, properties, { gs_evt_name: event });
         expect(spy).to.have.been.calledWith([event, sinon.match(augmentedProperties)]);
 
         spy.restore();

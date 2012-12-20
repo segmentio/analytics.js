@@ -22,14 +22,13 @@ analytics.addProvider('Klaviyo', {
 
         var _learnq = _learnq || [];
         _learnq.push(['account', this.settings.apiKey]);
+        window._learnq = _learnq;
         (function () {
             var b = document.createElement('script'); b.type = 'text/javascript'; b.async = true;
             b.src = ('https:' == document.location.protocol ? 'https://' : 'http://') +
                 'a.klaviyo.com/media/js/learnmarklet.js';
             var a = document.getElementsByTagName('script')[0]; a.parentNode.insertBefore(b, a);
         })();
-
-        window._learnq = _learnq;
     },
 
 

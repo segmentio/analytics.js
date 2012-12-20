@@ -497,13 +497,13 @@ analytics.addProvider('Google Analytics', {
             _gaq.push(['_gat._anonymizeIp']);
         }
         _gaq.push(['_trackPageview']);
+        window._gaq = _gaq;
+
         (function() {
             var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
             ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
         })();
-
-        window._gaq = _gaq;
     },
 
 
@@ -754,6 +754,8 @@ analytics.addProvider('KISSmetrics', {
         analytics.utils.extend(this.settings, settings);
 
         var _kmq = _kmq || [];
+        window._kmq = _kmq;
+
         function _kms(u){
             setTimeout(function(){
                 var d = document, f = d.getElementsByTagName('script')[0],
@@ -764,8 +766,6 @@ analytics.addProvider('KISSmetrics', {
         }
         _kms('//i.kissmetrics.com/i.js');
         _kms('//doug1izaerwt3.cloudfront.net/'+this.settings.apiKey+'.1.js');
-
-        window._kmq = _kmq;
     },
 
 
@@ -814,14 +814,13 @@ analytics.addProvider('Klaviyo', {
 
         var _learnq = _learnq || [];
         _learnq.push(['account', this.settings.apiKey]);
+        window._learnq = _learnq;
         (function () {
             var b = document.createElement('script'); b.type = 'text/javascript'; b.async = true;
             b.src = ('https:' == document.location.protocol ? 'https://' : 'http://') +
                 'a.klaviyo.com/media/js/learnmarklet.js';
             var a = document.getElementsByTagName('script')[0]; a.parentNode.insertBefore(b, a);
         })();
-
-        window._learnq = _learnq;
     },
 
 

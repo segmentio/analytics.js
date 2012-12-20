@@ -2,6 +2,7 @@
 ==================
 
 * Added link query tag support for `ajs_uid` and `ajs_event`
+* Added docco, uglify, and phantom to devDependencies by [@peleteiro](https://github.com/peleteiro)
 
 0.2.1 / 2012-12-18
 ==================

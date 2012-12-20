@@ -1,3 +1,8 @@
+0.2.2 / 2012-12-19
+==================
+
+* Added link query tag support for `ajs_uid` and `ajs_event`
+
 0.2.1 / 2012-12-18
 ==================
 

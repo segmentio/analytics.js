@@ -205,12 +205,12 @@
     });
 
     test('get parameter from url', function () {
-        var urlSearchParameter = '?ajsid=12k31k2j31k&ajsevent=Test%20Click%20Event&other=1239xxjkjkj&';
+        var urlSearchParameter = '?ajs_id=12k31k2j31k&ajs_event=Test%20Click%20Event&other=1239xxjkjkj&';
 
-        var userId = analytics.utils.getUrlParameter(urlSearchParameter, 'ajsid');
+        var userId = analytics.utils.getUrlParameter(urlSearchParameter, 'ajs_id');
         expect(userId).to.equal('12k31k2j31k');
 
-        var event = analytics.utils.getUrlParameter(urlSearchParameter, 'ajsevent');
+        var event = analytics.utils.getUrlParameter(urlSearchParameter, 'ajs_event');
         expect(event).to.equal('Test Click Event');
 
         var nonexistent = analytics.utils.getUrlParameter(urlSearchParameter, 'variable');

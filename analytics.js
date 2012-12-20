@@ -1,4 +1,4 @@
-//     Analytics.js 0.2.1
+//     Analytics.js 0.2.2
 
 //     (c) 2012 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -76,7 +76,7 @@
             this.initialized = true;
 
             // Try to use id and event parameters from the url
-            var userId = this.utils.getUrlParameter(window.location.search, 'ajs_id');
+            var userId = this.utils.getUrlParameter(window.location.search, 'ajs_uid');
             if (userId) this.identify(userId);
             var event = this.utils.getUrlParameter(window.location.search, 'ajs_event');
             if (event) this.track(event);

@@ -19,6 +19,9 @@
   "devDependencies": {
       "mocha-cloud" : "0.0.1",
       "mocha-phantomjs": "1.1.1",
-      "connect" : "2.7.1"
+      "connect" : "2.7.1",
+      "uglify-js" : ">= 1.3.4",
+      "docco" : ">= 0.4.0",
+      "phantomjs" : ">= 0.2.3"
   }
 }

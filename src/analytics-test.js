@@ -215,6 +215,9 @@
 
         var nonexistent = analytics.utils.getUrlParameter(urlSearchParameter, 'variable');
         expect(nonexistent).to.equal();
+
+        var nonexistent2 = analytics.utils.getUrlParameter('', 'ajs_event');
+        expect(nonexistent).to.equal();
     });
 
     test('isEmail matches emails', function () {

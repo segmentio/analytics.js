@@ -76,7 +76,7 @@
             this.initialized = true;
 
             // Try to use id and event parameters from the url
-            var userId = this.utils.getUrlParameter(window.location.search, 'ajs_id');
+            var userId = this.utils.getUrlParameter(window.location.search, 'ajs_uid');
             if (userId) this.identify(userId);
             var event = this.utils.getUrlParameter(window.location.search, 'ajs_event');
             if (event) this.track(event);

@@ -49,7 +49,6 @@
         expect(analytics.userId).to.be.null;
     });
 
-
     // Identify
     // --------
 
@@ -205,19 +204,22 @@
     });
 
     test('get parameter from url', function () {
-        var urlSearchParameter = '?ajs_id=12k31k2j31k&ajs_event=Test%20Click%20Event&other=1239xxjkjkj&';
+        var urlSearchParameter = '?ajs_uid=12k31k2j31k&ajs_event=Test%20Click%20Event&other=1239xxjkjkj&';
 
-        var userId = analytics.utils.getUrlParameter(urlSearchParameter, 'ajs_id');
+        var userId = analytics.utils.getUrlParameter(urlSearchParameter, 'ajs_uid');
         expect(userId).to.equal('12k31k2j31k');
 
         var event = analytics.utils.getUrlParameter(urlSearchParameter, 'ajs_event');
         expect(event).to.equal('Test Click Event');
 
         var nonexistent = analytics.utils.getUrlParameter(urlSearchParameter, 'variable');
-        expect(nonexistent).to.equal();
+        expect(nonexistent).to.be.undefined;
 
         var nonexistent2 = analytics.utils.getUrlParameter('', 'ajs_event');
-        expect(nonexistent).to.equal();
+        expect(nonexistent2).to.be.undefined;
+
+        var hanging = analytics.utils.getUrlParameter('?ajs_uid', 'ajs_uid');
+        expect(hanging).to.be.undefined;
     });
 
     test('isEmail matches emails', function () {

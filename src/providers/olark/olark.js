@@ -5,8 +5,9 @@
 analytics.addProvider('Olark', {
 
     settings : {
-        siteId : null,
-        track  : false
+        siteId   : null,
+        track    : false,
+        pageview : true
     },
 
 
@@ -56,8 +57,26 @@ analytics.addProvider('Olark', {
         // Check the `track` setting to know whether log events or not.
         if (!this.settings.track) return;
 
+        // To stay consistent with olark's default messages, it's all lowercase.
         window.olark('api.chat.sendNotificationToOperator', {
-            body : 'Visitor triggered "'+event+'".'
+            body : 'visitor triggered "'+event+'"'
+        });
+    },
+
+
+    // Pageview
+    // --------
+
+    // Again, not analytics, but we can mimic the functionality Olark has for
+    // normal pageviews with pseudo-pageviews, telling the operator when a
+    // visitor changes pages.
+    pageview : function () {
+        // Check the `pageview` settings to know whether they want this or not.
+        if (!this.settings.pageview) return;
+
+        // To stay consistent with olark's default messages, it's all lowercase.
+        window.olark('api.chat.sendNotificationToOperator', {
+            body : 'looking at ' + window.location.href
         });
     }
 

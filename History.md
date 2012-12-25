@@ -1,4 +1,20 @@
-0.2.0 / 2012-12-14
+0.2.2 / 2012-12-19
+==================
+
+* Added link query tag support for `ajs_uid` and `ajs_event`
+* Added docco, uglify, and phantom to devDependencies by [@peleteiro](https://github.com/peleteiro)
+
+0.2.1 / 2012-12-18
+==================
+
+* Added the `pageview` method for tracking virtual pageviews
+* Added Travis-CI
+* Fixed window level objects in customerio and gosquared
+* Support added for Intercom's "secure" mode by [@buger](https://github.com/buger)
+* Removed root references
+
+
+0.2.0 / 2012-12-16
 ==================
 
 * Separated providers into separate files for easier maintenance

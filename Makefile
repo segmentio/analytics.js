@@ -1,6 +1,3 @@
-server:
-	python -m SimpleHTTPServer 8000
-
 analytics.js:
 	cat \
 		src/analytics.js \
@@ -17,7 +14,7 @@ analytics.js:
 		src/providers/olark/olark.js \
 		> analytics.js
 
-min:
+min: analytics.js
 	uglifyjs -o analytics.min.js analytics.js
 
 docs:
@@ -34,12 +31,22 @@ docs:
 		src/providers/klaviyo/klaviyo.js \
 		src/providers/mixpanel/mixpanel.js \
 		src/providers/olark/olark.js
-	open docs/analytics.html
 
-test:
-	open http://localhost:8000/test/min.html
-	open http://localhost:8000/test/providers.html
-	open http://localhost:8000/test/core.html
+server:
+	node test/server.js &
+
+# Kills the travis server
+kill:
+	kill -9 `cat test/pid.txt`
+	rm test/pid.txt
+
+# Runs travis tests
+test: server
+	sleep 1
+	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/min.html
+	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/providers.html
+	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/core.html
+	make kill
 
 release:
 	make analytics.js
@@ -47,4 +54,4 @@ release:
 	make docs
 	make test
 
-.PHONY: server analytics.js min docs release test
+.PHONY: analytics.js docs test

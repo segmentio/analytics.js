@@ -1,4 +1,4 @@
-//     Analytics.js 0.2.0
+//     Analytics.js 0.2.2
 
 //     (c) 2012 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -8,12 +8,8 @@
     // Setup
     // -----
 
-    // A reference to the global object, `window` in the browser, `global` on
-    // the server.
-    var root = this;
-
     // The `analytics` object that will be exposed to you on the global object.
-    root.analytics || (root.analytics = {
+    var analytics = {
 
         // Cache the `userId` when a user is identified.
         userId : null,
@@ -78,6 +74,12 @@
 
             // Update the initialized state that other methods rely on.
             this.initialized = true;
+
+            // Try to use id and event parameters from the url
+            var userId = this.utils.getUrlParameter(window.location.search, 'ajs_uid');
+            if (userId) this.identify(userId);
+            var event = this.utils.getUrlParameter(window.location.search, 'ajs_event');
+            if (event) this.track(event);
         },
 
 
@@ -147,6 +149,29 @@
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.track) continue;
                 provider.track(event, this.utils.clone(properties));
+            }
+        },
+
+
+        // Pageview
+        // --------
+
+        // For single-page applications where real page loads don't happen, the
+        // **pageview** method simulates a page loading event for all providers
+        // that track pageviews and support it. This is the equivalent of
+        // calling `_gaq.push(['trackPageview'])` in Google Analytics.
+        //
+        // **pageview** is _not_ for sending events about which pages in your
+        // app the user has loaded. For that, use a regular track call like:
+        // `analytics.track('View Signup Page')`. Or, if you think you've come
+        // up with a badass abstraction, submit a pull request!
+        pageview : function () {
+            if (!this.initialized) return;
+
+            // Call `pageview` on all of our enabled providers that support it.
+            for (var i = 0, provider; provider = this.providers[i]; i++) {
+                if (!provider.pageview) continue;
+                provider.pageview();
             }
         },
 
@@ -238,20 +263,32 @@
                 }
 
                 return settings;
+            },
+
+            // A helper to track events based on the 'anjs' url parameter
+            getUrlParameter : function (urlSearchParameter, paramKey) {
+                var params = urlSearchParameter.replace('?', '').split('&');
+                for (var i = 0; i < params.length; i += 1) {
+                    var param = params[i].split('=');
+                    if (param.length === 2 && param[0] === paramKey) {
+                        return decodeURIComponent(param[1]);
+                    }
+                }
             }
         }
 
-    });
+    };
 
     // Wrap any existing `onload` function with our own that will cache the
     // loaded state of the page.
     var oldonload = window.onload;
     window.onload = function () {
-        root.analytics.loaded = true;
-        if (root.analytics.utils.isFunction(oldonload)) oldonload();
+        analytics.loaded = true;
+        if (analytics.utils.isFunction(oldonload)) oldonload();
     };
 
-}).call(this);
+    window.analytics = analytics;
+})();
 
 
 // Chartbeat
@@ -296,9 +333,15 @@ analytics.addProvider('Chartbeat', {
                 "js/chartbeat.js");
             document.body.appendChild(e);
         })();
-    }
+    },
 
-    // TODO: Add virtual page API.
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        window.pSUPERFLY.virtualPage(window.location.pathname);
+    }
 
 });
 
@@ -358,7 +401,7 @@ analytics.addProvider('Customer.io', {
 
         var self = this;
 
-        var _cio = _cio || [];
+        var _cio = window._cio = _cio || [];
         (function() {
             var a,b,c;a=function(f){return function(){_cio.push([f].
             concat(Array.prototype.slice.call(arguments,0)))}};b=["identify",
@@ -371,7 +414,7 @@ analytics.addProvider('Customer.io', {
             t.src = 'https://assets.customer.io/assets/track.js';
             s.parentNode.insertBefore(t, s);
         })();
-        window._cio = _cio;
+
     },
 
 
@@ -454,13 +497,13 @@ analytics.addProvider('Google Analytics', {
             _gaq.push(['_gat._anonymizeIp']);
         }
         _gaq.push(['_trackPageview']);
+        window._gaq = _gaq;
+
         (function() {
             var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
             ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
         })();
-
-        window._gaq = _gaq;
     },
 
 
@@ -469,6 +512,14 @@ analytics.addProvider('Google Analytics', {
 
     track : function (event, properties) {
         window._gaq.push(['_trackEvent', 'All', event]);
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        window._gaq.push(['_trackPageview']);
     }
 
 });
@@ -527,6 +578,14 @@ analytics.addProvider('HubSpot', {
     // existing custom event as the event variable.
     track : function (event, properties) {
         window._hsq.push(["trackEvent", event, properties]);
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        // TODO http://performabledoc.hubspot.com/display/DOC/JavaScript+API
     }
 
 });
@@ -557,13 +616,11 @@ analytics.addProvider('GoSquared', {
         settings = analytics.utils.resolveSettings(settings, 'siteToken');
         analytics.utils.extend(this.settings, settings);
 
-        var GoSquared={};
+        var GoSquared = window.GoSquared = {};
         GoSquared.acct = this.settings.siteToken;
         window._gstc_lt=+(new Date); var d=document;
         var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
         var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
-
-        window.GoSquared = GoSquared;
     },
 
 
@@ -584,8 +641,21 @@ analytics.addProvider('GoSquared', {
     track : function (event, properties) {
         // The queue isn't automatically created by the snippet.
         if (!window.GoSquared.q) window.GoSquared.q = [];
+
+        // GoSquared sets a `gs_evt_name` property with a value of the event
+        // name, so it relies on properties being an object.
+        properties || (properties = {});
+
         window.GoSquared.q.push(['TrackEvent', event, properties]);
-    }
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        window.GoSquared.DefaultTracker.TrackView();
+    },
 
 });
 
@@ -620,6 +690,7 @@ analytics.addProvider('Intercom', {
     //
     // * Add `appId` from stored `settings`.
     // * Add `userId`.
+    // * Add `userHash` for secure mode
     identify: function (userId, traits) {
         // Don't do anything if we just have traits.
         if (!userId) return;
@@ -628,6 +699,7 @@ analytics.addProvider('Intercom', {
         window.intercomSettings = {
             app_id      : this.settings.appId,
             user_id     : userId,
+            user_hash   : this.settings.userHash,
             custom_data : traits || {},
         };
 
@@ -682,6 +754,8 @@ analytics.addProvider('KISSmetrics', {
         analytics.utils.extend(this.settings, settings);
 
         var _kmq = _kmq || [];
+        window._kmq = _kmq;
+
         function _kms(u){
             setTimeout(function(){
                 var d = document, f = d.getElementsByTagName('script')[0],
@@ -692,8 +766,6 @@ analytics.addProvider('KISSmetrics', {
         }
         _kms('//i.kissmetrics.com/i.js');
         _kms('//doug1izaerwt3.cloudfront.net/'+this.settings.apiKey+'.1.js');
-
-        window._kmq = _kmq;
     },
 
 
@@ -742,14 +814,13 @@ analytics.addProvider('Klaviyo', {
 
         var _learnq = _learnq || [];
         _learnq.push(['account', this.settings.apiKey]);
+        window._learnq = _learnq;
         (function () {
             var b = document.createElement('script'); b.type = 'text/javascript'; b.async = true;
             b.src = ('https:' == document.location.protocol ? 'https://' : 'http://') +
                 'a.klaviyo.com/media/js/learnmarklet.js';
             var a = document.getElementsByTagName('script')[0]; a.parentNode.insertBefore(b, a);
         })();
-
-        window._learnq = _learnq;
     },
 
 
@@ -860,6 +931,16 @@ analytics.addProvider('Mixpanel', {
 
     track : function (event, properties) {
         window.mixpanel.track(event, properties);
+    },
+
+
+    // Pageview
+    // --------
+
+    // Mixpanel doesn't actually track the pageviews, but they do show up in the
+    // Mixpanel stream.
+    pageview : function () {
+        window.mixpanel.track_pageview();
     }
 
 });
@@ -872,8 +953,9 @@ analytics.addProvider('Mixpanel', {
 analytics.addProvider('Olark', {
 
     settings : {
-        siteId : null,
-        track  : false
+        siteId   : null,
+        track    : false,
+        pageview : true
     },
 
 
@@ -923,8 +1005,26 @@ analytics.addProvider('Olark', {
         // Check the `track` setting to know whether log events or not.
         if (!this.settings.track) return;
 
+        // To stay consistent with olark's default messages, it's all lowercase.
         window.olark('api.chat.sendNotificationToOperator', {
-            body : 'Visitor triggered "'+event+'".'
+            body : 'visitor triggered "'+event+'"'
+        });
+    },
+
+
+    // Pageview
+    // --------
+
+    // Again, not analytics, but we can mimic the functionality Olark has for
+    // normal pageviews with pseudo-pageviews, telling the operator when a
+    // visitor changes pages.
+    pageview : function () {
+        // Check the `pageview` settings to know whether they want this or not.
+        if (!this.settings.pageview) return;
+
+        // To stay consistent with olark's default messages, it's all lowercase.
+        window.olark('api.chat.sendNotificationToOperator', {
+            body : 'looking at ' + window.location.href
         });
     }
 

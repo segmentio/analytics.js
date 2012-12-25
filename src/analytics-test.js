@@ -4,10 +4,14 @@
     var provider = {
         initialize : function (settings) {},
         identify : function (userId, traits) {},
-        track : function (event, properties) {}
+        track : function (event, properties) {},
+        pageview : function () {}
     };
     analytics.addProvider('test', provider);
 
+
+    // Initialize
+    // ----------
 
     suite('initialize');
 
@@ -45,8 +49,18 @@
         expect(analytics.userId).to.be.null;
     });
 
+    // Identify
+    // --------
 
     suite('identify');
+
+    test('identify is called on providers', function () {
+        var spy = sinon.spy(provider, 'identify');
+        analytics.identify();
+        expect(spy).to.have.been.called;
+
+        spy.restore();
+    });
 
     test('identify sends userId along', function () {
         var spy = sinon.spy(provider, 'identify');
@@ -70,7 +84,18 @@
     });
 
 
+    // Track
+    // -----
+
     suite('track');
+
+    test('track is called on providers', function () {
+        var spy = sinon.spy(provider, 'track');
+        analytics.track();
+        expect(spy).to.have.been.called;
+
+        spy.restore();
+    });
 
     test('track sends event name along', function () {
         var spy = sinon.spy(provider, 'track');
@@ -93,6 +118,47 @@
         spy.restore();
     });
 
+
+    // Track Click
+    // -----------
+
+    test('track click fires on a button', function () {
+        var spy = sinon.spy(provider, 'track');
+        var button = $('#button')[0];
+        analytics.trackClick(button, 'party');
+        $(button).click();
+        expect(spy).to.have.been.calledWith('party');
+    });
+
+    test('track click fires on a link without an href', function () {
+        var spy = sinon.spy(provider, 'track');
+        var link = $('#link')[0];
+        analytics.trackClick(link, 'party');
+        $(link).click();
+        expect(spy).to.have.been.calledWith('party');
+    });
+
+    test('track click routes to a new href on links');
+
+    test('track click doesnt route to an href when its a meta click');
+
+
+    // Pageview
+    // --------
+
+    suite('pageview');
+
+    test('pageview is called on providers', function () {
+        var spy = sinon.spy(provider, 'pageview');
+        analytics.pageview();
+        expect(spy).to.have.been.called;
+
+        spy.restore();
+    });
+
+
+    // Utils
+    // -----
 
     suite('utils');
 
@@ -159,6 +225,25 @@
     test('getSeconds returns the seconds of a date', function () {
         var date = new Date(1355548865865);
         expect(analytics.utils.getSeconds(date)).to.equal(1355548865);
+    });
+
+    test('get parameter from url', function () {
+        var urlSearchParameter = '?ajs_uid=12k31k2j31k&ajs_event=Test%20Click%20Event&other=1239xxjkjkj&';
+
+        var userId = analytics.utils.getUrlParameter(urlSearchParameter, 'ajs_uid');
+        expect(userId).to.equal('12k31k2j31k');
+
+        var event = analytics.utils.getUrlParameter(urlSearchParameter, 'ajs_event');
+        expect(event).to.equal('Test Click Event');
+
+        var nonexistent = analytics.utils.getUrlParameter(urlSearchParameter, 'variable');
+        expect(nonexistent).to.be.undefined;
+
+        var nonexistent2 = analytics.utils.getUrlParameter('', 'ajs_event');
+        expect(nonexistent2).to.be.undefined;
+
+        var hanging = analytics.utils.getUrlParameter('?ajs_uid', 'ajs_uid');
+        expect(hanging).to.be.undefined;
     });
 
     test('isEmail matches emails', function () {

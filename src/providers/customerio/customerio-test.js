@@ -16,6 +16,10 @@
         created : new Date('12/30/1989')
     };
 
+
+    // Initialize
+    // ----------
+
     test('adds customer.io\'s track.js on initialize', function () {
         expect(window._cio).not.to.exist;
 
@@ -25,6 +29,10 @@
         expect(window._cio).to.exist;
         expect(analytics.providers[0].settings.siteId).to.equal('x');
     });
+
+
+    // Identify
+    // --------
 
     test('calls identify on identify', function () {
         var spy = sinon.spy(window._cio, 'identify');
@@ -41,6 +49,10 @@
 
         spy.restore();
     });
+
+
+    // Track
+    // -----
 
     test('calls track on track', function () {
         var spy = sinon.spy(window._cio, 'track');

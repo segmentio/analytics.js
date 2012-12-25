@@ -16,6 +16,10 @@
         email : 'zeus@segment.io'
     };
 
+
+    // Initialize
+    // ----------
+
     test('stores settings and adds GoSquared js on initialize', function () {
         expect(window.GoSquared).not.to.exist;
 
@@ -33,6 +37,10 @@
             done();
         };
     });
+
+
+    // Identify
+    // --------
 
     test('correctly identifies the user', function () {
         expect(window.GoSquared.UserName).not.to.exist;
@@ -53,12 +61,36 @@
         expect(window.GoSquared.Visitor).to.deep.equal(traits);
     });
 
+
+    // Track
+    // -----
+
     test('pushes "TrackEvent" on track', function () {
         var spy = sinon.spy(window.GoSquared.q, 'push');
-
-        analytics.track(event, properties);
-        var augmentedProperties = _.extend(properties, { gs_evt_name: event });
+        analytics.track(event);
+        // GoSquared adds the event name to the properties hash.
+        var augmentedProperties = { gs_evt_name: event };
         expect(spy).to.have.been.calledWith([event, sinon.match(augmentedProperties)]);
+
+        spy.reset();
+        analytics.track(event, properties);
+        // GoSquared adds the event name to the properties hash.
+        augmentedProperties = _.extend({}, properties, { gs_evt_name: event });
+        expect(spy).to.have.been.calledWith([event, sinon.match(augmentedProperties)]);
+
+        spy.restore();
+    });
+
+
+    // Pageview
+    // --------
+
+    test('calls "TrackView" on pageview', function () {
+        var spy = sinon.spy(window.GoSquared.DefaultTracker, 'TrackView');
+        analytics.pageview();
+        expect(spy).to.have.been.called;
+
+        spy.restore();
     });
 
 }());

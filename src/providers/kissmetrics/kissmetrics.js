@@ -20,6 +20,8 @@ analytics.addProvider('KISSmetrics', {
         analytics.utils.extend(this.settings, settings);
 
         var _kmq = _kmq || [];
+        window._kmq = _kmq;
+
         function _kms(u){
             setTimeout(function(){
                 var d = document, f = d.getElementsByTagName('script')[0],
@@ -30,8 +32,6 @@ analytics.addProvider('KISSmetrics', {
         }
         _kms('//i.kissmetrics.com/i.js');
         _kms('//doug1izaerwt3.cloudfront.net/'+this.settings.apiKey+'.1.js');
-
-        window._kmq = _kmq;
     },
 
 

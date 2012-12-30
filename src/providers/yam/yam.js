@@ -4,8 +4,6 @@
 
 analytics.addProvider('Yandex.Metrika', {
 
-    counter: null,
-
     settings : {
         id                 : null,
         webvisor           : true,
@@ -27,7 +25,7 @@ analytics.addProvider('Yandex.Metrika', {
         (function (d, w, c) {
             (w[c] = w[c] || []).push(function() {
                 try {
-                    that.counter = w['yaCounter' + that.settings.id] = new Ya.Metrika(that.settings);
+                    w['yaCounter' + that.settings.id] = new Ya.Metrika(that.settings);
                 } catch(e) { }
             });
 
@@ -45,26 +43,19 @@ analytics.addProvider('Yandex.Metrika', {
     },
 
 
-    // Hit
+    // Pageview
     // -----
 
-    hit : function (url, title, referer, params) {
-        this.counter.hit(url, title, referer, params);
+    pageview : function () {
+        var d = document;
+        w['yaCounter' + that.settings.id].hit(d.location.href, d.title, d.referrer);
     },
 
-
-    // AddFileExtension
+    // Track
     // --------
 
-    addFileExtension : function (extension) {
-        this.counter.addFileExtension(extension);
-    },
-
-    // ClickMap
-    // --------
-
-    clickmap : function (props) {
-        this.counter.clickmap(props);
+    track : function (event, properties) {
+        w['yaCounter' + that.settings.id].reachGoal(event, properties);
     }
 
 });

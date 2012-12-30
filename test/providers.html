@@ -14,7 +14,7 @@
     <script src="libs/mocha/mocha-cloud-0.0.1.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
     <script>
-        window.mocha.setup({ ui : 'qunit', ignoreLeaks : true });
+        window.mocha.setup({ ui : 'qunit', ignoreLeaks : true, timeout: 7000 });
         window.expect = window.chai.expect;
     </script>
 
@@ -29,6 +29,7 @@
     <script src="../src/providers/klaviyo/klaviyo.js"></script>
     <script src="../src/providers/mixpanel/mixpanel.js"></script>
     <script src="../src/providers/olark/olark.js"></script>
+    <script src="../src/providers/yam/yam.js"></script>
 
     <script src="../src/providers/chartbeat/chartbeat-test.js"></script>
     <script src="../src/providers/customerio/customerio-test.js"></script>
@@ -40,6 +41,7 @@
     <script src="../src/providers/klaviyo/klaviyo-test.js"></script>
     <script src="../src/providers/mixpanel/mixpanel-test.js"></script>
     <script src="../src/providers/olark/olark-test.js"></script>
+    <script src="../src/providers/yam/yam-test.js"></script>
 </head>
 <body>
     <h1>Providers Test</h1>

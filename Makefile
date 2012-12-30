@@ -12,6 +12,7 @@ analytics.js:
 		src/providers/klaviyo/klaviyo.js \
 		src/providers/mixpanel/mixpanel.js \
 		src/providers/olark/olark.js \
+		src/providers/yam/yam.js \
 		> analytics.js
 
 min: analytics.js

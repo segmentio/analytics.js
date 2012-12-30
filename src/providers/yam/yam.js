@@ -42,20 +42,19 @@ analytics.addProvider('Yandex.Metrika', {
         })(document, window, "yandex_metrika_callbacks");
     },
 
-
     // Pageview
     // -----
 
     pageview : function () {
         var d = document;
-        w['yaCounter' + that.settings.id].hit(d.location.href, d.title, d.referrer);
+        window['yaCounter' + this.settings.id].hit(d.location.href, d.title, d.referrer);
     },
 
     // Track
     // --------
 
     track : function (event, properties) {
-        w['yaCounter' + that.settings.id].reachGoal(event, properties);
+        window['yaCounter' + this.settings.id].reachGoal(event, properties);
     }
 
 });

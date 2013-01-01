@@ -21,7 +21,7 @@
         analytics.initialize({
             'Google Analytics' : {
               'trackingId' : 'x',
-              'domainName' : 'example.com'
+              'domain' : 'example.com'
             }
         });
         expect(

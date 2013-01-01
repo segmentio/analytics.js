@@ -8,7 +8,7 @@ analytics.addProvider('Google Analytics', {
         anonymizeIp             : false,
         enhancedLinkAttribution : false,
         siteSpeedSampleRate     : null,
-        domainName              : null,
+        domain                  : null,
         trackingId              : null
     },
 
@@ -35,8 +35,8 @@ analytics.addProvider('Google Analytics', {
         if (analytics.utils.isNumber(this.settings.siteSpeedSampleRate)) {
             _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
         }
-        if(this.settings.domainName) {
-            _gaq.push(['_setDomainName', this.settings.domainName]);
+        if(this.settings.domain) {
+            _gaq.push(['_setDomainName', this.settings.domain]);
         }
         if(this.settings.anonymizeIp) {
             _gaq.push(['_gat._anonymizeIp']);

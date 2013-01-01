@@ -17,6 +17,20 @@
         expect(analytics.providers[0].settings.trackingId).to.equal('x');
     });
 
+    test('can set domain on initialize', function () {
+        analytics.initialize({
+            'Google Analytics' : {
+              'trackingId' : 'x',
+              'domainName' : 'example.com'
+            }
+        });
+        expect(
+          _.find(window._gaq, function(item){ 
+            return(item[0] === '_setDomainName' && item[1] === 'example.com') 
+          })
+        ).to.exist
+    });
+
     test('can add enhanced link attribution');
 
     test('can add site speed sample rate');

@@ -161,21 +161,24 @@
         // in as short of a timeout as possible to fire the track call, because
         // [response times matter](http://theixdlibrary.com/pdf/Miller1968.pdf).
         //
-        // * `element` is either a single DOM element, or an array of DOM
+        // * `elements` is either a single DOM element, or an array of DOM
         // elements like jQuery would give you.
         //
         // * `event` and `properties` are passed directly to `analytics.track`
         // and take the same options.
-        trackClick : function (element, event, properties) {
-            if (!element) return;
-            if (!this.utils.isArray(element)) element = [element];
+        trackClick : function (elements, event, properties) {
+            if (!elements) return;
+            if (!this.utils.isArray(elements)) elements = [elements];
 
-            // Listen to all the elements.
-            for (var i = 0, el; el = element[i]; i++) {
+            // Bind to all the elements in the array.
+            for (var i = 0; i < elements.length; i++) {
+                var self = this;
+                var el = elements[i];
+
                 this.utils.bind(el, 'click', function (e) {
 
                     // Fire a normal track call.
-                    this.track(event, properties);
+                    self.track(event, properties);
 
                     // To justify us preventing the default behavior we must:
                     //
@@ -186,7 +189,7 @@
                     //
                     // This might not cover all cases, but we'd rather throw out
                     // an event than miss a case that breaks the experience.
-                    if (el.href && !this.utils.isMeta(e)) {
+                    if (el.href && !self.utils.isMeta(e)) {
 
                         // Navigate to the url after a small timeout to let the
                         // event have time to fire.
@@ -194,7 +197,7 @@
                             window.location.href = el.href;
                         }, 100);
 
-                        // Prevent the default.
+                        // Prevent the link's default redirect.
                         return false;
                     }
                 });

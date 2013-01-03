@@ -122,20 +122,39 @@
     // Track Click
     // -----------
 
+    suite('trackClick');
+
     test('track click fires on a button', function () {
         var spy = sinon.spy(provider, 'track');
         var button = $('#button')[0];
         analytics.trackClick(button, 'party');
         $(button).click();
         expect(spy).to.have.been.calledWith('party');
+
+        $(button).remove();
+        spy.restore();
+    });
+
+    test('track click fires on a $button', function () {
+        var spy = sinon.spy(provider, 'track');
+        var $button = $('#another-button');
+        analytics.trackClick($button, 'party');
+        $button.click();
+        expect(spy).to.have.been.calledWith('party');
+
+        $button.remove();
+        spy.restore();
     });
 
     test('track click fires on a link without an href', function () {
         var spy = sinon.spy(provider, 'track');
-        var link = $('#link')[0];
-        analytics.trackClick(link, 'party');
-        $(link).click();
+        var $link = $('#href-link');
+        analytics.trackClick($link, 'party');
+        $link.click();
         expect(spy).to.have.been.calledWith('party');
+
+        $link.remove();
+        spy.restore();
     });
 
     test('track click routes to a new href on links');

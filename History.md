@@ -1,3 +1,8 @@
+0.2.4 / 2012-1-3
+==================
+
+* GoSquared trailing comma fix by [@cmer](https://github.com/cmer)
+
 0.2.3 / 2012-1-2
 ==================
 

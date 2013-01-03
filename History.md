@@ -1,3 +1,10 @@
+0.2.3 / 2012-1-2
+==================
+
+* Added domain field to GA by [@starrhorne](https://github.com/starrhorne)
+* Removing phantom install to get travis working
+* Adding window._gaq fix in initialize.
+
 0.2.2 / 2012-12-19
 ==================
 

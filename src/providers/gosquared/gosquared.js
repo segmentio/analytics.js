@@ -62,7 +62,7 @@ analytics.addProvider('GoSquared', {
 
     pageview : function () {
         window.GoSquared.DefaultTracker.TrackView();
-    },
+    }
 
 });
 

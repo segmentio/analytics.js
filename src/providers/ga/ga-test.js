@@ -18,17 +18,18 @@
     });
 
     test('can set domain on initialize', function () {
+        window._gaq = [];
+        var spy = sinon.spy(window._gaq, 'push');
+
         analytics.initialize({
             'Google Analytics' : {
               'trackingId' : 'x',
               'domain' : 'example.com'
             }
         });
-        expect(
-          _.find(window._gaq, function(item){ 
-            return(item[0] === '_setDomainName' && item[1] === 'example.com') 
-          })
-        ).to.exist
+
+        expect(spy).to.have.been.calledWith(['_setDomainName', 'example.com']);
+        spy.restore();
     });
 
     test('can add enhanced link attribution');

@@ -7,10 +7,13 @@
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
+    <script>
+      var analytics=analytics||[];analytics.load=function(e){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=("https:"===document.location.protocol?"https://":"http://")+"d2dq2ahtl5zl1z.cloudfront.net"+"/analytics.js/v1/"+e+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(t,n);var r=function(e){return function(){analytics.push([e].concat(Array.prototype.slice.call(arguments,0)))}},s=["identify","track"];for(var i=0;i<s.length;i++)analytics[s[i]]=r(s[i])},
+      analytics.load("6axnhaa");
+    </script>
   </head>
   <body>
     <div class="wrapper">
@@ -23,15 +26,17 @@
         </ul>
       </header>
       <section>
-<p><strong>Every project needs analytics.</strong> But you shouldn't have to litter your codebase third-party-specific calls. Changing or adding new services should be a snap.</p>
+<p><strong>Every project needs analytics.</strong> But you shouldn't have to litter your codebase with third-party-specific calls. Changing or adding new services should be a snap.</p>
 
 <p>That's where <strong>analytics.js</strong> comes in! Instead of adding hooks for every single analytics service you integrate, you add a single set of provider-agnostic hooks that then route to any analytics service you want!</p>
 
 <p>You'll never want to go back to those unfriendly third-party APIs again!</p>
 
+<p>We're also working on a hosted version, where you can add and change analytics services without touching any code! Interested? Check out <a href="http://analyticsjs.com">analyticsjs.com</a>.</p>
+
 <h2>The API</h2>
 
-<p>Our goal for the API was to pave over the small differences in all your analytics services to give you a single calls.</p>
+<p>Our goal for the API was to pave over the small differences in all your analytics services to give you a single call.</p>
 
 <h3>initialize()</h3>
 
@@ -122,7 +127,7 @@
 <li>Complete Purchase</li>
 <li>Upgrade Plan</li>
 <li>Share on Facebook</li>
-<li>Watche a Video</li>
+<li>Watch a Video</li>
 <li>Invite a Friend</li>
 </ul><p>or</p>
 

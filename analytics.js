@@ -1,6 +1,6 @@
 //     Analytics.js 0.2.2
 
-//     (c) 2012 Segment.io Inc.
+//     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
 
 (function () {
@@ -477,7 +477,7 @@ analytics.addProvider('Errorception', {
 
         var self = this;
 
-        var _errs = [settings.projectId];
+        var _errs = window._errs = _errs || [settings.projectId];
         (function(a,b){
             a.onerror = function () {
                 _errs.push(arguments);
@@ -491,22 +491,6 @@ analytics.addProvider('Errorception', {
             };
             a.addEventListener ? a.addEventListener("load",d,!1) : a.attachEvent("onload",d);
         })(window,document);
-    },
-
-
-    // Identify
-    // --------
-
-    identify : function (userId, traits) {
-        // noop
-    },
-
-
-    // Track
-    // -----
-
-    track : function (event, properties) {
-        // noop
     }
 
 });

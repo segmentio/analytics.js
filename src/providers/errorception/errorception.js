@@ -32,22 +32,6 @@ analytics.addProvider('Errorception', {
             };
             a.addEventListener ? a.addEventListener("load",d,!1) : a.attachEvent("onload",d);
         })(window,document);
-    },
-
-
-    // Identify
-    // --------
-
-    identify : function (userId, traits) {
-        // noop
-    },
-
-
-    // Track
-    // -----
-
-    track : function (event, properties) {
-        // noop
     }
 
 });

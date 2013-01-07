@@ -318,7 +318,7 @@ analytics.addProvider('Chartbeat', {
 
         // Since all the custom settings just get passed through, update the
         // Chartbeat `_sf_async_config` variable with settings.
-        var _sf_async_config = this.settings || {};
+        window._sf_async_config = this.settings || {};
 
         (function(){
             // Use the stored date from when we were loaded.

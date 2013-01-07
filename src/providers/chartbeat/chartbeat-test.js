@@ -23,6 +23,8 @@
             expect(window.pSUPERFLY).to.exist;
             expect(analytics.providers[0].settings.uid).to.equal('x');
             expect(analytics.providers[0].settings.domain).to.equal('example.com');
+            expect(window._sf_async_config).to.exist;
+            expect(window._sf_async_config).to.equal(analytics.providers[0].settings);
             done();
         }, 500);
     });

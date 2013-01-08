@@ -1,4 +1,4 @@
-//     Analytics.js 0.2.2
+//     Analytics.js 0.2.5
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -743,7 +743,7 @@ analytics.addProvider('Intercom', {
             app_id      : this.settings.appId,
             user_id     : userId,
             user_hash   : this.settings.userHash,
-            custom_data : traits || {},
+            custom_data : traits || {}
         };
 
         // Augment `intercomSettings` with some of the special traits.

@@ -1,9 +1,17 @@
-0.2.4 / 2012-1-3
+0.2.5 / 2013-1-8
+==================
+
+* Errorception support added
+* Clicky support added
+* IE 7 fix reported by [@yefremov](https://github.com/yefremov)
+* Doc typos removed
+
+0.2.4 / 2013-1-3
 ==================
 
 * GoSquared trailing comma fix by [@cmer](https://github.com/cmer)
 
-0.2.3 / 2012-1-2
+0.2.3 / 2013-1-2
 ==================
 
 * Added domain field to GA by [@starrhorne](https://github.com/starrhorne)

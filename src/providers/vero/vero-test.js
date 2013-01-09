@@ -34,7 +34,7 @@
     // Identify
     // --------
 
-    test('calls identify on identify', function () {
+    test('pushes "users" on identify', function () {
         var spy = sinon.spy(window._veroq, 'push');
         analytics.identify(traits);
         expect(spy).to.not.have.been.called;

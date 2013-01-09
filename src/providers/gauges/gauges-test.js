@@ -21,7 +21,7 @@
     // Pageview
     // --------
 
-    test('pushes "track" on pagebiew', function () {
+    test('pushes "track" on pageview', function () {
         var spy = sinon.spy(window._gauges, 'push');
         analytics.pageview();
         expect(spy).to.have.been.calledWith(['track']);

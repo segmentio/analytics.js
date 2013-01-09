@@ -6,7 +6,7 @@ analytics.js:
 		src/providers/customerio/customerio.js \
 		src/providers/errorception/errorception.js \
 		src/providers/ga/ga.js \
-		src/providers/gaug.es/gauges.js \
+		src/providers/gauges/gauges.js \
 		src/providers/hubspot/hubspot.js \
 		src/providers/gosquared/gosquared.js \
 		src/providers/intercom/intercom.js \
@@ -27,7 +27,7 @@ docs:
 		src/providers/customerio/customerio.js \
 		src/providers/errorception/errorception.js \
 		src/providers/ga/ga.js \
-		src/providers/gaug\.es/gauges.js \
+		src/providers/gauges/gauges.js \
 		src/providers/hubspot/hubspot.js \
 		src/providers/gosquared/gosquared.js \
 		src/providers/intercom/intercom.js \

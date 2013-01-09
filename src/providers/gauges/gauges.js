@@ -36,7 +36,7 @@ analytics.addProvider('Gaug.es', {
     // Pageview
     // --------
 
-    pageview : function() {
+    pageview : function(url) {
         window._gauges.push(['track']);
     }
 

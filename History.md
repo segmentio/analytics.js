@@ -4,7 +4,6 @@
 * Errorception support added
 * Clicky support added
 * IE 7 fix reported by [@yefremov](https://github.com/yefremov)
-* Doc typos removed
 
 0.2.4 / 2013-1-3
 ==================

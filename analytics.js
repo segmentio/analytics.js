@@ -1,4 +1,4 @@
-//     Analytics.js 0.2.2
+//     Analytics.js 0.2.5
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -322,7 +322,7 @@ analytics.addProvider('Chartbeat', {
 
         // Since all the custom settings just get passed through, update the
         // Chartbeat `_sf_async_config` variable with settings.
-        var _sf_async_config = this.settings || {};
+        window._sf_async_config = this.settings || {};
 
         (function(){
             // Use the stored date from when we were loaded.
@@ -749,7 +749,7 @@ analytics.addProvider('Intercom', {
             app_id      : this.settings.appId,
             user_id     : userId,
             user_hash   : this.settings.userHash,
-            custom_data : traits || {},
+            custom_data : traits || {}
         };
 
         // Augment `intercomSettings` with some of the special traits.

@@ -38,7 +38,7 @@ analytics.addProvider('Intercom', {
             app_id      : this.settings.appId,
             user_id     : userId,
             user_hash   : this.settings.userHash,
-            custom_data : traits || {},
+            custom_data : traits || {}
         };
 
         // Augment `intercomSettings` with some of the special traits.

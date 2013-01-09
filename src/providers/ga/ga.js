@@ -63,8 +63,10 @@ analytics.addProvider('Google Analytics', {
     // Pageview
     // --------
 
-    pageview : function () {
-        window._gaq.push(['_trackPageview']);
+    pageview : function (url) {
+        var options = ['_trackPageview'];
+        if (url) options[1] = url;
+        window._gaq.push(options);
     }
 
 });

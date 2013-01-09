@@ -56,8 +56,8 @@
 
     test('pushes "_trackPageview" on pageview', function () {
         var spy = sinon.spy(window._gaq, 'push');
-        analytics.pageview();
-        expect(spy).to.have.been.calledWith(['_trackPageview']);
+        analytics.pageview('/url');
+        expect(spy).to.have.been.calledWith(['_trackPageview', '/url']);
 
         spy.restore();
     });

@@ -36,6 +36,10 @@
         analytics.pageview();
         expect(spy).to.have.been.calledWith(window.location.pathname);
 
+        spy.reset();
+        analytics.pageview('/url');
+        expect(spy).to.have.been.calledWith('/url');
+
         spy.restore();
     });
 

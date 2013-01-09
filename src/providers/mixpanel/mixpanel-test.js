@@ -186,6 +186,10 @@
         analytics.pageview();
         expect(spy).to.have.been.called;
 
+        spy.reset();
+        analytics.pageview('/url');
+        expect(spy).to.have.been.calledWith('/url');
+
         spy.restore();
     });
 

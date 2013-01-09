@@ -165,13 +165,17 @@
         // app the user has loaded. For that, use a regular track call like:
         // `analytics.track('View Signup Page')`. Or, if you think you've come
         // up with a badass abstraction, submit a pull request!
-        pageview : function () {
+        //
+        // * `url` (optional) is the url path that you want to be associated
+        // with the page. You only need to pass this argument if the URL hasn't
+        // changed but you want to register a new pageview.
+        pageview : function (url) {
             if (!this.initialized) return;
 
             // Call `pageview` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.pageview) continue;
-                provider.pageview();
+                provider.pageview(url);
             }
         },
 
@@ -339,8 +343,8 @@ analytics.addProvider('Chartbeat', {
     // Pageview
     // --------
 
-    pageview : function () {
-        window.pSUPERFLY.virtualPage(window.location.pathname);
+    pageview : function (url) {
+        window.pSUPERFLY.virtualPage(url || window.location.pathname);
     }
 
 });
@@ -561,8 +565,10 @@ analytics.addProvider('Google Analytics', {
     // Pageview
     // --------
 
-    pageview : function () {
-        window._gaq.push(['_trackPageview']);
+    pageview : function (url) {
+        var options = ['_trackPageview'];
+        if (url) options[1] = url;
+        window._gaq.push(options);
     }
 
 });
@@ -982,8 +988,8 @@ analytics.addProvider('Mixpanel', {
 
     // Mixpanel doesn't actually track the pageviews, but they do show up in the
     // Mixpanel stream.
-    pageview : function () {
-        window.mixpanel.track_pageview();
+    pageview : function (url) {
+        window.mixpanel.track_pageview(url);
     }
 
 });

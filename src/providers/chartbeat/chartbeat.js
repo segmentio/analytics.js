@@ -46,8 +46,8 @@ analytics.addProvider('Chartbeat', {
     // Pageview
     // --------
 
-    pageview : function () {
-        window.pSUPERFLY.virtualPage(window.location.pathname);
+    pageview : function (url) {
+        window.pSUPERFLY.virtualPage(url || window.location.pathname);
     }
 
 });

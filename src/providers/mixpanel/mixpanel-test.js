@@ -1,4 +1,3 @@
-/*global sinon, suite, beforeEach, test, expect, analytics */
 !(function () {
 
     suite('Mixpanel');

@@ -1,4 +1,4 @@
-0.2.6 / 2013-1-9
+0.3.0 / 2013-1-9
 ==================
 
 * [Gaug.es](http://get.gaug.es/) support added by [@bdougherty](https://github.com/bdougherty)

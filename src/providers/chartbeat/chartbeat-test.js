@@ -1,4 +1,3 @@
-/*global sinon, suite, beforeEach, test, expect, analytics */
 !(function () {
 
     suite('Chartbeat');
@@ -26,7 +25,7 @@
             expect(window._sf_async_config).to.exist;
             expect(window._sf_async_config).to.equal(analytics.providers[0].settings);
             done();
-        }, 500);
+        }, 700);
     });
 
 

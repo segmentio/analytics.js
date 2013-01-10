@@ -1,6 +1,6 @@
 !(function () {
 
-    suite('Gaug.es');
+    suite('Gauges');
 
 
     // Initialize
@@ -10,7 +10,7 @@
         expect(window._gauges).not.to.exist;
 
         analytics.initialize({
-            'Gaug.es' : 'x'
+            'Gauges' : 'x'
         });
         expect(window._gauges).to.exist;
         expect(analytics.providers[0].settings.siteId).to.equal('x');

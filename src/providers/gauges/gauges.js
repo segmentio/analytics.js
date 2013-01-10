@@ -1,8 +1,8 @@
-// Gaug.es
+// Gauges
 // -------
 // [Documentation](http://get.gaug.es/documentation/tracking/).
 
-analytics.addProvider('Gaug.es', {
+analytics.addProvider('Gauges', {
 
     settings: {
         siteId: null

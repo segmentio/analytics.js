@@ -1,7 +1,7 @@
 0.3.0 / 2013-1-9
 ==================
 
-* [Gaug.es](http://get.gaug.es/) support added by [@bdougherty](https://github.com/bdougherty)
+* [Gauges](http://get.gaug.es/) support added by [@bdougherty](https://github.com/bdougherty)
 * [Vero](http://www.getvero.com/) support added
 * Added optional `url` argument to `pageview` method
 

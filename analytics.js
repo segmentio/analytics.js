@@ -371,10 +371,11 @@ analytics.addProvider('CrazyEgg', {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
 
+        var apiKey = this.settings.apiKey;
         (function(){
             var a=document.createElement("script");
             var b=document.getElementsByTagName("script")[0];
-            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+this.settings.apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
+            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
             a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b);
         })();
     }
@@ -558,7 +559,17 @@ analytics.addProvider('Google Analytics', {
     // -----
 
     track : function (event, properties) {
-        window._gaq.push(['_trackEvent', 'All', event]);
+        properties || (properties = {});
+
+        // Try to check for a `category` and `label`. A `category` is required,
+        // so if it's not there we use `'All'` as a default. We can safely push
+        // undefined if the special properties don't exist.
+        window._gaq.push([
+            '_trackEvent',
+            properties.category || 'All',
+            event,
+            properties.label
+        ]);
     },
 
 
@@ -566,19 +577,18 @@ analytics.addProvider('Google Analytics', {
     // --------
 
     pageview : function (url) {
-        var options = ['_trackPageview'];
-        if (url) options[1] = url;
-        window._gaq.push(options);
+        // If there isn't a url, that's fine.
+        window._gaq.push(['_trackPageview', url]);
     }
 
 });
 
 
-// Gaug.es
+// Gauges
 // -------
 // [Documentation](http://get.gaug.es/documentation/tracking/).
 
-analytics.addProvider('Gaug.es', {
+analytics.addProvider('Gauges', {
 
     settings: {
         siteId: null

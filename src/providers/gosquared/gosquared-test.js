@@ -30,7 +30,9 @@
     });
 
     test('GoSquared tracker finishes loading', function (done) {
-        // use the GoSquared.load function...
+        this.timeout(10000);
+
+        // Use the GoSquared.load function...
         window.GoSquared.load = function(tracker) {
             expect(window.GoSquared.DefaultTracker).to.equal(tracker);
             done();

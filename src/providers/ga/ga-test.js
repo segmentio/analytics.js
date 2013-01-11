@@ -44,7 +44,20 @@
     test('pushes "_trackEvent" on track', function () {
         var spy = sinon.spy(window._gaq, 'push');
         analytics.track('event');
-        expect(spy).to.have.been.calledWith(['_trackEvent', 'All', 'event']);
+        expect(spy).to.have.been.calledWith(['_trackEvent', 'All', 'event', undefined]);
+
+        spy.reset();
+        analytics.track('event', {
+            category : 'Category'
+        });
+        expect(spy).to.have.been.calledWith(['_trackEvent', 'Category', 'event', undefined]);
+
+        spy.reset();
+        analytics.track('event', {
+            category : 'Category',
+            label    : 'Label'
+        });
+        expect(spy).to.have.been.calledWith(['_trackEvent', 'Category', 'event', 'Label']);
 
         spy.restore();
     });
@@ -55,6 +68,10 @@
 
     test('pushes "_trackPageview" on pageview', function () {
         var spy = sinon.spy(window._gaq, 'push');
+        analytics.pageview();
+        expect(spy).to.have.been.calledWith(['_trackPageview', undefined]);
+
+        spy.reset();
         analytics.pageview('/url');
         expect(spy).to.have.been.calledWith(['_trackPageview', '/url']);
 

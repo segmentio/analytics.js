@@ -1,3 +1,8 @@
+0.3.1 / 2013-1-11
+==================
+
+* Added `label` and `category` support to Google Analytics
+
 0.3.0 / 2013-1-9
 ==================
 

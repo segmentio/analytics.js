@@ -1,4 +1,3 @@
-/*global sinon, suite, beforeEach, test, expect, analytics */
 !(function () {
 
     suite('Chartbeat');
@@ -23,8 +22,10 @@
             expect(window.pSUPERFLY).to.exist;
             expect(analytics.providers[0].settings.uid).to.equal('x');
             expect(analytics.providers[0].settings.domain).to.equal('example.com');
+            expect(window._sf_async_config).to.exist;
+            expect(window._sf_async_config).to.equal(analytics.providers[0].settings);
             done();
-        }, 500);
+        }, 700);
     });
 
 
@@ -35,6 +36,10 @@
         var spy = sinon.spy(window.pSUPERFLY, 'virtualPage');
         analytics.pageview();
         expect(spy).to.have.been.calledWith(window.location.pathname);
+
+        spy.reset();
+        analytics.pageview('/url');
+        expect(spy).to.have.been.calledWith('/url');
 
         spy.restore();
     });

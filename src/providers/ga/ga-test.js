@@ -1,4 +1,3 @@
-/*global sinon, suite, beforeEach, test, expect, analytics */
 !(function () {
 
     suite('Google Analytics');
@@ -15,6 +14,21 @@
         });
         expect(window._gaq).to.exist;
         expect(analytics.providers[0].settings.trackingId).to.equal('x');
+    });
+
+    test('can set domain on initialize', function () {
+        window._gaq = [];
+        var spy = sinon.spy(window._gaq, 'push');
+
+        analytics.initialize({
+            'Google Analytics' : {
+              'trackingId' : 'x',
+              'domain' : 'example.com'
+            }
+        });
+
+        expect(spy).to.have.been.calledWith(['_setDomainName', 'example.com']);
+        spy.restore();
     });
 
     test('can add enhanced link attribution');
@@ -41,8 +55,8 @@
 
     test('pushes "_trackPageview" on pageview', function () {
         var spy = sinon.spy(window._gaq, 'push');
-        analytics.pageview();
-        expect(spy).to.have.been.calledWith(['_trackPageview']);
+        analytics.pageview('/url');
+        expect(spy).to.have.been.calledWith(['_trackPageview', '/url']);
 
         spy.restore();
     });

@@ -1,6 +1,6 @@
-//     Analytics.js 0.2.2
+//     Analytics.js 0.3.0
 
-//     (c) 2012 Segment.io Inc.
+//     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
 
 (function () {
@@ -153,8 +153,7 @@
         },
 
 
-        // Track Click
-        // -----------
+        // ### trackClick
 
         // A helper for tracking outbound links that would normally leave the
         // page before the track calls went out. It works by wrapping the calls
@@ -162,17 +161,22 @@
         // [response times matter](http://theixdlibrary.com/pdf/Miller1968.pdf).
         //
         // * `element` is either a single DOM element, or an array of DOM
-        // elements like jQuery would give you.
+        // elements like jQuery gives you.
         //
         // * `event` and `properties` are passed directly to `analytics.track`
         // and take the same options.
         trackClick : function (element, event, properties) {
             if (!element) return;
+
+            // Turn a non-array into an array so that we're always handling
+            // arrays, which allows for passing jQuery objects.
             if (!this.utils.isArray(element)) element = [element];
 
-            // Listen to all the elements.
-            for (var i = 0, el; el = element[i]; i++) {
+            // Bind to all the elements in the array.
+            for (var i = 0; i < element.length; i++) {
                 var self = this;
+                var el = element[i];
+
                 this.utils.bind(el, 'click', function (e) {
 
                     // Fire a normal track call.
@@ -189,15 +193,56 @@
                     // an event than miss a case that breaks the experience.
                     if (el.href && !self.utils.isMeta(e)) {
 
-                        // Navigate to the url after a small timeout to let the
-                        // event have time to fire.
+                        // Navigate to the url after a small timeout, giving the
+                        // event time to get fired.
                         setTimeout(function () {
                             window.location.href = el.href;
-                        }, 100);
+                        }, 250);
 
-                        // Prevent the default.
+                        // Prevent the link's default redirect.
                         return false;
                     }
+                });
+            }
+        },
+
+
+        // ### trackForm
+
+        // Similar to `trackClick`, this is a helper for tracking form
+        // submissions that would normally leave the page before a track call
+        // can be sent. It works by preventing the default submit, sending a
+        // track call, and then submitting the form programmatically.
+        //
+        // * `form` is either a single form element, or an array of
+        // form elements like jQuery gives you.
+        //
+        // * `event` and `properties` are passed directly to `analytics.track`
+        // and take the same options.
+        trackForm : function (form, event, properties) {
+            if (!form) return;
+
+            // Turn a non-array into an array so that we're always handling
+            // arrays, which allows for passing jQuery objects.
+            if (!this.utils.isArray(form)) form = [form];
+
+            // Bind to all the forms in the array.
+            for (var i = 0; i < form.length; i++) {
+                var self = this;
+                var el = form[i];
+
+                this.utils.bind(el, 'submit', function (e) {
+                    // Fire a normal track call.
+                    self.track(event, properties);
+
+                    // Submit the form after a small timeout, giving the event
+                    // time to get fired.
+                    setTimeout(function () {
+                        el.submit();
+                    }, 250);
+
+                    // Prevent the form's default submission.
+                    return false;
                 });
             }
         },
@@ -215,13 +260,17 @@
         // app the user has loaded. For that, use a regular track call like:
         // `analytics.track('View Signup Page')`. Or, if you think you've come
         // up with a badass abstraction, submit a pull request!
-        pageview : function () {
+        //
+        // * `url` (optional) is the url path that you want to be associated
+        // with the page. You only need to pass this argument if the URL hasn't
+        // changed but you want to register a new pageview.
+        pageview : function (url) {
             if (!this.initialized) return;
 
             // Call `pageview` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.pageview) continue;
-                provider.pageview();
+                provider.pageview(url);
             }
         },
 
@@ -400,7 +449,7 @@ analytics.addProvider('Chartbeat', {
 
         // Since all the custom settings just get passed through, update the
         // Chartbeat `_sf_async_config` variable with settings.
-        var _sf_async_config = this.settings || {};
+        window._sf_async_config = this.settings || {};
 
         (function(){
             // Use the stored date from when we were loaded.
@@ -421,8 +470,8 @@ analytics.addProvider('Chartbeat', {
     // Pageview
     // --------
 
-    pageview : function () {
-        window.pSUPERFLY.virtualPage(window.location.pathname);
+    pageview : function (url) {
+        window.pSUPERFLY.virtualPage(url || window.location.pathname);
     }
 
 });
@@ -449,10 +498,11 @@ analytics.addProvider('CrazyEgg', {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
 
+        var apiKey = this.settings.apiKey;
         (function(){
             var a=document.createElement("script");
             var b=document.getElementsByTagName("script")[0];
-            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+this.settings.apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
+            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
             a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b);
         })();
     }
@@ -539,6 +589,45 @@ analytics.addProvider('Customer.io', {
 });
 
 
+// Errorception
+// ------------
+// [Documentation](http://errorception.com/).
+
+analytics.addProvider('Errorception', {
+
+    settings : {
+        projectId : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'projectId');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
+
+        var _errs = window._errs = _errs || [settings.projectId];
+        (function(a,b){
+            a.onerror = function () {
+                _errs.push(arguments);
+            };
+            var d = function () {
+                var a = b.createElement("script"),
+                    c = b.getElementsByTagName("script")[0];
+                a.src = "//d15qhc0lu1ghnk.cloudfront.net/beacon.js";
+                a.async = true;
+                c.parentNode.insertBefore(a,c);
+            };
+            a.addEventListener ? a.addEventListener("load",d,!1) : a.attachEvent("onload",d);
+        })(window,document);
+    }
+
+});
+
+
 // Google Analytics
 // ----------------
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
@@ -549,6 +638,7 @@ analytics.addProvider('Google Analytics', {
         anonymizeIp             : false,
         enhancedLinkAttribution : false,
         siteSpeedSampleRate     : null,
+        domain                  : null,
         trackingId              : null
     },
 
@@ -566,7 +656,7 @@ analytics.addProvider('Google Analytics', {
         settings = analytics.utils.resolveSettings(settings, 'trackingId');
         analytics.utils.extend(this.settings, settings);
 
-        var _gaq = _gaq || [];
+        var _gaq = window._gaq || [];
         _gaq.push(['_setAccount', this.settings.trackingId]);
         if (this.settings.enhancedLinkAttribution) {
             var pluginUrl = (('https:' == document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
@@ -574,6 +664,9 @@ analytics.addProvider('Google Analytics', {
         }
         if (analytics.utils.isNumber(this.settings.siteSpeedSampleRate)) {
             _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
+        }
+        if(this.settings.domain) {
+            _gaq.push(['_setDomainName', this.settings.domain]);
         }
         if(this.settings.anonymizeIp) {
             _gaq.push(['_gat._anonymizeIp']);
@@ -600,13 +693,58 @@ analytics.addProvider('Google Analytics', {
     // Pageview
     // --------
 
-    pageview : function () {
-        window._gaq.push(['_trackPageview']);
+    pageview : function (url) {
+        var options = ['_trackPageview'];
+        if (url) options[1] = url;
+        window._gaq.push(options);
     }
 
 });
 
 
+// Gauges
+// -------
+// [Documentation](http://get.gaug.es/documentation/tracking/).
+
+analytics.addProvider('Gauges', {
+
+    settings: {
+        siteId: null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function(settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        var _gauges = _gauges || [];
+
+        (function() {
+            var t   = document.createElement('script');
+            t.type  = 'text/javascript';
+            t.async = true;
+            t.id    = 'gauges-tracker';
+            t.setAttribute('data-site-id', settings.siteId);
+            t.src = '//secure.gaug.es/track.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(t, s);
+          })();
+
+        window._gauges = _gauges;
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function(url) {
+        window._gauges.push(['track']);
+    }
+
+});
 // HubSpot
 // -------
 // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
@@ -737,7 +875,7 @@ analytics.addProvider('GoSquared', {
 
     pageview : function () {
         window.GoSquared.DefaultTracker.TrackView();
-    },
+    }
 
 });
 
@@ -782,7 +920,7 @@ analytics.addProvider('Intercom', {
             app_id      : this.settings.appId,
             user_id     : userId,
             user_hash   : this.settings.userHash,
-            custom_data : traits || {},
+            custom_data : traits || {}
         };
 
         // Augment `intercomSettings` with some of the special traits.
@@ -1021,8 +1159,8 @@ analytics.addProvider('Mixpanel', {
 
     // Mixpanel doesn't actually track the pageviews, but they do show up in the
     // Mixpanel stream.
-    pageview : function () {
-        window.mixpanel.track_pageview();
+    pageview : function (url) {
+        window.mixpanel.track_pageview(url);
     }
 
 });

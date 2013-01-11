@@ -8,6 +8,7 @@ analytics.addProvider('Google Analytics', {
         anonymizeIp             : false,
         enhancedLinkAttribution : false,
         siteSpeedSampleRate     : null,
+        domain                  : null,
         trackingId              : null
     },
 
@@ -25,7 +26,7 @@ analytics.addProvider('Google Analytics', {
         settings = analytics.utils.resolveSettings(settings, 'trackingId');
         analytics.utils.extend(this.settings, settings);
 
-        var _gaq = _gaq || [];
+        var _gaq = window._gaq || [];
         _gaq.push(['_setAccount', this.settings.trackingId]);
         if (this.settings.enhancedLinkAttribution) {
             var pluginUrl = (('https:' == document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
@@ -33,6 +34,9 @@ analytics.addProvider('Google Analytics', {
         }
         if (analytics.utils.isNumber(this.settings.siteSpeedSampleRate)) {
             _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
+        }
+        if(this.settings.domain) {
+            _gaq.push(['_setDomainName', this.settings.domain]);
         }
         if(this.settings.anonymizeIp) {
             _gaq.push(['_gat._anonymizeIp']);
@@ -59,8 +63,10 @@ analytics.addProvider('Google Analytics', {
     // Pageview
     // --------
 
-    pageview : function () {
-        window._gaq.push(['_trackPageview']);
+    pageview : function (url) {
+        var options = ['_trackPageview'];
+        if (url) options[1] = url;
+        window._gaq.push(options);
     }
 
 });

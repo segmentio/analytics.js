@@ -1,4 +1,3 @@
-/*global sinon, suite, beforeEach, test, expect, analytics */
 !(function () {
 
     suite('Mixpanel');
@@ -185,6 +184,10 @@
         var spy = sinon.spy(window.mixpanel, 'track_pageview');
         analytics.pageview();
         expect(spy).to.have.been.called;
+
+        spy.reset();
+        analytics.pageview('/url');
+        expect(spy).to.have.been.calledWith('/url');
 
         spy.restore();
     });

@@ -1,6 +1,6 @@
-//     Analytics.js 0.2.2
+//     Analytics.js 0.3.0
 
-//     (c) 2012 Segment.io Inc.
+//     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
 
 (function () {
@@ -153,27 +153,29 @@
         },
 
 
-        // Track Click
-        // -----------
+        // ### trackClick
 
         // A helper for tracking outbound links that would normally leave the
         // page before the track calls went out. It works by wrapping the calls
         // in as short of a timeout as possible to fire the track call, because
         // [response times matter](http://theixdlibrary.com/pdf/Miller1968.pdf).
         //
-        // * `elements` is either a single DOM element, or an array of DOM
-        // elements like jQuery would give you.
+        // * `element` is either a single DOM element, or an array of DOM
+        // elements like jQuery gives you.
         //
         // * `event` and `properties` are passed directly to `analytics.track`
         // and take the same options.
-        trackClick : function (elements, event, properties) {
-            if (!elements) return;
-            if (!this.utils.isArray(elements)) elements = [elements];
+        trackClick : function (element, event, properties) {
+            if (!element) return;
+
+            // Turn a non-array into an array so that we're always handling
+            // arrays, which allows for passing jQuery objects.
+            if (!this.utils.isArray(element)) element = [element];
 
             // Bind to all the elements in the array.
-            for (var i = 0; i < elements.length; i++) {
+            for (var i = 0; i < element.length; i++) {
                 var self = this;
-                var el = elements[i];
+                var el = element[i];
 
                 this.utils.bind(el, 'click', function (e) {
 
@@ -191,15 +193,56 @@
                     // an event than miss a case that breaks the experience.
                     if (el.href && !self.utils.isMeta(e)) {
 
-                        // Navigate to the url after a small timeout to let the
-                        // event have time to fire.
+                        // Navigate to the url after a small timeout, giving the
+                        // event time to get fired.
                         setTimeout(function () {
                             window.location.href = el.href;
-                        }, 100);
+                        }, 250);
 
                         // Prevent the link's default redirect.
                         return false;
                     }
+                });
+            }
+        },
+
+
+        // ### trackForm
+
+        // Similar to `trackClick`, this is a helper for tracking form
+        // submissions that would normally leave the page before a track call
+        // can be sent. It works by preventing the default submit, sending a
+        // track call, and then submitting the form programmatically.
+        //
+        // * `form` is either a single form element, or an array of
+        // form elements like jQuery gives you.
+        //
+        // * `event` and `properties` are passed directly to `analytics.track`
+        // and take the same options.
+        trackForm : function (form, event, properties) {
+            if (!form) return;
+
+            // Turn a non-array into an array so that we're always handling
+            // arrays, which allows for passing jQuery objects.
+            if (!this.utils.isArray(form)) form = [form];
+
+            // Bind to all the forms in the array.
+            for (var i = 0; i < form.length; i++) {
+                var self = this;
+                var el = form[i];
+
+                this.utils.bind(el, 'submit', function (e) {
+                    // Fire a normal track call.
+                    self.track(event, properties);
+
+                    // Submit the form after a small timeout, giving the event
+                    // time to get fired.
+                    setTimeout(function () {
+                        el.submit();
+                    }, 250);
+
+                    // Prevent the form's default submission.
+                    return false;
                 });
             }
         },
@@ -217,13 +260,17 @@
         // app the user has loaded. For that, use a regular track call like:
         // `analytics.track('View Signup Page')`. Or, if you think you've come
         // up with a badass abstraction, submit a pull request!
-        pageview : function () {
+        //
+        // * `url` (optional) is the url path that you want to be associated
+        // with the page. You only need to pass this argument if the URL hasn't
+        // changed but you want to register a new pageview.
+        pageview : function (url) {
             if (!this.initialized) return;
 
             // Call `pageview` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.pageview) continue;
-                provider.pageview();
+                provider.pageview(url);
             }
         },
 

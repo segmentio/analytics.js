@@ -15,6 +15,7 @@ analytics.js:
 		src/providers/klaviyo/klaviyo.js \
 		src/providers/mixpanel/mixpanel.js \
 		src/providers/olark/olark.js \
+		src/providers/keen/keen.js \
 		src/providers/quantcast/quantcast.js \
 		src/providers/vero/vero.js \
 		> analytics.js
@@ -39,6 +40,7 @@ docs:
 		src/providers/klaviyo/klaviyo.js \
 		src/providers/mixpanel/mixpanel.js \
 		src/providers/olark/olark.js \
+		src/providers/keen/keen.js \
 		src/providers/quantcast/quantcast.js \
 		src/providers/vero/vero.js
 

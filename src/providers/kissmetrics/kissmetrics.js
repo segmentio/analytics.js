@@ -19,9 +19,7 @@ analytics.addProvider('KISSmetrics', {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
 
-        var _kmq = _kmq || [];
-        window._kmq = _kmq;
-
+        var _kmq = window._kmq = window._kmq || [];
         function _kms(u){
             setTimeout(function(){
                 var d = document, f = d.getElementsByTagName('script')[0],

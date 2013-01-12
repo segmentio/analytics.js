@@ -14,7 +14,7 @@
                 pCode : 'x'
             }
         });
-        // We have to wait for the charbeat.js to come back and create the
+        // We have to wait for the quant.js to come back and create the
         // global variable on window...
         var self = this;
         setTimeout(function () {

@@ -16,7 +16,7 @@ analytics.addProvider('Gauges', {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
         analytics.utils.extend(this.settings, settings);
 
-        var _gauges = _gauges || [];
+        var _gauges = window._gauges = window._gauges || [];
 
         (function() {
             var t   = document.createElement('script');
@@ -27,9 +27,7 @@ analytics.addProvider('Gauges', {
             t.src = '//secure.gaug.es/track.js';
             var s = document.getElementsByTagName('script')[0];
             s.parentNode.insertBefore(t, s);
-          })();
-
-        window._gauges = _gauges;
+        })();
     },
 
 

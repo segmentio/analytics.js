@@ -18,7 +18,9 @@ analytics.addProvider('Errorception', {
 
         var self = this;
 
-        var _errs = window._errs = _errs || [settings.projectId];
+        var _errs = window._errs = window._errs || [];
+        _errs.push(settings.projectId);
+        
         (function(a,b){
             a.onerror = function () {
                 _errs.push(arguments);

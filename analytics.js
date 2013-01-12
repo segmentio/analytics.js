@@ -1,4 +1,4 @@
-//     Analytics.js 0.3.1
+//     Analytics.js 0.3.2
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -366,8 +366,9 @@ analytics.addProvider('Clicky', {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
         analytics.utils.extend(this.settings, settings);
 
-        var clicky_site_ids = window.clicky_site_ids = clicky_site_ids || [];
+        var clicky_site_ids = window.clicky_site_ids = window.clicky_site_ids || [];
         clicky_site_ids.push(settings.siteId);
+        
         (function() {
             var s = document.createElement('script');
             s.type = 'text/javascript';
@@ -399,8 +400,9 @@ analytics.addProvider('Comscore', {
         settings = analytics.utils.resolveSettings(settings, 'c2');
         analytics.utils.extend(this.settings, settings);
 
-        var _comscore = window._comscore = _comscore || [];
+        var _comscore = window._comscore = window._comscore || [];
         _comscore.push(settings);
+
         (function() {
             var s = document.createElement("script");
             var el = document.getElementsByTagName("script")[0];
@@ -413,7 +415,9 @@ analytics.addProvider('Comscore', {
         // because we have to run JS in order to do any of this!
     }
 
-});// CrazyEgg
+});
+
+// CrazyEgg
 // --------
 // [Documentation](www.crazyegg.com).
 
@@ -469,7 +473,7 @@ analytics.addProvider('Customer.io', {
 
         var self = this;
 
-        var _cio = window._cio = _cio || [];
+        var _cio = window._cio = window._cio || [];
         (function() {
             var a,b,c;a=function(f){return function(){_cio.push([f].
             concat(Array.prototype.slice.call(arguments,0)))}};b=["identify",
@@ -545,7 +549,9 @@ analytics.addProvider('Errorception', {
 
         var self = this;
 
-        var _errs = window._errs = _errs || [settings.projectId];
+        var _errs = window._errs = window._errs || [];
+        _errs.push(settings.projectId);
+        
         (function(a,b){
             a.onerror = function () {
                 _errs.push(arguments);
@@ -592,7 +598,7 @@ analytics.addProvider('Google Analytics', {
         settings = analytics.utils.resolveSettings(settings, 'trackingId');
         analytics.utils.extend(this.settings, settings);
 
-        var _gaq = window._gaq || [];
+        var _gaq = window._gaq = window._gaq || [];
         _gaq.push(['_setAccount', this.settings.trackingId]);
         if (this.settings.enhancedLinkAttribution) {
             var pluginUrl = (('https:' == document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
@@ -608,7 +614,6 @@ analytics.addProvider('Google Analytics', {
             _gaq.push(['_gat._anonymizeIp']);
         }
         _gaq.push(['_trackPageview']);
-        window._gaq = _gaq;
 
         (function() {
             var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
@@ -665,7 +670,7 @@ analytics.addProvider('Gauges', {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
         analytics.utils.extend(this.settings, settings);
 
-        var _gauges = _gauges || [];
+        var _gauges = window._gauges = window._gauges || [];
 
         (function() {
             var t   = document.createElement('script');
@@ -676,9 +681,7 @@ analytics.addProvider('Gauges', {
             t.src = '//secure.gaug.es/track.js';
             var s = document.getElementsByTagName('script')[0];
             s.parentNode.insertBefore(t, s);
-          })();
-
-        window._gauges = _gauges;
+        })();
     },
 
 
@@ -918,9 +921,7 @@ analytics.addProvider('KISSmetrics', {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
 
-        var _kmq = _kmq || [];
-        window._kmq = _kmq;
-
+        var _kmq = window._kmq = window._kmq || [];
         function _kms(u){
             setTimeout(function(){
                 var d = document, f = d.getElementsByTagName('script')[0],
@@ -977,9 +978,8 @@ analytics.addProvider('Klaviyo', {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
 
-        var _learnq = _learnq || [];
+        var _learnq = window._learnq = window._learnq || [];
         _learnq.push(['account', this.settings.apiKey]);
-        window._learnq = _learnq;
         (function () {
             var b = document.createElement('script'); b.type = 'text/javascript'; b.async = true;
             b.src = ('https:' == document.location.protocol ? 'https://' : 'http://') +
@@ -1214,7 +1214,7 @@ analytics.addProvider('Quantcast', {
         settings = analytics.utils.resolveSettings(settings, 'pCode');
         analytics.utils.extend(this.settings, settings);
 
-        var _qevents = window._qevents = _qevents || [];
+        var _qevents = window._qevents = window._qevents || [];
 
         (function() {
            var elem = document.createElement('script');
@@ -1253,7 +1253,7 @@ analytics.addProvider('Vero', {
 
         var self = this;
 
-        var _veroq = window._veroq = _veroq || [];
+        var _veroq = window._veroq = window._veroq || [];
         _veroq.push(['init', {
             api_key: settings.apiKey
         }]);

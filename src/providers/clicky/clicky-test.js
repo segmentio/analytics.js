@@ -15,7 +15,7 @@
         setTimeout(function () {
             expect(window.clicky).to.exist;
             callback();
-        }, 1000);
+        }, 1500);
         expect(analytics.providers[0].settings.siteId).to.equal('x');
     });
 

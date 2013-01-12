@@ -10,13 +10,16 @@
 
         expect(window.clicky).not.to.exist;
 
+        // Clicky loads slowly on travis
+        this.timeout(8000);
+
         analytics.initialize({
             'Clicky' : 'x'
         });
         setTimeout(function () {
             expect(window.clicky).to.exist;
             callback();
-        }, 1000);
+        }, 7000);
         expect(analytics.providers[0].settings.siteId).to.equal('x');
     });
 

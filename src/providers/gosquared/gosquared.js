@@ -48,6 +48,11 @@ analytics.addProvider('GoSquared', {
     track : function (event, properties) {
         // The queue isn't automatically created by the snippet.
         if (!window.GoSquared.q) window.GoSquared.q = [];
+
+        // GoSquared sets a `gs_evt_name` property with a value of the event
+        // name, so it relies on properties being an object.
+        properties || (properties = {});
+
         window.GoSquared.q.push(['TrackEvent', event, properties]);
     },
 
@@ -57,7 +62,7 @@ analytics.addProvider('GoSquared', {
 
     pageview : function () {
         window.GoSquared.DefaultTracker.TrackView();
-    },
+    }
 
 });
 

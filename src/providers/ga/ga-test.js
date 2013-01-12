@@ -1,4 +1,3 @@
-/*global sinon, suite, beforeEach, test, expect, analytics */
 !(function () {
 
     suite('Google Analytics');
@@ -17,6 +16,21 @@
         expect(analytics.providers[0].settings.trackingId).to.equal('x');
     });
 
+    test('can set domain on initialize', function () {
+        window._gaq = [];
+        var spy = sinon.spy(window._gaq, 'push');
+
+        analytics.initialize({
+            'Google Analytics' : {
+              'trackingId' : 'x',
+              'domain' : 'example.com'
+            }
+        });
+
+        expect(spy).to.have.been.calledWith(['_setDomainName', 'example.com']);
+        spy.restore();
+    });
+
     test('can add enhanced link attribution');
 
     test('can add site speed sample rate');
@@ -30,7 +44,20 @@
     test('pushes "_trackEvent" on track', function () {
         var spy = sinon.spy(window._gaq, 'push');
         analytics.track('event');
-        expect(spy).to.have.been.calledWith(['_trackEvent', 'All', 'event']);
+        expect(spy).to.have.been.calledWith(['_trackEvent', 'All', 'event', undefined]);
+
+        spy.reset();
+        analytics.track('event', {
+            category : 'Category'
+        });
+        expect(spy).to.have.been.calledWith(['_trackEvent', 'Category', 'event', undefined]);
+
+        spy.reset();
+        analytics.track('event', {
+            category : 'Category',
+            label    : 'Label'
+        });
+        expect(spy).to.have.been.calledWith(['_trackEvent', 'Category', 'event', 'Label']);
 
         spy.restore();
     });
@@ -42,7 +69,11 @@
     test('pushes "_trackPageview" on pageview', function () {
         var spy = sinon.spy(window._gaq, 'push');
         analytics.pageview();
-        expect(spy).to.have.been.calledWith(['_trackPageview']);
+        expect(spy).to.have.been.calledWith(['_trackPageview', undefined]);
+
+        spy.reset();
+        analytics.pageview('/url');
+        expect(spy).to.have.been.calledWith(['_trackPageview', '/url']);
 
         spy.restore();
     });

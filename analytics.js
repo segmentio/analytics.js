@@ -1,6 +1,6 @@
-//     Analytics.js 0.2.1
+//     Analytics.js 0.3.2
 
-//     (c) 2012 Segment.io Inc.
+//     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
 
 (function () {
@@ -8,12 +8,8 @@
     // Setup
     // -----
 
-    // A reference to the global object, `window` in the browser, `global` on
-    // the server.
-    var root = this;
-
     // The `analytics` object that will be exposed to you on the global object.
-    root.analytics || (root.analytics = {
+    var analytics = {
 
         // Cache the `userId` when a user is identified.
         userId : null,
@@ -78,6 +74,12 @@
 
             // Update the initialized state that other methods rely on.
             this.initialized = true;
+
+            // Try to use id and event parameters from the url
+            var userId = this.utils.getUrlParameter(window.location.search, 'ajs_uid');
+            if (userId) this.identify(userId);
+            var event = this.utils.getUrlParameter(window.location.search, 'ajs_event');
+            if (event) this.track(event);
         },
 
 
@@ -163,13 +165,17 @@
         // app the user has loaded. For that, use a regular track call like:
         // `analytics.track('View Signup Page')`. Or, if you think you've come
         // up with a badass abstraction, submit a pull request!
-        pageview : function () {
+        //
+        // * `url` (optional) is the url path that you want to be associated
+        // with the page. You only need to pass this argument if the URL hasn't
+        // changed but you want to register a new pageview.
+        pageview : function (url) {
             if (!this.initialized) return;
 
             // Call `pageview` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.pageview) continue;
-                provider.pageview();
+                provider.pageview(url);
             }
         },
 
@@ -261,20 +267,32 @@
                 }
 
                 return settings;
+            },
+
+            // A helper to track events based on the 'anjs' url parameter
+            getUrlParameter : function (urlSearchParameter, paramKey) {
+                var params = urlSearchParameter.replace('?', '').split('&');
+                for (var i = 0; i < params.length; i += 1) {
+                    var param = params[i].split('=');
+                    if (param.length === 2 && param[0] === paramKey) {
+                        return decodeURIComponent(param[1]);
+                    }
+                }
             }
         }
 
-    });
+    };
 
     // Wrap any existing `onload` function with our own that will cache the
     // loaded state of the page.
     var oldonload = window.onload;
     window.onload = function () {
-        root.analytics.loaded = true;
-        if (root.analytics.utils.isFunction(oldonload)) oldonload();
+        analytics.loaded = true;
+        if (analytics.utils.isFunction(oldonload)) oldonload();
     };
 
-}).call(this);
+    window.analytics = analytics;
+})();
 
 
 // Chartbeat
@@ -304,7 +322,7 @@ analytics.addProvider('Chartbeat', {
 
         // Since all the custom settings just get passed through, update the
         // Chartbeat `_sf_async_config` variable with settings.
-        var _sf_async_config = this.settings || {};
+        window._sf_async_config = this.settings || {};
 
         (function(){
             // Use the stored date from when we were loaded.
@@ -325,8 +343,38 @@ analytics.addProvider('Chartbeat', {
     // Pageview
     // --------
 
-    pageview : function () {
-        window.pSUPERFLY.virtualPage(window.location.pathname);
+    pageview : function (url) {
+        window.pSUPERFLY.virtualPage(url || window.location.pathname);
+    }
+
+});
+
+
+// Clicky
+// ------
+// [Documentation](http://clicky.com/help/customization/manual?new-domain).
+
+analytics.addProvider('Clicky', {
+
+    settings : {},
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        var clicky_site_ids = window.clicky_site_ids = clicky_site_ids || [];
+        clicky_site_ids.push(settings.siteId);
+        (function() {
+            var s = document.createElement('script');
+            s.type = 'text/javascript';
+            s.async = true;
+            s.src = '//static.getclicky.com/js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
+        })();
     }
 
 });
@@ -353,10 +401,11 @@ analytics.addProvider('CrazyEgg', {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
 
+        var apiKey = this.settings.apiKey;
         (function(){
             var a=document.createElement("script");
             var b=document.getElementsByTagName("script")[0];
-            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+this.settings.apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
+            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
             a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b);
         })();
     }
@@ -443,6 +492,45 @@ analytics.addProvider('Customer.io', {
 });
 
 
+// Errorception
+// ------------
+// [Documentation](http://errorception.com/).
+
+analytics.addProvider('Errorception', {
+
+    settings : {
+        projectId : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'projectId');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
+
+        var _errs = window._errs = _errs || [settings.projectId];
+        (function(a,b){
+            a.onerror = function () {
+                _errs.push(arguments);
+            };
+            var d = function () {
+                var a = b.createElement("script"),
+                    c = b.getElementsByTagName("script")[0];
+                a.src = "//d15qhc0lu1ghnk.cloudfront.net/beacon.js";
+                a.async = true;
+                c.parentNode.insertBefore(a,c);
+            };
+            a.addEventListener ? a.addEventListener("load",d,!1) : a.attachEvent("onload",d);
+        })(window,document);
+    }
+
+});
+
+
 // Google Analytics
 // ----------------
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
@@ -453,6 +541,7 @@ analytics.addProvider('Google Analytics', {
         anonymizeIp             : false,
         enhancedLinkAttribution : false,
         siteSpeedSampleRate     : null,
+        domain                  : null,
         trackingId              : null
     },
 
@@ -470,7 +559,7 @@ analytics.addProvider('Google Analytics', {
         settings = analytics.utils.resolveSettings(settings, 'trackingId');
         analytics.utils.extend(this.settings, settings);
 
-        var _gaq = _gaq || [];
+        var _gaq = window._gaq || [];
         _gaq.push(['_setAccount', this.settings.trackingId]);
         if (this.settings.enhancedLinkAttribution) {
             var pluginUrl = (('https:' == document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
@@ -479,17 +568,20 @@ analytics.addProvider('Google Analytics', {
         if (analytics.utils.isNumber(this.settings.siteSpeedSampleRate)) {
             _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
         }
+        if(this.settings.domain) {
+            _gaq.push(['_setDomainName', this.settings.domain]);
+        }
         if(this.settings.anonymizeIp) {
             _gaq.push(['_gat._anonymizeIp']);
         }
         _gaq.push(['_trackPageview']);
+        window._gaq = _gaq;
+
         (function() {
             var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
             ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
         })();
-
-        window._gaq = _gaq;
     },
 
 
@@ -497,7 +589,130 @@ analytics.addProvider('Google Analytics', {
     // -----
 
     track : function (event, properties) {
-        window._gaq.push(['_trackEvent', 'All', event]);
+        properties || (properties = {});
+
+        // Try to check for a `category` and `label`. A `category` is required,
+        // so if it's not there we use `'All'` as a default. We can safely push
+        // undefined if the special properties don't exist.
+        window._gaq.push([
+            '_trackEvent',
+            properties.category || 'All',
+            event,
+            properties.label
+        ]);
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function (url) {
+        // If there isn't a url, that's fine.
+        window._gaq.push(['_trackPageview', url]);
+    }
+
+});
+
+
+// Gauges
+// -------
+// [Documentation](http://get.gaug.es/documentation/tracking/).
+
+analytics.addProvider('Gauges', {
+
+    settings: {
+        siteId: null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function(settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        var _gauges = _gauges || [];
+
+        (function() {
+            var t   = document.createElement('script');
+            t.type  = 'text/javascript';
+            t.async = true;
+            t.id    = 'gauges-tracker';
+            t.setAttribute('data-site-id', settings.siteId);
+            t.src = '//secure.gaug.es/track.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(t, s);
+          })();
+
+        window._gauges = _gauges;
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function(url) {
+        window._gauges.push(['track']);
+    }
+
+});
+// GoSquared
+// ---------
+// [Documentation](www.gosquared.com/support).
+// Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat).
+
+analytics.addProvider('GoSquared', {
+
+    settings : {
+        siteToken : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    // Changes to the GoSquared tracking code:
+    //
+    // * Use `siteToken` from settings.
+    // * No longer need to wait for pageload, removed unnecessary functions.
+    // * Attach `GoSquared` to `window`.
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteToken');
+        analytics.utils.extend(this.settings, settings);
+
+        var GoSquared = window.GoSquared = {};
+        GoSquared.acct = this.settings.siteToken;
+        window._gstc_lt=+(new Date); var d=document;
+        var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
+        var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        // TODO figure out if this will actually work. Seems like GoSquared will
+        // never know these values are updated.
+        if (userId) window.GoSquared.UserName = userId;
+        if (traits) window.GoSquared.Visitor = traits;
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        // The queue isn't automatically created by the snippet.
+        if (!window.GoSquared.q) window.GoSquared.q = [];
+
+        // GoSquared sets a `gs_evt_name` property with a value of the event
+        // name, so it relies on properties being an object.
+        properties || (properties = {});
+
+        window.GoSquared.q.push(['TrackEvent', event, properties]);
     },
 
 
@@ -505,7 +720,7 @@ analytics.addProvider('Google Analytics', {
     // --------
 
     pageview : function () {
-        window._gaq.push(['_trackPageview']);
+        window.GoSquared.DefaultTracker.TrackView();
     }
 
 });
@@ -577,70 +792,6 @@ analytics.addProvider('HubSpot', {
 });
 
 
-// GoSquared
-// ---------
-// [Documentation](www.gosquared.com/support).
-// Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat).
-
-analytics.addProvider('GoSquared', {
-
-    settings : {
-        siteToken : null
-    },
-
-
-    // Initialize
-    // ----------
-
-    // Changes to the GoSquared tracking code:
-    //
-    // * Use `siteToken` from settings.
-    // * No longer need to wait for pageload, removed unnecessary functions.
-    // * Attach `GoSquared` to `window`.
-
-    initialize : function (settings) {
-        settings = analytics.utils.resolveSettings(settings, 'siteToken');
-        analytics.utils.extend(this.settings, settings);
-
-        var GoSquared = window.GoSquared = {};
-        GoSquared.acct = this.settings.siteToken;
-        window._gstc_lt=+(new Date); var d=document;
-        var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
-        var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
-    },
-
-
-    // Identify
-    // --------
-
-    identify : function (userId, traits) {
-        // TODO figure out if this will actually work. Seems like GoSquared will
-        // never know these values are updated.
-        if (userId) window.GoSquared.UserName = userId;
-        if (traits) window.GoSquared.Visitor = traits;
-    },
-
-
-    // Track
-    // -----
-
-    track : function (event, properties) {
-        // The queue isn't automatically created by the snippet.
-        if (!window.GoSquared.q) window.GoSquared.q = [];
-        window.GoSquared.q.push(['TrackEvent', event, properties]);
-    },
-
-
-    // Pageview
-    // --------
-
-    pageview : function () {
-        window.GoSquared.DefaultTracker.TrackView();
-    },
-
-});
-
-
 // Intercom
 // --------
 // [Documentation](http://docs.intercom.io/).
@@ -671,6 +822,7 @@ analytics.addProvider('Intercom', {
     //
     // * Add `appId` from stored `settings`.
     // * Add `userId`.
+    // * Add `userHash` for secure mode
     identify: function (userId, traits) {
         // Don't do anything if we just have traits.
         if (!userId) return;
@@ -679,7 +831,8 @@ analytics.addProvider('Intercom', {
         window.intercomSettings = {
             app_id      : this.settings.appId,
             user_id     : userId,
-            custom_data : traits || {},
+            user_hash   : this.settings.userHash,
+            custom_data : traits || {}
         };
 
         // Augment `intercomSettings` with some of the special traits.
@@ -733,6 +886,8 @@ analytics.addProvider('KISSmetrics', {
         analytics.utils.extend(this.settings, settings);
 
         var _kmq = _kmq || [];
+        window._kmq = _kmq;
+
         function _kms(u){
             setTimeout(function(){
                 var d = document, f = d.getElementsByTagName('script')[0],
@@ -743,8 +898,6 @@ analytics.addProvider('KISSmetrics', {
         }
         _kms('//i.kissmetrics.com/i.js');
         _kms('//doug1izaerwt3.cloudfront.net/'+this.settings.apiKey+'.1.js');
-
-        window._kmq = _kmq;
     },
 
 
@@ -793,14 +946,13 @@ analytics.addProvider('Klaviyo', {
 
         var _learnq = _learnq || [];
         _learnq.push(['account', this.settings.apiKey]);
+        window._learnq = _learnq;
         (function () {
             var b = document.createElement('script'); b.type = 'text/javascript'; b.async = true;
             b.src = ('https:' == document.location.protocol ? 'https://' : 'http://') +
                 'a.klaviyo.com/media/js/learnmarklet.js';
             var a = document.getElementsByTagName('script')[0]; a.parentNode.insertBefore(b, a);
         })();
-
-        window._learnq = _learnq;
     },
 
 
@@ -919,8 +1071,8 @@ analytics.addProvider('Mixpanel', {
 
     // Mixpanel doesn't actually track the pageviews, but they do show up in the
     // Mixpanel stream.
-    pageview : function () {
-        window.mixpanel.track_pageview();
+    pageview : function (url) {
+        window.mixpanel.track_pageview(url);
     }
 
 });
@@ -1064,3 +1216,110 @@ analytics.addProvider('Keen', {
     }
 
 });
+// Quantcast
+// ---------
+// [Documentation](https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/)
+
+analytics.addProvider('Quantcast', {
+
+    settings : {
+        pCode : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'pCode');
+        analytics.utils.extend(this.settings, settings);
+
+        var _qevents = window._qevents = _qevents || [];
+
+        (function() {
+           var elem = document.createElement('script');
+           elem.src = (document.location.protocol == "https:" ? "https://secure" : "http://edge") + ".quantserve.com/quant.js";
+           elem.async = true;
+           elem.type = "text/javascript";
+           var scpt = document.getElementsByTagName('script')[0];
+           scpt.parentNode.insertBefore(elem, scpt);  
+        })();
+
+        _qevents.push({qacct: settings.pCode});
+
+        // NOTE: the <noscript><div><img> bit in the docs is ignored
+        // because we have to run JS in order to do any of this!
+    }
+
+});
+
+
+// GetVero.com
+// -----------
+// [Documentation](https://github.com/getvero/vero-api/blob/master/sections/js.md).
+
+analytics.addProvider('Vero', {
+
+    settings : {
+        apiKey : null
+    },
+
+
+    // Initialize
+    // ----------
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'apiKey');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
+
+        var _veroq = window._veroq = _veroq || [];
+        _veroq.push(['init', {
+            api_key: settings.apiKey
+        }]);
+        (function(){
+            var ve = document.createElement('script');
+            ve.type = 'text/javascript';
+            ve.async = true;
+            ve.src = '//www.getvero.com/assets/m.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ve, s);
+        })();
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        // Don't do anything if we just have traits, because Vero
+        // requires a `userId`.
+        if (!userId) return;
+
+        traits || (traits = {});
+
+        // Vero takes the `userId` as part of the traits object.
+        traits.id = userId;
+
+        // If there wasn't already an email and the userId is one, use it.
+        if (!traits.email && analytics.utils.isEmail(userId)) {
+            traits.email = userId;
+        }
+
+        // Vero *requires* an email and an id
+        if (!traits.id || !traits.email) return;
+
+        window._veroq.push(['user', traits]);
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        window._veroq.push(['track', event, properties]);
+    }
+
+});
+
+

@@ -1,6 +1,6 @@
-//     Analytics.js 0.2.1
+//     Analytics.js 0.3.2
 
-//     (c) 2012 Segment.io Inc.
+//     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
 
 (function () {
@@ -8,12 +8,8 @@
     // Setup
     // -----
 
-    // A reference to the global object, `window` in the browser, `global` on
-    // the server.
-    var root = this;
-
     // The `analytics` object that will be exposed to you on the global object.
-    root.analytics || (root.analytics = {
+    var analytics = {
 
         // Cache the `userId` when a user is identified.
         userId : null,
@@ -78,6 +74,12 @@
 
             // Update the initialized state that other methods rely on.
             this.initialized = true;
+
+            // Try to use id and event parameters from the url
+            var userId = this.utils.getUrlParameter(window.location.search, 'ajs_uid');
+            if (userId) this.identify(userId);
+            var event = this.utils.getUrlParameter(window.location.search, 'ajs_event');
+            if (event) this.track(event);
         },
 
 
@@ -163,13 +165,17 @@
         // app the user has loaded. For that, use a regular track call like:
         // `analytics.track('View Signup Page')`. Or, if you think you've come
         // up with a badass abstraction, submit a pull request!
-        pageview : function () {
+        //
+        // * `url` (optional) is the url path that you want to be associated
+        // with the page. You only need to pass this argument if the URL hasn't
+        // changed but you want to register a new pageview.
+        pageview : function (url) {
             if (!this.initialized) return;
 
             // Call `pageview` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.pageview) continue;
-                provider.pageview();
+                provider.pageview(url);
             }
         },
 
@@ -261,19 +267,31 @@
                 }
 
                 return settings;
+            },
+
+            // A helper to track events based on the 'anjs' url parameter
+            getUrlParameter : function (urlSearchParameter, paramKey) {
+                var params = urlSearchParameter.replace('?', '').split('&');
+                for (var i = 0; i < params.length; i += 1) {
+                    var param = params[i].split('=');
+                    if (param.length === 2 && param[0] === paramKey) {
+                        return decodeURIComponent(param[1]);
+                    }
+                }
             }
         }
 
-    });
+    };
 
     // Wrap any existing `onload` function with our own that will cache the
     // loaded state of the page.
     var oldonload = window.onload;
     window.onload = function () {
-        root.analytics.loaded = true;
-        if (root.analytics.utils.isFunction(oldonload)) oldonload();
+        analytics.loaded = true;
+        if (analytics.utils.isFunction(oldonload)) oldonload();
     };
 
-}).call(this);
+    window.analytics = analytics;
+})();
 
 

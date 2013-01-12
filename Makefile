@@ -2,17 +2,22 @@ analytics.js:
 	cat \
 		src/analytics.js \
 		src/providers/chartbeat/chartbeat.js \
+		src/providers/clicky/clicky.js \
 		src/providers/crazyegg/crazyegg.js \
 		src/providers/customerio/customerio.js \
+		src/providers/errorception/errorception.js \
 		src/providers/ga/ga.js \
-		src/providers/hubspot/hubspot.js \
+		src/providers/gauges/gauges.js \
 		src/providers/gosquared/gosquared.js \
+		src/providers/hubspot/hubspot.js \
 		src/providers/intercom/intercom.js \
 		src/providers/kissmetrics/kissmetrics.js \
 		src/providers/klaviyo/klaviyo.js \
 		src/providers/mixpanel/mixpanel.js \
 		src/providers/olark/olark.js \
 		src/providers/keen/keen.js \
+		src/providers/quantcast/quantcast.js \
+		src/providers/vero/vero.js \
 		> analytics.js
 
 min: analytics.js
@@ -22,17 +27,22 @@ docs:
 	docco \
 		src/analytics.js \
 		src/providers/chartbeat/chartbeat.js \
+		src/providers/clicky/clicky.js \
 		src/providers/crazyegg/crazyegg.js \
 		src/providers/customerio/customerio.js \
+		src/providers/errorception/errorception.js \
 		src/providers/ga/ga.js \
-		src/providers/hubspot/hubspot.js \
+		src/providers/gauges/gauges.js \
 		src/providers/gosquared/gosquared.js \
+		src/providers/hubspot/hubspot.js \
 		src/providers/intercom/intercom.js \
 		src/providers/kissmetrics/kissmetrics.js \
 		src/providers/klaviyo/klaviyo.js \
 		src/providers/mixpanel/mixpanel.js \
 		src/providers/olark/olark.js \
-		src/providers/keen/keen.js
+		src/providers/keen/keen.js \
+		src/providers/quantcast/quantcast.js \
+		src/providers/vero/vero.js
 
 server:
 	node test/server.js &

@@ -1,4 +1,3 @@
-/*global sinon, suite, beforeEach, test, expect, analytics */
 !(function () {
 
     suite('GoSquared');
@@ -31,7 +30,9 @@
     });
 
     test('GoSquared tracker finishes loading', function (done) {
-        // use the GoSquared.load function...
+        this.timeout(10000);
+
+        // Use the GoSquared.load function...
         window.GoSquared.load = function(tracker) {
             expect(window.GoSquared.DefaultTracker).to.equal(tracker);
             done();
@@ -67,8 +68,15 @@
 
     test('pushes "TrackEvent" on track', function () {
         var spy = sinon.spy(window.GoSquared.q, 'push');
+        analytics.track(event);
+        // GoSquared adds the event name to the properties hash.
+        var augmentedProperties = { gs_evt_name: event };
+        expect(spy).to.have.been.calledWith([event, sinon.match(augmentedProperties)]);
+
+        spy.reset();
         analytics.track(event, properties);
-        var augmentedProperties = _.extend(properties, { gs_evt_name: event });
+        // GoSquared adds the event name to the properties hash.
+        augmentedProperties = _.extend({}, properties, { gs_evt_name: event });
         expect(spy).to.have.been.calledWith([event, sinon.match(augmentedProperties)]);
 
         spy.restore();

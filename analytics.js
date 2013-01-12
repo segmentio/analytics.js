@@ -381,11 +381,11 @@ analytics.addProvider('Clicky', {
 });
 
 
-// Comscore
+// comScore
 // ---------
 // [Documentation](http://direct.comscore.com/clients/help/FAQ.aspx#faqTagging)
 
-analytics.addProvider('Comscore', {
+analytics.addProvider('comScore', {
 
     settings : {
         c1 : '2',

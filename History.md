@@ -1,7 +1,7 @@
 0.3.3 / 2013-1-11
 ==================
 
-* [Comscore Direct](http://direct.comscore.com) support added
+* [comScore Direct](http://direct.comscore.com) support added
 
 0.3.2 / 2013-1-11
 ==================

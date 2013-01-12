@@ -1,6 +1,6 @@
 !(function () {
 
-    suite('Comscore');
+    suite('comScore');
 
 
     // Initialize
@@ -10,7 +10,7 @@
         expect(window._comscore).not.to.exist;
 
         analytics.initialize({
-            'Comscore' : {
+            'comScore' : {
                 c2 : 'x'
             }
         });

@@ -14,8 +14,9 @@ analytics.addProvider('Clicky', {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
         analytics.utils.extend(this.settings, settings);
 
-        var clicky_site_ids = clicky_site_ids || [];
+        var clicky_site_ids = window.clicky_site_ids = window.clicky_site_ids || [];
         clicky_site_ids.push(settings.siteId);
+        
         (function() {
             var s = document.createElement('script');
             s.type = 'text/javascript';

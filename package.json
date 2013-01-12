@@ -1,7 +1,7 @@
 {
   "name" : "analytics",
   "author" : "Segmentio <friends@segment.io>",
-  "version" : "0.3.0",
+  "version" : "0.3.3",
   "description" : "The hassle-free way to integrate analytics into any web application.",
   "keywords" : [
     "analytics", "analytics.js", "analyticsjs", "segment", "segmentio", "segment.io",

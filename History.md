@@ -1,3 +1,21 @@
+0.3.3 / 2013-1-11
+==================
+
+* [comScore Direct](http://direct.comscore.com) support added
+
+0.3.2 / 2013-1-11
+==================
+
+* [Quantcast](http://quantcast.com) support added
+* Fixed breaking issue on Clicky
+* Updated Makefile for new providers
+
+
+0.3.1 / 2013-1-11
+==================
+
+* Added `label` and `category` support to Google Analytics
+
 0.3.0 / 2013-1-9
 ==================
 

@@ -350,6 +350,36 @@ analytics.addProvider('Chartbeat', {
 });
 
 
+// Clicky
+// ------
+// [Documentation](http://clicky.com/help/customization/manual?new-domain).
+
+analytics.addProvider('Clicky', {
+
+    settings : {},
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        var clicky_site_ids = window.clicky_site_ids = clicky_site_ids || [];
+        clicky_site_ids.push(settings.siteId);
+        (function() {
+            var s = document.createElement('script');
+            s.type = 'text/javascript';
+            s.async = true;
+            s.src = '//static.getclicky.com/js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
+        })();
+    }
+
+});
+
+
 // CrazyEgg
 // --------
 // [Documentation](www.crazyegg.com).
@@ -627,72 +657,6 @@ analytics.addProvider('Gauges', {
     }
 
 });
-// HubSpot
-// -------
-// [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
-
-analytics.addProvider('HubSpot', {
-
-    settings : {
-        portalId : null
-    },
-
-
-    // Initialize
-    // ----------
-
-    // Changes to the HubSpot snippet:
-    //
-    // * Concatenate `portalId` into the URL.
-    initialize : function (settings) {
-        settings = analytics.utils.resolveSettings(settings, 'portalId');
-        analytics.utils.extend(this.settings, settings);
-
-        var self = this;
-
-        (function(d,s,i,r) {
-            if (d.getElementById(i)){return;}
-            window._hsq = window._hsq || []; // for calls pre-load
-            var n=d.createElement(s),e=d.getElementsByTagName(s)[0];
-            n.id=i;n.src='https://js.hubspot.com/analytics/'+(Math.ceil(new Date()/r)*r)+'/' + self.settings.portalId + '.js';
-            e.parentNode.insertBefore(n, e);
-        })(document,"script","hs-analytics",300000);
-    },
-
-
-    // Identify
-    // --------
-
-    identify : function (userId, traits) {
-        // HubSpot does not use a userId, but the email address is required on
-        // the traits object.
-        if (!traits) return;
-
-        window._hsq.push(["identify", traits]);
-    },
-
-
-    // Track
-    // -----
-
-    // Event Tracking is available to HubSpot Enterprise customers only. In
-    // addition to adding any unique event name, you can also use the id of an
-    // existing custom event as the event variable.
-    track : function (event, properties) {
-        window._hsq.push(["trackEvent", event, properties]);
-    },
-
-
-    // Pageview
-    // --------
-
-    pageview : function () {
-        // TODO http://performabledoc.hubspot.com/display/DOC/JavaScript+API
-    }
-
-});
-
-
 // GoSquared
 // ---------
 // [Documentation](www.gosquared.com/support).
@@ -757,6 +721,72 @@ analytics.addProvider('GoSquared', {
 
     pageview : function () {
         window.GoSquared.DefaultTracker.TrackView();
+    }
+
+});
+
+
+// HubSpot
+// -------
+// [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
+
+analytics.addProvider('HubSpot', {
+
+    settings : {
+        portalId : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    // Changes to the HubSpot snippet:
+    //
+    // * Concatenate `portalId` into the URL.
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'portalId');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
+
+        (function(d,s,i,r) {
+            if (d.getElementById(i)){return;}
+            window._hsq = window._hsq || []; // for calls pre-load
+            var n=d.createElement(s),e=d.getElementsByTagName(s)[0];
+            n.id=i;n.src='https://js.hubspot.com/analytics/'+(Math.ceil(new Date()/r)*r)+'/' + self.settings.portalId + '.js';
+            e.parentNode.insertBefore(n, e);
+        })(document,"script","hs-analytics",300000);
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        // HubSpot does not use a userId, but the email address is required on
+        // the traits object.
+        if (!traits) return;
+
+        window._hsq.push(["identify", traits]);
+    },
+
+
+    // Track
+    // -----
+
+    // Event Tracking is available to HubSpot Enterprise customers only. In
+    // addition to adding any unique event name, you can also use the id of an
+    // existing custom event as the event variable.
+    track : function (event, properties) {
+        window._hsq.push(["trackEvent", event, properties]);
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        // TODO http://performabledoc.hubspot.com/display/DOC/JavaScript+API
     }
 
 });
@@ -1128,6 +1158,113 @@ analytics.addProvider('Olark', {
         window.olark('api.chat.sendNotificationToOperator', {
             body : 'looking at ' + window.location.href
         });
+    }
+
+});
+
+
+// Quantcast
+// ---------
+// [Documentation](https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/)
+
+analytics.addProvider('Quantcast', {
+
+    settings : {
+        pCode : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'pCode');
+        analytics.utils.extend(this.settings, settings);
+
+        var _qevents = window._qevents = _qevents || [];
+
+        (function() {
+           var elem = document.createElement('script');
+           elem.src = (document.location.protocol == "https:" ? "https://secure" : "http://edge") + ".quantserve.com/quant.js";
+           elem.async = true;
+           elem.type = "text/javascript";
+           var scpt = document.getElementsByTagName('script')[0];
+           scpt.parentNode.insertBefore(elem, scpt);  
+        })();
+
+        _qevents.push({qacct: settings.pCode});
+
+        // NOTE: the <noscript><div><img> bit in the docs is ignored
+        // because we have to run JS in order to do any of this!
+    }
+
+});
+
+
+// GetVero.com
+// -----------
+// [Documentation](https://github.com/getvero/vero-api/blob/master/sections/js.md).
+
+analytics.addProvider('Vero', {
+
+    settings : {
+        apiKey : null
+    },
+
+
+    // Initialize
+    // ----------
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'apiKey');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
+
+        var _veroq = window._veroq = _veroq || [];
+        _veroq.push(['init', {
+            api_key: settings.apiKey
+        }]);
+        (function(){
+            var ve = document.createElement('script');
+            ve.type = 'text/javascript';
+            ve.async = true;
+            ve.src = '//www.getvero.com/assets/m.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ve, s);
+        })();
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        // Don't do anything if we just have traits, because Vero
+        // requires a `userId`.
+        if (!userId) return;
+
+        traits || (traits = {});
+
+        // Vero takes the `userId` as part of the traits object.
+        traits.id = userId;
+
+        // If there wasn't already an email and the userId is one, use it.
+        if (!traits.email && analytics.utils.isEmail(userId)) {
+            traits.email = userId;
+        }
+
+        // Vero *requires* an email and an id
+        if (!traits.id || !traits.email) return;
+
+        window._veroq.push(['user', traits]);
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        window._veroq.push(['track', event, properties]);
     }
 
 });

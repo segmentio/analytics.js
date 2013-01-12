@@ -3,6 +3,7 @@ analytics.js:
 		src/analytics.js \
 		src/providers/chartbeat/chartbeat.js \
 		src/providers/clicky/clicky.js \
+		src/providers/comscore/comscore.js \
 		src/providers/crazyegg/crazyegg.js \
 		src/providers/customerio/customerio.js \
 		src/providers/errorception/errorception.js \
@@ -27,6 +28,7 @@ docs:
 		src/analytics.js \
 		src/providers/chartbeat/chartbeat.js \
 		src/providers/clicky/clicky.js \
+		src/providers/comscore/comscore.js \
 		src/providers/crazyegg/crazyegg.js \
 		src/providers/customerio/customerio.js \
 		src/providers/errorception/errorception.js \

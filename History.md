@@ -1,3 +1,11 @@
+0.3.2 / 2013-1-11
+==================
+
+* [Quantcast](http://quantcast.com) support added
+* Fixed breaking issue on Clicky
+* Updated Makefile for new providers
+
+
 0.3.1 / 2013-1-11
 ==================
 

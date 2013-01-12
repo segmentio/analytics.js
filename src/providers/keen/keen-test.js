@@ -3,13 +3,13 @@
 
     suite('Keen');
 
-    var event = 'event';
+    var event = 'someEventName';
 
     var properties = {
         count: 42
     };
 
-    var userId = 'user';
+    var userId = 'someUserId';
 
     var traits = {
         name: 'Zeus',
@@ -20,18 +20,18 @@
     // ----------
     test('stores settings and adds keenio.js on initialize', function() {
         expect(window.Keen).not.to.exist;
-
+        
         analytics.initialize({
             'Keen': {
-                projectId: '4f4dc223163d6667f7000000',
-                apiKey: '26975cb8a7db41d1a65a7264a0f04991'
+                projectId: 'KEEN_PROJECT_ID',
+                apiKey: 'KEEN_API_KEY'
             }
         });
         expect(window.Keen).to.exist;
         expect(window.Keen.setGlobalProperties).to.exist;
         expect(window.Keen.addEvent).to.exist;
-        expect(window.Keen._pId).to.equal('4f4dc223163d6667f7000000');
-        expect(window.Keen._ak).to.equal('26975cb8a7db41d1a65a7264a0f04991');
+        expect(window.Keen._pId).to.equal('KEEN_PROJECT_ID');
+        expect(window.Keen._ak).to.equal('KEEN_API_KEY');
     });
 
     // Identify
@@ -43,14 +43,28 @@
         var spy = sinon.spy(window.Keen, 'setGlobalProperties');
         analytics.identify();
         expect(spy).to.have.not.been.called;
+        
+        // a custom checker for code re-use. just makes sure that the function
+        // passed as the globalProperties, when invoked, returns sane values.
+        var customChecker = function (expectedUserId, expectedTraits) {
+            expect(spy).to.have.been.calledWith(sinon.match(function (value) {
+                if (typeof value === "function") {
+                    result = value("some event name");
+                    expect(result.user.userId).to.equal(expectedUserId);
+                    expect(result.user.traits).to.eql(expectedTraits);
+                    return true;
+                }
+                return false;
+            }))
+        };
 
         spy.reset();
         analytics.identify(userId);
-        expect(spy).to.have.been.called;
+        customChecker(userId);
 
         spy.reset();
         analytics.identify(userId, traits);
-        expect(spy).to.have.been.called;
+        customChecker(userId, traits);
 
         spy.restore();
     });

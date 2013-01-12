@@ -371,10 +371,11 @@ analytics.addProvider('CrazyEgg', {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
 
+        var apiKey = this.settings.apiKey;
         (function(){
             var a=document.createElement("script");
             var b=document.getElementsByTagName("script")[0];
-            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+this.settings.apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
+            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
             a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b);
         })();
     }
@@ -574,11 +575,11 @@ analytics.addProvider('Google Analytics', {
 });
 
 
-// Gaug.es
+// Gauges
 // -------
 // [Documentation](http://get.gaug.es/documentation/tracking/).
 
-analytics.addProvider('Gaug.es', {
+analytics.addProvider('Gauges', {
 
     settings: {
         siteId: null

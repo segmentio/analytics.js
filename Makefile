@@ -52,8 +52,12 @@ kill:
 	kill -9 `cat test/pid.txt`
 	rm test/pid.txt
 
+# Cache slow loading assets for travis.
+cache:
+	curl http://static.getclicky.com/js > /dev/null
+
 # Runs travis tests
-test: server
+test: server cache
 	sleep 1
 	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/min.html
 	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/providers.html

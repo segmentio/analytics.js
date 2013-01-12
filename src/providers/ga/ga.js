@@ -56,7 +56,17 @@ analytics.addProvider('Google Analytics', {
     // -----
 
     track : function (event, properties) {
-        window._gaq.push(['_trackEvent', 'All', event]);
+        properties || (properties = {});
+
+        // Try to check for a `category` and `label`. A `category` is required,
+        // so if it's not there we use `'All'` as a default. We can safely push
+        // undefined if the special properties don't exist.
+        window._gaq.push([
+            '_trackEvent',
+            properties.category || 'All',
+            event,
+            properties.label
+        ]);
     },
 
 
@@ -64,9 +74,8 @@ analytics.addProvider('Google Analytics', {
     // --------
 
     pageview : function (url) {
-        var options = ['_trackPageview'];
-        if (url) options[1] = url;
-        window._gaq.push(options);
+        // If there isn't a url, that's fine.
+        window._gaq.push(['_trackPageview', url]);
     }
 
 });

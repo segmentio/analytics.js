@@ -18,7 +18,7 @@ analytics.addProvider('Comscore', {
         analytics.utils.extend(this.settings, settings);
 
         var _comscore = window._comscore = window._comscore || [];
-        _comscore.push(settings);
+        _comscore.push(this.settings);
 
         (function() {
             var s = document.createElement("script");

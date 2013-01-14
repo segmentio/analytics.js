@@ -252,33 +252,33 @@
         //
         // * `event` and `properties` are passed directly to `analytics.track`
         // and take the same options.
-        trackForm : function (form, event, properties) {
-            if (!form) return;
+        // trackForm : function (form, event, properties) {
+        //     if (!form) return;
 
-            // Turn a single element into an array so that we're always handling
-            // arrays, which allows for passing jQuery objects.
-            if (this.utils.isElement(form)) form = [form];
+        //     // Turn a single element into an array so that we're always handling
+        //     // arrays, which allows for passing jQuery objects.
+        //     if (this.utils.isElement(form)) form = [form];
 
-            // Bind to all the forms in the array.
-            for (var i = 0; i < form.length; i++) {
-                var self = this;
-                var el = form[i];
+        //     // Bind to all the forms in the array.
+        //     for (var i = 0; i < form.length; i++) {
+        //         var self = this;
+        //         var el = form[i];
 
-                this.utils.bind(el, 'submit', function (e) {
-                    // Fire a normal track call.
-                    self.track(event, properties);
+        //         this.utils.bind(el, 'submit', function (e) {
+        //             // Fire a normal track call.
+        //             self.track(event, properties);
 
-                    // Submit the form after a small timeout, giving the event
-                    // time to get fired.
-                    setTimeout(function () {
-                        el.submit();
-                    }, this.timeout);
+        //             // Submit the form after a small timeout, giving the event
+        //             // time to get fired.
+        //             setTimeout(function () {
+        //                 el.submit();
+        //             }, this.timeout);
 
-                    // Prevent the form's default submission.
-                    return false;
-                });
-            }
-        },
+        //             // Prevent the form's default submission.
+        //             return false;
+        //         });
+        //     }
+        // },
 
 
         // Pageview

@@ -201,9 +201,9 @@
         trackClick : function (element, event, properties) {
             if (!element) return;
 
-            // Turn a non-array into an array so that we're always handling
+            // Turn a single element into an array so that we're always handling
             // arrays, which allows for passing jQuery objects.
-            if (!this.utils.isArray(element)) element = [element];
+            if (this.utils.isElement(element)) element = [element];
 
             // Bind to all the elements in the array.
             for (var i = 0; i < element.length; i++) {
@@ -255,9 +255,9 @@
         trackForm : function (form, event, properties) {
             if (!form) return;
 
-            // Turn a non-array into an array so that we're always handling
+            // Turn a single element into an array so that we're always handling
             // arrays, which allows for passing jQuery objects.
-            if (!this.utils.isArray(form)) form = [form];
+            if (this.utils.isElement(form)) form = [form];
 
             // Bind to all the forms in the array.
             for (var i = 0; i < form.length; i++) {
@@ -818,8 +818,8 @@ analytics.addProvider('Google Analytics', {
 
 analytics.addProvider('Gauges', {
 
-    settings: {
-        siteId: null
+    settings : {
+        siteId : null
     },
 
 

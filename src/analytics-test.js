@@ -3,21 +3,11 @@
 
     var provider = {
         initialize : function (settings) {},
-        identify : function (userId, traits) {},
-        track : function (event, properties) {},
-        pageview : function () {}
+        identify   : function (userId, traits) {},
+        track      : function (event, properties) {},
+        pageview   : function () {}
     };
     analytics.addProvider('test', provider);
-
-    $(function () {
-        // Don't let any links or forms change the page.
-        $('body').on('a', 'click', function (event) {
-            event.preventDefault();
-        });
-        $('body').on('form', 'submit', function (event) {
-            event.preventDefault();
-        });
-    });
 
 
     // Initialize
@@ -203,27 +193,64 @@
 
     test('track click fires on a link without an href', function () {
         var spy = sinon.spy(provider, 'track');
-        var $link = $('#link');
-        analytics.trackClick($link, 'party');
-        $link.click();
+        var link = $('#link')[0];
+        analytics.trackClick(link, 'party');
+
+        // Internet Explorer.
+        if (link.fireEvent) {
+            link.fireEvent('onClick');
+        // Everyone else.
+        } else {
+            var event = document.createEvent('Events');
+            event.initEvent('click', true, false);
+            link.dispatchEvent(event);
+        }
         expect(spy).to.have.been.calledWith('party');
 
-        $link.remove();
+        $(link).remove();
         spy.restore();
     });
 
     test('track click routes to a new href on links', function () {
         var spy = sinon.spy(provider, 'track');
-        var $link = $('#href-link');
-        analytics.trackClick($link, 'party');
-        $link.click();
-        expect(spy).to.have.been.calledWith('party');
+        var link = $('#href-link')[0];
+        analytics.trackClick(link, 'party');
 
-        $link.remove();
+        // Internet Explorer.
+        if (link.fireEvent) {
+            link.fireEvent('onClick');
+        // Everyone else.
+        } else {
+            var event = document.createEvent('Events');
+            event.initEvent('click', true, false);
+            link.dispatchEvent(event);
+        }
+        expect(spy).to.have.been.calledWith('party');
+        expect(window.location.hash).to.equal('#test');
+
+        $(link).remove();
         spy.restore();
     });
 
-    test('track click doesnt route to an href when its a meta click');
+    test('track click doesnt route to an href when its a meta click', function () {
+        // Reset hash from last test.
+        window.location.hash = '';
+        var spy = sinon.spy(provider, 'track');
+        var link = $('#another-href-link')[0];
+        analytics.trackClick(link, 'party');
+
+        // Everyone but Internet Explorer, since it can't simulate a metaKey.
+        if (!link.fireEvent) {
+            var event = document.createEvent('MouseEvent');
+            // Jesus, make it a metaKey click.
+            event.initMouseEvent('click', true, false, null, null, null, null, null, null, null, null, null, true);
+            link.dispatchEvent(event);
+        }
+        expect(spy).to.have.been.calledWith('party');
+
+        $(link).remove();
+        spy.restore();
+    });
 
 
     // Track Form

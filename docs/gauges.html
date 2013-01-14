@@ -2,8 +2,8 @@
 
 <p><a href="http://get.gaug.es/documentation/tracking/">Documentation</a>.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">analytics</span><span class="p">.</span><span class="nx">addProvider</span><span class="p">(</span><span class="s1">&#39;Gauges&#39;</span><span class="p">,</span> <span class="p">{</span>
 
-    <span class="nx">settings</span><span class="o">:</span> <span class="p">{</span>
-        <span class="nx">siteId</span><span class="o">:</span> <span class="kc">null</span>
+    <span class="nx">settings</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">siteId</span> <span class="o">:</span> <span class="kc">null</span>
     <span class="p">},</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h2>Initialize</h2>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nx">initialize</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">settings</span><span class="p">)</span> <span class="p">{</span>
         <span class="nx">settings</span> <span class="o">=</span> <span class="nx">analytics</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">resolveSettings</span><span class="p">(</span><span class="nx">settings</span><span class="p">,</span> <span class="s1">&#39;siteId&#39;</span><span class="p">);</span>
         <span class="nx">analytics</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">settings</span><span class="p">,</span> <span class="nx">settings</span><span class="p">);</span>

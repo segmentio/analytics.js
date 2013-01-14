@@ -3,9 +3,9 @@
 
     var provider = {
         initialize : function (settings) {},
-        identify : function (userId, traits) {},
-        track : function (event, properties) {},
-        pageview : function () {}
+        identify   : function (userId, traits) {},
+        track      : function (event, properties) {},
+        pageview   : function () {}
     };
     analytics.addProvider('test', provider);
 
@@ -83,6 +83,41 @@
         spy.restore();
     });
 
+    test('identify calls the callback after 250ms', function (done) {
+        var callback = sinon.spy();
+        analytics.identify('id', { name : 'Achilles' }, callback);
+        expect(callback).not.to.have.been.called;
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            done();
+        }, 300);
+    });
+
+    test('identify takes a callback with optional traits or userId', function (done) {
+        var finish = _.after(3, done);
+
+        var callback = sinon.spy();
+        analytics.identify('id', callback);
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            finish();
+        }, 300);
+
+        callback.reset();
+        analytics.identify({ name : 'Achilles' }, callback);
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            finish();
+        }, 300);
+
+        callback.reset();
+        analytics.identify('id', { name : 'Achilles' }, callback);
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            finish();
+        }, 300);
+    });
+
 
     // Track
     // -----
@@ -117,6 +152,151 @@
 
         spy.restore();
     });
+
+    test('track calls the callback after 250ms', function (done) {
+        var callback = sinon.spy();
+        analytics.track('party', { level : 'hard' }, callback);
+        expect(callback).not.to.have.been.called;
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            done();
+        }, 300);
+    });
+
+
+    // Track Click
+    // -----------
+
+    suite('trackClick');
+
+    test('track click fires on a button', function () {
+        var spy = sinon.spy(provider, 'track');
+        var button = $('#button')[0];
+        analytics.trackClick(button, 'party');
+        $(button).click();
+        expect(spy).to.have.been.calledWith('party');
+
+        $(button).remove();
+        spy.restore();
+    });
+
+    test('track click fires on a $button', function () {
+        var spy = sinon.spy(provider, 'track');
+        var $button = $('#another-button');
+        analytics.trackClick($button, 'party');
+        $button.click();
+        expect(spy).to.have.been.calledWith('party');
+
+        $button.remove();
+        spy.restore();
+    });
+
+    test('track click fires on a link without an href', function () {
+        var spy = sinon.spy(provider, 'track');
+        var link = $('#link')[0];
+        analytics.trackClick(link, 'party');
+
+        // Internet Explorer.
+        if (link.fireEvent) {
+            link.fireEvent('onClick');
+        // Everyone else.
+        } else {
+            var event = document.createEvent('Events');
+            event.initEvent('click', true, false);
+            link.dispatchEvent(event);
+        }
+        expect(spy).to.have.been.calledWith('party');
+
+        $(link).remove();
+        spy.restore();
+    });
+
+    test('track click routes to a new href on links', function () {
+        var spy = sinon.spy(provider, 'track');
+        var link = $('#href-link')[0];
+        analytics.trackClick(link, 'party');
+
+        // Internet Explorer.
+        if (link.fireEvent) {
+            link.fireEvent('onClick');
+        // Everyone else.
+        } else {
+            var event = document.createEvent('Events');
+            event.initEvent('click', true, false);
+            link.dispatchEvent(event);
+        }
+        expect(spy).to.have.been.calledWith('party');
+        expect(window.location.hash).to.equal('#test');
+
+        $(link).remove();
+        spy.restore();
+    });
+
+    test('track click doesnt route to an href when its a meta click', function () {
+        // Reset hash from last test.
+        window.location.hash = '';
+        var spy = sinon.spy(provider, 'track');
+        var link = $('#another-href-link')[0];
+        analytics.trackClick(link, 'party');
+
+        // Everyone but Internet Explorer, since it can't simulate a metaKey.
+        if (!link.fireEvent) {
+            var event = document.createEvent('MouseEvent');
+            // Jesus, make it a metaKey click.
+            event.initMouseEvent('click', true, false, null, null, null, null, null, null, null, null, null, true);
+            link.dispatchEvent(event);
+        }
+        expect(spy).to.have.been.calledWith('party');
+
+        $(link).remove();
+        spy.restore();
+    });
+
+
+    // Track Form
+    // ----------
+
+    // suite('trackForm');
+
+    // test('track form fires on a form', function () {
+    //     var spy = sinon.spy(provider, 'track');
+    //     var form = $('#form')[0];
+    //     var input = $(form).find('input')[0];
+    //     analytics.trackForm(form, 'party');
+
+    //     if (input.fireEvent) {
+    //         input.fireEvent('onClick');
+    //     // Everyone else.
+    //     } else {
+    //         var event = document.createEvent('Events');
+    //         event.initEvent('click', true, false);
+    //         input.dispatchEvent(event);
+    //     }
+    //     expect(spy).to.have.been.calledWith('party');
+
+    //     $(form).remove();
+    //     spy.restore();
+    // });
+
+    // test('track form fires on a $form', function () {
+    //     var spy = sinon.spy(provider, 'track');
+    //     var $form = $('#another-form');
+    //     var input = $form.find('input')[0];
+    //     analytics.trackForm($form, 'party');
+
+    //     if (input.fireEvent) {
+    //         input.fireEvent('onClick');
+    //     // Everyone else.
+    //     } else {
+    //         var event = document.createEvent('Events');
+    //         event.initEvent('click', true, false);
+    //         input.dispatchEvent(event);
+    //     }
+    //     expect(spy).to.have.been.calledWith('party');
+
+    //     $form.remove();
+    //     spy.restore();
+    // });
 
 
     // Pageview

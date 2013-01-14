@@ -4,8 +4,8 @@
 
 analytics.addProvider('Gauges', {
 
-    settings: {
-        siteId: null
+    settings : {
+        siteId : null
     },
 
 

@@ -1,3 +1,9 @@
+
+0.3.4 / 2013-1-13
+==================
+
+* Upgrade to Mixpanel 2.2 by [@loganfuller](https://github.com/loganfuller)
+
 0.3.3 / 2013-1-11
 ==================
 

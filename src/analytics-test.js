@@ -9,6 +9,16 @@
     };
     analytics.addProvider('test', provider);
 
+    $(function () {
+        // Don't let any links or forms change the page.
+        $('body').on('a', 'click', function (event) {
+            event.preventDefault();
+        });
+        $('body').on('form', 'submit', function (event) {
+            event.preventDefault();
+        });
+    });
+
 
     // Initialize
     // ----------
@@ -83,6 +93,41 @@
         spy.restore();
     });
 
+    test('identify calls the callback after 250ms', function (done) {
+        var callback = sinon.spy();
+        analytics.identify('id', { name : 'Achilles' }, callback);
+        expect(callback).not.to.have.been.called;
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            done();
+        }, 300);
+    });
+
+    test('identify takes a callback with optional traits or userId', function (done) {
+        var finish = _.after(3, done);
+
+        var callback = sinon.spy();
+        analytics.identify('id', callback);
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            finish();
+        }, 300);
+
+        callback.reset();
+        analytics.identify({ name : 'Achilles' }, callback);
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            finish();
+        }, 300);
+
+        callback.reset();
+        analytics.identify('id', { name : 'Achilles' }, callback);
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            finish();
+        }, 300);
+    });
+
 
     // Track
     // -----
@@ -118,6 +163,16 @@
         spy.restore();
     });
 
+    test('track calls the callback after 250ms', function (done) {
+        var callback = sinon.spy();
+        analytics.track('party', { level : 'hard' }, callback);
+        expect(callback).not.to.have.been.called;
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            done();
+        }, 300);
+    });
+
 
     // Track Click
     // -----------
@@ -148,6 +203,17 @@
 
     test('track click fires on a link without an href', function () {
         var spy = sinon.spy(provider, 'track');
+        var $link = $('#link');
+        analytics.trackClick($link, 'party');
+        $link.click();
+        expect(spy).to.have.been.calledWith('party');
+
+        $link.remove();
+        spy.restore();
+    });
+
+    test('track click routes to a new href on links', function () {
+        var spy = sinon.spy(provider, 'track');
         var $link = $('#href-link');
         analytics.trackClick($link, 'party');
         $link.click();
@@ -157,9 +223,35 @@
         spy.restore();
     });
 
-    test('track click routes to a new href on links');
-
     test('track click doesnt route to an href when its a meta click');
+
+
+    // Track Form
+    // ----------
+
+    suite('trackForm');
+
+    test('track form fires on a form', function () {
+        var spy = sinon.spy(provider, 'track');
+        var form = $('#form')[0];
+        analytics.trackForm(form, 'party');
+        form.submit();
+        expect(spy).to.have.been.calledWith('party');
+
+        $(form).remove();
+        spy.restore();
+    });
+
+    test('track form fires on a $form', function () {
+        var spy = sinon.spy(provider, 'track');
+        var $form = $('#another-form');
+        analytics.trackForm($form, 'party');
+        $form.submit();
+        expect(spy).to.have.been.calledWith('party');
+
+        $form.remove();
+        spy.restore();
+    });
 
 
     // Pageview

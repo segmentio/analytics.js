@@ -24,6 +24,10 @@
         // Whether analytics.js has been initialized with providers.
         initialized : false,
 
+        // The amount of milliseconds to wait for requests to providers to clear
+        // before navigating away from the current page.
+        timeout : 250,
+
 
         // Providers
         // ---------
@@ -98,15 +102,26 @@
         // * `userId` (optional) is the ID you know the user by. Ideally this
         // isn't an email, because the user might be able to change their email
         // and you don't want that to affect your analytics.
+        //
         // * `traits` (optional) is a dictionary of traits to tie your user.
         // Things like `name`, `age` or `friendCount`. If you have them, you
         // should always store a `name` and `email`.
-        identify : function (userId, traits) {
+        //
+        // * `callback` (optional) is a function to call after the a small
+        // timeout to give the identify requests a chance to be sent.
+        identify : function (userId, traits, callback) {
             if (!this.initialized) return;
+
+            // Allow for not passing traits, but passing a callback.
+            if (this.utils.isFunction(traits)) {
+                callback = traits;
+                traits = null;
+            }
 
             // Allow for identifying traits without setting a `userId`, for
             // anonymous users whose traits you learn.
             if (this.utils.isObject(userId)) {
+                if (traits && this.utils.isFunction(traits)) callback = traits;
                 traits = userId;
                 userId = null;
             }
@@ -121,6 +136,10 @@
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.identify) continue;
                 provider.identify(userId, this.utils.clone(traits));
+            }
+
+            if (callback && this.utils.isFunction(callback)) {
+                setTimeout(callback, this.timeout);
             }
         },
 
@@ -139,16 +158,30 @@
         // * `event` is the name of the event. The best names are human-readable
         // so that your whole team knows what they mean when they analyze your
         // data.
+        //
         // * `properties` (optional) is a dictionary of properties of the event.
         // Property keys are all camelCase (we'll alias to non-camelCase for
         // you automatically for providers that require it).
-        track : function (event, properties) {
+        //
+        // * `callback` (optional) is a function to call after the a small
+        // timeout to give the track requests a chance to be sent.
+        track : function (event, properties, callback) {
             if (!this.initialized) return;
+
+            // Allow for not passing properties, but passing a callback.
+            if (this.utils.isFunction(properties)) {
+                callback = properties;
+                properties = null;
+            }
 
             // Call `track` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.track) continue;
                 provider.track(event, this.utils.clone(properties));
+            }
+
+            if (callback && this.utils.isFunction(callback)) {
+                setTimeout(callback, this.timeout);
             }
         },
 
@@ -168,9 +201,9 @@
         trackClick : function (element, event, properties) {
             if (!element) return;
 
-            // Turn a non-array into an array so that we're always handling
+            // Turn a single element into an array so that we're always handling
             // arrays, which allows for passing jQuery objects.
-            if (!this.utils.isArray(element)) element = [element];
+            if (this.utils.isElement(element)) element = [element];
 
             // Bind to all the elements in the array.
             for (var i = 0; i < element.length; i++) {
@@ -197,7 +230,7 @@
                         // event time to get fired.
                         setTimeout(function () {
                             window.location.href = el.href;
-                        }, 250);
+                        }, this.timeout);
 
                         // Prevent the link's default redirect.
                         return false;
@@ -222,9 +255,9 @@
         trackForm : function (form, event, properties) {
             if (!form) return;
 
-            // Turn a non-array into an array so that we're always handling
+            // Turn a single element into an array so that we're always handling
             // arrays, which allows for passing jQuery objects.
-            if (!this.utils.isArray(form)) form = [form];
+            if (this.utils.isElement(form)) form = [form];
 
             // Bind to all the forms in the array.
             for (var i = 0; i < form.length; i++) {
@@ -239,7 +272,7 @@
                     // time to get fired.
                     setTimeout(function () {
                         el.submit();
-                    }, 250);
+                    }, this.timeout);
 
                     // Prevent the form's default submission.
                     return false;

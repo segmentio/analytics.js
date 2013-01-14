@@ -103,38 +103,6 @@
         spy.restore();
     });
 
-    test('calls people.identify on identify if `people` setting is true', function () {
-        // Reset internal `userId` state from any previous identifies.
-        analytics.userId = null;
-
-        analytics.providers[0].settings.people = true;
-        var spy = sinon.spy(window.mixpanel.people, 'identify');
-        analytics.identify(traits);
-        expect(spy).to.have.not.been.called;
-
-        spy.reset();
-        analytics.identify(userId);
-        expect(spy).to.have.been.calledWith(userId);
-
-        spy.reset();
-        analytics.identify(userId, traits);
-        expect(spy).to.have.been.calledWith(userId);
-
-        spy.restore();
-    });
-
-    test('doesnt call people.identify on identify if `people` setting is false', function () {
-        // Reset internal `userId` state from any previous identifies.
-        analytics.userId = null;
-
-        analytics.providers[0].settings.people = false;
-        var spy = sinon.spy(window.mixpanel.people, 'identify');
-        analytics.identify(userId, traits);
-        expect(spy).not.to.have.been.called;
-
-        spy.restore();
-    });
-
     test('calls people.set on identify if `people` setting is true', function () {
         // Reset internal `userId` state from any previous identifies.
         analytics.userId = null;

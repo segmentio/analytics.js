@@ -15,8 +15,11 @@
 
         function onFinish() {
             expect(window.clicky).to.exist;
-            clearInterval(loadedCheck);
-            callback();
+            if (loadedCheck) {
+                clearInterval(loadedCheck);
+                loadedCheck = null;
+                callback();
+            }
         }
 
         expect(window.clicky).not.to.exist;

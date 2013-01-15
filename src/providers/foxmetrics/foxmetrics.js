@@ -1,14 +1,14 @@
 // FoxMetrics
 // -----------
+// [Website] (http://foxmetrics.com)
 // [Documentation](http://foxmetrics.com/documentation)
+// [Documentation - JS](http://foxmetrics.com/documentation/apijavascript)
 // [Support](http://support.foxmetrics.com)
 
 analytics.addProvider('FoxMetrics', {
 
     settings: {
-        appId: null,
-        appName: null,
-        cookieDomain: null
+        appId: null
     },
 
 
@@ -19,10 +19,8 @@ analytics.addProvider('FoxMetrics', {
         settings = analytics.utils.resolveSettings(settings, 'appId');
         analytics.utils.extend(this.settings, settings);
 
-        // fxm - aync script load
-        var _fxm = _fxm || {};
-        _fxm.events = _fxm.events || [];
-        window._fxm = _fxm.events;
+        var _fxm = window._fxm || {};
+        window._fxm = _fxm.events || [];
 
         function _fxms(id) {
             (function () {
@@ -41,10 +39,9 @@ analytics.addProvider('FoxMetrics', {
 
     identify: function (userId, traits) {
 
-        // FoxMetrics allows the user to create/update a profile
-        // however, the user id is a required field
-        if (typeof (userId) !== 'undefined' && userId) {
-
+        // user id is required for profile updates,
+        // otherwise its a waste of resources as nothing will get updated
+        if (userId) {
             // fxm needs first and last name seperately
             var fname = null, lname = null, email = null;
             if (traits) {

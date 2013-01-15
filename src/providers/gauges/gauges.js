@@ -12,7 +12,7 @@ analytics.addProvider('Gauges', {
     // Initialize
     // ----------
 
-    initialize : function(settings) {
+    initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
         analytics.utils.extend(this.settings, settings);
 
@@ -34,7 +34,7 @@ analytics.addProvider('Gauges', {
     // Pageview
     // --------
 
-    pageview : function(url) {
+    pageview : function (url) {
         window._gauges.push(['track']);
     }
 

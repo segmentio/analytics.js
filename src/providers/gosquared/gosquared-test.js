@@ -29,15 +29,15 @@
         expect(analytics.providers[0].settings.siteToken).to.equal('x');
     });
 
-    test('GoSquared tracker finishes loading', function (done) {
-        this.timeout(10000);
+    // test('GoSquared tracker finishes loading', function (done) {
+    //     this.timeout(10000);
 
-        // Use the GoSquared.load function...
-        window.GoSquared.load = function(tracker) {
-            expect(window.GoSquared.DefaultTracker).to.equal(tracker);
-            done();
-        };
-    });
+    //     // Use the GoSquared.load function...
+    //     window.GoSquared.load = function(tracker) {
+    //         expect(window.GoSquared.DefaultTracker).to.equal(tracker);
+    //         done();
+    //     };
+    // });
 
 
     // Identify

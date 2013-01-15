@@ -6,21 +6,10 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds clicky.js on initialize', function (callback) {
-
-        // Clicky loads very slowly on travis, so we
-        // have to use a slightly different structure.
-        this.timeout(8000);
-        var loadedCheck;
-
-        function onFinish() {
-            expect(window.clicky).to.exist;
-            if (loadedCheck) {
-                clearInterval(loadedCheck);
-                loadedCheck = null;
-                callback();
-            }
-        }
+    // Clicky loads very slowly on travis, so we get smart and check it on an
+    // interval so that we wait for the shortest time possible.
+    test('stores settings and adds clicky.js on initialize', function (done) {
+        this.timeout(10000);
 
         expect(window.clicky).not.to.exist;
 
@@ -28,14 +17,14 @@
             'Clicky' : 'x'
         });
 
-        // Check to see whether clicky has loaded.
-        // Avoids long timeout when testing locally.
-        loadedCheck = setInterval(function () {
-            if (window.clicky)
-              onFinish();
-        }, 500);
+        var interval = setInterval(function () {
+            if (window.clicky) {
+                clearInterval(interval);
+                expect(window.clicky).to.exist;
+                done();
+            }
+        }, 1000);
 
-        setTimeout(onFinish, 7000);
         expect(analytics.providers[0].settings.siteId).to.equal('x');
     });
 

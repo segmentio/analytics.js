@@ -1,4 +1,4 @@
-//     Analytics.js 0.3.4
+//     Analytics.js 0.3.5
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -836,7 +836,7 @@ analytics.addProvider('Gauges', {
     // Initialize
     // ----------
 
-    initialize : function(settings) {
+    initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
         analytics.utils.extend(this.settings, settings);
 
@@ -858,7 +858,7 @@ analytics.addProvider('Gauges', {
     // Pageview
     // --------
 
-    pageview : function(url) {
+    pageview : function (url) {
         window._gauges.push(['track']);
     }
 

@@ -61,10 +61,15 @@ test: server
 	node_modules/.bin/mocha-phantomjs http://localhost:8000/test/core.html
 	make kill
 
+browser-test:
+	open http://localhost:8000/test/min.html
+	open http://localhost:8000/test/providers.html
+	open http://localhost:8000/test/core.html
+
 release:
 	make analytics.js
 	make min
 	make docs
 	make test
 
-.PHONY: analytics.js docs test
+.PHONY: analytics.js docs test browser-test

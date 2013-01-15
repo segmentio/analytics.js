@@ -1,4 +1,4 @@
-//     Analytics.js 0.3.4
+//     Analytics.js 0.3.5
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -26,7 +26,7 @@
 
         // The amount of milliseconds to wait for requests to providers to clear
         // before navigating away from the current page.
-        timeout : 250,
+        timeout : 300,
 
 
         // Providers
@@ -218,29 +218,34 @@
                     // To justify us preventing the default behavior we must:
                     //
                     // * Have an `href` to use.
+                    // * Not have a `target="_blank"` attribute.
                     // * Not have any special keys pressed, because they might
                     // be trying to open in a new tab, or window, or download
                     // the asset.
                     //
                     // This might not cover all cases, but we'd rather throw out
                     // an event than miss a case that breaks the experience.
-                    if (el.href && !self.utils.isMeta(e)) {
+                    if (el.href && el.target !== '_blank' && !self.utils.isMeta(e)) {
+
+                        // Prevent the link's default redirect in all the sane
+                        // browsers, and also IE.
+                        if (e.preventDefault)
+                            e.preventDefault();
+                        else
+                            e.returnValue = false;
 
                         // Navigate to the url after a small timeout, giving the
-                        // event time to get fired.
+                        // providers time to track the event.
                         setTimeout(function () {
                             window.location.href = el.href;
-                        }, this.timeout);
-
-                        // Prevent the link's default redirect.
-                        return false;
+                        }, self.timeout);
                     }
                 });
             }
         },
 
 
-        // ### trackForm
+        // ### trackSubmit
 
         // Similar to `trackClick`, this is a helper for tracking form
         // submissions that would normally leave the page before a track call
@@ -252,33 +257,38 @@
         //
         // * `event` and `properties` are passed directly to `analytics.track`
         // and take the same options.
-        // trackForm : function (form, event, properties) {
-        //     if (!form) return;
+        trackSubmit : function (form, event, properties) {
+            if (!form) return;
 
-        //     // Turn a single element into an array so that we're always handling
-        //     // arrays, which allows for passing jQuery objects.
-        //     if (this.utils.isElement(form)) form = [form];
+            // Turn a single element into an array so that we're always handling
+            // arrays, which allows for passing jQuery objects.
+            if (this.utils.isElement(form)) form = [form];
 
-        //     // Bind to all the forms in the array.
-        //     for (var i = 0; i < form.length; i++) {
-        //         var self = this;
-        //         var el = form[i];
+            // Bind to all the forms in the array.
+            for (var i = 0; i < form.length; i++) {
+                var self = this;
+                var el = form[i];
 
-        //         this.utils.bind(el, 'submit', function (e) {
-        //             // Fire a normal track call.
-        //             self.track(event, properties);
+                this.utils.bind(el, 'submit', function (e) {
 
-        //             // Submit the form after a small timeout, giving the event
-        //             // time to get fired.
-        //             setTimeout(function () {
-        //                 el.submit();
-        //             }, this.timeout);
+                    // Fire a normal track call.
+                    self.track(event, properties);
 
-        //             // Prevent the form's default submission.
-        //             return false;
-        //         });
-        //     }
-        // },
+                    // Prevent the form's default submit in all the sane
+                    // browsers, and also IE.
+                    if (e.preventDefault)
+                        e.preventDefault();
+                    else
+                        e.returnValue = false;
+
+                    // Submit the form after a small timeout, giving the event
+                    // time to get fired.
+                    setTimeout(function () {
+                        el.submit();
+                    }, this.timeout);
+                });
+            }
+        },
 
 
         // Pageview

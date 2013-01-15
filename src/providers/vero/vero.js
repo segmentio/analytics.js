@@ -65,5 +65,3 @@ analytics.addProvider('Vero', {
     }
 
 });
-
-

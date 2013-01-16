@@ -17,6 +17,7 @@ analytics.js:
 		src/providers/mixpanel/mixpanel.js \
 		src/providers/olark/olark.js \
 		src/providers/quantcast/quantcast.js \
+		src/providers/snapengage/snapengage.js \
 		src/providers/vero/vero.js \
 		> analytics.js
 
@@ -42,6 +43,7 @@ docs:
 		src/providers/mixpanel/mixpanel.js \
 		src/providers/olark/olark.js \
 		src/providers/quantcast/quantcast.js \
+		src/providers/snapengage/snapengage.js \
 		src/providers/vero/vero.js
 
 server:

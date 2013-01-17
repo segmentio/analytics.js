@@ -34,7 +34,7 @@ analytics.addProvider('Clicky', {
 
     track : function (event, properties) {
         window.clicky.log(window.location.href, event);
-    },
+    }
 
 });
 

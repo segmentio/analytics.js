@@ -526,7 +526,9 @@ analytics.addProvider('Chartbeat', {
 
 analytics.addProvider('Clicky', {
 
-    settings : {},
+    settings : {
+        siteId : null
+    },
 
 
     // Initialize
@@ -546,7 +548,15 @@ analytics.addProvider('Clicky', {
             s.src = '//static.getclicky.com/js';
             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
         })();
-    }
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        window.clicky.log(window.location.href, event);
+    },
 
 });
 

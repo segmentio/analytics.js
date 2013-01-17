@@ -2,6 +2,12 @@
 
     suite('Clicky');
 
+    var event = 'event';
+
+    var properties = {
+        count : 42
+    };
+
 
     // Initialize
     // ----------
@@ -26,6 +32,19 @@
         }, 1000);
 
         expect(analytics.providers[0].settings.siteId).to.equal('x');
+    });
+
+
+    // Track
+    // -----
+
+    test('calls log on track', function () {
+        var spy = sinon.spy(window.clicky, 'log');
+        analytics.track(event, properties);
+        // Mixpanel adds custom properties, so we need to have a loose match.
+        expect(spy).to.have.been.calledWith(window.location.href, event);
+
+        spy.restore();
     });
 
 

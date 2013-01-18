@@ -64,7 +64,9 @@ analytics.addProvider('Google Analytics', {
             '_trackEvent',
             properties.category || 'All',
             event,
-            properties.label
+            properties.label,
+            properties.value,
+            properties.noninteraction
         ]);
     },
 

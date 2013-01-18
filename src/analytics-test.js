@@ -35,7 +35,7 @@
 
         analytics.initialize({'test' : 'x'});
 
-        expect(spy.calledWith('x')).to.be.true;
+        expect(spy.calledWith('x')).to.be(true);
 
         spy.restore();
     });
@@ -64,7 +64,7 @@
 
         analytics.identify();
 
-        expect(spy.called).to.be.true;
+        expect(spy.called).to.be(true);
 
         spy.restore();
     });
@@ -100,9 +100,9 @@
         analytics.identify('id', { name : 'Achilles' }, callback);
 
         // The callback shouldn't be called immediately, but after the timeout.
-        expect(callback.called).to.be.false;
+        expect(callback.called).to.be(false);
         setTimeout(function () {
-            expect(callback.called).to.be.true;
+            expect(callback.called).to.be(true);
             done();
         }, analytics.timeout);
     });
@@ -114,7 +114,7 @@
         analytics.identify('id', callback);
 
         setTimeout(function () {
-            expect(callback.called).to.be.true;
+            expect(callback.called).to.be(true);
             finish();
         }, analytics.timeout);
 
@@ -123,7 +123,7 @@
         analytics.identify({ name : 'Achilles' }, callback);
 
         setTimeout(function () {
-            expect(callback.called).to.be.true;
+            expect(callback.called).to.be(true);
             finish();
         }, analytics.timeout);
 
@@ -132,7 +132,7 @@
         analytics.identify('id', { name : 'Achilles' }, callback);
 
         setTimeout(function () {
-            expect(callback.called).to.be.true;
+            expect(callback.called).to.be(true);
             finish();
         }, analytics.timeout);
     });
@@ -148,7 +148,7 @@
 
         analytics.track();
 
-        expect(spy.called).to.be.true;
+        expect(spy.called).to.be(true);
 
         spy.restore();
     });
@@ -158,7 +158,7 @@
 
         analytics.track('party');
 
-        expect(spy.calledWith('party')).to.be.true;
+        expect(spy.calledWith('party')).to.be(true);
 
         spy.restore();
     });
@@ -184,9 +184,9 @@
         analytics.track('party', { level : 'hard' }, callback);
 
         // The callback shouldn't be called immediately, but after the timeout.
-        expect(callback.called).to.be.false;
+        expect(callback.called).to.be(false);
         setTimeout(function () {
-            expect(callback.called).to.be.true;
+            expect(callback.called).to.be(true);
             done();
         }, analytics.timeout);
     });
@@ -204,7 +204,7 @@
         analytics.trackClick(button, 'party');
 
         $(button).click();
-        expect(spy.calledWith('party')).to.be.true;
+        expect(spy.calledWith('party')).to.be(true);
 
         spy.restore();
     });
@@ -216,7 +216,7 @@
         analytics.trackClick($button, 'party');
 
         $button.click();
-        expect(spy.calledWith('party')).to.be.true;
+        expect(spy.calledWith('party')).to.be(true);
 
         spy.restore();
     });
@@ -229,7 +229,7 @@
 
         triggerClick(link);
 
-        expect(spy.calledWith('party')).to.be.true;
+        expect(spy.calledWith('party')).to.be(true);
 
         spy.restore();
     });
@@ -247,7 +247,7 @@
 
         // Expect the track call to have happened, but for the href not to have
         // been applied yet.
-        expect(spy.calledWith('party')).to.be.true;
+        expect(spy.calledWith('party')).to.be(true);
         expect(window.location.hash).not.to.equal('#test');
 
         // Expect the href to be applied after the timeout that gives events
@@ -271,7 +271,7 @@
 
         triggerClick(link);
 
-        expect(spy.calledWith('party')).to.be.true;
+        expect(spy.calledWith('party')).to.be(true);
         expect(window.location.hash).not.to.equal('#test');
 
         spy.restore();
@@ -288,7 +288,7 @@
 
         triggerClick(link, true);
 
-        expect(spy.calledWith('party')).to.be.true;
+        expect(spy.calledWith('party')).to.be(true);
         expect(window.location.hash).not.to.equal('#test');
 
         spy.restore();
@@ -309,7 +309,7 @@
 
         triggerClick(input);
 
-        expect(spy.calledWith('party')).to.be.true;
+        expect(spy.calledWith('party')).to.be(true);
 
         spy.restore();
     });
@@ -323,7 +323,7 @@
 
         triggerClick(input);
 
-        expect(spy.calledWith('party')).to.be.true;
+        expect(spy.calledWith('party')).to.be(true);
 
         spy.restore();
     });
@@ -339,7 +339,7 @@
 
         analytics.pageview();
 
-        expect(spy.called).to.be.true;
+        expect(spy.called).to.be(true);
 
         spy.restore();
     });
@@ -437,47 +437,47 @@
 
     test('isEmail matches emails', function () {
         var isEmail = analytics.utils.isEmail;
-        expect(isEmail('team@segment.io')).to.be.true;
-        expect(isEmail('t-eam+34@segme-ntio.com')).to.be.true;
-        expect(isEmail('team@.org')).to.be.false;
-        expect(isEmail('team+45.io')).to.be.false;
-        expect(isEmail('@segmentio.com')).to.be.false;
+        expect(isEmail('team@segment.io')).to.be(true);
+        expect(isEmail('t-eam+34@segme-ntio.com')).to.be(true);
+        expect(isEmail('team@.org')).to.be(false);
+        expect(isEmail('team+45.io')).to.be(false);
+        expect(isEmail('@segmentio.com')).to.be(false);
     });
 
     test('isObject matches objects', function () {
         var isObject = analytics.utils.isObject;
-        expect(isObject({})).to.be.true;
-        expect(isObject([])).to.be.true;
-        expect(isObject(function () {})).to.be.true;
-        expect(isObject('string')).to.be.false;
-        expect(isObject(0)).to.be.false;
+        expect(isObject({})).to.be(true);
+        expect(isObject([])).to.be(true);
+        expect(isObject(function () {})).to.be(true);
+        expect(isObject('string')).to.be(false);
+        expect(isObject(0)).to.be(false);
     });
 
     test('isFunction matches functions', function () {
         var isFunction = analytics.utils.isFunction;
-        expect(isFunction(function () {})).to.be.true;
-        expect(isFunction({})).to.be.false;
-        expect(isFunction([])).to.be.false;
-        expect(isFunction('string')).to.be.false;
-        expect(isFunction(0)).to.be.false;
+        expect(isFunction(function () {})).to.be(true);
+        expect(isFunction({})).to.be(false);
+        expect(isFunction([])).to.be(false);
+        expect(isFunction('string')).to.be(false);
+        expect(isFunction(0)).to.be(false);
     });
 
     test('isNumber matches numbers', function () {
         var isNumber = analytics.utils.isNumber;
-        expect(isNumber(0)).to.be.true;
-        expect(isNumber({})).to.be.false;
-        expect(isNumber([])).to.be.false;
-        expect(isNumber('string')).to.be.false;
-        expect(isNumber(function () {})).to.be.false;
+        expect(isNumber(0)).to.be(true);
+        expect(isNumber({})).to.be(false);
+        expect(isNumber([])).to.be(false);
+        expect(isNumber('string')).to.be(false);
+        expect(isNumber(function () {})).to.be(false);
     });
 
     test('isString matches strings', function () {
         var isString = analytics.utils.isString;
-        expect(isString('string')).to.be.true;
-        expect(isString({})).to.be.false;
-        expect(isString([])).to.be.false;
-        expect(isString(0)).to.be.false;
-        expect(isString(function () {})).to.be.false;
+        expect(isString('string')).to.be(true);
+        expect(isString({})).to.be(false);
+        expect(isString([])).to.be(false);
+        expect(isString(0)).to.be(false);
+        expect(isString(function () {})).to.be(false);
     });
 
 })();

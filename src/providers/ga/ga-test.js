@@ -27,7 +27,7 @@
             }
         });
 
-        expect(spy).to.have.been.calledWith(['_setDomainName', 'example.com']);
+        expect(spy.calledWith(['_setDomainName', 'example.com'])).to.be(true);
         spy.restore();
     });
 
@@ -44,20 +44,20 @@
     test('pushes "_trackEvent" on track', function () {
         var spy = sinon.spy(window._gaq, 'push');
         analytics.track('event');
-        expect(spy).to.have.been.calledWith(['_trackEvent', 'All', 'event', undefined]);
+        expect(spy.calledWith(['_trackEvent', 'All', 'event', undefined])).to.be(true);
 
         spy.reset();
         analytics.track('event', {
             category : 'Category'
         });
-        expect(spy).to.have.been.calledWith(['_trackEvent', 'Category', 'event', undefined]);
+        expect(spy.calledWith(['_trackEvent', 'Category', 'event', undefined])).to.be(true);
 
         spy.reset();
         analytics.track('event', {
             category : 'Category',
             label    : 'Label'
         });
-        expect(spy).to.have.been.calledWith(['_trackEvent', 'Category', 'event', 'Label']);
+        expect(spy.calledWith(['_trackEvent', 'Category', 'event', 'Label'])).to.be(true);
 
         spy.restore();
     });
@@ -69,11 +69,11 @@
     test('pushes "_trackPageview" on pageview', function () {
         var spy = sinon.spy(window._gaq, 'push');
         analytics.pageview();
-        expect(spy).to.have.been.calledWith(['_trackPageview', undefined]);
+        expect(spy.calledWith(['_trackPageview', undefined])).to.be(true);
 
         spy.reset();
         analytics.pageview('/url');
-        expect(spy).to.have.been.calledWith(['_trackPageview', '/url']);
+        expect(spy.calledWith(['_trackPageview', '/url'])).to.be(true);
 
         spy.restore();
     });

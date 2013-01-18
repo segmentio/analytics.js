@@ -35,7 +35,7 @@
         });
         expect(window.mixpanel).to.exist;
         expect(analytics.providers[0].settings.token).to.equal('x');
-        expect(analytics.providers[0].settings.people).to.be.true;
+        expect(analytics.providers[0].settings.people).to.be(true);
     });
 
     test('calls init with settings on initialize');
@@ -50,15 +50,15 @@
 
         var spy = sinon.spy(window.mixpanel, 'identify');
         analytics.identify(traits);
-        expect(spy).to.have.not.been.called;
+        expect(spy.called).to.be(false);
 
         spy.reset();
         analytics.identify(userId);
-        expect(spy).to.have.been.calledWith(userId);
+        expect(spy.calledWith(userId)).to.be(true);
 
         spy.reset();
         analytics.identify(userId, traits);
-        expect(spy).to.have.been.calledWith(userId);
+        expect(spy.calledWith(userId)).to.be(true);
 
         spy.restore();
     });
@@ -69,15 +69,15 @@
 
         var spy = sinon.spy(window.mixpanel, 'register');
         analytics.identify(traits);
-        expect(spy).to.have.been.calledWith(aliasedTraits);
+        expect(spy.calledWith(aliasedTraits)).to.be(true);
 
         spy.reset();
         analytics.identify(userId);
-        expect(spy).to.have.not.been.called;
+        expect(spy.called).to.be(false);
 
         spy.reset();
         analytics.identify(userId, traits);
-        expect(spy).to.have.been.calledWith(aliasedTraits);
+        expect(spy.calledWith(aliasedTraits)).to.be(true);
 
         spy.restore();
     });
@@ -90,15 +90,15 @@
 
         var spy = sinon.spy(window.mixpanel, 'name_tag');
         analytics.identify(traits);
-        expect(spy).to.have.not.been.called;
+        expect(spy.called).to.be(false);
 
         spy.reset();
         analytics.identify(userId);
-        expect(spy).to.have.been.calledWith(userId);
+        expect(spy.calledWith(userId)).to.be(true);
 
         spy.reset();
         analytics.identify(userId, traits);
-        expect(spy).to.have.been.calledWith(userId);
+        expect(spy.calledWith(userId)).to.be(true);
 
         spy.restore();
     });
@@ -110,11 +110,11 @@
         analytics.providers[0].settings.people = true;
         var spy = sinon.spy(window.mixpanel.people, 'set');
         analytics.identify(traits);
-        expect(spy).to.have.been.calledWith(aliasedTraits);
+        expect(spy.calledWith(aliasedTraits)).to.be(true);
 
         spy.reset();
         analytics.identify(userId, traits);
-        expect(spy).to.have.been.calledWith(aliasedTraits);
+        expect(spy.calledWith(aliasedTraits)).to.be(true);
 
         spy.restore();
     });
@@ -126,7 +126,7 @@
         analytics.providers[0].settings.people = false;
         var spy = sinon.spy(window.mixpanel.people, 'set');
         analytics.identify(userId, traits);
-        expect(spy).not.to.have.been.called;
+        expect(spy.called).to.be(false);
 
         spy.restore();
     });
@@ -139,7 +139,7 @@
         var spy = sinon.spy(window.mixpanel, 'track');
         analytics.track(event, properties);
         // Mixpanel adds custom properties, so we need to have a loose match.
-        expect(spy).to.have.been.calledWith(event, sinon.match(properties));
+        expect(spy.calledWith(event, sinon.match(properties))).to.be(true);
 
         spy.restore();
     });
@@ -151,11 +151,11 @@
     test('calls track_pageview on pageview', function () {
         var spy = sinon.spy(window.mixpanel, 'track_pageview');
         analytics.pageview();
-        expect(spy).to.have.been.called;
+        expect(spy.called).to.be(true);
 
         spy.reset();
         analytics.pageview('/url');
-        expect(spy).to.have.been.calledWith('/url');
+        expect(spy.calledWith('/url')).to.be(true);
 
         spy.restore();
     });

@@ -19,14 +19,21 @@
     // Initialize
     // ----------
 
-    test('adds Vero\'s m.js on initialize', function () {
+    test('adds Vero\'s m.js on initialize', function (done) {
         expect(window._veroq).not.to.exist;
 
         analytics.initialize({
             'Vero' : 'x'
         });
         expect(window._veroq).to.exist;
+        expect(window._veroq.push).to.equal(Array.prototype.push);
         expect(analytics.providers[0].settings.apiKey).to.equal('x');
+
+        setTimeout(function () {
+          // Check that vero has indeed loaded
+          expect(window._veroq.push).not.to.equal(Array.prototype.push);
+          done();
+        }, 1000);
     });
 
 
@@ -38,19 +45,22 @@
     test('pushes "users" on identify', function () {
         var spy = sinon.spy(window._veroq, 'push');
         analytics.identify(traits);
-        expect(spy).to.not.have.been.called;
+        expect(spy.called).to.be(false);
 
         spy.reset();
         analytics.identify(userId);
-        expect(spy).to.not.have.been.called;
+        expect(spy.called).to.be(false);
 
         spy.reset();
-        analytics.identify(userId, traits);
-        expect(spy).to.have.been.calledWith(['user', {
+        // Vero alters passed in array, use with args to track count
+        spy.withArgs(['user', {
             id    : userId,
             email : traits.email,
             name  : traits.name
         }]);
+
+        analytics.identify(userId, traits);
+        expect(spy.calledOnce).to.be(true);
 
         spy.restore();
     });
@@ -62,7 +72,10 @@
     test('pushes "track" on track', function () {
         var spy = sinon.spy(window._veroq, 'push');
         analytics.track('event', properties);
-        expect(spy).to.have.been.calledWith(['track', 'event', properties]);
+
+        spy.withArgs(['track', 'event', properties]);
+
+        expect(spy.called).to.be(true);
 
         spy.restore();
     });

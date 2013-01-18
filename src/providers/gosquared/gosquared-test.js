@@ -44,7 +44,7 @@
 
         analytics.identify(traits);
         expect(window.GoSquared.UserName).not.to.exist;
-        expect(window.GoSquared.Visitor).to.deep.equal(traits);
+        expect(window.GoSquared.Visitor).to.eql(traits);
 
         window.GoSquared.Visitor = undefined;
         analytics.identify(userId);
@@ -54,7 +54,7 @@
         window.GoSquared.UserName = undefined;
         analytics.identify(userId, traits);
         expect(window.GoSquared.UserName).to.equal(userId);
-        expect(window.GoSquared.Visitor).to.deep.equal(traits);
+        expect(window.GoSquared.Visitor).to.eql(traits);
     });
 
 
@@ -66,13 +66,13 @@
         analytics.track(event);
         // GoSquared adds the event name to the properties hash.
         var augmentedProperties = { gs_evt_name: event };
-        expect(spy).to.have.been.calledWith([event, sinon.match(augmentedProperties)]);
+        expect(spy.calledWith([event, sinon.match(augmentedProperties)])).to.be(true);
 
         spy.reset();
         analytics.track(event, properties);
         // GoSquared adds the event name to the properties hash.
         augmentedProperties = _.extend({}, properties, { gs_evt_name: event });
-        expect(spy).to.have.been.calledWith([event, sinon.match(augmentedProperties)]);
+        expect(spy.calledWith([event, sinon.match(augmentedProperties)])).to.be(true);
 
         spy.restore();
     });
@@ -84,7 +84,7 @@
     test('calls "TrackView" on pageview', function () {
         var spy = sinon.spy(window.GoSquared.DefaultTracker, 'TrackView');
         analytics.pageview();
-        expect(spy).to.have.been.called;
+        expect(spy.called).to.be(true);
 
         spy.restore();
     });

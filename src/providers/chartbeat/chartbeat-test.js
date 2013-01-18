@@ -36,11 +36,11 @@
     test('calls virtualPage on pageview', function () {
         var spy = sinon.spy(window.pSUPERFLY, 'virtualPage');
         analytics.pageview();
-        expect(spy.calledWith(window.location.pathname)).to.be.true;
+        expect(spy.calledWith(window.location.pathname)).to.be(true);
 
         spy.reset();
         analytics.pageview('/url');
-        expect(spy.calledWith('/url')).to.be.true;
+        expect(spy.calledWith('/url')).to.be(true);
 
         spy.restore();
     });

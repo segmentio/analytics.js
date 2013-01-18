@@ -5,6 +5,7 @@ PHANTOM_OPTS = -s web-security=false -s local-to-remote-url-access=true
 analytics.js:
 	cat \
 		src/analytics.js \
+        src/providers/chartbeat/improvely.js \
 		src/providers/chartbeat/chartbeat.js \
 		src/providers/clicky/clicky.js \
 		src/providers/comscore/comscore.js \
@@ -33,6 +34,7 @@ min: analytics.js
 docs:
 	docco \
 		src/analytics.js \
+        src/providers/chartbeat/improvely.js \
 		src/providers/chartbeat/chartbeat.js \
 		src/providers/clicky/clicky.js \
 		src/providers/comscore/comscore.js \

@@ -35,7 +35,7 @@
 
         analytics.initialize({'test' : 'x'});
 
-        expect(spy).to.have.been.calledWith('x');
+        expect(spy.calledWith('x')).to.be.true;
 
         spy.restore();
     });
@@ -64,7 +64,7 @@
 
         analytics.identify();
 
-        expect(spy).to.have.been.called;
+        expect(spy.called).to.be.true;
 
         spy.restore();
     });
@@ -74,7 +74,7 @@
 
         analytics.identify('id');
 
-        expect(spy).to.have.been.calledWith('id');
+        expect(spy.calledWith('id'));
 
         spy.restore();
     });
@@ -89,7 +89,7 @@
         analytics.identify('id', traits);
 
         expect(spy.args[0][1]).not.to.equal(traits);
-        expect(spy.args[0][1]).to.deep.equal(traits);
+        expect(spy.args[0][1]).to.eql(traits);
 
         spy.restore();
     });
@@ -100,9 +100,9 @@
         analytics.identify('id', { name : 'Achilles' }, callback);
 
         // The callback shouldn't be called immediately, but after the timeout.
-        expect(callback).not.to.have.been.called;
+        expect(callback.called).to.be.false;
         setTimeout(function () {
-            expect(callback).to.have.been.called;
+            expect(callback.called).to.be.true;
             done();
         }, analytics.timeout);
     });
@@ -114,7 +114,7 @@
         analytics.identify('id', callback);
 
         setTimeout(function () {
-            expect(callback).to.have.been.called;
+            expect(callback.called).to.be.true;
             finish();
         }, analytics.timeout);
 
@@ -123,7 +123,7 @@
         analytics.identify({ name : 'Achilles' }, callback);
 
         setTimeout(function () {
-            expect(callback).to.have.been.called;
+            expect(callback.called).to.be.true;
             finish();
         }, analytics.timeout);
 
@@ -132,7 +132,7 @@
         analytics.identify('id', { name : 'Achilles' }, callback);
 
         setTimeout(function () {
-            expect(callback).to.have.been.called;
+            expect(callback.called).to.be.true;
             finish();
         }, analytics.timeout);
     });
@@ -148,7 +148,7 @@
 
         analytics.track();
 
-        expect(spy).to.have.been.called;
+        expect(spy.called).to.be.true;
 
         spy.restore();
     });
@@ -158,7 +158,7 @@
 
         analytics.track('party');
 
-        expect(spy).to.have.been.calledWith('party');
+        expect(spy.calledWith('party')).to.be.true;
 
         spy.restore();
     });
@@ -173,7 +173,7 @@
         analytics.track('party', properties);
 
         expect(spy.args[0][1]).not.to.equal(properties);
-        expect(spy.args[0][1]).to.deep.equal(properties);
+        expect(spy.args[0][1]).to.eql(properties);
 
         spy.restore();
     });
@@ -184,9 +184,9 @@
         analytics.track('party', { level : 'hard' }, callback);
 
         // The callback shouldn't be called immediately, but after the timeout.
-        expect(callback).not.to.have.been.called;
+        expect(callback.called).to.be.false;
         setTimeout(function () {
-            expect(callback).to.have.been.called;
+            expect(callback.called).to.be.true;
             done();
         }, analytics.timeout);
     });
@@ -204,7 +204,7 @@
         analytics.trackClick(button, 'party');
 
         $(button).click();
-        expect(spy).to.have.been.calledWith('party');
+        expect(spy.calledWith('party')).to.be.true;
 
         spy.restore();
     });
@@ -216,7 +216,7 @@
         analytics.trackClick($button, 'party');
 
         $button.click();
-        expect(spy).to.have.been.calledWith('party');
+        expect(spy.calledWith('party')).to.be.true;
 
         spy.restore();
     });
@@ -229,7 +229,7 @@
 
         triggerClick(link);
 
-        expect(spy).to.have.been.calledWith('party');
+        expect(spy.calledWith('party')).to.be.true;
 
         spy.restore();
     });
@@ -247,7 +247,7 @@
 
         // Expect the track call to have happened, but for the href not to have
         // been applied yet.
-        expect(spy).to.have.been.calledWith('party');
+        expect(spy.calledWith('party')).to.be.true;
         expect(window.location.hash).not.to.equal('#test');
 
         // Expect the href to be applied after the timeout that gives events
@@ -271,7 +271,7 @@
 
         triggerClick(link);
 
-        expect(spy).to.have.been.calledWith('party');
+        expect(spy.calledWith('party')).to.be.true;
         expect(window.location.hash).not.to.equal('#test');
 
         spy.restore();
@@ -288,7 +288,7 @@
 
         triggerClick(link, true);
 
-        expect(spy).to.have.been.calledWith('party');
+        expect(spy.calledWith('party')).to.be.true;
         expect(window.location.hash).not.to.equal('#test');
 
         spy.restore();
@@ -309,7 +309,7 @@
 
         triggerClick(input);
 
-        expect(spy).to.have.been.calledWith('party');
+        expect(spy.calledWith('party')).to.be.true;
 
         spy.restore();
     });
@@ -323,7 +323,7 @@
 
         triggerClick(input);
 
-        expect(spy).to.have.been.calledWith('party');
+        expect(spy.calledWith('party')).to.be.true;
 
         spy.restore();
     });
@@ -339,7 +339,7 @@
 
         analytics.pageview();
 
-        expect(spy).to.have.been.called;
+        expect(spy.called).to.be.true;
 
         spy.restore();
     });
@@ -356,7 +356,7 @@
         var object = { thing: 1 };
 
         expect(analytics.utils.clone(object)).not.to.equal(object);
-        expect(analytics.utils.clone(object)).to.deep.equal(object);
+        expect(analytics.utils.clone(object)).to.eql(object);
     });
 
     test('extend properly augments an object', function () {
@@ -366,14 +366,14 @@
 
         analytics.utils.extend(object, { two: 2 });
 
-        expect(object).to.deep.equal({
+        expect(object).to.eql({
             one : 1,
             two : 2
         });
 
         analytics.utils.extend(object, { three: 3 }, { four: 4 });
 
-        expect(object).to.deep.equal({
+        expect(object).to.eql({
             one   : 1,
             two   : 2,
             three : 3,
@@ -382,7 +382,7 @@
 
         analytics.utils.extend(object, { one: 2 });
 
-        expect(object).to.deep.equal({
+        expect(object).to.eql({
             one   : 2,
             two   : 2,
             three : 3,
@@ -398,14 +398,14 @@
 
         analytics.utils.alias(traits, { email: '$email' });
 
-        expect(traits).to.deep.equal({
+        expect(traits).to.eql({
             name   : 'Medusa',
             $email : 'medusa@segment.io'
         });
 
         analytics.utils.alias(traits, { createdAt: 'created_at' });
 
-        expect(traits).to.deep.equal({
+        expect(traits).to.eql({
             name   : 'Medusa',
             $email : 'medusa@segment.io'
         });

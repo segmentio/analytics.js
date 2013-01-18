@@ -33,21 +33,24 @@
     // Identify
     // --------
 
+    // Very requires an email and traits. Check for both separately, but do
+    // traits first because otherwise the userId will be cached.
     test('pushes "users" on identify', function () {
         var spy = sinon.spy(window._veroq, 'push');
         analytics.identify(traits);
         expect(spy).to.not.have.been.called;
 
         spy.reset();
+        analytics.identify(userId);
+        expect(spy).to.not.have.been.called;
+
+        spy.reset();
         analytics.identify(userId, traits);
-        expect(spy).to.have.been.calledWith([
-            'user',
-            {
-                id         : userId,
-                email      : traits.email,
-                name       : traits.name
-            }
-        ]);
+        expect(spy).to.have.been.calledWith(['user', {
+            id    : userId,
+            email : traits.email,
+            name  : traits.name
+        }]);
 
         spy.restore();
     });

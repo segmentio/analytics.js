@@ -22,9 +22,8 @@
     test('stores settings and adds kissmetrics javascript on initialize', function () {
         expect(window._kmq).not.to.exist;
 
-        analytics.initialize({
-            'KISSmetrics' : 'x'
-        });
+        analytics.initialize({ 'KISSmetrics' : 'x' });
+
         expect(window._kmq).to.exist;
         expect(analytics.providers[0].settings.apiKey).to.equal('x');
     });

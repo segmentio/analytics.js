@@ -1,10 +1,14 @@
 !function (name, context, definition) {
-  if (typeof require === "function" && typeof exports === "object" && typeof module === "object")
-    module.exports = definition(name, context);
-  else if (typeof define === 'function' && typeof define.amd  === 'object') define(definition);
-  else context[name] = definition(name, context);
-}('chai', this, function (name, context) {
-
+  if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') {
+    module.exports = definition();
+  } else if (typeof define === 'function' && typeof define.amd  === 'object') {
+    define(function () {
+      return definition();
+    });
+  } else {
+    context[name] = definition();
+  }
+}('chai', this, function () {
 
   function require(p) {
     var path = require.resolve(p)
@@ -34,7 +38,7 @@
 
   require.relative = function (parent) {
     return function(p){
-      if ('.' != p[0]) return require(p);
+      if ('.' != p.charAt(0)) return require(p);
 
       var path = parent.split('/')
         , segs = p.split('/');
@@ -70,7 +74,7 @@
      * Chai version
      */
 
-    exports.version = '1.1.1';
+    exports.version = '1.4.2';
 
     /*!
      * Primary `Assertion` prototype
@@ -82,7 +86,7 @@
      * Assertion Error
      */
 
-    exports.AssertionError = require('./chai/browser/error');
+    exports.AssertionError = require('./chai/error');
 
     /*!
      * Utils for plugins (not exported)
@@ -151,7 +155,7 @@
      * Module dependencies.
      */
 
-    var AssertionError = require('./browser/error')
+    var AssertionError = require('./error')
       , util = require('./utils')
       , flag = util.flag;
 
@@ -224,17 +228,19 @@
      * @api private
      */
 
-    Assertion.prototype.assert = function (expr, msg, negateMsg, expected, _actual) {
-      var msg = util.getMessage(this, arguments)
-        , actual = util.getActual(this, arguments)
-        , ok = util.test(this, arguments);
+    Assertion.prototype.assert = function (expr, msg, negateMsg, expected, _actual, showDiff) {
+      var ok = util.test(this, arguments);
+      if (true !== showDiff) showDiff = false;
 
       if (!ok) {
+        var msg = util.getMessage(this, arguments)
+          , actual = util.getActual(this, arguments);
         throw new AssertionError({
             message: msg
           , actual: actual
           , expected: expected
           , stackStartFunction: (Assertion.includeStack) ? this.assert : flag(this, 'ssfi')
+          , showDiff: showDiff
         });
       }
     };
@@ -289,6 +295,8 @@
        * - and
        * - have
        * - with
+       * - at
+       * - of
        *
        * @name language chains
        * @api public
@@ -296,7 +304,8 @@
 
       [ 'to', 'be', 'been'
       , 'is', 'and', 'have'
-      , 'with', 'that' ].forEach(function (chain) {
+      , 'with', 'that', 'at'
+      , 'of' ].forEach(function (chain) {
         Assertion.addProperty(chain, function () {
           return this;
         });
@@ -357,10 +366,12 @@
        * @name a
        * @alias an
        * @param {String} type
+       * @param {String} message _optional_
        * @api public
        */
 
-      function an(type) {
+      function an(type, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object')
           , klassStart = type.charAt(0).toUpperCase()
           , klass = klassStart + type.slice(1)
@@ -391,6 +402,7 @@
        * @name include
        * @alias contain
        * @param {Object|String|Number} obj
+       * @param {String} message _optional_
        * @api public
        */
 
@@ -398,7 +410,8 @@
         flag(this, 'contains', true);
       }
 
-      function include (val) {
+      function include (val, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object')
         this.assert(
             ~obj.indexOf(val)
@@ -616,10 +629,12 @@
        * @alias eq
        * @alias deep.equal
        * @param {Mixed} value
+       * @param {String} message _optional_
        * @api public
        */
 
-      function assertEqual (val) {
+      function assertEqual (val, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object');
         if (flag(this, 'deep')) {
           return this.eql(val);
@@ -629,6 +644,8 @@
             , 'expected #{this} to equal #{exp}'
             , 'expected #{this} to not equal #{exp}'
             , val
+            , this._obj
+            , true
           );
         }
       }
@@ -647,15 +664,19 @@
        *
        * @name eql
        * @param {Mixed} value
+       * @param {String} message _optional_
        * @api public
        */
 
-      Assertion.addMethod('eql', function (obj) {
+      Assertion.addMethod('eql', function (obj, msg) {
+        if (msg) flag(this, 'message', msg);
         this.assert(
             _.eql(obj, flag(this, 'object'))
           , 'expected #{this} to deeply equal #{exp}'
           , 'expected #{this} to not deeply equal #{exp}'
           , obj
+          , this._obj
+          , true
         );
       });
 
@@ -678,13 +699,15 @@
        * @alias gt
        * @alias greaterThan
        * @param {Number} value
+       * @param {String} message _optional_
        * @api public
        */
 
-      function assertAbove (n) {
+      function assertAbove (n, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object');
         if (flag(this, 'doLength')) {
-          new Assertion(obj).to.have.property('length');
+          new Assertion(obj, msg).to.have.property('length');
           var len = obj.length;
           this.assert(
               len > n
@@ -697,7 +720,7 @@
           this.assert(
               obj > n
             , 'expected #{this} to be above ' + n
-            , 'expected #{this} to be below ' + n
+            , 'expected #{this} to be at most ' + n
           );
         }
       }
@@ -705,6 +728,53 @@
       Assertion.addMethod('above', assertAbove);
       Assertion.addMethod('gt', assertAbove);
       Assertion.addMethod('greaterThan', assertAbove);
+
+      /**
+       * ### .least(value)
+       *
+       * Asserts that the target is greater than or equal to `value`.
+       *
+       *     expect(10).to.be.at.least(10);
+       *
+       * Can also be used in conjunction with `length` to
+       * assert a minimum length. The benefit being a
+       * more informative error message than if the length
+       * was supplied directly.
+       *
+       *     expect('foo').to.have.length.of.at.least(2);
+       *     expect([ 1, 2, 3 ]).to.have.length.of.at.least(3);
+       *
+       * @name least
+       * @alias gte
+       * @param {Number} value
+       * @param {String} message _optional_
+       * @api public
+       */
+
+      function assertLeast (n, msg) {
+        if (msg) flag(this, 'message', msg);
+        var obj = flag(this, 'object');
+        if (flag(this, 'doLength')) {
+          new Assertion(obj, msg).to.have.property('length');
+          var len = obj.length;
+          this.assert(
+              len >= n
+            , 'expected #{this} to have a length at least #{exp} but got #{act}'
+            , 'expected #{this} to not have a length below #{exp}'
+            , n
+            , len
+          );
+        } else {
+          this.assert(
+              obj >= n
+            , 'expected #{this} to be at least ' + n
+            , 'expected #{this} to be below ' + n
+          );
+        }
+      }
+
+      Assertion.addMethod('least', assertLeast);
+      Assertion.addMethod('gte', assertLeast);
 
       /**
        * ### .below(value)
@@ -725,13 +795,15 @@
        * @alias lt
        * @alias lessThan
        * @param {Number} value
+       * @param {String} message _optional_
        * @api public
        */
 
-      function assertBelow (n) {
+      function assertBelow (n, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object');
         if (flag(this, 'doLength')) {
-          new Assertion(obj).to.have.property('length');
+          new Assertion(obj, msg).to.have.property('length');
           var len = obj.length;
           this.assert(
               len < n
@@ -744,7 +816,7 @@
           this.assert(
               obj < n
             , 'expected #{this} to be below ' + n
-            , 'expected #{this} to be above ' + n
+            , 'expected #{this} to be at least ' + n
           );
         }
       }
@@ -752,6 +824,53 @@
       Assertion.addMethod('below', assertBelow);
       Assertion.addMethod('lt', assertBelow);
       Assertion.addMethod('lessThan', assertBelow);
+
+      /**
+       * ### .most(value)
+       *
+       * Asserts that the target is less than or equal to `value`.
+       *
+       *     expect(5).to.be.at.most(5);
+       *
+       * Can also be used in conjunction with `length` to
+       * assert a maximum length. The benefit being a
+       * more informative error message than if the length
+       * was supplied directly.
+       *
+       *     expect('foo').to.have.length.of.at.most(4);
+       *     expect([ 1, 2, 3 ]).to.have.length.of.at.most(3);
+       *
+       * @name most
+       * @alias lte
+       * @param {Number} value
+       * @param {String} message _optional_
+       * @api public
+       */
+
+      function assertMost (n, msg) {
+        if (msg) flag(this, 'message', msg);
+        var obj = flag(this, 'object');
+        if (flag(this, 'doLength')) {
+          new Assertion(obj, msg).to.have.property('length');
+          var len = obj.length;
+          this.assert(
+              len <= n
+            , 'expected #{this} to have a length at most #{exp} but got #{act}'
+            , 'expected #{this} to not have a length above #{exp}'
+            , n
+            , len
+          );
+        } else {
+          this.assert(
+              obj <= n
+            , 'expected #{this} to be at most ' + n
+            , 'expected #{this} to be above ' + n
+          );
+        }
+      }
+
+      Assertion.addMethod('most', assertMost);
+      Assertion.addMethod('lte', assertMost);
 
       /**
        * ### .within(start, finish)
@@ -771,14 +890,16 @@
        * @name within
        * @param {Number} start lowerbound inclusive
        * @param {Number} finish upperbound inclusive
+       * @param {String} message _optional_
        * @api public
        */
 
-      Assertion.addMethod('within', function (start, finish) {
+      Assertion.addMethod('within', function (start, finish, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object')
           , range = start + '..' + finish;
         if (flag(this, 'doLength')) {
-          new Assertion(obj).to.have.property('length');
+          new Assertion(obj, msg).to.have.property('length');
           var len = obj.length;
           this.assert(
               len >= start && len <= finish
@@ -807,11 +928,13 @@
        *
        * @name instanceof
        * @param {Constructor} constructor
+       * @param {String} message _optional_
        * @alias instanceOf
        * @api public
        */
 
-      function assertInstanceOf (constructor) {
+      function assertInstanceOf (constructor, msg) {
+        if (msg) flag(this, 'message', msg);
         var name = _.getName(constructor);
         this.assert(
             flag(this, 'object') instanceof constructor
@@ -877,19 +1000,25 @@
        * @alias deep.property
        * @param {String} name
        * @param {Mixed} value (optional)
+       * @param {String} message _optional_
        * @returns value of property for chaining
        * @api public
        */
 
-      Assertion.addMethod('property', function (name, val) {
-        var obj = flag(this, 'object')
-          , value = flag(this, 'deep') ? _.getPathValue(name, obj) : obj[name]
-          , descriptor = flag(this, 'deep') ? 'deep property ' : 'property '
-          , negate = flag(this, 'negate');
+      Assertion.addMethod('property', function (name, val, msg) {
+        if (msg) flag(this, 'message', msg);
+
+        var descriptor = flag(this, 'deep') ? 'deep property ' : 'property '
+          , negate = flag(this, 'negate')
+          , obj = flag(this, 'object')
+          , value = flag(this, 'deep')
+            ? _.getPathValue(name, obj)
+            : obj[name];
 
         if (negate && undefined !== val) {
           if (undefined === value) {
-            throw new Error(_.inspect(obj) + ' has no ' + descriptor + _.inspect(name));
+            msg = (msg != null) ? msg + ': ' : '';
+            throw new Error(msg + _.inspect(obj) + ' has no ' + descriptor + _.inspect(name));
           }
         } else {
           this.assert(
@@ -922,10 +1051,12 @@
        * @name ownProperty
        * @alias haveOwnProperty
        * @param {String} name
+       * @param {String} message _optional_
        * @api public
        */
 
-      function assertOwnProperty (name) {
+      function assertOwnProperty (name, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object');
         this.assert(
             obj.hasOwnProperty(name)
@@ -959,6 +1090,7 @@
        * @name length
        * @alias lengthOf
        * @param {Number} length
+       * @param {String} message _optional_
        * @api public
        */
 
@@ -966,9 +1098,10 @@
         flag(this, 'doLength', true);
       }
 
-      function assertLength (n) {
+      function assertLength (n, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object');
-        new Assertion(obj).to.have.property('length');
+        new Assertion(obj, msg).to.have.property('length');
         var len = obj.length;
 
         this.assert(
@@ -992,10 +1125,12 @@
        *
        * @name match
        * @param {RegExp} RegularExpression
+       * @param {String} message _optional_
        * @api public
        */
 
-      Assertion.addMethod('match', function (re) {
+      Assertion.addMethod('match', function (re, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object');
         this.assert(
             re.exec(obj)
@@ -1013,12 +1148,14 @@
        *
        * @name string
        * @param {String} string
+       * @param {String} message _optional_
        * @api public
        */
 
-      Assertion.addMethod('string', function (str) {
+      Assertion.addMethod('string', function (str, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object');
-        new Assertion(obj).is.a('string');
+        new Assertion(obj, msg).is.a('string');
 
         this.assert(
             ~obj.indexOf(str)
@@ -1125,28 +1262,32 @@
        * @alias throws
        * @alias Throw
        * @param {ErrorConstructor} constructor
+       * @param {String|RegExp} expected error message
+       * @param {String} message _optional_
        * @see https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Error#Error_types
        * @api public
        */
 
-      function assertThrows (constructor, msg) {
+      function assertThrows (constructor, errMsg, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object');
-        new Assertion(obj).is.a('function');
+        new Assertion(obj, msg).is.a('function');
 
         var thrown = false
           , desiredError = null
-          , name = null;
+          , name = null
+          , thrownError = null;
 
         if (arguments.length === 0) {
-          msg = null;
+          errMsg = null;
           constructor = null;
         } else if (constructor && (constructor instanceof RegExp || 'string' === typeof constructor)) {
-          msg = constructor;
+          errMsg = constructor;
           constructor = null;
         } else if (constructor && constructor instanceof Error) {
           desiredError = constructor;
           constructor = null;
-          msg = null;
+          errMsg = null;
         } else if (typeof constructor === 'function') {
           name = (new constructor()).name;
         } else {
@@ -1169,38 +1310,43 @@
           if (constructor) {
             this.assert(
                 err instanceof constructor
-              , 'expected #{this} to throw ' + name + ' but a ' + err.name + ' was thrown'
-              , 'expected #{this} to not throw ' + name );
-            if (!msg) return this;
+              , 'expected #{this} to throw ' + name + ' but ' + _.inspect(err) + ' was thrown'
+              , 'expected #{this} to not throw ' + name + ' but ' + _.inspect(err) + ' was thrown');
+            if (!errMsg) return this;
           }
           // next, check message
-          if (err.message && msg && msg instanceof RegExp) {
+          if (err.message && errMsg && errMsg instanceof RegExp) {
             this.assert(
-                msg.exec(err.message)
-              , 'expected #{this} to throw error matching ' + msg + ' but got ' + _.inspect(err.message)
-              , 'expected #{this} to throw error not matching ' + msg
+                errMsg.exec(err.message)
+              , 'expected #{this} to throw error matching ' + errMsg + ' but got ' + _.inspect(err.message)
+              , 'expected #{this} to throw error not matching ' + errMsg
             );
             return this;
-          } else if (err.message && msg && 'string' === typeof msg) {
+          } else if (err.message && errMsg && 'string' === typeof errMsg) {
             this.assert(
-                ~err.message.indexOf(msg)
+                ~err.message.indexOf(errMsg)
               , 'expected #{this} to throw error including #{exp} but got #{act}'
               , 'expected #{this} to throw error not including #{act}'
-              , msg
+              , errMsg
               , err.message
             );
             return this;
           } else {
             thrown = true;
+            thrownError = err;
           }
         }
 
         var expectedThrown = name ? name : desiredError ? _.inspect(desiredError) : 'an error';
+        var actuallyGot = ''
+        if (thrown) {
+          actuallyGot = ' but ' + _.inspect(thrownError) + ' was thrown'
+        }
 
         this.assert(
             thrown === true
-          , 'expected #{this} to throw ' + expectedThrown
-          , 'expected #{this} to not throw ' + expectedThrown
+          , 'expected #{this} to throw ' + expectedThrown + actuallyGot
+          , 'expected #{this} to not throw ' + expectedThrown + actuallyGot
         );
       };
 
@@ -1225,10 +1371,12 @@
        *
        * @name respondTo
        * @param {String} method
+       * @param {String} message _optional_
        * @api public
        */
 
-      Assertion.addMethod('respondTo', function (method) {
+      Assertion.addMethod('respondTo', function (method, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object')
           , itself = flag(this, 'itself')
           , context = ('function' === typeof obj && !itself)
@@ -1271,10 +1419,12 @@
        *
        * @name satisfy
        * @param {Function} matcher
+       * @param {String} message _optional_
        * @api public
        */
 
-      Assertion.addMethod('satisfy', function (matcher) {
+      Assertion.addMethod('satisfy', function (matcher, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object');
         this.assert(
             matcher(obj)
@@ -1295,10 +1445,12 @@
        * @name closeTo
        * @param {Number} expected
        * @param {Number} delta
+       * @param {String} message _optional_
        * @api public
        */
 
-      Assertion.addMethod('closeTo', function (expected, delta) {
+      Assertion.addMethod('closeTo', function (expected, delta, msg) {
+        if (msg) flag(this, 'message', msg);
         var obj = flag(this, 'object');
         this.assert(
             Math.abs(obj - expected) <= delta
@@ -1311,14 +1463,35 @@
 
   }); // module: chai/core/assertions.js
 
-  require.register("chai/browser/error.js", function(module, exports, require){
+  require.register("chai/error.js", function(module, exports, require){
     /*!
      * chai
      * Copyright(c) 2011-2012 Jake Luer <jake@alogicalparadox.com>
      * MIT Licensed
      */
 
+    /*!
+     * Main export
+     */
+
     module.exports = AssertionError;
+
+    /**
+     * # AssertionError (constructor)
+     *
+     * Create a new assertion error based on the Javascript
+     * `Error` prototype.
+     *
+     * **Options**
+     * - message
+     * - actual
+     * - expected
+     * - operator
+     * - startStackFunction
+     *
+     * @param {Object} options
+     * @api public
+     */
 
     function AssertionError (options) {
       options = options || {};
@@ -1326,6 +1499,7 @@
       this.actual = options.actual;
       this.expected = options.expected;
       this.operator = options.operator;
+      this.showDiff = options.showDiff;
 
       if (options.stackStartFunction && Error.captureStackTrace) {
         var stackStartFunction = options.stackStartFunction;
@@ -1333,15 +1507,25 @@
       }
     }
 
+    /*!
+     * Inherit from Error
+     */
+
     AssertionError.prototype = Object.create(Error.prototype);
     AssertionError.prototype.name = 'AssertionError';
     AssertionError.prototype.constructor = AssertionError;
+
+    /**
+     * # toString()
+     *
+     * Override default to string method
+     */
 
     AssertionError.prototype.toString = function() {
       return this.message;
     };
 
-  }); // module: chai/browser/error.js
+  }); // module: chai/error.js
 
   require.register("chai/interface/assert.js", function(module, exports, require){
     /*!
@@ -2206,13 +2390,17 @@
       };
 
       /**
-       * ### .throws(function, [constructor/regexp], [message])
+       * ### .throws(function, [constructor/string/regexp], [string/regexp], [message])
        *
        * Asserts that `function` will throw an error that is an instance of
        * `constructor`, or alternately that it will throw an error with message
        * matching `regexp`.
        *
+       *     assert.throw(fn, 'function throws a reference error');
+       *     assert.throw(fn, /function throws a reference error/);
+       *     assert.throw(fn, ReferenceError);
        *     assert.throw(fn, ReferenceError, 'function throws a reference error');
+       *     assert.throw(fn, ReferenceError, /function throws a reference error/);
        *
        * @name throws
        * @alias throw
@@ -2225,13 +2413,13 @@
        * @api public
        */
 
-      assert.Throw = function (fn, type, msg) {
-        if ('string' === typeof type) {
-          msg = type;
-          type = null;
+      assert.Throw = function (fn, errt, errs, msg) {
+        if ('string' === typeof errt || errt instanceof RegExp) {
+          errs = errt;
+          errt = null;
         }
 
-        new Assertion(fn, msg).to.Throw(type);
+        new Assertion(fn, msg).to.Throw(errt, errs);
       };
 
       /**
@@ -2288,6 +2476,25 @@
           , 'expected ' + util.inspect(val) + ' to not be ' + operator + ' ' + util.inspect(val2) );
       };
 
+      /**
+       * ### .closeTo(actual, expected, delta, [message])
+       *
+       * Asserts that the target is equal `expected`, to within a +/- `delta` range.
+       *
+       *     assert.closeTo(1.5, 1, 0.5, 'numbers are close');
+       *
+       * @name closeTo
+       * @param {Number} actual
+       * @param {Number} expected
+       * @param {Number} delta
+       * @param {String} message
+       * @api public
+       */
+
+      assert.closeTo = function (act, exp, delta, msg) {
+        new Assertion(act, msg).to.be.closeTo(exp, delta);
+      };
+
       /*!
        * Undocumented / untested
        */
@@ -2339,7 +2546,21 @@
       function loadShould () {
         // modify Object.prototype to have `should`
         Object.defineProperty(Object.prototype, 'should',
-          { set: function () {}
+          {
+            set: function (value) {
+              // See https://github.com/chaijs/chai/issues/86: this makes
+              // `whatever.should = someValue` actually set `someValue`, which is
+              // especially useful for `global.should = require('chai').should()`.
+              //
+              // Note that we have to use [[DefineProperty]] instead of [[Put]]
+              // since otherwise we would trigger this very setter!
+              Object.defineProperty(this, 'should', {
+                value: value,
+                enumerable: true,
+                configurable: true,
+                writable: true
+              });
+            }
           , get: function(){
               if (this instanceof String || this instanceof Number) {
                 return new Assertion(this.constructor(this));
@@ -2353,31 +2574,31 @@
 
         var should = {};
 
-        should.equal = function (val1, val2) {
-          new Assertion(val1).to.equal(val2);
+        should.equal = function (val1, val2, msg) {
+          new Assertion(val1, msg).to.equal(val2);
         };
 
-        should.Throw = function (fn, errt, errs) {
-          new Assertion(fn).to.Throw(errt, errs);
+        should.Throw = function (fn, errt, errs, msg) {
+          new Assertion(fn, msg).to.Throw(errt, errs);
         };
 
-        should.exist = function (val) {
-          new Assertion(val).to.exist;
+        should.exist = function (val, msg) {
+          new Assertion(val, msg).to.exist;
         }
 
         // negation
         should.not = {}
 
-        should.not.equal = function (val1, val2) {
-          new Assertion(val1).to.not.equal(val2);
+        should.not.equal = function (val1, val2, msg) {
+          new Assertion(val1, msg).to.not.equal(val2);
         };
 
-        should.not.Throw = function (fn, errt, errs) {
-          new Assertion(fn).to.not.Throw(errt, errs);
+        should.not.Throw = function (fn, errt, errs, msg) {
+          new Assertion(fn, msg).to.not.Throw(errt, errs);
         };
 
-        should.not.exist = function (val) {
-          new Assertion(val).to.not.exist;
+        should.not.exist = function (val, msg) {
+          new Assertion(val, msg).to.not.exist;
         }
 
         should['throw'] = should['Throw'];
@@ -2474,7 +2695,7 @@
      */
 
     /**
-     * ### addMethod (ctx, name, method)
+     * ### .addMethod (ctx, name, method)
      *
      * Adds a method to the prototype of an object.
      *
@@ -2552,22 +2773,23 @@
   }); // module: chai/utils/addProperty.js
 
   require.register("chai/utils/eql.js", function(module, exports, require){
-    // This is directly from Node.js assert
+    // This is (almost) directly from Node.js assert
     // https://github.com/joyent/node/blob/f8c335d0caf47f16d31413f89aa28eda3878e3aa/lib/assert.js
-
 
     module.exports = _deepEqual;
 
-    // For browser implementation
-    if (!Buffer) {
-      var Buffer = {
-        isBuffer: function () {
-          return false;
-        }
+    // for the browser
+    var Buffer;
+    try {
+      Buffer = require('buffer').Buffer;
+    } catch (ex) {
+      Buffer = {
+        isBuffer: function () { return false; }
       };
     }
 
-    function _deepEqual(actual, expected) {
+    function _deepEqual(actual, expected, memos) {
+
       // 7.1. All identical values are equivalent, as determined by ===.
       if (actual === expected) {
         return true;
@@ -2598,7 +2820,7 @@
       // corresponding key, and an identical 'prototype' property. Note: this
       // accounts for both named and indexed properties on Arrays.
       } else {
-        return objEquiv(actual, expected);
+        return objEquiv(actual, expected, memos);
       }
     }
 
@@ -2610,11 +2832,25 @@
       return Object.prototype.toString.call(object) == '[object Arguments]';
     }
 
-    function objEquiv(a, b) {
+    function objEquiv(a, b, memos) {
       if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
         return false;
+
       // an identical 'prototype' property.
       if (a.prototype !== b.prototype) return false;
+
+      // check if we have already compared a and b
+      var i;
+      if (memos) {
+        for(i = 0; i < memos.length; i++) {
+          if ((memos[i][0] === a && memos[i][1] === b) ||
+              (memos[i][0] === b && memos[i][1] === a))
+            return true;
+        }
+      } else {
+        memos = [];
+      }
+
       //~~~I've managed to break Object.keys through screwy arguments passing.
       //   Converting to array solves the problem.
       if (isArguments(a)) {
@@ -2623,19 +2859,21 @@
         }
         a = pSlice.call(a);
         b = pSlice.call(b);
-        return _deepEqual(a, b);
+        return _deepEqual(a, b, memos);
       }
       try {
         var ka = Object.keys(a),
             kb = Object.keys(b),
-            key, i;
+            key;
       } catch (e) {//happens when one is a string literal and the other isn't
         return false;
       }
+
       // having the same number of owned properties (keys incorporates
       // hasOwnProperty)
       if (ka.length != kb.length)
         return false;
+
       //the same set of keys (although not necessarily the same order),
       ka.sort();
       kb.sort();
@@ -2644,14 +2882,20 @@
         if (ka[i] != kb[i])
           return false;
       }
+
+      // remember objects we have compared to guard against circular references
+      memos.push([ a, b ]);
+
       //equivalent values for every corresponding key, and
       //~~~possibly expensive deep test
       for (i = ka.length - 1; i >= 0; i--) {
         key = ka[i];
-        if (!_deepEqual(a[key], b[key])) return false;
+        if (!_deepEqual(a[key], b[key], memos)) return false;
       }
+
       return true;
     }
+
   }); // module: chai/utils/eql.js
 
   require.register("chai/utils/flag.js", function(module, exports, require){
@@ -2708,7 +2952,7 @@
 
     module.exports = function (obj, args) {
       var actual = args[4];
-      return 'undefined' !== actual ? actual : obj.obj;
+      return 'undefined' !== typeof actual ? actual : obj._obj;
     };
 
   }); // module: chai/utils/getActual.js
@@ -2726,10 +2970,11 @@
 
     var flag = require('./flag')
       , getActual = require('./getActual')
-      , inspect = require('./inspect');
+      , inspect = require('./inspect')
+      , objDisplay = require('./objDisplay');
 
     /**
-     * # getMessage(object, message, negateMessage)
+     * ### .getMessage(object, message, negateMessage)
      *
      * Construct the error message based on flags
      * and template tags. Template tags will return
@@ -2742,6 +2987,8 @@
      *
      * @param {Object} object (constructed Assertion)
      * @param {Arguments} chai.Assertion.prototype.assert arguments
+     * @name getMessage
+     * @api public
      */
 
     module.exports = function (obj, args) {
@@ -2754,9 +3001,9 @@
 
       msg = msg || '';
       msg = msg
-        .replace(/#{this}/g, inspect(val))
-        .replace(/#{act}/g, inspect(actual))
-        .replace(/#{exp}/g, inspect(expected));
+        .replace(/#{this}/g, objDisplay(val))
+        .replace(/#{act}/g, objDisplay(actual))
+        .replace(/#{exp}/g, objDisplay(expected));
 
       return flagMsg ? flagMsg + ': ' + msg : msg;
     };
@@ -2931,6 +3178,12 @@
     exports.inspect = require('./inspect');
 
     /*!
+     * Object Display util
+     */
+
+    exports.objDisplay = require('./objDisplay');
+
+    /*!
      * Flag utility
      */
 
@@ -3021,6 +3274,36 @@
       return formatValue(ctx, obj, (typeof depth === 'undefined' ? 2 : depth));
     }
 
+    // https://gist.github.com/1044128/
+    var getOuterHTML = function(element) {
+      if ('outerHTML' in element) return element.outerHTML;
+      var ns = "http://www.w3.org/1999/xhtml";
+      var container = document.createElementNS(ns, '_');
+      var elemProto = (window.HTMLElement || window.Element).prototype;
+      var xmlSerializer = new XMLSerializer();
+      var html;
+      if (document.xmlVersion) {
+        return xmlSerializer.serializeToString(element);
+      } else {
+        container.appendChild(element.cloneNode(false));
+        html = container.innerHTML.replace('><', '>' + element.innerHTML + '<');
+        container.innerHTML = '';
+        return html;
+      }
+    };
+
+    // Returns true if object is a DOM element.
+    var isDOMElement = function (object) {
+      if (typeof HTMLElement === 'object') {
+        return object instanceof HTMLElement;
+      } else {
+        return object &&
+          typeof object === 'object' &&
+          object.nodeType === 1 &&
+          typeof object.nodeName === 'string';
+      }
+    };
+
     function formatValue(ctx, value, recurseTimes) {
       // Provide a hook for user-specified inspect functions.
       // Check that value is an object with an inspect function on it
@@ -3036,6 +3319,11 @@
       var primitive = formatPrimitive(ctx, value);
       if (primitive) {
         return primitive;
+      }
+
+      // If it's DOM elem, get outer HTML.
+      if (isDOMElement(value)) {
+        return getOuterHTML(value);
       }
 
       // Look up the keys of the object.
@@ -3275,6 +3563,54 @@
     }
 
   }); // module: chai/utils/inspect.js
+
+  require.register("chai/utils/objDisplay.js", function(module, exports, require){
+    /*!
+     * Chai - flag utility
+     * Copyright(c) 2012 Jake Luer <jake@alogicalparadox.com>
+     * MIT Licensed
+     */
+
+    /*!
+     * Module dependancies
+     */
+
+    var inspect = require('./inspect');
+
+    /**
+     * ### .objDisplay (object)
+     *
+     * Determines if an object or an array matches
+     * criteria to be inspected in-line for error
+     * messages or should be truncated.
+     *
+     * @param {Mixed} javascript object to inspect
+     * @name objDisplay
+     * @api public
+     */
+
+    module.exports = function (obj) {
+      var str = inspect(obj)
+        , type = Object.prototype.toString.call(obj);
+
+      if (str.length >= 40) {
+        if (type === '[object Array]') {
+          return '[ Array(' + obj.length + ') ]';
+        } else if (type === '[object Object]') {
+          var keys = Object.keys(obj)
+            , kstr = keys.length > 2
+              ? keys.splice(0, 2).join(', ') + ', ...'
+              : keys.join(', ');
+          return '{ Object (' + kstr + ') }';
+        } else {
+          return str;
+        }
+      } else {
+        return str;
+      }
+    };
+
+  }); // module: chai/utils/objDisplay.js
 
   require.register("chai/utils/overwriteMethod.js", function(module, exports, require){
     /*!

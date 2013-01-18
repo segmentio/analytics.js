@@ -16,7 +16,7 @@ analytics.addProvider('Quantcast', {
         settings = analytics.utils.resolveSettings(settings, 'pCode');
         analytics.utils.extend(this.settings, settings);
 
-        var _qevents = window._qevents = _qevents || [];
+        var _qevents = window._qevents = window._qevents || [];
 
         (function() {
            var elem = document.createElement('script');

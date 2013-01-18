@@ -21,7 +21,7 @@ analytics.addProvider('Customer.io', {
 
         var self = this;
 
-        var _cio = window._cio = _cio || [];
+        var _cio = window._cio = window._cio || [];
         (function() {
             var a,b,c;a=function(f){return function(){_cio.push([f].
             concat(Array.prototype.slice.call(arguments,0)))}};b=["identify",

@@ -39,7 +39,9 @@
     function getMessages(spy, action, nonNegatedSuffix, always, args) {
         var verbPhrase = always ? "always have " : "have ";
         nonNegatedSuffix = nonNegatedSuffix || "";
-        spy = spy.proxy || spy;
+        if (isSpy(spy.proxy)) {
+            spy = spy.proxy;
+        }
 
         function printfArray(array) {
             return spy.printf.apply(spy, array);
@@ -101,7 +103,7 @@
     sinonMethod("calledOn", "been called with %1 as this", ", but it was called with %t instead");
     sinonMethod("calledWith", "been called with arguments %*", "%C");
     sinonMethod("calledWithExactly", "been called with exact arguments %*", "%C");
-    sinonMethod("calledWithMatch", "been called with matching arguments %*", "%C");
+    sinonMethod("calledWithMatch", "been called with arguments matching %*", "%C");
     sinonMethod("returned", "returned %1");
     exceptionalSinonMethod("thrown", "threw", "thrown %1");
 }));

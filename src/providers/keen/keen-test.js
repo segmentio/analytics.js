@@ -15,12 +15,12 @@
         name: 'Zeus',
         email: 'zeus@segment.io'
     };
-    
+
     // Initialize
     // ----------
     test('stores settings and adds keenio.js on initialize', function() {
         expect(window.Keen).not.to.exist;
-        
+
         analytics.initialize({
             'Keen': {
                 projectId: 'KEEN_PROJECT_ID',
@@ -39,11 +39,11 @@
     test('calls setGlobalProperties on identify', function() {
         // Reset internal `userId` state from any previous identifies.
         analytics.userId = null;
-        
+
         var spy = sinon.spy(window.Keen, 'setGlobalProperties');
         analytics.identify();
         expect(spy).to.have.not.been.called;
-        
+
         // a custom checker for code re-use. just makes sure that the function
         // passed as the globalProperties, when invoked, returns sane values.
         var customChecker = function (expectedUserId, expectedTraits) {
@@ -55,7 +55,7 @@
                     return true;
                 }
                 return false;
-            }))
+            }));
         };
 
         spy.reset();

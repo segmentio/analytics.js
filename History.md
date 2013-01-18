@@ -1,3 +1,9 @@
+0.4.0 / 2013-1-18
+=================
+
+* Rename `trackClick` to `trackLink`
+* Rename `trackSubmit` to `trackForm`
+
 0.3.8 / 2013-1-18
 =================
 

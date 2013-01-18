@@ -489,7 +489,7 @@ function triggerClick (element, isMeta) {
     if (document.createEvent) {
         e = document.createEvent('MouseEvent');
         if (isMeta)
-            e.initMouseEvent('click', true, true, null, null, null, null, null, null, null, null, null, true);
+            e.initMouseEvent('click', true, true, null, null, null, null, null, null, true, true, true, true);
         else
             e.initMouseEvent('click', true, true);
         element.dispatchEvent(e);

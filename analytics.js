@@ -555,7 +555,7 @@ analytics.addProvider('Clicky', {
     // -----
 
     track : function (event, properties) {
-        window.clicky.log(window.location.href, event);
+        if (window.clicky) window.clicky.log(window.location.href, event);
     }
 
 });

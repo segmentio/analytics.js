@@ -58,6 +58,7 @@ kill:
 # Runs travis tests
 test: server
 	sleep 1
+	node_modules/.bin/mocha-phantomjs -s web-security=false -s local-to-remote-url-access=true http://localhost:8000/test/min.html
 	node_modules/.bin/mocha-phantomjs -s web-security=false -s local-to-remote-url-access=true http://localhost:8000/test/providers.html
 	node_modules/.bin/mocha-phantomjs -s web-security=false -s local-to-remote-url-access=true http://localhost:8000/test/core.html
 	make kill

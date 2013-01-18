@@ -1,3 +1,10 @@
+0.3.7 / 2013-1-17
+=================
+
+* [HitTail](http://hittail.com) support added
+* [USERcycle](http://usercycle.com) support added
+* Travis testing fixed
+
 0.3.6 / 2013-1-14
 =================
 

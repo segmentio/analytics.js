@@ -1,3 +1,7 @@
+
+PHANTOM = node_modules/.bin/mocha-phantomjs
+PHANTOM_OPTS = -s web-security=false -s local-to-remote-url-access=true
+
 analytics.js:
 	cat \
 		src/analytics.js \
@@ -58,9 +62,9 @@ kill:
 # Runs travis tests
 test: server
 	sleep 1
-	node_modules/.bin/mocha-phantomjs -s web-security=false -s local-to-remote-url-access=true http://localhost:8000/test/min.html
-	node_modules/.bin/mocha-phantomjs -s web-security=false -s local-to-remote-url-access=true http://localhost:8000/test/providers.html
-	node_modules/.bin/mocha-phantomjs -s web-security=false -s local-to-remote-url-access=true http://localhost:8000/test/core.html
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/min.html
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/providers.html
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/core.html
 	make kill
 
 browser-test:
@@ -68,10 +72,6 @@ browser-test:
 	open http://localhost:8000/test/providers.html
 	open http://localhost:8000/test/core.html
 
-release:
-	make analytics.js
-	make min
-	make docs
-	make test
+release: analytics.js min docs test
 
 .PHONY: analytics.js docs test browser-test

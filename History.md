@@ -1,3 +1,28 @@
+0.4.1 / 2013-1-18
+=================
+
+* [Keen.io](http://keen.io/) added by [@dkador](https://github.com/dkador)
+* [Foxmetrics](http://foxmetrics.com/) added by [@rawsoft](https://github.com/rawsoft)
+
+
+0.4.0 / 2013-1-18
+=================
+
+* Rename `trackClick` to `trackLink`
+* Rename `trackSubmit` to `trackForm`
+
+0.3.8 / 2013-1-18
+=================
+
+* Fix for Clicky loading slowly
+
+0.3.7 / 2013-1-17
+=================
+
+* [HitTail](http://hittail.com) support added
+* [USERcycle](http://usercycle.com) support added
+* Travis testing fixed
+
 0.3.6 / 2013-1-14
 =================
 

@@ -20,7 +20,7 @@
         expect(window.htk).to.exist;
         expect(analytics.providers[0].settings.siteId).to.equal('x');
             done();
-        }, 500);
+        }, 1000);
     });
 
 }());

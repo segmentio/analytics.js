@@ -26,7 +26,7 @@
             expect(window.pSUPERFLY).to.exist;
             expect(window._sf_async_config).to.equal(analytics.providers[0].settings);
             done();
-        }, 500);
+        }, 1000);
     });
 
 

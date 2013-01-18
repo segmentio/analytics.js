@@ -10,6 +10,7 @@ analytics.js:
 		src/providers/ga/ga.js \
 		src/providers/gauges/gauges.js \
 		src/providers/gosquared/gosquared.js \
+		src/providers/hittail/hittail.js \
 		src/providers/hubspot/hubspot.js \
 		src/providers/intercom/intercom.js \
 		src/providers/kissmetrics/kissmetrics.js \
@@ -36,6 +37,7 @@ docs:
 		src/providers/ga/ga.js \
 		src/providers/gauges/gauges.js \
 		src/providers/gosquared/gosquared.js \
+		src/providers/hittail/hittail.js \
 		src/providers/hubspot/hubspot.js \
 		src/providers/intercom/intercom.js \
 		src/providers/kissmetrics/kissmetrics.js \

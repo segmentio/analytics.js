@@ -22,7 +22,7 @@
         expect(window.improvely).not.to.exist;
         expect(window._improvely).not.to.exist;
 
-        analytics.initialize({ 'Improvely' : domain: domain, project_id: project_id });
+        analytics.initialize({ 'Improvely' : { domain: domain, project_id: project_id } });
 
         expect(window.improvely).to.exist;
         expect(window._improvely).to.exist;

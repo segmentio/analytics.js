@@ -3,11 +3,17 @@
 
     var provider = {
         initialize : function (settings) {},
-        identify : function (userId, traits) {},
-        track : function (event, properties) {},
-        pageview : function () {}
+        identify   : function (userId, traits) {},
+        track      : function (event, properties) {},
+        pageview   : function () {}
     };
     analytics.addProvider('test', provider);
+
+    // Initialize the provider above so that everything works even when looking
+    // at a single test case.
+    analytics.initialize({
+        'test' : 'x'
+    });
 
 
     // Initialize
@@ -15,72 +21,120 @@
 
     suite('initialize');
 
-    test('initialize copies providers into this.providers', function () {
-        expect(analytics.providers).to.be.empty;
+    test('stores enabled providers', function () {
+        // Reset list of enabled providers.
+        analytics.providers = [];
 
-        analytics.initialize({
-            'test' : 'x'
-        });
+        analytics.initialize({'test' : 'x'});
+
         expect(analytics.providers[0]).to.equal(provider);
     });
 
-    test('initialize sends settings to providers initialize method', function () {
+    test('sends settings to enabled providers initialize', function () {
         var spy = sinon.spy(provider, 'initialize');
-        analytics.initialize({
-            'test' : 'x'
-        });
+
+        analytics.initialize({'test' : 'x'});
+
         expect(spy).to.have.been.calledWith('x');
 
         spy.restore();
     });
 
-    test('initialize resets providers and userId', function () {
-        analytics.initialize({
-            'test' : 'x'
-        });
+    test('resets enabled providers and userId', function () {
+        analytics.initialize({'test' : 'x'});
         analytics.identify('user');
+
         expect(analytics.providers.length).to.equal(1);
         expect(analytics.userId).to.equal('user');
 
-        analytics.initialize({
-            'test' : 'x'
-        });
+        analytics.initialize({'test' : 'x'});
+
         expect(analytics.providers.length).to.equal(1);
         expect(analytics.userId).to.be.null;
     });
+
 
     // Identify
     // --------
 
     suite('identify');
 
-    test('identify is called on providers', function () {
+    test('is called on providers', function () {
         var spy = sinon.spy(provider, 'identify');
+
         analytics.identify();
+
         expect(spy).to.have.been.called;
 
         spy.restore();
     });
 
-    test('identify sends userId along', function () {
+    test('sends userId along', function () {
         var spy = sinon.spy(provider, 'identify');
+
         analytics.identify('id');
+
         expect(spy).to.have.been.calledWith('id');
 
         spy.restore();
     });
 
-    test('identify sends a clone of traits along', function  () {
-        var spy = sinon.spy(provider, 'identify');
+    test('sends a clone of traits along', function  () {
+        var spy    = sinon.spy(provider, 'identify');
         var traits = {
             age  : 23,
             name : 'Achilles'
         };
+
         analytics.identify('id', traits);
+
         expect(spy.args[0][1]).not.to.equal(traits);
         expect(spy.args[0][1]).to.deep.equal(traits);
 
         spy.restore();
+    });
+
+    test('calls the callback after the timeout duration', function (done) {
+        var callback = sinon.spy();
+
+        analytics.identify('id', { name : 'Achilles' }, callback);
+
+        // The callback shouldn't be called immediately, but after the timeout.
+        expect(callback).not.to.have.been.called;
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            done();
+        }, analytics.timeout);
+    });
+
+    test('takes a callback with optional traits or userId', function (done) {
+        var finish   = _.after(3, done);
+        var callback = sinon.spy();
+
+        analytics.identify('id', callback);
+
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            finish();
+        }, analytics.timeout);
+
+        callback.reset();
+
+        analytics.identify({ name : 'Achilles' }, callback);
+
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            finish();
+        }, analytics.timeout);
+
+        callback.reset();
+
+        analytics.identify('id', { name : 'Achilles' }, callback);
+
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            finish();
+        }, analytics.timeout);
     });
 
 
@@ -89,33 +143,197 @@
 
     suite('track');
 
-    test('track is called on providers', function () {
+    test('is called on providers', function () {
         var spy = sinon.spy(provider, 'track');
+
         analytics.track();
+
         expect(spy).to.have.been.called;
 
         spy.restore();
     });
 
-    test('track sends event name along', function () {
+    test('sends event name along', function () {
         var spy = sinon.spy(provider, 'track');
+
         analytics.track('party');
+
         expect(spy).to.have.been.calledWith('party');
 
         spy.restore();
     });
 
-    test('track sends a clone of properties along', function  () {
-        var spy = sinon.spy(provider, 'track');
+    test('sends a clone of properties along', function  () {
+        var spy        = sinon.spy(provider, 'track');
         var properties = {
             level  : 'hard',
             volume : 11
         };
+
         analytics.track('party', properties);
+
         expect(spy.args[0][1]).not.to.equal(properties);
         expect(spy.args[0][1]).to.deep.equal(properties);
 
         spy.restore();
+    });
+
+    test('calls the callback after the timeout duration', function (done) {
+        var callback = sinon.spy();
+
+        analytics.track('party', { level : 'hard' }, callback);
+
+        // The callback shouldn't be called immediately, but after the timeout.
+        expect(callback).not.to.have.been.called;
+        setTimeout(function () {
+            expect(callback).to.have.been.called;
+            done();
+        }, analytics.timeout);
+    });
+
+
+    // Track Link
+    // ----------
+
+    suite('trackLink');
+
+    test('triggers a track on a button click', function () {
+        var spy    = sinon.spy(provider, 'track');
+        var button = $('<button>')[0];
+
+        analytics.trackLink(button, 'party');
+
+        $(button).click();
+        expect(spy).to.have.been.calledWith('party');
+
+        spy.restore();
+    });
+
+    test('triggers a track on a $button click', function () {
+        var spy     = sinon.spy(provider, 'track');
+        var $button = $('<button>');
+
+        analytics.trackLink($button, 'party');
+
+        $button.click();
+        expect(spy).to.have.been.calledWith('party');
+
+        spy.restore();
+    });
+
+    test('triggers a track on a link click without an href', function () {
+        var spy  = sinon.spy(provider, 'track');
+        var link = $('<a>')[0];
+
+        analytics.trackLink(link, 'party');
+
+        triggerClick(link);
+
+        expect(spy).to.have.been.calledWith('party');
+
+        spy.restore();
+    });
+
+    test('triggers a track and loads an href on a link click with an href', function (done) {
+        var spy  = sinon.spy(provider, 'track');
+        var link = $('<a href="#test">')[0];
+
+        // Make sure hash is reset.
+        window.location.hash = '';
+
+        analytics.trackLink(link, 'party');
+
+        triggerClick(link);
+
+        // Expect the track call to have happened, but for the href not to have
+        // been applied yet.
+        expect(spy).to.have.been.calledWith('party');
+        expect(window.location.hash).not.to.equal('#test');
+
+        // Expect the href to be applied after the timeout that gives events
+        // time to send requests.
+        setTimeout(function () {
+            expect(window.location.hash).to.equal('#test');
+            done();
+        }, analytics.timeout);
+
+        spy.restore();
+    });
+
+    test('triggers a track but doesnt load an href on an href with blank target', function () {
+        var spy  = sinon.spy(provider, 'track');
+        var link = $('<a href="http://google.com" target="_blank">')[0];
+
+        // Make sure hash is reset.
+        window.location.hash = '';
+
+        analytics.trackLink(link, 'party');
+
+        triggerClick(link);
+
+        expect(spy).to.have.been.calledWith('party');
+        expect(window.location.hash).not.to.equal('#test');
+
+        spy.restore();
+    });
+
+    test('triggers a track but doesnt load an href on a meta link click with an href', function () {
+        var spy  = sinon.spy(provider, 'track');
+        var link = $('<a href="http://google.com">')[0];
+
+        // Make sure hash is reset.
+        window.location.hash = '';
+
+        analytics.trackLink(link, 'party');
+
+        triggerClick(link, true);
+
+        expect(spy).to.have.been.calledWith('party');
+        expect(window.location.hash).not.to.equal('#test');
+
+        spy.restore();
+    });
+
+    test('trackClick is aliased to trackLink for backwards compatibility', function () {
+        expect(analytics.trackClick).to.equal(analytics.trackLink);
+    });
+
+
+    // Track Form
+    // ----------
+
+    suite('trackForm');
+
+    test('triggers a track on a form submit', function () {
+        var spy   = sinon.spy(provider, 'track');
+        var form  = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
+        var input = $(form).find('input')[0];
+
+        analytics.trackForm(form, 'party');
+
+        triggerClick(input);
+
+        expect(spy).to.have.been.calledWith('party');
+
+        spy.restore();
+    });
+
+    test('triggers a track on a $form submit', function () {
+        var spy   = sinon.spy(provider, 'track');
+        var form  = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
+        var input = $(form).find('input')[0];
+
+        analytics.trackForm(form, 'party');
+
+        triggerClick(input);
+
+        expect(spy).to.have.been.calledWith('party');
+
+        spy.restore();
+    });
+
+    test('trackSubmit is aliased to trackForm for backwards compatibility', function () {
+        expect(analytics.trackSubmit).to.equal(analytics.trackForm);
     });
 
 
@@ -124,9 +342,11 @@
 
     suite('pageview');
 
-    test('pageview is called on providers', function () {
+    test('is called on providers', function () {
         var spy = sinon.spy(provider, 'pageview');
+
         analytics.pageview();
+
         expect(spy).to.have.been.called;
 
         spy.restore();
@@ -141,9 +361,8 @@
     test('resolveSettings...');
 
     test('clone returns a copy of an object', function () {
-        var object = {
-            thing : 1
-        };
+        var object = { thing: 1 };
+
         expect(analytics.utils.clone(object)).not.to.equal(object);
         expect(analytics.utils.clone(object)).to.deep.equal(object);
     });
@@ -152,13 +371,16 @@
         var object = {
             one : 1
         };
+
         analytics.utils.extend(object, { two: 2 });
+
         expect(object).to.deep.equal({
             one : 1,
             two : 2
         });
 
         analytics.utils.extend(object, { three: 3 }, { four: 4 });
+
         expect(object).to.deep.equal({
             one   : 1,
             two   : 2,
@@ -166,7 +388,8 @@
             four  : 4
         });
 
-        analytics.utils.extend(object, { one : 2 });
+        analytics.utils.extend(object, { one: 2 });
+
         expect(object).to.deep.equal({
             one   : 2,
             two   : 2,
@@ -181,17 +404,15 @@
             email : 'medusa@segment.io'
         };
 
-        analytics.utils.alias(traits, {
-            email : '$email'
-        });
+        analytics.utils.alias(traits, { email: '$email' });
+
         expect(traits).to.deep.equal({
             name   : 'Medusa',
             $email : 'medusa@segment.io'
         });
 
-        analytics.utils.alias(traits, {
-            createdAt : 'created_at'
-        });
+        analytics.utils.alias(traits, { createdAt: 'created_at' });
+
         expect(traits).to.deep.equal({
             name   : 'Medusa',
             $email : 'medusa@segment.io'
@@ -270,4 +491,24 @@
 })();
 
 
-
+// Helper to trigger true DOM click events in all browser ... and IE.
+function triggerClick (element, isMeta) {
+    var e;
+    if (document.createEvent) {
+        e = document.createEvent('MouseEvent');
+        if (isMeta)
+            e.initMouseEvent('click', true, true, null, null, null, null, null, null, true, true, true, true);
+        else
+            e.initMouseEvent('click', true, true);
+        element.dispatchEvent(e);
+    } else {
+        if (isMeta) {
+            e = document.createEventObject({
+                altKey   : true,
+                ctrlKey  : true,
+                shiftKey : true
+            });
+        }
+        element.fireEvent('onClick', e);
+    }
+}

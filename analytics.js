@@ -1,4 +1,4 @@
-//     Analytics.js 0.3.0
+//     Analytics.js 0.4.1
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -23,6 +23,10 @@
 
         // Whether analytics.js has been initialized with providers.
         initialized : false,
+
+        // The amount of milliseconds to wait for requests to providers to clear
+        // before navigating away from the current page.
+        timeout : 250,
 
 
         // Providers
@@ -98,15 +102,26 @@
         // * `userId` (optional) is the ID you know the user by. Ideally this
         // isn't an email, because the user might be able to change their email
         // and you don't want that to affect your analytics.
+        //
         // * `traits` (optional) is a dictionary of traits to tie your user.
         // Things like `name`, `age` or `friendCount`. If you have them, you
         // should always store a `name` and `email`.
-        identify : function (userId, traits) {
+        //
+        // * `callback` (optional) is a function to call after the a small
+        // timeout to give the identify requests a chance to be sent.
+        identify : function (userId, traits, callback) {
             if (!this.initialized) return;
+
+            // Allow for not passing traits, but passing a callback.
+            if (this.utils.isFunction(traits)) {
+                callback = traits;
+                traits = null;
+            }
 
             // Allow for identifying traits without setting a `userId`, for
             // anonymous users whose traits you learn.
             if (this.utils.isObject(userId)) {
+                if (traits && this.utils.isFunction(traits)) callback = traits;
                 traits = userId;
                 userId = null;
             }
@@ -121,6 +136,10 @@
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.identify) continue;
                 provider.identify(userId, this.utils.clone(traits));
+            }
+
+            if (callback && this.utils.isFunction(callback)) {
+                setTimeout(callback, this.timeout);
             }
         },
 
@@ -139,16 +158,135 @@
         // * `event` is the name of the event. The best names are human-readable
         // so that your whole team knows what they mean when they analyze your
         // data.
+        //
         // * `properties` (optional) is a dictionary of properties of the event.
         // Property keys are all camelCase (we'll alias to non-camelCase for
         // you automatically for providers that require it).
-        track : function (event, properties) {
+        //
+        // * `callback` (optional) is a function to call after the a small
+        // timeout to give the track requests a chance to be sent.
+        track : function (event, properties, callback) {
             if (!this.initialized) return;
+
+            // Allow for not passing properties, but passing a callback.
+            if (this.utils.isFunction(properties)) {
+                callback = properties;
+                properties = null;
+            }
 
             // Call `track` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.track) continue;
                 provider.track(event, this.utils.clone(properties));
+            }
+
+            if (callback && this.utils.isFunction(callback)) {
+                setTimeout(callback, this.timeout);
+            }
+        },
+
+
+        // ### trackLink
+
+        // A helper for tracking outbound links that would normally leave the
+        // page before the track calls went out. It works by wrapping the calls
+        // in as short of a timeout as possible to fire the track call, because
+        // [response times matter](http://theixdlibrary.com/pdf/Miller1968.pdf).
+        //
+        // * `link` is either a single link DOM element, or an array of link
+        // elements like jQuery gives you.
+        //
+        // * `event` and `properties` are passed directly to `analytics.track`
+        // and take the same options.
+        trackLink : function (link, event, properties) {
+            if (!link) return;
+
+            // Turn a single link into an array so that we're always handling
+            // arrays, which allows for passing jQuery objects.
+            if (this.utils.isElement(link)) link = [link];
+
+            // Bind to all the links in the array.
+            for (var i = 0; i < link.length; i++) {
+                var self = this;
+                var el = link[i];
+
+                this.utils.bind(el, 'click', function (e) {
+
+                    // Fire a normal track call.
+                    self.track(event, properties);
+
+                    // To justify us preventing the default behavior we must:
+                    //
+                    // * Have an `href` to use.
+                    // * Not have a `target="_blank"` attribute.
+                    // * Not have any special keys pressed, because they might
+                    // be trying to open in a new tab, or window, or download
+                    // the asset.
+                    //
+                    // This might not cover all cases, but we'd rather throw out
+                    // an event than miss a case that breaks the experience.
+                    if (el.href && el.target !== '_blank' && !self.utils.isMeta(e)) {
+
+                        // Prevent the link's default redirect in all the sane
+                        // browsers, and also IE.
+                        if (e.preventDefault)
+                            e.preventDefault();
+                        else
+                            e.returnValue = false;
+
+                        // Navigate to the url after a small timeout, giving the
+                        // providers time to track the event.
+                        setTimeout(function () {
+                            window.location.href = el.href;
+                        }, self.timeout);
+                    }
+                });
+            }
+        },
+
+
+        // ### trackForm
+
+        // Similar to `trackClick`, this is a helper for tracking form
+        // submissions that would normally leave the page before a track call
+        // can be sent. It works by preventing the default submit, sending a
+        // track call, and then submitting the form programmatically.
+        //
+        // * `form` is either a single form DOM element, or an array of
+        // form elements like jQuery gives you.
+        //
+        // * `event` and `properties` are passed directly to `analytics.track`
+        // and take the same options.
+        trackForm : function (form, event, properties) {
+            if (!form) return;
+
+            // Turn a single element into an array so that we're always handling
+            // arrays, which allows for passing jQuery objects.
+            if (this.utils.isElement(form)) form = [form];
+
+            // Bind to all the forms in the array.
+            for (var i = 0; i < form.length; i++) {
+                var self = this;
+                var el = form[i];
+
+                this.utils.bind(el, 'submit', function (e) {
+
+                    // Fire a normal track call.
+                    self.track(event, properties);
+
+                    // Prevent the form's default submit in all the sane
+                    // browsers, and also IE.
+                    if (e.preventDefault)
+                        e.preventDefault();
+                    else
+                        e.returnValue = false;
+
+                    // Submit the form after a small timeout, giving the event
+                    // time to get fired.
+                    setTimeout(function () {
+                        el.submit();
+                    }, this.timeout);
+                });
             }
         },
 
@@ -185,20 +323,38 @@
 
         utils : {
 
+            // Attach an event handler to a DOM element, even in IE.
+            bind : function (el, event, callback) {
+                if (el.addEventListener) {
+                    el.addEventListener(event, callback, false);
+                } else if (el.attachEvent) {
+                    el.attachEvent('on' + event, callback);
+                }
+            },
+
+            // Given a DOM event, tell us whether a meta key or button was
+            // pressed that would make a link open in a new tab, window,
+            // start a download, or anything else that wouldn't take the user to
+            // a new page.
+            isMeta : function (e) {
+                if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
+
+                // Logic that handles checks for the middle mouse button, based
+                // on [jQuery](https://github.com/jquery/jquery/blob/master/src/event.js#L466).
+                var which = e.which, button = e.button;
+                if (!which && button !== undefined) {
+                    return (!button & 1) && (!button & 2) && (button & 4);
+                } else if (which === 2) {
+                    return true;
+                }
+
+                return false;
+            },
+
             // Given a timestamp, return its value in seconds. For providers
             // that rely on Unix time instead of millis.
             getSeconds : function (time) {
                 return Math.floor((new Date(time)) / 1000);
-            },
-
-            // A helper to shallow-ly clone objects, so that they don't get
-            // mangled by different analytics providers because of the
-            // reference.
-            clone : function (obj) {
-                if (!obj) return;
-                var clone = {};
-                for (var prop in obj) clone[prop] = obj[prop];
-                return clone;
             },
 
             // A helper to extend objects with properties from other objects.
@@ -212,6 +368,14 @@
                     }
                 }
                 return obj;
+            },
+
+            // A helper to shallow-ly clone objects, so that they don't get
+            // mangled by different analytics providers because of the
+            // reference.
+            clone : function (obj) {
+                if (!obj) return;
+                return this.extend({}, obj);
             },
 
             // A helper to alias certain object's keys to different key names.
@@ -228,7 +392,13 @@
             },
 
             // Type detection helpers, copied from
-            // [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L928-L938).
+            // [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L926-L946).
+            isElement : function(obj) {
+                return !!(obj && obj.nodeType === 1);
+            },
+            isArray : Array.isArray || function (obj) {
+                return Object.prototype.toString.call(obj) === '[object Array]';
+            },
             isObject : function (obj) {
                 return obj === Object(obj);
             },
@@ -282,6 +452,10 @@
         }
 
     };
+
+    // Add `trackClick` and `trackSubmit` for backwards compatibility.
+    analytics.trackClick = analytics.trackLink;
+    analytics.trackSubmit = analytics.trackForm;
 
     // Wrap any existing `onload` function with our own that will cache the
     // loaded state of the page.
@@ -350,6 +524,83 @@ analytics.addProvider('Chartbeat', {
 });
 
 
+// Clicky
+// ------
+// [Documentation](http://clicky.com/help/customization/manual?new-domain).
+
+analytics.addProvider('Clicky', {
+
+    settings : {
+        siteId : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        var clicky_site_ids = window.clicky_site_ids = window.clicky_site_ids || [];
+        clicky_site_ids.push(settings.siteId);
+
+        (function() {
+            var s = document.createElement('script');
+            s.type = 'text/javascript';
+            s.async = true;
+            s.src = '//static.getclicky.com/js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
+        })();
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        if (window.clicky) window.clicky.log(window.location.href, event);
+    }
+
+});
+
+
+// comScore
+// ---------
+// [Documentation](http://direct.comscore.com/clients/help/FAQ.aspx#faqTagging)
+
+analytics.addProvider('comScore', {
+
+    settings : {
+        c1 : '2',
+        c2 : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'c2');
+        analytics.utils.extend(this.settings, settings);
+
+        var _comscore = window._comscore = window._comscore || [];
+        _comscore.push(this.settings);
+
+        (function() {
+            var s = document.createElement("script");
+            var el = document.getElementsByTagName("script")[0];
+            s.async = true;
+            s.src = (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js";
+            el.parentNode.insertBefore(s, el);
+        })();
+
+        // NOTE: the <noscript><img> bit in the docs is ignored
+        // because we have to run JS in order to do any of this!
+    }
+
+});
+
 // CrazyEgg
 // --------
 // [Documentation](www.crazyegg.com).
@@ -371,10 +622,11 @@ analytics.addProvider('CrazyEgg', {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
 
+        var apiKey = this.settings.apiKey;
         (function(){
             var a=document.createElement("script");
             var b=document.getElementsByTagName("script")[0];
-            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+this.settings.apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
+            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
             a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b);
         })();
     }
@@ -405,7 +657,7 @@ analytics.addProvider('Customer.io', {
 
         var self = this;
 
-        var _cio = window._cio = _cio || [];
+        var _cio = window._cio = window._cio || [];
         (function() {
             var a,b,c;a=function(f){return function(){_cio.push([f].
             concat(Array.prototype.slice.call(arguments,0)))}};b=["identify",
@@ -481,7 +733,9 @@ analytics.addProvider('Errorception', {
 
         var self = this;
 
-        var _errs = window._errs = _errs || [settings.projectId];
+        var _errs = window._errs = window._errs || [];
+        _errs.push(settings.projectId);
+
         (function(a,b){
             a.onerror = function () {
                 _errs.push(arguments);
@@ -495,6 +749,84 @@ analytics.addProvider('Errorception', {
             };
             a.addEventListener ? a.addEventListener("load",d,!1) : a.attachEvent("onload",d);
         })(window,document);
+    }
+
+});
+
+
+// FoxMetrics
+// -----------
+// [Website] (http://foxmetrics.com)
+// [Documentation](http://foxmetrics.com/documentation)
+// [Documentation - JS](http://foxmetrics.com/documentation/apijavascript)
+// [Support](http://support.foxmetrics.com)
+
+analytics.addProvider('FoxMetrics', {
+
+    settings: {
+        appId: null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize: function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'appId');
+        analytics.utils.extend(this.settings, settings);
+
+        var _fxm = window._fxm || {};
+        window._fxm = _fxm.events || [];
+
+        function _fxms(id) {
+            (function () {
+                var fxms = document.createElement('script'); fxms.type = 'text/javascript'; fxms.async = true;
+                fxms.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'd35tca7vmefkrc.cloudfront.net/scripts/' + id + '.js';
+                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(fxms, s);
+            })();
+        }
+
+        _fxms(this.settings.appId);
+    },
+
+
+    // Identify
+    // --------
+
+    identify: function (userId, traits) {
+
+        // user id is required for profile updates,
+        // otherwise its a waste of resources as nothing will get updated
+        if (userId) {
+            // fxm needs first and last name seperately
+            var fname = null, lname = null, email = null;
+            if (traits) {
+                fname = traits.name.split(' ')[0];
+                lname = traits.name.split(' ')[1];
+                email = typeof (traits.email) !== 'undefined' ? traits.email : null;
+            }
+
+            // we should probably remove name and email before passing as attributes
+            window._fxm.push(['_fxm.visitor.Profile', userId, fname, lname, email, null, null, null, (traits || null)]);
+        }
+    },
+
+
+    // Track
+    // -----
+
+    track: function (event, properties) {
+        // send in null as event category name
+        window._fxm.push([event, null, properties]);
+    },
+
+    // Pageview
+    // ----------
+
+    pageview: function (url) {
+        // we are happy to accept traditional analytics :)
+        // (title, name, categoryName, url, referrer)
+        window._fxm.push(['_fxm.pages.view', null, null, null, (url || null), null]);
     }
 
 });
@@ -528,7 +860,7 @@ analytics.addProvider('Google Analytics', {
         settings = analytics.utils.resolveSettings(settings, 'trackingId');
         analytics.utils.extend(this.settings, settings);
 
-        var _gaq = window._gaq || [];
+        var _gaq = window._gaq = window._gaq || [];
         _gaq.push(['_setAccount', this.settings.trackingId]);
         if (this.settings.enhancedLinkAttribution) {
             var pluginUrl = (('https:' == document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
@@ -544,7 +876,6 @@ analytics.addProvider('Google Analytics', {
             _gaq.push(['_gat._anonymizeIp']);
         }
         _gaq.push(['_trackPageview']);
-        window._gaq = _gaq;
 
         (function() {
             var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
@@ -558,7 +889,17 @@ analytics.addProvider('Google Analytics', {
     // -----
 
     track : function (event, properties) {
-        window._gaq.push(['_trackEvent', 'All', event]);
+        properties || (properties = {});
+
+        // Try to check for a `category` and `label`. A `category` is required,
+        // so if it's not there we use `'All'` as a default. We can safely push
+        // undefined if the special properties don't exist.
+        window._gaq.push([
+            '_trackEvent',
+            properties.category || 'All',
+            event,
+            properties.label
+        ]);
     },
 
 
@@ -566,33 +907,32 @@ analytics.addProvider('Google Analytics', {
     // --------
 
     pageview : function (url) {
-        var options = ['_trackPageview'];
-        if (url) options[1] = url;
-        window._gaq.push(options);
+        // If there isn't a url, that's fine.
+        window._gaq.push(['_trackPageview', url]);
     }
 
 });
 
 
-// Gaug.es
+// Gauges
 // -------
 // [Documentation](http://get.gaug.es/documentation/tracking/).
 
-analytics.addProvider('Gaug.es', {
+analytics.addProvider('Gauges', {
 
-    settings: {
-        siteId: null
+    settings : {
+        siteId : null
     },
 
 
     // Initialize
     // ----------
 
-    initialize : function(settings) {
+    initialize : function (settings) {
         settings = analytics.utils.resolveSettings(settings, 'siteId');
         analytics.utils.extend(this.settings, settings);
 
-        var _gauges = _gauges || [];
+        var _gauges = window._gauges = window._gauges || [];
 
         (function() {
             var t   = document.createElement('script');
@@ -603,86 +943,18 @@ analytics.addProvider('Gaug.es', {
             t.src = '//secure.gaug.es/track.js';
             var s = document.getElementsByTagName('script')[0];
             s.parentNode.insertBefore(t, s);
-          })();
-
-        window._gauges = _gauges;
+        })();
     },
 
 
     // Pageview
     // --------
 
-    pageview : function(url) {
+    pageview : function (url) {
         window._gauges.push(['track']);
     }
 
 });
-// HubSpot
-// -------
-// [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
-
-analytics.addProvider('HubSpot', {
-
-    settings : {
-        portalId : null
-    },
-
-
-    // Initialize
-    // ----------
-
-    // Changes to the HubSpot snippet:
-    //
-    // * Concatenate `portalId` into the URL.
-    initialize : function (settings) {
-        settings = analytics.utils.resolveSettings(settings, 'portalId');
-        analytics.utils.extend(this.settings, settings);
-
-        var self = this;
-
-        (function(d,s,i,r) {
-            if (d.getElementById(i)){return;}
-            window._hsq = window._hsq || []; // for calls pre-load
-            var n=d.createElement(s),e=d.getElementsByTagName(s)[0];
-            n.id=i;n.src='https://js.hubspot.com/analytics/'+(Math.ceil(new Date()/r)*r)+'/' + self.settings.portalId + '.js';
-            e.parentNode.insertBefore(n, e);
-        })(document,"script","hs-analytics",300000);
-    },
-
-
-    // Identify
-    // --------
-
-    identify : function (userId, traits) {
-        // HubSpot does not use a userId, but the email address is required on
-        // the traits object.
-        if (!traits) return;
-
-        window._hsq.push(["identify", traits]);
-    },
-
-
-    // Track
-    // -----
-
-    // Event Tracking is available to HubSpot Enterprise customers only. In
-    // addition to adding any unique event name, you can also use the id of an
-    // existing custom event as the event variable.
-    track : function (event, properties) {
-        window._hsq.push(["trackEvent", event, properties]);
-    },
-
-
-    // Pageview
-    // --------
-
-    pageview : function () {
-        // TODO http://performabledoc.hubspot.com/display/DOC/JavaScript+API
-    }
-
-});
-
-
 // GoSquared
 // ---------
 // [Documentation](www.gosquared.com/support).
@@ -747,6 +1019,104 @@ analytics.addProvider('GoSquared', {
 
     pageview : function () {
         window.GoSquared.DefaultTracker.TrackView();
+    }
+
+});
+
+
+// HitTail
+// -------
+// [Documentation](www.hittail.com).
+
+analytics.addProvider('HitTail', {
+
+    settings : {
+        siteId : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        var siteId = settings.siteId;
+        (function(){
+            var ht = document.createElement('script');
+            ht.async = true;
+            ht.type = 'text/javascript';
+            ht.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + siteId + '.hittail.com/mlt.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ht, s);
+        })();
+    }
+
+});
+
+
+// HubSpot
+// -------
+// [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
+
+analytics.addProvider('HubSpot', {
+
+    settings : {
+        portalId : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    // Changes to the HubSpot snippet:
+    //
+    // * Concatenate `portalId` into the URL.
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'portalId');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
+
+        (function(d,s,i,r) {
+            if (d.getElementById(i)){return;}
+            window._hsq = window._hsq || []; // for calls pre-load
+            var n=d.createElement(s),e=d.getElementsByTagName(s)[0];
+            n.id=i;n.src='https://js.hubspot.com/analytics/'+(Math.ceil(new Date()/r)*r)+'/' + self.settings.portalId + '.js';
+            e.parentNode.insertBefore(n, e);
+        })(document,"script","hs-analytics",300000);
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        // HubSpot does not use a userId, but the email address is required on
+        // the traits object.
+        if (!traits) return;
+
+        window._hsq.push(["identify", traits]);
+    },
+
+
+    // Track
+    // -----
+
+    // Event Tracking is available to HubSpot Enterprise customers only. In
+    // addition to adding any unique event name, you can also use the id of an
+    // existing custom event as the event variable.
+    track : function (event, properties) {
+        window._hsq.push(["trackEvent", event, properties]);
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function () {
+        // TODO http://performabledoc.hubspot.com/display/DOC/JavaScript+API
     }
 
 });
@@ -824,6 +1194,61 @@ analytics.addProvider('Intercom', {
 });
 
 
+// Keen IO
+// -------
+// [Documentation](https://keen.io/docs/).
+analytics.addProvider('Keen', {
+
+    settings: {
+        projectId: null,
+        apiKey: null
+    },
+
+
+    // Initialize
+    // ----------
+    initialize: function(settings) {
+        if (typeof settings !== "object" || !settings.projectId || !settings.apiKey) {
+            throw new Error("Settings must be an object with properties 'projectId' and 'apiKey'.");
+        }
+
+        var Keen=window.Keen||{configure:function(a,b,c){this._pId=a;this._ak=b;this._op=c},addEvent:function(a,b,c,d){this._eq=this._eq||[];this._eq.push([a,b,c,d])},setGlobalProperties:function(a){this._gp=a},onChartsReady:function(a){this._ocrq=this._ocrq||[];this._ocrq.push(a)}};
+        (function(){var a=document.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"==document.location.protocol?"https://":"http://")+"dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js";var b=document.getElementsByTagName("script")[0];b.parentNode.insertBefore(a,b)})();
+
+        // Configure the Keen object with your Project ID and API Key.
+        Keen.configure(settings.projectId, settings.apiKey);
+
+        this.settings = settings;
+
+        window.Keen = Keen;
+    },
+
+
+    // Identify
+    // --------
+    identify: function(userId, traits) {
+        // Use Keen IO global properties to include user ID and traits on every event sent to Keen IO.
+        var globalUserProps = {};
+        if (userId) globalUserProps.userId = userId;
+        if (traits) globalUserProps.traits = traits;
+        if (userId || traits) {
+            window.Keen.setGlobalProperties(function(eventCollection) {
+                return {
+                    "user": globalUserProps
+                };
+            });
+        }
+    },
+
+
+    // Track
+    // -----
+    track: function(event, properties) {
+        // Each track invocation will add a single event to Keen.
+        window.Keen.addEvent(event, properties);
+    }
+
+});
 // KISSmetrics
 // -----------
 // [Documentation](http://support.kissmetrics.com/apis/javascript).
@@ -845,9 +1270,7 @@ analytics.addProvider('KISSmetrics', {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
 
-        var _kmq = _kmq || [];
-        window._kmq = _kmq;
-
+        var _kmq = window._kmq = window._kmq || [];
         function _kms(u){
             setTimeout(function(){
                 var d = document, f = d.getElementsByTagName('script')[0],
@@ -904,9 +1327,8 @@ analytics.addProvider('Klaviyo', {
         settings = analytics.utils.resolveSettings(settings, 'apiKey');
         analytics.utils.extend(this.settings, settings);
 
-        var _learnq = _learnq || [];
+        var _learnq = window._learnq = window._learnq || [];
         _learnq.push(['account', this.settings.apiKey]);
-        window._learnq = _learnq;
         (function () {
             var b = document.createElement('script'); b.type = 'text/javascript'; b.async = true;
             b.src = ('https:' == document.location.protocol ? 'https://' : 'http://') +
@@ -969,14 +1391,14 @@ analytics.addProvider('Mixpanel', {
 
         (function(c,a){window.mixpanel=a;var b,d,h,e;b=c.createElement("script");
         b.type="text/javascript";b.async=!0;b.src=("https:"===c.location.protocol?"https:":"http:")+
-        '//cdn.mxpnl.com/libs/mixpanel-2.1.min.js';d=c.getElementsByTagName("script")[0];
+        '//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';d=c.getElementsByTagName("script")[0];
         d.parentNode.insertBefore(b,d);a._i=[];a.init=function(b,c,f){function d(a,b){
         var c=b.split(".");2==c.length&&(a=a[c[0]],b=c[1]);a[b]=function(){a.push([b].concat(
         Array.prototype.slice.call(arguments,0)))}}var g=a;"undefined"!==typeof f?g=a[f]=[]:
         f="mixpanel";g.people=g.people||[];h=['disable','track','track_pageview','track_links',
-        'track_forms','register','register_once','unregister','identify','name_tag',
-        'set_config','people.identify','people.set','people.increment'];for(e=0;e<h.length;e++)d(g,h[e]);
-        a._i.push([b,c,f])};a.__SV=1.1;})(document,window.mixpanel||[]);
+        'track_forms','register','register_once','unregister','identify','alias','name_tag',
+        'set_config','people.set','people.increment'];for(e=0;e<h.length;e++)d(g,h[e]);
+        a._i.push([b,c,f])};a.__SV=1.2;})(document,window.mixpanel||[]);
 
         // Pass settings directly to `init` as the second argument.
         window.mixpanel.init(this.settings.token, this.settings);
@@ -1009,7 +1431,6 @@ analytics.addProvider('Mixpanel', {
         if (userId) {
             window.mixpanel.identify(userId);
             if (this.settings.nameTag) window.mixpanel.name_tag(userId);
-            if (this.settings.people) window.mixpanel.people.identify(userId);
         }
         if (traits) {
             window.mixpanel.register(traits);
@@ -1123,3 +1544,189 @@ analytics.addProvider('Olark', {
 });
 
 
+// Quantcast
+// ---------
+// [Documentation](https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/)
+
+analytics.addProvider('Quantcast', {
+
+    settings : {
+        pCode : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'pCode');
+        analytics.utils.extend(this.settings, settings);
+
+        var _qevents = window._qevents = window._qevents || [];
+
+        (function() {
+           var elem = document.createElement('script');
+           elem.src = (document.location.protocol == "https:" ? "https://secure" : "http://edge") + ".quantserve.com/quant.js";
+           elem.async = true;
+           elem.type = "text/javascript";
+           var scpt = document.getElementsByTagName('script')[0];
+           scpt.parentNode.insertBefore(elem, scpt);
+        })();
+
+        _qevents.push({qacct: settings.pCode});
+
+        // NOTE: the <noscript><div><img> bit in the docs is ignored
+        // because we have to run JS in order to do any of this!
+    }
+
+});
+
+
+// SnapEngage
+// ----------
+// [Documentation](http://help.snapengage.com/installation-guide-getting-started-in-a-snap/).
+
+analytics.addProvider('SnapEngage', {
+
+    settings : {
+        apiKey : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    // Changes to the SnapEngage snippet:
+    //
+    // * Add `apiKey` from stored `settings`.
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'apiKey');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
+        (function() {
+            var se = document.createElement('script'); se.type = 'text/javascript'; se.async = true;
+            se.src = '//commondatastorage.googleapis.com/code.snapengage.com/js/'+self.settings.apiKey+'.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(se, s);
+        })();
+    }
+
+});
+
+
+// USERcycle
+// -----------
+// [Documentation](http://docs.usercycle.com/javascript_api).
+
+analytics.addProvider('USERcycle', {
+
+    settings : {
+        key : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'key');
+        analytics.utils.extend(this.settings, settings);
+
+        var _uc = window._uc = window._uc || [];
+        (function(){
+            var e = document.createElement('script');
+            e.setAttribute('type', 'text/javascript');
+            var protocol = 'https:' == document.location.protocol ? 'https://' : 'http://';
+            e.setAttribute('src', protocol+'api.usercycle.com/javascripts/track.js');
+            document.body.appendChild(e);
+        })();
+
+        window._uc.push(['_key', settings.key]);
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        if (userId) window._uc.push(['uid', userId, traits]);
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        window._uc.push(['action', event, properties]);
+    }
+
+});
+
+
+// GetVero.com
+// -----------
+// [Documentation](https://github.com/getvero/vero-api/blob/master/sections/js.md).
+
+analytics.addProvider('Vero', {
+
+    settings : {
+        apiKey : null
+    },
+
+
+    // Initialize
+    // ----------
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'apiKey');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
+
+        var _veroq = window._veroq = window._veroq || [];
+        _veroq.push(['init', {
+            api_key: settings.apiKey
+        }]);
+        (function(){
+            var ve = document.createElement('script');
+            ve.type = 'text/javascript';
+            ve.async = true;
+            ve.src = '//www.getvero.com/assets/m.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ve, s);
+        })();
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        // Don't do anything if we just have traits, because Vero
+        // requires a `userId`.
+        if (!userId) return;
+
+        traits || (traits = {});
+
+        // Vero takes the `userId` as part of the traits object.
+        traits.id = userId;
+
+        // If there wasn't already an email and the userId is one, use it.
+        if (!traits.email && analytics.utils.isEmail(userId)) {
+            traits.email = userId;
+        }
+
+        // Vero *requires* an email and an id
+        if (!traits.id || !traits.email) return;
+
+        window._veroq.push(['user', traits]);
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        window._veroq.push(['track', event, properties]);
+    }
+
+});

@@ -17,7 +17,7 @@ analytics.addProvider('Vero', {
 
         var self = this;
 
-        var _veroq = window._veroq = _veroq || [];
+        var _veroq = window._veroq = window._veroq || [];
         _veroq.push(['init', {
             api_key: settings.apiKey
         }]);
@@ -65,5 +65,3 @@ analytics.addProvider('Vero', {
     }
 
 });
-
-

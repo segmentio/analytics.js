@@ -1,4 +1,4 @@
-//     Analytics.js 0.3.0
+//     Analytics.js 0.4.0
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -23,6 +23,10 @@
 
         // Whether analytics.js has been initialized with providers.
         initialized : false,
+
+        // The amount of milliseconds to wait for requests to providers to clear
+        // before navigating away from the current page.
+        timeout : 250,
 
 
         // Providers
@@ -98,15 +102,26 @@
         // * `userId` (optional) is the ID you know the user by. Ideally this
         // isn't an email, because the user might be able to change their email
         // and you don't want that to affect your analytics.
+        //
         // * `traits` (optional) is a dictionary of traits to tie your user.
         // Things like `name`, `age` or `friendCount`. If you have them, you
         // should always store a `name` and `email`.
-        identify : function (userId, traits) {
+        //
+        // * `callback` (optional) is a function to call after the a small
+        // timeout to give the identify requests a chance to be sent.
+        identify : function (userId, traits, callback) {
             if (!this.initialized) return;
+
+            // Allow for not passing traits, but passing a callback.
+            if (this.utils.isFunction(traits)) {
+                callback = traits;
+                traits = null;
+            }
 
             // Allow for identifying traits without setting a `userId`, for
             // anonymous users whose traits you learn.
             if (this.utils.isObject(userId)) {
+                if (traits && this.utils.isFunction(traits)) callback = traits;
                 traits = userId;
                 userId = null;
             }
@@ -121,6 +136,10 @@
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.identify) continue;
                 provider.identify(userId, this.utils.clone(traits));
+            }
+
+            if (callback && this.utils.isFunction(callback)) {
+                setTimeout(callback, this.timeout);
             }
         },
 
@@ -139,16 +158,135 @@
         // * `event` is the name of the event. The best names are human-readable
         // so that your whole team knows what they mean when they analyze your
         // data.
+        //
         // * `properties` (optional) is a dictionary of properties of the event.
         // Property keys are all camelCase (we'll alias to non-camelCase for
         // you automatically for providers that require it).
-        track : function (event, properties) {
+        //
+        // * `callback` (optional) is a function to call after the a small
+        // timeout to give the track requests a chance to be sent.
+        track : function (event, properties, callback) {
             if (!this.initialized) return;
+
+            // Allow for not passing properties, but passing a callback.
+            if (this.utils.isFunction(properties)) {
+                callback = properties;
+                properties = null;
+            }
 
             // Call `track` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.track) continue;
                 provider.track(event, this.utils.clone(properties));
+            }
+
+            if (callback && this.utils.isFunction(callback)) {
+                setTimeout(callback, this.timeout);
+            }
+        },
+
+
+        // ### trackLink
+
+        // A helper for tracking outbound links that would normally leave the
+        // page before the track calls went out. It works by wrapping the calls
+        // in as short of a timeout as possible to fire the track call, because
+        // [response times matter](http://theixdlibrary.com/pdf/Miller1968.pdf).
+        //
+        // * `link` is either a single link DOM element, or an array of link
+        // elements like jQuery gives you.
+        //
+        // * `event` and `properties` are passed directly to `analytics.track`
+        // and take the same options.
+        trackLink : function (link, event, properties) {
+            if (!link) return;
+
+            // Turn a single link into an array so that we're always handling
+            // arrays, which allows for passing jQuery objects.
+            if (this.utils.isElement(link)) link = [link];
+
+            // Bind to all the links in the array.
+            for (var i = 0; i < link.length; i++) {
+                var self = this;
+                var el = link[i];
+
+                this.utils.bind(el, 'click', function (e) {
+
+                    // Fire a normal track call.
+                    self.track(event, properties);
+
+                    // To justify us preventing the default behavior we must:
+                    //
+                    // * Have an `href` to use.
+                    // * Not have a `target="_blank"` attribute.
+                    // * Not have any special keys pressed, because they might
+                    // be trying to open in a new tab, or window, or download
+                    // the asset.
+                    //
+                    // This might not cover all cases, but we'd rather throw out
+                    // an event than miss a case that breaks the experience.
+                    if (el.href && el.target !== '_blank' && !self.utils.isMeta(e)) {
+
+                        // Prevent the link's default redirect in all the sane
+                        // browsers, and also IE.
+                        if (e.preventDefault)
+                            e.preventDefault();
+                        else
+                            e.returnValue = false;
+
+                        // Navigate to the url after a small timeout, giving the
+                        // providers time to track the event.
+                        setTimeout(function () {
+                            window.location.href = el.href;
+                        }, self.timeout);
+                    }
+                });
+            }
+        },
+
+
+        // ### trackForm
+
+        // Similar to `trackClick`, this is a helper for tracking form
+        // submissions that would normally leave the page before a track call
+        // can be sent. It works by preventing the default submit, sending a
+        // track call, and then submitting the form programmatically.
+        //
+        // * `form` is either a single form DOM element, or an array of
+        // form elements like jQuery gives you.
+        //
+        // * `event` and `properties` are passed directly to `analytics.track`
+        // and take the same options.
+        trackForm : function (form, event, properties) {
+            if (!form) return;
+
+            // Turn a single element into an array so that we're always handling
+            // arrays, which allows for passing jQuery objects.
+            if (this.utils.isElement(form)) form = [form];
+
+            // Bind to all the forms in the array.
+            for (var i = 0; i < form.length; i++) {
+                var self = this;
+                var el = form[i];
+
+                this.utils.bind(el, 'submit', function (e) {
+
+                    // Fire a normal track call.
+                    self.track(event, properties);
+
+                    // Prevent the form's default submit in all the sane
+                    // browsers, and also IE.
+                    if (e.preventDefault)
+                        e.preventDefault();
+                    else
+                        e.returnValue = false;
+
+                    // Submit the form after a small timeout, giving the event
+                    // time to get fired.
+                    setTimeout(function () {
+                        el.submit();
+                    }, this.timeout);
+                });
             }
         },
 
@@ -185,20 +323,38 @@
 
         utils : {
 
+            // Attach an event handler to a DOM element, even in IE.
+            bind : function (el, event, callback) {
+                if (el.addEventListener) {
+                    el.addEventListener(event, callback, false);
+                } else if (el.attachEvent) {
+                    el.attachEvent('on' + event, callback);
+                }
+            },
+
+            // Given a DOM event, tell us whether a meta key or button was
+            // pressed that would make a link open in a new tab, window,
+            // start a download, or anything else that wouldn't take the user to
+            // a new page.
+            isMeta : function (e) {
+                if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
+
+                // Logic that handles checks for the middle mouse button, based
+                // on [jQuery](https://github.com/jquery/jquery/blob/master/src/event.js#L466).
+                var which = e.which, button = e.button;
+                if (!which && button !== undefined) {
+                    return (!button & 1) && (!button & 2) && (button & 4);
+                } else if (which === 2) {
+                    return true;
+                }
+
+                return false;
+            },
+
             // Given a timestamp, return its value in seconds. For providers
             // that rely on Unix time instead of millis.
             getSeconds : function (time) {
                 return Math.floor((new Date(time)) / 1000);
-            },
-
-            // A helper to shallow-ly clone objects, so that they don't get
-            // mangled by different analytics providers because of the
-            // reference.
-            clone : function (obj) {
-                if (!obj) return;
-                var clone = {};
-                for (var prop in obj) clone[prop] = obj[prop];
-                return clone;
             },
 
             // A helper to extend objects with properties from other objects.
@@ -212,6 +368,14 @@
                     }
                 }
                 return obj;
+            },
+
+            // A helper to shallow-ly clone objects, so that they don't get
+            // mangled by different analytics providers because of the
+            // reference.
+            clone : function (obj) {
+                if (!obj) return;
+                return this.extend({}, obj);
             },
 
             // A helper to alias certain object's keys to different key names.
@@ -228,7 +392,13 @@
             },
 
             // Type detection helpers, copied from
-            // [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L928-L938).
+            // [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L926-L946).
+            isElement : function(obj) {
+                return !!(obj && obj.nodeType === 1);
+            },
+            isArray : Array.isArray || function (obj) {
+                return Object.prototype.toString.call(obj) === '[object Array]';
+            },
             isObject : function (obj) {
                 return obj === Object(obj);
             },
@@ -282,6 +452,10 @@
         }
 
     };
+
+    // Add `trackClick` and `trackSubmit` for backwards compatibility.
+    analytics.trackClick = analytics.trackLink;
+    analytics.trackSubmit = analytics.trackForm;
 
     // Wrap any existing `onload` function with our own that will cache the
     // loaded state of the page.

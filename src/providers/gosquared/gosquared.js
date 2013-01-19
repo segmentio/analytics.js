@@ -25,9 +25,15 @@ analytics.addProvider('GoSquared', {
 
         var GoSquared = window.GoSquared = {};
         GoSquared.acct = this.settings.siteToken;
-        window._gstc_lt=+(new Date); var d=document;
-        var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
-        var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
+        window._gstc_lt =+ (new Date);
+        var d = document;
+        var g = d.createElement('script');
+        g.type = 'text/javascript';
+        g.async = true;
+        var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+        g.src = protocol + '//d1l6p2sc9645hc.cloudfront.net/tracker.js';
+        var s = d.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(g, s);
     },
 
 

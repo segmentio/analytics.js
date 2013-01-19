@@ -501,14 +501,14 @@ analytics.addProvider('Chartbeat', {
         (function(){
             // Use the stored date from when we were loaded.
             window._sf_endpt = analytics.date.getTime();
-            var e = document.createElement("script");
-            e.setAttribute("language", "javascript");
-            e.setAttribute("type", "text/javascript");
-            e.setAttribute("src",
-                (("https:" == document.location.protocol) ?
-                    "https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/" :
-                    "http://static.chartbeat.com/") +
-                "js/chartbeat.js");
+            var e = document.createElement('script');
+            e.setAttribute('language', 'javascript');
+            e.setAttribute('type', 'text/javascript');
+            e.setAttribute('src',
+                (('https:' == document.location.protocol) ?
+                    'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/' :
+                    'http://static.chartbeat.com/') +
+                'js/chartbeat.js');
             document.body.appendChild(e);
         })();
     },
@@ -549,7 +549,8 @@ analytics.addProvider('Clicky', {
             var s = document.createElement('script');
             s.type = 'text/javascript';
             s.async = true;
-            s.src = '//static.getclicky.com/js';
+            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+            s.src = protocol + '//static.getclicky.com/js';
             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
         })();
     },
@@ -588,10 +589,10 @@ analytics.addProvider('comScore', {
         _comscore.push(this.settings);
 
         (function() {
-            var s = document.createElement("script");
-            var el = document.getElementsByTagName("script")[0];
+            var s = document.createElement('script');
+            var el = document.getElementsByTagName('script')[0];
             s.async = true;
-            s.src = (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js";
+            s.src = (document.location.protocol == 'https:' ? 'https://sb' : 'http://b') + '.scorecardresearch.com/beacon.js';
             el.parentNode.insertBefore(s, el);
         })();
 
@@ -624,10 +625,12 @@ analytics.addProvider('CrazyEgg', {
 
         var apiKey = this.settings.apiKey;
         (function(){
-            var a=document.createElement("script");
-            var b=document.getElementsByTagName("script")[0];
-            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
-            a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b);
+            var a = document.createElement('script');
+            var b = document.getElementsByTagName('script')[0];
+            a.src = document.location.protocol+'//dnn506yrbagrg.cloudfront.net/pages/scripts/'+apiKey+'.js?'+Math.floor(new Date().getTime()/3600000);
+            a.async = true;
+            a.type = 'text/javascript';
+            b.parentNode.insertBefore(a,b);
         })();
     }
 
@@ -659,9 +662,16 @@ analytics.addProvider('Customer.io', {
 
         var _cio = window._cio = window._cio || [];
         (function() {
-            var a,b,c;a=function(f){return function(){_cio.push([f].
-            concat(Array.prototype.slice.call(arguments,0)))}};b=["identify",
-            "track"];for(c=0;c<b.length;c++){_cio[b[c]]=a(b[c])};
+            var a,b,c;
+            a = function (f) {
+                return function () {
+                    _cio.push([f].concat(Array.prototype.slice.call(arguments,0)));
+                };
+            };
+            b = ['identify', 'track'];
+            for (c = 0; c < b.length; c++) {
+                _cio[b[c]] = a(b[c]);
+            }
             var t = document.createElement('script'),
                 s = document.getElementsByTagName('script')[0];
             t.async = true;
@@ -741,13 +751,14 @@ analytics.addProvider('Errorception', {
                 _errs.push(arguments);
             };
             var d = function () {
-                var a = b.createElement("script"),
-                    c = b.getElementsByTagName("script")[0];
-                a.src = "//d15qhc0lu1ghnk.cloudfront.net/beacon.js";
+                var a = b.createElement('script'),
+                    c = b.getElementsByTagName('script')[0],
+                    protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+                a.src = protocol + '//d15qhc0lu1ghnk.cloudfront.net/beacon.js';
                 a.async = true;
                 c.parentNode.insertBefore(a,c);
             };
-            a.addEventListener ? a.addEventListener("load",d,!1) : a.attachEvent("onload",d);
+            a.addEventListener ? a.addEventListener('load', d, !1) : a.attachEvent('onload', d);
         })(window,document);
     }
 
@@ -948,7 +959,8 @@ analytics.addProvider('Gauges', {
             t.async = true;
             t.id    = 'gauges-tracker';
             t.setAttribute('data-site-id', settings.siteId);
-            t.src = '//secure.gaug.es/track.js';
+            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+            t.src = protocol + '//secure.gaug.es/track.js';
             var s = document.getElementsByTagName('script')[0];
             s.parentNode.insertBefore(t, s);
         })();
@@ -990,9 +1002,15 @@ analytics.addProvider('GoSquared', {
 
         var GoSquared = window.GoSquared = {};
         GoSquared.acct = this.settings.siteToken;
-        window._gstc_lt=+(new Date); var d=document;
-        var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
-        var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
+        window._gstc_lt =+ (new Date);
+        var d = document;
+        var g = d.createElement('script');
+        g.type = 'text/javascript';
+        g.async = true;
+        var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+        g.src = protocol + '//d1l6p2sc9645hc.cloudfront.net/tracker.js';
+        var s = d.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(g, s);
     },
 
 
@@ -1090,10 +1108,12 @@ analytics.addProvider('HubSpot', {
         (function(d,s,i,r) {
             if (d.getElementById(i)){return;}
             window._hsq = window._hsq || []; // for calls pre-load
-            var n=d.createElement(s),e=d.getElementsByTagName(s)[0];
-            n.id=i;n.src='https://js.hubspot.com/analytics/'+(Math.ceil(new Date()/r)*r)+'/' + self.settings.portalId + '.js';
+            var n = d.createElement(s),
+                e = d.getElementsByTagName(s)[0];
+            n.id = i;
+            n.src = 'https://js.hubspot.com/analytics/' + (Math.ceil(new Date()/r)*r) + '/' + self.settings.portalId + '.js';
             e.parentNode.insertBefore(n, e);
-        })(document,"script","hs-analytics",300000);
+        })(document, 'script', 'hs-analytics', 300000);
     },
 
 
@@ -1216,12 +1236,19 @@ analytics.addProvider('Keen', {
     // Initialize
     // ----------
     initialize: function(settings) {
-        if (typeof settings !== "object" || !settings.projectId || !settings.apiKey) {
-            throw new Error("Settings must be an object with properties 'projectId' and 'apiKey'.");
+        if (typeof settings !== 'object' || !settings.projectId || !settings.apiKey) {
+            throw new Error('Settings must be an object with properties projectId and apiKey.');
         }
 
-        var Keen=window.Keen||{configure:function(a,b,c){this._pId=a;this._ak=b;this._op=c},addEvent:function(a,b,c,d){this._eq=this._eq||[];this._eq.push([a,b,c,d])},setGlobalProperties:function(a){this._gp=a},onChartsReady:function(a){this._ocrq=this._ocrq||[];this._ocrq.push(a)}};
-        (function(){var a=document.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"==document.location.protocol?"https://":"http://")+"dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js";var b=document.getElementsByTagName("script")[0];b.parentNode.insertBefore(a,b)})();
+        var Keen = window.Keen||{configure:function(a,b,c){this._pId=a;this._ak=b;this._op=c},addEvent:function(a,b,c,d){this._eq=this._eq||[];this._eq.push([a,b,c,d])},setGlobalProperties:function(a){this._gp=a},onChartsReady:function(a){this._ocrq=this._ocrq||[];this._ocrq.push(a)}};
+        (function(){
+            var a = document.createElement('script');
+            a.type = 'text/javascript';
+            a.async = true;
+            a.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js';
+            var b = document.getElementsByTagName('script')[0];
+            b.parentNode.insertBefore(a,b);
+        })();
 
         // Configure the Keen object with your Project ID and API Key.
         Keen.configure(settings.projectId, settings.apiKey);
@@ -1235,14 +1262,15 @@ analytics.addProvider('Keen', {
     // Identify
     // --------
     identify: function(userId, traits) {
-        // Use Keen IO global properties to include user ID and traits on every event sent to Keen IO.
+        // Use Keen IO global properties to include user ID
+        // and traits on every event sent to Keen IO.
         var globalUserProps = {};
         if (userId) globalUserProps.userId = userId;
         if (traits) globalUserProps.traits = traits;
         if (userId || traits) {
             window.Keen.setGlobalProperties(function(eventCollection) {
                 return {
-                    "user": globalUserProps
+                    'user': globalUserProps
                 };
             });
         }
@@ -1281,9 +1309,13 @@ analytics.addProvider('KISSmetrics', {
         var _kmq = window._kmq = window._kmq || [];
         function _kms(u){
             setTimeout(function(){
-                var d = document, f = d.getElementsByTagName('script')[0],
-                s = d.createElement('script');
-                s.type = 'text/javascript'; s.async = true; s.src = u;
+                var d = document,
+                    f = d.getElementsByTagName('script')[0],
+                    s = d.createElement('script');
+                s.type = 'text/javascript';
+                s.async = true;
+                var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+                s.src = protocol + u;
                 f.parentNode.insertBefore(s, f);
             }, 1);
         }
@@ -1338,10 +1370,13 @@ analytics.addProvider('Klaviyo', {
         var _learnq = window._learnq = window._learnq || [];
         _learnq.push(['account', this.settings.apiKey]);
         (function () {
-            var b = document.createElement('script'); b.type = 'text/javascript'; b.async = true;
+            var b = document.createElement('script');
+            b.type = 'text/javascript';
+            b.async = true;
             b.src = ('https:' == document.location.protocol ? 'https://' : 'http://') +
                 'a.klaviyo.com/media/js/learnmarklet.js';
-            var a = document.getElementsByTagName('script')[0]; a.parentNode.insertBefore(b, a);
+            var a = document.getElementsByTagName('script')[0];
+            a.parentNode.insertBefore(b, a);
         })();
     },
 
@@ -1397,16 +1432,33 @@ analytics.addProvider('Mixpanel', {
         settings = analytics.utils.resolveSettings(settings, 'token');
         analytics.utils.extend(this.settings, settings);
 
-        (function(c,a){window.mixpanel=a;var b,d,h,e;b=c.createElement("script");
-        b.type="text/javascript";b.async=!0;b.src=("https:"===c.location.protocol?"https:":"http:")+
-        '//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';d=c.getElementsByTagName("script")[0];
-        d.parentNode.insertBefore(b,d);a._i=[];a.init=function(b,c,f){function d(a,b){
-        var c=b.split(".");2==c.length&&(a=a[c[0]],b=c[1]);a[b]=function(){a.push([b].concat(
-        Array.prototype.slice.call(arguments,0)))}}var g=a;"undefined"!==typeof f?g=a[f]=[]:
-        f="mixpanel";g.people=g.people||[];h=['disable','track','track_pageview','track_links',
-        'track_forms','register','register_once','unregister','identify','alias','name_tag',
-        'set_config','people.set','people.increment'];for(e=0;e<h.length;e++)d(g,h[e]);
-        a._i.push([b,c,f])};a.__SV=1.2;})(document,window.mixpanel||[]);
+        (function (c, a) {
+            window.mixpanel = a;
+            var b, d, h, e;
+            b = c.createElement('script');
+            b.type = 'text/javascript';
+            b.async = true;
+            b.src = ('https:' === c.location.protocol ? 'https:' : 'http:') + '//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';
+            d = c.getElementsByTagName('script')[0];
+            d.parentNode.insertBefore(b, d);
+            a._i = [];
+            a.init = function (b, c, f) {
+                function d(a, b) {
+                    var c = b.split('.');
+                    2 == c.length && (a = a[c[0]], b = c[1]);
+                    a[b] = function () {
+                        a.push([b].concat(Array.prototype.slice.call(arguments, 0)));
+                    };
+                }
+                var g = a;
+                'undefined' !== typeof f ? g = a[f] = [] : f = 'mixpanel';
+                g.people = g.people || [];
+                h = ['disable', 'track', 'track_pageview', 'track_links', 'track_forms', 'register', 'register_once', 'unregister', 'identify', 'alias', 'name_tag', 'set_config', 'people.set', 'people.increment'];
+                for (e = 0; e < h.length; e++) d(g, h[e]);
+                a._i.push([b, c, f]);
+            };
+            a.__SV = 1.2;
+        })(document, window.mixpanel || []);
 
         // Pass settings directly to `init` as the second argument.
         window.mixpanel.init(this.settings.token, this.settings);
@@ -1574,9 +1626,9 @@ analytics.addProvider('Quantcast', {
 
         (function() {
            var elem = document.createElement('script');
-           elem.src = (document.location.protocol == "https:" ? "https://secure" : "http://edge") + ".quantserve.com/quant.js";
+           elem.src = (document.location.protocol == 'https:' ? 'https://secure' : 'http://edge') + '.quantserve.com/quant.js';
            elem.async = true;
-           elem.type = "text/javascript";
+           elem.type = 'text/javascript';
            var scpt = document.getElementsByTagName('script')[0];
            scpt.parentNode.insertBefore(elem, scpt);  
         })();
@@ -1613,8 +1665,11 @@ analytics.addProvider('SnapEngage', {
 
         var self = this;
         (function() {
-            var se = document.createElement('script'); se.type = 'text/javascript'; se.async = true;
-            se.src = '//commondatastorage.googleapis.com/code.snapengage.com/js/'+self.settings.apiKey+'.js';
+            var se = document.createElement('script');
+            se.type = 'text/javascript';
+            se.async = true;
+            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+            se.src = protocol + '//commondatastorage.googleapis.com/code.snapengage.com/js/'+self.settings.apiKey+'.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(se, s);
         })();
     }
@@ -1698,7 +1753,8 @@ analytics.addProvider('Vero', {
             var ve = document.createElement('script');
             ve.type = 'text/javascript';
             ve.async = true;
-            ve.src = '//www.getvero.com/assets/m.js';
+            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+            ve.src = protocol + '//www.getvero.com/assets/m.js';
             var s = document.getElementsByTagName('script')[0];
             s.parentNode.insertBefore(ve, s);
         })();

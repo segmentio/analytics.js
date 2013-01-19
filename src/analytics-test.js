@@ -197,31 +197,7 @@
 
     suite('trackLink');
 
-    test('triggers a track on a button click', function () {
-        var spy    = sinon.spy(provider, 'track');
-        var button = $('<button>')[0];
-
-        analytics.trackLink(button, 'party');
-
-        $(button).click();
-        expect(spy.calledWith('party')).to.be(true);
-
-        spy.restore();
-    });
-
-    test('triggers a track on a $button click', function () {
-        var spy     = sinon.spy(provider, 'track');
-        var $button = $('<button>');
-
-        analytics.trackLink($button, 'party');
-
-        $button.click();
-        expect(spy.calledWith('party')).to.be(true);
-
-        spy.restore();
-    });
-
-    test('triggers a track on a link click without an href', function () {
+    test('triggers a track on a link click', function () {
         var spy  = sinon.spy(provider, 'track');
         var link = $('<a>')[0];
 
@@ -230,6 +206,47 @@
         triggerClick(link);
 
         expect(spy.calledWith('party')).to.be(true);
+
+        spy.restore();
+    });
+
+    test('triggers a track on a $link click', function () {
+        var spy   = sinon.spy(provider, 'track');
+        var $link = $('<a>');
+
+        analytics.trackLink($link, 'party');
+
+        triggerClick($link[0]);
+
+        expect(spy.calledWith('party')).to.be(true);
+
+        spy.restore();
+    });
+
+    test('allows for properties to be a function', function () {
+        var spy  = sinon.spy(provider, 'track');
+        var link = $('<a>')[0];
+
+        analytics.trackLink(link, 'party', function () {
+            return { type : 'crazy' };
+        });
+
+        triggerClick(link);
+
+        expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
+
+        spy.restore();
+    });
+
+    test('calls a properties function with the link that was clicked', function () {
+        var spy    = sinon.spy();
+        var link = $('<a>')[0];
+
+        analytics.trackLink(link, 'party', spy);
+
+        triggerClick(link);
+
+        expect(spy.calledWith(link)).to.be(true);
 
         spy.restore();
     });
@@ -328,6 +345,36 @@
         triggerClick(input);
 
         expect(spy.calledWith('party')).to.be(true);
+
+        spy.restore();
+    });
+
+    test('allows for properties to be a function', function () {
+        var spy   = sinon.spy(provider, 'track');
+        var form  = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
+        var input = $(form).find('input')[0];
+
+        analytics.trackForm(form, 'party', function () {
+            return { type : 'crazy' };
+        });
+
+        triggerClick(input);
+
+        expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
+
+        spy.restore();
+    });
+
+    test('calls a properties function with the link that was clicked', function () {
+        var spy   = sinon.spy();
+        var form  = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
+        var input = $(form).find('input')[0];
+
+        analytics.trackForm(form, 'party', spy);
+
+        triggerClick(input);
+
+        expect(spy.calledWith(form)).to.be(true);
 
         spy.restore();
     });

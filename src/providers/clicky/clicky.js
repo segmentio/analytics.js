@@ -23,7 +23,8 @@ analytics.addProvider('Clicky', {
             var s = document.createElement('script');
             s.type = 'text/javascript';
             s.async = true;
-            s.src = '//static.getclicky.com/js';
+            var protocol = (('https:' == document.location.protocol) ? 'https:' : 'http:');
+            s.src = protocol + '//static.getclicky.com/js';
             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
         })();
     },

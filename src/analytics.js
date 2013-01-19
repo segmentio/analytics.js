@@ -1,4 +1,4 @@
-//     Analytics.js 0.4.1
+//     Analytics.js 0.4.2
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -216,7 +216,7 @@
 
                     // Allow for properties to be a function. And pass it the
                     // link element that was clicked.
-                    if (this.utils.isFunction(properties)) properties = properties(el);
+                    if (self.utils.isFunction(properties)) properties = properties(el);
 
                     // Fire a normal track call.
                     self.track(event, properties);
@@ -281,7 +281,7 @@
 
                     // Allow for properties to be a function. And pass it the
                     // form element that was submitted.
-                    if (this.utils.isFunction(properties)) properties = properties(el);
+                    if (self.utils.isFunction(properties)) properties = properties(el);
 
                     // Fire a normal track call.
                     self.track(event, properties);

@@ -247,8 +247,6 @@
         triggerClick(link);
 
         expect(spy.calledWith(link)).to.be(true);
-
-        spy.restore();
     });
 
     test('triggers a track and loads an href on a link click with an href', function (done) {
@@ -322,13 +320,12 @@
     suite('trackForm');
 
     test('triggers a track on a form submit', function () {
-        var spy   = sinon.spy(provider, 'track');
-        var form  = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
-        var input = $(form).find('input')[0];
+        var spy  = sinon.spy(provider, 'track');
+        var form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
 
         analytics.trackForm(form, 'party');
 
-        triggerClick(input);
+        triggerClick($(form).find('input')[0]);
 
         expect(spy.calledWith('party')).to.be(true);
 
@@ -337,12 +334,11 @@
 
     test('triggers a track on a $form submit', function () {
         var spy   = sinon.spy(provider, 'track');
-        var form  = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
-        var input = $(form).find('input')[0];
+        var $form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
 
-        analytics.trackForm(form, 'party');
+        analytics.trackForm($form, 'party');
 
-        triggerClick(input);
+        triggerClick($form.find('input')[0]);
 
         expect(spy.calledWith('party')).to.be(true);
 
@@ -350,33 +346,29 @@
     });
 
     test('allows for properties to be a function', function () {
-        var spy   = sinon.spy(provider, 'track');
-        var form  = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
-        var input = $(form).find('input')[0];
+        var spy  = sinon.spy(provider, 'track');
+        var form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
 
         analytics.trackForm(form, 'party', function () {
             return { type : 'crazy' };
         });
 
-        triggerClick(input);
+        triggerClick($(form).find('input')[0]);
 
         expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
 
         spy.restore();
     });
 
-    test('calls a properties function with the link that was clicked', function () {
-        var spy   = sinon.spy();
-        var form  = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
-        var input = $(form).find('input')[0];
+    test('calls a properties function with the form that was clicked', function () {
+        var spy  = sinon.spy();
+        var form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
 
         analytics.trackForm(form, 'party', spy);
 
-        triggerClick(input);
+        triggerClick($(form).find('input')[0]);
 
         expect(spy.calledWith(form)).to.be(true);
-
-        spy.restore();
     });
 
     test('trackSubmit is aliased to trackForm for backwards compatibility', function () {

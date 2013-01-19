@@ -1,3 +1,8 @@
+0.4.2 / 2013-1-18
+=================
+
+* Added option to use a properties function in `trackLink` and `trackForm` methods
+
 0.4.1 / 2013-1-18
 =================
 

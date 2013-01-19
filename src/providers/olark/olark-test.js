@@ -20,12 +20,12 @@
     // ----------
 
     test('stores settings and adds olark.js on initialize', function () {
-        expect(window.olark).not.to.exist;
+        expect(window.olark).to.be(undefined);
 
         analytics.initialize({
             'Olark' : 'x'
         });
-        expect(window.olark).to.exist;
+        expect(window.olark).not.to.be(undefined);
         expect(analytics.providers[0].settings.siteId).to.equal('x');
     });
 

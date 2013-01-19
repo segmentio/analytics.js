@@ -192,16 +192,16 @@
     });
 
 
-    // Track Click
-    // -----------
+    // Track Link
+    // ----------
 
-    suite('trackClick');
+    suite('trackLink');
 
     test('triggers a track on a button click', function () {
         var spy    = sinon.spy(provider, 'track');
         var button = $('<button>')[0];
 
-        analytics.trackClick(button, 'party');
+        analytics.trackLink(button, 'party');
 
         $(button).click();
         expect(spy.calledWith('party')).to.be(true);
@@ -213,7 +213,7 @@
         var spy     = sinon.spy(provider, 'track');
         var $button = $('<button>');
 
-        analytics.trackClick($button, 'party');
+        analytics.trackLink($button, 'party');
 
         $button.click();
         expect(spy.calledWith('party')).to.be(true);
@@ -225,7 +225,7 @@
         var spy  = sinon.spy(provider, 'track');
         var link = $('<a>')[0];
 
-        analytics.trackClick(link, 'party');
+        analytics.trackLink(link, 'party');
 
         triggerClick(link);
 
@@ -241,7 +241,7 @@
         // Make sure hash is reset.
         window.location.hash = '';
 
-        analytics.trackClick(link, 'party');
+        analytics.trackLink(link, 'party');
 
         triggerClick(link);
 
@@ -267,7 +267,7 @@
         // Make sure hash is reset.
         window.location.hash = '';
 
-        analytics.trackClick(link, 'party');
+        analytics.trackLink(link, 'party');
 
         triggerClick(link);
 
@@ -284,7 +284,7 @@
         // Make sure hash is reset.
         window.location.hash = '';
 
-        analytics.trackClick(link, 'party');
+        analytics.trackLink(link, 'party');
 
         triggerClick(link, true);
 
@@ -294,18 +294,22 @@
         spy.restore();
     });
 
+    test('trackClick is aliased to trackLink for backwards compatibility', function () {
+        expect(analytics.trackClick).to.equal(analytics.trackLink);
+    });
 
-    // Track Submit
-    // ------------
 
-    suite('trackSubmit');
+    // Track Form
+    // ----------
+
+    suite('trackForm');
 
     test('triggers a track on a form submit', function () {
         var spy   = sinon.spy(provider, 'track');
         var form  = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
         var input = $(form).find('input')[0];
 
-        analytics.trackSubmit(form, 'party');
+        analytics.trackForm(form, 'party');
 
         triggerClick(input);
 
@@ -319,13 +323,17 @@
         var form  = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
         var input = $(form).find('input')[0];
 
-        analytics.trackSubmit(form, 'party');
+        analytics.trackForm(form, 'party');
 
         triggerClick(input);
 
         expect(spy.calledWith('party')).to.be(true);
 
         spy.restore();
+    });
+
+    test('trackSubmit is aliased to trackForm for backwards compatibility', function () {
+        expect(analytics.trackSubmit).to.equal(analytics.trackForm);
     });
 
 

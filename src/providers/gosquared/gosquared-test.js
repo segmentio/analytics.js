@@ -20,12 +20,12 @@
     // ----------
 
     test('stores settings and adds GoSquared js on initialize', function (done) {
-        expect(window.GoSquared).not.to.exist;
+        expect(window.GoSquared).to.be(undefined);
 
         analytics.initialize({
             'GoSquared' : 'x'
         });
-        expect(window.GoSquared).to.exist;
+        expect(window.GoSquared).not.to.be(undefined);
         expect(analytics.providers[0].settings.siteToken).to.equal('x');
 
         window.GoSquared.load = function(tracker) {
@@ -39,17 +39,17 @@
     // --------
 
     test('correctly identifies the user', function () {
-        expect(window.GoSquared.UserName).not.to.exist;
-        expect(window.GoSquared.Visitor).not.to.exist;
+        expect(window.GoSquared.UserName).to.be(undefined);
+        expect(window.GoSquared.Visitor).to.be(undefined);
 
         analytics.identify(traits);
-        expect(window.GoSquared.UserName).not.to.exist;
+        expect(window.GoSquared.UserName).to.be(undefined);
         expect(window.GoSquared.Visitor).to.eql(traits);
 
         window.GoSquared.Visitor = undefined;
         analytics.identify(userId);
         expect(window.GoSquared.UserName).to.equal(userId);
-        expect(window.GoSquared.Visitor).not.to.exist;
+        expect(window.GoSquared.Visitor).to.be(undefined);
 
         window.GoSquared.UserName = undefined;
         analytics.identify(userId, traits);

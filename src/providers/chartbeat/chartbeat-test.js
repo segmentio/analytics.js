@@ -7,7 +7,7 @@
     // ----------
 
     test('stores settings and adds chartbeat.js on initialize', function (done) {
-        expect(window.pSUPERFLY).not.to.exist;
+        expect(window.pSUPERFLY).to.be(undefined);
 
         analytics.initialize({
             'Chartbeat' : {
@@ -23,10 +23,10 @@
         // global variable on window...
         var self = this;
         setTimeout(function () {
-            expect(window.pSUPERFLY).to.exist;
+            expect(window.pSUPERFLY).not.to.be(undefined);
             expect(window._sf_async_config).to.equal(analytics.providers[0].settings);
             done();
-        }, 500);
+        }, 1000);
     });
 
 

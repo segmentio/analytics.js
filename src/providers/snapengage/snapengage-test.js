@@ -20,7 +20,7 @@
     // ----------
 
     test('stores settings and adds SnapEngage on initialize', function () {
-        expect(window.SnapABug).not.to.exist;
+        expect(window.SnapABug).to.be(undefined);
 
         analytics.initialize({ 'SnapEngage' : 'x' });
 

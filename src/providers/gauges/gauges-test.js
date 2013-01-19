@@ -7,11 +7,11 @@
     // ----------
 
     test('stores settings and adds gaug.es javascript on initialize', function () {
-        expect(window._gauges).not.to.exist;
+        expect(window._gauges).to.be(undefined);
 
         analytics.initialize({ 'Gauges' : 'x' });
 
-        expect(window._gauges).to.exist;
+        expect(window._gauges).not.to.be(undefined);
         expect(analytics.providers[0].settings.siteId).to.equal('x');
     });
 

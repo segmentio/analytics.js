@@ -20,19 +20,19 @@
     // ----------
 
     test('stores settings and adds hubspot js on initialize', function (done) {
-        expect(window._hsq).not.to.exist;
+        expect(window._hsq).to.be(undefined);
 
         analytics.initialize({
             'HubSpot' : 'x'
         });
-        expect(window._hsq).to.exist;
+        expect(window._hsq).not.to.be(undefined);
         expect(window._hsq.push).to.equal(Array.prototype.push);
         expect(analytics.providers[0].settings.portalId).to.equal('x');
 
         // Once the hubspot JS file comes back, the array should be transformed.
         var self = this;
         setTimeout(function () {
-            expect(window._hsq).to.exist;
+            expect(window._hsq).not.to.be(undefined);
             expect(window._hsq).to.not.equal(Array.prototype.push);
             done();
         }, 100);

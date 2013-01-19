@@ -7,7 +7,7 @@
     // ----------
 
     test('stores settings and adds javascript on initialize', function () {
-        expect(window.CE2).not.to.exist;
+        expect(window.CE2).to.be(undefined);
 
         analytics.initialize({
             'CrazyEgg' : '0013/8301'

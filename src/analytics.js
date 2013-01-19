@@ -1,4 +1,4 @@
-//     Analytics.js 0.3.6
+//     Analytics.js 0.4.1
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -186,29 +186,29 @@
         },
 
 
-        // ### trackClick
+        // ### trackLink
 
         // A helper for tracking outbound links that would normally leave the
         // page before the track calls went out. It works by wrapping the calls
         // in as short of a timeout as possible to fire the track call, because
         // [response times matter](http://theixdlibrary.com/pdf/Miller1968.pdf).
         //
-        // * `element` is either a single DOM element, or an array of DOM
+        // * `link` is either a single link DOM element, or an array of link
         // elements like jQuery gives you.
         //
         // * `event` and `properties` are passed directly to `analytics.track`
         // and take the same options.
-        trackClick : function (element, event, properties) {
-            if (!element) return;
+        trackLink : function (link, event, properties) {
+            if (!link) return;
 
-            // Turn a single element into an array so that we're always handling
+            // Turn a single link into an array so that we're always handling
             // arrays, which allows for passing jQuery objects.
-            if (this.utils.isElement(element)) element = [element];
+            if (this.utils.isElement(link)) link = [link];
 
-            // Bind to all the elements in the array.
-            for (var i = 0; i < element.length; i++) {
+            // Bind to all the links in the array.
+            for (var i = 0; i < link.length; i++) {
                 var self = this;
-                var el = element[i];
+                var el = link[i];
 
                 this.utils.bind(el, 'click', function (e) {
 
@@ -245,19 +245,19 @@
         },
 
 
-        // ### trackSubmit
+        // ### trackForm
 
         // Similar to `trackClick`, this is a helper for tracking form
         // submissions that would normally leave the page before a track call
         // can be sent. It works by preventing the default submit, sending a
         // track call, and then submitting the form programmatically.
         //
-        // * `form` is either a single form element, or an array of
+        // * `form` is either a single form DOM element, or an array of
         // form elements like jQuery gives you.
         //
         // * `event` and `properties` are passed directly to `analytics.track`
         // and take the same options.
-        trackSubmit : function (form, event, properties) {
+        trackForm : function (form, event, properties) {
             if (!form) return;
 
             // Turn a single element into an array so that we're always handling
@@ -452,6 +452,10 @@
         }
 
     };
+
+    // Add `trackClick` and `trackSubmit` for backwards compatibility.
+    analytics.trackClick = analytics.trackLink;
+    analytics.trackSubmit = analytics.trackForm;
 
     // Wrap any existing `onload` function with our own that will cache the
     // loaded state of the page.

@@ -7,7 +7,7 @@
     // ----------
 
     test('stores settings and adds errorception.js on initialize', function (done) {
-        expect(window._errs).not.to.exist;
+        expect(window._errs).to.be(undefined);
 
         analytics.initialize({
             'Errorception' : {
@@ -18,7 +18,7 @@
         // global variable on window...
         var self = this;
         setTimeout(function () {
-            expect(window._errs).to.exist;
+            expect(window._errs).not.to.be(undefined);
             expect(analytics.providers[0].settings.projectId).to.equal('x');
             done();
         }, 500);

@@ -20,12 +20,12 @@
     // ----------
 
     test('adds customer.io\'s track.js on initialize', function () {
-        expect(window._cio).not.to.exist;
+        expect(window._cio).to.be(undefined);
 
         analytics.initialize({
             'Customer.io' : 'x'
         });
-        expect(window._cio).to.exist;
+        expect(window._cio).not.to.be(undefined);
         expect(analytics.providers[0].settings.siteId).to.equal('x');
     });
 

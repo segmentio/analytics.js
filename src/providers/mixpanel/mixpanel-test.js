@@ -25,7 +25,7 @@
     // ----------
 
     test('stores settings and adds mixpanel.js on initialize', function () {
-        expect(window.mixpanel).not.to.exist;
+        expect(window.mixpanel).to.be(undefined);
 
         analytics.initialize({
             'Mixpanel' : {
@@ -33,7 +33,7 @@
                 people : true
             }
         });
-        expect(window.mixpanel).to.exist;
+        expect(window.mixpanel).not.to.be(undefined);
         expect(analytics.providers[0].settings.token).to.equal('x');
         expect(analytics.providers[0].settings.people).to.be(true);
     });

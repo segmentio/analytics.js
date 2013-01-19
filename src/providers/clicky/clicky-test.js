@@ -17,7 +17,7 @@
     test('stores settings and adds clicky.js on initialize', function (done) {
         this.timeout(10000);
 
-        expect(window.clicky).not.to.exist;
+        expect(window.clicky).to.be(undefined);
 
         analytics.initialize({
             'Clicky' : 'x'
@@ -26,7 +26,7 @@
         var interval = setInterval(function () {
             if (window.clicky) {
                 clearInterval(interval);
-                expect(window.clicky).to.exist;
+                expect(window.clicky).not.to.be(undefined);
                 done();
             }
         }, 1000);

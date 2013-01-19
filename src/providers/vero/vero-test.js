@@ -20,12 +20,12 @@
     // ----------
 
     test('adds Vero\'s m.js on initialize', function (done) {
-        expect(window._veroq).not.to.exist;
+        expect(window._veroq).to.be(undefined);
 
         analytics.initialize({
             'Vero' : 'x'
         });
-        expect(window._veroq).to.exist;
+        expect(window._veroq).not.to.be(undefined);
         expect(window._veroq.push).to.equal(Array.prototype.push);
         expect(analytics.providers[0].settings.apiKey).to.equal('x');
 

@@ -19,6 +19,7 @@ FILES = src/analytics.js \
 				src/providers/keen/keen.js \
 				src/providers/kissmetrics/kissmetrics.js \
 				src/providers/klaviyo/klaviyo.js \
+				src/providers/marketo/marketo.js \
 				src/providers/mixpanel/mixpanel.js \
 				src/providers/olark/olark.js \
 				src/providers/quantcast/quantcast.js \

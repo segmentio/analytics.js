@@ -62,19 +62,27 @@ test-dev: server
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/providers.html
 	make kill
 
-# Opens all the tests in the browser.
+# Runs only the non-minified core tests.
+test-dev-core: server
+	sleep 1
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/core.html
+	make kill
+
+# Runs only the non-minified provider tests.
+test-dev-providers: server
+	sleep 1
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/providers.html
+	make kill
+
+# Opens all the tests in your browser.
 test-browser:
 	open http://localhost:8000/test/core.html
 	open http://localhost:8000/test/providers.html
 	open http://localhost:8000/test/min.html
 
-# Opens only the non-minified tests in the browser.
-test-browser-dev:
-	open http://localhost:8000/test/core.html
-	open http://localhost:8000/test/providers.html
-
 # Compiles, minfies, doccos, and tests analytics.js - wrapped up and good to go.
 release: analytics.js min docs test
 
 
-.PHONY: analytics.js min docs server kill test test-dev test-browser test-browser-dev release
+
+.PHONY: analytics.js docs

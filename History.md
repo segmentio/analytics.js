@@ -1,3 +1,20 @@
+0.3.8 / 2013-1-18
+=================
+
+* Fix for Clicky loading slowly
+
+0.3.7 / 2013-1-17
+=================
+
+* [HitTail](http://hittail.com) support added
+* [USERcycle](http://usercycle.com) support added
+* Travis testing fixed
+
+0.3.6 / 2013-1-14
+=================
+
+* [SnapEngage](http://snapengage.com) support added
+
 0.3.5 / 2013-1-14
 =================
 

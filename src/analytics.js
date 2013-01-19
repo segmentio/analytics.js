@@ -1,4 +1,4 @@
-//     Analytics.js 0.3.5
+//     Analytics.js 0.3.8
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -26,7 +26,7 @@
 
         // The amount of milliseconds to wait for requests to providers to clear
         // before navigating away from the current page.
-        timeout : 300,
+        timeout : 250,
 
 
         // Providers

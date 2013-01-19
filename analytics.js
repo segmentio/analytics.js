@@ -1,4 +1,4 @@
-//     Analytics.js 0.3.5
+//     Analytics.js 0.3.8
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -26,7 +26,7 @@
 
         // The amount of milliseconds to wait for requests to providers to clear
         // before navigating away from the current page.
-        timeout : 300,
+        timeout : 250,
 
 
         // Providers
@@ -526,7 +526,9 @@ analytics.addProvider('Chartbeat', {
 
 analytics.addProvider('Clicky', {
 
-    settings : {},
+    settings : {
+        siteId : null
+    },
 
 
     // Initialize
@@ -546,6 +548,14 @@ analytics.addProvider('Clicky', {
             s.src = '//static.getclicky.com/js';
             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(s);
         })();
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        if (window.clicky) window.clicky.log(window.location.href, event);
     }
 
 });
@@ -927,6 +937,38 @@ analytics.addProvider('GoSquared', {
 
     pageview : function () {
         window.GoSquared.DefaultTracker.TrackView();
+    }
+
+});
+
+
+// HitTail
+// -------
+// [Documentation](www.hittail.com).
+
+analytics.addProvider('HitTail', {
+
+    settings : {
+        siteId : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        var siteId = settings.siteId;
+        (function(){
+            var ht = document.createElement('script');
+            ht.async = true;
+            ht.type = 'text/javascript';
+            ht.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + siteId + '.hittail.com/mlt.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ht, s);
+        })();
     }
 
 });
@@ -1398,6 +1440,87 @@ analytics.addProvider('Quantcast', {
 
         // NOTE: the <noscript><div><img> bit in the docs is ignored
         // because we have to run JS in order to do any of this!
+    }
+
+});
+
+
+// SnapEngage
+// ----------
+// [Documentation](http://help.snapengage.com/installation-guide-getting-started-in-a-snap/).
+
+analytics.addProvider('SnapEngage', {
+
+    settings : {
+        apiKey : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    // Changes to the SnapEngage snippet:
+    //
+    // * Add `apiKey` from stored `settings`.
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'apiKey');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
+        (function() {
+            var se = document.createElement('script'); se.type = 'text/javascript'; se.async = true;
+            se.src = '//commondatastorage.googleapis.com/code.snapengage.com/js/'+self.settings.apiKey+'.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(se, s);
+        })();
+    }
+
+});
+
+
+// USERcycle
+// -----------
+// [Documentation](http://docs.usercycle.com/javascript_api).
+
+analytics.addProvider('USERcycle', {
+
+    settings : {
+        key : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'key');
+        analytics.utils.extend(this.settings, settings);
+
+        var _uc = window._uc = window._uc || [];
+        (function(){
+            var e = document.createElement('script');
+            e.setAttribute('type', 'text/javascript');
+            var protocol = 'https:' == document.location.protocol ? 'https://' : 'http://';
+            e.setAttribute('src', protocol+'api.usercycle.com/javascripts/track.js');
+            document.body.appendChild(e);
+        })();
+        
+        window._uc.push(['_key', settings.key]);
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        if (userId) window._uc.push(['uid', userId, traits]);
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        window._uc.push(['action', event, properties]);
     }
 
 });

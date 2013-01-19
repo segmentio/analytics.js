@@ -19,7 +19,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds GoSquared js on initialize', function () {
+    test('stores settings and adds GoSquared js on initialize', function (done) {
         expect(window.GoSquared).not.to.exist;
 
         analytics.initialize({
@@ -27,17 +27,12 @@
         });
         expect(window.GoSquared).to.exist;
         expect(analytics.providers[0].settings.siteToken).to.equal('x');
+
+        window.GoSquared.load = function(tracker) {
+             expect(window.GoSquared.DefaultTracker).to.equal(tracker);
+             done();
+        };
     });
-
-    // test('GoSquared tracker finishes loading', function (done) {
-    //     this.timeout(10000);
-
-    //     // Use the GoSquared.load function...
-    //     window.GoSquared.load = function(tracker) {
-    //         expect(window.GoSquared.DefaultTracker).to.equal(tracker);
-    //         done();
-    //     };
-    // });
 
 
     // Identify

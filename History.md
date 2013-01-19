@@ -1,3 +1,17 @@
+0.4.1 / 2013-1-18
+=================
+
+* [Keen.io](http://keen.io/) added by [@dkador](https://github.com/dkador)
+* [Foxmetrics](http://foxmetrics.com/) added by [@rawsoft](https://github.com/rawsoft)
+* Updated Google Analytics to include noninteraction and value added by [@rantav](https://github.com/rantav)
+
+
+0.4.0 / 2013-1-18
+=================
+
+* Rename `trackClick` to `trackLink`
+* Rename `trackSubmit` to `trackForm`
+
 0.3.8 / 2013-1-18
 =================
 

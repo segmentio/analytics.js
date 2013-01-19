@@ -1,4 +1,4 @@
-//     Analytics.js 0.3.8
+//     Analytics.js 0.4.0
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -186,29 +186,29 @@
         },
 
 
-        // ### trackClick
+        // ### trackLink
 
         // A helper for tracking outbound links that would normally leave the
         // page before the track calls went out. It works by wrapping the calls
         // in as short of a timeout as possible to fire the track call, because
         // [response times matter](http://theixdlibrary.com/pdf/Miller1968.pdf).
         //
-        // * `element` is either a single DOM element, or an array of DOM
+        // * `link` is either a single link DOM element, or an array of link
         // elements like jQuery gives you.
         //
         // * `event` and `properties` are passed directly to `analytics.track`
         // and take the same options.
-        trackClick : function (element, event, properties) {
-            if (!element) return;
+        trackLink : function (link, event, properties) {
+            if (!link) return;
 
-            // Turn a single element into an array so that we're always handling
+            // Turn a single link into an array so that we're always handling
             // arrays, which allows for passing jQuery objects.
-            if (this.utils.isElement(element)) element = [element];
+            if (this.utils.isElement(link)) link = [link];
 
-            // Bind to all the elements in the array.
-            for (var i = 0; i < element.length; i++) {
+            // Bind to all the links in the array.
+            for (var i = 0; i < link.length; i++) {
                 var self = this;
-                var el = element[i];
+                var el = link[i];
 
                 this.utils.bind(el, 'click', function (e) {
 
@@ -245,19 +245,19 @@
         },
 
 
-        // ### trackSubmit
+        // ### trackForm
 
         // Similar to `trackClick`, this is a helper for tracking form
         // submissions that would normally leave the page before a track call
         // can be sent. It works by preventing the default submit, sending a
         // track call, and then submitting the form programmatically.
         //
-        // * `form` is either a single form element, or an array of
+        // * `form` is either a single form DOM element, or an array of
         // form elements like jQuery gives you.
         //
         // * `event` and `properties` are passed directly to `analytics.track`
         // and take the same options.
-        trackSubmit : function (form, event, properties) {
+        trackForm : function (form, event, properties) {
             if (!form) return;
 
             // Turn a single element into an array so that we're always handling
@@ -452,6 +452,10 @@
         }
 
     };
+
+    // Add `trackClick` and `trackSubmit` for backwards compatibility.
+    analytics.trackClick = analytics.trackLink;
+    analytics.trackSubmit = analytics.trackForm;
 
     // Wrap any existing `onload` function with our own that will cache the
     // loaded state of the page.
@@ -750,6 +754,84 @@ analytics.addProvider('Errorception', {
 });
 
 
+// FoxMetrics
+// -----------
+// [Website] (http://foxmetrics.com)
+// [Documentation](http://foxmetrics.com/documentation)
+// [Documentation - JS](http://foxmetrics.com/documentation/apijavascript)
+// [Support](http://support.foxmetrics.com)
+
+analytics.addProvider('FoxMetrics', {
+
+    settings: {
+        appId: null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize: function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'appId');
+        analytics.utils.extend(this.settings, settings);
+
+        var _fxm = window._fxm || {};
+        window._fxm = _fxm.events || [];
+
+        function _fxms(id) {
+            (function () {
+                var fxms = document.createElement('script'); fxms.type = 'text/javascript'; fxms.async = true;
+                fxms.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'd35tca7vmefkrc.cloudfront.net/scripts/' + id + '.js';
+                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(fxms, s);
+            })();
+        }
+
+        _fxms(this.settings.appId);
+    },
+
+
+    // Identify
+    // --------
+
+    identify: function (userId, traits) {
+
+        // user id is required for profile updates,
+        // otherwise its a waste of resources as nothing will get updated
+        if (userId) {
+            // fxm needs first and last name seperately
+            var fname = null, lname = null, email = null;
+            if (traits) {
+                fname = traits.name.split(' ')[0];
+                lname = traits.name.split(' ')[1];
+                email = typeof (traits.email) !== 'undefined' ? traits.email : null;
+            }
+
+            // we should probably remove name and email before passing as attributes
+            window._fxm.push(['_fxm.visitor.Profile', userId, fname, lname, email, null, null, null, (traits || null)]);
+        }
+    },
+
+
+    // Track
+    // -----
+
+    track: function (event, properties) {
+        // send in null as event category name
+        window._fxm.push([event, null, properties]);
+    },
+
+    // Pageview
+    // ----------
+
+    pageview: function (url) {
+        // we are happy to accept traditional analytics :)
+        // (title, name, categoryName, url, referrer)
+        window._fxm.push(['_fxm.pages.view', null, null, null, (url || null), null]);
+    }
+
+});
+
+
 // Google Analytics
 // ----------------
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
@@ -809,6 +891,12 @@ analytics.addProvider('Google Analytics', {
     track : function (event, properties) {
         properties || (properties = {});
 
+        var value;
+
+        // Since value is a common property name, ensure it is a number
+        if (analytics.utils.isNumber(properties.value))
+            value = properties.value;
+
         // Try to check for a `category` and `label`. A `category` is required,
         // so if it's not there we use `'All'` as a default. We can safely push
         // undefined if the special properties don't exist.
@@ -816,7 +904,9 @@ analytics.addProvider('Google Analytics', {
             '_trackEvent',
             properties.category || 'All',
             event,
-            properties.label
+            properties.label,
+            value,
+            properties.noninteraction
         ]);
     },
 
@@ -1112,6 +1202,61 @@ analytics.addProvider('Intercom', {
 });
 
 
+// Keen IO
+// -------
+// [Documentation](https://keen.io/docs/).
+analytics.addProvider('Keen', {
+
+    settings: {
+        projectId: null,
+        apiKey: null
+    },
+
+
+    // Initialize
+    // ----------
+    initialize: function(settings) {
+        if (typeof settings !== "object" || !settings.projectId || !settings.apiKey) {
+            throw new Error("Settings must be an object with properties 'projectId' and 'apiKey'.");
+        }
+
+        var Keen=window.Keen||{configure:function(a,b,c){this._pId=a;this._ak=b;this._op=c},addEvent:function(a,b,c,d){this._eq=this._eq||[];this._eq.push([a,b,c,d])},setGlobalProperties:function(a){this._gp=a},onChartsReady:function(a){this._ocrq=this._ocrq||[];this._ocrq.push(a)}};
+        (function(){var a=document.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"==document.location.protocol?"https://":"http://")+"dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js";var b=document.getElementsByTagName("script")[0];b.parentNode.insertBefore(a,b)})();
+
+        // Configure the Keen object with your Project ID and API Key.
+        Keen.configure(settings.projectId, settings.apiKey);
+
+        this.settings = settings;
+
+        window.Keen = Keen;
+    },
+
+
+    // Identify
+    // --------
+    identify: function(userId, traits) {
+        // Use Keen IO global properties to include user ID and traits on every event sent to Keen IO.
+        var globalUserProps = {};
+        if (userId) globalUserProps.userId = userId;
+        if (traits) globalUserProps.traits = traits;
+        if (userId || traits) {
+            window.Keen.setGlobalProperties(function(eventCollection) {
+                return {
+                    "user": globalUserProps
+                };
+            });
+        }
+    },
+
+
+    // Track
+    // -----
+    track: function(event, properties) {
+        // Each track invocation will add a single event to Keen.
+        window.Keen.addEvent(event, properties);
+    }
+
+});
 // KISSmetrics
 // -----------
 // [Documentation](http://support.kissmetrics.com/apis/javascript).

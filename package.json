@@ -7,7 +7,7 @@
     "analytics", "analytics.js", "analyticsjs", "segment", "segmentio", "segment.io",
     "chartbeat", "crazyegg", "customer.io", "google analytics", "hubspot",
     "gosquared", "intercom", "kissmetrics", "klaviyo", "mixpanel", "olark",
-    "gaug.es"
+    "gaug.es", "bitdeli"
   ],
   "url" : "https://github.com/segmentio/analytics.js",
   "repository" : {

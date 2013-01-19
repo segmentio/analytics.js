@@ -1,4 +1,4 @@
-//     Analytics.js 0.4.1
+//     Analytics.js 0.4.0
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -544,7 +544,7 @@ analytics.addProvider('Clicky', {
 
         var clicky_site_ids = window.clicky_site_ids = window.clicky_site_ids || [];
         clicky_site_ids.push(settings.siteId);
-
+        
         (function() {
             var s = document.createElement('script');
             s.type = 'text/javascript';
@@ -735,7 +735,7 @@ analytics.addProvider('Errorception', {
 
         var _errs = window._errs = window._errs || [];
         _errs.push(settings.projectId);
-
+        
         (function(a,b){
             a.onerror = function () {
                 _errs.push(arguments);
@@ -891,6 +891,12 @@ analytics.addProvider('Google Analytics', {
     track : function (event, properties) {
         properties || (properties = {});
 
+        var value;
+
+        if (analytics.utils.isNumber(properties.value)) {
+            value = properties.value;
+        }
+
         // Try to check for a `category` and `label`. A `category` is required,
         // so if it's not there we use `'All'` as a default. We can safely push
         // undefined if the special properties don't exist.
@@ -898,7 +904,9 @@ analytics.addProvider('Google Analytics', {
             '_trackEvent',
             properties.category || 'All',
             event,
-            properties.label
+            properties.label,
+            value,
+            properties.noninteraction
         ]);
     },
 
@@ -1570,7 +1578,7 @@ analytics.addProvider('Quantcast', {
            elem.async = true;
            elem.type = "text/javascript";
            var scpt = document.getElementsByTagName('script')[0];
-           scpt.parentNode.insertBefore(elem, scpt);
+           scpt.parentNode.insertBefore(elem, scpt);  
         })();
 
         _qevents.push({qacct: settings.pCode});
@@ -1640,7 +1648,7 @@ analytics.addProvider('USERcycle', {
             e.setAttribute('src', protocol+'api.usercycle.com/javascripts/track.js');
             document.body.appendChild(e);
         })();
-
+        
         window._uc.push(['_key', settings.key]);
     },
 

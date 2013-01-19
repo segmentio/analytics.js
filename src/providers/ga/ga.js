@@ -57,6 +57,12 @@ analytics.addProvider('Google Analytics', {
     track : function (event, properties) {
         properties || (properties = {});
 
+        var value;
+
+        if (analytics.utils.isNumber(properties.value)) {
+            value = properties.value;
+        }
+
         // Try to check for a `category` and `label`. A `category` is required,
         // so if it's not there we use `'All'` as a default. We can safely push
         // undefined if the special properties don't exist.
@@ -65,7 +71,7 @@ analytics.addProvider('Google Analytics', {
             properties.category || 'All',
             event,
             properties.label,
-            properties.value,
+            value,
             properties.noninteraction
         ]);
     },

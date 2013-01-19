@@ -37,27 +37,45 @@
 
     test('can add anonymize ip');
 
-
     // Track
     // -----
 
     test('pushes "_trackEvent" on track', function () {
         var spy = sinon.spy(window._gaq, 'push');
         analytics.track('event');
-        expect(spy).to.have.been.calledWith(['_trackEvent', 'All', 'event', undefined]);
+        expect(spy).to.have.been.calledWith(
+          ['_trackEvent', 'All', 'event', undefined, undefined, undefined]);
 
         spy.reset();
         analytics.track('event', {
             category : 'Category'
         });
-        expect(spy).to.have.been.calledWith(['_trackEvent', 'Category', 'event', undefined]);
+        expect(spy).to.have.been.calledWith(
+          ['_trackEvent', 'Category', 'event', undefined, undefined, undefined]);
 
         spy.reset();
         analytics.track('event', {
-            category : 'Category',
-            label    : 'Label'
+            category       : 'Category',
+            label          : 'Label',
+            noninteraction : true
         });
-        expect(spy).to.have.been.calledWith(['_trackEvent', 'Category', 'event', 'Label']);
+        expect(spy).to.have.been.calledWith(
+          ['_trackEvent', 'Category', 'event', 'Label', undefined, true]);
+
+        spy.reset();
+        analytics.track('event', {
+            value    : 30
+        });
+        expect(spy).to.have.been.calledWith(
+          ['_trackEvent', 'All', 'event', undefined, 30, undefined]);
+
+        spy.reset();
+        analytics.track('event', {
+            value    : '30'
+        });
+        expect(spy).to.have.been.calledWith(
+          ['_trackEvent', 'All', 'event', undefined, undefined, undefined]);
+
 
         spy.restore();
     });

@@ -14,8 +14,8 @@ analytics.addProvider('Keen', {
     // ----------
 
     initialize: function(settings) {
-        if (typeof settings !== "object" || !settings.projectId || !settings.apiKey) {
-            throw new Error("Settings must be an object with properties 'projectId' and 'apiKey'.");
+        if (typeof settings !== 'object' || !settings.projectId || !settings.apiKey) {
+            throw new Error('Settings must be an object with properties projectId and apiKey.');
         }
 
         analytics.utils.extend(this.settings, settings);
@@ -42,7 +42,7 @@ analytics.addProvider('Keen', {
         if (userId || traits) {
             window.Keen.setGlobalProperties(function(eventCollection) {
                 return {
-                    "user": globalUserProps
+                    'user': globalUserProps
                 };
             });
         }

@@ -24,7 +24,8 @@ analytics.addProvider('Gauges', {
             t.async = true;
             t.id    = 'gauges-tracker';
             t.setAttribute('data-site-id', settings.siteId);
-            t.src = '//secure.gaug.es/track.js';
+            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+            t.src = protocol + '//secure.gaug.es/track.js';
             var s = document.getElementsByTagName('script')[0];
             s.parentNode.insertBefore(t, s);
         })();

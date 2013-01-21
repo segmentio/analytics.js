@@ -6,8 +6,8 @@
         <span class="nx">projectId</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
         <span class="nx">apiKey</span>    <span class="o">:</span> <span class="kc">null</span>
     <span class="p">},</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h2>Initialize</h2>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nx">initialize</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">settings</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">settings</span> <span class="o">!==</span> <span class="s2">&quot;object&quot;</span> <span class="o">||</span> <span class="o">!</span><span class="nx">settings</span><span class="p">.</span><span class="nx">projectId</span> <span class="o">||</span> <span class="o">!</span><span class="nx">settings</span><span class="p">.</span><span class="nx">apiKey</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s2">&quot;Settings must be an object with properties &#39;projectId&#39; and &#39;apiKey&#39;.&quot;</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">settings</span> <span class="o">!==</span> <span class="s1">&#39;object&#39;</span> <span class="o">||</span> <span class="o">!</span><span class="nx">settings</span><span class="p">.</span><span class="nx">projectId</span> <span class="o">||</span> <span class="o">!</span><span class="nx">settings</span><span class="p">.</span><span class="nx">apiKey</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s1">&#39;Settings must be an object with properties projectId and apiKey.&#39;</span><span class="p">);</span>
         <span class="p">}</span>
 
         <span class="nx">analytics</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">settings</span><span class="p">,</span> <span class="nx">settings</span><span class="p">);</span>
@@ -23,7 +23,7 @@ every event sent to Keen IO.</p>             </td>             <td class="code">
         <span class="k">if</span> <span class="p">(</span><span class="nx">userId</span> <span class="o">||</span> <span class="nx">traits</span><span class="p">)</span> <span class="p">{</span>
             <span class="nb">window</span><span class="p">.</span><span class="nx">Keen</span><span class="p">.</span><span class="nx">setGlobalProperties</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">eventCollection</span><span class="p">)</span> <span class="p">{</span>
                 <span class="k">return</span> <span class="p">{</span>
-                    <span class="s2">&quot;user&quot;</span><span class="o">:</span> <span class="nx">globalUserProps</span>
+                    <span class="s1">&#39;user&#39;</span><span class="o">:</span> <span class="nx">globalUserProps</span>
                 <span class="p">};</span>
             <span class="p">});</span>
         <span class="p">}</span>

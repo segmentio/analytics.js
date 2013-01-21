@@ -21,10 +21,13 @@ analytics.addProvider('CrazyEgg', {
 
         var apiKey = this.settings.apiKey;
         (function(){
-            var a=document.createElement("script");
-            var b=document.getElementsByTagName("script")[0];
-            a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/"+apiKey+".js?"+Math.floor(new Date().getTime()/3600000);
-            a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b);
+            var a = document.createElement('script');
+            var b = document.getElementsByTagName('script')[0];
+            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+            a.src = protocol+'//dnn506yrbagrg.cloudfront.net/pages/scripts/'+apiKey+'.js?'+Math.floor(new Date().getTime()/3600000);
+            a.async = true;
+            a.type = 'text/javascript';
+            b.parentNode.insertBefore(a,b);
         })();
     }
 

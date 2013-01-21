@@ -3,6 +3,7 @@ PHANTOM = node_modules/.bin/mocha-phantomjs
 PHANTOM_OPTS = -s web-security=false -s local-to-remote-url-access=true
 
 FILES = src/analytics.js \
+				src/providers/bitdeli/bitdeli.js \
 				src/providers/chartbeat/chartbeat.js \
 				src/providers/clicky/clicky.js \
 				src/providers/comscore/comscore.js \

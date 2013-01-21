@@ -1,4 +1,3 @@
-/*global sinon, suite, beforeEach, test, expect, analytics */
 !(function () {
 
     suite('Intercom');
@@ -11,10 +10,10 @@
     });
 
     test('adds intercom javascript on identify', function () {
-        expect(window.intercomSettings).not.to.exist;
+        expect(window.intercomSettings).to.be(undefined);
 
         analytics.identify('zeus@segment.io', { name : 'Zeus' });
-        expect(window.intercomSettings).to.exist;
+        expect(window.intercomSettings).not.to.be(undefined);
     });
 
 }());

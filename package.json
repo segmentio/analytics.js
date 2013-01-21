@@ -1,12 +1,14 @@
 {
-  "name" : "analytics",
-  "author" : "Segmentio <friends@segment.io>",
-  "version" : "0.2.3",
+  "name" : "analytics.js",
+  "author" : "Segment.io <friends@segment.io>",
+  "version" : "0.4.4",
   "description" : "The hassle-free way to integrate analytics into any web application.",
   "keywords" : [
     "analytics", "analytics.js", "analyticsjs", "segment", "segmentio", "segment.io",
-    "chartbeat", "crazyegg", "customer.io", "google analytics", "hubspot",
-    "gosquared", "intercom", "kissmetrics", "klaviyo", "mixpanel", "olark"
+    "bitdeli", "chartbeat", "clicky", "comscore", "crazyegg", "customer.io",
+    "errorception", "foxmetrics", "google analytics", "gauges", "gosquared",
+    "hittail", "hubspot", "intercom", "keen", "kissmetrics", "klaviyo",
+    "mixpanel", "olark", "quantcast", "snapengage", "usercycle", "vero"
   ],
   "url" : "https://github.com/segmentio/analytics.js",
   "repository" : {

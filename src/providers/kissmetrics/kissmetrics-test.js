@@ -1,4 +1,3 @@
-/*global sinon, suite, beforeEach, test, expect, analytics */
 !(function () {
 
     suite('KISSmetrics');
@@ -21,12 +20,11 @@
     // ----------
 
     test('stores settings and adds kissmetrics javascript on initialize', function () {
-        expect(window._kmq).not.to.exist;
+        expect(window._kmq).to.be(undefined);
 
-        analytics.initialize({
-            'KISSmetrics' : 'x'
-        });
-        expect(window._kmq).to.exist;
+        analytics.initialize({ 'KISSmetrics' : 'x' });
+
+        expect(window._kmq).not.to.be(undefined);
         expect(analytics.providers[0].settings.apiKey).to.equal('x');
     });
 
@@ -37,15 +35,15 @@
     test('pushes "_identify" on identify', function () {
         var spy = sinon.spy(window._kmq, 'push');
         analytics.identify(traits);
-        expect(spy).to.have.not.been.calledWith(['identify', userId]);
+        expect(spy.calledWith(['identify', userId])).to.be(false);
 
         spy.reset();
         analytics.identify(userId);
-        expect(spy).to.have.been.calledWith(['identify', userId]);
+        expect(spy.calledWith(['identify', userId])).to.be(true);
 
         spy.reset();
         analytics.identify(userId, traits);
-        expect(spy).to.have.been.calledWith(['identify', userId]);
+        expect(spy.calledWith(['identify', userId])).to.be(true);
 
         spy.restore();
     });
@@ -53,15 +51,14 @@
     test('pushes "_set" on identify', function () {
         var spy = sinon.spy(window._kmq, 'push');
         analytics.identify(traits);
-        expect(spy).to.have.been.calledWith(['set', traits]);
+        expect(spy.calledWith(['set', traits])).to.be(true);
 
         spy.reset();
         analytics.identify(userId);
-        expect(spy).to.have.not.been.calledWith(['set', traits]);
-
+        expect(spy.calledWith(['set', traits])).to.be(false);
         spy.reset();
         analytics.identify(userId, traits);
-        expect(spy).to.have.been.calledWith(['set', traits]);
+        expect(spy.calledWith(['set', traits])).to.be(true);
 
         spy.restore();
     });
@@ -73,7 +70,7 @@
     test('pushes "_record" on track', function () {
         var spy = sinon.spy(window._kmq, 'push');
         analytics.track(event, properties);
-        expect(spy).to.have.been.calledWith(['record', event, properties]);
+        expect(spy.calledWith(['record', event, properties])).to.be(true);
 
         spy.restore();
     });

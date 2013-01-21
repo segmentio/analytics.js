@@ -1,4 +1,3 @@
-/*global _, sinon, suite, beforeEach, test, expect, analytics */
 !(function () {
 
     suite('Klaviyo');
@@ -20,13 +19,13 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds kissmetrics javascript on initialize', function () {
-        expect(window._learnq).not.to.exist;
+    test('stores settings and adds klaviyo javascript on initialize', function () {
+        expect(window._learnq).to.be(undefined);
 
         analytics.initialize({
             'Klaviyo' : 'x'
         });
-        expect(window._learnq).to.exist;
+        expect(window._learnq).not.to.be(undefined);
         expect(analytics.providers[0].settings.apiKey).to.equal('x');
     });
 
@@ -37,16 +36,16 @@
     test('pushes "_identify" on identify', function () {
         var spy = sinon.spy(window._learnq, 'push');
         analytics.identify(traits);
-        expect(spy).to.have.been.calledWith(['identify', traits]);
+        expect(spy.calledWith(['identify', traits])).to.be(true);
 
         spy.reset();
         analytics.identify(userId);
-        expect(spy).to.have.been.calledWith(['identify', { $id: userId }]);
+        expect(spy.calledWith(['identify', { $id: userId }])).to.be(true);
 
         spy.reset();
         var augmentedTraits = _.extend({}, traits, { $id: userId });
         analytics.identify(userId, traits);
-        expect(spy).to.have.been.calledWith(['identify', augmentedTraits]);
+        expect(spy.calledWith(['identify', augmentedTraits])).to.be(true);
 
         spy.restore();
     });
@@ -60,7 +59,7 @@
         analytics.track(event, properties);
         // Klaviyo adds extra properites to the event, so we don't want to check
         // for an exact match.
-        expect(spy).to.have.been.calledWithMatch(['track', event, sinon.match(properties)]);
+        expect(spy.calledWithMatch(['track', event, sinon.match(properties)])).to.be(true);
 
         spy.restore();
     });

@@ -1,4 +1,3 @@
-/*global sinon, suite, beforeEach, test, expect, analytics */
 !(function () {
 
     suite('Olark');
@@ -21,12 +20,12 @@
     // ----------
 
     test('stores settings and adds olark.js on initialize', function () {
-        expect(window.olark).not.to.exist;
+        expect(window.olark).to.be(undefined);
 
         analytics.initialize({
             'Olark' : 'x'
         });
-        expect(window.olark).to.exist;
+        expect(window.olark).not.to.be(undefined);
         expect(analytics.providers[0].settings.siteId).to.equal('x');
     });
 
@@ -39,33 +38,34 @@
         analytics.identify({
             dogs : 1
         });
-        expect(spy).not.to.have.been.called;
+        expect(spy.called).to.be(false);
 
         spy.reset();
         analytics.identify({
             email : 'zeus@segment.io'
         });
-        expect(spy).to.have.been.calledWith('api.chat.updateVisitorNickname', sinon.match({
+
+        expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
             snippet : 'zeus@segment.io'
-        }));
+        })).to.be(true);
 
         spy.reset();
         analytics.identify(traits);
-        expect(spy).to.have.been.calledWith('api.chat.updateVisitorNickname', sinon.match({
+        expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
             snippet : 'Zeus (zeus@segment.io)'
-        }));
+        })).to.be(true);
 
         spy.reset();
         analytics.identify(userId);
-        expect(spy).to.have.been.calledWith('api.chat.updateVisitorNickname', sinon.match({
+        expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
             snippet : 'user'
-        }));
+        })).to.be(true);
 
         spy.reset();
         analytics.identify(userId, traits);
-        expect(spy).to.have.been.calledWith('api.chat.updateVisitorNickname', sinon.match({
+        expect(spy.calledWith('api.chat.updateVisitorNickname', {
             snippet : 'Zeus (zeus@segment.io)'
-        }));
+        })).to.be(true);
 
         spy.restore();
     });
@@ -78,9 +78,9 @@
         analytics.providers[0].settings.track = true;
         var spy = sinon.spy(window, 'olark');
         analytics.track(event, properties);
-        expect(spy).to.have.been.calledWith('api.chat.sendNotificationToOperator', sinon.match({
+        expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
             body : 'visitor triggered "'+event+'"'
-        }));
+        })).to.be(true);
 
         spy.restore();
     });
@@ -89,7 +89,7 @@
         analytics.providers[0].settings.track = false;
         var spy = sinon.spy(window, 'olark');
         analytics.track(event, properties);
-        expect(spy).not.to.have.been.called;
+        expect(spy.called).to.be(false);
 
         spy.restore();
     });
@@ -102,9 +102,9 @@
         analytics.providers[0].settings.pageview = true;
         var spy = sinon.spy(window, 'olark');
         analytics.pageview();
-        expect(spy).to.have.been.calledWith('api.chat.sendNotificationToOperator', sinon.match({
+        expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
             body : 'looking at ' + window.location.href
-        }));
+        })).to.be(true);
 
         spy.restore();
     });
@@ -113,7 +113,7 @@
         analytics.providers[0].settings.pageview = false;
         var spy = sinon.spy(window, 'olark');
         analytics.pageview();
-        expect(spy).not.to.have.been.called;
+        expect(spy.called).to.be(false);
 
         spy.restore();
     });

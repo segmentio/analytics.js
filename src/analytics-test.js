@@ -530,6 +530,22 @@
         expect(isString(function () {})).to.be(false);
     });
 
+    test('parseUrl can parse URLs', function () {
+        var url = 'http://google.com/finance?search=hi#test';
+
+        expect(analytics.utils.parseUrl(url)).to.eql({
+            href     : url,
+            host     : 'google.com',
+            port     : '0',
+            hash     : '#test',
+            hostname : 'google.com',
+            pathname : '/finance',
+            protocol : 'http:',
+            search   : '?search=hi',
+            query    : 'search=hi'
+        });
+    });
+
 })();
 
 

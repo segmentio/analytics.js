@@ -74,6 +74,18 @@
         spy.restore();
     });
 
+    test('can disable initial "trackPageview" on initialize', function () {
+        window._bdq = [];
+        var spy = sinon.spy(window._bdq, 'push');
+
+        var modifiedSettings = analytics.utils.clone(settings);
+        modifiedSettings.initialPageview = false;
+        analytics.initialize({ 'Bitdeli' : modifiedSettings });
+
+        expect(spy.calledWith(['trackPageview'])).to.be(false);
+        spy.restore();
+    });
+
 
     // Identify
     // --------

@@ -7,7 +7,11 @@ analytics.addProvider('Bitdeli', {
 
     settings : {
         inputId   : null,
-        authToken : null
+        authToken : null,
+
+        // Whether or not to track an initial pageview when the page first
+        // loads. You might not want this if you're using a single-page app.
+        initialPageview : true
     },
 
 
@@ -31,7 +35,7 @@ analytics.addProvider('Bitdeli', {
 
         var _bdq = window._bdq = window._bdq || [];
         _bdq.push(["setAccount", this.settings.inputId, this.settings.authToken]);
-        _bdq.push(["trackPageview"]);
+        if (this.settings.initialPageview) _bdq.push(["trackPageview"]);
 
         (function() {
             var bd = document.createElement("script"); bd.type = "text/javascript"; bd.async = true;

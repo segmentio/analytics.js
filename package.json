@@ -7,7 +7,7 @@
     "analytics", "analytics.js", "analyticsjs", "segment", "segmentio", "segment.io",
     "bitdeli", "chartbeat", "clicky", "comscore", "crazyegg", "customer.io",
     "errorception", "foxmetrics", "google analytics", "gauges", "gosquared",
-    "hittail", "hubspot", "intercom", "keen" "kissmetrics", "klaviyo",
+    "hittail", "hubspot", "intercom", "keen", "kissmetrics", "klaviyo",
     "mixpanel", "olark", "quantcast", "snapengage", "usercycle", "vero"
   ],
   "url" : "https://github.com/segmentio/analytics.js",

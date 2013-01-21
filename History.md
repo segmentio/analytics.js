@@ -1,6 +1,7 @@
 0.4.4 / 2013-1-21
 =================
 
+* [Bitdeli] support added by [@jtuulos](https://github.com/jtuulos)
 * Added Mixpanel `$first_name` and `$last_name` aliases
 * Fixed Mixpanel `$last_seen` alias
 

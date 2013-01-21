@@ -381,7 +381,7 @@
 
     suite('pageview');
 
-    test('is called on providers', function () {
+    test('gets called on providers', function () {
         var spy = sinon.spy(provider, 'pageview');
 
         analytics.pageview();
@@ -397,7 +397,10 @@
 
     suite('utils');
 
-    test('resolveSettings...');
+    test('resolveSettings converts a settings string into an api key', function() {
+        expect(analytics.utils.resolveSettings('x', 'apiKey')).to.eql({ apiKey : 'x' });
+        expect(analytics.utils.resolveSettings({ apiKey : 'x' }, 'apiKey')).to.eql({ apiKey : 'x' });
+    });
 
     test('clone returns a copy of an object', function () {
         var object = { thing: 1 };
@@ -406,7 +409,7 @@
         expect(analytics.utils.clone(object)).to.eql(object);
     });
 
-    test('extend properly augments an object', function () {
+    test('extend augments an object', function () {
         var object = {
             one : 1
         };
@@ -437,7 +440,7 @@
         });
     });
 
-    test('alias properly changes props to their aliases', function () {
+    test('alias changes props to their aliases', function () {
         var traits = {
             name  : 'Medusa',
             email : 'medusa@segment.io'

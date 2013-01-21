@@ -49,8 +49,6 @@
         expect(analytics.providers[0].settings.people).to.be(true);
     });
 
-    test('calls init with settings on initialize');
-
 
     // Identify
     // --------

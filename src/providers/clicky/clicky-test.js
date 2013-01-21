@@ -46,10 +46,4 @@
         spy.restore();
     });
 
-
-    // Pageview
-    // --------
-
-    test('sends pageview on pageview');
-
 }());

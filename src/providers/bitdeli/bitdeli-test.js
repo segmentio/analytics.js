@@ -26,7 +26,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds bitdeli.js on initialize', function () {
+    test('stores settings and adds bitdeli.js on initialize', function (done) {
         expect(window._bdq).to.be(undefined);
 
         analytics.initialize({ 'Bitdeli' : settings });
@@ -34,6 +34,13 @@
         expect(window._bdq).not.to.be(undefined);
         expect(analytics.providers[0].settings.inputId).to.equal(settings.inputId);
         expect(analytics.providers[0].settings.authToken).to.equal(settings.authToken);
+
+
+        expect(window._bdq._version).to.be(undefined);
+        setTimeout(function () {
+            expect(window._bdq._version).not.to.be(undefined);
+            done();
+        }, 1000);
     });
 
     test('throws error when initialized with a string instead of an object', function () {

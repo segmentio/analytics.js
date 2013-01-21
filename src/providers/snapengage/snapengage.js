@@ -21,8 +21,11 @@ analytics.addProvider('SnapEngage', {
 
         var self = this;
         (function() {
-            var se = document.createElement('script'); se.type = 'text/javascript'; se.async = true;
-            se.src = '//commondatastorage.googleapis.com/code.snapengage.com/js/'+self.settings.apiKey+'.js';
+            var se = document.createElement('script');
+            se.type = 'text/javascript';
+            se.async = true;
+            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+            se.src = protocol + '//commondatastorage.googleapis.com/code.snapengage.com/js/'+self.settings.apiKey+'.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(se, s);
         })();
     }

@@ -25,7 +25,8 @@ analytics.addProvider('Vero', {
             var ve = document.createElement('script');
             ve.type = 'text/javascript';
             ve.async = true;
-            ve.src = '//www.getvero.com/assets/m.js';
+            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+            ve.src = protocol + '//www.getvero.com/assets/m.js';
             var s = document.getElementsByTagName('script')[0];
             s.parentNode.insertBefore(ve, s);
         })();

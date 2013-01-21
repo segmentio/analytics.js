@@ -20,7 +20,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds keenio.js on initialize', function() {
+    test('stores settings and adds keenio.js on initialize', function(done) {
         expect(window.Keen).not.to.exist;
 
         analytics.initialize({
@@ -34,6 +34,13 @@
         expect(window.Keen.addEvent).not.to.be(undefined);
         expect(window.Keen._pId).to.equal('KEEN_PROJECT_ID');
         expect(window.Keen._ak).to.equal('KEEN_API_KEY');
+
+        // test actual loading
+        expect(window.Keen.Base64).to.be(undefined);
+        setTimeout(function () {
+            expect(window.Keen.Base64).not.to.be(undefined);
+            done();
+        }, 1000);
     });
 
 

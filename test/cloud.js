@@ -4,7 +4,7 @@ var Cloud = require('mocha-cloud')
                       process.env.SAUCE_ACCESS_KEY);
 
 cloud.browser('Firefox', '3.6', 'Linux');
-cloud.url('http://localhost:8000/test/providers.html');
+cloud.url('http://segmentio.github.com/analytics.js/test/providers');
 
 cloud.on('init', function (browser) {
   console.log(browser);

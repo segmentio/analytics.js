@@ -1,3 +1,9 @@
+0.4.4 / 2013-1-21
+=================
+
+* Added Mixpanel `$first_name` and `$last_name` aliases
+* Fixed Mixpanel `$last_seen` alias
+
 0.4.3 / 2013-1-20
 =================
 

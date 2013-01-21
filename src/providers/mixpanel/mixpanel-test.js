@@ -10,14 +10,25 @@
 
     var userId = 'user';
 
+    var now = new Date();
     var traits = {
-        name  : 'Zeus',
-        email : 'zeus@segment.io'
+        name      : 'Zeus',
+        firstName : 'Zeus',
+        lastName  : 'Allmighty',
+        username  : 'zeus98',
+        email     : 'zeus@segment.io',
+        created   : now,
+        lastSeen  : now
     };
 
     var aliasedTraits = {
-        $name  : 'Zeus',
-        $email : 'zeus@segment.io'
+        $name       : 'Zeus',
+        $first_name : 'Zeus',
+        $last_name  : 'Allmighty',
+        $username   : 'zeus98',
+        $email      : 'zeus@segment.io',
+        $created    : now,
+        $last_seen  : now
     };
 
 

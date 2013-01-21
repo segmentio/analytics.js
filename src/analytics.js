@@ -1,4 +1,4 @@
-//     Analytics.js 0.4.3
+//     Analytics.js 0.4.4
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.

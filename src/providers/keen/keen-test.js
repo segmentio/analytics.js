@@ -6,25 +6,27 @@
     var event = 'someEventName';
 
     var properties = {
-        count: 42
+        count : 42
     };
 
     var userId = 'someUserId';
 
     var traits = {
-        name: 'Zeus',
-        email: 'zeus@segment.io'
+        name  : 'Zeus',
+        email : 'zeus@segment.io'
     };
+
 
     // Initialize
     // ----------
+
     test('stores settings and adds keenio.js on initialize', function() {
         expect(window.Keen).not.to.exist;
 
         analytics.initialize({
             'Keen': {
-                projectId: 'KEEN_PROJECT_ID',
-                apiKey: 'KEEN_API_KEY'
+                projectId : 'KEEN_PROJECT_ID',
+                apiKey    : 'KEEN_API_KEY'
             }
         });
         expect(window.Keen).not.to.be(undefined);
@@ -34,8 +36,10 @@
         expect(window.Keen._ak).to.equal('KEEN_API_KEY');
     });
 
+
     // Identify
     // --------
+
     test('calls setGlobalProperties on identify', function() {
         // Reset internal `userId` state from any previous identifies.
         analytics.userId = null;
@@ -69,8 +73,10 @@
         spy.restore();
     });
 
+
     // Track
     // -----
+
     test('calls addEvent on track', function() {
         var spy = sinon.spy(window.Keen, 'addEvent');
         analytics.track(event, properties);

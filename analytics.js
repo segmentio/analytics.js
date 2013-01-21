@@ -1,4 +1,4 @@
-//     Analytics.js 0.4.2
+//     Analytics.js 0.4.3
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -613,6 +613,7 @@ analytics.addProvider('comScore', {
 
 });
 
+
 // CrazyEgg
 // --------
 // [Documentation](www.crazyegg.com).
@@ -732,7 +733,11 @@ analytics.addProvider('Customer.io', {
 analytics.addProvider('Errorception', {
 
     settings : {
-        projectId : null
+        projectId : null,
+
+        // Whether to store metadata about the user on `identify` calls, using
+        // the [Errorception `meta` API](http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html).
+        meta : true
     },
 
 
@@ -743,11 +748,8 @@ analytics.addProvider('Errorception', {
         settings = analytics.utils.resolveSettings(settings, 'projectId');
         analytics.utils.extend(this.settings, settings);
 
-        var self = this;
+        var _errs = window._errs = window._errs || [settings.projectId];
 
-        var _errs = window._errs = window._errs || [];
-        _errs.push(settings.projectId);
-        
         (function(a,b){
             a.onerror = function () {
                 _errs.push(arguments);
@@ -761,6 +763,20 @@ analytics.addProvider('Errorception', {
             };
             a.addEventListener ? a.addEventListener("load",d,!1) : a.attachEvent("onload",d);
         })(window,document);
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        if (!traits) return;
+
+        // If the custom metadata object hasn't ever been made, make it.
+        window._errs.meta || (window._errs.meta = {});
+
+        // Add all of the traits as metadata.
+        if (this.settings.meta) analytics.utils.extend(window._errs.meta, traits);
     }
 
 });
@@ -975,6 +991,8 @@ analytics.addProvider('Gauges', {
     }
 
 });
+
+
 // GoSquared
 // ---------
 // [Documentation](www.gosquared.com/support).
@@ -1217,20 +1235,24 @@ analytics.addProvider('Intercom', {
 // Keen IO
 // -------
 // [Documentation](https://keen.io/docs/).
+
 analytics.addProvider('Keen', {
 
     settings: {
-        projectId: null,
-        apiKey: null
+        projectId : null,
+        apiKey    : null
     },
 
 
     // Initialize
     // ----------
+
     initialize: function(settings) {
         if (typeof settings !== "object" || !settings.projectId || !settings.apiKey) {
             throw new Error("Settings must be an object with properties 'projectId' and 'apiKey'.");
         }
+
+        analytics.utils.extend(this.settings, settings);
 
         var Keen=window.Keen||{configure:function(a,b,c){this._pId=a;this._ak=b;this._op=c},addEvent:function(a,b,c,d){this._eq=this._eq||[];this._eq.push([a,b,c,d])},setGlobalProperties:function(a){this._gp=a},onChartsReady:function(a){this._ocrq=this._ocrq||[];this._ocrq.push(a)}};
         (function(){var a=document.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"==document.location.protocol?"https://":"http://")+"dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js";var b=document.getElementsByTagName("script")[0];b.parentNode.insertBefore(a,b)})();
@@ -1238,16 +1260,16 @@ analytics.addProvider('Keen', {
         // Configure the Keen object with your Project ID and API Key.
         Keen.configure(settings.projectId, settings.apiKey);
 
-        this.settings = settings;
-
         window.Keen = Keen;
     },
 
 
     // Identify
     // --------
+
     identify: function(userId, traits) {
-        // Use Keen IO global properties to include user ID and traits on every event sent to Keen IO.
+        // Use Keen IO global properties to include `userId` and `traits` on
+        // every event sent to Keen IO.
         var globalUserProps = {};
         if (userId) globalUserProps.userId = userId;
         if (traits) globalUserProps.traits = traits;
@@ -1263,12 +1285,14 @@ analytics.addProvider('Keen', {
 
     // Track
     // -----
+
     track: function(event, properties) {
-        // Each track invocation will add a single event to Keen.
         window.Keen.addEvent(event, properties);
     }
 
 });
+
+
 // KISSmetrics
 // -----------
 // [Documentation](http://support.kissmetrics.com/apis/javascript).

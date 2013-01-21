@@ -1,3 +1,8 @@
+0.4.3 / 2013-1-20
+=================
+
+* Added support for Errorception user metadata
+
 0.4.2 / 2013-1-18
 =================
 

@@ -1,4 +1,4 @@
-//     Analytics.js 0.4.1
+//     Analytics.js 0.4.4
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -197,7 +197,9 @@
         // elements like jQuery gives you.
         //
         // * `event` and `properties` are passed directly to `analytics.track`
-        // and take the same options.
+        // and take the same options. `properties` can also be a function that
+        // will get passed the link that was clicked, and should return a
+        // dictionary of event properties.
         trackLink : function (link, event, properties) {
             if (!link) return;
 
@@ -211,6 +213,10 @@
                 var el = link[i];
 
                 this.utils.bind(el, 'click', function (e) {
+
+                    // Allow for properties to be a function. And pass it the
+                    // link element that was clicked.
+                    if (self.utils.isFunction(properties)) properties = properties(el);
 
                     // Fire a normal track call.
                     self.track(event, properties);
@@ -256,7 +262,9 @@
         // form elements like jQuery gives you.
         //
         // * `event` and `properties` are passed directly to `analytics.track`
-        // and take the same options.
+        // and take the same options. `properties` can also be a function that
+        // will get passed the form that was submitted, and should return a
+        // dictionary of event properties.
         trackForm : function (form, event, properties) {
             if (!form) return;
 
@@ -270,6 +278,10 @@
                 var el = form[i];
 
                 this.utils.bind(el, 'submit', function (e) {
+
+                    // Allow for properties to be a function. And pass it the
+                    // form element that was submitted.
+                    if (self.utils.isFunction(properties)) properties = properties(el);
 
                     // Fire a normal track call.
                     self.track(event, properties);
@@ -469,6 +481,84 @@
 })();
 
 
+// Bitdeli
+// -------
+// * [Documentation](https://bitdeli.com/docs)
+// * [JavaScript API Reference](https://bitdeli.com/docs/javascript-api.html)
+
+analytics.addProvider('Bitdeli', {
+
+    settings : {
+        inputId   : null,
+        authToken : null,
+
+        // Whether or not to track an initial pageview when the page first
+        // loads. You might not want this if you're using a single-page app.
+        initialPageview : true
+    },
+
+
+    // Initialize
+    // ----------
+
+    // Changes to the Bitdeli snippet:
+    //
+    // * Use `window._bdq` instead of `_bdq` to access existing queue instance
+    // * Always load the latest version of the library
+    //   (major backwards incompatible updates will use another URL)
+    initialize : function (settings) {
+        var utils = analytics.utils;
+        if (!utils.isObject(settings) ||
+            !utils.isString(settings.inputId) ||
+            !utils.isString(settings.authToken)) {
+            throw new Error("Settings must be an object with properties 'inputId' and 'authToken'.");
+        }
+
+        utils.extend(this.settings, settings);
+
+        var _bdq = window._bdq = window._bdq || [];
+        _bdq.push(["setAccount", this.settings.inputId, this.settings.authToken]);
+        if (this.settings.initialPageview) _bdq.push(["trackPageview"]);
+
+        (function() {
+            var bd = document.createElement("script"); bd.type = "text/javascript"; bd.async = true;
+            bd.src = ("https:" == document.location.protocol ? "https://" : "http://") + "d2flrkr957qc5j.cloudfront.net/bitdeli.min.js";
+            var s = document.getElementsByTagName("script")[0]; s.parentNode.insertBefore(bd, s);
+        })();
+    },
+
+
+    // Identify
+    // --------
+
+    // Bitdeli uses two separate methods: `identify` for storing the `userId`
+    // and `set` for storing `traits`.
+    identify : function (userId, traits) {
+        if (userId) window._bdq.push(['identify', userId]);
+        if (traits) window._bdq.push(['set', traits]);
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        window._bdq.push(['track', event, properties]);
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function (url) {
+        // If `url` is undefined, Bitdeli uses the current page URL instead.
+        window._bdq.push(['trackPageview', url]);
+    }
+
+
+});
+
+
 // Chartbeat
 // ---------
 // [Documentation](http://chartbeat.com/docs/adding_the_code/),
@@ -544,7 +634,7 @@ analytics.addProvider('Clicky', {
 
         var clicky_site_ids = window.clicky_site_ids = window.clicky_site_ids || [];
         clicky_site_ids.push(settings.siteId);
-        
+
         (function() {
             var s = document.createElement('script');
             s.type = 'text/javascript';
@@ -560,6 +650,8 @@ analytics.addProvider('Clicky', {
     // -----
 
     track : function (event, properties) {
+        // We aren't guaranteed `clicky` is available until the script has been
+        // requested and run, hence the check.
         if (window.clicky) window.clicky.log(window.location.href, event);
     }
 
@@ -602,6 +694,7 @@ analytics.addProvider('comScore', {
 
 });
 
+
 // CrazyEgg
 // --------
 // [Documentation](www.crazyegg.com).
@@ -627,7 +720,8 @@ analytics.addProvider('CrazyEgg', {
         (function(){
             var a = document.createElement('script');
             var b = document.getElementsByTagName('script')[0];
-            a.src = document.location.protocol+'//dnn506yrbagrg.cloudfront.net/pages/scripts/'+apiKey+'.js?'+Math.floor(new Date().getTime()/3600000);
+            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+            a.src = protocol+'//dnn506yrbagrg.cloudfront.net/pages/scripts/'+apiKey+'.js?'+Math.floor(new Date().getTime()/3600000);
             a.async = true;
             a.type = 'text/javascript';
             b.parentNode.insertBefore(a,b);
@@ -730,7 +824,11 @@ analytics.addProvider('Customer.io', {
 analytics.addProvider('Errorception', {
 
     settings : {
-        projectId : null
+        projectId : null,
+
+        // Whether to store metadata about the user on `identify` calls, using
+        // the [Errorception `meta` API](http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html).
+        meta : true
     },
 
 
@@ -741,11 +839,8 @@ analytics.addProvider('Errorception', {
         settings = analytics.utils.resolveSettings(settings, 'projectId');
         analytics.utils.extend(this.settings, settings);
 
-        var self = this;
+        var _errs = window._errs = window._errs || [settings.projectId];
 
-        var _errs = window._errs = window._errs || [];
-        _errs.push(settings.projectId);
-        
         (function(a,b){
             a.onerror = function () {
                 _errs.push(arguments);
@@ -760,6 +855,20 @@ analytics.addProvider('Errorception', {
             };
             a.addEventListener ? a.addEventListener('load', d, !1) : a.attachEvent('onload', d);
         })(window,document);
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        if (!traits) return;
+
+        // If the custom metadata object hasn't ever been made, make it.
+        window._errs.meta || (window._errs.meta = {});
+
+        // Add all of the traits as metadata.
+        if (this.settings.meta) analytics.utils.extend(window._errs.meta, traits);
     }
 
 });
@@ -873,15 +982,15 @@ analytics.addProvider('Google Analytics', {
 
         var _gaq = window._gaq = window._gaq || [];
         _gaq.push(['_setAccount', this.settings.trackingId]);
+        if(this.settings.domain) {
+            _gaq.push(['_setDomainName', this.settings.domain]);
+        }
         if (this.settings.enhancedLinkAttribution) {
             var pluginUrl = (('https:' == document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
             _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
         }
         if (analytics.utils.isNumber(this.settings.siteSpeedSampleRate)) {
             _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
-        }
-        if(this.settings.domain) {
-            _gaq.push(['_setDomainName', this.settings.domain]);
         }
         if(this.settings.anonymizeIp) {
             _gaq.push(['_gat._anonymizeIp']);
@@ -975,6 +1084,8 @@ analytics.addProvider('Gauges', {
     }
 
 });
+
+
 // GoSquared
 // ---------
 // [Documentation](www.gosquared.com/support).
@@ -1225,35 +1336,30 @@ analytics.addProvider('Intercom', {
 // Keen IO
 // -------
 // [Documentation](https://keen.io/docs/).
+
 analytics.addProvider('Keen', {
 
     settings: {
-        projectId: null,
-        apiKey: null
+        projectId : null,
+        apiKey    : null
     },
 
 
     // Initialize
     // ----------
+
     initialize: function(settings) {
         if (typeof settings !== 'object' || !settings.projectId || !settings.apiKey) {
             throw new Error('Settings must be an object with properties projectId and apiKey.');
         }
 
-        var Keen = window.Keen||{configure:function(a,b,c){this._pId=a;this._ak=b;this._op=c},addEvent:function(a,b,c,d){this._eq=this._eq||[];this._eq.push([a,b,c,d])},setGlobalProperties:function(a){this._gp=a},onChartsReady:function(a){this._ocrq=this._ocrq||[];this._ocrq.push(a)}};
-        (function(){
-            var a = document.createElement('script');
-            a.type = 'text/javascript';
-            a.async = true;
-            a.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js';
-            var b = document.getElementsByTagName('script')[0];
-            b.parentNode.insertBefore(a,b);
-        })();
+        analytics.utils.extend(this.settings, settings);
+
+        var Keen=window.Keen||{configure:function(a,b,c){this._pId=a;this._ak=b;this._op=c},addEvent:function(a,b,c,d){this._eq=this._eq||[];this._eq.push([a,b,c,d])},setGlobalProperties:function(a){this._gp=a},onChartsReady:function(a){this._ocrq=this._ocrq||[];this._ocrq.push(a)}};
+        (function(){var a=document.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"==document.location.protocol?"https://":"http://")+"dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js";var b=document.getElementsByTagName("script")[0];b.parentNode.insertBefore(a,b)})();
 
         // Configure the Keen object with your Project ID and API Key.
         Keen.configure(settings.projectId, settings.apiKey);
-
-        this.settings = settings;
 
         window.Keen = Keen;
     },
@@ -1261,9 +1367,10 @@ analytics.addProvider('Keen', {
 
     // Identify
     // --------
+
     identify: function(userId, traits) {
-        // Use Keen IO global properties to include user ID
-        // and traits on every event sent to Keen IO.
+        // Use Keen IO global properties to include `userId` and `traits` on
+        // every event sent to Keen IO.
         var globalUserProps = {};
         if (userId) globalUserProps.userId = userId;
         if (traits) globalUserProps.traits = traits;
@@ -1279,12 +1386,14 @@ analytics.addProvider('Keen', {
 
     // Track
     // -----
+
     track: function(event, properties) {
-        // Each track invocation will add a single event to Keen.
         window.Keen.addEvent(event, properties);
     }
 
 });
+
+
 // KISSmetrics
 // -----------
 // [Documentation](http://support.kissmetrics.com/apis/javascript).
@@ -1478,11 +1587,13 @@ analytics.addProvider('Mixpanel', {
         // Alias the traits' keys with dollar signs for Mixpanel's API.
         if (traits) {
             analytics.utils.alias(traits, {
-                'email'    : '$email',
-                'name'     : '$name',
-                'username' : '$username',
-                'lastSeen' : '$lastSeen',
-                'created'  : '$created'
+                'created'   : '$created',
+                'email'     : '$email',
+                'firstName' : '$first_name',
+                'lastName'  : '$last_name',
+                'lastSeen'  : '$last_seen',
+                'name'      : '$name',
+                'username'  : '$username'
             });
         }
 

@@ -6,7 +6,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds ga.js on initialize', function () {
+    test('stores settings and adds ga.js on initialize', function (done) {
         expect(window._gaq).to.be(undefined);
 
         analytics.initialize({
@@ -14,6 +14,13 @@
         });
         expect(window._gaq).not.to.be(undefined);
         expect(analytics.providers[0].settings.trackingId).to.equal('x');
+
+        // test actual loading
+        expect(window._gaq.I).to.be(undefined);
+        setTimeout(function () {
+            expect(window._gaq.I).not.to.be(undefined);
+            done();
+        }, 1000);
     });
 
     test('can set domain on initialize', function () {
@@ -22,8 +29,8 @@
 
         analytics.initialize({
             'Google Analytics' : {
-              'trackingId' : 'x',
-              'domain' : 'example.com'
+              trackingId : 'x',
+              domain     : 'example.com'
             }
         });
 
@@ -31,11 +38,51 @@
         spy.restore();
     });
 
-    test('can add enhanced link attribution');
+    test('can add enhanced link attribution on initialize', function () {
+        window._gaq = [];
+        var spy = sinon.spy(window._gaq, 'push');
 
-    test('can add site speed sample rate');
+        analytics.initialize({
+            'Google Analytics' : {
+              trackingId              : 'x',
+              enhancedLinkAttribution : true
+            }
+        });
 
-    test('can add anonymize ip');
+        expect(spy.calledWith(['_require', 'inpage_linkid', 'http://www.google-analytics.com/plugins/ga/inpage_linkid.js'])).to.be(true);
+        spy.restore();
+    });
+
+    test('can add site speed sample rate on initialize', function () {
+        window._gaq = [];
+        var spy = sinon.spy(window._gaq, 'push');
+
+        analytics.initialize({
+            'Google Analytics' : {
+              trackingId          : 'x',
+              siteSpeedSampleRate : 5
+            }
+        });
+
+        expect(spy.calledWith(['_setSiteSpeedSampleRate', 5])).to.be(true);
+        spy.restore();
+    });
+
+    test('can add anonymize ip on initialize', function () {
+        window._gaq = [];
+        var spy = sinon.spy(window._gaq, 'push');
+
+        analytics.initialize({
+            'Google Analytics' : {
+              trackingId  : 'x',
+              anonymizeIp : true
+            }
+        });
+
+        expect(spy.calledWith(['_gat._anonymizeIp'])).to.be(true);
+        spy.restore();
+    });
+
 
     // Track
     // -----

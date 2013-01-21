@@ -28,15 +28,15 @@ analytics.addProvider('Google Analytics', {
 
         var _gaq = window._gaq = window._gaq || [];
         _gaq.push(['_setAccount', this.settings.trackingId]);
+        if(this.settings.domain) {
+            _gaq.push(['_setDomainName', this.settings.domain]);
+        }
         if (this.settings.enhancedLinkAttribution) {
             var pluginUrl = (('https:' == document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
             _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
         }
         if (analytics.utils.isNumber(this.settings.siteSpeedSampleRate)) {
             _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
-        }
-        if(this.settings.domain) {
-            _gaq.push(['_setDomainName', this.settings.domain]);
         }
         if(this.settings.anonymizeIp) {
             _gaq.push(['_gat._anonymizeIp']);

@@ -18,7 +18,7 @@ analytics.addProvider('Clicky', {
 
         var clicky_site_ids = window.clicky_site_ids = window.clicky_site_ids || [];
         clicky_site_ids.push(settings.siteId);
-        
+
         (function() {
             var s = document.createElement('script');
             s.type = 'text/javascript';
@@ -34,6 +34,8 @@ analytics.addProvider('Clicky', {
     // -----
 
     track : function (event, properties) {
+        // We aren't guaranteed `clicky` is available until the script has been
+        // requested and run, hence the check.
         if (window.clicky) window.clicky.log(window.location.href, event);
     }
 

@@ -73,11 +73,13 @@ analytics.addProvider('Mixpanel', {
         // Alias the traits' keys with dollar signs for Mixpanel's API.
         if (traits) {
             analytics.utils.alias(traits, {
-                'email'    : '$email',
-                'name'     : '$name',
-                'username' : '$username',
-                'lastSeen' : '$lastSeen',
-                'created'  : '$created'
+                'created'   : '$created',
+                'email'     : '$email',
+                'firstName' : '$first_name',
+                'lastName'  : '$last_name',
+                'lastSeen'  : '$last_seen',
+                'name'      : '$name',
+                'username'  : '$username'
             });
         }
 

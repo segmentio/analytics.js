@@ -3,6 +3,7 @@ PHANTOM = node_modules/.bin/mocha-phantomjs
 PHANTOM_OPTS = -s web-security=false -s local-to-remote-url-access=true
 
 FILES = src/analytics.js \
+				src/providers/bitdeli/bitdeli.js \
 				src/providers/chartbeat/chartbeat.js \
 				src/providers/clicky/clicky.js \
 				src/providers/comscore/comscore.js \
@@ -26,37 +27,63 @@ FILES = src/analytics.js \
 				src/providers/usercycle/usercycle.js \
 				src/providers/vero/vero.js
 
+# Compiles a one-file copy of analytics.js from all the development files.
 analytics.js:
 	cat $(FILES) > analytics.js
 
+# Adds a minified copy of analytics.js
 min: analytics.js
 	uglifyjs -o analytics.min.js analytics.js
 
+# Adds nice annotated-source docs for each file.
 docs:
 	docco $(FILES)
 
+# Starts the testing server.
 server:
 	node test/server.js &
 
-# Kills the travis server
+# Kills the testing server.
 kill:
 	kill -9 `cat test/pid.txt`
 	rm test/pid.txt
 
-
-# Runs travis tests
+# Runs all the tests on travis.
 test: server
 	sleep 1
-	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/min.html
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/core.html
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/providers.html
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/min.html
+	make kill
+
+# Runs only the non-minified tests.
+test-dev: server
+	sleep 1
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/core.html
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/providers.html
+	make kill
+
+# Runs only the non-minified core tests.
+test-dev-core: server
+	sleep 1
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/core.html
 	make kill
 
-browser-test:
-	open http://localhost:8000/test/min.html
-	open http://localhost:8000/test/providers.html
-	open http://localhost:8000/test/core.html
+# Runs only the non-minified provider tests.
+test-dev-providers: server
+	sleep 1
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/providers.html
+	make kill
 
+# Opens all the tests in your browser.
+test-browser:
+	open http://localhost:8000/test/core.html
+	open http://localhost:8000/test/providers.html
+	open http://localhost:8000/test/min.html
+
+# Compiles, minfies, doccos, and tests analytics.js - wrapped up and good to go.
 release: analytics.js min docs test
 
-.PHONY: analytics.js docs test browser-test
+
+
+.PHONY: analytics.js docs

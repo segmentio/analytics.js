@@ -1,3 +1,20 @@
+0.4.4 / 2013-1-21
+=================
+
+* [Bitdeli] support added by [@jtuulos](https://github.com/jtuulos)
+* Added Mixpanel `$first_name` and `$last_name` aliases
+* Fixed Mixpanel `$last_seen` alias
+
+0.4.3 / 2013-1-20
+=================
+
+* Added support for Errorception user metadata
+
+0.4.2 / 2013-1-18
+=================
+
+* Added option to use a properties function in `trackLink` and `trackForm` methods
+
 0.4.1 / 2013-1-18
 =================
 

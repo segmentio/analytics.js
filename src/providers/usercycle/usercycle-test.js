@@ -22,16 +22,11 @@
     test('stores settings and adds mixpanel.js on initialize', function () {
         expect(window._uc).to.be(undefined);
 
-        analytics.initialize({
-            'USERcycle' : {
-                key : 'x'
-            }
-        });
+        analytics.initialize({ 'USERcycle' : 'x' });
+
         expect(window._uc).not.to.be(undefined);
         expect(analytics.providers[0].settings.key).to.equal('x');
     });
-
-    test('calls init with settings on initialize');
 
 
     // Identify

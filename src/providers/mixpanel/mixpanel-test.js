@@ -10,21 +10,32 @@
 
     var userId = 'user';
 
+    var now = new Date();
     var traits = {
-        name  : 'Zeus',
-        email : 'zeus@segment.io'
+        name      : 'Zeus',
+        firstName : 'Zeus',
+        lastName  : 'Allmighty',
+        username  : 'zeus98',
+        email     : 'zeus@segment.io',
+        created   : now,
+        lastSeen  : now
     };
 
     var aliasedTraits = {
-        $name  : 'Zeus',
-        $email : 'zeus@segment.io'
+        $name       : 'Zeus',
+        $first_name : 'Zeus',
+        $last_name  : 'Allmighty',
+        $username   : 'zeus98',
+        $email      : 'zeus@segment.io',
+        $created    : now,
+        $last_seen  : now
     };
 
 
     // Initialize
     // ----------
 
-    test('stores settings and adds mixpanel.js on initialize', function () {
+    test('stores settings and adds mixpanel.js on initialize', function (done) {
         expect(window.mixpanel).to.be(undefined);
 
         analytics.initialize({
@@ -36,9 +47,14 @@
         expect(window.mixpanel).not.to.be(undefined);
         expect(analytics.providers[0].settings.token).to.equal('x');
         expect(analytics.providers[0].settings.people).to.be(true);
-    });
 
-    test('calls init with settings on initialize');
+        // test actual loading
+        expect(window.mixpanel.config).to.be(undefined);
+        setTimeout(function () {
+            expect(window.mixpanel.config).not.to.be(undefined);
+            done();
+        }, 1000);
+    });
 
 
     // Identify

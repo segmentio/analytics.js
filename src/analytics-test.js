@@ -197,31 +197,7 @@
 
     suite('trackLink');
 
-    test('triggers a track on a button click', function () {
-        var spy    = sinon.spy(provider, 'track');
-        var button = $('<button>')[0];
-
-        analytics.trackLink(button, 'party');
-
-        $(button).click();
-        expect(spy.calledWith('party')).to.be(true);
-
-        spy.restore();
-    });
-
-    test('triggers a track on a $button click', function () {
-        var spy     = sinon.spy(provider, 'track');
-        var $button = $('<button>');
-
-        analytics.trackLink($button, 'party');
-
-        $button.click();
-        expect(spy.calledWith('party')).to.be(true);
-
-        spy.restore();
-    });
-
-    test('triggers a track on a link click without an href', function () {
+    test('triggers a track on a link click', function () {
         var spy  = sinon.spy(provider, 'track');
         var link = $('<a>')[0];
 
@@ -232,6 +208,45 @@
         expect(spy.calledWith('party')).to.be(true);
 
         spy.restore();
+    });
+
+    test('triggers a track on a $link click', function () {
+        var spy   = sinon.spy(provider, 'track');
+        var $link = $('<a>');
+
+        analytics.trackLink($link, 'party');
+
+        triggerClick($link[0]);
+
+        expect(spy.calledWith('party')).to.be(true);
+
+        spy.restore();
+    });
+
+    test('allows for properties to be a function', function () {
+        var spy  = sinon.spy(provider, 'track');
+        var link = $('<a>')[0];
+
+        analytics.trackLink(link, 'party', function () {
+            return { type : 'crazy' };
+        });
+
+        triggerClick(link);
+
+        expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
+
+        spy.restore();
+    });
+
+    test('calls a properties function with the link that was clicked', function () {
+        var spy    = sinon.spy();
+        var link = $('<a>')[0];
+
+        analytics.trackLink(link, 'party', spy);
+
+        triggerClick(link);
+
+        expect(spy.calledWith(link)).to.be(true);
     });
 
     test('triggers a track and loads an href on a link click with an href', function (done) {
@@ -305,13 +320,12 @@
     suite('trackForm');
 
     test('triggers a track on a form submit', function () {
-        var spy   = sinon.spy(provider, 'track');
-        var form  = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
-        var input = $(form).find('input')[0];
+        var spy  = sinon.spy(provider, 'track');
+        var form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
 
         analytics.trackForm(form, 'party');
 
-        triggerClick(input);
+        triggerClick($(form).find('input')[0]);
 
         expect(spy.calledWith('party')).to.be(true);
 
@@ -320,16 +334,41 @@
 
     test('triggers a track on a $form submit', function () {
         var spy   = sinon.spy(provider, 'track');
-        var form  = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
-        var input = $(form).find('input')[0];
+        var $form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
 
-        analytics.trackForm(form, 'party');
+        analytics.trackForm($form, 'party');
 
-        triggerClick(input);
+        triggerClick($form.find('input')[0]);
 
         expect(spy.calledWith('party')).to.be(true);
 
         spy.restore();
+    });
+
+    test('allows for properties to be a function', function () {
+        var spy  = sinon.spy(provider, 'track');
+        var form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
+
+        analytics.trackForm(form, 'party', function () {
+            return { type : 'crazy' };
+        });
+
+        triggerClick($(form).find('input')[0]);
+
+        expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
+
+        spy.restore();
+    });
+
+    test('calls a properties function with the form that was clicked', function () {
+        var spy  = sinon.spy();
+        var form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
+
+        analytics.trackForm(form, 'party', spy);
+
+        triggerClick($(form).find('input')[0]);
+
+        expect(spy.calledWith(form)).to.be(true);
     });
 
     test('trackSubmit is aliased to trackForm for backwards compatibility', function () {
@@ -342,7 +381,7 @@
 
     suite('pageview');
 
-    test('is called on providers', function () {
+    test('gets called on providers', function () {
         var spy = sinon.spy(provider, 'pageview');
 
         analytics.pageview();
@@ -358,7 +397,10 @@
 
     suite('utils');
 
-    test('resolveSettings...');
+    test('resolveSettings converts a settings string into an api key', function() {
+        expect(analytics.utils.resolveSettings('x', 'apiKey')).to.eql({ apiKey : 'x' });
+        expect(analytics.utils.resolveSettings({ apiKey : 'x' }, 'apiKey')).to.eql({ apiKey : 'x' });
+    });
 
     test('clone returns a copy of an object', function () {
         var object = { thing: 1 };
@@ -367,7 +409,7 @@
         expect(analytics.utils.clone(object)).to.eql(object);
     });
 
-    test('extend properly augments an object', function () {
+    test('extend augments an object', function () {
         var object = {
             one : 1
         };
@@ -398,7 +440,7 @@
         });
     });
 
-    test('alias properly changes props to their aliases', function () {
+    test('alias changes props to their aliases', function () {
         var traits = {
             name  : 'Medusa',
             email : 'medusa@segment.io'

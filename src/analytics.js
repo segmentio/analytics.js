@@ -1,4 +1,4 @@
-//     Analytics.js 0.4.1
+//     Analytics.js 0.4.4
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -197,7 +197,9 @@
         // elements like jQuery gives you.
         //
         // * `event` and `properties` are passed directly to `analytics.track`
-        // and take the same options.
+        // and take the same options. `properties` can also be a function that
+        // will get passed the link that was clicked, and should return a
+        // dictionary of event properties.
         trackLink : function (link, event, properties) {
             if (!link) return;
 
@@ -211,6 +213,10 @@
                 var el = link[i];
 
                 this.utils.bind(el, 'click', function (e) {
+
+                    // Allow for properties to be a function. And pass it the
+                    // link element that was clicked.
+                    if (self.utils.isFunction(properties)) properties = properties(el);
 
                     // Fire a normal track call.
                     self.track(event, properties);
@@ -256,7 +262,9 @@
         // form elements like jQuery gives you.
         //
         // * `event` and `properties` are passed directly to `analytics.track`
-        // and take the same options.
+        // and take the same options. `properties` can also be a function that
+        // will get passed the form that was submitted, and should return a
+        // dictionary of event properties.
         trackForm : function (form, event, properties) {
             if (!form) return;
 
@@ -270,6 +278,10 @@
                 var el = form[i];
 
                 this.utils.bind(el, 'submit', function (e) {
+
+                    // Allow for properties to be a function. And pass it the
+                    // form element that was submitted.
+                    if (self.utils.isFunction(properties)) properties = properties(el);
 
                     // Fire a normal track call.
                     self.track(event, properties);

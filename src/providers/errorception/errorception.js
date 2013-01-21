@@ -5,7 +5,11 @@
 analytics.addProvider('Errorception', {
 
     settings : {
-        projectId : null
+        projectId : null,
+
+        // Whether to store metadata about the user on `identify` calls, using
+        // the [Errorception `meta` API](http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html).
+        meta : true
     },
 
 
@@ -16,11 +20,8 @@ analytics.addProvider('Errorception', {
         settings = analytics.utils.resolveSettings(settings, 'projectId');
         analytics.utils.extend(this.settings, settings);
 
-        var self = this;
+        var _errs = window._errs = window._errs || [settings.projectId];
 
-        var _errs = window._errs = window._errs || [];
-        _errs.push(settings.projectId);
-        
         (function(a,b){
             a.onerror = function () {
                 _errs.push(arguments);
@@ -35,6 +36,20 @@ analytics.addProvider('Errorception', {
             };
             a.addEventListener ? a.addEventListener('load', d, !1) : a.attachEvent('onload', d);
         })(window,document);
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        if (!traits) return;
+
+        // If the custom metadata object hasn't ever been made, make it.
+        window._errs.meta || (window._errs.meta = {});
+
+        // Add all of the traits as metadata.
+        if (this.settings.meta) analytics.utils.extend(window._errs.meta, traits);
     }
 
 });

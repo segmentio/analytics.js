@@ -6,25 +6,27 @@
     var event = 'someEventName';
 
     var properties = {
-        count: 42
+        count : 42
     };
 
     var userId = 'someUserId';
 
     var traits = {
-        name: 'Zeus',
-        email: 'zeus@segment.io'
+        name  : 'Zeus',
+        email : 'zeus@segment.io'
     };
+
 
     // Initialize
     // ----------
-    test('stores settings and adds keenio.js on initialize', function() {
+
+    test('stores settings and adds keenio.js on initialize', function(done) {
         expect(window.Keen).not.to.exist;
 
         analytics.initialize({
             'Keen': {
-                projectId: 'KEEN_PROJECT_ID',
-                apiKey: 'KEEN_API_KEY'
+                projectId : 'KEEN_PROJECT_ID',
+                apiKey    : 'KEEN_API_KEY'
             }
         });
         expect(window.Keen).not.to.be(undefined);
@@ -32,10 +34,19 @@
         expect(window.Keen.addEvent).not.to.be(undefined);
         expect(window.Keen._pId).to.equal('KEEN_PROJECT_ID');
         expect(window.Keen._ak).to.equal('KEEN_API_KEY');
+
+        // test actual loading
+        expect(window.Keen.Base64).to.be(undefined);
+        setTimeout(function () {
+            expect(window.Keen.Base64).not.to.be(undefined);
+            done();
+        }, 1000);
     });
+
 
     // Identify
     // --------
+
     test('calls setGlobalProperties on identify', function() {
         // Reset internal `userId` state from any previous identifies.
         analytics.userId = null;
@@ -69,8 +80,10 @@
         spy.restore();
     });
 
+
     // Track
     // -----
+
     test('calls addEvent on track', function() {
         var spy = sinon.spy(window.Keen, 'addEvent');
         analytics.track(event, properties);

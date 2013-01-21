@@ -19,7 +19,7 @@
     // Initialize
     // ----------
 
-    test('adds customer.io\'s track.js on initialize', function () {
+    test('adds customer.io\'s track.js on initialize', function (done) {
         expect(window._cio).to.be(undefined);
 
         analytics.initialize({
@@ -27,6 +27,13 @@
         });
         expect(window._cio).not.to.be(undefined);
         expect(analytics.providers[0].settings.siteId).to.equal('x');
+
+        // test actual loading
+        expect(window._cio.image).to.be(undefined);
+        setTimeout(function () {
+            expect(window._cio.image).not.to.be(undefined);
+            done();
+        }, 1000);
     });
 
 

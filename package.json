@@ -5,10 +5,10 @@
   "description" : "The hassle-free way to integrate analytics into any web application.",
   "keywords" : [
     "analytics", "analytics.js", "analyticsjs", "segment", "segmentio", "segment.io",
-    "chartbeat", "clicky", "comscore", "crazyegg", "customer.io", "errorception",
-    "foxmetrics", "google analytics", "gauges", "gosquared", "hittail", "hubspot",
-    "intercom", "keen" "kissmetrics", "klaviyo", "mixpanel", "olark", "quantcast",
-    "snapengage", "usercycle", "vero"
+    "bitdeli", "chartbeat", "clicky", "comscore", "crazyegg", "customer.io",
+    "errorception", "foxmetrics", "google analytics", "gauges", "gosquared",
+    "hittail", "hubspot", "intercom", "keen" "kissmetrics", "klaviyo",
+    "mixpanel", "olark", "quantcast", "snapengage", "usercycle", "vero"
   ],
   "url" : "https://github.com/segmentio/analytics.js",
   "repository" : {

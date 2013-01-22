@@ -43,9 +43,12 @@
 		test('sends an array of settings to enabled providers initialize', function () {
 		    var spy = sinon.spy(provider, 'initialize');
 				var array = [{x: 'x'}, {y: 'y'}];
+				
 		    analytics.initialize({'test' : array});
 
 				expect(spy.calledWith(spy.args[0][0])).to.eql(true);				
+				expect(spy.calledWith(spy.args[1][0])).to.eql(true);				
+				
 		    spy.restore();
 		});
 		

@@ -82,8 +82,16 @@
     // --------
 
     test('calls "TrackView" on pageview', function () {
-        var spy = sinon.spy(window.GoSquared.DefaultTracker, 'TrackView');
+        var spy = sinon.spy(window.GoSquared.q, 'push');
+        spy.withArgs(['TrackView']);
+
         analytics.pageview();
+        expect(spy.called).to.be(true);
+
+        spy.reset();
+        spy.withArgs(['TrackView', '/url']);
+
+        analytics.pageview('/url');
         expect(spy.called).to.be(true);
 
         spy.restore();

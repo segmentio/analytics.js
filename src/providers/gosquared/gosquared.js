@@ -1,6 +1,7 @@
 // GoSquared
 // ---------
 // [Documentation](www.gosquared.com/support).
+// [Tracker Functions](https://www.gosquared.com/customer/portal/articles/612063-tracker-functions)
 // Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat).
 
 analytics.addProvider('GoSquared', {
@@ -65,8 +66,12 @@ analytics.addProvider('GoSquared', {
     // Pageview
     // --------
 
-    pageview : function () {
-        window.GoSquared.DefaultTracker.TrackView();
+    pageview : function (url) {
+        var args = ['TrackView'];
+
+        if (url) args.push(url);
+
+        window.GoSquared.q.push(args);
     }
 
 });

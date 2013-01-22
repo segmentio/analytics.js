@@ -42,12 +42,10 @@
 		
 		test('sends an array of settings to enabled providers initialize', function () {
 		    var spy = sinon.spy(provider, 'initialize');
+				var array = [{x: 'x'}, {y: 'y'}];
+		    analytics.initialize({'test' : array});
 
-		    analytics.initialize({'test' : [{x: 'x'}, {y: 'y'}]});
-
-				expect(spy.calledWith(spy.args[0][0])).to.be(true);	
-				expect(spy.calledWith(spy.args[1][0])).to.be(true);	
-				
+				expect(spy.calledWith(spy.args[0][0])).to.eql(true);				
 		    spy.restore();
 		});
 		
@@ -98,7 +96,8 @@
         };
 
         analytics.identify('id', traits);
-
+				
+				console.log(spy.args)
         expect(spy.args[0][1]).not.to.equal(traits);
         expect(spy.args[0][1]).to.eql(traits);
 

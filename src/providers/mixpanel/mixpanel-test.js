@@ -114,7 +114,7 @@
 
         spy.reset();
         analytics.identify(userId, traits);
-        expect(spy.calledWith(userId)).to.be(true);
+        expect(spy.calledWith(traits.email)).to.be(true);
 
         spy.restore();
     });

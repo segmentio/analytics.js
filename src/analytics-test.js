@@ -45,7 +45,9 @@
 
 		    analytics.initialize({'test' : [{x: 'x'}, {y: 'y'}]});
 
-				// expect(spy.calledTwice).to.be(true);
+				expect(spy.calledWith(spy.args[0][0])).to.be(true);	
+				expect(spy.calledWith(spy.args[1][0])).to.be(true);	
+				
 		    spy.restore();
 		});
 		

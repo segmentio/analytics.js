@@ -35,7 +35,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds mixpanel.js on initialize', function () {
+    test('stores settings and adds mixpanel.js on initialize', function (done) {
         expect(window.mixpanel).to.be(undefined);
 
         analytics.initialize({
@@ -47,6 +47,13 @@
         expect(window.mixpanel).not.to.be(undefined);
         expect(analytics.providers[0].settings.token).to.equal('x');
         expect(analytics.providers[0].settings.people).to.be(true);
+
+        // test actual loading
+        expect(window.mixpanel.config).to.be(undefined);
+        setTimeout(function () {
+            expect(window.mixpanel.config).not.to.be(undefined);
+            done();
+        }, 1000);
     });
 
 

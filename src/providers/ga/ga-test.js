@@ -6,7 +6,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds ga.js on initialize', function () {
+    test('stores settings and adds ga.js on initialize', function (done) {
         expect(window._gaq).to.be(undefined);
 
         analytics.initialize({
@@ -14,6 +14,13 @@
         });
         expect(window._gaq).not.to.be(undefined);
         expect(analytics.providers[0].settings.trackingId).to.equal('x');
+
+        // test actual loading
+        expect(window._gaq.I).to.be(undefined);
+        setTimeout(function () {
+            expect(window._gaq.I).not.to.be(undefined);
+            done();
+        }, 1000);
     });
 
     test('can set domain on initialize', function () {

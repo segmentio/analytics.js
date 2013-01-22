@@ -2,7 +2,7 @@
 =================
 
 * [Bitdeli] support added by [@jtuulos](https://github.com/jtuulos)
-* Added Mixpanel `$first_name` and `$last_name` aliases
+* Mixpanel `$first_name` and `$last_name` aliases added by [@dwradcliffe](https://github.com/dwradcliffe)
 * Fixed Mixpanel `$last_seen` alias
 * Added `parseUrl` util
 * Moving gosquared queue to snippet

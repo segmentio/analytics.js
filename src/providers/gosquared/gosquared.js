@@ -25,6 +25,7 @@ analytics.addProvider('GoSquared', {
 
         var GoSquared = window.GoSquared = {};
         GoSquared.acct = this.settings.siteToken;
+        GoSquared.q = [];
         window._gstc_lt=+(new Date); var d=document;
         var g = d.createElement("script"); g.type = "text/javascript"; g.async = true; g.src = "//d1l6p2sc9645hc.cloudfront.net/tracker.js";
         var s = d.getElementsByTagName("script")[0]; s.parentNode.insertBefore(g, s);
@@ -46,9 +47,6 @@ analytics.addProvider('GoSquared', {
     // -----
 
     track : function (event, properties) {
-        // The queue isn't automatically created by the snippet.
-        if (!window.GoSquared.q) window.GoSquared.q = [];
-
         // GoSquared sets a `gs_evt_name` property with a value of the event
         // name, so it relies on properties being an object.
         properties || (properties = {});

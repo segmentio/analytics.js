@@ -39,7 +39,16 @@
 
         spy.restore();
     });
+		
+		test('sends an array of settings to enabled providers initialize', function () {
+		    var spy = sinon.spy(provider, 'initialize');
 
+		    analytics.initialize({'test' : [{x: 'x'}, {y: 'y'}]});
+
+				expect(spy.calledTwice).to.be(true);
+		    spy.restore();
+		});
+		
     test('resets enabled providers and userId', function () {
         analytics.initialize({'test' : 'x'});
         analytics.identify('user');

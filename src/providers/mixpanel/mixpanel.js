@@ -87,7 +87,7 @@ analytics.addProvider('Mixpanel', {
         // against settings to make sure they're enabled.
         if (userId) {
             window.mixpanel.identify(userId);
-            if (this.settings.nameTag) window.mixpanel.name_tag(userId);
+            if (this.settings.nameTag) window.mixpanel.name_tag(traits && traits.$email || userId);
         }
         if (traits) {
             window.mixpanel.register(traits);

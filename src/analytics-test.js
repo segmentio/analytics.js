@@ -46,8 +46,7 @@
 				
 		    analytics.initialize({'test' : array});
 
-				expect(spy.calledWith(spy.args[0][0])).to.eql(true);				
-				expect(spy.calledWith(spy.args[1][0])).to.eql(true);				
+				expect(spy.calledTwice).to.be(true);
 				
 		    spy.restore();
 		});
@@ -99,8 +98,7 @@
         };
 
         analytics.identify('id', traits);
-				
-				console.log(spy.args)
+
         expect(spy.args[0][1]).not.to.equal(traits);
         expect(spy.args[0][1]).to.eql(traits);
 

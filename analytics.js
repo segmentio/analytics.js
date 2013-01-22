@@ -72,7 +72,13 @@
                 var provider = this.initializableProviders[key];
                 var settings = providers[key];
                 if (!provider) throw new Error('Could not find a provider named "'+key+'"');
-                provider.initialize(settings);
+								if(analytics.utils.isArray(settings)) {
+									for (var i = 0; i < settings.length; i++) {
+										provider.initialize(settings[i]);
+									}
+								} else {
+									provider.initialize(settings);
+								}
                 this.providers.push(provider);
             }
 

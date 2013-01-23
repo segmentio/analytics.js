@@ -26,7 +26,7 @@
 
         // The amount of milliseconds to wait for requests to providers to clear
         // before navigating away from the current page.
-        timeout : 250,
+        timeout : 300,
 
 
         // Providers

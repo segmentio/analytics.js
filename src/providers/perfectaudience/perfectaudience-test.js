@@ -30,6 +30,8 @@
 	// -----
 
 	test('calls track on track', function () {
+		expect(window._pa.track).not.to.be(undefined);
+
 		var event = 'event';
 		var properties = {
 			orderId: 12345,

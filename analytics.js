@@ -1951,7 +1951,14 @@ analytics.addProvider('Perfect Audience', {
 			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(pa, s);
 		})();
 
-	}
+	},
+
+	// Track
+	// -----
+
+	track : function (event, properties) {
+		window._pa.track(event, properties);
+	},
 
 });
 

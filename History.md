@@ -3,6 +3,7 @@
 
 * Automatically handle canonical URLs in Google Analytics
 * Add Intercom widget setting
+* Fix for Chartbeat required `body` element to exist
 
 0.4.4 / 2013-1-21
 =================

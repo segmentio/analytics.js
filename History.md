@@ -1,3 +1,8 @@
+0.4.5 / 2013-1-25
+=================
+
+* Automatically handle canonical URLs in Google Analytics
+
 0.4.4 / 2013-1-21
 =================
 

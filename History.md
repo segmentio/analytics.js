@@ -2,6 +2,7 @@
 =================
 
 * Automatically handle canonical URLs in Google Analytics
+* Add Intercom widget setting
 
 0.4.4 / 2013-1-21
 =================

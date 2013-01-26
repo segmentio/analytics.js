@@ -10,7 +10,7 @@
 
     // The `analytics` object that will be exposed to you on the global object.
     var analytics = {
-
+    
         // Cache the `userId` when a user is identified.
         userId : null,
 
@@ -1697,7 +1697,6 @@ analytics.addProvider('Olark', {
         window.olark.identify(this.settings.siteId);
     },
 
-
     // Identify
     // --------
 
@@ -1941,6 +1940,66 @@ analytics.addProvider('Vero', {
 
     track : function (event, properties) {
         window._veroq.push(['track', event, properties]);
+    }
+
+});
+
+// UserFox
+// -----------
+// [Documentation](https://www.userfox.com/docs/).
+
+analytics.addProvider('UserFox', {
+
+    settings : {
+        clientId : null
+    },
+
+    // Initialize
+    // --------
+    
+    // Userfox identifies when the script is loaded, so instead of initializing
+    // in `initialize`, we store the settings for later and initialize in `identify`.
+    
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'clientId');
+        analytics.utils.extend(this.settings, settings);
+    },
+
+    // Identify
+    // --------
+    
+    // userfox requires email + signup_date + clientId (site key)
+    // signup_date format: "2012-11-10T00:53:14.920Z" or "2012-11-09 16:53:14 -0800" 
+    
+    identify : function (userEmail, traits) {
+
+        // doesn't work without this stuff
+        if (!userEmail || !traits || !traits.signup_date) return;
+
+        // collect email and signup_date
+        if (traits) {
+            if (analytics.utils.isEmail(userEmail) {
+                this.settings.email = userEmail;
+            }
+            this.settings.signup_date = traits.signup_date;
+        }
+
+        window._ufq.push(['init', {
+            email: this.settings.email,
+            clientId: this.settings.clientId
+        }]);    
+    
+        window._ufq.push([ 'track', traits ]);
+        
+        var _ufq = _ufq || [];
+        
+        (function() {
+            var ufs = document.createElement("script"); 
+            ufs.type='text/javascript'; 
+            ufs.src=document.location.protocol+'//d2y71mjhnajxcg.cloudfront.net/js/userfox-stable.js'; 
+            ufs.async=true; 
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ufs, s);
+        })();        
     }
 
 });

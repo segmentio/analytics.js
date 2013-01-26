@@ -29,7 +29,7 @@
                 expect(window.clicky).not.to.be(undefined);
                 done();
             }
-        }, 1000);
+        }, 1900);
 
         expect(analytics.providers[0].settings.siteId).to.equal('x');
     });

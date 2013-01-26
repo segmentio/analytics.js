@@ -40,7 +40,7 @@
         setTimeout(function () {
             expect(window.Keen.Base64).not.to.be(undefined);
             done();
-        }, 1000);
+        }, 1900);
     });
 
 

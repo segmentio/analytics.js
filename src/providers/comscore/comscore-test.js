@@ -27,7 +27,7 @@
             expect(analytics.providers[0].settings.c1).to.equal('2');
             expect(analytics.providers[0].settings.c2).to.equal('x');
             done();
-        }, 1000);
+        }, 1900);
     });
 
 }());

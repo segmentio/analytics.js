@@ -21,7 +21,7 @@
             expect(window._qevents).not.to.be(undefined);
             expect(analytics.providers[0].settings.pCode).to.equal('x');
             done();
-        }, 1000);
+        }, 1900);
     });
 
 }());

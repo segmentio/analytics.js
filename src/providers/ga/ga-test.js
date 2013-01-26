@@ -20,7 +20,7 @@
         setTimeout(function () {
             expect(window._gaq.I).not.to.be(undefined);
             done();
-        }, 1000);
+        }, 1900);
     });
 
     test('can set domain on initialize', function () {

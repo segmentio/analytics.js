@@ -33,7 +33,7 @@
         setTimeout(function () {
             expect(window._cio.image).not.to.be(undefined);
             done();
-        }, 1000);
+        }, 1900);
     });
 
 

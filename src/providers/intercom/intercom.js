@@ -5,7 +5,10 @@
 analytics.addProvider('Intercom', {
 
     settings : {
-        appId : null
+        appId  : null,
+
+        // An optional setting to display the Intercom inbox widget.
+        activator : null
     },
 
 
@@ -34,7 +37,7 @@ analytics.addProvider('Intercom', {
         if (!userId) return;
 
         // Pass traits directly in to Intercom's `custom_data`.
-        window.intercomSettings = {
+        var settings = window.intercomSettings = {
             app_id      : this.settings.appId,
             user_id     : userId,
             user_hash   : this.settings.userHash,
@@ -43,14 +46,21 @@ analytics.addProvider('Intercom', {
 
         // Augment `intercomSettings` with some of the special traits.
         if (traits) {
-            window.intercomSettings.email = traits.email;
-            window.intercomSettings.name = traits.name;
-            window.intercomSettings.created_at = analytics.utils.getSeconds(traits.created);
+            settings.email = traits.email;
+            settings.name = traits.name;
+            settings.created_at = analytics.utils.getSeconds(traits.created);
         }
 
         // If they didn't pass an email, check to see if the `userId` qualifies.
         if (analytics.utils.isEmail(userId) && (traits && !traits.email)) {
-            window.intercomSettings.email = userId;
+            settings.email = userId;
+        }
+
+        // Optionally add the widget.
+        if (this.settings.activator) {
+            settings.widget = {
+                activator : this.settings.activator
+            };
         }
 
         function async_load() {

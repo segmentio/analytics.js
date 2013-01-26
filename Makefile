@@ -5,7 +5,7 @@ PHANTOM_OPTS = -s web-security=false -s local-to-remote-url-access=true
 # Compiles a one-file copy of analytics.js from all the development files.
 analytics.js:
 	@echo "Concatenating source files..."
-	@find src -type f ! -name "*-test.js" -exec cat {} + > analytics.js
+	@find src -type f -name "*.js" ! -name "*-test.js" -exec cat {} + > analytics.js
 
 # Adds a minified copy of analytics.js
 min: analytics.js
@@ -14,7 +14,7 @@ min: analytics.js
 
 # Adds nice annotated-source docs for each file.
 docs:
-	@find src -type f ! -name "*-test.js" -exec docco {} \;
+	@find src -type f -name "*.js" ! -name "*-test.js" -exec docco {} \;
 
 # Starts the testing server.
 server:

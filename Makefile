@@ -2,42 +2,19 @@
 PHANTOM = node_modules/.bin/mocha-phantomjs
 PHANTOM_OPTS = -s web-security=false -s local-to-remote-url-access=true
 
-FILES = src/analytics.js \
-				src/providers/bitdeli/bitdeli.js \
-				src/providers/chartbeat/chartbeat.js \
-				src/providers/clicky/clicky.js \
-				src/providers/comscore/comscore.js \
-				src/providers/crazyegg/crazyegg.js \
-				src/providers/customerio/customerio.js \
-				src/providers/errorception/errorception.js \
-				src/providers/foxmetrics/foxmetrics.js \
-				src/providers/ga/ga.js \
-				src/providers/gauges/gauges.js \
-				src/providers/gosquared/gosquared.js \
-				src/providers/hittail/hittail.js \
-				src/providers/hubspot/hubspot.js \
-				src/providers/intercom/intercom.js \
-				src/providers/keen/keen.js \
-				src/providers/kissmetrics/kissmetrics.js \
-				src/providers/klaviyo/klaviyo.js \
-				src/providers/mixpanel/mixpanel.js \
-				src/providers/olark/olark.js \
-				src/providers/quantcast/quantcast.js \
-				src/providers/snapengage/snapengage.js \
-				src/providers/usercycle/usercycle.js \
-				src/providers/vero/vero.js
-
 # Compiles a one-file copy of analytics.js from all the development files.
 analytics.js:
-	cat $(FILES) > analytics.js
+	@echo "Concatenating source files..."
+	@find src -type f ! -name "*-test.js" -exec cat {} + > analytics.js
 
 # Adds a minified copy of analytics.js
 min: analytics.js
-	uglifyjs -o analytics.min.js analytics.js
+	@echo "Minifying analytics.js..."
+	@uglifyjs -o analytics.min.js analytics.js
 
 # Adds nice annotated-source docs for each file.
 docs:
-	docco $(FILES)
+	@find src -type f ! -name "*-test.js" -exec docco {} \;
 
 # Starts the testing server.
 server:

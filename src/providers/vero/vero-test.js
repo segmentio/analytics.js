@@ -33,7 +33,7 @@
           // Check that vero has indeed loaded
           expect(window._veroq.push).not.to.equal(Array.prototype.push);
           done();
-        }, 1000);
+        }, 1900);
     });
 
 

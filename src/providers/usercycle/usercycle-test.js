@@ -19,7 +19,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds mixpanel.js on initialize', function () {
+    test('stores settings and adds USERcycles js on initialize', function () {
         expect(window._uc).to.be(undefined);
 
         analytics.initialize({ 'USERcycle' : 'x' });

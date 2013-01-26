@@ -40,7 +40,7 @@
         setTimeout(function () {
             expect(window._bdq._version).not.to.be(undefined);
             done();
-        }, 1000);
+        }, 1900);
     });
 
     test('throws error when initialized with a string instead of an object', function () {

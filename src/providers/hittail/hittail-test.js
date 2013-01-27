@@ -20,7 +20,7 @@
         expect(window.htk).not.to.be(undefined);
         expect(analytics.providers[0].settings.siteId).to.equal('x');
             done();
-        }, 1500);
+        }, 1900);
     });
 
 }());

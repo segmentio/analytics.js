@@ -53,7 +53,7 @@
         setTimeout(function () {
             expect(window.mixpanel.config).not.to.be(undefined);
             done();
-        }, 1000);
+        }, 1900);
     });
 
 

@@ -18,7 +18,7 @@
         setTimeout(function () {
             expect(window._gauges.push).not.to.eql(Array.prototype.push);
             done();
-        }, 1000);
+        }, 1900);
     });
 
 

@@ -609,15 +609,16 @@ analytics.addProvider('Chartbeat', {
         (function(){
             // Use the stored date from when we were loaded.
             window._sf_endpt = analytics.date.getTime();
+            var f = document.getElementsByTagName('script')[0];
             var e = document.createElement('script');
             e.setAttribute('language', 'javascript');
             e.setAttribute('type', 'text/javascript');
             e.setAttribute('src',
-                (('https:' == document.location.protocol) ?
+                (('https:' === document.location.protocol) ?
                     'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/' :
                     'http://static.chartbeat.com/') +
                 'js/chartbeat.js');
-            document.body.appendChild(e);
+            f.parentNode.insertBefore(e, f);
         })();
     },
 
@@ -1004,7 +1005,7 @@ analytics.addProvider('Google Analytics', {
             _gaq.push(['_setDomainName', this.settings.domain]);
         }
         if (this.settings.enhancedLinkAttribution) {
-            var pluginUrl = (('https:' == document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
+            var pluginUrl = (('https:' === document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
             _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
         }
         if (analytics.utils.isNumber(this.settings.siteSpeedSampleRate)) {
@@ -1013,11 +1014,17 @@ analytics.addProvider('Google Analytics', {
         if(this.settings.anonymizeIp) {
             _gaq.push(['_gat._anonymizeIp']);
         }
-        _gaq.push(['_trackPageview']);
+
+        // Check to see if there is a canonical meta tag to use as the URL.
+        var canonicalUrl, metaTags = document.getElementsByTagName('meta');
+        for (var i = 0, tag; tag = metaTags[i]; i++) {
+            if (tag.getAttribute('rel') === 'canonical') canonicalUrl = tag.getAttribute('href');
+        }
+        _gaq.push(['_trackPageview', canonicalUrl]);
 
         (function() {
             var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            ga.src = ('https:' === document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
         })();
     },
@@ -1290,7 +1297,10 @@ analytics.addProvider('HubSpot', {
 analytics.addProvider('Intercom', {
 
     settings : {
-        appId : null
+        appId  : null,
+
+        // An optional setting to display the Intercom inbox widget.
+        activator : null
     },
 
 
@@ -1319,7 +1329,7 @@ analytics.addProvider('Intercom', {
         if (!userId) return;
 
         // Pass traits directly in to Intercom's `custom_data`.
-        window.intercomSettings = {
+        var settings = window.intercomSettings = {
             app_id      : this.settings.appId,
             user_id     : userId,
             user_hash   : this.settings.userHash,
@@ -1328,14 +1338,21 @@ analytics.addProvider('Intercom', {
 
         // Augment `intercomSettings` with some of the special traits.
         if (traits) {
-            window.intercomSettings.email = traits.email;
-            window.intercomSettings.name = traits.name;
-            window.intercomSettings.created_at = analytics.utils.getSeconds(traits.created);
+            settings.email = traits.email;
+            settings.name = traits.name;
+            settings.created_at = analytics.utils.getSeconds(traits.created);
         }
 
         // If they didn't pass an email, check to see if the `userId` qualifies.
         if (analytics.utils.isEmail(userId) && (traits && !traits.email)) {
-            window.intercomSettings.email = userId;
+            settings.email = userId;
+        }
+
+        // Optionally add the widget.
+        if (this.settings.activator) {
+            settings.widget = {
+                activator : this.settings.activator
+            };
         }
 
         function async_load() {

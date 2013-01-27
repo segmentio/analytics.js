@@ -35,7 +35,7 @@
             expect(window._hsq).not.to.be(undefined);
             expect(window._hsq).to.not.equal(Array.prototype.push);
             done();
-        }, 100);
+        }, 1900);
     });
 
 

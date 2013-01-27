@@ -30,15 +30,16 @@ analytics.addProvider('Chartbeat', {
         (function(){
             // Use the stored date from when we were loaded.
             window._sf_endpt = analytics.date.getTime();
+            var f = document.getElementsByTagName('script')[0];
             var e = document.createElement('script');
             e.setAttribute('language', 'javascript');
             e.setAttribute('type', 'text/javascript');
             e.setAttribute('src',
-                (('https:' == document.location.protocol) ?
+                (('https:' === document.location.protocol) ?
                     'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/' :
                     'http://static.chartbeat.com/') +
                 'js/chartbeat.js');
-            document.body.appendChild(e);
+            f.parentNode.insertBefore(e, f);
         })();
     },
 

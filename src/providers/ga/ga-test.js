@@ -20,7 +20,7 @@
         setTimeout(function () {
             expect(window._gaq.I).not.to.be(undefined);
             done();
-        }, 1000);
+        }, 1900);
     });
 
     test('can set domain on initialize', function () {
@@ -80,6 +80,30 @@
         });
 
         expect(spy.calledWith(['_gat._anonymizeIp'])).to.be(true);
+        spy.restore();
+    });
+
+    test('adds canonical url from meta tag if present', function () {
+        // Add the meta tag we need.
+        var $meta = $('<meta rel="canonical" href="http://google.com">').appendTo('head');
+
+        window._gaq = [];
+        var spy = sinon.spy(window._gaq, 'push');
+
+        analytics.initialize({ 'Google Analytics' : 'x' });
+
+        expect(spy.calledWith(['_trackPageview', 'http://google.com'])).to.be(true);
+        spy.restore();
+        $meta.remove();
+    });
+
+    test('doesnt add canonical url from meta tag if not present', function () {
+        window._gaq = [];
+        var spy = sinon.spy(window._gaq, 'push');
+
+        analytics.initialize({ 'Google Analytics' : 'x' });
+
+        expect(spy.calledWith(['_trackPageview', undefined])).to.be(true);
         spy.restore();
     });
 

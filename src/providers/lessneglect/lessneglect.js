@@ -17,7 +17,6 @@ analytics.addProvider('Less Neglect', {
         analytics.utils.extend(this.settings, settings);
 
         var _lnq = window._lnq = window._lnq || [];
-        _lnq.push(['_setDebug', true]);
         _lnq.push(["_setCode", this.settings.projectCode]);
 
         (function() {

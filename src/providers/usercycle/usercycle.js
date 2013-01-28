@@ -22,9 +22,10 @@ analytics.addProvider('USERcycle', {
             e.setAttribute('type', 'text/javascript');
             var protocol = 'https:' == document.location.protocol ? 'https://' : 'http://';
             e.setAttribute('src', protocol+'api.usercycle.com/javascripts/track.js');
-            document.body.appendChild(e);
+            var f = document.getElementsByTagName('script')[0];
+            f.parentNode.insertBefore(e, f);
         })();
-        
+
         window._uc.push(['_key', settings.key]);
     },
 

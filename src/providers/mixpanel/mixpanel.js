@@ -7,7 +7,11 @@
 analytics.addProvider('Mixpanel', {
 
     settings : {
+        // Whether to always call `mixpanel.alias` on `identify`.
+        alias   : true,
+        // Whether to call `mixpanel.nameTag` on `identify`.
         nameTag : true,
+        // Whether to use Mixpanel's People API.
         people  : false,
         token   : null
     },
@@ -88,6 +92,13 @@ analytics.addProvider('Mixpanel', {
         if (userId) {
             window.mixpanel.identify(userId);
             if (this.settings.nameTag) window.mixpanel.name_tag(traits && traits.$email || userId);
+
+            // Mixpanel doesn't automatically alias anonymous users when they
+            // get identified. They say you should only call this once on signup
+            // but we've talked to their support, and as long as you're not
+            // doing crazy things the most common case is that this won't hurt
+            // at all.
+            if (this.settings.alias) window.mixpanel.alias(userId);
         }
         if (traits) {
             window.mixpanel.register(traits);

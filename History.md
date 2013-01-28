@@ -1,3 +1,8 @@
+0.4.6 / 2013-1-28
+=================
+
+* Make the most-common case easier by automatically calling Mixpanel's `alias` method
+
 0.4.5 / 2013-1-25
 =================
 

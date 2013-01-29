@@ -85,14 +85,14 @@
 
     test('adds canonical url from meta tag if present', function () {
         // Add the meta tag we need.
-        var $meta = $('<meta rel="canonical" href="http://google.com">').appendTo('head');
+        var $meta = $('<meta rel="canonical" href="http://google.com/a-thing">').appendTo('head');
 
         window._gaq = [];
         var spy = sinon.spy(window._gaq, 'push');
 
         analytics.initialize({ 'Google Analytics' : 'x' });
 
-        expect(spy.calledWith(['_trackPageview', 'http://google.com'])).to.be(true);
+        expect(spy.calledWith(['_trackPageview', '/a-thing'])).to.be(true);
         spy.restore();
         $meta.remove();
     });

@@ -73,13 +73,14 @@ analytics.addProvider('Google Analytics', {
 
         // Try to check for a `category` and `label`. A `category` is required,
         // so if it's not there we use `'All'` as a default. We can safely push
-        // undefined if the special properties don't exist.
+        // undefined if the special properties don't exist. Try using revenue
+        // first, but fall back to a generic `value` as well.
         window._gaq.push([
             '_trackEvent',
             properties.category || 'All',
             event,
             properties.label,
-            value,
+            Math.round(properties.revenue) || value,
             properties.noninteraction
         ]);
     },

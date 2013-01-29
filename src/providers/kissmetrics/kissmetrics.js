@@ -52,6 +52,12 @@ analytics.addProvider('KISSmetrics', {
     // -----
 
     track : function (event, properties) {
+        // KISSmetrics handles revenue with the `'Billing Amount'` property by
+        // default, although it's changeable in the interface.
+        analytics.utils.alias(properties, {
+            'revenue' : 'Billing Amount'
+        });
+
         window._kmq.push(['record', event, properties]);
     }
 

@@ -5,7 +5,8 @@
     var event = 'event';
 
     var properties = {
-        count : 42
+        count   : 42,
+        revenue : 9.99
     };
 
     var userId = 'user';
@@ -70,7 +71,10 @@
     test('pushes "_record" on track', function () {
         var spy = sinon.spy(window._kmq, 'push');
         analytics.track(event, properties);
-        expect(spy.calledWith(['record', event, properties])).to.be(true);
+        expect(spy.calledWith(['record', event, {
+            count            : 42,
+            'Billing Amount' : 9.99
+        }])).to.be(true);
 
         spy.restore();
     });

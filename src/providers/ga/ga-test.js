@@ -135,10 +135,20 @@
 
         spy.reset();
         analytics.track('event', {
-            value    : 30
+            value : 30
         });
         expect(spy.calledWith(
           ['_trackEvent', 'All', 'event', undefined, 30, undefined]))
+          .to.be(true);
+
+        spy.reset();
+
+        spy.reset();
+        analytics.track('event', {
+            revenue : 9.99
+        });
+        expect(spy.calledWith(
+          ['_trackEvent', 'All', 'event', undefined, 10, undefined]))
           .to.be(true);
 
         spy.reset();

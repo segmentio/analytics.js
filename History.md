@@ -2,6 +2,8 @@
 =================
 
 * Added support for Mixpanel's [revenue](https://mixpanel.com/docs/people-analytics/javascript#track_charge) feature
+* Added support for KISSmetrics' `"Billing Amount"` property for revenue
+* Added support for `revenue` being passed to Google Analytics' `value` property
 
 0.4.6 / 2013-1-28
 =================

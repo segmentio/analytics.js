@@ -68,8 +68,7 @@ analytics.addProvider('Google Analytics', {
         var value;
 
         // Since value is a common property name, ensure it is a number
-        if (analytics.utils.isNumber(properties.value))
-            value = properties.value;
+        if (analytics.utils.isNumber(properties.value)) value = properties.value;
 
         // Try to check for a `category` and `label`. A `category` is required,
         // so if it's not there we use `'All'` as a default. We can safely push

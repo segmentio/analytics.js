@@ -106,7 +106,7 @@ analytics.addProvider('Mixpanel', {
 
         // Mixpanel handles revenue with a `transaction` call in their People
         // feature. So if we're using people, record a transcation.
-        if (properties.revenue && this.settings.people) {
+        if (properties && properties.revenue && this.settings.people) {
             window.mixpanel.people.track_charge(properties.revenue);
         }
     },

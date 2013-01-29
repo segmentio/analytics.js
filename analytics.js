@@ -1,4 +1,4 @@
-//     Analytics.js 0.4.6
+//     Analytics.js 0.4.7
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -1658,6 +1658,12 @@ analytics.addProvider('Mixpanel', {
 
     track : function (event, properties) {
         window.mixpanel.track(event, properties);
+
+        // Mixpanel handles revenue with a `transaction` call in their People
+        // feature. So if we're using people, record a transcation.
+        if (properties.revenue && this.settings.people) {
+            window.mixpanel.people.track_charge(properties.revenue);
+        }
     },
 
 

@@ -160,6 +160,18 @@
         spy.restore();
     });
 
+    test('calls track_charge on track with revenue', function () {
+        analytics.providers[0].settings.people = true;
+        var spy = sinon.spy(window.mixpanel.people, 'track_charge');
+
+        analytics.track(event, { revenue : 9.99 });
+
+        expect(spy.calledWith(9.99)).to.be(true);
+
+        spy.restore();
+        analytics.providers[0].settings.people = false;
+    });
+
 
     // Pageview
     // --------

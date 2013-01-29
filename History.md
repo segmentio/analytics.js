@@ -1,3 +1,8 @@
+0.4.7 / 2013-1-29
+=================
+
+* Added support for Mixpanel's [revenue](https://mixpanel.com/docs/people-analytics/javascript#track_charge) feature
+
 0.4.6 / 2013-1-28
 =================
 

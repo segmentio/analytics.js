@@ -1,12 +1,11 @@
 0.4.6 / 2013-1-28
 =================
 
-* Make the most-common case easier by automatically calling Mixpanel's `alias` method
+* Automatically handle canonical URLs in Google Analytics
 
 0.4.5 / 2013-1-25
 =================
 
-* Automatically handle canonical URLs in Google Analytics
 * Add Intercom widget setting
 * Fix for Chartbeat required `body` element to exist
 

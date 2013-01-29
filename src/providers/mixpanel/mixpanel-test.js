@@ -119,21 +119,6 @@
         spy.restore();
     });
 
-    test('calls alias on identify', function () {
-        // Reset internal `userId` state from any previous identifies.
-        analytics.userId = null;
-
-        var spy = sinon.spy(window.mixpanel, 'alias');
-        analytics.identify(traits);
-        expect(spy.called).to.be(false);
-
-        spy.reset();
-        analytics.identify(userId);
-        expect(spy.calledWith(userId)).to.be(true);
-
-        spy.restore();
-    });
-
     test('calls people.set on identify if `people` setting is true', function () {
         // Reset internal `userId` state from any previous identifies.
         analytics.userId = null;

@@ -345,6 +345,52 @@
         spy.restore();
     });
 
+    test('triggers a track on a form submit when click overridden by jQuery and manual submit called', function () {
+        var spy  = sinon.spy(provider, 'track');
+        var form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
+
+        analytics.trackForm(form, 'party', function () {
+            return { type : 'crazy' };
+        });
+        
+        // Intercept the click event of the submit button
+        // and return false (to prevent the click)
+        // but then immediately call the submit ourself
+        // This may happen when custom code is written on form submit
+        $(form).find('input').click(function() {
+        	$(form).submit();
+        	return false;
+        });
+
+        triggerClick($(form).find('input')[0]);
+
+        expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
+
+        spy.restore();
+    });
+
+    test('triggers a track on a form submit when form submit overridden by jQuery', function () {
+        var spy  = sinon.spy(provider, 'track');
+        var form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
+
+        analytics.trackForm(form, 'party', function () {
+            return { type : 'crazy' };
+        });
+        
+        // Intercept the form submit via jQuery and simply allow it to proceed
+        $(form).submit(function() {
+        	// Do nothing in this handler
+        	// but proper code may want to do its own post processing of tracking
+        	return true;
+        });
+
+        triggerClick($(form).find('input')[0]);
+
+        expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
+
+        spy.restore();
+    });
+
     test('allows for properties to be a function', function () {
         var spy  = sinon.spy(provider, 'track');
         var form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];

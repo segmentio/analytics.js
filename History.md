@@ -1,3 +1,8 @@
+0.4.8 / 2013-1-29
+=================
+
+* Fix for `trackForm` timeout by [@Plasma](https://github.com/Plasma)
+
 0.4.7 / 2013-1-29
 =================
 

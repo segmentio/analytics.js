@@ -1,4 +1,4 @@
-//     Analytics.js 0.4.7
+//     Analytics.js 0.4.8
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -297,7 +297,7 @@
                     // time to get fired.
                     setTimeout(function () {
                         el.submit();
-                    }, this.timeout);
+                    }, self.timeout);
                 });
             }
         },

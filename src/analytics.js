@@ -1,4 +1,4 @@
-//     Analytics.js 0.4.8
+//     Analytics.js 0.4.9
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -373,8 +373,12 @@
             // Based off of the [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L763)
             // method.
             extend : function (obj) {
+                if (!this.isObject(obj)) return;
+
                 var args = Array.prototype.slice.call(arguments, 1);
                 for (var i = 0, source; source = args[i]; i++) {
+                    if (!this.isObject(source)) return;
+
                     for (var property in source) {
                         obj[property] = source[property];
                     }
@@ -394,6 +398,8 @@
             // Useful for abstracting over providers that require specific key
             // names.
             alias : function (obj, aliases) {
+                if (!this.isObject(obj)) return;
+
                 for (var prop in aliases) {
                     var alias = aliases[prop];
                     if (obj[prop] !== undefined) {

@@ -1,3 +1,8 @@
+0.4.9 / 2013-1-29
+=================
+
+* Fix for `alias` and `extend` breaking on non-objects
+
 0.4.8 / 2013-1-29
 =================
 

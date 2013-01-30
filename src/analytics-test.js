@@ -409,6 +409,12 @@
         expect(analytics.utils.clone(object)).to.eql(object);
     });
 
+    test('extend doesnt break on a non object', function () {
+        expect(function () {
+            analytics.utils.clone(undefined);
+        }).to.not.throwException();
+    });
+
     test('extend augments an object', function () {
         var object = {
             one : 1
@@ -440,6 +446,16 @@
         });
     });
 
+    test('extend doesnt break on a non object', function () {
+        expect(function () {
+            analytics.utils.extend(undefined, { email: '$email' });
+        }).to.not.throwException();
+
+        expect(function () {
+            analytics.utils.extend({ email: 'ian@segment.io' }, undefined);
+        }).to.not.throwException();
+    });
+
     test('alias changes props to their aliases', function () {
         var traits = {
             name  : 'Medusa',
@@ -459,6 +475,16 @@
             name   : 'Medusa',
             $email : 'medusa@segment.io'
         });
+    });
+
+    test('alias doesnt break on a non object', function () {
+        expect(function () {
+            analytics.utils.alias(undefined, { email: '$email' });
+        }).to.not.throwException();
+
+        expect(function () {
+            analytics.utils.alias({ email: 'ian@segment.io' }, undefined);
+        }).to.not.throwException();
     });
 
     test('getSeconds returns the seconds of a date', function () {

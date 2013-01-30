@@ -297,7 +297,7 @@
                     // time to get fired.
                     setTimeout(function () {
                         el.submit();
-                    }, this.timeout);
+                    }, self.timeout);
                 });
             }
         },

@@ -337,7 +337,9 @@
 
             // Attach an event handler to a DOM element, even in IE.
             bind : function (el, event, callback) {
-                if (el.addEventListener) {
+            	if (jQuery) {
+            		$(el).on(event, callback);
+            	} else if (el.addEventListener) {
                     el.addEventListener(event, callback, false);
                 } else if (el.attachEvent) {
                     el.attachEvent('on' + event, callback);

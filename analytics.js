@@ -1382,11 +1382,11 @@ analytics.addProvider('Intercom', {
 });
 
 
-// Keen IO
+// Keen.io
 // -------
 // [Documentation](https://keen.io/docs/).
 
-analytics.addProvider('Keen', {
+analytics.addProvider('Keen.io', {
 
     settings: {
         projectId : null,

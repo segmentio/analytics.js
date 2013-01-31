@@ -2,6 +2,7 @@
 =================
 
 * Fix for CrazyEgg `apiKey` to `accountNumber`
+* Fix for Keen to Keen.io
 
 0.4.9 / 2013-1-29
 =================

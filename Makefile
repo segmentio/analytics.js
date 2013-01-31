@@ -17,7 +17,7 @@ FILES = src/analytics.js \
 				src/providers/hittail/hittail.js \
 				src/providers/hubspot/hubspot.js \
 				src/providers/intercom/intercom.js \
-				src/providers/keen/keen.js \
+				src/providers/keenio/keenio.js \
 				src/providers/kissmetrics/kissmetrics.js \
 				src/providers/klaviyo/klaviyo.js \
 				src/providers/mixpanel/mixpanel.js \

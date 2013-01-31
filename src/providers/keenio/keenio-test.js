@@ -1,7 +1,7 @@
 /*global sinon, suite, beforeEach, test, expect, analytics */
 !(function() {
 
-    suite('Keen');
+    suite('Keen.io');
 
     var event = 'someEventName';
 
@@ -24,7 +24,7 @@
         expect(window.Keen).not.to.exist;
 
         analytics.initialize({
-            'Keen': {
+            'Keen.io': {
                 projectId : 'KEEN_PROJECT_ID',
                 apiKey    : 'KEEN_API_KEY'
             }

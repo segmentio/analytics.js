@@ -486,6 +486,28 @@
                     search   : a.search,
                     query    : a.search.slice(1)
                 };
+            },
+
+            // A helper to get cookies
+            getCookie : function (name) {
+                if (document.cookie.length > 0) {
+                    var start = document.cookie.indexOf(name + '=');
+                    if (start !== -1) {
+                        start = start + name.length + 1;
+                        var end = document.cookie.indexOf(";", start);
+                        if (end === -1)
+                            end = document.cookie.length;
+                        return unescape(document.cookie.substring(start, end));
+                    }
+                }
+            },
+
+            // A helper to set cookies
+            setCookie : function (name, value, expirationDays) {
+                var expirationDate = new Date();
+                expirationDate.setDate(expirationDate.getDate() + expirationDays);
+                var expirationAndPath = (expirationDays === null ? '' : ';expires=' + expirationDate.toGMTString() + ';path=' + escape('/'));
+                document.cookie = name + '=' + escape(value) + expirationAndPath;
             }
         }
 

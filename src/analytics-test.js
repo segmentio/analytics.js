@@ -600,6 +600,16 @@
         });
     });
 
+    test('setting and getting a cookie works and matches', function () {
+        var name = 'AlbatrossesWith5Eyes';
+        var value = '18 <221l3k1j2!@#!@#/>';
+        var expirationDays = 4;
+
+        analytics.utils.setCookie(name, value, expirationDays);
+
+        expect(analytics.utils.getCookie(name)).to.eql(value);
+    });
+
 })();
 
 

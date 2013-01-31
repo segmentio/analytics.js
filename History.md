@@ -1,6 +1,7 @@
 0.4.10 / 2013-1-30
 =================
 
+* Fix for multiple elements on `trackLink` and `trackForm`
 * Fix for CrazyEgg `apiKey` to `accountNumber`
 * Fix for Keen to Keen.io
 

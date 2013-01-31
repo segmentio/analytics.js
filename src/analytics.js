@@ -207,46 +207,47 @@
             // arrays, which allows for passing jQuery objects.
             if (this.utils.isElement(link)) link = [link];
 
+            var self = this;
+
             // Bind to all the links in the array.
             for (var i = 0; i < link.length; i++) {
-                var self = this;
-                var el = link[i];
+                (function (el) {
+                    self.utils.bind(el, 'click', function (e) {
 
-                this.utils.bind(el, 'click', function (e) {
+                        // Allow for properties to be a function. And pass it the
+                        // link element that was clicked.
+                        if (self.utils.isFunction(properties)) properties = properties(el);
 
-                    // Allow for properties to be a function. And pass it the
-                    // link element that was clicked.
-                    if (self.utils.isFunction(properties)) properties = properties(el);
+                        // Fire a normal track call.
+                        self.track(event, properties);
 
-                    // Fire a normal track call.
-                    self.track(event, properties);
+                        // To justify us preventing the default behavior we must:
+                        //
+                        // * Have an `href` to use.
+                        // * Not have a `target="_blank"` attribute.
+                        // * Not have any special keys pressed, because they might
+                        // be trying to open in a new tab, or window, or download
+                        // the asset.
+                        //
+                        // This might not cover all cases, but we'd rather throw out
+                        // an event than miss a case that breaks the experience.
+                        if (el.href && el.target !== '_blank' && !self.utils.isMeta(e)) {
 
-                    // To justify us preventing the default behavior we must:
-                    //
-                    // * Have an `href` to use.
-                    // * Not have a `target="_blank"` attribute.
-                    // * Not have any special keys pressed, because they might
-                    // be trying to open in a new tab, or window, or download
-                    // the asset.
-                    //
-                    // This might not cover all cases, but we'd rather throw out
-                    // an event than miss a case that breaks the experience.
-                    if (el.href && el.target !== '_blank' && !self.utils.isMeta(e)) {
+                            // Prevent the link's default redirect in all the sane
+                            // browsers, and also IE.
+                            if (e.preventDefault)
+                                e.preventDefault();
+                            else
+                                e.returnValue = false;
 
-                        // Prevent the link's default redirect in all the sane
-                        // browsers, and also IE.
-                        if (e.preventDefault)
-                            e.preventDefault();
-                        else
-                            e.returnValue = false;
-
-                        // Navigate to the url after a small timeout, giving the
-                        // providers time to track the event.
-                        setTimeout(function () {
-                            window.location.href = el.href;
-                        }, self.timeout);
-                    }
-                });
+                            // Navigate to the url after a small timeout, giving the
+                            // providers time to track the event.
+                            setTimeout(function () {
+                                window.location.href = el.href;
+                            }, self.timeout);
+                        }
+                    });
+                })(link[i]);
             }
         },
 
@@ -272,33 +273,34 @@
             // arrays, which allows for passing jQuery objects.
             if (this.utils.isElement(form)) form = [form];
 
+            var self = this;
+
             // Bind to all the forms in the array.
             for (var i = 0; i < form.length; i++) {
-                var self = this;
-                var el = form[i];
+                (function (el) {
+                    self.utils.bind(el, 'submit', function (e) {
 
-                this.utils.bind(el, 'submit', function (e) {
+                        // Allow for properties to be a function. And pass it the
+                        // form element that was submitted.
+                        if (self.utils.isFunction(properties)) properties = properties(el);
 
-                    // Allow for properties to be a function. And pass it the
-                    // form element that was submitted.
-                    if (self.utils.isFunction(properties)) properties = properties(el);
+                        // Fire a normal track call.
+                        self.track(event, properties);
 
-                    // Fire a normal track call.
-                    self.track(event, properties);
+                        // Prevent the form's default submit in all the sane
+                        // browsers, and also IE.
+                        if (e.preventDefault)
+                            e.preventDefault();
+                        else
+                            e.returnValue = false;
 
-                    // Prevent the form's default submit in all the sane
-                    // browsers, and also IE.
-                    if (e.preventDefault)
-                        e.preventDefault();
-                    else
-                        e.returnValue = false;
-
-                    // Submit the form after a small timeout, giving the event
-                    // time to get fired.
-                    setTimeout(function () {
-                        el.submit();
-                    }, self.timeout);
-                });
+                        // Submit the form after a small timeout, giving the event
+                        // time to get fired.
+                        setTimeout(function () {
+                            el.submit();
+                        }, self.timeout);
+                    });
+                })(form[i]);
             }
         },
 

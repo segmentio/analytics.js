@@ -1003,6 +1003,50 @@ analytics.addProvider('FoxMetrics', {
 });
 
 
+// Gauges
+// -------
+// [Documentation](http://get.gaug.es/documentation/tracking/).
+
+analytics.addProvider('Gauges', {
+
+    settings : {
+        siteId : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        var _gauges = window._gauges = window._gauges || [];
+
+        (function() {
+            var t   = document.createElement('script');
+            t.type  = 'text/javascript';
+            t.async = true;
+            t.id    = 'gauges-tracker';
+            t.setAttribute('data-site-id', settings.siteId);
+            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+            t.src = protocol + '//secure.gaug.es/track.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(t, s);
+        })();
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function (url) {
+        window._gauges.push(['track']);
+    }
+
+});
+
+
 // Google Analytics
 // ----------------
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
@@ -1096,50 +1140,6 @@ analytics.addProvider('Google Analytics', {
     pageview : function (url) {
         // If there isn't a url, that's fine.
         window._gaq.push(['_trackPageview', url]);
-    }
-
-});
-
-
-// Gauges
-// -------
-// [Documentation](http://get.gaug.es/documentation/tracking/).
-
-analytics.addProvider('Gauges', {
-
-    settings : {
-        siteId : null
-    },
-
-
-    // Initialize
-    // ----------
-
-    initialize : function (settings) {
-        settings = analytics.utils.resolveSettings(settings, 'siteId');
-        analytics.utils.extend(this.settings, settings);
-
-        var _gauges = window._gauges = window._gauges || [];
-
-        (function() {
-            var t   = document.createElement('script');
-            t.type  = 'text/javascript';
-            t.async = true;
-            t.id    = 'gauges-tracker';
-            t.setAttribute('data-site-id', settings.siteId);
-            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
-            t.src = protocol + '//secure.gaug.es/track.js';
-            var s = document.getElementsByTagName('script')[0];
-            s.parentNode.insertBefore(t, s);
-        })();
-    },
-
-
-    // Pageview
-    // --------
-
-    pageview : function (url) {
-        window._gauges.push(['track']);
     }
 
 });
@@ -1797,6 +1797,44 @@ analytics.addProvider('Olark', {
         window.olark('api.chat.sendNotificationToOperator', {
             body : 'looking at ' + window.location.href
         });
+    }
+
+});
+
+
+// Perfect Audience
+// ----------------
+// [Documentation](https://www.perfectaudience.com/docs#javascript_api_autoopen)
+
+analytics.addProvider('Perfect Audience', {
+
+    settings : {
+        siteId : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        (function() {
+            window._pa = window._pa || {};
+            var pa = document.createElement('script'); pa.type = 'text/javascript'; pa.async = true;
+            pa.src = ('https:' === document.location.protocol ? 'https:' : 'http:') + "//tag.perfectaudience.com/serve/" + settings.siteId + ".js";
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(pa, s);
+        })();
+
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        window._pa.track(event, properties);
     }
 
 });

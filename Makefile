@@ -11,8 +11,8 @@ FILES = src/analytics.js \
 				src/providers/customerio/customerio.js \
 				src/providers/errorception/errorception.js \
 				src/providers/foxmetrics/foxmetrics.js \
-				src/providers/ga/ga.js \
 				src/providers/gauges/gauges.js \
+				src/providers/google-analytics/google-analytics.js \
 				src/providers/gosquared/gosquared.js \
 				src/providers/hittail/hittail.js \
 				src/providers/hubspot/hubspot.js \
@@ -22,6 +22,7 @@ FILES = src/analytics.js \
 				src/providers/klaviyo/klaviyo.js \
 				src/providers/mixpanel/mixpanel.js \
 				src/providers/olark/olark.js \
+				src/providers/perfect-audience/perfect-audience.js \
 				src/providers/quantcast/quantcast.js \
 				src/providers/snapengage/snapengage.js \
 				src/providers/usercycle/usercycle.js \

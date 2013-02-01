@@ -25,7 +25,8 @@ FILES = src/analytics.js \
 				src/providers/quantcast/quantcast.js \
 				src/providers/snapengage/snapengage.js \
 				src/providers/usercycle/usercycle.js \
-				src/providers/vero/vero.js
+				src/providers/vero/vero.js \
+				src/providers/8digits/8digits.js
 
 # Compiles a one-file copy of analytics.js from all the development files.
 analytics.js:

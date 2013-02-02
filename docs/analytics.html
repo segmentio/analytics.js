@@ -193,18 +193,18 @@ changed but you want to register a new pageview.</li>
                 <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">provider</span><span class="p">.</span><span class="nx">pageview</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span>
                 <span class="nx">provider</span><span class="p">.</span><span class="nx">pageview</span><span class="p">(</span><span class="nx">url</span><span class="p">);</span>
             <span class="p">}</span>
-        <span class="p">},</span></pre></div>             </td>           </tr>                               <tr id="section-50">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-50">&#182;</a>               </div>               <h2>Alias</h2>             </td>             <td class="code">               <div class="highlight"><pre></pre></div>             </td>           </tr>                               <tr id="section-51">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-51">&#182;</a>               </div>               <p>Alias combines two previously unassociates user identities. This
+        <span class="p">},</span></pre></div>             </td>           </tr>                               <tr id="section-50">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-50">&#182;</a>               </div>               <h2>Alias</h2>             </td>             <td class="code">               <div class="highlight"><pre></pre></div>             </td>           </tr>                               <tr id="section-51">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-51">&#182;</a>               </div>               <p>Alias combines two previously unassociated user identities. This
 comes in handy if the same user visits from two different devices and
 you want to combine their history. Some providers also don't alias
-automatically when an anonymous user signs up (like Mixpanel), so you
-need to call alias manually when the user signs up.</p>
+automatically for you when an anonymous user signs up (like
+Mixpanel), so you need to call <code>alias</code> manually right after sign up
+with their brand new <code>userId</code>.</p>
 
 <ul>
-<li><p><code>newId</code> is the new ID you want to associate with the user.</p></li>
-<li><p><code>originalId</code> (optional) is the original ID that you want to
-associate the <code>newId</code> with. This defaults to the currently identified
-user if there is one. In most cases you don't need to pass this
-argument.</p></li>
+<li><p><code>newId</code> is the new ID you want to associate the user with.</p></li>
+<li><p><code>originalId</code> (optional) is the original ID that the user was
+recognized by. This defaults to the currently identified user's ID if
+there is one. In most cases you don't need to pass this argument.</p></li>
 </ul>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">alias</span> <span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">newId</span><span class="p">,</span> <span class="nx">originalId</span><span class="p">)</span> <span class="p">{</span>
             <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">initialized</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span></pre></div>             </td>           </tr>                               <tr id="section-52">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-52">&#182;</a>               </div>               <p>Call <code>alias</code> on all of our enabled providers that support it.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">provider</span><span class="p">;</span> <span class="nx">provider</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">providers</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
                 <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">provider</span><span class="p">.</span><span class="nx">alias</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span>

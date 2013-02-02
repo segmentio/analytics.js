@@ -119,6 +119,16 @@ analytics.addProvider('Mixpanel', {
     // Mixpanel stream.
     pageview : function (url) {
         window.mixpanel.track_pageview(url);
+    },
+
+
+    // Alias
+    // -----
+
+    // Although undocumented, Mixpanel actually supports the `originalId`. It
+    // just usually defaults to the current user's `distinct_id`.
+    alias : function (newId, originalId) {
+        window.mixpanel.alias(newId, originalId);
     }
 
 });

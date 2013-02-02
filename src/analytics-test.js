@@ -5,15 +5,14 @@
         initialize : function (settings) {},
         identify   : function (userId, traits) {},
         track      : function (event, properties) {},
-        pageview   : function () {}
+        pageview   : function () {},
+        alias      : function (newId, originalId) {}
     };
     analytics.addProvider('test', provider);
 
     // Initialize the provider above so that everything works even when looking
     // at a single test case.
-    analytics.initialize({
-        'test' : 'x'
-    });
+    analytics.initialize({ 'test' : 'x' });
 
 
     // Initialize
@@ -413,6 +412,22 @@
         var spy = sinon.spy(provider, 'pageview');
 
         analytics.pageview();
+
+        expect(spy.called).to.be(true);
+
+        spy.restore();
+    });
+
+
+    // Alias
+    // -----
+
+    suite('alias');
+
+    test('gets called on providers', function () {
+        var spy = sinon.spy(provider, 'alias');
+
+        analytics.alias();
 
         expect(spy.called).to.be(true);
 

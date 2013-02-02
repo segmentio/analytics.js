@@ -332,6 +332,32 @@
         },
 
 
+        // Alias
+        // -----
+
+        // Alias combines two previously unassociates user identities. This
+        // comes in handy if the same user visits from two different devices and
+        // you want to combine their history. Some providers also don't alias
+        // automatically when an anonymous user signs up (like Mixpanel), so you
+        // need to call alias manually when the user signs up.
+        //
+        // * `newId` is the new ID you want to associate with the user.
+        //
+        // * `originalId` (optional) is the original ID that you want to
+        // associate the `newId` with. This defaults to the currently identified
+        // user if there is one. In most cases you don't need to pass this
+        // argument.
+        alias : function (newId, originalId) {
+            if (!this.initialized) return;
+
+            // Call `alias` on all of our enabled providers that support it.
+            for (var i = 0, provider; provider = this.providers[i]; i++) {
+                if (!provider.alias) continue;
+                provider.alias(newId, originalId);
+            }
+        },
+
+
         // Utils
         // -----
 

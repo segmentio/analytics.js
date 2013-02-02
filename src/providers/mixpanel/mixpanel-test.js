@@ -188,4 +188,16 @@
         spy.restore();
     });
 
+
+    // Alias
+    // -----
+
+    test('calls alias on alias', function () {
+        var spy = sinon.spy(window.mixpanel, 'alias');
+        analytics.alias('new', 'old');
+        expect(spy.calledWith('new', 'old')).to.be(true);
+
+        spy.restore();
+    });
+
 }());

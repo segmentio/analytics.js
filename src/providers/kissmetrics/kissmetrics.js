@@ -59,6 +59,16 @@ analytics.addProvider('KISSmetrics', {
         });
 
         window._kmq.push(['record', event, properties]);
+    },
+
+
+    // Alias
+    // -----
+
+    // Although undocumented, KISSmetrics actually supports not passing a second
+    // ID, in which case it uses the currenty identified user's ID.
+    alias : function (newId, originalId) {
+        window._kmq.push(['alias', newId, originalId]);
     }
 
 });

@@ -1,9 +1,15 @@
+0.5.0 / 2013-2-1
+=================
+
+* Added an `alias` method for merging two user's by ID
+
 0.4.10 / 2013-1-30
 =================
 
 * Fix for multiple elements on `trackLink` and `trackForm`
 * Fix for CrazyEgg `apiKey` to `accountNumber`
 * Fix for Keen to Keen.io
+
 
 0.4.9 / 2013-1-29
 =================

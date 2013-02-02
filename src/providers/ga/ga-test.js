@@ -7,6 +7,8 @@
     // ----------
 
     test('stores settings and adds ga.js on initialize', function (done) {
+        this.timeout(3000);
+
         expect(window._gaq).to.be(undefined);
 
         analytics.initialize({ 'Google Analytics' : 'x' });
@@ -17,7 +19,7 @@
         setTimeout(function () {
             expect(window._gaq.I).not.to.be(undefined);
             done();
-        }, 1800);
+        }, 2500);
     });
 
     test('can set domain on initialize', function () {

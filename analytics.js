@@ -1436,7 +1436,7 @@ analytics.addProvider('Intercom', {
 // -------
 // [Documentation](https://keen.io/docs/).
 
-analytics.addProvider('Keen.io', {
+analytics.addProvider('Keen IO', {
 
     settings: {
         projectId : null,

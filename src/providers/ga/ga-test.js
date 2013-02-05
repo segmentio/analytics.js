@@ -7,7 +7,7 @@
     // ----------
 
     test('stores settings and adds ga.js on initialize', function (done) {
-        this.timeout(3000);
+        this.timeout(4000);
 
         expect(window._gaq).to.be(undefined);
 
@@ -19,7 +19,7 @@
         setTimeout(function () {
             expect(window._gaq.push).not.to.eql(Array.prototype.push);
             done();
-        }, 2500);
+        }, 3500);
     });
 
     test('can set domain on initialize', function () {

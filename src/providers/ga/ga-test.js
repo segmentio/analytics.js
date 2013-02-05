@@ -13,11 +13,11 @@
 
         analytics.initialize({ 'Google Analytics' : 'x' });
         expect(window._gaq).not.to.be(undefined);
+        expect(window._gaq.push).to.eql(Array.prototype.push);
         expect(analytics.providers[0].settings.trackingId).to.equal('x');
 
-        expect(window._gaq.I).to.be(undefined);
         setTimeout(function () {
-            expect(window._gaq.I).not.to.be(undefined);
+            expect(window._gaq.push).not.to.eql(Array.prototype.push);
             done();
         }, 2500);
     });

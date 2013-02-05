@@ -26,15 +26,13 @@
     // --------
 
     test('pushes "track" on pageview', function () {
-        var spy = sinon.spy(window._gauges, 'push');
-
-        spy.withArgs(['track']);
+        var stub = sinon.stub(window._gauges, 'push');
 
         analytics.pageview();
 
-        expect(spy.called).to.be(true);
+        expect(stub.calledWith(['track'])).to.be(true);
 
-        spy.restore();
+        stub.restore();
     });
 
 }());

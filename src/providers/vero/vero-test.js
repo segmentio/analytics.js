@@ -43,26 +43,26 @@
     // Very requires an email and traits. Check for both separately, but do
     // traits first because otherwise the userId will be cached.
     test('pushes "users" on identify', function () {
-        var spy = sinon.spy(window._veroq, 'push');
+
+        // Vero alters passed in array, use a stub to track count
+        var stub = sinon.stub(window._veroq, 'push');
         analytics.identify(traits);
-        expect(spy.called).to.be(false);
+        expect(stub.called).to.be(false);
 
-        spy.reset();
+        stub.reset();
         analytics.identify(userId);
-        expect(spy.called).to.be(false);
+        expect(stub.called).to.be(false);
 
-        spy.reset();
-        // Vero alters passed in array, use with args to track count
-        spy.withArgs(['user', {
+        stub.reset();
+
+        analytics.identify(userId, traits);
+        expect(stub.calledWith(['user', {
             id    : userId,
             email : traits.email,
             name  : traits.name
-        }]);
+        }])).to.be(true);
 
-        analytics.identify(userId, traits);
-        expect(spy.calledOnce).to.be(true);
-
-        spy.restore();
+        stub.restore();
     });
 
 
@@ -70,14 +70,12 @@
     // -----
 
     test('pushes "track" on track', function () {
-        var spy = sinon.spy(window._veroq, 'push');
+        var stub = sinon.stub(window._veroq, 'push');
         analytics.track('event', properties);
 
-        spy.withArgs(['track', 'event', properties]);
+        expect(stub.calledWith(['track', 'event', properties])).to.be(true);
 
-        expect(spy.called).to.be(true);
-
-        spy.restore();
+        stub.restore();
     });
 
 }());

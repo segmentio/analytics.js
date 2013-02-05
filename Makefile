@@ -51,6 +51,7 @@ kill:
 # Runs all the tests on travis.
 test: server
 	sleep 1
+	curl http://www.google-analytics.com/ga.js
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/core.html
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/providers.html
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/min.html

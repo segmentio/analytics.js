@@ -605,7 +605,6 @@
         expect(analytics.utils.parseUrl(url)).to.eql({
             href     : url,
             host     : 'google.com',
-            port     : '0',
             hash     : '#test',
             hostname : 'google.com',
             pathname : '/finance',

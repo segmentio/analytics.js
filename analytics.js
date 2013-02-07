@@ -507,7 +507,7 @@
                     port     : a.port || location.port,
                     hash     : a.hash,
                     hostname : a.hostname || location.hostname,
-                    pathname : a.pathname,
+                    pathname : a.pathname.charAt(0) !== '/' ? '/' + a.pathname : a.pathname,
                     protocol : !a.protocol || ':' === a.protocol ? location.protocol : a.protocol,
                     search   : a.search,
                     query    : a.search.slice(1)
@@ -1572,7 +1572,6 @@ analytics.addProvider('KISSmetrics', {
 // Klaviyo
 // -------
 // [Documentation](https://www.klaviyo.com/docs).
-// [Documentation](https://www.klaviyo.com/docs/http-api).
 
 analytics.addProvider('Klaviyo', {
 

@@ -2,6 +2,7 @@
 =================
 
 * Merging in fix for Keen IO's branding
+* Adding fix to `utils.parseUrl()` field `pathname` in IE
 
 0.5.0 / 2013-2-1
 =================

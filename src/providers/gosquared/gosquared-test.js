@@ -29,8 +29,8 @@
         expect(analytics.providers[0].settings.siteToken).to.equal('x');
 
         window.GoSquared.load = function(tracker) {
-             expect(window.GoSquared.DefaultTracker).to.equal(tracker);
-             done();
+            expect(window.GoSquared.DefaultTracker).to.equal(tracker);
+            done();
         };
     });
 
@@ -62,19 +62,16 @@
     // -----
 
     test('pushes "TrackEvent" on track', function () {
-        var spy = sinon.spy(window.GoSquared.q, 'push');
+        var stub = sinon.stub(window.GoSquared.q, 'push');
         analytics.track(event);
-        // GoSquared adds the event name to the properties hash.
-        var augmentedProperties = { gs_evt_name: event };
-        expect(spy.calledWith([event, sinon.match(augmentedProperties)])).to.be(true);
 
-        spy.reset();
+        expect(stub.calledWith(["TrackEvent", event, {}])).to.be(true);
+
+        stub.reset();
         analytics.track(event, properties);
-        // GoSquared adds the event name to the properties hash.
-        augmentedProperties = _.extend({}, properties, { gs_evt_name: event });
-        expect(spy.calledWith([event, sinon.match(augmentedProperties)])).to.be(true);
+        expect(stub.calledWith(["TrackEvent", event, properties])).to.be(true);
 
-        spy.restore();
+        stub.restore();
     });
 
 
@@ -82,19 +79,17 @@
     // --------
 
     test('calls "TrackView" on pageview', function () {
-        var spy = sinon.spy(window.GoSquared.q, 'push');
-        spy.withArgs(['TrackView']);
+        var stub = sinon.stub(window.GoSquared.q, 'push');
 
         analytics.pageview();
-        expect(spy.called).to.be(true);
+        expect(stub.calledWith(['TrackView'])).to.be(true);
 
-        spy.reset();
-        spy.withArgs(['TrackView', '/url']);
+        stub.reset();
 
         analytics.pageview('/url');
-        expect(spy.called).to.be(true);
+        expect(stub.calledWith(['TrackView', '/url'])).to.be(true);
 
-        spy.restore();
+        stub.restore();
     });
 
 }());

@@ -5,7 +5,7 @@ var _          = require('underscore')
                       process.env.SAUCE_ACCESS_KEY);
 
 cloud.browser('internet explorer', '10', 'Windows 2012');
-cloud.url('http://segmentio.github.com/analytics.js/test/providers.html');
+cloud.url('http://dl.dropbox.com/u/8040/analytics.js/test/providers.html');
 
 
 cloud.on('end', function (browser, res) {

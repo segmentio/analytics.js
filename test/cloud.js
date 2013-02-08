@@ -4,7 +4,7 @@ var _          = require('underscore')
   , cloud      = new Cloud('Analytics.js', process.env.SAUCE_USERNAME,
                       process.env.SAUCE_ACCESS_KEY);
 
-cloud.browser('internet explorer', '10', 'Windows 2012');
+cloud.browser('internet explorer', '7', 'Windows 2003');
 cloud.url('http://dl.dropbox.com/u/8040/analytics.js/test/providers.html');
 
 

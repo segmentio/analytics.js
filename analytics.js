@@ -1384,6 +1384,11 @@ analytics.addProvider('HubSpot', {
 
 analytics.addProvider('Intercom', {
 
+    // Whether Intercom has already been initialized or not. This is because
+    // since we initialize Intercom on `identify`, people can make multiple
+    // `identify` calls and we don't want that breaking anything.
+    initialized : false,
+
     settings : {
         appId  : null,
 
@@ -1413,6 +1418,11 @@ analytics.addProvider('Intercom', {
     // * Add `userId`.
     // * Add `userHash` for secure mode
     identify: function (userId, traits) {
+        // If we've already been initialized once, don't do it again since we
+        // load the script when this happens. Intercom can only handle one
+        // identify call.
+        if (this.initialized) return;
+
         // Don't do anything if we just have traits.
         if (!userId) return;
 
@@ -1455,6 +1465,9 @@ analytics.addProvider('Intercom', {
         } else {
             window.addEventListener('load', async_load, false);
         }
+
+        // Set the initialized state, so that we don't initialize again.
+        this.initialized = true;
     }
 
 });

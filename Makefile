@@ -27,6 +27,7 @@ FILES = src/analytics.js \
 				src/providers/quantcast/quantcast.js \
 				src/providers/snapengage/snapengage.js \
 				src/providers/usercycle/usercycle.js \
+				src/providers/uservoice/uservoice.js \
 				src/providers/vero/vero.js \
 				src/providers/woopra/woopra.js
 

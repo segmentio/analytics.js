@@ -30,6 +30,9 @@ analytics.addProvider('Perfect Audience', {
     // -----
 
     track : function (event, properties) {
+        // We're not guaranteed a track method.
+        if (!window._pa.track) return;
+
         window._pa.track(event, properties);
     }
 

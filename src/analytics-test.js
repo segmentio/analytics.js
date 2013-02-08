@@ -64,13 +64,17 @@
         // Turn off our current initialized state.
         analytics.initialized = false;
 
-        var spy = sinon.spy();
+        var spy1 = sinon.spy();
+        var spy2 = sinon.spy();
 
-        analytics.ready(spy);
-        expect(spy.called).to.be(false);
+        analytics.ready(spy1);
+        analytics.ready(spy2);
+        expect(spy1.called).to.be(false);
+        expect(spy2.called).to.be(false);
 
         analytics.initialize(settings);
-        expect(spy.called).to.be(true);
+        expect(spy1.called).to.be(true);
+        expect(spy2.called).to.be(true);
     });
 
     test('calls callbacks immediately when already initialized', function () {

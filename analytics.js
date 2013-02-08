@@ -711,6 +711,8 @@ analytics.addProvider('Chartbeat', {
     // --------
 
     pageview : function (url) {
+        if (!window.pSUPERFLY) return;
+
         window.pSUPERFLY.virtualPage(url || window.location.pathname);
     }
 
@@ -753,9 +755,11 @@ analytics.addProvider('Clicky', {
     // -----
 
     track : function (event, properties) {
+        if (!window.clicky) return;
+
         // We aren't guaranteed `clicky` is available until the script has been
         // requested and run, hence the check.
-        if (window.clicky) window.clicky.log(window.location.href, event);
+        window.clicky.log(window.location.href, event);
     }
 
 });
@@ -1504,6 +1508,8 @@ analytics.addProvider('Keen IO', {
     // --------
 
     identify: function(userId, traits) {
+        if (!window.Keen.setGlobalProperties) return;
+
         // Use Keen IO global properties to include `userId` and `traits` on
         // every event sent to Keen IO.
         var globalUserProps = {};
@@ -1523,6 +1529,8 @@ analytics.addProvider('Keen IO', {
     // -----
 
     track: function(event, properties) {
+        if (!window.Keen.addEvent) return;
+
         window.Keen.addEvent(event, properties);
     }
 

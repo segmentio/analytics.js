@@ -34,6 +34,8 @@ analytics.addProvider('Keen IO', {
     // --------
 
     identify: function(userId, traits) {
+        if (!window.Keen.setGlobalProperties) return;
+
         // Use Keen IO global properties to include `userId` and `traits` on
         // every event sent to Keen IO.
         var globalUserProps = {};
@@ -53,6 +55,8 @@ analytics.addProvider('Keen IO', {
     // -----
 
     track: function(event, properties) {
+        if (!window.Keen.addEvent) return;
+
         window.Keen.addEvent(event, properties);
     }
 

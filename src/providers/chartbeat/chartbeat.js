@@ -48,6 +48,8 @@ analytics.addProvider('Chartbeat', {
     // --------
 
     pageview : function (url) {
+        if (!window.pSUPERFLY) return;
+
         window.pSUPERFLY.virtualPage(url || window.location.pathname);
     }
 

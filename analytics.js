@@ -1,4 +1,4 @@
-//     Analytics.js 0.5.1
+//     Analytics.js 0.6.0
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -23,6 +23,10 @@
 
         // Whether analytics.js has been initialized with providers.
         initialized : false,
+
+        // A queue for storing `ready` callback functions to get run when
+        // analytics have been initialized.
+        readyCallbacks : [],
 
         // The amount of milliseconds to wait for requests to providers to clear
         // before navigating away from the current page.
@@ -78,6 +82,11 @@
 
             // Update the initialized state that other methods rely on.
             this.initialized = true;
+
+            // Run any callbacks on our `readyCallbacks` queue.
+            for (var i = 0, callback; callback = this.readyCallbacks[i]; i++) {
+                callback();
+            }
 
             // Try to use id and event parameters from the url
             var userId = this.utils.getUrlParameter(window.location.search, 'ajs_uid');
@@ -354,6 +363,26 @@
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.alias) continue;
                 provider.alias(newId, originalId);
+            }
+        },
+
+
+        // Ready
+        // -----
+
+        // Ready lets you pass in a callback that will get called when your
+        // analytics services have been initialized. It's like jQuery's `ready`
+        // expect for analytics instead of the DOM.
+        ready : function (callback) {
+            // Not a function, get out of here.
+            if (!this.utils.isFunction(callback)) return;
+
+            // If we're already initialized, do it right away. Otherwise, add it
+            // to the queue for when we do get initialized.
+            if (this.initialized) {
+                callback();
+            } else {
+                this.readyCallbacks.push(callback);
             }
         },
 
@@ -682,6 +711,8 @@ analytics.addProvider('Chartbeat', {
     // --------
 
     pageview : function (url) {
+        if (!window.pSUPERFLY) return;
+
         window.pSUPERFLY.virtualPage(url || window.location.pathname);
     }
 
@@ -724,9 +755,11 @@ analytics.addProvider('Clicky', {
     // -----
 
     track : function (event, properties) {
+        if (!window.clicky) return;
+
         // We aren't guaranteed `clicky` is available until the script has been
         // requested and run, hence the check.
-        if (window.clicky) window.clicky.log(window.location.href, event);
+        window.clicky.log(window.location.href, event);
     }
 
 });
@@ -1028,6 +1061,50 @@ analytics.addProvider('FoxMetrics', {
 });
 
 
+// Gauges
+// -------
+// [Documentation](http://get.gaug.es/documentation/tracking/).
+
+analytics.addProvider('Gauges', {
+
+    settings : {
+        siteId : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        var _gauges = window._gauges = window._gauges || [];
+
+        (function() {
+            var t   = document.createElement('script');
+            t.type  = 'text/javascript';
+            t.async = true;
+            t.id    = 'gauges-tracker';
+            t.setAttribute('data-site-id', settings.siteId);
+            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+            t.src = protocol + '//secure.gaug.es/track.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(t, s);
+        })();
+    },
+
+
+    // Pageview
+    // --------
+
+    pageview : function (url) {
+        window._gauges.push(['track']);
+    }
+
+});
+
+
 // Google Analytics
 // ----------------
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
@@ -1121,50 +1198,6 @@ analytics.addProvider('Google Analytics', {
     pageview : function (url) {
         // If there isn't a url, that's fine.
         window._gaq.push(['_trackPageview', url]);
-    }
-
-});
-
-
-// Gauges
-// -------
-// [Documentation](http://get.gaug.es/documentation/tracking/).
-
-analytics.addProvider('Gauges', {
-
-    settings : {
-        siteId : null
-    },
-
-
-    // Initialize
-    // ----------
-
-    initialize : function (settings) {
-        settings = analytics.utils.resolveSettings(settings, 'siteId');
-        analytics.utils.extend(this.settings, settings);
-
-        var _gauges = window._gauges = window._gauges || [];
-
-        (function() {
-            var t   = document.createElement('script');
-            t.type  = 'text/javascript';
-            t.async = true;
-            t.id    = 'gauges-tracker';
-            t.setAttribute('data-site-id', settings.siteId);
-            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
-            t.src = protocol + '//secure.gaug.es/track.js';
-            var s = document.getElementsByTagName('script')[0];
-            s.parentNode.insertBefore(t, s);
-        })();
-    },
-
-
-    // Pageview
-    // --------
-
-    pageview : function (url) {
-        window._gauges.push(['track']);
     }
 
 });
@@ -1355,6 +1388,11 @@ analytics.addProvider('HubSpot', {
 
 analytics.addProvider('Intercom', {
 
+    // Whether Intercom has already been initialized or not. This is because
+    // since we initialize Intercom on `identify`, people can make multiple
+    // `identify` calls and we don't want that breaking anything.
+    initialized : false,
+
     settings : {
         appId  : null,
 
@@ -1384,6 +1422,11 @@ analytics.addProvider('Intercom', {
     // * Add `userId`.
     // * Add `userHash` for secure mode
     identify: function (userId, traits) {
+        // If we've already been initialized once, don't do it again since we
+        // load the script when this happens. Intercom can only handle one
+        // identify call.
+        if (this.initialized) return;
+
         // Don't do anything if we just have traits.
         if (!userId) return;
 
@@ -1414,18 +1457,16 @@ analytics.addProvider('Intercom', {
             };
         }
 
-        function async_load() {
+        (function() {
             var s = document.createElement('script');
             s.type = 'text/javascript'; s.async = true;
             s.src = 'https://api.intercom.io/api/js/library.js';
             var x = document.getElementsByTagName('script')[0];
             x.parentNode.insertBefore(s, x);
-        }
-        if (window.attachEvent) {
-            window.attachEvent('onload', async_load);
-        } else {
-            window.addEventListener('load', async_load, false);
-        }
+        })();
+
+        // Set the initialized state, so that we don't initialize again.
+        this.initialized = true;
     }
 
 });
@@ -1467,6 +1508,8 @@ analytics.addProvider('Keen IO', {
     // --------
 
     identify: function(userId, traits) {
+        if (!window.Keen.setGlobalProperties) return;
+
         // Use Keen IO global properties to include `userId` and `traits` on
         // every event sent to Keen IO.
         var globalUserProps = {};
@@ -1486,6 +1529,8 @@ analytics.addProvider('Keen IO', {
     // -----
 
     track: function(event, properties) {
+        if (!window.Keen.addEvent) return;
+
         window.Keen.addEvent(event, properties);
     }
 
@@ -1620,6 +1665,68 @@ analytics.addProvider('Klaviyo', {
 
     track : function (event, properties) {
         window._learnq.push(['track', event, properties]);
+    }
+
+});
+
+
+// LiveChat
+// --------
+// [Documentation](http://www.livechatinc.com/api/javascript-api).
+
+analytics.addProvider('LiveChat', {
+
+    settings : {
+        license : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'license');
+        analytics.utils.extend(this.settings, settings);
+
+        window.__lc = {};
+        window.__lc.license = this.settings.license;
+
+        (function() {
+            var lc = document.createElement('script'); lc.type = 'text/javascript'; lc.async = true;
+            lc.src = ('https:' === document.location.protocol ? 'https://' : 'http://') + 'cdn.livechatinc.com/tracking.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(lc, s);
+        })();
+    },
+
+
+    // Identify
+    // --------
+
+    // LiveChat isn't an analytics service, but we can use the `userId` and
+    // `traits` to tag the user with their real name in the chat console.
+    identify : function (userId, traits) {
+        // We aren't guaranteed the variable exists.
+        if (!window.LC_API) return;
+
+        // We need either a `userId` or `traits`.
+        if (!userId && !traits) return;
+
+        // LiveChat takes them in an array format.
+        var variables = [];
+
+        if (userId) {
+            variables.push({ name: 'User ID', value: userId });
+        }
+        if (traits) {
+            for (var key in traits) {
+                var trait = {};
+                trait.name = key;
+                trait.value = traits[key];
+                variables.push(trait);
+            }
+        }
+
+        window.LC_API.set_custom_variables(variables);
     }
 
 });
@@ -1846,6 +1953,47 @@ analytics.addProvider('Olark', {
 });
 
 
+// Perfect Audience
+// ----------------
+// [Documentation](https://www.perfectaudience.com/docs#javascript_api_autoopen)
+
+analytics.addProvider('Perfect Audience', {
+
+    settings : {
+        siteId : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'siteId');
+        analytics.utils.extend(this.settings, settings);
+
+        (function() {
+            window._pa = window._pa || {};
+            var pa = document.createElement('script'); pa.type = 'text/javascript'; pa.async = true;
+            pa.src = ('https:' === document.location.protocol ? 'https:' : 'http:') + "//tag.perfectaudience.com/serve/" + settings.siteId + ".js";
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(pa, s);
+        })();
+
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        // We're not guaranteed a track method.
+        if (!window._pa.track) return;
+
+        window._pa.track(event, properties);
+    }
+
+});
+
+
 // Quantcast
 // ---------
 // [Documentation](https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/)
@@ -1969,6 +2117,35 @@ analytics.addProvider('USERcycle', {
 });
 
 
+// UserVoice
+// ---------
+// [Documentation](http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb).
+
+analytics.addProvider('UserVoice', {
+
+    settings : {
+        widgetId : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'widgetId');
+        analytics.utils.extend(this.settings, settings);
+
+        window.uvOptions = {};
+        (function() {
+            var uv = document.createElement('script'); uv.type = 'text/javascript'; uv.async = true;
+            uv.src = ('https:' === document.location.protocol ? 'https://' : 'http://') + 'widget.uservoice.com/' + settings.widgetId + '.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(uv, s);
+        })();
+    }
+
+});
+
+
 // GetVero.com
 // -----------
 // [Documentation](https://github.com/getvero/vero-api/blob/master/sections/js.md).
@@ -2036,4 +2213,70 @@ analytics.addProvider('Vero', {
         window._veroq.push(['track', event, properties]);
     }
 
+});// Woopra
+// ------
+// [Documentation](http://www.woopra.com/docs/setup/javascript-tracking/).
+
+analytics.addProvider('Woopra', {
+
+    settings : {
+        domain : null
+    },
+
+
+    // Initialize
+    // ----------
+
+    initialize : function (settings) {
+        settings = analytics.utils.resolveSettings(settings, 'domain');
+        analytics.utils.extend(this.settings, settings);
+
+        var self = this;
+        window.woopraReady = function (tracker) {
+            tracker.setDomain(self.settings.domain);
+            tracker.setIdleTimeout(300000);
+            tracker.track();
+            return false;
+        };
+
+        (function(){
+            var wsc = document.createElement('script');
+            wsc.type = 'text/javascript';
+            var protocol = ('https:' === document.location.protocol) ? 'https:' : 'http:';
+            wsc.src = protocol + '//static.woopra.com/js/woopra.js';
+            wsc.async = true;
+            var ssc = document.getElementsByTagName('script')[0];
+            ssc.parentNode.insertBefore(wsc, ssc);
+        })();
+    },
+
+
+    // Identify
+    // --------
+
+    identify : function (userId, traits) {
+        // TODO - we need the cookie solution, because Woopra is one of those
+        // that requires identify to happen before the script is requested.
+    },
+
+
+    // Track
+    // -----
+
+    track : function (event, properties) {
+        // We aren't guaranteed a tracker.
+        if (!window.woopraTracker) return;
+
+        // Woopra takes its event as dictionaries with the `name` key.
+        var settings = {};
+        settings.name = event;
+
+        // If we have properties, add them to the settings.
+        if (properties) settings = analytics.utils.extend({}, properties, settings);
+
+        window.woopraTracker.pushEvent(settings);
+    }
+
 });
+
+

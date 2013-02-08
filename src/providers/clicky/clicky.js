@@ -34,9 +34,11 @@ analytics.addProvider('Clicky', {
     // -----
 
     track : function (event, properties) {
+        if (!window.clicky) return;
+
         // We aren't guaranteed `clicky` is available until the script has been
         // requested and run, hence the check.
-        if (window.clicky) window.clicky.log(window.location.href, event);
+        window.clicky.log(window.location.href, event);
     }
 
 });

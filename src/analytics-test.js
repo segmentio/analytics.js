@@ -10,9 +10,11 @@
     };
     analytics.addProvider('test', provider);
 
-    // Initialize the provider above so that everything works even when looking
+    var settings = { 'test' : 'x' };
+
+    // Initialize the provider here so that everything works even when looking
     // at a single test case.
-    analytics.initialize({ 'test' : 'x' });
+    analytics.initialize(settings);
 
 
     // Initialize
@@ -24,7 +26,7 @@
         // Reset list of enabled providers.
         analytics.providers = [];
 
-        analytics.initialize({'test' : 'x'});
+        analytics.initialize(settings);
 
         expect(analytics.providers[0]).to.equal(provider);
     });
@@ -32,7 +34,7 @@
     test('sends settings to enabled providers initialize', function () {
         var spy = sinon.spy(provider, 'initialize');
 
-        analytics.initialize({'test' : 'x'});
+        analytics.initialize(settings);
 
         expect(spy.calledWith('x')).to.be(true);
 
@@ -40,16 +42,52 @@
     });
 
     test('resets enabled providers and userId', function () {
-        analytics.initialize({'test' : 'x'});
+        analytics.initialize(settings);
         analytics.identify('user');
 
         expect(analytics.providers.length).to.equal(1);
         expect(analytics.userId).to.equal('user');
 
-        analytics.initialize({'test' : 'x'});
+        analytics.initialize(settings);
 
         expect(analytics.providers.length).to.equal(1);
         expect(analytics.userId).to.be.null;
+    });
+
+
+    // Ready
+    // -----
+
+    suite('ready');
+
+    test('calls callbacks on initialize', function () {
+        // Turn off our current initialized state.
+        analytics.initialized = false;
+
+        var spy1 = sinon.spy();
+        var spy2 = sinon.spy();
+
+        analytics.ready(spy1);
+        analytics.ready(spy2);
+        expect(spy1.called).to.be(false);
+        expect(spy2.called).to.be(false);
+
+        analytics.initialize(settings);
+        expect(spy1.called).to.be(true);
+        expect(spy2.called).to.be(true);
+    });
+
+    test('calls callbacks immediately when already initialized', function () {
+        var spy = sinon.spy();
+
+        analytics.ready(spy);
+        expect(spy.called).to.be(true);
+    });
+
+    test('doesnt break on being passed a non-function', function () {
+        expect(function () {
+            analytics.ready('callback');
+        }).to.not.throwException();
     });
 
 

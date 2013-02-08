@@ -1,4 +1,4 @@
-//     Analytics.js 0.5.1
+//     Analytics.js 0.6.0
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -23,6 +23,10 @@
 
         // Whether analytics.js has been initialized with providers.
         initialized : false,
+
+        // A queue for storing `ready` callback functions to get run when
+        // analytics have been initialized.
+        readyCallbacks : [],
 
         // The amount of milliseconds to wait for requests to providers to clear
         // before navigating away from the current page.
@@ -78,6 +82,11 @@
 
             // Update the initialized state that other methods rely on.
             this.initialized = true;
+
+            // Run any callbacks on our `readyCallbacks` queue.
+            for (var i = 0, callback; callback = this.readyCallbacks[i]; i++) {
+                callback();
+            }
 
             // Try to use id and event parameters from the url
             var userId = this.utils.getUrlParameter(window.location.search, 'ajs_uid');
@@ -354,6 +363,26 @@
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.alias) continue;
                 provider.alias(newId, originalId);
+            }
+        },
+
+
+        // Ready
+        // -----
+
+        // Ready lets you pass in a callback that will get called when your
+        // analytics services have been initialized. It's like jQuery's `ready`
+        // expect for analytics instead of the DOM.
+        ready : function (callback) {
+            // Not a function, get out of here.
+            if (!this.utils.isFunction(callback)) return;
+
+            // If we're already initialized, do it right away. Otherwise, add it
+            // to the queue for when we do get initialized.
+            if (this.initialized) {
+                callback();
+            } else {
+                this.readyCallbacks.push(callback);
             }
         },
 

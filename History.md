@@ -1,16 +1,25 @@
+0.6.0 / 2013-2-7
+================
+
+* Added `ready` method for binding to when analytics are initialized
+* Added support for UserVoice
+* Added support for Perfect Audience
+* Added support for LiveChat
+* Fix for Intercom to allow multiple `identify` calls
+
 0.5.1 / 2013-2-4
-=================
+================
 
 * Merging in fix for Keen IO's branding
 * Adding fix to `utils.parseUrl()` field `pathname` in IE
 
 0.5.0 / 2013-2-1
-=================
+================
 
 * Added an `alias` method for merging two user's by ID
 
 0.4.10 / 2013-1-30
-=================
+==================
 
 * Fix for multiple elements on `trackLink` and `trackForm`
 * Fix for CrazyEgg `apiKey` to `accountNumber`

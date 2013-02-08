@@ -12,7 +12,7 @@
         analytics.initialize({'UserVoice' : 'qTSuuylq5nZrsjC0L8bmg'});
 
         expect(window.uvOptions).not.to.be(undefined);
-        expect(analytics.providers[0].settings.siteId).to.equal('qTSuuylq5nZrsjC0L8bmg');
+        expect(analytics.providers[0].settings.widgetId).to.equal('qTSuuylq5nZrsjC0L8bmg');
 
         // Test the library actually loading.
         expect(window._uvts).to.be(undefined);

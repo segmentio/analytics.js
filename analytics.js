@@ -1,4 +1,4 @@
-//     Analytics.js 0.5.1
+//     Analytics.js 0.6.0
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -1453,18 +1453,13 @@ analytics.addProvider('Intercom', {
             };
         }
 
-        function async_load() {
+        (function() {
             var s = document.createElement('script');
             s.type = 'text/javascript'; s.async = true;
             s.src = 'https://api.intercom.io/api/js/library.js';
             var x = document.getElementsByTagName('script')[0];
             x.parentNode.insertBefore(s, x);
-        }
-        if (window.attachEvent) {
-            window.attachEvent('onload', async_load);
-        } else {
-            window.addEventListener('load', async_load, false);
-        }
+        })();
 
         // Set the initialized state, so that we don't initialize again.
         this.initialized = true;
@@ -2116,12 +2111,12 @@ analytics.addProvider('USERcycle', {
 
 // UserVoice
 // ---------
-// [Documentation](http://www.livechatinc.com/api/javascript-api).
+// [Documentation](http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb).
 
 analytics.addProvider('UserVoice', {
 
     settings : {
-        siteId : null
+        widgetId : null
     },
 
 
@@ -2129,13 +2124,13 @@ analytics.addProvider('UserVoice', {
     // ----------
 
     initialize : function (settings) {
-        settings = analytics.utils.resolveSettings(settings, 'siteId');
+        settings = analytics.utils.resolveSettings(settings, 'widgetId');
         analytics.utils.extend(this.settings, settings);
 
         window.uvOptions = {};
         (function() {
             var uv = document.createElement('script'); uv.type = 'text/javascript'; uv.async = true;
-            uv.src = ('https:' === document.location.protocol ? 'https://' : 'http://') + 'widget.uservoice.com/' + settings.siteId + '.js';
+            uv.src = ('https:' === document.location.protocol ? 'https://' : 'http://') + 'widget.uservoice.com/' + settings.widgetId + '.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(uv, s);
         })();
     }

@@ -20,6 +20,7 @@ FILES = src/analytics.js \
 				src/providers/keenio/keenio.js \
 				src/providers/kissmetrics/kissmetrics.js \
 				src/providers/klaviyo/klaviyo.js \
+				src/providers/livechat/livechat.js \
 				src/providers/mixpanel/mixpanel.js \
 				src/providers/olark/olark.js \
 				src/providers/perfect-audience/perfect-audience.js \

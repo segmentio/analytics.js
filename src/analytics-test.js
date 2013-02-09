@@ -51,7 +51,7 @@
         analytics.initialize(settings);
 
         expect(analytics.providers.length).to.equal(1);
-        expect(analytics.userId).to.be.null;
+        expect(analytics.userId).to.be(null);
     });
 
 
@@ -241,7 +241,6 @@
         analytics.trackLink(link, 'party');
 
         triggerClick(link);
-
         expect(spy.calledWith('party')).to.be(true);
 
         spy.restore();
@@ -671,9 +670,15 @@ function triggerClick (element, isMeta) {
     if (document.createEvent) {
         e = document.createEvent('MouseEvent');
         if (isMeta)
-            e.initMouseEvent('click', true, true, null, null, null, null, null, null, true, true, true, true);
+            e.initMouseEvent('click', true, true, null,
+                             null, null, null, null, null,
+                             true, true, true, true,
+                             0, null);
         else
-            e.initMouseEvent('click', true, true);
+            e.initMouseEvent('click', true, true, null,
+                             null, null, null, null, null,
+                             false, false, false, false,
+                             0, null);
         element.dispatchEvent(e);
     } else {
         if (isMeta) {

@@ -66,6 +66,8 @@
     </div>
     <script>
       $(function () {
+        if (window.onerror) window.onerror = console.log;
+
         if (window.mochaPhantomJS)
           window.mochaPhantomJS.run();
         else

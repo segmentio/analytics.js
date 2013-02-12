@@ -4,7 +4,9 @@
 // [Tracker Functions](https://www.gosquared.com/customer/portal/articles/612063-tracker-functions)
 // Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat).
 
-var utils = require('../../utils');
+var extend = require('extend')
+  , load   = require('load-script')
+  , utils  = require('../../utils');
 
 
 module.exports = GoSquared;
@@ -23,21 +25,15 @@ function GoSquared () {
 // * Attach `GoSquared` to `window`.
 GoSquared.prototype.initialize = function (settings) {
   settings = utils.resolveSettings(settings, 'siteToken');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
   var GoSquared = window.GoSquared = {};
   GoSquared.acct = this.settings.siteToken;
   GoSquared.q = [];
 
   window._gstc_lt =+ (new Date());
-  var d = document;
-  var g = d.createElement('script');
-  g.type = 'text/javascript';
-  g.async = true;
-  var protocol = ('https:' === d.location.protocol) ? 'https:' : 'http:';
-  g.src = protocol + '//d1l6p2sc9645hc.cloudfront.net/tracker.js';
-  var s = d.getElementsByTagName('script')[0];
-  s.parentNode.insertBefore(g, s);
+
+  load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
 },
 
 

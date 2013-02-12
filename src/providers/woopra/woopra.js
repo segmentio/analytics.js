@@ -2,7 +2,9 @@
 // ------
 // [Documentation](http://www.woopra.com/docs/setup/javascript-tracking/).
 
-var utils = require('../../utils');
+var extend = require('extend')
+  , load   = require('load-script')
+  , utils  = require('../../utils');
 
 
 module.exports = Woopra;
@@ -16,7 +18,7 @@ function Woopra () {
 
 Woopra.prototype.initialize = function (settings) {
   settings = utils.resolveSettings(settings, 'domain');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
   var self = this;
   window.woopraReady = function (tracker) {
@@ -26,15 +28,7 @@ Woopra.prototype.initialize = function (settings) {
     return false;
   };
 
-  (function(){
-    var wsc = document.createElement('script');
-    wsc.type = 'text/javascript';
-    var protocol = ('https:' === document.location.protocol) ? 'https:' : 'http:';
-    wsc.src = protocol + '//static.woopra.com/js/woopra.js';
-    wsc.async = true;
-    var ssc = document.getElementsByTagName('script')[0];
-    ssc.parentNode.insertBefore(wsc, ssc);
-  })();
+  load('//static.woopra.com/js/woopra.js');
 };
 
 

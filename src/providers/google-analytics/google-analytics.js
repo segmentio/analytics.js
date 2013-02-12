@@ -2,9 +2,12 @@
 // ----------------
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
 
-var each  = require('each')
-  , url   = require('url')
-  , utils = require('../../utils');
+var each   = require('each')
+  , extend = require('extend')
+  , load   = require('load-script')
+  , type   = require('type')
+  , url    = require('url')
+  , utils  = require('../../utils');
 
 
 module.exports = GoogleAnalytics;
@@ -27,9 +30,8 @@ function GoogleAnalytics () {
 // * Added optional support for `siteSpeedSampleRate`
 // * Added optional support for `anonymizeIp`
 GoogleAnalytics.prototype.initialize = function (settings) {
-
   settings = utils.resolveSettings(settings, 'trackingId');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
   var _gaq = window._gaq = window._gaq || [];
   _gaq.push(['_setAccount', this.settings.trackingId]);
@@ -40,7 +42,7 @@ GoogleAnalytics.prototype.initialize = function (settings) {
     _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
   }
 
-  if (utils.isNumber(this.settings.siteSpeedSampleRate)) {
+  if (type(this.settings.siteSpeedSampleRate) === 'number') {
     _gaq.push(['_setSiteSpeedSampleRate', this.settings.siteSpeedSampleRate]);
   }
 
@@ -54,13 +56,13 @@ GoogleAnalytics.prototype.initialize = function (settings) {
     }
   });
 
-  _gaq.push(['_trackPageview', canonicalUrl]);
+  // Track the initial pageview.
+  this.pageview(canonicalUrl);
 
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' === document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
+  load({
+    http  : 'http://www.google-analytics.com/ga.js',
+    https : 'https://ssl.google-analytics.com/ga.js'
+  });
 };
 
 
@@ -70,7 +72,7 @@ GoogleAnalytics.prototype.track = function (event, properties) {
   var value;
 
   // Since value is a common property name, ensure it is a number
-  if (utils.isNumber(properties.value)) value = properties.value;
+  if (type(properties.value) === 'number') value = properties.value;
 
   // Try to check for a `category` and `label`. A `category` is required,
   // so if it's not there we use `'All'` as a default. We can safely push
@@ -88,7 +90,6 @@ GoogleAnalytics.prototype.track = function (event, properties) {
 
 
 GoogleAnalytics.prototype.pageview = function (url) {
-
   // If there isn't a url, that's fine.
   window._gaq.push(['_trackPageview', url]);
 };

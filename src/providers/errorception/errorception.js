@@ -2,7 +2,9 @@
 // ------------
 // [Documentation](http://errorception.com/).
 
-var utils = require('../../utils');
+var extend = require('extend')
+  , load   = require('load-script')
+  , utils  = require('../../utils');
 
 
 module.exports = Errorception;
@@ -20,24 +22,16 @@ function Errorception () {
 
 Errorception.prototype.initialize = function (settings) {
   settings = utils.resolveSettings(settings, 'projectId');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
-  var _errs = window._errs = window._errs || [settings.projectId];
+  window._errs = window._errs || [settings.projectId];
 
-  (function(a,b){
-    a.onerror = function () {
-      _errs.push(arguments);
-    };
-    var d = function () {
-      var a = b.createElement('script'),
-          c = b.getElementsByTagName('script')[0],
-          protocol = ('https:' === document.location.protocol) ? 'https:' : 'http:';
-      a.src = protocol + '//d15qhc0lu1ghnk.cloudfront.net/beacon.js';
-      a.async = true;
-      c.parentNode.insertBefore(a,c);
-    };
-    a.addEventListener ? a.addEventListener('load', d, !1) : a.attachEvent('onload', d);
-  })(window,document);
+  // Attach the window `onerror` event.
+  window.onerror = function () {
+    window._errs.push(arguments);
+  };
+
+  load('//d15qhc0lu1ghnk.cloudfront.net/beacon.js');
 };
 
 

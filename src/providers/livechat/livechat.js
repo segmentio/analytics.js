@@ -2,8 +2,10 @@
 // --------
 // [Documentation](http://www.livechatinc.com/api/javascript-api).
 
-var each  = require('each')
-  , utils = require('../../utils');
+var each   = require('each')
+  , extend = require('extend')
+  , load   = require('load-script')
+  , utils  = require('../../utils');
 
 
 module.exports = LiveChat;
@@ -17,23 +19,20 @@ function LiveChat () {
 
 LiveChat.prototype.initialize = function (settings) {
   settings = utils.resolveSettings(settings, 'license');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
-  window.__lc = {};
-  window.__lc.license = this.settings.license;
+  window.__lc = {
+    license : this.settings.license
+  };
 
-  (function() {
-      var lc = document.createElement('script'); lc.type = 'text/javascript'; lc.async = true;
-      lc.src = ('https:' === document.location.protocol ? 'https://' : 'http://') + 'cdn.livechatinc.com/tracking.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(lc, s);
-  })();
+  load('//cdn.livechatinc.com/tracking.js');
 };
 
 
 // LiveChat isn't an analytics service, but we can use the `userId` and
 // `traits` to tag the user with their real name in the chat console.
 LiveChat.prototype.identify = function (userId, traits) {
-  // We aren't guaranteed the variable exists.
+  // In case the LiveChat library hasn't loaded yet.
   if (!window.LC_API) return;
 
   // We need either a `userId` or `traits`.

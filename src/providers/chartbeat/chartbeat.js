@@ -4,7 +4,9 @@
 // [documentation](http://chartbeat.com/docs/configuration_variables/),
 // [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
 
-var utils = require('../../utils');
+var extend = require('extend')
+  , load   = require('load-script')
+  , utils  = require('../../utils');
 
 
 module.exports = Chartbeat;
@@ -24,33 +26,26 @@ function Chartbeat () {
 // * Pass `settings` directly as the config object.
 // * Replaced the date with our stored `date` variable.
 Chartbeat.prototype.initialize = function (settings) {
-
   settings = utils.resolveSettings(settings, 'uid');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
   // Since all the custom settings just get passed through, update the
   // Chartbeat `_sf_async_config` variable with settings.
   window._sf_async_config = this.settings || {};
+  // Use the stored date from when we were loaded.
+  window._sf_endpt = analytics.date.getTime();
 
-  (function(){
-    // Use the stored date from when we were loaded.
-    window._sf_endpt = analytics.date.getTime();
-    var f = document.getElementsByTagName('script')[0];
-    var e = document.createElement('script');
-    e.setAttribute('language', 'javascript');
-    e.setAttribute('type', 'text/javascript');
-    e.setAttribute('src',
-        (('https:' === document.location.protocol) ?
-            'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/' :
-            'http://static.chartbeat.com/') +
-        'js/chartbeat.js');
-    f.parentNode.insertBefore(e, f);
-  })();
+  load({
+    http  : 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',
+    https : 'http://static.chartbeat.com/js/chartbeat.js'
+  });
 };
 
 
 Chartbeat.prototype.pageview = function (url) {
+  // In case the Chartbeat library hasn't loaded yet.
   if (!window.pSUPERFLY) return;
 
+  // Requires a path, so default to the current one.
   window.pSUPERFLY.virtualPage(url || window.location.pathname);
 };

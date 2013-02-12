@@ -7,7 +7,7 @@ var each        = require('each')
   , type        = require('type')
   , url         = require('url')
   , querystring = require('querystring')
-  , events      = require('events')
+  , bind        = require('event').bind
   , providers   = require('./providers')
   , utils       = require('./utils');
 
@@ -221,7 +221,7 @@ Analytics.prototype.trackLink = function (links, event, properties) {
   // Bind to all the links in the array.
   each(links, function (el) {
 
-    events.bind('click', function (e) {
+    bind(el, 'click', function (e) {
 
       // Allow for properties to be a function. And pass it the
       // link element that was clicked.
@@ -285,7 +285,7 @@ Analytics.prototype.trackForm = function (form, event, properties) {
 
   each(form, function (el) {
 
-    events.bind(el, 'submit', function (e) {
+    bind(el, 'submit', function (e) {
       // Allow for properties to be a function. And pass it the
       // form element that was submitted.
       if (type(properties) === 'function') properties = properties(el);

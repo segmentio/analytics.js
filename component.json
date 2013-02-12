@@ -44,11 +44,12 @@
     "component/clone": "*",
     "component/url": "*",
     "component/querystring": "*",
-    "component/events": "*",
     "segmentio/extend": "*",
     "segmentio/alias": "*",
     "segmentio/load-script": "*",
-    "segmentio/is-email": "*"
+    "segmentio/is-email": "*",
+    "component/cookie": "*",
+    "component/event": "*"
   },
   "scripts": [
     "src/index.js",

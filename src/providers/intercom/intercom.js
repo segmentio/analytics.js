@@ -2,7 +2,10 @@
 // --------
 // [Documentation](http://docs.intercom.io/).
 
-var utils = require('../../utils');
+var extend  = require('extend')
+  , load    = require('load-script')
+  , isEmail = require('is-email')
+  , utils   = require('../../utils');
 
 
 module.exports = Intercom;
@@ -28,7 +31,7 @@ function Intercom () {
 // `identify`.
 Intercom.prototype.initialize = function (settings) {
   settings = utils.resolveSettings(settings, 'appId');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 };
 
 
@@ -62,7 +65,7 @@ Intercom.prototype.identify = function (userId, traits) {
   }
 
   // If they didn't pass an email, check to see if the `userId` qualifies.
-  if (utils.isEmail(userId) && (traits && !traits.email)) {
+  if (isEmail(userId) && (traits && !traits.email)) {
     settings.email = userId;
   }
 
@@ -73,13 +76,7 @@ Intercom.prototype.identify = function (userId, traits) {
     };
   }
 
-  (function() {
-      var s = document.createElement('script');
-      s.type = 'text/javascript'; s.async = true;
-      s.src = 'https://api.intercom.io/api/js/library.js';
-      var x = document.getElementsByTagName('script')[0];
-      x.parentNode.insertBefore(s, x);
-  })();
+  load('https://api.intercom.io/api/js/library.js');
 
   // Set the initialized state, so that we don't initialize again.
   this.initialized = true;

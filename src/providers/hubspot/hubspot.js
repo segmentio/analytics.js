@@ -2,10 +2,12 @@
 // -------
 // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
 
-var utils = require('../../utils');
+var extend = require('extend')
+  , load   = require('load-script')
+  , utils  = require('../../utils');
 
 
-module.exports = HubSpot
+module.exports = HubSpot;
 
 function HubSpot () {
   this.settings = {
@@ -19,24 +21,19 @@ function HubSpot () {
 // * Concatenate `portalId` into the URL.
 HubSpot.prototype.initialize = function (settings) {
   settings = utils.resolveSettings(settings, 'portalId');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
-  var self = this;
-
-  (function(d,s,i,r) {
-    if (d.getElementById(i)){return;}
-    window._hsq = window._hsq || []; // for calls pre-load
-    var n = d.createElement(s),
-        e = d.getElementsByTagName(s)[0];
-    n.id = i;
-    n.src = 'https://js.hubspot.com/analytics/' + (Math.ceil(new Date()/r)*r) + '/' + self.settings.portalId + '.js';
-    e.parentNode.insertBefore(n, e);
-  })(document, 'script', 'hs-analytics', 300000);
+  // HubSpot checks in their snippet to make sure another script with
+  // `hs-analytics` isn't already in the DOM. Seems excessive, but who knows
+  // if there's weird deprecation going on :p
+  if (!document.getElementById('hs-analytics')) {
+    var script = load('https://js.hubspot.com/analytics/' + (Math.ceil(new Date()/300000)*300000) + '/' + this.settings.portalId + '.js');
+    script.id = 'hs-analytics';
+  }
 };
 
 
 HubSpot.prototype.identify = function (userId, traits) {
-
   // HubSpot does not use a userId, but the email address is required on
   // the traits object.
   if (!traits) return;

@@ -5,6 +5,7 @@
 
 var type   = require('type')
   , extend = require('extend')
+  , load   = require('load-script')
   , utils  = require('../../utils');
 
 
@@ -28,24 +29,17 @@ function Bitdeli () {
 // * Always load the latest version of the library
 //   (major backwards incompatible updates will use another URL)
 Bitdeli.prototype.initialize = function (settings) {
-
-  if (type(settings) !== 'object' ||
-      type(settings.inputId) !== 'string' ||
-      type(settings.authToken) !== 'string') {
+  if (!settings.inputId || !settings.authToken) {
     throw new Error("Settings must be an object with properties 'inputId' and 'authToken'.");
   }
 
   extend(this.settings, settings);
 
-  var _bdq = window._bdq = window._bdq || [];
-  _bdq.push(["setAccount", this.settings.inputId, this.settings.authToken]);
-  if (this.settings.initialPageview) _bdq.push(["trackPageview"]);
+  window._bdq = window._bdq || [];
+  window._bdq.push(["setAccount", this.settings.inputId, this.settings.authToken]);
+  if (this.settings.initialPageview) this.pageview();
 
-  (function() {
-    var bd = document.createElement("script"); bd.type = "text/javascript"; bd.async = true;
-    bd.src = ("https:" === document.location.protocol ? "https://" : "http://") + "d2flrkr957qc5j.cloudfront.net/bitdeli.min.js";
-    var s = document.getElementsByTagName("script")[0]; s.parentNode.insertBefore(bd, s);
-  })();
+  load('//d2flrkr957qc5j.cloudfront.net/bitdeli.min.js');
 };
 
 

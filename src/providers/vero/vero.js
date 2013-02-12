@@ -2,7 +2,9 @@
 // -----------
 // [Documentation](https://github.com/getvero/vero-api/blob/master/sections/js.md).
 
-var utils = require('../../utils');
+var extend = require('extend')
+  , load   = require('load-script')
+  , utils  = require('../../utils');
 
 
 module.exports = Vero;
@@ -16,21 +18,12 @@ function Vero () {
 
 Vero.prototype.initialize = function (settings) {
   settings = utils.resolveSettings(settings, 'apiKey');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
-  var _veroq = window._veroq = window._veroq || [];
+  window._veroq = window._veroq || [];
+  window._veroq.push(['init', { api_key: this.settings.apiKey }]);
 
-  _veroq.push(['init', { api_key: settings.apiKey }]);
-
-  (function(){
-    var ve = document.createElement('script');
-    ve.type = 'text/javascript';
-    ve.async = true;
-    var protocol = ('https:' === document.location.protocol) ? 'https:' : 'http:';
-    ve.src = protocol + '//www.getvero.com/assets/m.js';
-    var s = document.getElementsByTagName('script')[0];
-    s.parentNode.insertBefore(ve, s);
-  })();
+  load('//www.getvero.com/assets/m.js');
 };
 
 
@@ -55,5 +48,5 @@ Vero.prototype.identify = function (userId, traits) {
 
 
 Vero.prototype.track = function (event, properties) {
-        window._veroq.push(['track', event, properties]);
+  window._veroq.push(['track', event, properties]);
 };

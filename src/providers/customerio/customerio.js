@@ -2,7 +2,9 @@
 // -----------
 // [Documentation](http://customer.io/docs/api/javascript.html).
 
-var utils = require('../../utils');
+var extend  = require('extend')
+  , isEmail = require('is-email')
+  , utils   = require('../../utils');
 
 
 module.exports = CustomerIO;
@@ -19,7 +21,7 @@ function CustomerIO () {
 // * Add `siteId`.
 CustomerIO.prototype.initialize = function (settings) {
   settings = utils.resolveSettings(settings, 'siteId');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
   var self = this;
 
@@ -57,7 +59,7 @@ CustomerIO.prototype.identify = function (userId, traits) {
   traits.id = userId;
 
   // If there wasn't already an email and the userId is one, use it.
-  if (!traits.email && utils.isEmail(userId)) traits.email = userId;
+  if (!traits.email && isEmail(userId)) traits.email = userId;
 
   // Swap the `created` trait to the `created_at` that Customer.io needs
   // (in seconds).

@@ -4,7 +4,10 @@
 // [documentation](https://mixpanel.com/docs/people-analytics/javascript),
 // [documentation](https://mixpanel.com/docs/integration-libraries/javascript-full-api).
 
-var utils = require('../../utils');
+var extend  = require('extend')
+  , alias   = require('alias')
+  , isEmail = require('is-email')
+  , utils   = require('../../utils');
 
 
 module.exports = Mixpanel;
@@ -29,7 +32,7 @@ function Mixpanel () {
 // they already do that.
 Mixpanel.prototype.initialize = function (settings) {
   settings = utils.resolveSettings(settings, 'token');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
   (function (c, a) {
     window.mixpanel = a;
@@ -66,14 +69,14 @@ Mixpanel.prototype.initialize = function (settings) {
 
 Mixpanel.prototype.identify = function (userId, traits) {
   // If we have an email and no email trait, set the email trait.
-  if (userId && utils.isEmail(userId) && (traits && !traits.email)) {
+  if (userId && isEmail(userId) && (traits && !traits.email)) {
     traits || (traits = {});
     traits.email = userId;
   }
 
   // Alias the traits' keys with dollar signs for Mixpanel's API.
   if (traits) {
-    utils.alias(traits, {
+    alias(traits, {
       'created'   : '$created',
       'email'     : '$email',
       'firstName' : '$first_name',
@@ -108,9 +111,9 @@ Mixpanel.prototype.track = function (event, properties) {
 };
 
 
+// Mixpanel doesn't actually track the pageviews, but they do show up in the
+// Mixpanel stream.
 Mixpanel.prototype.pageview = function (url) {
-  // Mixpanel doesn't actually track the pageviews, but they do show up in the
-  // Mixpanel stream.
   window.mixpanel.track_pageview(url);
 };
 

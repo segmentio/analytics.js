@@ -2,7 +2,9 @@
 // -------
 // [Documentation](http://get.gaug.es/documentation/tracking/).
 
-var utils = require('../../utils');
+var extend = require('extend')
+  , load   = require('load-script')
+  , utils  = require('../../utils');
 
 
 module.exports = Gauges;
@@ -16,21 +18,14 @@ function Gauges () {
 
 Gauges.prototype.initialize = function (settings) {
   settings = utils.resolveSettings(settings, 'siteId');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
-  var _gauges = window._gauges = window._gauges || [];
+  window._gauges = window._gauges || [];
 
-  (function() {
-    var t   = document.createElement('script');
-    t.type  = 'text/javascript';
-    t.async = true;
-    t.id    = 'gauges-tracker';
-    t.setAttribute('data-site-id', settings.siteId);
-    var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
-    t.src = protocol + '//secure.gaug.es/track.js';
-    var s = document.getElementsByTagName('script')[0];
-    s.parentNode.insertBefore(t, s);
-  })();
+  // Load the library and add the `id` and `data-site-id` Gauges needs.
+  var script = load('//secure.gaug.es/track.js');
+  script.id = 'gauges-tracker';
+  script.setAttribute('data-site-id', this.settings.siteId);
 };
 
 

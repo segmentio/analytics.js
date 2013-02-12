@@ -5,7 +5,9 @@
 // [Documentation - JS](http://foxmetrics.com/documentation/apijavascript)
 // [Support](http://support.foxmetrics.com)
 
-var utils = require('../../utils');
+var extend = require('extend')
+  , load   = require('load-script')
+  , utils  = require('../../utils');
 
 
 module.exports = FoxMetrics;
@@ -21,20 +23,12 @@ function FoxMetrics () {
 // ----------
 FoxMetrics.prototype.initialize = function (settings) {
   settings = utils.resolveSettings(settings, 'appId');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
   var _fxm = window._fxm || {};
   window._fxm = _fxm.events || [];
 
-  function _fxms(id) {
-    (function () {
-      var fxms = document.createElement('script'); fxms.type = 'text/javascript'; fxms.async = true;
-      fxms.src = ('https:' === document.location.protocol ? 'https://' : 'http://') + 'd35tca7vmefkrc.cloudfront.net/scripts/' + id + '.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(fxms, s);
-      })();
-  }
-
-  _fxms(this.settings.appId);
+  load('d35tca7vmefkrc.cloudfront.net/scripts/' + this.settings.appId + '.js');
 };
 
 
@@ -42,7 +36,6 @@ FoxMetrics.prototype.initialize = function (settings) {
 // --------
 
 FoxMetrics.prototype.identify = function (userId, traits) {
-
   // A `userId` is required for profile updates, otherwise its a waste of
   // resources as nothing will get updated.
   if (!userId) return;

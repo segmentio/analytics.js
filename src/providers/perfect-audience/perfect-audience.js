@@ -2,7 +2,8 @@
 // ----------------
 // [Documentation](https://www.perfectaudience.com/docs#javascript_api_autoopen)
 
-var utils = require('../../utils');
+var extend = require('extend')
+  , utils  = require('../../utils');
 
 
 module.exports = PerfectAudience;
@@ -15,9 +16,8 @@ function PerfectAudience () {
 
 
 PerfectAudience.prototype.initialize = function (settings) {
-
   settings = utils.resolveSettings(settings, 'siteId');
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
   (function() {
     window._pa = window._pa || {};
@@ -29,7 +29,7 @@ PerfectAudience.prototype.initialize = function (settings) {
 
 
 PerfectAudience.prototype.track = function (event, properties) {
-  // We're not guaranteed a track method.
+  // In case the Perfect Audience library hasn't loaded yet.
   if (!window._pa.track) return;
 
   window._pa.track(event, properties);

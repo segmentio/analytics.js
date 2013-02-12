@@ -43,20 +43,32 @@ FoxMetrics.prototype.initialize = function (settings) {
 
 FoxMetrics.prototype.identify = function (userId, traits) {
 
-  // user id is required for profile updates,
-  // otherwise its a waste of resources as nothing will get updated
-  if (userId) {
-    // fxm needs first and last name seperately
-    var fname = null, lname = null, email = null;
-    if (traits) {
-      fname = traits.name.split(' ')[0];
-      lname = traits.name.split(' ')[1];
-      email = typeof (traits.email) !== 'undefined' ? traits.email : null;
-    }
+  // A `userId` is required for profile updates, otherwise its a waste of
+  // resources as nothing will get updated.
+  if (!userId) return;
 
-    // we should probably remove name and email before passing as attributes
-    window._fxm.push(['_fxm.visitor.Profile', userId, fname, lname, email, null, null, null, (traits || null)]);
+  // FoxMetrics needs the first and last name seperately.
+  var firstName = null, lastName = null, email = null;
+  if (traits && traits.name) {
+    firstName = traits.name.split(' ')[0];
+    lastName = traits.name.split(' ')[1];
   }
+  if (traits && traits.email) {
+    email = traits.email;
+  }
+
+  // We should probably remove name and email before passing as attributes.
+  window._fxm.push([
+    '_fxm.visitor.profile',
+    userId,          // user id
+    firstName,       // first name
+    lastName,        // last name
+    email,           // email
+    null,            // address
+    null,            // social
+    null,            // partners
+    (traits || null) // attributes
+  ]);
 };
 
 
@@ -64,8 +76,12 @@ FoxMetrics.prototype.identify = function (userId, traits) {
 // -----
 
 FoxMetrics.prototype.track = function (event, properties) {
-  // send in null as event category name
-  window._fxm.push([event, null, properties]);
+  // Send in null as event category name.
+  window._fxm.push([
+    event,     // event name
+    null,      // category
+    properties // properties
+  ]);
 };
 
 
@@ -73,7 +89,12 @@ FoxMetrics.prototype.track = function (event, properties) {
 // ----------
 
 FoxMetrics.prototype.pageview = function (url) {
-  // we are happy to accept traditional analytics :)
-  // (title, name, categoryName, url, referrer)
-  window._fxm.push(['_fxm.pages.view', null, null, null, (url || null), null]);
+  window._fxm.push([
+    '_fxm.pages.view',
+    null,          // title
+    null,          // name
+    null,          // category
+    (url || null), // url
+    null           // referrer
+  ]);
 };

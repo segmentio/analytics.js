@@ -1,7 +1,7 @@
 {
-  "name": "analyticsjs",
+  "name": "analytics.js",
   "repo": "segmentio/analytics.js",
-  "description": "A wrapper for multiple analytics services.",
+  "description": "The hassle-free way to integrate analytics into any web application.",
   "version": "0.7.0",
   "keywords": [
     "analytics",
@@ -27,19 +27,28 @@
     "keen io",
     "kissmetrics",
     "klaviyo",
+    "live chat",
     "mixpanel",
     "olark",
     "perfect audience",
     "quantcast",
     "snapengage",
     "usercycle",
-    "vero"
+    "uservoice",
+    "vero",
+    "woopra"
   ],
   "dependencies": {
     "component/each": "*",
     "component/type": "*",
     "component/clone": "*",
-    "component/url": "*"
+    "component/url": "*",
+    "component/querystring": "*",
+    "component/events": "*",
+    "segmentio/extend": "*",
+    "segmentio/alias": "*",
+    "segmentio/load-script": "*",
+    "segmentio/is-email": "*"
   },
   "scripts": [
     "src/index.js",

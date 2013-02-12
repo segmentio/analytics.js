@@ -2,3 +2,5 @@
 *.sublime*
 node_modules/
 test/pid.txt
+components
+build

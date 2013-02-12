@@ -1,11 +1,15 @@
-//     Analytics.js 0.6.0
-//     (c) 2013 Segment.io Inc.
-//     Analytics.js may be freely distributed under the MIT license.
+// Analytics.js 0.7.0
+// (c) 2013 Segment.io Inc.
+// Analytics.js may be freely distributed under the MIT license.
 
-var each      = require('each')
-  , clone     = require('clone')
-  , providers = require('./providers')
-  , utils     = require('./utils');
+var each        = require('each')
+  , clone       = require('clone')
+  , type        = require('type')
+  , url         = require('url')
+  , querystring = require('querystring')
+  , events      = require('events')
+  , providers   = require('./providers')
+  , utils       = require('./utils');
 
 
 module.exports = Analytics;
@@ -89,12 +93,10 @@ Analytics.prototype.initialize = function (providers) {
     callback();
   });
 
-  // Try to use id and event parameters from the url
-  var userId = utils.getUrlParameter(window.location.search, 'ajs_uid');
-  if (userId) this.identify(userId);
-
-  var event = utils.getUrlParameter(window.location.search, 'ajs_event');
-  if (event) this.track(event);
+  // Identify/track any `ajs_uid` and `ajs_event` parameters in the URL.
+  var queries = querystring(url(window.location.href).query);
+  if (queries.ajs_uid) this.identify(queries.ajs_uid);
+  if (queries.ajs_event) this.track(queries.ajs_event);
 };
 
 
@@ -123,15 +125,15 @@ Analytics.prototype.identify = function (userId, traits, callback) {
   if (!this.initialized) return;
 
   // Allow for not passing traits, but passing a callback.
-  if (utils.isFunction(traits)) {
+  if (type(traits) === 'function') {
     callback = traits;
     traits = null;
   }
 
   // Allow for identifying traits without setting a `userId`, for
   // anonymous users whose traits you learn.
-  if (utils.isObject(userId)) {
-    if (traits && utils.isFunction(traits)) callback = traits;
+  if (type(userId) === 'object') {
+    if (traits && type(traits) === 'function') callback = traits;
     traits = userId;
     userId = null;
   }
@@ -147,7 +149,7 @@ Analytics.prototype.identify = function (userId, traits, callback) {
     if (provider.identify) provider.identify(userId, clone(traits));
   });
 
-  if (callback && utils.isFunction(callback)) {
+  if (callback && type(callback) === 'function') {
     setTimeout(callback, this.timeout);
   }
 };
@@ -177,7 +179,7 @@ Analytics.prototype.track = function (event, properties, callback) {
   if (!this.initialized) return;
 
   // Allow for not passing properties, but passing a callback.
-  if (utils.isFunction(properties)) {
+  if (type(properties) === 'function') {
     callback = properties;
     properties = null;
   }
@@ -187,7 +189,7 @@ Analytics.prototype.track = function (event, properties, callback) {
     if (provider.track) provider.track(event, clone(properties));
   });
 
-  if (callback && utils.isFunction(callback)) {
+  if (callback && type(callback) === 'function') {
     setTimeout(callback, this.timeout);
   }
 };
@@ -219,11 +221,11 @@ Analytics.prototype.trackLink = function (links, event, properties) {
   // Bind to all the links in the array.
   each(links, function (el) {
 
-    utils.bind('click', function (e) {
+    events.bind('click', function (e) {
 
       // Allow for properties to be a function. And pass it the
       // link element that was clicked.
-      if (utils.isFunction(properties)) properties = properties(el);
+      if (type(properties) === 'function') properties = properties(el);
 
       // Fire a normal track call.
       self.track(event, properties);
@@ -283,10 +285,10 @@ Analytics.prototype.trackForm = function (form, event, properties) {
 
   each(form, function (el) {
 
-    utils.bind(el, 'submit', function (e) {
+    events.bind(el, 'submit', function (e) {
       // Allow for properties to be a function. And pass it the
       // form element that was submitted.
-      if (utils.isFunction(properties)) properties = properties(el);
+      if (type(properties) === 'function') properties = properties(el);
 
       // Fire a normal track call.
       self.track(event, properties);
@@ -364,7 +366,7 @@ Analytics.prototype.alias = function (newId, originalId) {
 // expect for analytics instead of the DOM.
 Analytics.prototype.ready = function (callback) {
   // Not a function, get out of here.
-  if (!utils.isFunction(callback)) return;
+  if (type(callback) !== 'function') return;
 
     // If we're already initialized, do it right away. Otherwise, add it
     // to the queue for when we do get initialized.
@@ -376,5 +378,6 @@ Analytics.prototype.ready = function (callback) {
 };
 
 
+// Alias `trackClick` and `trackSubmit` for backwards compatibility.
 Analytics.prototype.trackClick = Analytics.prototype.trackLink;
 Analytics.prototype.trackSubmit = Analytics.prototype.trackForm;

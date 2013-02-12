@@ -3,7 +3,9 @@
 // * [Documentation](https://bitdeli.com/docs)
 // * [JavaScript API Reference](https://bitdeli.com/docs/javascript-api.html)
 
-var utils = require('../../utils');
+var type   = require('type')
+  , extend = require('extend')
+  , utils  = require('../../utils');
 
 
 module.exports = Bitdeli;
@@ -27,13 +29,13 @@ function Bitdeli () {
 //   (major backwards incompatible updates will use another URL)
 Bitdeli.prototype.initialize = function (settings) {
 
-  if (!utils.isObject(settings) ||
-      !utils.isString(settings.inputId) ||
-      !utils.isString(settings.authToken)) {
+  if (type(settings) !== 'object' ||
+      type(settings.inputId) !== 'string' ||
+      type(settings.authToken) !== 'string') {
     throw new Error("Settings must be an object with properties 'inputId' and 'authToken'.");
   }
 
-  utils.extend(this.settings, settings);
+  extend(this.settings, settings);
 
   var _bdq = window._bdq = window._bdq || [];
   _bdq.push(["setAccount", this.settings.inputId, this.settings.authToken]);
@@ -41,7 +43,7 @@ Bitdeli.prototype.initialize = function (settings) {
 
   (function() {
     var bd = document.createElement("script"); bd.type = "text/javascript"; bd.async = true;
-    bd.src = ("https:" == document.location.protocol ? "https://" : "http://") + "d2flrkr957qc5j.cloudfront.net/bitdeli.min.js";
+    bd.src = ("https:" === document.location.protocol ? "https://" : "http://") + "d2flrkr957qc5j.cloudfront.net/bitdeli.min.js";
     var s = document.getElementsByTagName("script")[0]; s.parentNode.insertBefore(bd, s);
   })();
 };

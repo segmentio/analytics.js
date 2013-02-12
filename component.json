@@ -1,5 +1,5 @@
 {
-  "name": "analytics.js",
+  "name": "analytics",
   "repo": "segmentio/analytics.js",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "version": "0.7.0",

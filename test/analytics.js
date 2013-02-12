@@ -1,4 +1,5 @@
-/*global sinon, suite, beforeEach, test, expect, analytics */
+var analytics = require('analytics');
+
 (function () {
 
     var provider = {

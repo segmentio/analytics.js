@@ -29,9 +29,9 @@
         expect(analytics.providers[0].settings.siteId).to.equal('x');
 
         // test actual loading
-        expect(window._cio.image).to.be(undefined);
+        expect(window._cio.pageHasLoaded).to.be(undefined);
         setTimeout(function () {
-            expect(window._cio.image).not.to.be(undefined);
+            expect(window._cio.pageHasLoaded).not.to.be(undefined);
             done();
         }, 1900);
     });

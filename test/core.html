@@ -16,7 +16,10 @@
         window.mocha.setup({ ui : 'qunit', ignoreLeaks : true });
     </script>
 
-    <script src="../src/analytics.js"></script>
+    <script src="../build/build.js"></script>
+    <script>
+      require('analyticsjs');
+    </script>
 
     <script src="../src/analytics-test.js"></script>
 </head>
@@ -24,6 +27,7 @@
     <h1>Core Test</h1>
     <div id="mocha"></div>
     <script>
+
       $(function () {
         if (window.onerror) window.onerror = console.log;
 

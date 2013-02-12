@@ -2,36 +2,36 @@
 // ---------
 // [Documentation](http://direct.comscore.com/clients/help/FAQ.aspx#faqTagging)
 
-analytics.addProvider('comScore', {
-
-    settings : {
-        c1 : '2',
-        c2 : null
-    },
+var utils = require('../../utils');
 
 
-    // Initialize
-    // ----------
+module.exports = ComScore;
 
-    initialize : function (settings) {
-        settings = analytics.utils.resolveSettings(settings, 'c2');
-        analytics.utils.extend(this.settings, settings);
+function ComScore () {
+  this.settings = {
+    c1 : '2',
+    c2 : null
+  };
+}
 
-        var _comscore = window._comscore = window._comscore || [];
-        _comscore.push(this.settings);
 
-        (function() {
-            var s = document.createElement('script');
-            var el = document.getElementsByTagName('script')[0];
-            s.async = true;
-            s.src = (document.location.protocol == 'https:' ? 'https://sb' : 'http://b') + '.scorecardresearch.com/beacon.js';
-            el.parentNode.insertBefore(s, el);
-        })();
+ComScore.prototype.initialize = function (settings) {
+  settings = utils.resolveSettings(settings, 'c2');
+  utils.extend(this.settings, settings);
 
-        // NOTE: the <noscript><img> bit in the docs is ignored
-        // because we have to run JS in order to do any of this!
-    }
+  var _comscore = window._comscore = window._comscore || [];
+  _comscore.push(this.settings);
 
-});
+  (function() {
+    var s = document.createElement('script');
+    var el = document.getElementsByTagName('script')[0];
+    s.async = true;
+    s.src = (document.location.protocol === 'https:' ? 'https://sb' : 'http://b') + '.scorecardresearch.com/beacon.js';
+    el.parentNode.insertBefore(s, el);
+  })();
+
+  // NOTE: the <noscript><img> bit in the docs is ignored
+  // because we have to run JS in order to do any of this!
+};
 
 

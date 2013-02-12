@@ -16,7 +16,7 @@
         window.mocha.setup({ ui : 'qunit', ignoreLeaks : true });
     </script>
 
-    <script src="../src/analytics.js"></script>
+    <!--<script src="../src/analytics.js"></script>
     <script src="../src/providers/bitdeli/bitdeli.js"></script>
     <script src="../src/providers/chartbeat/chartbeat.js"></script>
     <script src="../src/providers/clicky/clicky.js"></script>
@@ -43,7 +43,11 @@
     <script src="../src/providers/usercycle/usercycle.js"></script>
     <script src="../src/providers/uservoice/uservoice.js"></script>
     <script src="../src/providers/vero/vero.js"></script>
-    <script src="../src/providers/woopra/woopra.js"></script>
+    <script src="../src/providers/woopra/woopra.js"></script>-->
+    <script src="../build/build.js"></script>
+    <script>
+      require('analyticsjs');
+    </script>
 
     <script src="../src/providers/bitdeli/bitdeli-test.js"></script>
     <script src="../src/providers/chartbeat/chartbeat-test.js"></script>

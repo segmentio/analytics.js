@@ -2,43 +2,38 @@
 // -------
 // [Documentation](http://get.gaug.es/documentation/tracking/).
 
-analytics.addProvider('Gauges', {
-
-    settings : {
-        siteId : null
-    },
+var utils = require('../../utils');
 
 
-    // Initialize
-    // ----------
+module.exports = Gauges;
 
-    initialize : function (settings) {
-        settings = analytics.utils.resolveSettings(settings, 'siteId');
-        analytics.utils.extend(this.settings, settings);
-
-        var _gauges = window._gauges = window._gauges || [];
-
-        (function() {
-            var t   = document.createElement('script');
-            t.type  = 'text/javascript';
-            t.async = true;
-            t.id    = 'gauges-tracker';
-            t.setAttribute('data-site-id', settings.siteId);
-            var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
-            t.src = protocol + '//secure.gaug.es/track.js';
-            var s = document.getElementsByTagName('script')[0];
-            s.parentNode.insertBefore(t, s);
-        })();
-    },
+function Gauges () {
+  this.settings = {
+    siteId : null
+  };
+}
 
 
-    // Pageview
-    // --------
+Gauges.prototype.initialize = function (settings) {
+  settings = utils.resolveSettings(settings, 'siteId');
+  utils.extend(this.settings, settings);
 
-    pageview : function (url) {
-        window._gauges.push(['track']);
-    }
+  var _gauges = window._gauges = window._gauges || [];
 
-});
+  (function() {
+    var t   = document.createElement('script');
+    t.type  = 'text/javascript';
+    t.async = true;
+    t.id    = 'gauges-tracker';
+    t.setAttribute('data-site-id', settings.siteId);
+    var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
+    t.src = protocol + '//secure.gaug.es/track.js';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(t, s);
+  })();
+};
 
 
+Gauges.prototype.pageview = function (url) {
+  window._gauges.push(['track']);
+};

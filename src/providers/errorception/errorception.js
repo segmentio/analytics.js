@@ -2,45 +2,43 @@
 // ------------
 // [Documentation](http://errorception.com/).
 
-var extend = require('extend')
-  , load   = require('load-script')
-  , utils  = require('../../utils');
+var Provider = require('../../provider')
+  , extend   = require('extend')
+  , load     = require('load-script');
 
 
-module.exports = Errorception;
+module.exports = Provider.extend({
 
-function Errorception () {
-  this.settings = {
+  key : 'projectId',
+
+  options : {
     projectId : null,
 
     // Whether to store metadata about the user on `identify` calls, using
     // the [Errorception `meta` API](http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html).
     meta : true
-  };
-}
+  },
 
 
-Errorception.prototype.initialize = function (settings) {
-  settings = utils.resolveSettings(settings, 'projectId');
-  extend(this.settings, settings);
+  initialize : function (options) {
+    window._errs = window._errs || [options.projectId];
+    load('//d15qhc0lu1ghnk.cloudfront.net/beacon.js');
 
-  window._errs = window._errs || [settings.projectId];
-
-  // Attach the window `onerror` event.
-  window.onerror = function () {
-    window._errs.push(arguments);
-  };
-
-  load('//d15qhc0lu1ghnk.cloudfront.net/beacon.js');
-};
+    // Attach the window `onerror` event.
+    window.onerror = function () {
+      window._errs.push(arguments);
+    };
+  },
 
 
-Errorception.prototype.identify = function (userId, traits) {
-  if (!traits) return;
+  identify : function (userId, traits) {
+    if (!this.options.meta || !traits) return;
 
-  // If the custom metadata object hasn't ever been made, make it.
-  window._errs.meta || (window._errs.meta = {});
+    // If the custom metadata object hasn't ever been made, make it.
+    window._errs.meta || (window._errs.meta = {});
 
-  // Add all of the traits as metadata.
-  if (this.settings.meta) analytics.utils.extend(window._errs.meta, traits);
-};
+    // Add all of the traits as metadata.
+    extend(window._errs.meta, traits);
+  }
+
+});

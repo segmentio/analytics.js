@@ -2,23 +2,22 @@
 // -------
 // [Documentation](www.hittail.com).
 
-var extend = require('extend')
-  , load   = require('load-script')
-  , utils  = require('../../utils');
+var Provider = require('../../provider')
+  , extend = require('extend')
+  , load   = require('load-script');
 
 
-module.exports = HitTail;
+module.exports = Provider.extend({
 
-function HitTail () {
-  this.settings = {
+  key : 'siteId',
+
+  options : {
     siteId : null
-  };
-}
+  },
 
 
-HitTail.prototype.initialize = function (settings) {
-  settings = utils.resolveSettings(settings, 'siteId');
-  extend(this.settings, settings);
+  initialize : function (options) {
+    load('//' + options.siteId + '.hittail.com/mlt.js');
+  }
 
-  load('//' + this.settings.siteId + '.hittail.com/mlt.js');
-};
+});

@@ -2,33 +2,31 @@
 // -------
 // [Documentation](http://get.gaug.es/documentation/tracking/).
 
-var extend = require('extend')
-  , load   = require('load-script')
-  , utils  = require('../../utils');
+var Provider = require('../../provider')
+  , extend   = require('extend')
+  , load     = require('load-script');
 
 
-module.exports = Gauges;
+module.exports = Provider.extend({
 
-function Gauges () {
-  this.settings = {
+  key : 'siteId',
+
+  options : {
     siteId : null
-  };
-}
+  },
 
-
-Gauges.prototype.initialize = function (settings) {
-  settings = utils.resolveSettings(settings, 'siteId');
-  extend(this.settings, settings);
-
-  window._gauges = window._gauges || [];
 
   // Load the library and add the `id` and `data-site-id` Gauges needs.
-  var script = load('//secure.gaug.es/track.js');
-  script.id = 'gauges-tracker';
-  script.setAttribute('data-site-id', this.settings.siteId);
-};
+  initialize : function (options) {
+    window._gauges = window._gauges || [];
+    var script = load('//secure.gaug.es/track.js');
+    script.id = 'gauges-tracker';
+    script.setAttribute('data-site-id', options.siteId);
+  },
 
 
-Gauges.prototype.pageview = function (url) {
-  window._gauges.push(['track']);
-};
+  pageview : function (url) {
+    window._gauges.push(['track']);
+  }
+
+});

@@ -2,76 +2,69 @@
 // -----------
 // [Documentation](http://customer.io/docs/api/javascript.html).
 
-var extend  = require('extend')
-  , isEmail = require('is-email')
-  , utils   = require('../../utils');
+var Provider = require('../../Provider')
+  , extend   = require('extend')
+  , isEmail  = require('is-email')
+  , load     = require('load-script');
 
 
-module.exports = CustomerIO;
+module.exports = Provider.extend({
 
-function CustomerIO () {
-  this.settings = {
+  key : 'siteId',
+
+  options : {
     siteId : null
-  };
-}
+  },
 
 
-// Changes to the Customer.io snippet:
-//
-// * Add `siteId`.
-CustomerIO.prototype.initialize = function (settings) {
-  settings = utils.resolveSettings(settings, 'siteId');
-  extend(this.settings, settings);
-
-  var self = this;
-
-  var _cio = window._cio = window._cio || [];
-  (function() {
-    var a,b,c;
-    a = function (f) {
-      return function () {
-        _cio.push([f].concat(Array.prototype.slice.call(arguments,0)));
+  initialize : function (options) {
+    var _cio = window._cio = window._cio || [];
+    (function() {
+      var a,b,c;
+      a = function (f) {
+        return function () {
+          _cio.push([f].concat(Array.prototype.slice.call(arguments,0)));
+        };
       };
-    };
-    b = ['identify', 'track'];
-    for (c = 0; c < b.length; c++) {
-      _cio[b[c]] = a(b[c]);
+      b = ['identify', 'track'];
+      for (c = 0; c < b.length; c++) {
+        _cio[b[c]] = a(b[c]);
+      }
+    })();
+
+    // Load the Customer.io script and add the required `id` and `data-site-id`.
+    var script = load('https://assets.customer.io/assets/track.js');
+    script.id = 'cio-tracker';
+    script.setAttribute('data-site-id', options.siteId);
+  },
+
+
+  identify : function (userId, traits) {
+    // Don't do anything if we just have traits, because Customer.io
+    // requires a `userId`.
+    if (!userId) return;
+
+    traits || (traits = {});
+
+    // Customer.io takes the `userId` as part of the traits object.
+    traits.id = userId;
+
+    // If there wasn't already an email and the userId is one, use it.
+    if (!traits.email && isEmail(userId)) traits.email = userId;
+
+    // Swap the `created` trait to the `created_at` that Customer.io needs
+    // and convert it from milliseconds to seconds.
+    if (traits.created) {
+      traits.created_at = Math.floor(traits.created/1000);
+      delete traits.created;
     }
-    var t = document.createElement('script'),
-        s = document.getElementsByTagName('script')[0];
-    t.async = true;
-    t.id    = 'cio-tracker';
-    t.setAttribute('data-site-id', self.settings.siteId);
-    t.src = 'https://assets.customer.io/assets/track.js';
-    s.parentNode.insertBefore(t, s);
-  })();
-};
+
+    window._cio.identify(traits);
+  },
 
 
-CustomerIO.prototype.identify = function (userId, traits) {
-  // Don't do anything if we just have traits, because Customer.io
-  // requires a `userId`.
-  if (!userId) return;
-
-  traits || (traits = {});
-
-  // Customer.io takes the `userId` as part of the traits object.
-  traits.id = userId;
-
-  // If there wasn't already an email and the userId is one, use it.
-  if (!traits.email && isEmail(userId)) traits.email = userId;
-
-  // Swap the `created` trait to the `created_at` that Customer.io needs
-  // (in seconds).
-  if (traits.created) {
-    traits.created_at = utils.getSeconds(traits.created);
-    delete traits.created;
+  track : function (event, properties) {
+    window._cio.track(event, properties);
   }
 
-  window._cio.identify(traits);
-};
-
-
-CustomerIO.prototype.track = function (event, properties) {
-  window._cio.track(event, properties);
-};
+});

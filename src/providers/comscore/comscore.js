@@ -2,30 +2,28 @@
 // ---------
 // [Documentation](http://direct.comscore.com/clients/help/FAQ.aspx#faqTagging)
 
-var extend = require('extend')
-  , load   = require('load-script')
-  , utils  = require('../../utils');
+var Provider = require('../../provider')
+  , extend   = require('extend')
+  , load     = require('load-script');
 
 
-module.exports = ComScore;
+module.exports = Provider.extend({
 
-function ComScore () {
-  this.settings = {
+  key : 'c2',
+
+  options : {
     c1 : '2',
     c2 : null
-  };
-}
+  },
 
 
-ComScore.prototype.initialize = function (settings) {
-  settings = utils.resolveSettings(settings, 'c2');
-  extend(this.settings, settings);
+  initialize : function (options) {
+    window._comscore = window._comscore || [];
+    window._comscore.push(options);
+    load({
+      http  : 'http://b.scorecardresearch.com/beacon.js',
+      https : 'https://sb.scorecardresearch.com/beacon.js'
+    });
+  }
 
-  window._comscore = window._comscore || [];
-  window._comscore.push(this.settings);
-
-  load({
-    http  : 'http://b.scorecardresearch.com/beacon.js',
-    https : 'https://sb.scorecardresearch.com/beacon.js'
-  });
-};
+});

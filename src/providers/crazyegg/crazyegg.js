@@ -2,29 +2,23 @@
 // --------
 // [Documentation](www.crazyegg.com).
 
-var extend = require('extend')
-  , load   = require('load-script')
-  , utils  = require('../../utils');
+var Provider = require('../../provider')
+  , extend = require('extend')
+  , load   = require('load-script');
 
 
-module.exports = CrazyEgg;
+module.exports = Provider.extend({
 
-function CrazyEgg () {
-  this.settings = {
+  key : 'accountNumber',
+
+  options : {
     accountNumber : null
-  };
-}
+  },
 
 
-// Changes to the CrazyEgg snippet:
-//
-// * Concatenate `accountNumber` into the URL.
-CrazyEgg.prototype.initialize = function (settings) {
-  settings = utils.resolveSettings(settings, 'accountNumber');
-  extend(this.settings, settings);
+  initialize : function (options) {
+    var accountPath = options.accountNumber.slice(0,4) + '/' + options.accountNumber.slice(4);
+    load('//dnn506yrbagrg.cloudfront.net/pages/scripts/'+accountPath+'.js?'+Math.floor(new Date().getTime()/3600000));
+  }
 
-  var accountNumber = this.settings.accountNumber;
-  var accountPath = accountNumber.slice(0, 4) + '/' + accountNumber.slice(4);
-
-  load('//dnn506yrbagrg.cloudfront.net/pages/scripts/'+accountPath+'.js?'+Math.floor(new Date().getTime()/3600000));
-};
+});

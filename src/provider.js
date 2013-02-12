@@ -15,10 +15,8 @@ function Provider (options) {
   } else {
     throw new Error('Could not resolve options.');
   }
-
   // Extend the options passed in with the provider's defaults.
   extend(this.options, options);
-
   // Call the provider's initialize object.
   this.initialize.call(this, this.options);
 }
@@ -37,7 +35,7 @@ Provider.extend = function (name, provider) {
 };
 
 
-// Add some defaults to the `Provider` prototype.
+// Add to the default Provider prototype.
 extend(Provider.prototype, {
 
   // Override this with any default options.

@@ -13,39 +13,12 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
-
-  this.initializableProviders = {};
-
-  // Cache the `userId` when a user is identified.
-  this.userId = null;
-
-  // Store the date when the page loaded, for services that depend on it.
-  this.date = new Date();
-
-  // Store window.onload state so that analytics that rely on it can be loaded
-  // even after onload fires.
-  this.loaded = false;
-
-  // Whether analytics.js has been initialized with providers.
-  this.initialized = false;
-
-  // A queue for storing `ready` callback functions to get run when
-  // analytics have been initialized.
-  this.readyCallbacks = [];
-
-  // The amount of milliseconds to wait for requests to providers to clear
-  // before navigating away from the current page.
-  this.timeout = 300,
-
-  this.providers = [];
-
   var self = this;
-
-  // Loop through and add each of our `Providers`.
+  // Loop through and add each of our `Providers`, so they can be initialized
+  // later by the user.
   each(Providers, function (key, Provider) {
     self.addProvider(key, Provider);
   });
-
   // Wrap any existing `onload` function with our own that will cache the
   // loaded state of the page.
   var oldonload = window.onload;
@@ -56,8 +29,34 @@ function Analytics (Providers) {
 }
 
 
-// Add methods to the `Analytics` prototype.
+// Add to the `Analytics` prototype.
 extend(Analytics.prototype, {
+
+  // Providers that can be initialized. Add using `this.addProvider`.
+  initializableProviders : {},
+
+  // Cache the `userId` when a user is identified.
+  userId : null,
+
+  // Store the date when the page loaded, for services that depend on it.
+  date : new Date(),
+
+  // Store window.onload state so that analytics that rely on it can be loaded
+  // even after onload fires.
+  loaded : false,
+
+  // Whether analytics.js has been initialized with providers.
+  initialized : false,
+
+  // A queue for storing `ready` callback functions to get run when
+  // analytics have been initialized.
+  readyCallbacks : [],
+
+  // The amount of milliseconds to wait for requests to providers to clear
+  // before navigating away from the current page.
+  timeout : 300,
+
+  providers : [],
 
   // Adds a provider to the list of available providers that can be
   // initialized.

@@ -19,14 +19,14 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds GoSquared js on initialize', function (done) {
+    test('stores options and adds GoSquared js on initialize', function (done) {
         expect(window.GoSquared).to.be(undefined);
 
         analytics.initialize({
             'GoSquared' : 'x'
         });
         expect(window.GoSquared).not.to.be(undefined);
-        expect(analytics.providers[0].settings.siteToken).to.equal('x');
+        expect(analytics.providers[0].options.siteToken).to.equal('x');
 
         window.GoSquared.load = function(tracker) {
             expect(window.GoSquared.DefaultTracker).to.equal(tracker);
@@ -82,7 +82,7 @@
         var stub = sinon.stub(window.GoSquared.q, 'push');
 
         analytics.pageview();
-        expect(stub.calledWith(['TrackView'])).to.be(true);
+        expect(stub.calledWith(['TrackView', undefined])).to.be(true);
 
         stub.reset();
 

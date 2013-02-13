@@ -19,14 +19,14 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds klaviyo javascript on initialize', function () {
+    test('stores options and adds klaviyo javascript on initialize', function () {
         expect(window._learnq).to.be(undefined);
 
         analytics.initialize({
             'Klaviyo' : 'x'
         });
         expect(window._learnq).not.to.be(undefined);
-        expect(analytics.providers[0].settings.apiKey).to.equal('x');
+        expect(analytics.providers[0].options.apiKey).to.equal('x');
     });
 
 

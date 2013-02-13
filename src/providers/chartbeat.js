@@ -4,7 +4,7 @@
 // [documentation](http://chartbeat.com/docs/configuration_variables/),
 // [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
 
-var Provider = require('../../provider')
+var Provider = require('../provider')
   , extend   = require('extend')
   , load     = require('load-script');
 

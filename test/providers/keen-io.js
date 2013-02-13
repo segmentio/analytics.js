@@ -20,7 +20,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds keenio.js on initialize', function(done) {
+    test('stores options and adds keenio.js on initialize', function(done) {
         expect(window.Keen).not.to.exist;
 
         analytics.initialize({

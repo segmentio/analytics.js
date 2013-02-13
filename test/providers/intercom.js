@@ -6,11 +6,11 @@
     // Initialize
     // ----------
 
-    test('stores settings on initialize', function () {
+    test('stores options on initialize', function () {
         analytics.initialize({
             'Intercom' : 'x'
         });
-        expect(analytics.providers[0].settings.appId).to.equal('x');
+        expect(analytics.providers[0].options.appId).to.equal('x');
     });
 
 

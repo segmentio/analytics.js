@@ -1,23 +1,23 @@
 // SnapEngage
 // ----------
 // [Documentation](http://help.snapengage.com/installation-guide-getting-started-in-a-snap/).
-var extend = require('extend')
-  , load   = require('load-script')
-  , utils  = require('../../utils');
+
+var Provider = require('../provider')
+  , extend   = require('extend')
+  , load     = require('load-script');
 
 
-module.exports = SnapEngage;
+module.exports = Provider.extend({
 
-function SnapEngage () {
-  this.settings = {
+  key : 'apiKey',
+
+  options : {
     apiKey : null
-  };
-}
+  },
 
 
-SnapEngage.prototype.initialize = function (settings) {
-  settings = utils.resolveSettings(settings, 'apiKey');
-  extend(this.settings, settings);
+  initialize : function (options) {
+    load('//commondatastorage.googleapis.com/code.snapengage.com/js/' + options.apiKey + '.js');
+  }
 
-  load('//commondatastorage.googleapis.com/code.snapengage.com/js/' + this.settings.apiKey + '.js');
-};
+});

@@ -6,7 +6,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds ga.js on initialize', function (done) {
+    test('stores options and adds ga.js on initialize', function (done) {
         this.timeout(4000);
 
         expect(window._gaq).to.be(undefined);
@@ -14,7 +14,7 @@
         analytics.initialize({ 'Google Analytics' : 'x' });
         expect(window._gaq).not.to.be(undefined);
         expect(window._gaq.push).to.eql(Array.prototype.push);
-        expect(analytics.providers[0].settings.trackingId).to.equal('x');
+        expect(analytics.providers[0].options.trackingId).to.equal('x');
 
         setTimeout(function () {
             expect(window._gaq.push).not.to.eql(Array.prototype.push);

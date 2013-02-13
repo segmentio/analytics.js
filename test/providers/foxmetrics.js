@@ -26,7 +26,7 @@
         });
 
         expect(window._fxm).not.to.be(undefined);
-        expect(analytics.providers[0].settings.appId).to.equal('4ec10e0c1542321b8c4caae7');
+        expect(analytics.providers[0].options.appId).to.equal('4ec10e0c1542321b8c4caae7');
     });
 
     // Identify
@@ -39,11 +39,11 @@
 
         spy.reset();
         analytics.identify(userId);
-        expect(spy.calledWith(['_fxm.visitor.Profile', userId, null, null, null, null, null, null, null])).to.be(true);
+        expect(spy.calledWith(['_fxm.visitor.profile', userId, null, null, null, null, null, null, null])).to.be(true);
 
         spy.reset();
         analytics.identify(userId, traits);
-        expect(spy.calledWith(['_fxm.visitor.Profile', userId, 'John', 'Fox', traits.email, null, null, null, traits])).to.be(true);
+        expect(spy.calledWith(['_fxm.visitor.profile', userId, 'John', 'Fox', traits.email, null, null, null, traits])).to.be(true);
 
         spy.restore();
     });

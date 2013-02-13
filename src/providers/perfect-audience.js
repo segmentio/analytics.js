@@ -2,35 +2,31 @@
 // ----------------
 // [Documentation](https://www.perfectaudience.com/docs#javascript_api_autoopen)
 
-var extend = require('extend')
-  , utils  = require('../../utils');
+var Provider = require('../provider')
+  , extend   = require('extend')
+  , load     = require('load-script');
 
 
-module.exports = PerfectAudience;
+module.exports = Provider.extend({
 
-function PerfectAudience () {
-  this.settings = {
+  key : 'siteId',
+
+  options : {
     siteId : null
-  };
-}
+  },
 
 
-PerfectAudience.prototype.initialize = function (settings) {
-  settings = utils.resolveSettings(settings, 'siteId');
-  extend(this.settings, settings);
-
-  (function() {
+  initialize : function (options) {
     window._pa = window._pa || {};
-    var pa = document.createElement('script'); pa.type = 'text/javascript'; pa.async = true;
-    pa.src = ('https:' === document.location.protocol ? 'https:' : 'http:') + "//tag.perfectaudience.com/serve/" + settings.siteId + ".js";
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(pa, s);
-  })();
-};
+    load('//tag.perfectaudience.com/serve/' + options.siteId + '.js');
+  },
 
 
-PerfectAudience.prototype.track = function (event, properties) {
-  // In case the Perfect Audience library hasn't loaded yet.
-  if (!window._pa.track) return;
+  track : function (event, properties) {
+    // In case the Perfect Audience library hasn't loaded yet.
+    if (!window._pa.track) return;
 
-  window._pa.track(event, properties);
-};
+    window._pa.track(event, properties);
+  }
+
+});

@@ -2,20 +2,22 @@ var analytics = require('analytics');
 
 (function () {
 
-    var provider = {
-        initialize : function (settings) {},
+    var Provider = analytics.Provider.extend({
+        key        : 'key',
+        options    : {},
+        initialize : function (options) {},
         identify   : function (userId, traits) {},
         track      : function (event, properties) {},
         pageview   : function () {},
         alias      : function (newId, originalId) {}
-    };
-    analytics.addProvider('test', provider);
+    });
+    analytics.addProvider('Test', Provider);
 
-    var settings = { 'test' : 'x' };
+    var options = { 'Test' : 'x' };
 
     // Initialize the provider here so that everything works even when looking
     // at a single test case.
-    analytics.initialize(settings);
+    analytics.initialize(options);
 
 
     // Initialize
@@ -24,32 +26,27 @@ var analytics = require('analytics');
     suite('initialize');
 
     test('stores enabled providers', function () {
-        // Reset list of enabled providers.
+        // Reset the list of enabled providers first.
         analytics.providers = [];
-
-        analytics.initialize(settings);
-
-        expect(analytics.providers[0]).to.equal(provider);
+        analytics.initialize(options);
+        expect(analytics.providers[0] instanceof Provider).to.be(true);
     });
 
-    test('sends settings to enabled providers initialize', function () {
-        var spy = sinon.spy(provider, 'initialize');
-
-        analytics.initialize(settings);
-
-        expect(spy.calledWith('x')).to.be(true);
-
+    test('sends options to enabled providers initialize', function () {
+        var spy = sinon.spy(Provider.prototype, 'initialize');
+        analytics.initialize(options);
+        expect(spy.calledWith(sinon.match({ key : 'x' }))).to.be(true);
         spy.restore();
     });
 
     test('resets enabled providers and userId', function () {
-        analytics.initialize(settings);
+        analytics.initialize(options);
         analytics.identify('user');
 
         expect(analytics.providers.length).to.equal(1);
         expect(analytics.userId).to.equal('user');
 
-        analytics.initialize(settings);
+        analytics.initialize(options);
 
         expect(analytics.providers.length).to.equal(1);
         expect(analytics.userId).to.be(null);
@@ -73,7 +70,7 @@ var analytics = require('analytics');
         expect(spy1.called).to.be(false);
         expect(spy2.called).to.be(false);
 
-        analytics.initialize(settings);
+        analytics.initialize(options);
         expect(spy1.called).to.be(true);
         expect(spy2.called).to.be(true);
     });
@@ -98,7 +95,7 @@ var analytics = require('analytics');
     suite('identify');
 
     test('is called on providers', function () {
-        var spy = sinon.spy(provider, 'identify');
+        var spy = sinon.spy(Provider.prototype, 'identify');
 
         analytics.identify();
 
@@ -108,7 +105,7 @@ var analytics = require('analytics');
     });
 
     test('sends userId along', function () {
-        var spy = sinon.spy(provider, 'identify');
+        var spy = sinon.spy(Provider.prototype, 'identify');
 
         analytics.identify('id');
 
@@ -118,7 +115,7 @@ var analytics = require('analytics');
     });
 
     test('sends a clone of traits along', function  () {
-        var spy    = sinon.spy(provider, 'identify');
+        var spy    = sinon.spy(Provider.prototype, 'identify');
         var traits = {
             age  : 23,
             name : 'Achilles'
@@ -182,7 +179,7 @@ var analytics = require('analytics');
     suite('track');
 
     test('is called on providers', function () {
-        var spy = sinon.spy(provider, 'track');
+        var spy = sinon.spy(Provider.prototype, 'track');
 
         analytics.track();
 
@@ -192,7 +189,7 @@ var analytics = require('analytics');
     });
 
     test('sends event name along', function () {
-        var spy = sinon.spy(provider, 'track');
+        var spy = sinon.spy(Provider.prototype, 'track');
 
         analytics.track('party');
 
@@ -202,7 +199,7 @@ var analytics = require('analytics');
     });
 
     test('sends a clone of properties along', function  () {
-        var spy        = sinon.spy(provider, 'track');
+        var spy        = sinon.spy(Provider.prototype, 'track');
         var properties = {
             level  : 'hard',
             volume : 11
@@ -236,7 +233,7 @@ var analytics = require('analytics');
     suite('trackLink');
 
     test('triggers a track on a link click', function () {
-        var spy  = sinon.spy(provider, 'track');
+        var spy  = sinon.spy(Provider.prototype, 'track');
         var link = $('<a>')[0];
 
         analytics.trackLink(link, 'party');
@@ -248,7 +245,7 @@ var analytics = require('analytics');
     });
 
     test('triggers a track on a $link click', function () {
-        var spy   = sinon.spy(provider, 'track');
+        var spy   = sinon.spy(Provider.prototype, 'track');
         var $link = $('<a>');
 
         analytics.trackLink($link, 'party');
@@ -261,7 +258,7 @@ var analytics = require('analytics');
     });
 
     test('allows for properties to be a function', function () {
-        var spy  = sinon.spy(provider, 'track');
+        var spy  = sinon.spy(Provider.prototype, 'track');
         var link = $('<a>')[0];
 
         analytics.trackLink(link, 'party', function () {
@@ -287,7 +284,7 @@ var analytics = require('analytics');
     });
 
     test('triggers a track and loads an href on a link click with an href', function (done) {
-        var spy  = sinon.spy(provider, 'track');
+        var spy  = sinon.spy(Provider.prototype, 'track');
         var link = $('<a href="#test">')[0];
 
         // Make sure hash is reset.
@@ -313,7 +310,7 @@ var analytics = require('analytics');
     });
 
     test('triggers a track and loads the correct href on a link click with multiple links', function (done) {
-        var spy  = sinon.spy(provider, 'track');
+        var spy  = sinon.spy(Provider.prototype, 'track');
         var link1 = $('<a href="#test1">')[0];
         var link2 = $('<a href="#test2">')[0];
         var link3 = $('<a href="#test3">')[0];
@@ -341,7 +338,7 @@ var analytics = require('analytics');
     });
 
     test('triggers a track but doesnt load an href on an href with blank target', function () {
-        var spy  = sinon.spy(provider, 'track');
+        var spy  = sinon.spy(Provider.prototype, 'track');
         var link = $('<a href="http://google.com" target="_blank">')[0];
 
         // Make sure hash is reset.
@@ -358,7 +355,7 @@ var analytics = require('analytics');
     });
 
     test('triggers a track but doesnt load an href on a meta link click with an href', function () {
-        var spy  = sinon.spy(provider, 'track');
+        var spy  = sinon.spy(Provider.prototype, 'track');
         var link = $('<a href="http://google.com">')[0];
 
         // Make sure hash is reset.
@@ -385,7 +382,7 @@ var analytics = require('analytics');
     suite('trackForm');
 
     test('triggers a track on a form submit', function () {
-        var spy  = sinon.spy(provider, 'track');
+        var spy  = sinon.spy(Provider.prototype, 'track');
         var form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
 
         analytics.trackForm(form, 'party');
@@ -398,7 +395,7 @@ var analytics = require('analytics');
     });
 
     test('triggers a track on a form submit', function () {
-        var spy   = sinon.spy(provider, 'track');
+        var spy   = sinon.spy(Provider.prototype, 'track');
         var $form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
 
         analytics.trackForm($form, 'party');
@@ -411,7 +408,7 @@ var analytics = require('analytics');
     });
 
     test('allows for properties to be a function', function () {
-        var spy  = sinon.spy(provider, 'track');
+        var spy  = sinon.spy(Provider.prototype, 'track');
         var form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>')[0];
 
         analytics.trackForm(form, 'party', function () {
@@ -447,7 +444,7 @@ var analytics = require('analytics');
     suite('pageview');
 
     test('gets called on providers', function () {
-        var spy = sinon.spy(provider, 'pageview');
+        var spy = sinon.spy(Provider.prototype, 'pageview');
 
         analytics.pageview();
 
@@ -463,7 +460,7 @@ var analytics = require('analytics');
     suite('alias');
 
     test('gets called on providers', function () {
-        var spy = sinon.spy(provider, 'alias');
+        var spy = sinon.spy(Provider.prototype, 'alias');
 
         analytics.alias();
 
@@ -473,199 +470,12 @@ var analytics = require('analytics');
     });
 
 
-    // Utils
-    // -----
-
-    suite('utils');
-
-    test('resolveSettings converts a settings string into an api key', function() {
-        expect(analytics.utils.resolveSettings('x', 'apiKey')).to.eql({ apiKey : 'x' });
-        expect(analytics.utils.resolveSettings({ apiKey : 'x' }, 'apiKey')).to.eql({ apiKey : 'x' });
-    });
-
-    test('clone returns a copy of an object', function () {
-        var object = { thing: 1 };
-
-        expect(analytics.utils.clone(object)).not.to.equal(object);
-        expect(analytics.utils.clone(object)).to.eql(object);
-    });
-
-    test('extend doesnt break on a non object', function () {
-        expect(function () {
-            analytics.utils.clone(undefined);
-        }).to.not.throwException();
-    });
-
-    test('extend augments an object', function () {
-        var object = {
-            one : 1
-        };
-
-        analytics.utils.extend(object, { two: 2 });
-
-        expect(object).to.eql({
-            one : 1,
-            two : 2
-        });
-
-        analytics.utils.extend(object, { three: 3 }, { four: 4 });
-
-        expect(object).to.eql({
-            one   : 1,
-            two   : 2,
-            three : 3,
-            four  : 4
-        });
-
-        analytics.utils.extend(object, { one: 2 });
-
-        expect(object).to.eql({
-            one   : 2,
-            two   : 2,
-            three : 3,
-            four  : 4
-        });
-    });
-
-    test('extend doesnt break on a non object', function () {
-        expect(function () {
-            analytics.utils.extend(undefined, { email: '$email' });
-        }).to.not.throwException();
-
-        expect(function () {
-            analytics.utils.extend({ email: 'ian@segment.io' }, undefined);
-        }).to.not.throwException();
-    });
-
-    test('alias changes props to their aliases', function () {
-        var traits = {
-            name  : 'Medusa',
-            email : 'medusa@segment.io'
-        };
-
-        analytics.utils.alias(traits, { email: '$email' });
-
-        expect(traits).to.eql({
-            name   : 'Medusa',
-            $email : 'medusa@segment.io'
-        });
-
-        analytics.utils.alias(traits, { createdAt: 'created_at' });
-
-        expect(traits).to.eql({
-            name   : 'Medusa',
-            $email : 'medusa@segment.io'
-        });
-    });
-
-    test('alias doesnt break on a non object', function () {
-        expect(function () {
-            analytics.utils.alias(undefined, { email: '$email' });
-        }).to.not.throwException();
-
-        expect(function () {
-            analytics.utils.alias({ email: 'ian@segment.io' }, undefined);
-        }).to.not.throwException();
-    });
-
-    test('getSeconds returns the seconds of a date', function () {
-        var date = new Date(1355548865865);
-        expect(analytics.utils.getSeconds(date)).to.equal(1355548865);
-    });
-
-    test('get parameter from url', function () {
-        var urlSearchParameter = '?ajs_uid=12k31k2j31k&ajs_event=Test%20Click%20Event&other=1239xxjkjkj&';
-
-        var userId = analytics.utils.getUrlParameter(urlSearchParameter, 'ajs_uid');
-        expect(userId).to.equal('12k31k2j31k');
-
-        var event = analytics.utils.getUrlParameter(urlSearchParameter, 'ajs_event');
-        expect(event).to.equal('Test Click Event');
-
-        var nonexistent = analytics.utils.getUrlParameter(urlSearchParameter, 'variable');
-        expect(nonexistent).to.be.undefined;
-
-        var nonexistent2 = analytics.utils.getUrlParameter('', 'ajs_event');
-        expect(nonexistent2).to.be.undefined;
-
-        var hanging = analytics.utils.getUrlParameter('?ajs_uid', 'ajs_uid');
-        expect(hanging).to.be.undefined;
-    });
-
-    test('isEmail matches emails', function () {
-        var isEmail = analytics.utils.isEmail;
-        expect(isEmail('team@segment.io')).to.be(true);
-        expect(isEmail('t-eam+34@segme-ntio.com')).to.be(true);
-        expect(isEmail('team@.org')).to.be(false);
-        expect(isEmail('team+45.io')).to.be(false);
-        expect(isEmail('@segmentio.com')).to.be(false);
-    });
-
-    test('isObject matches objects', function () {
-        var isObject = analytics.utils.isObject;
-        expect(isObject({})).to.be(true);
-        expect(isObject([])).to.be(true);
-        expect(isObject(function () {})).to.be(true);
-        expect(isObject('string')).to.be(false);
-        expect(isObject(0)).to.be(false);
-    });
-
-    test('isFunction matches functions', function () {
-        var isFunction = analytics.utils.isFunction;
-        expect(isFunction(function () {})).to.be(true);
-        expect(isFunction({})).to.be(false);
-        expect(isFunction([])).to.be(false);
-        expect(isFunction('string')).to.be(false);
-        expect(isFunction(0)).to.be(false);
-    });
-
-    test('isNumber matches numbers', function () {
-        var isNumber = analytics.utils.isNumber;
-        expect(isNumber(0)).to.be(true);
-        expect(isNumber({})).to.be(false);
-        expect(isNumber([])).to.be(false);
-        expect(isNumber('string')).to.be(false);
-        expect(isNumber(function () {})).to.be(false);
-    });
-
-    test('isString matches strings', function () {
-        var isString = analytics.utils.isString;
-        expect(isString('string')).to.be(true);
-        expect(isString({})).to.be(false);
-        expect(isString([])).to.be(false);
-        expect(isString(0)).to.be(false);
-        expect(isString(function () {})).to.be(false);
-    });
-
-    test('parseUrl can parse URLs', function () {
-        var url = 'http://google.com/finance?search=hi#test';
-
-        expect(analytics.utils.parseUrl(url)).to.eql({
-            href     : url,
-            host     : 'google.com',
-            hash     : '#test',
-            hostname : 'google.com',
-            pathname : '/finance',
-            protocol : 'http:',
-            search   : '?search=hi',
-            query    : 'search=hi'
-        });
-    });
-
-    test('setting and getting a cookie works and matches', function () {
-        var name = 'AlbatrossesWith5Eyes';
-        var value = '18 <221l3k1j2!@#!@#/>';
-        var expirationDays = 4;
-
-        analytics.utils.setCookie(name, value, expirationDays);
-
-        expect(analytics.utils.getCookie(name)).to.eql(value);
-    });
-
 })();
 
 
-// Helper to trigger true DOM click events in all browser ... and IE.
+// Helper to trigger true DOM click events in all browser ... and IE. Believe it
+// or not `initMouseEvent` isn't even an IE thing:
+// https://developer.mozilla.org/en-US/docs/DOM/event.initMouseEvent
 function triggerClick (element, isMeta) {
     var e;
     if (document.createEvent) {

@@ -19,12 +19,12 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds SnapEngage on initialize', function () {
+    test('stores options and adds SnapEngage on initialize', function () {
         expect(window.SnapABug).to.be(undefined);
 
         analytics.initialize({ 'SnapEngage' : 'x' });
 
-        expect(analytics.providers[0].settings.apiKey).to.equal('x');
+        expect(analytics.providers[0].options.apiKey).to.equal('x');
     });
 
 }());

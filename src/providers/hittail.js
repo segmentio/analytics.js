@@ -2,7 +2,7 @@
 // -------
 // [Documentation](www.hittail.com).
 
-var Provider = require('../../provider')
+var Provider = require('../provider')
   , extend = require('extend')
   , load   = require('load-script');
 

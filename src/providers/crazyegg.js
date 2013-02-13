@@ -2,9 +2,9 @@
 // --------
 // [Documentation](www.crazyegg.com).
 
-var Provider = require('../../provider')
-  , extend = require('extend')
-  , load   = require('load-script');
+var Provider = require('../provider')
+  , extend   = require('extend')
+  , load     = require('load-script');
 
 
 module.exports = Provider.extend({

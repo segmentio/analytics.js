@@ -14,7 +14,7 @@
 
     // Clicky loads very slowly on travis, so we get smart and check it on an
     // interval so that we wait for the shortest time possible.
-    test('stores settings and adds clicky.js on initialize', function (done) {
+    test('stores options and adds clicky.js on initialize', function (done) {
         this.timeout(10000);
 
         expect(window.clicky).to.be(undefined);
@@ -31,7 +31,7 @@
             }
         }, 1900);
 
-        expect(analytics.providers[0].settings.siteId).to.equal('x');
+        expect(analytics.providers[0].options.siteId).to.equal('x');
     });
 
 

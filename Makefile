@@ -80,7 +80,8 @@ test-dev-providers: server
 	make kill
 
 # Opens all the tests in your browser.
-test-browser:
+test-browser: server
+	sleep 1
 	open http://localhost:8000/test/core.html
 	open http://localhost:8000/test/providers.html
 	open http://localhost:8000/test/min.html

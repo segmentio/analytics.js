@@ -2,24 +2,23 @@
 // ---------
 // [Documentation](http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb).
 
-var extend = require('extend')
-  , load   = require('load-script')
-  , utils  = require('../../utils');
+var Provider = require('../provider')
+  , extend   = require('extend')
+  , load     = require('load-script');
 
 
-module.exports = UserVoice;
+module.exports = Provider.extend({
 
-function UserVoice () {
-  this.settings = {
+  key : 'widgetId',
+
+  options : {
     widgetId : null
-  };
-}
+  },
 
 
-UserVoice.prototype.initialize = function (settings) {
-  settings = utils.resolveSettings(settings, 'widgetId');
-  extend(this.settings, settings);
+  initialize : function (options) {
+    window.uvOptions = {};
+    load('//widget.uservoice.com/' + options.widgetId + '.js');
+  }
 
-  window.uvOptions = {};
-  load('//widget.uservoice.com/' + this.settings.widgetId + '.js');
-};
+});

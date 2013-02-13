@@ -6,7 +6,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds beacon.js on initialize', function (done) {
+    test('stores options and adds beacon.js on initialize', function (done) {
         expect(window._comscore).to.be(undefined);
 
         analytics.initialize({
@@ -24,8 +24,8 @@
         var self = this;
         setTimeout(function () {
             expect(window._comscore).not.to.be(undefined);
-            expect(analytics.providers[0].settings.c1).to.equal('2');
-            expect(analytics.providers[0].settings.c2).to.equal('x');
+            expect(analytics.providers[0].options.c1).to.equal('2');
+            expect(analytics.providers[0].options.c2).to.equal('x');
             done();
         }, 1900);
     });

@@ -2,7 +2,7 @@
 // ----------------
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
 
-var Provider = require('../../provider')
+var Provider = require('../provider')
   , each     = require('each')
   , extend   = require('extend')
   , load     = require('load-script')

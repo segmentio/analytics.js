@@ -27,7 +27,7 @@
         });
         expect(window._veroq).not.to.be(undefined);
         expect(window._veroq.push).to.equal(Array.prototype.push);
-        expect(analytics.providers[0].settings.apiKey).to.equal('x');
+        expect(analytics.providers[0].options.apiKey).to.equal('x');
 
         setTimeout(function () {
           // Check that vero has indeed loaded

@@ -2,29 +2,27 @@
 // ---------
 // [Documentation](https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/)
 
-var extend = require('extend')
-  , load   = require('load-script')
-  , utils  = require('../../utils');
+var Provider = require('../provider')
+  , extend   = require('extend')
+  , load     = require('load-script');
 
 
-module.exports = Quantcast;
+module.exports = Provider.extend({
 
-function Quantcast () {
-  this.settings = {
+  key : 'pCode',
+
+  options : {
     pCode : null
-  };
-}
+  },
 
 
-Quantcast.prototype.initialize = function (settings) {
-  settings = utils.resolveSettings(settings, 'pCode');
-  extend(this.settings, settings);
+  initialize : function (options) {
+    window._qevents = window._qevents || [];
+    window._qevents.push({ qacct: options.pCode });
+    load({
+      http  : 'http://edge.quantserve.com/quant.js',
+      https : 'https://secure.quantserve.com/quant.js'
+    });
+  }
 
-  window._qevents = window._qevents || [];
-  window._qevents.push({ qacct: this.settings.pCode });
-
-  load({
-    http  : 'http://edge.quantserve.com/quant.js',
-    https : 'https://secure.quantserve.com/quant.js'
-  });
-};
+});

@@ -1,3 +1,5 @@
+var analytics = require('analytics');
+
 !(function () {
 
     suite('LiveChat');
@@ -13,13 +15,13 @@
     // Initialize
     // ----------
 
-    test('stores settings and loads the LiveChat library on initialize', function (done) {
+    test('stores options and loads the LiveChat library on initialize', function (done) {
         expect(window.__lc).to.be(undefined);
 
         analytics.initialize({'LiveChat' : '2143261'});
 
         expect(window.__lc).not.to.be(undefined);
-        expect(analytics.providers[0].settings.license).to.equal('2143261');
+        expect(analytics.providers[0].options.license).to.equal('2143261');
 
         // Test the library actually loading.
         expect(window.LC_API).to.be(undefined);

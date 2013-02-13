@@ -6,6 +6,7 @@ var each        = require('each')
   , querystring = require('querystring')
   , bind        = require('event').bind
   , providers   = require('./providers')
+  , Provider    = require('./provider')
   , utils       = require('./utils');
 
 
@@ -58,6 +59,8 @@ extend(Analytics.prototype, {
 
   providers : [],
 
+  Provider : Provider,
+
   // Adds a provider to the list of available providers that can be
   // initialized.
   addProvider : function (name, Provider) {
@@ -98,7 +101,8 @@ extend(Analytics.prototype, {
     this.initialized = true;
 
     // Identify/track any `ajs_uid` and `ajs_event` parameters in the URL.
-    var queries = querystring(url(window.location.href).query);
+    var query = url.parse(window.location.href).query;
+    var queries = querystring.parse(query);
     if (queries.ajs_uid) this.identify(queries.ajs_uid);
     if (queries.ajs_event) this.track(queries.ajs_event);
 

@@ -5,7 +5,7 @@
 // [Documentation - JS](http://foxmetrics.com/documentation/apijavascript)
 // [Support](http://support.foxmetrics.com)
 
-var Provider = require('../../provider')
+var Provider = require('../provider')
   , extend = require('extend')
   , load   = require('load-script');
 
@@ -32,7 +32,9 @@ module.exports = Provider.extend({
     if (!userId) return;
 
     // FoxMetrics needs the first and last name seperately.
-    var firstName = null, lastName = null, email = null;
+    var firstName = null
+      , lastName  = null
+      , email     = null;
     if (traits && traits.name) {
       firstName = traits.name.split(' ')[0];
       lastName = traits.name.split(' ')[1];

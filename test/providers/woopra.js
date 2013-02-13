@@ -1,3 +1,6 @@
+var analytics = require('analytics')
+  , extend    = require('segmentio-extend');
+
 !(function () {
 
     suite('Woopra');
@@ -19,8 +22,7 @@
     // Initialize
     // ----------
 
-
-    test('stores settings and loads Woopra js on initialize', function (done) {
+    test('stores options and loads Woopra js on initialize', function (done) {
         expect(window.woopraReady).to.be(undefined);
         expect(window.woopraTracker).to.be(undefined);
 
@@ -28,7 +30,7 @@
 
         expect(window.woopraReady).not.to.be(undefined);
         expect(window.woopraTracker).to.be(undefined);
-        expect(analytics.providers[0].settings.domain).to.equal('x');
+        expect(analytics.providers[0].options.domain).to.equal('x');
 
         setTimeout(function () {
         expect(window.woopraTracker).not.to.be(undefined);
@@ -58,7 +60,7 @@
 
         analytics.track(event, properties);
 
-        augmentedProperties = _.extend({}, properties, { name: event });
+        augmentedProperties = extend({}, properties, { name: event });
         expect(spy.calledWith(sinon.match(augmentedProperties))).to.be(true);
 
         spy.restore();

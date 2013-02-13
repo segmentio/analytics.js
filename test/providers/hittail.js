@@ -6,7 +6,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds mlt.js on initialize', function (done) {
+    test('stores options and adds mlt.js on initialize', function (done) {
         expect(window.htk).to.be(undefined);
 
         analytics.initialize({
@@ -18,7 +18,7 @@
         var self = this;
         setTimeout(function () {
         expect(window.htk).not.to.be(undefined);
-        expect(analytics.providers[0].settings.siteId).to.equal('x');
+        expect(analytics.providers[0].options.siteId).to.equal('x');
             done();
         }, 1900);
     });

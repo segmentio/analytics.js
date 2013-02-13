@@ -15,13 +15,13 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds perfectaudience.js on initialize', function (done) {
+    test('stores options and adds perfectaudience.js on initialize', function (done) {
         expect(window._pa).to.be(undefined);
 
         analytics.initialize({ 'Perfect Audience' : siteId });
 
         expect(window._pa).not.to.be(undefined);
-        expect(analytics.providers[0].settings.siteId).to.equal(siteId);
+        expect(analytics.providers[0].options.siteId).to.equal(siteId);
 
         // Test to make sure the library _actually_ loads.
         setTimeout(function () {

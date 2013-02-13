@@ -19,13 +19,13 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds USERcycles js on initialize', function () {
+    test('stores options and adds USERcycles js on initialize', function () {
         expect(window._uc).to.be(undefined);
 
         analytics.initialize({ 'USERcycle' : 'x' });
 
         expect(window._uc).not.to.be(undefined);
-        expect(analytics.providers[0].settings.key).to.equal('x');
+        expect(analytics.providers[0].options.key).to.equal('x');
     });
 
 

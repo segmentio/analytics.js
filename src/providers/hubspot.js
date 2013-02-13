@@ -2,7 +2,7 @@
 // -------
 // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
 
-var Provider = require('../../provider')
+var Provider = require('../provider')
   , extend   = require('extend')
   , load     = require('load-script');
 
@@ -21,6 +21,7 @@ module.exports = Provider.extend({
     // `hs-analytics` isn't already in the DOM. Seems excessive, but who knows
     // if there's weird deprecation going on :p
     if (!document.getElementById('hs-analytics')) {
+      window._hsq = window._hsq || [];
       var script = load('https://js.hubspot.com/analytics/' + (Math.ceil(new Date()/300000)*300000) + '/' + options.portalId + '.js');
       script.id = 'hs-analytics';
     }

@@ -3,7 +3,7 @@
 // * [Documentation](https://bitdeli.com/docs)
 // * [JavaScript API Reference](https://bitdeli.com/docs/javascript-api.html)
 
-var Provider = require('../../provider')
+var Provider = require('../provider')
   , type     = require('type')
   , extend   = require('extend')
   , load     = require('load-script');

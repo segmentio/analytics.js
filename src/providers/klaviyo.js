@@ -2,44 +2,40 @@
 // -------
 // [Documentation](https://www.klaviyo.com/docs).
 
-var extend = require('extend')
-  , load   = require('load-script')
-  , utils  = require('../../utils');
+var Provider = require('../provider')
+  , extend   = require('extend')
+  , load     = require('load-script');
 
-module.exports = Klaviyo;
 
-function Klaviyo () {
-  this.settings = {
+module.exports = Provider.extend({
+
+  key : 'apiKey',
+
+  options : {
     apiKey : null
-  };
-}
+  },
 
 
-// Changes to the Klaviyo snippet:
-//
-// * Added `apiKey`.
-Klaviyo.prototype.initialize = function (settings) {
-  settings = utils.resolveSettings(settings, 'apiKey');
-  extend(this.settings, settings);
-
-  window._learnq = window._learnq || [];
-  window._learnq.push(['account', this.settings.apiKey]);
-
-  load('//a.klaviyo.com/media/js/learnmarklet.js');
-};
+  initialize : function (options) {
+    window._learnq = window._learnq || [];
+    window._learnq.push(['account', options.apiKey]);
+    load('//a.klaviyo.com/media/js/learnmarklet.js');
+  },
 
 
-Klaviyo.prototype.identify = function (userId, traits) {
-  if (!userId && !traits) return;
+  identify : function (userId, traits) {
+    if (!userId && !traits) return;
 
-  // Klaviyo takes the user ID on the traits object itself.
-  traits || (traits = {});
-  if (userId) traits.$id = userId;
+    // Klaviyo takes the user ID on the traits object itself.
+    traits || (traits = {});
+    if (userId) traits.$id = userId;
 
-  window._learnq.push(['identify', traits]);
-};
+    window._learnq.push(['identify', traits]);
+  },
 
 
-Klaviyo.prototype.track = function (event, properties) {
-  window._learnq.push(['track', event, properties]);
-};
+  track : function (event, properties) {
+    window._learnq.push(['track', event, properties]);
+  }
+
+});

@@ -1,8 +1,11 @@
+var analytics = require('analytics'),
+    clone     = require('component-clone');
+
 !(function (undefined) {
 
     suite('Bitdeli');
 
-    var settings = {
+    var options = {
         inputId   : 'x',
         authToken : 'y'
     };
@@ -26,14 +29,14 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds bitdeli.js on initialize', function (done) {
+    test('stores options and adds bitdeli.js on initialize', function (done) {
         expect(window._bdq).to.be(undefined);
 
-        analytics.initialize({ 'Bitdeli' : settings });
+        analytics.initialize({ 'Bitdeli' : options });
 
         expect(window._bdq).not.to.be(undefined);
-        expect(analytics.providers[0].settings.inputId).to.equal(settings.inputId);
-        expect(analytics.providers[0].settings.authToken).to.equal(settings.authToken);
+        expect(analytics.providers[0].options.inputId).to.equal(options.inputId);
+        expect(analytics.providers[0].options.authToken).to.equal(options.authToken);
 
 
         expect(window._bdq._version).to.be(undefined);
@@ -53,7 +56,7 @@
 
     test('throws error on initialize when "inputId" is missing', function () {
         expect(function() {
-            var modifiedSettings = analytics.utils.clone(settings);
+            var modifiedSettings = analytics.utils.clone(options);
             delete modifiedSettings.inputId;
             analytics.initialize({ 'Bitdeli' : modifiedSettings });
         }).to.throwException(function (e) {
@@ -63,7 +66,7 @@
 
     test('throws error on initialize when "authToken" is missing', function () {
         expect(function() {
-            var modifiedSettings = analytics.utils.clone(settings);
+            var modifiedSettings = analytics.utils.clone(options);
             delete modifiedSettings.authToken;
             analytics.initialize({ 'Bitdeli' : modifiedSettings });
         }).to.throwException(function (e) {
@@ -75,9 +78,9 @@
         window._bdq = [];
         var spy = sinon.spy(window._bdq, 'push');
 
-        analytics.initialize({ 'Bitdeli' : settings });
+        analytics.initialize({ 'Bitdeli' : options });
 
-        expect(spy.calledWith(['trackPageview'])).to.be(true);
+        expect(spy.calledWith(['trackPageview', undefined])).to.be(true);
         spy.restore();
     });
 
@@ -85,7 +88,7 @@
         window._bdq = [];
         var spy = sinon.spy(window._bdq, 'push');
 
-        var modifiedSettings = analytics.utils.clone(settings);
+        var modifiedSettings = clone(options);
         modifiedSettings.initialPageview = false;
         analytics.initialize({ 'Bitdeli' : modifiedSettings });
 

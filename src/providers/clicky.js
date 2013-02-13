@@ -2,7 +2,7 @@
 // ------
 // [Documentation](http://clicky.com/help/customization/manual?new-domain).
 
-var Provider = require('../../provider')
+var Provider = require('../provider')
   , extend   = require('extend')
   , load     = require('load-script');
 

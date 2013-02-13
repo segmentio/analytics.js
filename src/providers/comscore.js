@@ -2,7 +2,7 @@
 // ---------
 // [Documentation](http://direct.comscore.com/clients/help/FAQ.aspx#faqTagging)
 
-var Provider = require('../../provider')
+var Provider = require('../provider')
   , extend   = require('extend')
   , load     = require('load-script');
 

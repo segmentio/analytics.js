@@ -6,7 +6,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds chartbeat.js on initialize', function (done) {
+    test('stores options and adds chartbeat.js on initialize', function (done) {
         expect(window.pSUPERFLY).to.be(undefined);
 
         analytics.initialize({
@@ -16,15 +16,15 @@
             }
         });
 
-        expect(analytics.providers[0].settings.uid).to.equal('x');
-        expect(analytics.providers[0].settings.domain).to.equal('example.com');
+        expect(analytics.providers[0].options.uid).to.equal('x');
+        expect(analytics.providers[0].options.domain).to.equal('example.com');
 
         // We have to wait for the charbeat.js to come back and create the
         // global variable on window...
         var self = this;
         setTimeout(function () {
             expect(window.pSUPERFLY).not.to.be(undefined);
-            expect(window._sf_async_config).to.equal(analytics.providers[0].settings);
+            expect(window._sf_async_config).to.equal(analytics.providers[0].options);
             done();
         }, 1900);
     });

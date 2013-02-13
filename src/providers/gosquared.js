@@ -4,7 +4,7 @@
 // [Tracker Functions](https://www.gosquared.com/customer/portal/articles/612063-tracker-functions)
 // Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat).
 
-var Provider = require('../../provider')
+var Provider = require('../provider')
   , extend   = require('extend')
   , load     = require('load-script');
 

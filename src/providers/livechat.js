@@ -2,57 +2,50 @@
 // --------
 // [Documentation](http://www.livechatinc.com/api/javascript-api).
 
-var each   = require('each')
-  , extend = require('extend')
-  , load   = require('load-script')
-  , utils  = require('../../utils');
+var Provider = require('../provider')
+  , each     = require('each')
+  , extend   = require('extend')
+  , load     = require('load-script');
 
 
-module.exports = LiveChat;
+module.exports = Provider.extend({
 
-function LiveChat () {
-  this.settings = {
+  key : 'license',
+
+  options : {
     license : null
-  };
-}
+  },
+
+  initialize : function (options) {
+    window.__lc = { license : options.license };
+    load('//cdn.livechatinc.com/tracking.js');
+  },
 
 
-LiveChat.prototype.initialize = function (settings) {
-  settings = utils.resolveSettings(settings, 'license');
-  extend(this.settings, settings);
+  // LiveChat isn't an analytics service, but we can use the `userId` and
+  // `traits` to tag the user with their real name in the chat console.
+  identify : function (userId, traits) {
+    // In case the LiveChat library hasn't loaded yet.
+    if (!window.LC_API) return;
 
-  window.__lc = {
-    license : this.settings.license
-  };
+    // We need either a `userId` or `traits`.
+    if (!userId && !traits) return;
 
-  load('//cdn.livechatinc.com/tracking.js');
-};
-
-
-// LiveChat isn't an analytics service, but we can use the `userId` and
-// `traits` to tag the user with their real name in the chat console.
-LiveChat.prototype.identify = function (userId, traits) {
-  // In case the LiveChat library hasn't loaded yet.
-  if (!window.LC_API) return;
-
-  // We need either a `userId` or `traits`.
-  if (!userId && !traits) return;
-
-  // LiveChat takes them in an array format.
-  var variables = [];
-
-  if (userId) variables.push({ name: 'User ID', value: userId });
-
-  if (traits) {
-    each(traits, function (value, key) {
-      variables.push({
-        name  : key,
-        value : value
+    // LiveChat takes them in an array format.
+    var variables = [];
+    if (userId) {
+      variables.push({ name: 'User ID', value: userId });
+    }
+    if (traits) {
+      each(traits, function (key, value) {
+        variables.push({
+          name  : key,
+          value : value
+        });
       });
-    });
+    }
+
+    window.LC_API.set_custom_variables(variables);
   }
 
-  window.LC_API.set_custom_variables(variables);
-};
-
-
+});

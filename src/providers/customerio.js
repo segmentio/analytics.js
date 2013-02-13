@@ -2,7 +2,7 @@
 // -----------
 // [Documentation](http://customer.io/docs/api/javascript.html).
 
-var Provider = require('../../Provider')
+var Provider = require('../provider')
   , extend   = require('extend')
   , isEmail  = require('is-email')
   , load     = require('load-script');

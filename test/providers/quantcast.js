@@ -6,7 +6,7 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds quant.js on initialize', function (done) {
+    test('stores options and adds quant.js on initialize', function (done) {
         expect(window._qevents).to.be(undefined);
 
         analytics.initialize({
@@ -19,7 +19,7 @@
         var self = this;
         setTimeout(function () {
             expect(window._qevents).not.to.be(undefined);
-            expect(analytics.providers[0].settings.pCode).to.equal('x');
+            expect(analytics.providers[0].options.pCode).to.equal('x');
             done();
         }, 1900);
     });

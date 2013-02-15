@@ -2,6 +2,7 @@
 
     suite('Google Analytics');
 
+    var options = { 'Google Analytics' : 'x' };
 
     // Initialize
     // ----------
@@ -11,15 +12,23 @@
 
         expect(window._gaq).to.be(undefined);
 
-        analytics.initialize({ 'Google Analytics' : 'x' });
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(window._gaq).not.to.be(undefined);
         expect(window._gaq.push).to.eql(Array.prototype.push);
-        expect(analytics.providers[0].options.trackingId).to.equal('x');
+        expect(spy.called).to.be(true);
 
+        // When the library loads, push will be overriden.
         setTimeout(function () {
             expect(window._gaq.push).not.to.eql(Array.prototype.push);
             done();
         }, 3500);
+    });
+
+    test('stores options and adds ga.js on initialize', function () {
+        analytics.initialize(options);
+        expect(analytics.providers[0].options.trackingId).to.equal('x');
     });
 
     test('can set domain on initialize', function () {

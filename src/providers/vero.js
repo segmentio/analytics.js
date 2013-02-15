@@ -17,10 +17,13 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window._veroq = window._veroq || [];
     window._veroq.push(['init', { api_key: options.apiKey }]);
     load('//www.getvero.com/assets/m.js');
+
+    // Vero creates a queue, so it's ready immediately.
+    ready();
   },
 
 

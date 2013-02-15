@@ -2,7 +2,7 @@
 
     suite('Perfect Audience');
 
-    var siteId = '4ff6ade4361ed500020000a5';
+    var options = { 'Perfect Audience' : '4ff6ade4361ed500020000a5' };
 
     var event = 'event';
 
@@ -15,19 +15,25 @@
     // Initialize
     // ----------
 
-    test('stores options and adds perfectaudience.js on initialize', function (done) {
+    test('calls ready and loads library on initialize', function (done) {
         expect(window._pa).to.be(undefined);
 
-        analytics.initialize({ 'Perfect Audience' : siteId });
-
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(window._pa).not.to.be(undefined);
-        expect(analytics.providers[0].options.siteId).to.equal(siteId);
 
         // Test to make sure the library _actually_ loads.
         setTimeout(function () {
             expect(window._pa.track).not.to.be(undefined);
+            expect(spy.called).to.be(true);
             done();
         }, 1900);
+    });
+
+    test('stores options on initialize', function () {
+        analytics.initialize(options);
+        expect(analytics.providers[0].options.siteId).to.equal('4ff6ade4361ed500020000a5');
     });
 
 

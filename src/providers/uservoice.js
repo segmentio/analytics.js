@@ -16,9 +16,9 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window.uvOptions = {};
-    load('//widget.uservoice.com/' + options.widgetId + '.js');
+    load('//widget.uservoice.com/' + options.widgetId + '.js', ready);
   }
 
 });

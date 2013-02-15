@@ -2,6 +2,8 @@
 
     suite('SnapEngage');
 
+    var options = { 'SnapEngage' : '782b737e-487f-4117-8a2b-2beb32b600e5' };
+
     var event = 'event';
 
     var properties = {
@@ -19,12 +21,23 @@
     // Initialize
     // ----------
 
-    test('stores options and adds SnapEngage on initialize', function () {
+    test('stores options and adds SnapEngage on initialize', function (done) {
         expect(window.SnapABug).to.be(undefined);
 
-        analytics.initialize({ 'SnapEngage' : 'x' });
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
 
-        expect(analytics.providers[0].options.apiKey).to.equal('x');
+        setTimeout(function () {
+            expect(window.SnapABug).not.to.be(undefined);
+            expect(spy.called).to.be(true);
+            done();
+        }, 1900);
+    });
+
+    test('stores options on initialize', function () {
+        analytics.initialize(options);
+        expect(analytics.providers[0].options.apiKey).to.equal('782b737e-487f-4117-8a2b-2beb32b600e5');
     });
 
 }());

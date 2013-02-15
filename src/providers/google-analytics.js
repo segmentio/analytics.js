@@ -23,7 +23,7 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window._gaq = window._gaq || [];
     window._gaq.push(['_setAccount', options.trackingId]);
 
@@ -57,6 +57,9 @@ module.exports = Provider.extend({
       http  : 'http://www.google-analytics.com/ga.js',
       https : 'https://ssl.google-analytics.com/ga.js'
     });
+
+    // Google makes a queue so it's ready immediately.
+    ready();
   },
 
 

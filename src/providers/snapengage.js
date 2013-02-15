@@ -16,8 +16,8 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
-    load('//commondatastorage.googleapis.com/code.snapengage.com/js/' + options.apiKey + '.js');
+  initialize : function (options, ready) {
+    load('//commondatastorage.googleapis.com/code.snapengage.com/js/' + options.apiKey + '.js', ready);
   }
 
 });

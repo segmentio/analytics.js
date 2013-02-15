@@ -18,12 +18,15 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window.GoSquared = {};
     window.GoSquared.acct = options.siteToken;
     window.GoSquared.q = [];
     window._gstc_lt =+ (new Date());
     load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
+
+    // GoSquared makes a queue, so it's ready immediately.
+    ready();
   },
 
 

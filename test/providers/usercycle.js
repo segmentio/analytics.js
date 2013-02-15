@@ -2,6 +2,8 @@
 
     suite('USERcycle');
 
+    var options = { 'USERcycle' : 'x' };
+
     var event = 'event';
 
     var properties = {
@@ -19,12 +21,18 @@
     // Initialize
     // ----------
 
-    test('stores options and adds USERcycles js on initialize', function () {
+    test('calls ready and loads the library on initialize', function () {
         expect(window._uc).to.be(undefined);
 
-        analytics.initialize({ 'USERcycle' : 'x' });
-
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(window._uc).not.to.be(undefined);
+        expect(spy.called).to.be(true);
+    });
+
+    test('stores options on initialize', function () {
+        analytics.initialize(options);
         expect(analytics.providers[0].options.key).to.equal('x');
     });
 

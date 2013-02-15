@@ -16,10 +16,10 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window.clicky_site_ids = window.clicky_site_ids || [];
     window.clicky_site_ids.push(options.siteId);
-    load('//static.getclicky.com/js');
+    load('//static.getclicky.com/js', ready);
   },
 
 

@@ -16,10 +16,13 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window._uc = window._uc || [];
     window._uc.push(['_key', options.key]);
     load('//api.usercycle.com/javascripts/track.js');
+
+    // USERcycle makes a queue, so it's ready immediately.
+    ready();
   },
 
 

@@ -2,14 +2,22 @@
 
     suite('Intercom');
 
+    var options = {
+        'Intercom' : 'x'
+    };
 
     // Initialize
     // ----------
 
+    test('calls ready on initialize', function () {
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
+        expect(spy.called).to.be(true);
+    });
+
     test('stores options on initialize', function () {
-        analytics.initialize({
-            'Intercom' : 'x'
-        });
+        analytics.initialize(options);
         expect(analytics.providers[0].options.appId).to.equal('x');
     });
 

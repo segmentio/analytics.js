@@ -2,6 +2,8 @@
 
     suite('Errorception');
 
+    var options = { 'Errorception' : 'x' };
+
     var userId = 'user';
 
     var traits = {
@@ -16,10 +18,13 @@
     test('stores options and adds errorception.js on initialize', function () {
         expect(window._errs).to.be(undefined);
 
-        analytics.initialize({ 'Errorception' : 'x' });
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
 
         expect(window._errs).not.to.be(undefined);
         expect(analytics.providers[0].options.projectId).to.equal('x');
+        expect(spy.called).to.be(true);
     });
 
 

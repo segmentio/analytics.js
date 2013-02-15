@@ -5,7 +5,7 @@ var extend = require('extend')
 module.exports = Provider;
 
 
-function Provider (options) {
+function Provider (options, ready) {
   // Allow for `options` to only be a string if the provider has specified
   // a default `key`, in which case convert `options` into a dictionary.
   if (type(options) !== 'object') {
@@ -20,7 +20,7 @@ function Provider (options) {
   // Extend the options passed in with the provider's defaults.
   extend(this.options, options);
   // Call the provider's initialize object.
-  this.initialize.call(this, this.options);
+  this.initialize.call(this, this.options, ready);
 }
 
 
@@ -55,5 +55,7 @@ extend(Provider.prototype, {
 
   // Override to provider your own initialization logic, usually a snippet
   // and loading a Javascript library.
-  initialize : function (options) {}
+  initialize : function (options, ready) {
+    ready();
+  }
 });

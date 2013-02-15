@@ -16,8 +16,8 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
-    load('//' + options.siteId + '.hittail.com/mlt.js');
+  initialize : function (options, ready) {
+    load('//' + options.siteId + '.hittail.com/mlt.js', ready);
   }
 
 });

@@ -49,7 +49,9 @@
     "segmentio/load-script": "*",
     "segmentio/is-email": "*",
     "component/cookie": "*",
-    "component/event": "*"
+    "component/event": "*",
+    "segmentio/after": "*",
+    "component/object": "*"
   },
   "scripts": [
     "src/index.js",

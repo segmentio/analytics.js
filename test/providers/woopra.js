@@ -5,6 +5,8 @@ var analytics = require('analytics')
 
     suite('Woopra');
 
+    var options = { 'Woopra' : 'x' };
+
     var event = 'event';
 
     var properties = {
@@ -26,16 +28,24 @@ var analytics = require('analytics')
         expect(window.woopraReady).to.be(undefined);
         expect(window.woopraTracker).to.be(undefined);
 
-        analytics.initialize({'Woopra' : 'x'});
-
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(window.woopraReady).not.to.be(undefined);
         expect(window.woopraTracker).to.be(undefined);
-        expect(analytics.providers[0].options.domain).to.equal('x');
 
+        // Once the library loads the tracker will be created and the spy will
+        // be called.
         setTimeout(function () {
         expect(window.woopraTracker).not.to.be(undefined);
             done();
+            expect(spy.called).to.be(true);
         }, 1900);
+    });
+
+    test('stores options on initialize', function () {
+        analytics.initialize(options);
+        expect(analytics.providers[0].options.domain).to.equal('x');
     });
 
 

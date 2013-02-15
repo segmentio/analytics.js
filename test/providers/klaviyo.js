@@ -2,6 +2,8 @@
 
     suite('Klaviyo');
 
+    var options = { 'Klaviyo' : 'x' };
+
     var event = 'event';
 
     var properties = {
@@ -22,10 +24,15 @@
     test('stores options and adds klaviyo javascript on initialize', function () {
         expect(window._learnq).to.be(undefined);
 
-        analytics.initialize({
-            'Klaviyo' : 'x'
-        });
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(window._learnq).not.to.be(undefined);
+        expect(spy.called).to.be(true);
+    });
+
+    test('stores options on initialize', function () {
+        analytics.initialize(options);
         expect(analytics.providers[0].options.apiKey).to.equal('x');
     });
 

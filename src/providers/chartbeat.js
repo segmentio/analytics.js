@@ -19,7 +19,7 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     // Since all the custom options just get passed through, update the
     // Chartbeat `_sf_async_config` variable with options.
     window._sf_async_config = options;
@@ -29,7 +29,7 @@ module.exports = Provider.extend({
     load({
       http  : 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',
       https : 'http://static.chartbeat.com/js/chartbeat.js'
-    });
+    }, ready);
   },
 
 

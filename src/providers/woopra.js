@@ -16,13 +16,14 @@ module.exports = Provider.extend({
   },
 
 
-
-  initialize : function (options) {
+  initialize : function (options, ready) {
+    // Woopra gives us a nice ready callback.
     var self = this;
     window.woopraReady = function (tracker) {
       tracker.setDomain(self.options.domain);
       tracker.setIdleTimeout(300000);
       tracker.track();
+      ready();
       return false;
     };
 

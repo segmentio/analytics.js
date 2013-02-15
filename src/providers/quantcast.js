@@ -16,13 +16,13 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window._qevents = window._qevents || [];
     window._qevents.push({ qacct: options.pCode });
     load({
       http  : 'http://edge.quantserve.com/quant.js',
       https : 'https://secure.quantserve.com/quant.js'
-    });
+    }, ready);
   }
 
 });

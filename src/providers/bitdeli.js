@@ -22,16 +22,15 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
-    if (!options.inputId || !options.authToken) {
-      throw new Error("Settings must be an object with properties 'inputId' and 'authToken'.");
-    }
-
+  initialize : function (options, ready) {
     window._bdq = window._bdq || [];
     window._bdq.push(["setAccount", options.inputId, options.authToken]);
     load('//d2flrkr957qc5j.cloudfront.net/bitdeli.min.js');
 
     if (options.initialPageview) this.pageview();
+
+    // Bitdeli just uses a queue, so it's ready right away.
+    ready();
   },
 
 

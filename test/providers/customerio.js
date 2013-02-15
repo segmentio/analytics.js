@@ -2,6 +2,10 @@
 
     suite('Customer.io');
 
+    var options = {
+        'Customer.io' : 'x'
+    };
+
     var event = 'event';
 
     var properties = {
@@ -19,17 +23,19 @@
     // Initialize
     // ----------
 
-    test('adds customer.io\'s track.js on initialize', function (done) {
+    // Customer.io can't be loaded twice, so we do all this in one test.
+    test('loads library and calls ready on initialize', function (done) {
         expect(window._cio).to.be(undefined);
 
-        analytics.initialize({
-            'Customer.io' : 'x'
-        });
-        expect(window._cio).not.to.be(undefined);
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(analytics.providers[0].options.siteId).to.equal('x');
-
-        // test actual loading
+        expect(window._cio).not.to.be(undefined);
         expect(window._cio.pageHasLoaded).to.be(undefined);
+        expect(spy.called).to.be(true);
+
+        // When the library is actually loaded `pageHasLoaded` is set.
         setTimeout(function () {
             expect(window._cio.pageHasLoaded).not.to.be(undefined);
             done();

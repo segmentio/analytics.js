@@ -2,6 +2,8 @@
 
     suite('Gauges');
 
+    var options = { 'Gauges' : 'x' };
+
 
     // Initialize
     // ----------
@@ -9,16 +11,22 @@
     test('stores options and adds gaug.es javascript on initialize', function (done) {
         expect(window._gauges).to.be(undefined);
 
-        analytics.initialize({ 'Gauges' : 'x' });
-
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(window._gauges).not.to.be(undefined);
-        expect(analytics.providers[0].options.siteId).to.equal('x');
         expect(window._gauges.push).to.eql(Array.prototype.push);
+        expect(spy.called).to.be(true);
 
         setTimeout(function () {
             expect(window._gauges.push).not.to.eql(Array.prototype.push);
             done();
         }, 1900);
+    });
+
+    test('stores options on initialize', function () {
+        analytics.initialize(options);
+        expect(analytics.providers[0].options.siteId).to.equal('x');
     });
 
 

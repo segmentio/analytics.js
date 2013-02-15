@@ -16,9 +16,9 @@ module.exports = Provider.extend({
     license : null
   },
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window.__lc = { license : options.license };
-    load('//cdn.livechatinc.com/tracking.js');
+    load('//cdn.livechatinc.com/tracking.js', ready);
   },
 
 

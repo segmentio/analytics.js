@@ -2,6 +2,10 @@
 
     suite('GoSquared');
 
+    var options = {
+        'GoSquared' : 'x'
+    };
+
     var event = 'event';
 
     var properties = {
@@ -22,16 +26,22 @@
     test('stores options and adds GoSquared js on initialize', function (done) {
         expect(window.GoSquared).to.be(undefined);
 
-        analytics.initialize({
-            'GoSquared' : 'x'
-        });
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(window.GoSquared).not.to.be(undefined);
-        expect(analytics.providers[0].options.siteToken).to.equal('x');
+        expect(spy.called).to.be(true);
 
-        window.GoSquared.load = function(tracker) {
+        // GoSquared gives us a nice `load` callback.
+        window.GoSquared.load = function (tracker) {
             expect(window.GoSquared.DefaultTracker).to.equal(tracker);
             done();
         };
+    });
+
+    test('stores options and adds GoSquared js on initialize', function () {
+        analytics.initialize(options);
+        expect(analytics.providers[0].options.siteToken).to.equal('x');
     });
 
 

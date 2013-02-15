@@ -2,6 +2,10 @@
 
     suite('Olark');
 
+    var options = {
+        'Olark' : 'x'
+    };
+
     var event = 'event';
 
     var properties = {
@@ -19,13 +23,19 @@
     // Initialize
     // ----------
 
-    test('stores options and adds olark.js on initialize', function () {
+    test('calls ready and loads library on initialize', function () {
         expect(window.olark).to.be(undefined);
 
-        analytics.initialize({
-            'Olark' : 'x'
-        });
+
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(window.olark).not.to.be(undefined);
+        expect(spy.called).to.be(true);
+    });
+
+    test('stores options on initialize', function () {
+        analytics.initialize(options);
         expect(analytics.providers[0].options.siteId).to.equal('x');
     });
 

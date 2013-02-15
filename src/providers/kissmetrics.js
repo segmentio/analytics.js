@@ -17,10 +17,13 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window._kmq = window._kmq || [];
     load('//i.kissmetrics.com/i.js');
     load('//doug1izaerwt3.cloudfront.net/' + options.apiKey + '.1.js');
+
+    // KISSmetrics creates a queue, so it's ready immediately.
+    ready();
   },
 
 

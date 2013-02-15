@@ -2,6 +2,13 @@
 
     suite('Mixpanel');
 
+    var options = {
+        'Mixpanel' : {
+            token  : 'x',
+            people : true
+        }
+    };
+
     var event = 'event';
 
     var properties = {
@@ -35,21 +42,20 @@
     // Initialize
     // ----------
 
+    // Initializing Mixpanel twice break, so we do it all in one.
     test('stores options and adds mixpanel.js on initialize', function (done) {
         expect(window.mixpanel).to.be(undefined);
 
-        analytics.initialize({
-            'Mixpanel' : {
-                token  : 'x',
-                people : true
-            }
-        });
-        expect(window.mixpanel).not.to.be(undefined);
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(analytics.providers[0].options.token).to.equal('x');
         expect(analytics.providers[0].options.people).to.be(true);
-
-        // test actual loading
+        expect(window.mixpanel).not.to.be(undefined);
         expect(window.mixpanel.config).to.be(undefined);
+        expect(spy.called).to.be(true);
+
+        // When the library loads, it sets `config`.
         setTimeout(function () {
             expect(window.mixpanel.config).not.to.be(undefined);
             done();

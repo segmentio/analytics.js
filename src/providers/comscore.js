@@ -17,13 +17,14 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  // Pass the entire options object directly into comScore.
+  initialize : function (options, ready) {
     window._comscore = window._comscore || [];
     window._comscore.push(options);
     load({
       http  : 'http://b.scorecardresearch.com/beacon.js',
       https : 'https://sb.scorecardresearch.com/beacon.js'
-    });
+    }, ready);
   }
 
 });

@@ -16,10 +16,13 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window._learnq = window._learnq || [];
     window._learnq.push(['account', options.apiKey]);
     load('//a.klaviyo.com/media/js/learnmarklet.js');
+
+    // Klaviyo creats a queue, so it's ready immediately.
+    ready();
   },
 
 

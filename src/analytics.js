@@ -1,12 +1,14 @@
-var each        = require('each')
-  , extend      = require('extend')
+var after       = require('after')
+  , bind        = require('event').bind
   , clone       = require('clone')
+  , each        = require('each')
+  , extend      = require('extend')
+  , size        = require('object').length
+  , Provider    = require('./provider')
+  , providers   = require('./providers')
+  , querystring = require('querystring')
   , type        = require('type')
   , url         = require('url')
-  , querystring = require('querystring')
-  , bind        = require('event').bind
-  , providers   = require('./providers')
-  , Provider    = require('./provider')
   , utils       = require('./utils');
 
 
@@ -68,6 +70,8 @@ extend(Analytics.prototype, {
   },
 
 
+  // Initialize
+  // ----------
   // Call **initialize** to setup analytics.js before identifying or
   // tracking any users or events. Here's what a call to **initialize**
   // might look like:
@@ -82,11 +86,22 @@ extend(Analytics.prototype, {
   // The keys are the names of the providers and their values are either
   // an api key, or dictionary of extra settings (including the api key).
   initialize : function (providers) {
+    var self = this;
+
     // Reset our state.
     this.providers = [];
     this.userId = null;
 
-    var self = this;
+    // Create a ready method that will run after all of our providers have been
+    // initialized and loaded. We'll pass the function into each provider's
+    // initialize method, so they can callback when they've loaded successfully.
+    var ready = _.after(size(providers), function () {
+      // Take each callback off the queue and call it.
+      var callback;
+      while(callback = self.readyCallbacks.shift()) {
+        callback();
+      }
+    });
 
     // Initialize a new instance of each provider with their `options`, and
     // copy the provider into `this.providers`.
@@ -94,11 +109,8 @@ extend(Analytics.prototype, {
       var Provider = self.initializableProviders[key];
       if (!Provider) throw new Error('Could not find a provider named "'+key+'"');
 
-      self.providers.push(new Provider(options));
+      self.providers.push(new Provider(options, ready));
     });
-
-    // Update the initialized state that other methods rely on.
-    this.initialized = true;
 
     // Identify/track any `ajs_uid` and `ajs_event` parameters in the URL.
     var query = url.parse(window.location.href).query;
@@ -106,10 +118,8 @@ extend(Analytics.prototype, {
     if (queries.ajs_uid) this.identify(queries.ajs_uid);
     if (queries.ajs_event) this.track(queries.ajs_event);
 
-    // Run any callbacks on our `readyCallbacks` queue.
-    each(this.readyCallbacks, function (callback) {
-      callback();
-    });
+    // Update the initialized state that other methods rely on.
+    this.initialized = true;
   },
 
 
@@ -119,11 +129,10 @@ extend(Analytics.prototype, {
   // analytics services have been initialized. It's like jQuery's `ready`
   // expect for analytics instead of the DOM.
   ready : function (callback) {
-    // Not a function, get out of here.
     if (type(callback) !== 'function') return;
 
-      // If we're already initialized, do it right away. Otherwise, add it
-      // to the queue for when we do get initialized.
+    // If we're already initialized, do it right away. Otherwise, add it to the
+    // queue for when we do get initialized.
     if (this.initialized) {
       callback();
     } else {
@@ -132,6 +141,8 @@ extend(Analytics.prototype, {
   },
 
 
+  // Identify
+  // --------
   // Identifying a user ties all of their actions to an ID you recognize
   // and records properties about a user. An example identify:
   //
@@ -226,7 +237,6 @@ extend(Analytics.prototype, {
 
 
   // ### trackLink
-  //
   // A helper for tracking outbound links that would normally leave the
   // page before the track calls went out. It works by wrapping the calls
   // in as short of a timeout as possible to fire the track call, because
@@ -291,7 +301,6 @@ extend(Analytics.prototype, {
 
 
   // ### trackForm
-  //
   // Similar to `trackClick`, this is a helper for tracking form
   // submissions that would normally leave the page before a track call
   // can be sent. It works by preventing the default submit, sending a

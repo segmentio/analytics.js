@@ -16,9 +16,9 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window._pa = window._pa || {};
-    load('//tag.perfectaudience.com/serve/' + options.siteId + '.js');
+    load('//tag.perfectaudience.com/serve/' + options.siteId + '.js', ready);
   },
 
 

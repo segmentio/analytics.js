@@ -20,7 +20,7 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window._errs = window._errs || [options.projectId];
     load('//d15qhc0lu1ghnk.cloudfront.net/beacon.js');
 
@@ -28,6 +28,9 @@ module.exports = Provider.extend({
     window.onerror = function () {
       window._errs.push(arguments);
     };
+
+    // Errorception makes a queue, so it's ready immediately.
+    ready();
   },
 
 

@@ -2,6 +2,8 @@
 
     suite('KISSmetrics');
 
+    var options = { 'KISSmetrics' : 'x' };
+
     var event = 'event';
 
     var properties = {
@@ -20,12 +22,18 @@
     // Initialize
     // ----------
 
-    test('stores options and adds kissmetrics javascript on initialize', function () {
+    test('calls ready and loads library on initialize', function () {
         expect(window._kmq).to.be(undefined);
 
+        var spy = sinon.spy();
+        analytics.ready(spy);
         analytics.initialize({ 'KISSmetrics' : 'x' });
-
+        expect(spy.called).to.be(true);
         expect(window._kmq).not.to.be(undefined);
+    });
+
+    test('stores options on initialize', function () {
+        analytics.initialize(options);
         expect(analytics.providers[0].options.apiKey).to.equal('x');
     });
 

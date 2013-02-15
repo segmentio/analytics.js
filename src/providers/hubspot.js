@@ -16,7 +16,7 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     // HubSpot checks in their snippet to make sure another script with
     // `hs-analytics` isn't already in the DOM. Seems excessive, but who knows
     // if there's weird deprecation going on :p
@@ -25,6 +25,9 @@ module.exports = Provider.extend({
       var script = load('https://js.hubspot.com/analytics/' + (Math.ceil(new Date()/300000)*300000) + '/' + options.portalId + '.js');
       script.id = 'hs-analytics';
     }
+
+    // HubSpot makes a queue, so it's ready immediately.
+    ready();
   },
 
 

@@ -27,7 +27,11 @@ module.exports = Provider.extend({
 
   // Intercom identifies when the script is loaded, so instead of initializing
   // in `initialize` we initialize in `identify`.
-  initialize : function (options) {},
+  initialize : function (options, ready) {
+    // Intercom is weird, so we call ready right away so that it doesn't block
+    // everything from loading.
+    ready();
+  },
 
 
   identify : function (userId, traits) {

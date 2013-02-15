@@ -17,7 +17,7 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     var _cio = window._cio = window._cio || [];
     (function() {
       var a,b,c;
@@ -36,6 +36,10 @@ module.exports = Provider.extend({
     var script = load('https://assets.customer.io/assets/track.js');
     script.id = 'cio-tracker';
     script.setAttribute('data-site-id', options.siteId);
+
+    // Since Customer.io creates their required methods in their snippet, we
+    // don't need to wait to be ready.
+    ready();
   },
 
 

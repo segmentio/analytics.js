@@ -3,6 +3,13 @@
 
     suite('Keen IO');
 
+    var options = {
+        'Keen IO': {
+            projectId : 'KEEN_PROJECT_ID',
+            apiKey    : 'KEEN_API_KEY'
+        }
+    };
+
     var event = 'someEventName';
 
     var properties = {
@@ -20,22 +27,20 @@
     // Initialize
     // ----------
 
-    test('stores options and adds keenio.js on initialize', function(done) {
+    test('calls ready and adds keenio.js on initialize', function (done) {
         expect(window.Keen).not.to.exist;
 
-        analytics.initialize({
-            'Keen IO': {
-                projectId : 'KEEN_PROJECT_ID',
-                apiKey    : 'KEEN_API_KEY'
-            }
-        });
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(window.Keen).not.to.be(undefined);
         expect(window.Keen.setGlobalProperties).not.to.be(undefined);
         expect(window.Keen.addEvent).not.to.be(undefined);
         expect(window.Keen._pId).to.equal('KEEN_PROJECT_ID');
         expect(window.Keen._ak).to.equal('KEEN_API_KEY');
+        expect(spy.called).to.be(true);
 
-        // test actual loading
+        // When the Keen IO library loads, it creates some keys we can test.
         expect(window.Keen.Base64).to.be(undefined);
         setTimeout(function () {
             expect(window.Keen.Base64).not.to.be(undefined);
@@ -43,11 +48,17 @@
         }, 1900);
     });
 
+    test('stores options on initialize', function () {
+        analytics.initialize(options);
+        expect(analytics.providers[0].options.projectId).to.equal('KEEN_PROJECT_ID');
+        expect(analytics.providers[0].options.apiKey).to.equal('KEEN_API_KEY');
+    });
+
 
     // Identify
     // --------
 
-    test('calls setGlobalProperties on identify', function() {
+    test('calls setGlobalProperties on identify', function () {
         // Reset internal `userId` state from any previous identifies.
         analytics.userId = null;
 
@@ -84,7 +95,7 @@
     // Track
     // -----
 
-    test('calls addEvent on track', function() {
+    test('calls addEvent on track', function () {
         var spy = sinon.spy(window.Keen, 'addEvent');
         analytics.track(event, properties);
         // Keen IO adds custom properties, so we need to have a loose match.

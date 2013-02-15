@@ -2,6 +2,8 @@
 
     suite('Vero');
 
+    var options = { 'Vero' : 'x' };
+
     var event = 'event';
 
     var properties = {
@@ -22,18 +24,23 @@
     test('adds Vero\'s m.js on initialize', function (done) {
         expect(window._veroq).to.be(undefined);
 
-        analytics.initialize({
-            'Vero' : 'x'
-        });
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(window._veroq).not.to.be(undefined);
         expect(window._veroq.push).to.equal(Array.prototype.push);
-        expect(analytics.providers[0].options.apiKey).to.equal('x');
+        expect(spy.called).to.be(true);
 
+        // When the library loads, it will overwrite the push method.
         setTimeout(function () {
-          // Check that vero has indeed loaded
           expect(window._veroq.push).not.to.equal(Array.prototype.push);
           done();
         }, 1900);
+    });
+
+    test('stores options on initialize', function () {
+        analytics.initialize(options);
+        expect(analytics.providers[0].options.apiKey).to.equal('x');
     });
 
 

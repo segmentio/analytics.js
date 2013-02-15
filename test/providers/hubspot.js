@@ -2,6 +2,10 @@
 
     suite('HubSpot');
 
+    var options = {
+        'HubSpot' : 'x'
+    };
+
     var event = 'event';
 
     var properties = {
@@ -19,23 +23,26 @@
     // Initialize
     // ----------
 
-    test('stores options and adds hubspot js on initialize', function (done) {
+    test('calls ready and loads the library on initialize', function (done) {
         expect(window._hsq).to.be(undefined);
 
-        analytics.initialize({
-            'HubSpot' : 'x'
-        });
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(window._hsq).not.to.be(undefined);
         expect(window._hsq.push).to.equal(Array.prototype.push);
-        expect(analytics.providers[0].options.portalId).to.equal('x');
+        expect(spy.called).to.be(true);
 
-        // Once the hubspot JS file comes back, the array should be transformed.
-        var self = this;
+        // Once the HubSpot library comes back, the array should be transformed.
         setTimeout(function () {
-            expect(window._hsq).not.to.be(undefined);
             expect(window._hsq).to.not.equal(Array.prototype.push);
             done();
         }, 1900);
+    });
+
+    test('stores options on initialize', function () {
+        analytics.initialize(options);
+        expect(analytics.providers[0].options.portalId).to.equal('x');
     });
 
 

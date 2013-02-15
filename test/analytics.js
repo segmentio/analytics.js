@@ -1,11 +1,14 @@
-var analytics = require('analytics');
+var analytics = require('analytics'),
+    extend    = require('segmentio-extend');
 
 (function () {
 
     var Provider = analytics.Provider.extend({
         key        : 'key',
         options    : {},
-        initialize : function (options) {},
+        initialize : function (options, ready) {
+            setTimeout(ready, 200);
+        },
         identify   : function (userId, traits) {},
         track      : function (event, properties) {},
         pageview   : function () {},
@@ -14,10 +17,6 @@ var analytics = require('analytics');
     analytics.addProvider('Test', Provider);
 
     var options = { 'Test' : 'x' };
-
-    // Initialize the provider here so that everything works even when looking
-    // at a single test case.
-    analytics.initialize(options);
 
 
     // Initialize
@@ -58,7 +57,7 @@ var analytics = require('analytics');
 
     suite('ready');
 
-    test('calls callbacks on initialize', function () {
+    test('calls callbacks on initialize after a timeout', function (done) {
         // Turn off our current initialized state.
         analytics.initialized = false;
 
@@ -71,8 +70,14 @@ var analytics = require('analytics');
         expect(spy2.called).to.be(false);
 
         analytics.initialize(options);
-        expect(spy1.called).to.be(true);
-        expect(spy2.called).to.be(true);
+        expect(spy1.called).to.be(false);
+        expect(spy2.called).to.be(false);
+
+        setTimeout(function () {
+            expect(spy1.called).to.be(true);
+            expect(spy2.called).to.be(true);
+            done();
+        }, 250);
     });
 
     test('calls callbacks immediately when already initialized', function () {

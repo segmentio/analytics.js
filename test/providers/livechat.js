@@ -4,6 +4,8 @@ var analytics = require('analytics');
 
     suite('LiveChat');
 
+    var options = { 'LiveChat' : '2143261' };
+
     var userId = 'user';
 
     var traits = {
@@ -18,17 +20,22 @@ var analytics = require('analytics');
     test('stores options and loads the LiveChat library on initialize', function (done) {
         expect(window.__lc).to.be(undefined);
 
-        analytics.initialize({'LiveChat' : '2143261'});
-
+        var spy = sinon.spy();
+        analytics.ready(spy);
+        analytics.initialize(options);
         expect(window.__lc).not.to.be(undefined);
-        expect(analytics.providers[0].options.license).to.equal('2143261');
-
-        // Test the library actually loading.
         expect(window.LC_API).to.be(undefined);
+
         setTimeout(function () {
             expect(window.LC_API).not.to.be(undefined);
+            expect(spy.called).to.be(true);
             done();
         }, 1900);
+    });
+
+    test('stores options and loads the LiveChat library on initialize', function () {
+        analytics.initialize(options);
+        expect(analytics.providers[0].options.license).to.equal('2143261');
     });
 
 

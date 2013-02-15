@@ -17,11 +17,14 @@ module.exports = Provider.extend({
 
 
   // Load the library and add the `id` and `data-site-id` Gauges needs.
-  initialize : function (options) {
+  initialize : function (options, ready) {
     window._gauges = window._gauges || [];
     var script = load('//secure.gaug.es/track.js');
     script.id = 'gauges-tracker';
     script.setAttribute('data-site-id', options.siteId);
+
+    // Gauges make a queue so it's ready immediately.
+    ready();
   },
 
 

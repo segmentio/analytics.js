@@ -23,7 +23,7 @@ module.exports = Provider.extend({
     token   : null
   },
 
-  initialize : function (options) {
+  initialize : function (options, ready) {
     (function (c, a) {
       window.mixpanel = a;
       var b, d, h, e;
@@ -54,6 +54,10 @@ module.exports = Provider.extend({
 
     // Pass options directly to `init` as the second argument.
     window.mixpanel.init(options.token, options);
+
+    // Mixpanel creats all of its methods in the snippet, so it's ready
+    // immediately.
+    ready();
   },
 
 

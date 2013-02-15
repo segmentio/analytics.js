@@ -16,15 +16,15 @@ module.exports = Provider.extend({
   },
 
 
-  initialize : function (options) {
-    if (!options.projectId || !options.apiKey) {
-      throw new Error('Settings must be an object with properties projectId and apiKey.');
-    }
-
+  initialize : function (options, ready) {
     window.Keen = window.Keen||{configure:function(a,b,c){this._pId=a;this._ak=b;this._op=c},addEvent:function(a,b,c,d){this._eq=this._eq||[];this._eq.push([a,b,c,d])},setGlobalProperties:function(a){this._gp=a},onChartsReady:function(a){this._ocrq=this._ocrq||[];this._ocrq.push(a)}};
     window.Keen.configure(options.projectId, options.apiKey);
 
     load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js');
+
+    // Keen IO actually defines all their functions in their snippet, so they
+    // are ready immediately.
+    ready();
   },
 
 

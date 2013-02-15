@@ -12,10 +12,8 @@
     <script src="libs/mocha/mocha-1.8.1.js"></script>
     <script src="libs/mocha/mocha-cloud-0.0.1.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-    <script>
-        window.mocha.setup({ ui : 'qunit', ignoreLeaks : true });
-    </script>
 
+    <script src="runner.js"></script>
     <script src="../build/build.js"></script>
 
     <script src="providers/bitdeli.js"></script>
@@ -49,15 +47,5 @@
 <body>
     <h1>Providers Test</h1>
     <div id="mocha"></div>
-    <script>
-      $(function () {
-        if (window.onerror) window.onerror = console.log;
-
-        if (window.mochaPhantomJS)
-          window.mochaPhantomJS.run();
-        else
-          window.cloud(window.mocha.run());
-      });
-    </script>
 </body>
 </html>

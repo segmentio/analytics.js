@@ -1,5 +1,6 @@
 // `ignoreLeaks` because analytics services are supposed to leak things.
 window.mocha.setup({
+  ui : 'bdd',
   ignoreLeaks : true
 });
 

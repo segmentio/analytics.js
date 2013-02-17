@@ -1,77 +1,64 @@
-!(function () {
-
-    suite('Customer.io');
-
-    var options = {
-        'Customer.io' : 'x'
-    };
-
-    var event = 'event';
-
-    var properties = {
-        count : 42
-    };
-
-    var userId = 'user';
-
-    var traits = {
-        name    : 'Zeus',
-        created : new Date('12/30/1989')
-    };
+var analytics = require('analytics');
 
 
-    // Initialize
-    // ----------
+describe('Customer.io', function () {
+
+  describe('initialize', function () {
 
     // Customer.io can't be loaded twice, so we do all this in one test.
-    test('loads library and calls ready on initialize', function (done) {
-        expect(window._cio).to.be(undefined);
+    it('should call ready and load libarary', function (done) {
+      expect(window._cio).to.be(undefined);
 
-        var spy = sinon.spy();
-        analytics.ready(spy);
-        analytics.initialize(options);
-        expect(analytics.providers[0].options.siteId).to.equal('x');
-        expect(window._cio).not.to.be(undefined);
-        expect(window._cio.pageHasLoaded).to.be(undefined);
-        expect(spy.called).to.be(true);
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'Customer.io' :  test['Customer.io'] });
+      expect(analytics.providers[0].options.siteId).to.equal('x');
+      expect(window._cio).not.to.be(undefined);
+      expect(window._cio.pageHasLoaded).to.be(undefined);
+      expect(spy.called).to.be(true);
 
-        // When the library is actually loaded `pageHasLoaded` is set.
-        setTimeout(function () {
-            expect(window._cio.pageHasLoaded).not.to.be(undefined);
-            done();
-        }, 1900);
+      // When the library is actually loaded `pageHasLoaded` is set.
+      setTimeout(function () {
+        expect(window._cio.pageHasLoaded).not.to.be(undefined);
+        done();
+      }, 1900);
     });
 
+  });
 
-    // Identify
-    // --------
 
-    test('calls identify on identify', function () {
-        var spy = sinon.spy(window._cio, 'identify');
-        analytics.identify(traits);
-        expect(spy.called).to.be(false);
+  describe('identify', function () {
 
-        spy.reset();
-        analytics.identify(userId, traits);
-        expect(spy.calledWith({
-            id         : userId,
-            name       : traits.name,
-            created_at : Math.floor((new Date('12/30/1989')).getTime() / 1000)
-        })).to.be(true);
+    it('should call identify', function () {
+      var spy = sinon.spy(window._cio, 'identify');
+      analytics.identify(test.traits);
+      expect(spy.called).to.be(false);
 
-        spy.restore();
+      spy.reset();
+      analytics.identify(test.userId, test.traits);
+      expect(spy.calledWith({
+        id         : test.userId,
+        name       : test.traits.name,
+        email      : test.traits.email,
+        created_at : Math.floor((test.traits.created).getTime() / 1000)
+      })).to.be(true);
+
+      spy.restore();
     });
 
+  });
 
-    // Track
-    // -----
 
-    test('calls track on track', function () {
-        var spy = sinon.spy(window._cio, 'track');
-        analytics.track(event, properties);
-        expect(spy.calledWith(event, properties)).to.be(true);
+  describe('track', function () {
 
-        spy.restore();
+    it('should call track', function () {
+      var spy = sinon.spy(window._cio, 'track');
+      analytics.track(test.event, test.properties);
+      expect(spy.calledWith(test.event, test.properties)).to.be(true);
+
+      spy.restore();
     });
 
-}());
+  });
+
+});

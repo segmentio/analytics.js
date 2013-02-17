@@ -1,73 +1,74 @@
 var analytics = require('analytics');
 
-!(function () {
 
-    suite('LiveChat');
+describe('LiveChat', function () {
 
-    var options = { 'LiveChat' : '2143261' };
+  describe('initialize', function () {
 
-    var userId = 'user';
+    it('should call ready and load library', function (done) {
+      expect(window.__lc).to.be(undefined);
 
-    var traits = {
-        name  : 'Zeus',
-        email : 'zeus@segment.io'
-    };
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'LiveChat' : test['LiveChat'] });
+      expect(window.__lc).not.to.be(undefined);
+      expect(window.LC_API).to.be(undefined);
 
-
-    // Initialize
-    // ----------
-
-    test('stores options and loads the LiveChat library on initialize', function (done) {
-        expect(window.__lc).to.be(undefined);
-
-        var spy = sinon.spy();
-        analytics.ready(spy);
-        analytics.initialize(options);
-        expect(window.__lc).not.to.be(undefined);
-        expect(window.LC_API).to.be(undefined);
-
-        setTimeout(function () {
-            expect(window.LC_API).not.to.be(undefined);
-            expect(spy.called).to.be(true);
-            done();
-        }, 1900);
+      setTimeout(function () {
+        expect(window.LC_API).not.to.be(undefined);
+        expect(spy.called).to.be(true);
+        done();
+      }, 1900);
     });
 
-    test('stores options and loads the LiveChat library on initialize', function () {
-        analytics.initialize(options);
-        expect(analytics.providers[0].options.license).to.equal('2143261');
+    it('should store options', function () {
+      analytics.initialize({ 'LiveChat' : test['LiveChat'] });
+      expect(analytics.providers[0].options.license).to.equal(test['LiveChat']);
     });
 
+  });
 
-    // Identify
-    // --------
 
-    test('updates visitor custom variables on identify', function () {
-        var spy = sinon.spy(window.LC_API, 'set_custom_variables');
+  describe('identify', function () {
 
-        analytics.identify(traits);
-        expect(spy.calledWithMatch([
-            { name : 'name', value : traits.name },
-            { name : 'email', value : traits.email }
-        ])).to.be(true);
+    it('should set user id', function () {
+      var spy = sinon.spy(window.LC_API, 'set_custom_variables');
+      analytics.identify(test.userId);
+      expect(spy.calledWith([
+        { name : 'User ID', value : test.userId }
+      ])).to.be(true);
 
-        spy.reset();
-
-        analytics.identify(userId);
-        expect(spy.calledWithMatch([
-            { name : 'User ID', value : userId }
-        ])).to.be(true);
-
-        spy.reset();
-
-        analytics.identify(userId, traits);
-        expect(spy.calledWithMatch([
-            { name : 'User ID', value : userId },
-            { name : 'name', value : traits.name },
-            { name : 'email', value : traits.email }
-        ])).to.be(true);
-
-        spy.restore();
+      spy.restore();
     });
 
-}());
+    it('should set traits', function () {
+      // Reset the internal user id first.
+      analytics.userId = undefined;
+
+      var stub = sinon.stub(window.LC_API, 'set_custom_variables');
+      analytics.identify(test.traits);
+      expect(stub.calledWith([
+        { name : 'name', value : test.traits.name },
+        { name : 'email', value : test.traits.email },
+        { name : 'created', value : test.traits.created }
+      ])).to.be(true);
+
+      stub.restore();
+    });
+
+    it('should set user id and traits', function () {
+      var stub = sinon.stub(window.LC_API, 'set_custom_variables');
+      analytics.identify(test.userId, test.traits);
+      expect(stub.calledWith([
+        { name : 'User ID', value : test.userId },
+        { name : 'name', value : test.traits.name },
+        { name : 'email', value : test.traits.email },
+        { name : 'created', value : test.traits.created }
+      ])).to.be(true);
+
+      stub.restore();
+    });
+
+  });
+
+});

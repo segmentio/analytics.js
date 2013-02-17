@@ -1,88 +1,76 @@
-!(function () {
-
-    suite('Vero');
-
-    var options = { 'Vero' : 'x' };
-
-    var event = 'event';
-
-    var properties = {
-        count : 42
-    };
-
-    var userId = 'user';
-
-    var traits = {
-        name  : 'Zeus',
-        email : 'zeus@olympus.io'
-    };
+var analytics = require('analytics');
 
 
-    // Initialize
-    // ----------
+describe('Vero', function () {
 
-    test('adds Vero\'s m.js on initialize', function (done) {
-        expect(window._veroq).to.be(undefined);
+  describe('initialize', function () {
 
-        var spy = sinon.spy();
-        analytics.ready(spy);
-        analytics.initialize(options);
-        expect(window._veroq).not.to.be(undefined);
-        expect(window._veroq.push).to.equal(Array.prototype.push);
-        expect(spy.called).to.be(true);
+    it('should call ready and load library', function (done) {
+      expect(window._veroq).to.be(undefined);
 
-        // When the library loads, it will overwrite the push method.
-        setTimeout(function () {
-          expect(window._veroq.push).not.to.equal(Array.prototype.push);
-          done();
-        }, 1900);
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'Vero' : test['Vero'] });
+      expect(window._veroq).not.to.be(undefined);
+      expect(window._veroq.push).to.equal(Array.prototype.push);
+      expect(spy.called).to.be(true);
+
+      // When the library loads, it will overwrite the push method.
+      setTimeout(function () {
+        expect(window._veroq.push).not.to.equal(Array.prototype.push);
+        done();
+      }, 1900);
     });
 
-    test('stores options on initialize', function () {
-        analytics.initialize(options);
-        expect(analytics.providers[0].options.apiKey).to.equal('x');
+    it('should store options', function () {
+      analytics.initialize({ 'Vero' : test['Vero'] });
+      expect(analytics.providers[0].options.apiKey).to.equal('x');
     });
 
+  });
 
-    // Identify
-    // --------
+
+  describe('identify', function () {
 
     // Very requires an email and traits. Check for both separately, but do
     // traits first because otherwise the userId will be cached.
-    test('pushes "users" on identify', function () {
+    it('should push "users"', function () {
+      // Vero alters passed in array, use a stub to track count
+      var stub = sinon.stub(window._veroq, 'push');
+      analytics.identify(test.traits);
+      expect(stub.called).to.be(false);
 
-        // Vero alters passed in array, use a stub to track count
-        var stub = sinon.stub(window._veroq, 'push');
-        analytics.identify(traits);
-        expect(stub.called).to.be(false);
+      stub.reset();
+      analytics.identify(test.userId);
+      expect(stub.called).to.be(false);
 
-        stub.reset();
-        analytics.identify(userId);
-        expect(stub.called).to.be(false);
+      stub.reset();
 
-        stub.reset();
+      analytics.identify(test.userId, test.traits);
+      expect(stub.calledWith(['user', {
+        id      : test.userId,
+        email   : test.traits.email,
+        name    : test.traits.name,
+        created : test.traits.created
+      }])).to.be(true);
 
-        analytics.identify(userId, traits);
-        expect(stub.calledWith(['user', {
-            id    : userId,
-            email : traits.email,
-            name  : traits.name
-        }])).to.be(true);
-
-        stub.restore();
+      stub.restore();
     });
 
+  });
 
-    // Track
-    // -----
 
-    test('pushes "track" on track', function () {
-        var stub = sinon.stub(window._veroq, 'push');
-        analytics.track('event', properties);
+  describe('track', function () {
 
-        expect(stub.calledWith(['track', 'event', properties])).to.be(true);
+    it('should push "track"', function () {
+      var stub = sinon.stub(window._veroq, 'push');
+      analytics.track(test.event, test.properties);
 
-        stub.restore();
+      expect(stub.calledWith(['track', test.event, test.properties])).to.be(true);
+
+      stub.restore();
     });
 
-}());
+  });
+
+});

@@ -1,33 +1,30 @@
-!(function () {
+var analytics = require('analytics');
 
-    suite('HitTail');
 
-    var options = {
-        'HitTail' : 'x'
-    };
+describe('HitTail', function () {
 
-    // Initialize
-    // ----------
+  describe('initialize', function () {
 
-    test('calls ready and loads library on initialize', function (done) {
-        expect(window.htk).to.be(undefined);
+    it('should call ready and load library', function (done) {
+      expect(window.htk).to.be(undefined);
 
-        var spy = sinon.spy();
-        analytics.ready(spy);
-        analytics.initialize(options);
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'HitTail' : test['HitTail'] });
 
-        // We have to wait for the mlt.js to come back and create the
-        // global variable on window...
-        setTimeout(function () {
-            expect(window.htk).not.to.be(undefined);
-            expect(spy.called).to.be(true);
-            done();
-        }, 1900);
+      // When the library loads `htk` is created.
+      setTimeout(function () {
+        expect(window.htk).not.to.be(undefined);
+        expect(spy.called).to.be(true);
+        done();
+      }, 1900);
     });
 
-    test('stores options on initialize', function () {
-        analytics.initialize(options);
-        expect(analytics.providers[0].options.siteId).to.equal('x');
+    it('should store options', function () {
+      analytics.initialize({ 'HitTail' : test['HitTail'] });
+      expect(analytics.providers[0].options.siteId).to.equal(test['HitTail']);
     });
 
-}());
+  });
+
+});

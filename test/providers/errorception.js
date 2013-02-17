@@ -1,52 +1,44 @@
-!(function () {
-
-    suite('Errorception');
-
-    var options = { 'Errorception' : 'x' };
-
-    var userId = 'user';
-
-    var traits = {
-        name  : 'Zeus',
-        email : 'zeus@segment.io'
-    };
+var analytics = require('analytics');
 
 
-    // Initialize
-    // ----------
+describe('Errorception', function () {
 
-    test('stores options and adds errorception.js on initialize', function () {
-        expect(window._errs).to.be(undefined);
+  describe('initialize', function () {
 
-        var spy = sinon.spy();
-        analytics.ready(spy);
-        analytics.initialize(options);
+    it('should call ready and load library', function () {
+      expect(window._errs).to.be(undefined);
 
-        expect(window._errs).not.to.be(undefined);
-        expect(analytics.providers[0].options.projectId).to.equal('x');
-        expect(spy.called).to.be(true);
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'Errorception' : test['Errorception'] });
+      expect(window._errs).not.to.be(undefined);
+      expect(analytics.providers[0].options.projectId).to.equal('x');
+      expect(spy.called).to.be(true);
     });
 
+  });
 
-    // Identify
-    // --------
 
-    test('adds metadata on identify if `meta` setting is true', function () {
-        expect(window._errs.meta).to.be(undefined);
+  describe('identify', function () {
 
-        analytics.providers[0].options.meta = true;
-        analytics.identify(userId, traits);
+    it('should add metadata', function () {
+      expect(window._errs.meta).to.be(undefined);
 
-        expect(window._errs.meta).to.eql(traits);
+      analytics.providers[0].options.meta = true;
+      analytics.identify(test.userId, test.traits);
+
+      expect(window._errs.meta).to.eql(test.traits);
     });
 
-    test('doesnt add metadata on identify if `meta` setting is false', function () {
-        window._errs.meta = undefined;
+    it('shouldnt add metadata', function () {
+      window._errs.meta = undefined;
 
-        analytics.providers[0].options.meta = false;
-        analytics.identify(userId, traits);
+      analytics.providers[0].options.meta = false;
+      analytics.identify(test.userId, test.traits);
 
-        expect(window._errs.meta).to.be(undefined);
+      expect(window._errs.meta).to.be(undefined);
     });
 
-}());
+  });
+
+});

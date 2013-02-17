@@ -1,131 +1,117 @@
-!(function () {
+var analytics = require('analytics');
 
-    suite('Olark');
 
-    var options = {
-        'Olark' : 'x'
-    };
+describe('Olark', function () {
 
-    var event = 'event';
+  describe('initialize', function () {
 
-    var properties = {
-        count : 42
-    };
+    it('should call ready and load library', function () {
+      expect(window.olark).to.be(undefined);
 
-    var userId = 'user';
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'Olark' : test['Olark'] });
+      expect(window.olark).not.to.be(undefined);
+      expect(spy.called).to.be(true);
+    });
 
-    var traits = {
-        name  : 'Zeus',
+    it('should store options', function () {
+      analytics.initialize({ 'Olark' : test['Olark'] });
+      expect(analytics.providers[0].options.siteId).to.equal(test['Olark']);
+    });
+
+  });
+
+
+  describe('initialize', function () {
+
+    it('should updates visitor nickname with the best name', function () {
+      var spy = sinon.spy(window, 'olark');
+      analytics.identify({
+        dogs : 1
+      });
+      expect(spy.called).to.be(false);
+
+      spy.reset();
+      analytics.identify({
         email : 'zeus@segment.io'
-    };
+      });
 
+      expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
+        snippet : 'zeus@segment.io'
+      })).to.be(true);
 
-    // Initialize
-    // ----------
+      spy.reset();
+      analytics.identify(test.traits);
+      expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
+        snippet : 'Zeus (zeus@segment.io)'
+      })).to.be(true);
 
-    test('calls ready and loads library on initialize', function () {
-        expect(window.olark).to.be(undefined);
+      spy.reset();
+      analytics.identify(test.userId);
+      expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
+        snippet : test.userId
+      })).to.be(true);
 
+      spy.reset();
+      analytics.identify(test.userId, test.traits);
+      expect(spy.calledWith('api.chat.updateVisitorNickname', {
+        snippet : 'Zeus (zeus@segment.io)'
+      })).to.be(true);
 
-        var spy = sinon.spy();
-        analytics.ready(spy);
-        analytics.initialize(options);
-        expect(window.olark).not.to.be(undefined);
-        expect(spy.called).to.be(true);
+      spy.restore();
     });
 
-    test('stores options on initialize', function () {
-        analytics.initialize(options);
-        expect(analytics.providers[0].options.siteId).to.equal('x');
+  });
+
+
+  describe('track', function () {
+
+    it('should log event to operator', function () {
+      analytics.providers[0].options.track = true;
+      var spy = sinon.spy(window, 'olark');
+      analytics.track(test.event, test.properties);
+      expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
+        body : 'visitor triggered "' + test.event + '"'
+      })).to.be(true);
+
+      spy.restore();
     });
 
+    it('shouldnt load event to operator', function () {
+      analytics.providers[0].options.track = false;
+      var spy = sinon.spy(window, 'olark');
+      analytics.track(test.event, test.properties);
+      expect(spy.called).to.be(false);
 
-    // Identify
-    // --------
-
-    test('updates visitor nickname on identify with the best name', function () {
-        var spy = sinon.spy(window, 'olark');
-        analytics.identify({
-            dogs : 1
-        });
-        expect(spy.called).to.be(false);
-
-        spy.reset();
-        analytics.identify({
-            email : 'zeus@segment.io'
-        });
-
-        expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
-            snippet : 'zeus@segment.io'
-        })).to.be(true);
-
-        spy.reset();
-        analytics.identify(traits);
-        expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
-            snippet : 'Zeus (zeus@segment.io)'
-        })).to.be(true);
-
-        spy.reset();
-        analytics.identify(userId);
-        expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
-            snippet : 'user'
-        })).to.be(true);
-
-        spy.reset();
-        analytics.identify(userId, traits);
-        expect(spy.calledWith('api.chat.updateVisitorNickname', {
-            snippet : 'Zeus (zeus@segment.io)'
-        })).to.be(true);
-
-        spy.restore();
+      spy.restore();
     });
 
+  });
 
-    // Track
-    // -----
 
-    test('logs event to operator on track if `track` setting is true', function () {
-        analytics.providers[0].options.track = true;
-        var spy = sinon.spy(window, 'olark');
-        analytics.track(event, properties);
-        expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
-            body : 'visitor triggered "'+event+'"'
-        })).to.be(true);
+  describe('pageview', function () {
 
-        spy.restore();
+    it('should log event to operator', function () {
+      analytics.providers[0].options.pageview = true;
+      var spy = sinon.spy(window, 'olark');
+      analytics.pageview();
+      expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
+        body : 'looking at ' + window.location.href
+      })).to.be(true);
+
+      spy.restore();
     });
 
-    test('doesnt log event to operator on track if `track` setting is false', function () {
-        analytics.providers[0].options.track = false;
-        var spy = sinon.spy(window, 'olark');
-        analytics.track(event, properties);
-        expect(spy.called).to.be(false);
+    it('shouldnt log event to operator', function () {
+      analytics.providers[0].options.pageview = false;
+      var spy = sinon.spy(window, 'olark');
+      analytics.pageview();
+      expect(spy.called).to.be(false);
 
-        spy.restore();
+      spy.restore();
     });
 
+  });
 
-    // Pageview
-    // --------
-
-    test('logs event to operator on pageview if `pageview` setting is true', function () {
-        analytics.providers[0].options.pageview = true;
-        var spy = sinon.spy(window, 'olark');
-        analytics.pageview();
-        expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
-            body : 'looking at ' + window.location.href
-        })).to.be(true);
-
-        spy.restore();
-    });
-
-    test('doesnt log event to operator on pageview if `pageview` setting is false', function () {
-        analytics.providers[0].options.pageview = false;
-        var spy = sinon.spy(window, 'olark');
-        analytics.pageview();
-        expect(spy.called).to.be(false);
-
-        spy.restore();
-    });
-
-}());
+});

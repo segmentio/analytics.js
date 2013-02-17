@@ -1,56 +1,54 @@
-!(function () {
-
-  suite('Chartbeat');
-
-  var options = {
-    'Chartbeat' : {
-      uid    : 'x',
-      domain : 'example.com'
-    }
-  };
+var analytics = require('analytics');
 
 
-  // Initialize
-  // ----------
+describe('Chartbeat', function () {
 
-  test('loads library and calls ready initialize', function (done) {
-    expect(window.pSUPERFLY).to.be(undefined);
+  describe('initialize', function () {
 
-    var spy = sinon.spy();
-    analytics.ready(spy);
-    analytics.initialize(options);
+    it('should call ready and load library', function (done) {
+      expect(window.pSUPERFLY).to.be(undefined);
 
-    // Once the library is loaded, the global will exist and ready should have
-    // been called.
-    setTimeout(function () {
-      expect(window.pSUPERFLY).not.to.be(undefined);
-      expect(spy.called).to.be(true);
-      done();
-    }, 1900);
-  });
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'Chartbeat' : test['Chartbeat'] });
 
-  test('stores options on initialize', function () {
-    analytics.initialize(options);
-    expect(analytics.providers[0].options.uid).to.equal('x');
-    expect(analytics.providers[0].options.domain).to.equal('example.com');
-    // We copy over all of the options directly into Chartbeat.
-    expect(window._sf_async_config).to.equal(analytics.providers[0].options);
+      // Once the library is loaded, the global will exist and ready should have
+      // been called.
+      setTimeout(function () {
+        expect(window.pSUPERFLY).not.to.be(undefined);
+        expect(spy.called).to.be(true);
+        done();
+      }, 1900);
+    });
+
+    it('should store options', function () {
+      analytics.initialize({ 'Chartbeat' : test['Chartbeat'] });
+      var options = analytics.providers[0].options;
+      expect(options.uid).to.equal(test['Chartbeat'].uid);
+      expect(options.domain).to.equal(test['Chartbeat'].domain);
+      // We copy over all of the options directly into Chartbeat. But,
+      // Chartbeat actually adds their own options, so we can't just use `eql`.
+      expect(window._sf_async_config.uid).to.equal(test['Chartbeat'].uid);
+      expect(window._sf_async_config.domain).to.equal(test['Chartbeat'].domain);
+    });
+
   });
 
 
-  // Pageview
-  // --------
+  describe('pageview', function () {
 
-  test('calls virtualPage on pageview', function () {
-    var spy = sinon.spy(window.pSUPERFLY, 'virtualPage');
-    analytics.pageview();
-    expect(spy.calledWith(window.location.pathname)).to.be(true);
+    it('should call virtualPage', function () {
+      var spy = sinon.spy(window.pSUPERFLY, 'virtualPage');
+      analytics.pageview();
+      expect(spy.calledWith(window.location.pathname)).to.be(true);
 
-    spy.reset();
-    analytics.pageview('/url');
-    expect(spy.calledWith('/url')).to.be(true);
+      spy.reset();
+      analytics.pageview(test.url);
+      expect(spy.calledWith(test.url)).to.be(true);
 
-    spy.restore();
+      spy.restore();
+    });
+
   });
 
-}());
+});

@@ -1,102 +1,97 @@
-!(function () {
-
-    suite('KISSmetrics');
-
-    var options = { 'KISSmetrics' : 'x' };
-
-    var event = 'event';
-
-    var properties = {
-        count   : 42,
-        revenue : 9.99
-    };
-
-    var userId = 'user';
-
-    var traits = {
-        name  : 'Zeus',
-        email : 'zeus@segment.io'
-    };
+var analytics = require('analytics');
 
 
-    // Initialize
-    // ----------
+describe('KISSmetrics', function () {
 
-    test('calls ready and loads library on initialize', function () {
-        expect(window._kmq).to.be(undefined);
+  describe('initialize', function () {
 
-        var spy = sinon.spy();
-        analytics.ready(spy);
-        analytics.initialize({ 'KISSmetrics' : 'x' });
-        expect(spy.called).to.be(true);
-        expect(window._kmq).not.to.be(undefined);
+    it('should call ready and load library', function (done) {
+      expect(window._kmq).to.be(undefined);
+
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'KISSmetrics' : test['KISSmetrics'] });
+      expect(spy.called).to.be(true);
+      expect(window._kmq).not.to.be(undefined);
+      expect(window.KM).to.be(undefined);
+
+      // When the library loads, it will create a `KM` global.
+      setTimeout(function () {
+        expect(window.KM).not.to.be(undefined);
+        done();
+      }, 1900);
     });
 
-    test('stores options on initialize', function () {
-        analytics.initialize(options);
-        expect(analytics.providers[0].options.apiKey).to.equal('x');
+    it('should store options', function () {
+      analytics.initialize({ 'KISSmetrics' : test['KISSmetrics'] });
+      expect(analytics.providers[0].options.apiKey).to.equal(test['KISSmetrics']);
     });
 
+  });
 
-    // Identify
-    // --------
 
-    test('pushes "_identify" on identify', function () {
-        var spy = sinon.spy(window._kmq, 'push');
-        analytics.identify(traits);
-        expect(spy.calledWith(['identify', userId])).to.be(false);
+  describe('identify', function () {
 
-        spy.reset();
-        analytics.identify(userId);
-        expect(spy.calledWith(['identify', userId])).to.be(true);
+    it('should push "_identify"', function () {
+      var stub = sinon.stub(window._kmq, 'push');
+      analytics.identify(test.traits);
+      expect(stub.calledWith(['identify', test.userId])).to.be(false);
 
-        spy.reset();
-        analytics.identify(userId, traits);
-        expect(spy.calledWith(['identify', userId])).to.be(true);
+      stub.reset();
+      analytics.identify(test.userId);
+      expect(stub.calledWith(['identify', test.userId])).to.be(true);
 
-        spy.restore();
+      stub.reset();
+      analytics.identify(test.userId, test.traits);
+      expect(stub.calledWith(['identify', test.userId])).to.be(true);
+
+      stub.restore();
     });
 
-    test('pushes "_set" on identify', function () {
-        var spy = sinon.spy(window._kmq, 'push');
-        analytics.identify(traits);
-        expect(spy.calledWith(['set', traits])).to.be(true);
+    it('should push "_set"', function () {
+      var stub = sinon.stub(window._kmq, 'push');
+      analytics.identify(test.traits);
+      expect(stub.calledWith(['set', test.traits])).to.be(true);
 
-        spy.reset();
-        analytics.identify(userId);
-        expect(spy.calledWith(['set', traits])).to.be(false);
-        spy.reset();
-        analytics.identify(userId, traits);
-        expect(spy.calledWith(['set', traits])).to.be(true);
+      stub.reset();
+      analytics.identify(test.userId);
+      expect(stub.calledWith(['set', test.traits])).to.be(false);
+      stub.reset();
+      analytics.identify(test.userId, test.traits);
+      expect(stub.calledWith(['set', test.traits])).to.be(true);
 
-        spy.restore();
+      stub.restore();
     });
 
+  });
 
-    // Track
-    // -----
 
-    test('pushes "_record" on track', function () {
-        var spy = sinon.spy(window._kmq, 'push');
-        analytics.track(event, properties);
-        expect(spy.calledWith(['record', event, {
-            count            : 42,
-            'Billing Amount' : 9.99
-        }])).to.be(true);
+  describe('track', function () {
 
-        spy.restore();
+    it('should push "_record"', function () {
+      var stub = sinon.stub(window._kmq, 'push');
+      analytics.track(test.event, test.properties);
+      expect(stub.calledWith(['record', test.event, {
+        type             : 'uncouth',
+        'Billing Amount' : 29.99
+      }])).to.be(true);
+
+      stub.restore();
     });
 
+  });
 
-    // Alias
-    // -----
 
-    test('calls alias on alias', function () {
-        var spy = sinon.spy(window._kmq, 'push');
-        analytics.alias('new', 'old');
-        expect(spy.calledWith(['alias', 'new', 'old'])).to.be(true);
+  describe('alias', function () {
 
-        spy.restore();
+    it('should call alias', function () {
+      var stub = sinon.stub(window._kmq, 'push');
+      analytics.alias(test.newUserId, test.oldUserId);
+      expect(stub.calledWith(['alias', test.newUserId, test.oldUserId])).to.be(true);
+
+      stub.restore();
     });
 
-}());
+  });
+
+});

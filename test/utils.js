@@ -1,5 +1,5 @@
 
-module.exports = {
+window.test = {
 
   userId : 'user',
 
@@ -18,6 +18,10 @@ module.exports = {
 
   url : '/url',
 
+  newUserId : 'new',
+
+  oldUserId : 'old',
+
 
   // Providers
   // ---------
@@ -25,6 +29,68 @@ module.exports = {
   'Bitdeli' : {
     inputId   : 'x',
     authToken : 'y'
-  }
+  },
+
+  'Chartbeat' : {
+    uid    : 'x',
+    domain : 'example.com'
+  },
+
+  'Clicky' : 'x',
+
+  'comScore' : {
+    c2 : 'x'
+  },
+
+  'CrazyEgg' : '00138301',
+
+  'Customer.io' : 'x',
+
+  'Errorception' : 'x',
+
+  'FoxMetrics': '4ec10e0c1542321b8c4caae7',
+
+  'Gauges' : 'x',
+
+  'Google Analytics' : {
+    trackingId : 'x'
+  },
+
+  'GoSquared' : 'x',
+
+  'HitTail' : 'x',
+
+  'HubSpot' : 'x',
+
+  'Intercom' : 'x',
+
+  'Keen IO': {
+    projectId : 'KEEN_PROJECT_ID',
+    apiKey    : 'KEEN_API_KEY'
+  },
+
+  'KISSmetrics' : '67f57ae9d61a6981fa07d141bec8c6c37e8b88c7',
+
+  'Klaviyo' : 'x',
+
+  'LiveChat' : '2143261',
+
+  'Mixpanel' : 'x',
+
+  'Olark' : 'x',
+
+  'Perfect Audience' : '4ff6ade4361ed500020000a5',
+
+  'Quantcast' : 'x',
+
+  'SnapEngage' : '782b737e-487f-4117-8a2b-2beb32b600e5',
+
+  'USERcycle' : 'x',
+
+  'UserVoice' : 'qTSuuylq5nZrsjC0L8bmg',
+
+  'Vero' : 'x',
+
+  'Woopra' : 'x'
 
 };

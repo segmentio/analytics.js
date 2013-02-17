@@ -1,43 +1,29 @@
-!(function () {
-
-    suite('SnapEngage');
-
-    var options = { 'SnapEngage' : '782b737e-487f-4117-8a2b-2beb32b600e5' };
-
-    var event = 'event';
-
-    var properties = {
-        count : 42
-    };
-
-    var userId = 'user';
-
-    var traits = {
-        name  : 'Zeus',
-        email : 'zeus@segment.io'
-    };
+var analytics = require('analytics');
 
 
-    // Initialize
-    // ----------
+describe('SnapEngage', function () {
 
-    test('stores options and adds SnapEngage on initialize', function (done) {
-        expect(window.SnapABug).to.be(undefined);
+  describe('initialize', function () {
 
-        var spy = sinon.spy();
-        analytics.ready(spy);
-        analytics.initialize(options);
+    it('should call ready and load library', function (done) {
+      expect(window.SnapABug).to.be(undefined);
 
-        setTimeout(function () {
-            expect(window.SnapABug).not.to.be(undefined);
-            expect(spy.called).to.be(true);
-            done();
-        }, 1900);
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'SnapEngage' : test['SnapEngage'] });
+
+      setTimeout(function () {
+        expect(window.SnapABug).not.to.be(undefined);
+        expect(spy.called).to.be(true);
+        done();
+      }, 1900);
     });
 
-    test('stores options on initialize', function () {
-        analytics.initialize(options);
-        expect(analytics.providers[0].options.apiKey).to.equal('782b737e-487f-4117-8a2b-2beb32b600e5');
+    it('should store options', function () {
+      analytics.initialize({ 'SnapEngage' : test['SnapEngage'] });
+      expect(analytics.providers[0].options.apiKey).to.equal(test['SnapEngage']);
     });
 
-}());
+  });
+
+});

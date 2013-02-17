@@ -1,105 +1,105 @@
-!(function () {
-
-    suite('GoSquared');
-
-    var options = {
-        'GoSquared' : 'x'
-    };
-
-    var event = 'event';
-
-    var properties = {
-        count : 42
-    };
-
-    var userId = 'user';
-
-    var traits = {
-        name  : 'Zeus',
-        email : 'zeus@segment.io'
-    };
+var analytics = require('analytics');
 
 
-    // Initialize
-    // ----------
+describe('GoSquared', function () {
 
-    test('stores options and adds GoSquared js on initialize', function (done) {
-        expect(window.GoSquared).to.be(undefined);
+  describe('initialize', function () {
 
-        var spy = sinon.spy();
-        analytics.ready(spy);
-        analytics.initialize(options);
-        expect(window.GoSquared).not.to.be(undefined);
-        expect(spy.called).to.be(true);
+    it('should call ready and load library', function (done) {
+      expect(window.GoSquared).to.be(undefined);
 
-        // GoSquared gives us a nice `load` callback.
-        window.GoSquared.load = function (tracker) {
-            expect(window.GoSquared.DefaultTracker).to.equal(tracker);
-            done();
-        };
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'GoSquared' : test['GoSquared'] });
+      expect(window.GoSquared).not.to.be(undefined);
+      expect(window.GoSquared.DefaultTracker).to.be(undefined);
+      expect(spy.called).to.be(true);
+
+      // When the library loads, the tracker will be available.
+      setTimeout(function () {
+        expect(window.GoSquared.DefaultTracker).not.to.be(undefined);
+        done();
+      }, 1900);
     });
 
-    test('stores options and adds GoSquared js on initialize', function () {
-        analytics.initialize(options);
-        expect(analytics.providers[0].options.siteToken).to.equal('x');
+    it('should store options', function () {
+      analytics.initialize({ 'GoSquared' : test['GoSquared'] });
+      expect(analytics.providers[0].options.siteToken).to.equal('x');
     });
 
+  });
 
-    // Identify
-    // --------
 
-    test('correctly identifies the user', function () {
-        expect(window.GoSquared.UserName).to.be(undefined);
-        expect(window.GoSquared.Visitor).to.be(undefined);
+  describe('identify', function () {
 
-        analytics.identify(traits);
-        expect(window.GoSquared.UserName).to.be(undefined);
-        expect(window.GoSquared.Visitor).to.eql(traits);
-
-        window.GoSquared.Visitor = undefined;
-        analytics.identify(userId);
-        expect(window.GoSquared.UserName).to.equal(userId);
-        expect(window.GoSquared.Visitor).to.be(undefined);
-
-        window.GoSquared.UserName = undefined;
-        analytics.identify(userId, traits);
-        expect(window.GoSquared.UserName).to.equal(userId);
-        expect(window.GoSquared.Visitor).to.eql(traits);
+    it('should set user id', function () {
+      // Reset GoSquared state before the test.
+      analytics.userId = null;
+      window.GoSquared.UserName = undefined;
+      window.GoSquared.Visitor = undefined;
+      analytics.identify(test.userId);
+      expect(window.GoSquared.UserName).to.equal(test.userId);
+      expect(window.GoSquared.Visitor).to.be(undefined);
     });
 
-
-    // Track
-    // -----
-
-    test('pushes "TrackEvent" on track', function () {
-        var stub = sinon.stub(window.GoSquared.q, 'push');
-        analytics.track(event);
-
-        expect(stub.calledWith(["TrackEvent", event, {}])).to.be(true);
-
-        stub.reset();
-        analytics.track(event, properties);
-        expect(stub.calledWith(["TrackEvent", event, properties])).to.be(true);
-
-        stub.restore();
+    it('should set traits', function () {
+      // Reset GoSquared state before the test.
+      analytics.userId = null;
+      window.GoSquared.UserName = undefined;
+      window.GoSquared.Visitor = undefined;
+      analytics.identify(test.traits);
+      expect(window.GoSquared.UserName).to.be(undefined);
+      expect(window.GoSquared.Visitor).to.eql(test.traits);
     });
 
-
-    // Pageview
-    // --------
-
-    test('calls "TrackView" on pageview', function () {
-        var stub = sinon.stub(window.GoSquared.q, 'push');
-
-        analytics.pageview();
-        expect(stub.calledWith(['TrackView', undefined])).to.be(true);
-
-        stub.reset();
-
-        analytics.pageview('/url');
-        expect(stub.calledWith(['TrackView', '/url'])).to.be(true);
-
-        stub.restore();
+    it('should set user id and traits', function () {
+      // Reset GoSquared state before the test.
+      analytics.userId = null;
+      window.GoSquared.UserName = undefined;
+      window.GoSquared.Visitor = undefined;
+      analytics.identify(test.userId, test.traits);
+      expect(window.GoSquared.UserName).to.equal(test.userId);
+      expect(window.GoSquared.Visitor).to.eql(test.traits);
     });
 
-}());
+  });
+
+
+  describe('traits', function () {
+
+    it('should push "TrackEvent"', function () {
+      var stub = sinon.stub(window.GoSquared.q, 'push');
+
+      analytics.track(test.event);
+      expect(stub.calledWith(["TrackEvent", test.event, {}])).to.be(true);
+
+      stub.reset();
+
+      analytics.track(test.event, test.properties);
+      expect(stub.calledWith(["TrackEvent", test.event, test.properties])).to.be(true);
+
+      stub.restore();
+    });
+
+  });
+
+
+  describe('pageview', function () {
+
+    it('should call "TrackView"', function () {
+      var stub = sinon.stub(window.GoSquared.q, 'push');
+
+      analytics.pageview();
+      expect(stub.calledWith(['TrackView', undefined])).to.be(true);
+
+      stub.reset();
+
+      analytics.pageview('/url');
+      expect(stub.calledWith(['TrackView', '/url'])).to.be(true);
+
+      stub.restore();
+    });
+
+  });
+
+});

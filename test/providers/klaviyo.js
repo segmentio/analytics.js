@@ -1,74 +1,62 @@
-!(function () {
-
-    suite('Klaviyo');
-
-    var options = { 'Klaviyo' : 'x' };
-
-    var event = 'event';
-
-    var properties = {
-        count : 42
-    };
-
-    var userId = 'user';
-
-    var traits = {
-        name  : 'Zeus',
-        email : 'zeus@segment.io'
-    };
+var analytics = require('analytics');
 
 
-    // Initialize
-    // ----------
+describe('Klaviyo', function () {
 
-    test('stores options and adds klaviyo javascript on initialize', function () {
-        expect(window._learnq).to.be(undefined);
+  describe('initialize', function () {
 
-        var spy = sinon.spy();
-        analytics.ready(spy);
-        analytics.initialize(options);
-        expect(window._learnq).not.to.be(undefined);
-        expect(spy.called).to.be(true);
+    it('should call ready and load library', function () {
+      expect(window._learnq).to.be(undefined);
+
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'Klaviyo' : test['Klaviyo'] });
+      expect(window._learnq).not.to.be(undefined);
+      expect(spy.called).to.be(true);
     });
 
-    test('stores options on initialize', function () {
-        analytics.initialize(options);
-        expect(analytics.providers[0].options.apiKey).to.equal('x');
+    it('should store options', function () {
+      analytics.initialize({ 'Klaviyo' : test['Klaviyo'] });
+      expect(analytics.providers[0].options.apiKey).to.equal(test['Klaviyo']);
     });
 
+  });
 
-    // Identify
-    // --------
 
-    test('pushes "_identify" on identify', function () {
-        var spy = sinon.spy(window._learnq, 'push');
-        analytics.identify(traits);
-        expect(spy.calledWith(['identify', traits])).to.be(true);
+  describe('identify', function () {
 
-        spy.reset();
-        analytics.identify(userId);
-        expect(spy.calledWith(['identify', { $id: userId }])).to.be(true);
+    it('should push "_identify"', function () {
+      var spy = sinon.spy(window._learnq, 'push');
+      analytics.identify(test.traits);
+      expect(spy.calledWith(['identify', test.traits])).to.be(true);
 
-        spy.reset();
-        var augmentedTraits = _.extend({}, traits, { $id: userId });
-        analytics.identify(userId, traits);
-        expect(spy.calledWith(['identify', augmentedTraits])).to.be(true);
+      spy.reset();
+      analytics.identify(test.userId);
+      expect(spy.calledWith(['identify', { $id: test.userId }])).to.be(true);
 
-        spy.restore();
+      spy.reset();
+      var augmentedTraits = _.extend({}, test.traits, { $id: test.userId });
+      analytics.identify(test.userId, test.traits);
+      expect(spy.calledWith(['identify', augmentedTraits])).to.be(true);
+
+      spy.restore();
     });
 
+  });
 
-    // Track
-    // -----
 
-    test('pushes "_track" on track', function () {
-        var spy = sinon.spy(window._learnq, 'push');
-        analytics.track(event, properties);
-        // Klaviyo adds extra properites to the event, so we don't want to check
-        // for an exact match.
-        expect(spy.calledWithMatch(['track', event, sinon.match(properties)])).to.be(true);
+  describe('track', function () {
 
-        spy.restore();
+    it('should push "_track"', function () {
+      var spy = sinon.spy(window._learnq, 'push');
+      analytics.track(test.event, test.properties);
+      // Klaviyo adds extra properites to the event, so we don't want to check
+      // for an exact match.
+      expect(spy.calledWithMatch(['track', test.event, sinon.match(test.properties)])).to.be(true);
+
+      spy.restore();
     });
 
-}());
+  });
+
+});

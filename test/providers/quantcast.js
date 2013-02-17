@@ -1,30 +1,30 @@
-!(function () {
-
-    suite('Quantcast');
-
-    var options = { 'Quantcast' : 'x' };
+var analytics = require('analytics');
 
 
-    // Initialize
-    // ----------
+describe('Quantcast', function () {
 
-    test('calls ready and loads the library on initialize', function (done) {
-        expect(window._qevents).to.be(undefined);
+  describe('initialize', function () {
 
-        var spy = sinon.spy();
-        analytics.ready(spy);
-        analytics.initialize(options);
+    it('should call ready and load library', function (done) {
+      expect(window._qevents).to.be(undefined);
 
-        setTimeout(function () {
-            expect(window._qevents).not.to.be(undefined);
-            expect(spy.called).to.be(true);
-            done();
-        }, 1900);
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'Quantcast' : test['Quantcast'] });
+
+      // Make sure the library actually loads.
+      setTimeout(function () {
+        expect(window._qevents).not.to.be(undefined);
+        expect(spy.called).to.be(true);
+        done();
+      }, 1900);
     });
 
-    test('stores options on initialize', function () {
-        analytics.initialize(options);
-        expect(analytics.providers[0].options.pCode).to.equal('x');
+    it('should store options', function () {
+      analytics.initialize({ 'Quantcast' : test['Quantcast'] });
+      expect(analytics.providers[0].options.pCode).to.equal(test['Quantcast']);
     });
 
-}());
+  });
+
+});

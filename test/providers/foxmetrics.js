@@ -1,77 +1,79 @@
-!(function () {
+var analytics = require('analytics');
 
-    suite('FoxMetrics');
 
-    var event = 'segment.io test';
+describe('FoxMetrics', function () {
 
-    var userId = '99FG84yf';
+  describe('initialize', function () {
 
-    var traits = {
-        name: 'John Fox',
-        email: 'john.fox@foxmetrics.com'
-    };
+    it('should call ready and load library', function () {
+      expect(window._fxm).to.be(undefined);
 
-    var properties = {
-        domain: 'segment.io'
-    };
-
-    // Initialize
-    // ----------
-
-    test('adds foxmetrics tracking script on initialize', function () {
-        expect(window._fxm).to.be(undefined);
-
-        analytics.initialize({
-            'FoxMetrics': '4ec10e0c1542321b8c4caae7'
-        });
-
-        expect(window._fxm).not.to.be(undefined);
-        expect(analytics.providers[0].options.appId).to.equal('4ec10e0c1542321b8c4caae7');
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      analytics.initialize({ 'FoxMetrics' : test['FoxMetrics'] });
+      expect(window._fxm).not.to.be(undefined);
+      expect(spy.called).to.be(true);
     });
 
-    // Identify
-    // --------
-
-    test('calls [fxm.visitor.Profile] on identify', function () {
-        var spy = sinon.spy(window._fxm, 'push');
-        analytics.identify(traits);
-        expect(spy.called).to.be(false);
-
-        spy.reset();
-        analytics.identify(userId);
-        expect(spy.calledWith(['_fxm.visitor.profile', userId, null, null, null, null, null, null, null])).to.be(true);
-
-        spy.reset();
-        analytics.identify(userId, traits);
-        expect(spy.calledWith(['_fxm.visitor.profile', userId, 'John', 'Fox', traits.email, null, null, null, traits])).to.be(true);
-
-        spy.restore();
+    it ('should store options', function () {
+      analytics.initialize({ 'FoxMetrics' : test['FoxMetrics'] });
+      expect(analytics.providers[0].options.appId).to.equal('4ec10e0c1542321b8c4caae7');
     });
 
-    // Track
-    // -----
+  });
 
-    test('calls custom event on track', function () {
-        var spy = sinon.spy(window._fxm, 'push');
-        analytics.track(event, properties);
-        expect(spy.calledWith([event, null, properties])).to.be(true);
 
-        spy.restore();
+  describe('identify', function () {
+
+    it('should push "_fxm.visitor.profile"', function () {
+      var spy = sinon.spy(window._fxm, 'push');
+      analytics.identify(test.traits);
+      expect(spy.called).to.be(false);
+
+      spy.reset();
+      analytics.identify(test.userId);
+      expect(spy.calledWith(['_fxm.visitor.profile', test.userId, null, null, null, null, null, null, null])).to.be(true);
+
+      spy.reset();
+      analytics.identify(test.userId, test.traits);
+      // FoxMetrics slices the name into first and last.
+      var firstName = test.traits.name.split(' ')[0];
+      var lastName = test.traits.name.split(' ')[1];
+      expect(spy.calledWith(['_fxm.visitor.profile', test.userId, firstName, lastName, test.traits.email, null, null, null, test.traits])).to.be(true);
+
+      spy.restore();
     });
 
-    // Pageview
-    // --------
+  });
 
-    test('calls [fxm.pages.view] on pageview', function () {
-        var spy = sinon.spy(window._fxm, 'push');
-        analytics.pageview();
-        expect(spy.calledWith(['_fxm.pages.view', null, null, null, null, null])).to.be(true);
 
-        spy.reset();
-        analytics.pageview('/url');
-        expect(spy.calledWith(['_fxm.pages.view', null, null, null, '/url', null])).to.be(true);
+  describe('track', function () {
 
-        spy.restore();
+    it('should push custom event', function () {
+      var spy = sinon.spy(window._fxm, 'push');
+      analytics.track(test.event, test.properties);
+      expect(spy.calledWith([test.event, null, test.properties])).to.be(true);
+
+      spy.restore();
     });
 
-} ());
+  });
+
+
+  describe('pageview', function () {
+
+    it('calls [fxm.pages.view] on pageview', function () {
+      var spy = sinon.spy(window._fxm, 'push');
+      analytics.pageview();
+      expect(spy.calledWith(['_fxm.pages.view', null, null, null, null, null])).to.be(true);
+
+      spy.reset();
+      analytics.pageview(test.url);
+      expect(spy.calledWith(['_fxm.pages.view', null, null, null, test.url, null])).to.be(true);
+
+      spy.restore();
+    });
+
+  });
+
+});

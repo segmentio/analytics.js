@@ -45,8 +45,11 @@ analytics.addProvider('FoxMetrics', {
             // fxm needs first and last name seperately
             var fname = null, lname = null, email = null;
             if (traits) {
-                fname = traits.name.split(' ')[0];
-                lname = traits.name.split(' ')[1];
+                if (traits.name) {
+                  fname = traits.name.split(' ')[0];
+                  lname = traits.name.split(' ')[1];
+                }
+
                 email = typeof (traits.email) !== 'undefined' ? traits.email : null;
             }
 

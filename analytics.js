@@ -1,4 +1,4 @@
-//     Analytics.js 0.6.0
+//     Analytics.js 0.6.1
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -825,7 +825,7 @@ analytics.addProvider('CrazyEgg', {
 
         var accountNumber = this.settings.accountNumber;
         var accountPath = accountNumber.slice(0, 4) + '/' + accountNumber.slice(4);
-        
+
         (function(){
             var a = document.createElement('script');
             var b = document.getElementsByTagName('script')[0];
@@ -1030,8 +1030,11 @@ analytics.addProvider('FoxMetrics', {
             // fxm needs first and last name seperately
             var fname = null, lname = null, email = null;
             if (traits) {
-                fname = traits.name.split(' ')[0];
-                lname = traits.name.split(' ')[1];
+                if (traits.name) {
+                  fname = traits.name.split(' ')[0];
+                  lname = traits.name.split(' ')[1];
+                }
+
                 email = typeof (traits.email) !== 'undefined' ? traits.email : null;
             }
 
@@ -2020,7 +2023,7 @@ analytics.addProvider('Quantcast', {
            elem.async = true;
            elem.type = 'text/javascript';
            var scpt = document.getElementsByTagName('script')[0];
-           scpt.parentNode.insertBefore(elem, scpt);  
+           scpt.parentNode.insertBefore(elem, scpt);
         })();
 
         _qevents.push({qacct: settings.pCode});

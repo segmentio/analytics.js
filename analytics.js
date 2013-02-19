@@ -46,6 +46,9 @@
         // initialized.
         addProvider : function (name, provider) {
             this.initializableProviders[name] = provider;
+            // add the provider's name so that we can later match turned
+            // off providers to their context map position
+            provider.name = name;
         },
 
 
@@ -116,10 +119,21 @@
         // Things like `name`, `age` or `friendCount`. If you have them, you
         // should always store a `name` and `email`.
         //
+        // * `context` (optional) is a dictionary of options that provide more
+        // information to the providers about this identify.
+        //  * `providers` {optional}: a dictionary of provider names to a
+        //  boolean specifying whether that provider will receive this identify.
+        //
         // * `callback` (optional) is a function to call after the a small
         // timeout to give the identify requests a chance to be sent.
-        identify : function (userId, traits, callback) {
+        identify : function (userId, traits, context, callback) {
             if (!this.initialized) return;
+
+            // Allow for not passing context, but passing a callback.
+            if (this.utils.isFunction(context)) {
+                callback = context;
+                context = null;
+            }
 
             // Allow for not passing traits, but passing a callback.
             if (this.utils.isFunction(traits)) {
@@ -143,8 +157,10 @@
 
             // Call `identify` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
-                if (!provider.identify) continue;
-                provider.identify(userId, this.utils.clone(traits));
+                if (!provider.identify ||
+                    !this.utils.isEnabled(provider, context)) continue;
+                provider.identify(userId, this.utils.clone(traits),
+                                          this.utils.clone(context));
             }
 
             if (callback && this.utils.isFunction(callback)) {
@@ -172,10 +188,21 @@
         // Property keys are all camelCase (we'll alias to non-camelCase for
         // you automatically for providers that require it).
         //
+        // * `context` (optional) is a dictionary of options that provide more
+        // information to the providers about this track.
+        //  * `providers` {optional}: a dictionary of provider names to a
+        //  boolean specifying whether that provider will receive this track.
+        //
         // * `callback` (optional) is a function to call after the a small
         // timeout to give the track requests a chance to be sent.
-        track : function (event, properties, callback) {
+        track : function (event, properties, context, callback) {
             if (!this.initialized) return;
+
+            // Allow for not passing context, but passing a callback.
+            if (this.utils.isFunction(context)) {
+                callback = context;
+                context = null;
+            }
 
             // Allow for not passing properties, but passing a callback.
             if (this.utils.isFunction(properties)) {
@@ -185,8 +212,10 @@
 
             // Call `track` on all of our enabled providers that support it.
             for (var i = 0, provider; provider = this.providers[i]; i++) {
-                if (!provider.track) continue;
-                provider.track(event, this.utils.clone(properties));
+                if (!provider.track ||
+                    !this.utils.isEnabled(provider, context)) continue;
+                provider.track(event, this.utils.clone(properties),
+                                      this.utils.clone(context));
             }
 
             if (callback && this.utils.isFunction(callback)) {
@@ -392,6 +421,27 @@
 
         utils : {
 
+            // Uses the context to determine if a provider is enabled
+            isEnabled: function (provider, context) {
+                // if there is no context, then the provider is enabled
+                if (!context) return true;
+                if (!this.isObject(context.providers)) return true;
+
+                var map = context.providers;
+
+                // determine the default provider setting
+                // if the user passes "all" or "All" : false
+                // then the provider is disabled unless told otherwise
+                var all = true;
+                if (this.isBoolean(map.all)) all = map.all;
+                if (this.isBoolean(map.All)) all = map.All;
+
+                if (this.isBoolean(map[provider.name]))
+                    return map[provider.name];
+                else
+                    return all;
+            },
+
             // Attach an event handler to a DOM element, even in IE.
             bind : function (el, event, callback) {
                 if (el.addEventListener) {
@@ -485,6 +535,9 @@
             },
             isNumber : function (obj) {
                 return Object.prototype.toString.call(obj) === '[object Number]';
+            },
+            isBoolean : function(obj) {
+                return obj === true || obj === false || toString.call(obj) == '[object Boolean]';
             },
 
             // Email detection helper to loosely validate emails.

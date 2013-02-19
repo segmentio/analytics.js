@@ -8,6 +8,7 @@
         pageview   : function () {},
         alias      : function (newId, originalId) {}
     };
+
     analytics.addProvider('test', provider);
 
     var settings = { 'test' : 'x' };
@@ -131,6 +132,27 @@
         spy.restore();
     });
 
+    test('sends a clone of context along', function  () {
+        var spy    = sinon.spy(provider, 'identify');
+
+        var userId = 'id';
+        var traits = {
+            age  : 23,
+            name : 'Achilles'
+        };
+        var context = {
+            providers: { all: true }
+        };
+
+        analytics.identify(userId, traits, context);
+
+        expect(spy.args[0][0]).to.equal(userId);
+        expect(spy.args[0][1]).to.eql(traits);
+        expect(spy.args[0][2]).to.eql(context);
+
+        spy.restore();
+    });
+
     test('calls the callback after the timeout duration', function (done) {
         var callback = sinon.spy();
 
@@ -145,7 +167,7 @@
     });
 
     test('takes a callback with optional traits or userId', function (done) {
-        var finish   = _.after(3, done);
+        var finish   = _.after(4, done);
         var callback = sinon.spy();
 
         analytics.identify('id', callback);
@@ -172,8 +194,94 @@
             expect(callback.called).to.be(true);
             finish();
         }, analytics.timeout);
+
+        var context = { providers: { all: true } };
+
+        analytics.identify('id', { name : 'Achilles' }, context, callback);
+
+        setTimeout(function () {
+            expect(callback.called).to.be(true);
+            finish();
+        }, analytics.timeout);
+
     });
 
+    test('takes a callback with optional traits or userId', function (done) {
+        var finish   = _.after(4, done);
+        var callback = sinon.spy();
+
+        analytics.identify('id', callback);
+
+        setTimeout(function () {
+            expect(callback.called).to.be(true);
+            finish();
+        }, analytics.timeout);
+
+        callback.reset();
+
+        analytics.identify({ name : 'Achilles' }, callback);
+
+        setTimeout(function () {
+            expect(callback.called).to.be(true);
+            finish();
+        }, analytics.timeout);
+
+        callback.reset();
+
+        analytics.identify('id', { name : 'Achilles' }, callback);
+
+        setTimeout(function () {
+            expect(callback.called).to.be(true);
+            finish();
+        }, analytics.timeout);
+
+        var context = { providers: { all : true } };
+
+        analytics.identify('id', { name : 'Achilles' }, context, callback);
+
+        setTimeout(function () {
+            expect(callback.called).to.be(true);
+            finish();
+        }, analytics.timeout);
+    });
+
+    test('is turned off by the all providers flag', function  () {
+        var spy    = sinon.spy(provider, 'identify');
+
+        var userId = 'id';
+        var traits = {
+            age  : 23,
+            name : 'Achilles'
+        };
+        var context = {
+            providers: { all: false }
+        };
+
+        analytics.identify(userId, traits, context);
+
+        expect(spy.called).to.be(false);
+
+        spy.restore();
+    });
+
+    test('is turned off by the single provider flag', function  () {
+        var spy    = sinon.spy(provider, 'identify');
+
+        var userId = 'id';
+        var traits = {
+            age  : 23,
+            name : 'Achilles'
+        };
+        var context = {
+            providers: { test: false }
+        };
+
+        analytics.identify(userId, traits, context);
+
+        expect(spy.called).to.be(false);
+
+        spy.restore();
+    });
 
     // Track
     // -----
@@ -211,6 +319,27 @@
 
         expect(spy.args[0][1]).not.to.equal(properties);
         expect(spy.args[0][1]).to.eql(properties);
+
+        spy.restore();
+    });
+
+    test('sends a clone of context along', function  () {
+        var spy    = sinon.spy(provider, 'track');
+
+        var eventName = 'woo';
+        var properties = {
+            level  : 'hard',
+            volume : 11
+        };
+        var context = {
+            providers: { all: true }
+        };
+
+        analytics.track(eventName, properties, context);
+
+        expect(spy.args[0][0]).to.equal(eventName);
+        expect(spy.args[0][1]).to.eql(properties);
+        expect(spy.args[0][2]).to.eql(context);
 
         spy.restore();
     });

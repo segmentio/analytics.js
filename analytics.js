@@ -825,7 +825,7 @@ analytics.addProvider('CrazyEgg', {
 
         var accountNumber = this.settings.accountNumber;
         var accountPath = accountNumber.slice(0, 4) + '/' + accountNumber.slice(4);
-
+        
         (function(){
             var a = document.createElement('script');
             var b = document.getElementsByTagName('script')[0];
@@ -2023,7 +2023,7 @@ analytics.addProvider('Quantcast', {
            elem.async = true;
            elem.type = 'text/javascript';
            var scpt = document.getElementsByTagName('script')[0];
-           scpt.parentNode.insertBefore(elem, scpt);
+           scpt.parentNode.insertBefore(elem, scpt);  
         })();
 
         _qevents.push({qacct: settings.pCode});

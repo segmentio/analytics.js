@@ -2,46 +2,13 @@
 PHANTOM = node_modules/.bin/mocha-phantomjs
 PHANTOM_OPTS = -s web-security=false -s local-to-remote-url-access=true
 
-FILES = src/analytics.js \
-				src/providers/bitdeli/bitdeli.js \
-				src/providers/chartbeat/chartbeat.js \
-				src/providers/clicky/clicky.js \
-				src/providers/comscore/comscore.js \
-				src/providers/crazyegg/crazyegg.js \
-				src/providers/customerio/customerio.js \
-				src/providers/errorception/errorception.js \
-				src/providers/foxmetrics/foxmetrics.js \
-				src/providers/gauges/gauges.js \
-				src/providers/google-analytics/google-analytics.js \
-				src/providers/gosquared/gosquared.js \
-				src/providers/hittail/hittail.js \
-				src/providers/hubspot/hubspot.js \
-				src/providers/intercom/intercom.js \
-				src/providers/keenio/keenio.js \
-				src/providers/kissmetrics/kissmetrics.js \
-				src/providers/klaviyo/klaviyo.js \
-				src/providers/livechat/livechat.js \
-				src/providers/mixpanel/mixpanel.js \
-				src/providers/olark/olark.js \
-				src/providers/perfect-audience/perfect-audience.js \
-				src/providers/quantcast/quantcast.js \
-				src/providers/snapengage/snapengage.js \
-				src/providers/usercycle/usercycle.js \
-				src/providers/uservoice/uservoice.js \
-				src/providers/vero/vero.js \
-				src/providers/woopra/woopra.js
-
 # Compiles a one-file copy of analytics.js from all the development files.
 analytics.js:
-	cat $(FILES) > analytics.js
+	component build --standalone analytics --out . --name analytics
 
 # Adds a minified copy of analytics.js
 min: analytics.js
 	uglifyjs -o analytics.min.js analytics.js
-
-# Adds nice annotated-source docs for each file.
-docs:
-	docco $(FILES)
 
 # Starts the testing server.
 server:
@@ -87,8 +54,8 @@ test-browser: server
 	open http://localhost:8000/test/min.html
 
 # Compiles, minfies, doccos, and tests analytics.js - wrapped up and good to go.
-release: analytics.js min docs test
+release: analytics.js min test
 
 
 
-.PHONY: analytics.js docs
+.PHONY: analytics.js

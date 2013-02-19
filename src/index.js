@@ -6,4 +6,4 @@ var Analytics = require('./analytics')
   , providers = require('./providers');
 
 
-module.exports = window.analytics = new Analytics(providers);
+module.exports = new Analytics(providers);

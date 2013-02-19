@@ -1,5 +1,3 @@
-var analytics = require('analytics');
-
 
 describe('CrazyEgg', function () {
 

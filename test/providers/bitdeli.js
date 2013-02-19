@@ -1,6 +1,3 @@
-var analytics = require('analytics')
-  , clone     = require('component-clone');
-
 
 describe('Bitdeli', function () {
 

@@ -1,6 +1,3 @@
-var analytics = require('analytics')
-  , extend    = require('segmentio-extend');
-
 
 describe('Woopra', function () {
 

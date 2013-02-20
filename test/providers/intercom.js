@@ -23,9 +23,10 @@ describe('Intercom', function () {
     it('should load library', function (done) {
       expect(window.intercomSettings).to.be(undefined);
 
+      expect(window.Intercom).to.be(undefined);
       analytics.identify(test.userId, test.traits);
       expect(window.intercomSettings).not.to.be(undefined);
-      expect(window.Intercom).to.be(undefined);
+
 
       // Once the Intercom library comes back, the array should be transformed.
       setTimeout(function () {

@@ -25,9 +25,10 @@ module.exports = Provider.extend({
   initialize : function (options, ready) {
     window._bdq = window._bdq || [];
     window._bdq.push(["setAccount", options.inputId, options.authToken]);
-    load('//d2flrkr957qc5j.cloudfront.net/bitdeli.min.js');
 
     if (options.initialPageview) this.pageview();
+
+    load('//d2flrkr957qc5j.cloudfront.net/bitdeli.min.js');
 
     // Bitdeli just uses a queue, so it's ready right away.
     ready();

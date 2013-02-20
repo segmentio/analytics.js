@@ -24,11 +24,13 @@ describe('Bitdeli', function () {
       }, 1900);
     });
 
-    it('should store options', function () {
+    it('should store options', function (done) {
+      window._bdq = [];
       analytics.initialize({ 'Bitdeli' : test['Bitdeli'] });
       var options = analytics.providers[0].options;
       expect(options.inputId).to.equal(test['Bitdeli'].inputId);
       expect(options.authToken).to.equal(test['Bitdeli'].authToken);
+      setTimeout(done, 1800);
     });
 
     it('should track a pageview', function () {
@@ -37,6 +39,8 @@ describe('Bitdeli', function () {
       var spy = sinon.spy(window._bdq, 'push');
 
       analytics.initialize({ 'Bitdeli' : test['Bitdeli'] });
+      console.log(spy.args);
+      console.log(analytics.providers[0].options.initialPageview);
       expect(spy.calledWith(['trackPageview', undefined])).to.be(true);
 
       spy.restore();

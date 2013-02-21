@@ -484,7 +484,7 @@
 
                 var args = Array.prototype.slice.call(arguments, 1);
                 for (var i = 0, source; source = args[i]; i++) {
-                    if (!this.isObject(source)) return;
+                    if (!this.isObject(source)) continue;
 
                     for (var property in source) {
                         obj[property] = source[property];

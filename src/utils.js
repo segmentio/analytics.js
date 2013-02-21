@@ -100,6 +100,9 @@ exports.isNumber = function (obj) {
   return Object.prototype.toString.call(obj) === '[object Number]';
 };
 
+var isBoolean = exports.isBoolean = function(obj) {
+  return obj === true || obj === false || toString.call(obj) == '[object Boolean]';
+};
 
 // Email detection helper to loosely validate emails.
 exports.isEmail = function (string) {
@@ -138,4 +141,25 @@ exports.getUrlParameter = function (urlSearchParameter, paramKey) {
       return decodeURIComponent(param[1]);
     }
   }
+};
+
+// Uses the context to determine if a provider is enabled
+exports.isEnabled = function (provider, context) {
+  // if there is no context, then the provider is enabled
+  if (!isObject(context)) return true;
+  if (!isObject(context.providers)) return true;
+
+  var map = context.providers;
+
+  // determine the default provider setting
+  // if the user passes "all" or "All" : false
+  // then the provider is disabled unless told otherwise
+  var all = true;
+  if (isBoolean(map.all)) all = map.all;
+  if (isBoolean(map.All)) all = map.All;
+
+  if (isBoolean(map[provider.name]))
+      return map[provider.name];
+  else
+      return all;
 };

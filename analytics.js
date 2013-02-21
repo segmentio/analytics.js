@@ -678,7 +678,7 @@ function set(name, value, options) {
 
   if (options.path) str += '; path=' + options.path;
   if (options.domain) str += '; domain=' + options.domain;
-  if (options.expires) str += '; expires=' + options.expires.toGMTString();
+  if (options.expires) str += '; expires=' + options.expires.toUTCString();
   if (options.secure) str += '; secure';
 
   document.cookie = str;
@@ -952,6 +952,9 @@ extend(Analytics.prototype, {
   // initialized.
   addProvider : function (name, Provider) {
     this.initializableProviders[name] = Provider;
+    // add the provider's name so that we can later match turned
+    // off providers to their context map position
+    Provider.prototype.name = name;
   },
 
 
@@ -1045,10 +1048,21 @@ extend(Analytics.prototype, {
   // Things like `name`, `age` or `friendCount`. If you have them, you
   // should always store a `name` and `email`.
   //
+  // * `context` (optional) is a dictionary of options that provide more
+  // information to the providers about this identify.
+  //  * `providers` {optional}: a dictionary of provider names to a
+  //  boolean specifying whether that provider will receive this identify.
+  //
   // * `callback` (optional) is a function to call after the a small
   // timeout to give the identify requests a chance to be sent.
-  identify : function (userId, traits, callback) {
+  identify : function (userId, traits, context, callback) {
     if (!this.initialized) return;
+
+    // Allow for not passing context, but passing a callback.
+    if (type(context) === 'function') {
+        callback = context;
+        context = null;
+    }
 
     // Allow for not passing traits, but passing a callback.
     if (type(traits) === 'function') {
@@ -1072,7 +1086,8 @@ extend(Analytics.prototype, {
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.identify) provider.identify(userId, clone(traits));
+      if (provider.identify && utils.isEnabled(provider, context))
+        provider.identify(userId, clone(traits), clone(context));
     });
 
     if (callback && type(callback) === 'function') {
@@ -1099,10 +1114,21 @@ extend(Analytics.prototype, {
   // Property keys are all camelCase (we'll alias to non-camelCase for
   // you automatically for providers that require it).
   //
+  // * `context` (optional) is a dictionary of options that provide more
+  // information to the providers about this track.
+  //  * `providers` {optional}: a dictionary of provider names to a
+  //  boolean specifying whether that provider will receive this track.
+  //
   // * `callback` (optional) is a function to call after the a small
   // timeout to give the track requests a chance to be sent.
-  track : function (event, properties, callback) {
+  track : function (event, properties, context, callback) {
     if (!this.initialized) return;
+
+    // Allow for not passing context, but passing a callback.
+    if (type(context) === 'function') {
+        callback = context;
+        context = null;
+    }
 
     // Allow for not passing properties, but passing a callback.
     if (type(properties) === 'function') {
@@ -1112,7 +1138,8 @@ extend(Analytics.prototype, {
 
     // Call `track` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.track) provider.track(event, clone(properties));
+      if (provider.track && utils.isEnabled(provider, context))
+        provider.track(event, clone(properties), clone(context));
     });
 
     if (callback && type(callback) === 'function') {
@@ -1455,6 +1482,9 @@ exports.isNumber = function (obj) {
   return Object.prototype.toString.call(obj) === '[object Number]';
 };
 
+var isBoolean = exports.isBoolean = function(obj) {
+  return obj === true || obj === false || toString.call(obj) == '[object Boolean]';
+};
 
 // Email detection helper to loosely validate emails.
 exports.isEmail = function (string) {
@@ -1495,6 +1525,26 @@ exports.getUrlParameter = function (urlSearchParameter, paramKey) {
   }
 };
 
+// Uses the context to determine if a provider is enabled
+exports.isEnabled = function (provider, context) {
+  // if there is no context, then the provider is enabled
+  if (!isObject(context)) return true;
+  if (!isObject(context.providers)) return true;
+
+  var map = context.providers;
+
+  // determine the default provider setting
+  // if the user passes "all" or "All" : false
+  // then the provider is disabled unless told otherwise
+  var all = true;
+  if (isBoolean(map.all)) all = map.all;
+  if (isBoolean(map.All)) all = map.All;
+
+  if (isBoolean(map[provider.name]))
+      return map[provider.name];
+  else
+      return all;
+};
 });
 require.register("analytics/src/providers/bitdeli.js", function(exports, require, module){
 // Bitdeli
@@ -3008,7 +3058,7 @@ require.alias("analytics/src/index.js", "analytics/index.js");
 if (typeof exports == "object") {
   module.exports = require("analytics");
 } else if (typeof define == "function" && define.amd) {
-  define(require("analytics"));
+  define(function(){ return require("analytics"); });
 } else {
   window["analytics"] = require("analytics");
 }})();

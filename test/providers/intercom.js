@@ -21,6 +21,9 @@ describe('Intercom', function () {
   describe('identify', function () {
 
     it('should load library', function (done) {
+
+      this.timeout(3000);
+
       expect(window.intercomSettings).to.be(undefined);
 
       expect(window.Intercom).to.be(undefined);
@@ -32,7 +35,7 @@ describe('Intercom', function () {
       setTimeout(function () {
         expect(window.Intercom).not.to.be(undefined);
         done();
-      }, 1900);
+      }, 2500);
     });
 
     it('shouldnt load library the second time', function () {

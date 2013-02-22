@@ -8,6 +8,7 @@ var Provider = require('../provider')
   , extend   = require('extend')
   , load     = require('load-script');
 
+var loadTime = new Date();
 
 module.exports = Provider.extend({
 
@@ -24,7 +25,7 @@ module.exports = Provider.extend({
     // Chartbeat `_sf_async_config` variable with options.
     window._sf_async_config = options;
     // Use the stored date from when we were loaded.
-    window._sf_endpt = analytics.date.getTime();
+    window._sf_endpt = loadTime.getTime();
 
     load({
       http  : 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',

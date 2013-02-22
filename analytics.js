@@ -980,7 +980,7 @@ extend(Analytics.prototype, {
     // Create a ready method that will run after all of our providers have been
     // initialized and loaded. We'll pass the function into each provider's
     // initialize method, so they can callback when they've loaded successfully.
-    var ready = _.after(size(providers), function () {
+    var ready = after(size(providers), function () {
       // Take each callback off the queue and call it.
       var callback;
       while(callback = self.readyCallbacks.shift()) {

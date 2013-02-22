@@ -28,8 +28,8 @@ module.exports = Provider.extend({
     window._sf_endpt = loadTime.getTime();
 
     load({
-      http  : 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',
-      https : 'http://static.chartbeat.com/js/chartbeat.js'
+      https : 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',
+      http  : 'http://static.chartbeat.com/js/chartbeat.js'
     }, ready);
   },
 

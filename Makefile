@@ -29,7 +29,8 @@ FILES = src/analytics.js \
 				src/providers/usercycle/usercycle.js \
 				src/providers/uservoice/uservoice.js \
 				src/providers/vero/vero.js \
-				src/providers/woopra/woopra.js
+				src/providers/woopra/woopra.js \
+				src/providers/storyberg/storyberg.js
 
 # Compiles a one-file copy of analytics.js from all the development files.
 analytics.js:

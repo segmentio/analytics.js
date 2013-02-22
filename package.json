@@ -53,7 +53,8 @@
     "quantcast",
     "snapengage",
     "usercycle",
-    "vero"
+    "vero",
+    "storyberg"
   ],
   "url": "https://github.com/segmentio/analytics.js",
   "repository": {

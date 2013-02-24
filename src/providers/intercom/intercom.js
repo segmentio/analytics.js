@@ -59,6 +59,7 @@ analytics.addProvider('Intercom', {
             settings.email = traits.email;
             settings.name = traits.name;
             settings.created_at = analytics.utils.getSeconds(traits.created);
+            settings.company = traits.company;
         }
 
         // If they didn't pass an email, check to see if the `userId` qualifies.

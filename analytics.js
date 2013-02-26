@@ -3064,7 +3064,7 @@ require.alias("analytics/src/index.js", "analytics/index.js");
 if (typeof exports == "object") {
   module.exports = require("analytics");
 } else if (typeof define == "function" && define.amd) {
-  define(require("analytics"));
+  define(function(){ return require("analytics"); });
 } else {
   window["analytics"] = require("analytics");
 }})();

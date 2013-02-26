@@ -39,8 +39,6 @@ describe('Bitdeli', function () {
       var spy = sinon.spy(window._bdq, 'push');
 
       analytics.initialize({ 'Bitdeli' : test['Bitdeli'] });
-      console.log(spy.args);
-      console.log(analytics.providers[0].options.initialPageview);
       expect(spy.calledWith(['trackPageview', undefined])).to.be(true);
 
       spy.restore();

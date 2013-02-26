@@ -16,6 +16,8 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
+  this.VERSION = '0.7.0';
+
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
   // later by the user.

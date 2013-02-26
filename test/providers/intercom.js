@@ -7,7 +7,7 @@ describe('Intercom', function () {
   };
 
   var userId = test.userId
-  ,   traits = clone(test.traits);
+    , traits = clone(test.traits);
 
   extend(traits, {
     company : { id : '123' }

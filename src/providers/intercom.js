@@ -56,6 +56,7 @@ module.exports = Provider.extend({
     if (traits) {
       settings.email = traits.email;
       settings.name = traits.name;
+      settings.company = traits.company;
       settings.created_at = Math.floor(traits.created/1000);
     }
 

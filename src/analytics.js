@@ -69,6 +69,9 @@ extend(Analytics.prototype, {
   // initialized.
   addProvider : function (name, Provider) {
     this.initializableProviders[name] = Provider;
+    // add the provider's name so that we can later match turned
+    // off providers to their context map position
+    Provider.prototype.name = name;
   },
 
 
@@ -162,10 +165,21 @@ extend(Analytics.prototype, {
   // Things like `name`, `age` or `friendCount`. If you have them, you
   // should always store a `name` and `email`.
   //
+  // * `context` (optional) is a dictionary of options that provide more
+  // information to the providers about this identify.
+  //  * `providers` {optional}: a dictionary of provider names to a
+  //  boolean specifying whether that provider will receive this identify.
+  //
   // * `callback` (optional) is a function to call after the a small
   // timeout to give the identify requests a chance to be sent.
-  identify : function (userId, traits, callback) {
+  identify : function (userId, traits, context, callback) {
     if (!this.initialized) return;
+
+    // Allow for not passing context, but passing a callback.
+    if (type(context) === 'function') {
+      callback = context;
+      context = null;
+    }
 
     // Allow for not passing traits, but passing a callback.
     if (type(traits) === 'function') {
@@ -189,7 +203,8 @@ extend(Analytics.prototype, {
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.identify) provider.identify(userId, clone(traits));
+      if (provider.identify && utils.isEnabled(provider, context))
+        provider.identify(userId, clone(traits), clone(context));
     });
 
     if (callback && type(callback) === 'function') {
@@ -216,10 +231,21 @@ extend(Analytics.prototype, {
   // Property keys are all camelCase (we'll alias to non-camelCase for
   // you automatically for providers that require it).
   //
+  // * `context` (optional) is a dictionary of options that provide more
+  // information to the providers about this track.
+  //  * `providers` {optional}: a dictionary of provider names to a
+  //  boolean specifying whether that provider will receive this track.
+  //
   // * `callback` (optional) is a function to call after the a small
   // timeout to give the track requests a chance to be sent.
-  track : function (event, properties, callback) {
+  track : function (event, properties, context, callback) {
     if (!this.initialized) return;
+
+    // Allow for not passing context, but passing a callback.
+    if (type(context) === 'function') {
+      callback = context;
+      context = null;
+    }
 
     // Allow for not passing properties, but passing a callback.
     if (type(properties) === 'function') {
@@ -229,7 +255,8 @@ extend(Analytics.prototype, {
 
     // Call `track` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.track) provider.track(event, clone(properties));
+      if (provider.track && utils.isEnabled(provider, context))
+        provider.track(event, clone(properties), clone(context));
     });
 
     if (callback && type(callback) === 'function') {

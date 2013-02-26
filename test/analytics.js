@@ -133,6 +133,27 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
+    it('sends a clone of context along', function  () {
+      var spy    = sinon.spy(Provider.prototype, 'identify');
+
+      var userId = 'id';
+      var traits = {
+          age  : 23,
+          name : 'Achilles'
+      };
+      var context = {
+          providers: { all: true }
+      };
+
+      analytics.identify(userId, traits, context);
+
+      expect(spy.args[0][0]).to.equal(userId);
+      expect(spy.args[0][1]).to.eql(traits);
+      expect(spy.args[0][2]).to.eql(context);
+
+      spy.restore();
+    });
+
     it('calls the callback after the timeout duration', function (done) {
       var callback = sinon.spy();
 
@@ -147,7 +168,7 @@ describe('Analytics.js', function () {
     });
 
     it('takes a callback with optional traits or userId', function (done) {
-      var finish   = _.after(3, done);
+      var finish   = _.after(4, done);
       var callback = sinon.spy();
 
       analytics.identify('id', callback);
@@ -174,7 +195,55 @@ describe('Analytics.js', function () {
         expect(callback.called).to.be(true);
         finish();
       }, analytics.timeout);
+
+      var context = { providers: { all: true } };
+
+      analytics.identify('id', { name : 'Achilles' }, context, callback);
+
+      setTimeout(function () {
+          expect(callback.called).to.be(true);
+          finish();
+      }, analytics.timeout);
     });
+
+    it('is turned off by the all providers flag', function  () {
+        var spy    = sinon.spy(Provider.prototype, 'identify');
+
+        var userId = 'id';
+        var traits = {
+            age  : 23,
+            name : 'Achilles'
+        };
+        var context = {
+            providers: { all: false }
+        };
+
+        analytics.identify(userId, traits, context);
+
+        expect(spy.called).to.be(false);
+
+        spy.restore();
+    });
+
+    it('is turned off by the single provider flag', function  () {
+        var spy    = sinon.spy(Provider.prototype, 'identify');
+
+        var userId = 'id';
+        var traits = {
+            age  : 23,
+            name : 'Achilles'
+        };
+        var userContext = {
+            providers: { Test: false }
+        };
+
+        analytics.identify(userId, traits, userContext);
+
+        expect(spy.called).to.be(false);
+
+        spy.restore();
+    });
+
   });
 
 
@@ -216,6 +285,27 @@ describe('Analytics.js', function () {
       expect(spy.args[0][1]).to.eql(properties);
 
       spy.restore();
+    });
+
+    it('sends a clone of context along', function  () {
+        var spy    = sinon.spy(Provider.prototype, 'track');
+
+        var eventName = 'woo';
+        var properties = {
+            level  : 'hard',
+            volume : 11
+        };
+        var context = {
+            providers: { all: true }
+        };
+
+        analytics.track(eventName, properties, context);
+
+        expect(spy.args[0][0]).to.equal(eventName);
+        expect(spy.args[0][1]).to.eql(properties);
+        expect(spy.args[0][2]).to.eql(context);
+
+        spy.restore();
     });
 
     it('calls the callback after the timeout duration', function (done) {

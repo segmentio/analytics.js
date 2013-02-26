@@ -3,7 +3,7 @@ PHANTOM = node_modules/.bin/mocha-phantomjs
 PHANTOM_OPTS = -s web-security=false -s local-to-remote-url-access=true
 
 # Compiles a one-file copy of analytics.js from all the development files.
-analytics.js:
+analytics.js: install
 	component build --standalone analytics --out . --name analytics
 
 # Adds a minified copy of analytics.js
@@ -18,6 +18,9 @@ server:
 kill:
 	kill -9 `cat test/pid.txt`
 	rm test/pid.txt
+
+install:
+	component install
 
 # Runs all the tests on travis.
 test: server

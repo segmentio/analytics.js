@@ -1062,8 +1062,8 @@ extend(Analytics.prototype, {
 
     // Allow for not passing context, but passing a callback.
     if (type(context) === 'function') {
-        callback = context;
-        context = null;
+      callback = context;
+      context = null;
     }
 
     // Allow for not passing traits, but passing a callback.
@@ -1128,8 +1128,8 @@ extend(Analytics.prototype, {
 
     // Allow for not passing context, but passing a callback.
     if (type(context) === 'function') {
-        callback = context;
-        context = null;
+      callback = context;
+      context = null;
     }
 
     // Allow for not passing properties, but passing a callback.

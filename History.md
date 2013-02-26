@@ -1,3 +1,9 @@
+0.7.1 / 2013-2-26
+================
+* Adding intercom companies by [@adrianrego](https://github.com/adrianrego)
+* Adding intercom setting for use_counter
+* Fixing intercom traits passed without a created field
+
 0.7.0 / 2013-2-25
 ================
 * Switching over to component

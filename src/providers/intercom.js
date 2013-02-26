@@ -21,7 +21,9 @@ module.exports = Provider.extend({
     appId : null,
 
     // An optional setting to display the Intercom inbox widget.
-    activator : null
+    activator : null,
+    // Whether to show the count of messages for the inbox widget.
+    counter : true
   },
 
 
@@ -57,18 +59,17 @@ module.exports = Provider.extend({
       settings.email = traits.email;
       settings.name = traits.name;
       settings.company = traits.company;
-      settings.created_at = Math.floor(traits.created/1000);
+      if (traits.created) settings.created_at = Math.floor(traits.created/1000);
     }
 
     // If they didn't pass an email, check to see if the `userId` qualifies.
-    if (isEmail(userId) && (traits && !traits.email)) {
-      settings.email = userId;
-    }
+    if (isEmail(userId) && (traits && !traits.email)) settings.email = userId;
 
     // Optionally add the widget.
     if (this.options.activator) {
       settings.widget = {
-          activator : this.options.activator
+        activator   : this.options.activator,
+        use_counter : this.options.counter
       };
     }
 

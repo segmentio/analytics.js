@@ -901,7 +901,7 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.7.0';
+  this.VERSION = '0.7.1';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -2282,7 +2282,9 @@ module.exports = Provider.extend({
     appId : null,
 
     // An optional setting to display the Intercom inbox widget.
-    activator : null
+    activator : null,
+    // Whether to show the count of messages for the inbox widget.
+    counter : true
   },
 
 
@@ -2317,18 +2319,18 @@ module.exports = Provider.extend({
     if (traits) {
       settings.email = traits.email;
       settings.name = traits.name;
-      settings.created_at = Math.floor(traits.created/1000);
+      settings.company = traits.company;
+      if (traits.created) settings.created_at = Math.floor(traits.created/1000);
     }
 
     // If they didn't pass an email, check to see if the `userId` qualifies.
-    if (isEmail(userId) && (traits && !traits.email)) {
-      settings.email = userId;
-    }
+    if (isEmail(userId) && (traits && !traits.email)) settings.email = userId;
 
     // Optionally add the widget.
     if (this.options.activator) {
       settings.widget = {
-          activator : this.options.activator
+        activator   : this.options.activator,
+        use_counter : this.options.counter
       };
     }
 
@@ -2339,6 +2341,7 @@ module.exports = Provider.extend({
   }
 
 });
+
 });
 require.register("analytics/src/providers/keen-io.js", function(exports, require, module){
 // Keen IO

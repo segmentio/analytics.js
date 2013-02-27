@@ -1,9 +1,9 @@
-
 describe('Perfect Audience', function () {
 
   describe('initialize', function () {
 
     it('should call read and load library', function (done) {
+      this.timeout(4000);
       expect(window._pa).to.be(undefined);
 
       var spy = sinon.spy();
@@ -16,7 +16,7 @@ describe('Perfect Audience', function () {
         expect(window._pa.track).not.to.be(undefined);
         expect(spy.called).to.be(true);
         done();
-      }, 1900);
+      }, 3900);
     });
 
     it('should call store options', function () {

@@ -22,6 +22,7 @@ exports['Olark']            = require('./olark');
 exports['Perfect Audience'] = require('./perfect-audience');
 exports['Quantcast']        = require('./quantcast');
 exports['SnapEngage']       = require('./snapengage');
+exports['Storyberg']        = require('./storyberg');
 exports['USERcycle']        = require('./usercycle');
 exports['UserVoice']        = require('./uservoice');
 exports['Vero']             = require('./vero');

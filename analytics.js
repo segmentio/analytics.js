@@ -678,7 +678,7 @@ function set(name, value, options) {
 
   if (options.path) str += '; path=' + options.path;
   if (options.domain) str += '; domain=' + options.domain;
-  if (options.expires) str += '; expires=' + options.expires.toGMTString();
+  if (options.expires) str += '; expires=' + options.expires.toUTCString();
   if (options.secure) str += '; secure';
 
   document.cookie = str;
@@ -2253,10 +2253,12 @@ exports['Olark']            = require('./olark');
 exports['Perfect Audience'] = require('./perfect-audience');
 exports['Quantcast']        = require('./quantcast');
 exports['SnapEngage']       = require('./snapengage');
+exports['Storyberg']        = require('./storyberg');
 exports['USERcycle']        = require('./usercycle');
 exports['UserVoice']        = require('./uservoice');
 exports['Vero']             = require('./vero');
 exports['Woopra']           = require('./woopra');
+
 });
 require.register("analytics/src/providers/intercom.js", function(exports, require, module){
 // Intercom
@@ -2368,16 +2370,13 @@ module.exports = Provider.extend({
 
     load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js');
 
-    // Keen IO actually defines all their functions in their snippet, so they
+    // Keen IO defines all their functions in the snippet, so they
     // are ready immediately.
     ready();
   },
 
 
   identify : function(userId, traits) {
-    // In case the Keen IO library hasn't loaded yet.
-    if (!window.Keen.setGlobalProperties) return;
-
     // Use Keen IO global properties to include `userId` and `traits` on
     // every event sent to Keen IO.
     var globalUserProps = {};
@@ -2392,9 +2391,6 @@ module.exports = Provider.extend({
 
 
   track : function(event, properties) {
-    // In case the Keen IO library hasn't loaded yet.
-    if (!window.Keen.addEvent) return;
-
     window.Keen.addEvent(event, properties);
   }
 
@@ -2849,6 +2845,61 @@ module.exports = Provider.extend({
 
 });
 });
+require.register("analytics/src/providers/storyberg.js", function(exports, require, module){
+// Storyberg
+// -----------
+// [Documentation](https://github.com/Storyberg/Docs/wiki/Javascript-Library).
+
+var Provider = require('../provider')
+  , extend   = require('extend')
+  , isEmail  = require('is-email')
+  , load     = require('load-script');
+
+module.exports = Provider.extend({
+
+  key : 'apiKey',
+
+  options : {
+    apiKey : null
+  },
+
+
+  initialize : function (options, ready) {
+    window._sbq = window._sbq || [];
+    window._sbk = options.apiKey;
+    load('//storyberg.com/analytics.js');
+
+    // Storyberg creates a queue, so it's ready immediately.
+    ready();
+  },
+
+
+  identify : function (userId, traits) {
+    // Don't do anything if we just have traits, because Vero
+    // requires a `userId`.
+    if (!userId) return;
+
+    traits || (traits = {});
+
+    // Storyberg takes the `userId` as part of the traits object
+    traits.user_id = userId;
+
+    window._sbq.push(['identify', traits]);
+  },
+
+
+  track : function (event, properties) {
+    properties || (properties = {});
+
+    // Storyberg takes the `userId` as part of the properties object
+    properties.name = event;
+
+    window._sbq.push(['event', properties]);
+  }
+
+});
+
+});
 require.register("analytics/src/providers/usercycle.js", function(exports, require, module){
 // USERcycle
 // -----------
@@ -2970,6 +3021,7 @@ module.exports = Provider.extend({
   }
 
 });
+
 });
 require.register("analytics/src/providers/woopra.js", function(exports, require, module){
 // Woopra

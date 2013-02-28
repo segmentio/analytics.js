@@ -9,6 +9,7 @@ var after       = require('after')
   , querystring = require('querystring')
   , type        = require('type')
   , url         = require('url')
+  , user        = require('./user')
   , utils       = require('./utils');
 
 
@@ -96,6 +97,9 @@ extend(Analytics.prototype, {
     // Reset our state.
     this.providers = [];
     this.userId = null;
+
+    // Load the user from our cookie.
+    user.load();
 
     // Create a ready method that will run after all of our providers have been
     // initialized and loaded. We'll pass the function into each provider's

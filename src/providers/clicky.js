@@ -1,8 +1,10 @@
 // Clicky
 // ------
 // [Documentation](http://clicky.com/help/customization/manual?new-domain).
+// [Session info](http://clicky.com/help/customization/manual?new-domain#/help/customization#session)
 
 var Provider = require('../provider')
+  , user     = require('../user')
   , extend   = require('extend')
   , load     = require('load-script');
 
@@ -19,6 +21,15 @@ module.exports = Provider.extend({
   initialize : function (options, ready) {
     window.clicky_site_ids = window.clicky_site_ids || [];
     window.clicky_site_ids.push(options.siteId);
+
+    var currentUser = user.get()
+      , session     = {};
+
+    session.username = currentUser.id;
+    if (currentUser.traits) extend(session, currentUser.traits);
+
+    window.clicky_custom = { session : session };
+
     load('//static.getclicky.com/js', ready);
   },
 

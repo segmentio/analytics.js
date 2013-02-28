@@ -5,7 +5,9 @@
 // Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat).
 
 var Provider = require('../provider')
+  , user     = require('../user')
   , extend   = require('extend')
+  , clone    = require('clone')
   , load     = require('load-script');
 
 
@@ -19,10 +21,15 @@ module.exports = Provider.extend({
 
 
   initialize : function (options, ready) {
-    window.GoSquared = {};
-    window.GoSquared.acct = options.siteToken;
-    window.GoSquared.q = [];
+    var GoSquared = window.GoSquared = {};
+    GoSquared.acct = options.siteToken;
+    GoSquared.q = [];
     window._gstc_lt =+ (new Date());
+
+    var currentUser = user.get();
+    GoSquared.VisitorName = currentUser.id;
+    GoSquared.Visitor = clone(currentUser.traits);
+
     load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
 
     // GoSquared makes a queue, so it's ready immediately.

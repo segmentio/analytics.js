@@ -6,6 +6,7 @@ module.exports = Provider;
 
 
 function Provider (options, ready) {
+
   // Allow for `options` to only be a string if the provider has specified
   // a default `key`, in which case convert `options` into a dictionary.
   if (type(options) !== 'object') {

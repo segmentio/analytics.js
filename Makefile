@@ -22,8 +22,11 @@ kill:
 install:
 	component install
 
+component:
+	component build --out . --name component --dev
+
 # Runs all the tests on travis.
-test: server
+test: server component
 	sleep 1
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/core.html
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/providers.html

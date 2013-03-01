@@ -41,9 +41,6 @@ extend(Analytics.prototype, {
   // Providers that can be initialized. Add using `this.addProvider`.
   initializableProviders : {},
 
-  // Cache the `userId` when a user is identified.
-  userId : null,
-
   // Store the date when the page loaded, for services that depend on it.
   date : new Date(),
 

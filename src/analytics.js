@@ -60,7 +60,7 @@ extend(Analytics.prototype, {
   timeout : 300,
 
   // Ability to access the user object.
-  // Should be removed eventually
+  // TODO: Should be removed eventually
   user : user,
 
   providers : [],
@@ -202,7 +202,7 @@ extend(Analytics.prototype, {
     }
 
     // Use the saved userId.
-    if (userId === null) userId = user.get().id;
+    if (userId === null) userId = user.id();
 
     // Update the cookie with new userId and traits.
     var alias = user.update(userId, traits);

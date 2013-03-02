@@ -1,5 +1,6 @@
 
 var cookieStore = require('cookie')
+  , clone       = require('clone')
   , extend      = require('extend')
   , json        = require('json')
   , type        = require('type');
@@ -37,6 +38,16 @@ exports.options = function (options) {
 };
 
 
+exports.id = function () {
+  return user.id;
+};
+
+
+exports.traits = function () {
+  return clone(user.traits);
+};
+
+
 /**
  * Updates the stored user with id and trait information
  * @param  {String}  userId
@@ -53,7 +64,7 @@ exports.update = function (userId, traits) {
 
   // If there is a current user and the new user isn't the same,
   // we want to just replace their traits. Otherwise extend.
-  if (user.id && userId && user.id !== userId) user.traits = traits || {};
+  if (user.id && userId && user.id !== userId) user.traits = traits;
   else extend(user.traits, traits);
 
   if (userId) user.id = userId;
@@ -61,15 +72,6 @@ exports.update = function (userId, traits) {
   if (cookie.enabled) save(user);
 
   return alias;
-};
-
-
-/**
- * Getter for the stored user object.
- * @return {Object} user
- */
-exports.get = function () {
-  return user;
 };
 
 

@@ -22,11 +22,12 @@ module.exports = Provider.extend({
     window.clicky_site_ids = window.clicky_site_ids || [];
     window.clicky_site_ids.push(options.siteId);
 
-    var currentUser = user.get()
-      , session     = {};
+    var userId  = user.id()
+      , traits  = user.traits()
+      , session = {};
 
-    session.username = currentUser.id;
-    if (currentUser.traits) extend(session, currentUser.traits);
+    session.username = userId;
+    extend(session, traits);
 
     window.clicky_custom = { session : session };
 

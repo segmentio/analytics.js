@@ -26,9 +26,8 @@ module.exports = Provider.extend({
     GoSquared.q = [];
     window._gstc_lt =+ (new Date());
 
-    var currentUser = user.get();
-    GoSquared.VisitorName = currentUser.id;
-    GoSquared.Visitor = clone(currentUser.traits);
+    GoSquared.VisitorName = user.id();
+    GoSquared.Visitor = user.traits();
 
     load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
 

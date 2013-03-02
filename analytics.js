@@ -1440,7 +1440,7 @@ extend(Analytics.prototype, {
   timeout : 300,
 
   // Ability to access the user object.
-  // Should be removed eventually
+  // TODO: Should be removed eventually
   user : user,
 
   providers : [],
@@ -1582,7 +1582,7 @@ extend(Analytics.prototype, {
     }
 
     // Use the saved userId.
-    if (userId === null) userId = user.get().id;
+    if (userId === null) userId = user.id();
 
     // Update the cookie with new userId and traits.
     var alias = user.update(userId, traits);
@@ -1889,6 +1889,7 @@ extend(Provider.prototype, {
 require.register("analytics/src/user.js", function(exports, require, module){
 
 var cookieStore = require('cookie')
+  , clone       = require('clone')
   , extend      = require('extend')
   , json        = require('json')
   , type        = require('type');
@@ -1926,6 +1927,16 @@ exports.options = function (options) {
 };
 
 
+exports.id = function () {
+  return user.id;
+};
+
+
+exports.traits = function () {
+  return clone(user.traits);
+};
+
+
 /**
  * Updates the stored user with id and trait information
  * @param  {String}  userId
@@ -1942,7 +1953,7 @@ exports.update = function (userId, traits) {
 
   // If there is a current user and the new user isn't the same,
   // we want to just replace their traits. Otherwise extend.
-  if (user.id && userId && user.id !== userId) user.traits = traits || {};
+  if (user.id && userId && user.id !== userId) user.traits = traits;
   else extend(user.traits, traits);
 
   if (userId) user.id = userId;
@@ -1950,15 +1961,6 @@ exports.update = function (userId, traits) {
   if (cookie.enabled) save(user);
 
   return alias;
-};
-
-
-/**
- * Getter for the stored user object.
- * @return {Object} user
- */
-exports.get = function () {
-  return user;
 };
 
 
@@ -2319,11 +2321,12 @@ module.exports = Provider.extend({
     window.clicky_site_ids = window.clicky_site_ids || [];
     window.clicky_site_ids.push(options.siteId);
 
-    var currentUser = user.get()
-      , session     = {};
+    var userId  = user.id()
+      , traits  = user.traits()
+      , session = {};
 
-    session.username = currentUser.id;
-    if (currentUser.traits) extend(session, currentUser.traits);
+    session.username = userId;
+    extend(session, traits);
 
     window.clicky_custom = { session : session };
 
@@ -2773,9 +2776,8 @@ module.exports = Provider.extend({
     GoSquared.q = [];
     window._gstc_lt =+ (new Date());
 
-    var currentUser = user.get();
-    GoSquared.VisitorName = currentUser.id;
-    GoSquared.Visitor = clone(currentUser.traits);
+    GoSquared.VisitorName = user.id();
+    GoSquared.Visitor = user.traits();
 
     load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
 
@@ -3027,16 +3029,13 @@ module.exports = Provider.extend({
 
     load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js');
 
-    // Keen IO actually defines all their functions in their snippet, so they
+    // Keen IO defines all their functions in the snippet, so they
     // are ready immediately.
     ready();
   },
 
 
   identify : function(userId, traits) {
-    // In case the Keen IO library hasn't loaded yet.
-    if (!window.Keen.setGlobalProperties) return;
-
     // Use Keen IO global properties to include `userId` and `traits` on
     // every event sent to Keen IO.
     var globalUserProps = {};
@@ -3051,9 +3050,6 @@ module.exports = Provider.extend({
 
 
   track : function(event, properties) {
-    // In case the Keen IO library hasn't loaded yet.
-    if (!window.Keen.addEvent) return;
-
     window.Keen.addEvent(event, properties);
   }
 
@@ -3660,8 +3656,7 @@ module.exports = Provider.extend({
       tracker.setDomain(self.options.domain);
       tracker.setIdleTimeout(300000);
 
-      var storedUser = user.get();
-      this.addTraits(storedUser.id, storedUser.traits, tracker);
+      this.addTraits(user.id(), user.traits(), tracker);
 
       tracker.track();
 

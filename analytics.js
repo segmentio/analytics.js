@@ -1593,8 +1593,9 @@ extend(Analytics.prototype, {
         provider.identify(userId, clone(traits), clone(context));
     });
 
+    // TODO: auto-alias once mixpanel API doesn't error
     // If we should alias, go ahead and do it.
-    if (alias) this.alias(userId);
+    // if (alias) this.alias(userId);
 
     if (callback && type(callback) === 'function') {
       setTimeout(callback, this.timeout);

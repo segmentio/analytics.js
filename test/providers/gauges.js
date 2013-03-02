@@ -1,9 +1,9 @@
-
 describe('Gauges', function () {
 
   describe('initialize', function () {
 
     it('should call ready and load library', function (done) {
+      this.timeout(4000);
       expect(window._gauges).to.be(undefined);
 
       var spy = sinon.spy();
@@ -16,7 +16,7 @@ describe('Gauges', function () {
       setTimeout(function () {
         expect(window._gauges.push).not.to.eql(Array.prototype.push);
         done();
-      }, 1900);
+      }, 3900);
     });
 
     it('should store options', function () {

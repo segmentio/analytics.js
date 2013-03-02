@@ -1,7 +1,8 @@
 
 var cookieStore = require('cookie')
+  , extend      = require('extend')
   , json        = require('json')
-  , extend      = require('extend');
+  , type        = require('type');
 
 
 var user = newUser();
@@ -24,12 +25,11 @@ exports.options = function (options) {
 
   options || (options = {});
 
-  if (typeof options.cookie === 'boolean') {
-    cookie.enabled = options.cookie;
-    return;
-  }
+  if (type(options.cookie) === 'boolean') {
 
-  if (typeof options.cookie === 'object') {
+    cookie.enabled = options.cookie;
+
+  } else if (type(options.cookie) === 'object') {
     cookie.enabled = true;
     if (options.cookie.name)   cookie.name   = options.cookie.name;
     if (options.cookie.maxage) cookie.maxage = options.cookie.maxage;

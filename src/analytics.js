@@ -205,13 +205,16 @@ extend(Analytics.prototype, {
     if (userId === null) userId = user.get().id;
 
     // Update the cookie with new userId and traits.
-    user.update(userId, traits);
+    var alias = user.update(userId, traits);
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
       if (provider.identify && utils.isEnabled(provider, context))
         provider.identify(userId, clone(traits), clone(context));
     });
+
+    // If we should alias, go ahead and do it.
+    if (alias) this.alias(userId);
 
     if (callback && type(callback) === 'function') {
       setTimeout(callback, this.timeout);

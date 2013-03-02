@@ -1585,13 +1585,16 @@ extend(Analytics.prototype, {
     if (userId === null) userId = user.get().id;
 
     // Update the cookie with new userId and traits.
-    user.update(userId, traits);
+    var alias = user.update(userId, traits);
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
       if (provider.identify && utils.isEnabled(provider, context))
         provider.identify(userId, clone(traits), clone(context));
     });
+
+    // If we should alias, go ahead and do it.
+    if (alias) this.alias(userId);
 
     if (callback && type(callback) === 'function') {
       setTimeout(callback, this.timeout);
@@ -1886,8 +1889,9 @@ extend(Provider.prototype, {
 require.register("analytics/src/user.js", function(exports, require, module){
 
 var cookieStore = require('cookie')
+  , extend      = require('extend')
   , json        = require('json')
-  , extend      = require('extend');
+  , type        = require('type');
 
 
 var user = newUser();
@@ -1910,12 +1914,11 @@ exports.options = function (options) {
 
   options || (options = {});
 
-  if (typeof options.cookie === 'boolean') {
-    cookie.enabled = options.cookie;
-    return;
-  }
+  if (type(options.cookie) === 'boolean') {
 
-  if (typeof options.cookie === 'object') {
+    cookie.enabled = options.cookie;
+
+  } else if (type(options.cookie) === 'object') {
     cookie.enabled = true;
     if (options.cookie.name)   cookie.name   = options.cookie.name;
     if (options.cookie.maxage) cookie.maxage = options.cookie.maxage;
@@ -3197,9 +3200,8 @@ module.exports = Provider.extend({
 
     // LiveChat takes them in an array format.
     var variables = [];
-    if (userId) {
-      variables.push({ name: 'User ID', value: userId });
-    }
+
+    if (userId) variables.push({ name: 'User ID', value: userId });
     if (traits) {
       each(traits, function (key, value) {
         variables.push({
@@ -3633,8 +3635,12 @@ require.register("analytics/src/providers/woopra.js", function(exports, require,
 // [Documentation](http://www.woopra.com/docs/setup/javascript-tracking/).
 
 var Provider = require('../provider')
+  , each     = require('each')
   , extend   = require('extend')
-  , load     = require('load-script');
+  , isEmail  = require('is-email')
+  , load     = require('load-script')
+  , type     = require('type')
+  , user     = require('../user');
 
 
 module.exports = Provider.extend({
@@ -3649,10 +3655,16 @@ module.exports = Provider.extend({
   initialize : function (options, ready) {
     // Woopra gives us a nice ready callback.
     var self = this;
+
     window.woopraReady = function (tracker) {
       tracker.setDomain(self.options.domain);
       tracker.setIdleTimeout(300000);
+
+      var storedUser = user.get();
+      this.addTraits(storedUser.id, storedUser.traits, tracker);
+
       tracker.track();
+
       ready();
       return false;
     };
@@ -3662,8 +3674,26 @@ module.exports = Provider.extend({
 
 
   identify : function (userId, traits) {
-    // TODO - we need the cookie solution, because Woopra is one of those
-    // that requires identify to happen before the script is requested.
+
+    if (!window.woopraTracker) return;
+
+    this.addTraits(userId, traits, window.woopraTracker);
+    window.woopraTracker.track();
+  },
+
+
+  // Convenience function for updating the userId and traits.
+  addTraits : function (userId, traits, tracker) {
+
+    var addTrait = tracker.addVisitorProperty;
+
+    if (userId) addTrait('id', userId);
+    if (isEmail(userId)) addTrait('email', userId);
+
+    // Seems to only support strings
+    each(traits, function (name, trait) {
+      if (type(trait) === 'string') addTrait(name, trait);
+    });
   },
 
 

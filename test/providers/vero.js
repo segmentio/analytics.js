@@ -70,7 +70,5 @@ describe('Vero', function () {
 
       stub.restore();
     });
-
   });
-
 });

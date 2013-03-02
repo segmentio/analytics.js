@@ -3,8 +3,12 @@
 // [Documentation](http://www.woopra.com/docs/setup/javascript-tracking/).
 
 var Provider = require('../provider')
+  , each     = require('each')
   , extend   = require('extend')
-  , load     = require('load-script');
+  , isEmail  = require('is-email')
+  , load     = require('load-script')
+  , type     = require('type')
+  , user     = require('../user');
 
 
 module.exports = Provider.extend({
@@ -19,10 +23,16 @@ module.exports = Provider.extend({
   initialize : function (options, ready) {
     // Woopra gives us a nice ready callback.
     var self = this;
+
     window.woopraReady = function (tracker) {
       tracker.setDomain(self.options.domain);
       tracker.setIdleTimeout(300000);
+
+      var storedUser = user.get();
+      this.addTraits(storedUser.id, storedUser.traits, tracker);
+
       tracker.track();
+
       ready();
       return false;
     };
@@ -32,8 +42,26 @@ module.exports = Provider.extend({
 
 
   identify : function (userId, traits) {
-    // TODO - we need the cookie solution, because Woopra is one of those
-    // that requires identify to happen before the script is requested.
+
+    if (!window.woopraTracker) return;
+
+    this.addTraits(userId, traits, window.woopraTracker);
+    window.woopraTracker.track();
+  },
+
+
+  // Convenience function for updating the userId and traits.
+  addTraits : function (userId, traits, tracker) {
+
+    var addTrait = tracker.addVisitorProperty;
+
+    if (userId) addTrait('id', userId);
+    if (isEmail(userId)) addTrait('email', userId);
+
+    // Seems to only support strings
+    each(traits, function (name, trait) {
+      if (type(trait) === 'string') addTrait(name, trait);
+    });
   },
 
 

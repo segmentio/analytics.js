@@ -6,12 +6,13 @@ var cookieStore = require('cookie')
   , type        = require('type');
 
 
-var user = newUser();
+var user   = newUser();
 
 var cookie = exports.cookie = {
   name    : 'ajs_user',
   maxage  : 31536000000, // default to a year
-  enabled : true
+  enabled : true,
+  path    : '/',
 };
 
 
@@ -21,6 +22,7 @@ var cookie = exports.cookie = {
  *   @field {Boolean|Object} cookie - whether to use a cookie
  *     @field {String}  name   - what to call the cookie ('ajs_user')
  *     @field {Number}  maxage - time in ms to keep the cookie. (one year)
+ *     @field {
  */
 exports.options = function (options) {
 
@@ -34,6 +36,11 @@ exports.options = function (options) {
     cookie.enabled = true;
     if (options.cookie.name)   cookie.name   = options.cookie.name;
     if (options.cookie.maxage) cookie.maxage = options.cookie.maxage;
+    if (options.cookie.domain) cookie.domain = options.cookie.domain;
+    if (options.cookie.path)   cookie.path   = options.cookie.path;
+
+    if (cookie.domain && cookie.domain.charAt(0) !== '.')
+      cookie.domain = '.' + cookie.domain;
   }
 };
 
@@ -79,7 +86,7 @@ exports.update = function (userId, traits) {
  * Clears the user, wipes the cookie.
  */
 exports.clear = function () {
-  if (cookie.enabled) cookieStore(cookie.name, null);
+  if (cookie.enabled) cookieStore(cookie.name, null, clone(cookie));
   user = newUser();
 };
 
@@ -91,7 +98,7 @@ exports.clear = function () {
  */
 var save = function (user) {
   try {
-    cookieStore(cookie.name, json.stringify(user), cookie);
+    cookieStore(cookie.name, json.stringify(user), clone(cookie));
     return true;
   } catch (e) {
     return false;

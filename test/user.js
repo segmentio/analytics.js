@@ -118,7 +118,7 @@ describe('User tests', function () {
 
       var cookieStr = cookie(user.cookie.name);
       user.clear();
-      cookie(user.cookie.name, cookieStr);
+      cookie(user.cookie.name, cookieStr, clone(user.cookie));
       stored = user.load();
       expect(stored).to.eql({
         id : 'newId',
@@ -148,16 +148,20 @@ describe('User tests', function () {
 
       user.options({ cookie : {
                       name   : 'test_cookie',
-                      maxage : 123
+                      maxage : 123,
+                      path   : '/test',
+                      domain : 'segment.io'
                    }});
       expect(user.cookie.name).to.be('test_cookie');
       expect(user.cookie.enabled).to.be(true);
       expect(user.cookie.maxage).to.be(123);
+      expect(user.cookie.path).to.be('/test');
+      expect(user.cookie.domain).to.be('.segment.io');
     });
 
     it('doesn\'t use the cookie if cookie === false', function () {
-      user.options({ cookie : false });
       user.clear();
+      user.options({ cookie : false });
       var stored = user.load();
       expect(stored).to.eql({
         id     : null,

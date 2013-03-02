@@ -3518,7 +3518,8 @@ require.register("analytics/src/providers/usercycle.js", function(exports, requi
 
 var Provider = require('../provider')
   , extend   = require('extend')
-  , load     = require('load-script');
+  , load     = require('load-script')
+  , user     = require('../user');
 
 
 module.exports = Provider.extend({
@@ -3541,12 +3542,14 @@ module.exports = Provider.extend({
 
 
   identify : function (userId, traits) {
-    if (userId) window._uc.push(['uid', userId, traits]);
+    if (userId) window._uc.push(['uid', userId]);
   },
 
 
   track : function (event, properties) {
-    window._uc.push(['action', event, properties]);
+    // Usercycle seems to use traits instead of properties.
+    var traits = user.traits();
+    window._uc.push(['action', event, traits]);
   }
 
 });
@@ -3664,7 +3667,10 @@ module.exports = Provider.extend({
       tracker.setDomain(self.options.domain);
       tracker.setIdleTimeout(300000);
 
-      this.addTraits(user.id(), user.traits(), tracker);
+      var userId = user.id()
+        , traits = user.traits();
+
+      self.addTraits(userId, traits, tracker);
 
       tracker.track();
 

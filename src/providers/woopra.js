@@ -28,7 +28,10 @@ module.exports = Provider.extend({
       tracker.setDomain(self.options.domain);
       tracker.setIdleTimeout(300000);
 
-      this.addTraits(user.id(), user.traits(), tracker);
+      var userId = user.id()
+        , traits = user.traits();
+
+      self.addTraits(userId, traits, tracker);
 
       tracker.track();
 

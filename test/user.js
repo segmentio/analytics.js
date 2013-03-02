@@ -107,9 +107,9 @@ describe('User tests', function () {
         traits : { dog : 'dog' }
       });
 
-      var cookieStr = cookie('ajs_user');
+      var cookieStr = cookie(user.cookie.name);
       user.clear();
-      cookie('ajs_user', cookieStr);
+      cookie(user.cookie.name, cookieStr);
       stored = user.load();
       expect(stored).to.eql({
         id : 'newId',
@@ -123,7 +123,7 @@ describe('User tests', function () {
       user.clear();
       expect(user.get()).to.eql({ id : null, traits : {}});
       expect(user.load()).to.eql({ id : null, traits : {}});
-      expect(cookie('ajs_user')).to.be(undefined);
+      expect(cookie(user.cookie.name)).to.be(undefined);
     });
   });
 });

@@ -30,9 +30,9 @@ describe('GoSquared', function () {
 
   describe('identify', function () {
 
+    beforeEach(analytics.user.clear);
+
     it('should set user id', function () {
-      // Reset GoSquared state before the test.
-      analytics.userId = null;
       window.GoSquared.UserName = undefined;
       window.GoSquared.Visitor = undefined;
       analytics.identify(test.userId);
@@ -41,8 +41,6 @@ describe('GoSquared', function () {
     });
 
     it('should set traits', function () {
-      // Reset GoSquared state before the test.
-      analytics.userId = null;
       window.GoSquared.UserName = undefined;
       window.GoSquared.Visitor = undefined;
       analytics.identify(test.traits);
@@ -51,8 +49,6 @@ describe('GoSquared', function () {
     });
 
     it('should set user id and traits', function () {
-      // Reset GoSquared state before the test.
-      analytics.userId = null;
       window.GoSquared.UserName = undefined;
       window.GoSquared.Visitor = undefined;
       analytics.identify(test.userId, test.traits);

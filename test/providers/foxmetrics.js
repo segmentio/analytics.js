@@ -23,6 +23,8 @@ describe('FoxMetrics', function () {
 
   describe('identify', function () {
 
+    before(analytics.user.clear);
+
     it('should push "_fxm.visitor.profile"', function () {
       var spy = sinon.spy(window._fxm, 'push');
       analytics.identify(test.traits);

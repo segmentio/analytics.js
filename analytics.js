@@ -1439,6 +1439,10 @@ extend(Analytics.prototype, {
   // before navigating away from the current page.
   timeout : 300,
 
+  // Ability to access the user object.
+  // Should be removed eventually
+  user : user,
+
   providers : [],
 
   Provider : Provider,
@@ -1468,7 +1472,7 @@ extend(Analytics.prototype, {
   // * `providers` is a dictionary of the providers you want to enabled.
   // The keys are the names of the providers and their values are either
   // an api key, or dictionary of extra settings (including the api key).
-  initialize : function (providers) {
+  initialize : function (providers, options) {
     var self = this;
 
     // Reset our state.
@@ -1476,7 +1480,7 @@ extend(Analytics.prototype, {
     this.userId = null;
 
     // Load the user from our cookie.
-    user.load();
+    user.load(options);
 
     // Create a ready method that will run after all of our providers have been
     // initialized and loaded. We'll pass the function into each provider's
@@ -1880,12 +1884,18 @@ extend(Provider.prototype, {
 });
 require.register("analytics/src/user.js", function(exports, require, module){
 
-var cookie = require('cookie')
-  , json   = require('json')
-  , extend = require('extend');
+var cookieStore = require('cookie')
+  , json        = require('json')
+  , extend      = require('extend');
 
 
 var user = newUser();
+
+var cookie = exports.cookie = {
+  name    : 'ajs_user',
+  maxage  : 31536000000, // default to a year
+  enabled : true
+};
 
 
 /**
@@ -1908,7 +1918,7 @@ exports.update = function (userId, traits) {
 
   if (userId) user.id = userId;
 
-  save(user);
+  if (cookie.enabled) save(user);
 
   return alias;
 };
@@ -1924,7 +1934,7 @@ exports.get = function () {
 
 
 exports.clear = function () {
-  cookie('ajs_user', null);
+  if (cookie.enabled) cookieStore(cookie.name, null);
   user = newUser();
 };
 
@@ -1936,7 +1946,7 @@ exports.clear = function () {
  */
 var save = function (user) {
   try {
-    cookie('ajs_user', json.stringify(user));
+    cookieStore(cookie.name, json.stringify(user), cookie);
     return true;
   } catch (e) {
     return false;
@@ -1946,13 +1956,21 @@ var save = function (user) {
 
 /**
  * Load the data from our cookie.
+ * @param {Object} options
+ *   @field {Boolean} cookie - if you don't want to use set a cookie, set cookie to 'false'
+ *
  * @return {Object}
  *   @field {String} id
  *   @field {Object} traits
  */
-exports.load = function () {
+exports.load = function (options) {
 
-  var storedUser = cookie('ajs_user');
+  options || (options = {});
+
+  if (options.cookie === false) cookie.enabled = false;
+  if (!cookie.enabled) return user;
+
+  var storedUser = cookieStore(cookie.name);
 
   if (storedUser) {
     try {

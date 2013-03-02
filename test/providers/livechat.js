@@ -41,7 +41,7 @@ describe('LiveChat', function () {
 
     it('should set traits', function () {
       // Reset the internal user id first.
-      analytics.userId = undefined;
+      analytics.user.clear();
 
       var stub = sinon.stub(window.LC_API, 'set_custom_variables');
       analytics.identify(test.traits);

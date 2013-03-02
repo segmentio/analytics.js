@@ -59,6 +59,10 @@ extend(Analytics.prototype, {
   // before navigating away from the current page.
   timeout : 300,
 
+  // Ability to access the user object.
+  // Should be removed eventually
+  user : user,
+
   providers : [],
 
   Provider : Provider,
@@ -88,7 +92,7 @@ extend(Analytics.prototype, {
   // * `providers` is a dictionary of the providers you want to enabled.
   // The keys are the names of the providers and their values are either
   // an api key, or dictionary of extra settings (including the api key).
-  initialize : function (providers) {
+  initialize : function (providers, options) {
     var self = this;
 
     // Reset our state.
@@ -96,7 +100,7 @@ extend(Analytics.prototype, {
     this.userId = null;
 
     // Load the user from our cookie.
-    user.load();
+    user.load(options);
 
     // Create a ready method that will run after all of our providers have been
     // initialized and loaded. We'll pass the function into each provider's

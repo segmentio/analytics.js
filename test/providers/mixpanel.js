@@ -34,9 +34,9 @@ describe('Mixpanel', function () {
 
   describe('identify', function () {
 
+    beforeEach(analytics.user.clear);
+
     it('should call identify with a user id', function () {
-      // Reset internal `userId` state from any previous identifies.
-      analytics.userId = null;
 
       var spy = sinon.spy(window.mixpanel, 'identify');
       analytics.identify(test.traits);
@@ -54,8 +54,6 @@ describe('Mixpanel', function () {
     });
 
     it('should call register with traits', function () {
-      // Reset internal `userId` state from any previous identifies.
-      analytics.userId = null;
 
       var spy = sinon.spy(window.mixpanel, 'register');
       analytics.identify(test.traits);
@@ -75,8 +73,6 @@ describe('Mixpanel', function () {
     // TODO name tag with options flag
 
     it('should call name_tag with the optimal id', function () {
-      // Reset internal `userId` state from any previous identifies.
-      analytics.userId = null;
 
       var spy = sinon.spy(window.mixpanel, 'name_tag');
       analytics.identify(test.traits);
@@ -94,8 +90,6 @@ describe('Mixpanel', function () {
     });
 
     it('should call people.set with traits', function () {
-      // Reset internal `userId` state from any previous identifies.
-      analytics.userId = null;
 
       analytics.providers[0].options.people = true;
       var spy = sinon.spy(window.mixpanel.people, 'set');
@@ -110,8 +104,6 @@ describe('Mixpanel', function () {
     });
 
     it('shouldnt call people.set', function () {
-      // Reset internal `userId` state from any previous identifies.
-      analytics.userId = null;
 
       analytics.providers[0].options.people = false;
       var spy = sinon.spy(window.mixpanel.people, 'set');

@@ -4,6 +4,8 @@
 * Adding identify support for Clicky
 * Adding identify support for GoSquared
 * Adding identify support for Woopra
+* Updating tracking for Usercycle
+* Adding mixpanel alias gaurd
 * Adding auto-aliasing
 
 0.7.1 / 2013-2-26

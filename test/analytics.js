@@ -241,6 +241,38 @@ describe('Analytics.js', function () {
         spy.restore();
     });
 
+    it('calls alias when identifying from anonymous users', function () {
+      var spy = sinon.spy(Provider.prototype, 'alias');
+
+      analytics.user.clear();
+
+      var userId = 'id'
+        , traits = {
+            age  : 23,
+            name : 'Achilles'
+          };
+
+      analytics.identify(userId, traits);
+      expect(spy.called).to.be(true);
+
+      spy.restore();
+    });
+
+    it('does not call alias when identifying another user', function () {
+      var spy = sinon.spy(Provider.prototype, 'alias');
+
+      var userId = 'newId'
+        , traits = {
+            age  : 23,
+            name : 'Achilles'
+          };
+
+      analytics.identify(userId, traits);
+      expect(spy.called).to.be(false);
+
+      spy.restore();
+    });
+
   });
 
 

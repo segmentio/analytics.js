@@ -9,7 +9,7 @@ describe('User tests', function () {
 
     before(user.clear);
 
-    it('should get an empty user', function () {
+    it('gets an empty user', function () {
       var stored = user.get();
       expect(stored).to.eql({
         id     : null,
@@ -17,7 +17,7 @@ describe('User tests', function () {
       });
     });
 
-    it('should get the updated user', function () {
+    it('gets the updated user', function () {
       user.update('someId', { some : 'trait' });
       var stored = user.get();
       expect(stored).to.eql({
@@ -31,7 +31,7 @@ describe('User tests', function () {
 
     before(user.clear);
 
-    it('should save a stored user', function () {
+    it('saves a stored user', function () {
       user.update('someId');
       var stored = user.get();
       expect(stored).to.eql({
@@ -40,7 +40,7 @@ describe('User tests', function () {
       });
     });
 
-    it('should update the users traits', function () {
+    it('updates the user\'s traits', function () {
       user.update(null, { some : 'trait' });
       var stored = user.get();
       expect(stored).to.eql({
@@ -49,7 +49,7 @@ describe('User tests', function () {
       });
     });
 
-    it('should assign new traits for a new user', function () {
+    it('assigns new traits for a new user', function () {
       user.update('newId', { other : 'trait' });
       var stored = user.get();
       expect(stored).to.eql({
@@ -58,7 +58,7 @@ describe('User tests', function () {
       });
     });
 
-    it('should extend traits for the same user', function () {
+    it('extends traits for the same user', function () {
       user.update('newId', { cats : 6 });
       var stored = user.get();
       expect(stored).to.eql({
@@ -67,7 +67,7 @@ describe('User tests', function () {
       });
     });
 
-    it('should reset traits for a new user', function () {
+    it('resets traits for a new user', function () {
       user.update('thirdId');
       var stored = user.get();
       expect(stored).to.eql({
@@ -76,7 +76,7 @@ describe('User tests', function () {
       });
     });
 
-    it('should save logged out traits', function () {
+    it('saves logged out traits', function () {
       user.clear();
       user.update(null, { name : 'dog' });
       var stored = user.get();
@@ -91,7 +91,7 @@ describe('User tests', function () {
 
     before(user.clear);
 
-    it('should load an empty user', function () {
+    it('loads an empty user', function () {
       var stored = user.load();
       expect(stored).to.eql({
         id     : null,
@@ -99,7 +99,7 @@ describe('User tests', function () {
       });
     });
 
-    it('should load properly from the cookie', function () {
+    it('loads properly from the cookie', function () {
       user.update('newId', { dog : 'dog' });
       var stored = user.load();
       expect(stored).to.eql({
@@ -120,7 +120,7 @@ describe('User tests', function () {
 
   describe('#clear()', function () {
 
-    it('should clear the cookie and user', function () {
+    it('clears the cookie and user', function () {
       user.load();
       user.clear();
       expect(user.get()).to.eql({ id : null, traits : {}});
@@ -132,7 +132,7 @@ describe('User tests', function () {
 
   describe('#options()', function () {
 
-    it('should be able to set cookie options', function () {
+    it('sets cookie options', function () {
       user.options({ cookie : false });
       expect(user.cookie.enabled).to.be(false);
 
@@ -145,7 +145,7 @@ describe('User tests', function () {
       expect(user.cookie.maxage).to.be(123);
     });
 
-    it('should not use the cookie if cookie === false', function () {
+    it('doesn\'t use the cookie if cookie === false', function () {
       user.options({ cookie : false });
       user.clear();
       var stored = user.load();

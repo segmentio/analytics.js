@@ -1421,9 +1421,6 @@ extend(Analytics.prototype, {
   // Providers that can be initialized. Add using `this.addProvider`.
   initializableProviders : {},
 
-  // Cache the `userId` when a user is identified.
-  userId : null,
-
   // Store the date when the page loaded, for services that depend on it.
   date : new Date(),
 
@@ -1579,11 +1576,11 @@ extend(Analytics.prototype, {
       userId = null;
     }
 
-    // Cache the `userId`, or use saved one.
-    if (userId !== null)
-      this.userId = userId;
-    else
-      userId = this.userId;
+    // Use the saved userId.
+    if (userId === null) userId = user.get().id;
+
+    // Update the cookie with new userId and traits.
+    user.update(userId, traits);
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
@@ -1888,10 +1885,7 @@ var cookie = require('cookie')
   , extend = require('extend');
 
 
-var user = {
-  id     : null,
-  traits : null
-};
+var user = newUser();
 
 
 /**
@@ -1905,10 +1899,14 @@ exports.update = function (userId, traits) {
   // Whether we should make an alias call.
   var alias = !user.id && userId;
 
-  if (traits) {
-    user.traits || (user.traits = {});
-    extend(user.traits, traits);
-  }
+  traits || (traits = {});
+
+  // If there is a current user and the new user isn't the same,
+  // we want to replace their traits. Otherwise extend.
+  if (user.id && userId && user.id !== userId) user.traits = traits || {};
+  else extend(user.traits, traits);
+
+  if (userId) user.id = userId;
 
   save(user);
 
@@ -1922,6 +1920,12 @@ exports.update = function (userId, traits) {
  */
 exports.get = function () {
   return user;
+};
+
+
+exports.clear = function () {
+  cookie('ajs_user', null);
+  user = newUser();
 };
 
 
@@ -1954,12 +1958,21 @@ exports.load = function () {
     try {
       user = json.parse(storedUser);
     } catch (e) {
-      user = null; // if we got bad json, toss the entire thing.
+      // if we got bad json, toss the entire thing.
+      user = newUser();
     }
   }
 
   return user;
 };
+
+
+function newUser() {
+  return {
+    id     : null,
+    traits : {}
+  };
+}
 });
 require.register("analytics/src/utils.js", function(exports, require, module){
 

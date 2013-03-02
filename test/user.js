@@ -2,7 +2,8 @@
 
 describe('User tests', function () {
 
-  var user = require('analytics/src/user.js');
+  var user   = require('analytics/src/user.js')
+    , cookie = require('component-cookie');
 
   describe('#get()', function () {
 
@@ -65,9 +66,65 @@ describe('User tests', function () {
         traits : { other : 'trait', cats : 6 }
       });
     });
+
+    it('should reset traits for a new user', function () {
+      user.update('thirdId');
+      var stored = user.get();
+      expect(stored).to.eql({
+        id     : 'thirdId',
+        traits : {}
+      });
+    });
+
+    it('should save logged out traits', function () {
+      user.clear();
+      user.update(null, { name : 'dog' });
+      var stored = user.get();
+      expect(stored).to.eql({
+        id     : null,
+        traits : { name : 'dog' }
+      });
+    });
   });
 
   describe('#load()', function () {
+
+    before(user.clear);
+
+    it('should load an empty user', function () {
+      var stored = user.load();
+      expect(stored).to.eql({
+        id     : null,
+        traits : {}
+      });
+    });
+
+    it('should load properly from the cookie', function () {
+      user.update('newId', { dog : 'dog' });
+      var stored = user.load();
+      expect(stored).to.eql({
+        id : 'newId',
+        traits : { dog : 'dog' }
+      });
+
+      var cookieStr = cookie('ajs_user');
+      user.clear();
+      cookie('ajs_user', cookieStr);
+      stored = user.load();
+      expect(stored).to.eql({
+        id : 'newId',
+        traits : { dog : 'dog' }
+      });
+    });
+  });
+
+  describe('#clear()', function () {
+    it('should clear the cookie and user', function () {
+      user.clear();
+      expect(user.get()).to.eql({ id : null, traits : {}});
+      expect(user.load()).to.eql({ id : null, traits : {}});
+      expect(cookie('ajs_user')).to.be(undefined);
+    });
   });
 });
 

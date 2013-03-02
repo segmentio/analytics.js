@@ -35,17 +35,14 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
-    it('resets enabled providers and userId', function () {
+    it('resets enabled providers', function () {
       analytics.initialize(options);
-      analytics.identify('user');
 
       expect(analytics.providers.length).to.equal(1);
-      expect(analytics.userId).to.equal('user');
 
       analytics.initialize(options);
 
       expect(analytics.providers.length).to.equal(1);
-      expect(analytics.userId).to.be(null);
     });
   });
 

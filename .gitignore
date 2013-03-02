@@ -4,4 +4,3 @@ node_modules/
 test/pid.txt
 components
 build
-component.js

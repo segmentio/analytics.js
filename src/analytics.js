@@ -196,11 +196,11 @@ extend(Analytics.prototype, {
       userId = null;
     }
 
-    // Cache the `userId`, or use saved one.
-    if (userId !== null)
-      this.userId = userId;
-    else
-      userId = this.userId;
+    // Use the saved userId.
+    if (userId === null) userId = user.get().id;
+
+    // Update the cookie with new userId and traits.
+    user.update(userId, traits);
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {

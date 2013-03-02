@@ -2333,7 +2333,7 @@ module.exports = Provider.extend({
       , traits  = user.traits()
       , session = {};
 
-    session.username = userId;
+    if (userId) session.username = userId;
     extend(session, traits);
 
     window.clicky_custom = { session : session };

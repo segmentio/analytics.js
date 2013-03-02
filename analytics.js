@@ -1479,8 +1479,9 @@ extend(Analytics.prototype, {
     this.providers = [];
     this.userId = null;
 
-    // Load the user from our cookie.
-    user.load(options);
+    // Set the user options, and load the user from our cookie.
+    user.options(options);
+    user.load();
 
     // Create a ready method that will run after all of our providers have been
     // initialized and loaded. We'll pass the function into each provider's
@@ -1899,20 +1900,45 @@ var cookie = exports.cookie = {
 
 
 /**
+ * Set the options for our user storage.
+ * @param  {Object} options
+ *   @field {Boolean|Object} cookie - whether to use a cookie
+ *     @field {String}  name   - what to call the cookie ('ajs_user')
+ *     @field {Number}  maxage - time in ms to keep the cookie. (one year)
+ */
+exports.options = function (options) {
+
+  options || (options = {});
+
+  if (typeof options.cookie === 'boolean') {
+    cookie.enabled = options.cookie;
+    return;
+  }
+
+  if (typeof options.cookie === 'object') {
+    cookie.enabled = true;
+    if (options.cookie.name)   cookie.name   = options.cookie.name;
+    if (options.cookie.maxage) cookie.maxage = options.cookie.maxage;
+  }
+};
+
+
+/**
  * Updates the stored user with id and trait information
  * @param  {String}  userId
  * @param  {Object}  traits
- * @return {Boolean} whether the alias should be called
+ * @return {Boolean} whether alias should be called
  */
 exports.update = function (userId, traits) {
 
-  // Whether we should make an alias call.
-  var alias = !user.id && userId;
+  // Make an alias call if there was no previous userId, there is one
+  // now, and we are using a cookie between page loads.
+  var alias = !user.id && userId && cookie.enabled;
 
   traits || (traits = {});
 
   // If there is a current user and the new user isn't the same,
-  // we want to replace their traits. Otherwise extend.
+  // we want to just replace their traits. Otherwise extend.
   if (user.id && userId && user.id !== userId) user.traits = traits || {};
   else extend(user.traits, traits);
 
@@ -1933,6 +1959,9 @@ exports.get = function () {
 };
 
 
+/**
+ * Clears the user, wipes the cookie.
+ */
 exports.clear = function () {
   if (cookie.enabled) cookieStore(cookie.name, null);
   user = newUser();
@@ -1956,18 +1985,13 @@ var save = function (user) {
 
 /**
  * Load the data from our cookie.
- * @param {Object} options
- *   @field {Boolean} cookie - if you don't want to use set a cookie, set cookie to 'false'
  *
  * @return {Object}
  *   @field {String} id
  *   @field {Object} traits
  */
-exports.load = function (options) {
+exports.load = function () {
 
-  options || (options = {});
-
-  if (options.cookie === false) cookie.enabled = false;
   if (!cookie.enabled) return user;
 
   var storedUser = cookieStore(cookie.name);
@@ -1985,6 +2009,9 @@ exports.load = function (options) {
 };
 
 
+/**
+ * Returns a new user object
+ */
 function newUser() {
   return {
     id     : null,

@@ -119,10 +119,47 @@ describe('User tests', function () {
   });
 
   describe('#clear()', function () {
+
     it('should clear the cookie and user', function () {
+      user.load();
       user.clear();
       expect(user.get()).to.eql({ id : null, traits : {}});
       expect(user.load()).to.eql({ id : null, traits : {}});
+      expect(cookie(user.cookie.name)).to.be(undefined);
+    });
+  });
+
+
+  describe('#options()', function () {
+
+    it('should be able to set cookie options', function () {
+      user.options({ cookie : false });
+      expect(user.cookie.enabled).to.be(false);
+
+      user.options({ cookie : {
+                      name   : 'test_cookie',
+                      maxage : 123
+                   }});
+      expect(user.cookie.name).to.be('test_cookie');
+      expect(user.cookie.enabled).to.be(true);
+      expect(user.cookie.maxage).to.be(123);
+    });
+
+    it('should not use the cookie if cookie === false', function () {
+      user.options({ cookie : false });
+      user.clear();
+      var stored = user.load();
+      expect(stored).to.eql({
+        id     : null,
+        traits : {}
+      });
+
+      user.update('myId', { trait : 4 });
+      expect(user.get()).to.eql({
+        id : 'myId',
+        traits : { trait : 4 }
+      });
+
       expect(cookie(user.cookie.name)).to.be(undefined);
     });
   });

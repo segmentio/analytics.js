@@ -99,8 +99,9 @@ extend(Analytics.prototype, {
     this.providers = [];
     this.userId = null;
 
-    // Load the user from our cookie.
-    user.load(options);
+    // Set the user options, and load the user from our cookie.
+    user.options(options);
+    user.load();
 
     // Create a ready method that will run after all of our providers have been
     // initialized and loaded. We'll pass the function into each provider's

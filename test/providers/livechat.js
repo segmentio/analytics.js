@@ -29,6 +29,8 @@ describe('LiveChat', function () {
 
   describe('identify', function () {
 
+    beforeEach(analytics.user.clear);
+
     it('should set user id', function () {
       var spy = sinon.spy(window.LC_API, 'set_custom_variables');
       analytics.identify(test.userId);
@@ -40,9 +42,6 @@ describe('LiveChat', function () {
     });
 
     it('should set traits', function () {
-      // Reset the internal user id first.
-      analytics.userId = undefined;
-
       var stub = sinon.stub(window.LC_API, 'set_custom_variables');
       analytics.identify(test.traits);
       expect(stub.calledWith([

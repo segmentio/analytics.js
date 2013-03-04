@@ -9,6 +9,7 @@ var after       = require('after')
   , querystring = require('querystring')
   , type        = require('type')
   , url         = require('url')
+  , user        = require('./user')
   , utils       = require('./utils');
 
 
@@ -16,7 +17,7 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.7.1';
+  this.VERSION = '0.8.0';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -40,9 +41,6 @@ extend(Analytics.prototype, {
   // Providers that can be initialized. Add using `this.addProvider`.
   initializableProviders : {},
 
-  // Cache the `userId` when a user is identified.
-  userId : null,
-
   // Store the date when the page loaded, for services that depend on it.
   date : new Date(),
 
@@ -60,6 +58,10 @@ extend(Analytics.prototype, {
   // The amount of milliseconds to wait for requests to providers to clear
   // before navigating away from the current page.
   timeout : 300,
+
+  // Ability to access the user object.
+  // TODO: Should be removed eventually
+  user : user,
 
   providers : [],
 
@@ -90,12 +92,16 @@ extend(Analytics.prototype, {
   // * `providers` is a dictionary of the providers you want to enabled.
   // The keys are the names of the providers and their values are either
   // an api key, or dictionary of extra settings (including the api key).
-  initialize : function (providers) {
+  initialize : function (providers, options) {
     var self = this;
 
     // Reset our state.
     this.providers = [];
     this.userId = null;
+
+    // Set the user options, and load the user from our cookie.
+    user.options(options);
+    user.load();
 
     // Create a ready method that will run after all of our providers have been
     // initialized and loaded. We'll pass the function into each provider's
@@ -195,17 +201,21 @@ extend(Analytics.prototype, {
       userId = null;
     }
 
-    // Cache the `userId`, or use saved one.
-    if (userId !== null)
-      this.userId = userId;
-    else
-      userId = this.userId;
+    // Use the saved userId.
+    if (userId === null) userId = user.id();
+
+    // Update the cookie with new userId and traits.
+    var alias = user.update(userId, traits);
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
       if (provider.identify && utils.isEnabled(provider, context))
         provider.identify(userId, clone(traits), clone(context));
     });
+
+    // TODO: auto-alias once mixpanel API doesn't error
+    // If we should alias, go ahead and do it.
+    // if (alias) this.alias(userId);
 
     if (callback && type(callback) === 'function') {
       setTimeout(callback, this.timeout);

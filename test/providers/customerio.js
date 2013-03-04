@@ -27,6 +27,8 @@ describe('Customer.io', function () {
 
   describe('identify', function () {
 
+    before(analytics.user.clear);
+
     it('should call identify', function () {
       var spy = sinon.spy(window._cio, 'identify');
       analytics.identify(test.traits);

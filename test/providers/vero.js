@@ -30,6 +30,8 @@ describe('Vero', function () {
 
   describe('identify', function () {
 
+    before(analytics.user.clear);
+
     // Very requires an email and traits. Check for both separately, but do
     // traits first because otherwise the userId will be cached.
     it('should push "users"', function () {
@@ -68,7 +70,5 @@ describe('Vero', function () {
 
       stub.restore();
     });
-
   });
-
 });

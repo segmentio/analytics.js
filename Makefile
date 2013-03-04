@@ -22,6 +22,9 @@ kill:
 install:
 	component install
 
+component:
+	component build --out . --name analytics.component --dev
+
 # Runs all the tests on travis.
 test: server
 	sleep 1
@@ -56,8 +59,8 @@ test-browser: server
 	open http://localhost:8000/test/providers.html
 	open http://localhost:8000/test/min.html
 
-# Compiles, minfies, doccos, and tests analytics.js - wrapped up and good to go.
-release: analytics.js min test
+# Compiles, minfies, component, and tests analytics.js - wrapped up and good to go.
+release: analytics.js min component test
 
 
 

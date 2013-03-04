@@ -59,8 +59,9 @@ describe('Bitdeli', function () {
 
   });
 
-
   describe('identify', function () {
+
+    before(analytics.user.clear);
 
     it('should push "identify" on identify', function () {
       var spy = sinon.spy(window._bdq, 'push');

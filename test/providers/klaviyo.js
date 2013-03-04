@@ -23,6 +23,8 @@ describe('Klaviyo', function () {
 
   describe('identify', function () {
 
+    before(analytics.user.clear);
+
     it('should push "_identify"', function () {
       var spy = sinon.spy(window._learnq, 'push');
       analytics.identify(test.traits);

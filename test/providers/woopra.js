@@ -32,9 +32,23 @@ describe('Woopra', function () {
 
   describe('identify', function () {
 
-    // TODO: We're waiting on handling our own cookie.
-    it('correctly identifies the user');
+    it('correctly adds the user properties', function () {
 
+      var spy = sinon.spy(window.woopraTracker, 'addVisitorProperty');
+      analytics.identify(test.userId, test.traits);
+      expect(spy.calledWith('email', test.traits.email)).to.be(true);
+      expect(spy.calledWith('id', test.userId)).to.be(true);
+      expect(spy.calledWith('name', test.traits.name)).to.be(true);
+      expect(spy.callCount).to.be(3);
+      spy.reset();
+    });
+
+    it('correctly makes a track request', function () {
+      var spy = sinon.spy(window.woopraTracker, 'track');
+      analytics.identify(test.userId, test.traits);
+      expect(spy.called).to.be(true);
+      spy.reset();
+    });
   });
 
 

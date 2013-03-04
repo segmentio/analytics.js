@@ -30,6 +30,8 @@ describe('KISSmetrics', function () {
 
   describe('identify', function () {
 
+    before(analytics.user.clear);
+
     it('should push "_identify"', function () {
       var stub = sinon.stub(window._kmq, 'push');
       analytics.identify(test.traits);

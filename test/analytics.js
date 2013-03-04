@@ -35,17 +35,14 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
-    it('resets enabled providers and userId', function () {
+    it('resets enabled providers', function () {
       analytics.initialize(options);
-      analytics.identify('user');
 
       expect(analytics.providers.length).to.equal(1);
-      expect(analytics.userId).to.equal('user');
 
       analytics.initialize(options);
 
       expect(analytics.providers.length).to.equal(1);
-      expect(analytics.userId).to.be(null);
     });
   });
 
@@ -243,6 +240,39 @@ describe('Analytics.js', function () {
 
         spy.restore();
     });
+
+    /* TODO: re-enable when we fix the mixpanel logging an error
+    it('calls alias when identifying from anonymous users', function () {
+      var spy = sinon.spy(Provider.prototype, 'alias');
+
+      analytics.user.clear();
+
+      var userId = 'id'
+        , traits = {
+            age  : 23,
+            name : 'Achilles'
+          };
+
+      analytics.identify(userId, traits);
+      expect(spy.called).to.be(true);
+
+      spy.restore();
+    });
+
+    it('does not call alias when identifying another user', function () {
+      var spy = sinon.spy(Provider.prototype, 'alias');
+
+      var userId = 'newId'
+        , traits = {
+            age  : 23,
+            name : 'Achilles'
+          };
+
+      analytics.identify(userId, traits);
+      expect(spy.called).to.be(false);
+
+      spy.restore();
+    });*/
 
   });
 

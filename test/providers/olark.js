@@ -21,7 +21,9 @@ describe('Olark', function () {
   });
 
 
-  describe('initialize', function () {
+  describe('identify', function () {
+
+    before(analytics.user.clear);
 
     it('should updates visitor nickname with the best name', function () {
       var spy = sinon.spy(window, 'olark');

@@ -33,9 +33,8 @@ module.exports = Provider.extend({
 
     // LiveChat takes them in an array format.
     var variables = [];
-    if (userId) {
-      variables.push({ name: 'User ID', value: userId });
-    }
+
+    if (userId) variables.push({ name: 'User ID', value: userId });
     if (traits) {
       each(traits, function (key, value) {
         variables.push({

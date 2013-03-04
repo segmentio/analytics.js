@@ -1,3 +1,11 @@
+0.8.0 / 2013-3-1
+================
+* Adding cookie-ing to keep identity and traits across page loads
+* Adding identify support for Clicky
+* Adding identify support for GoSquared
+* Adding identify support for Woopra
+* Updating tracking for Usercycle
+
 0.7.1 / 2013-2-26
 ================
 * Adding intercom companies by [@adrianrego](https://github.com/adrianrego)

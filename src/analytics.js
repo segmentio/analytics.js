@@ -209,8 +209,12 @@ extend(Analytics.prototype, {
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.identify && utils.isEnabled(provider, context))
-        provider.identify(userId, clone(traits), clone(context));
+      if (provider.identify && utils.isEnabled(provider, context)) {
+        var args = [userId, clone(traits), clone(context)];
+
+        if (provider.ready) provider.identify.apply(provider, args);
+        else provider.enqueue('identify', args);
+      }
     });
 
     // TODO: auto-alias once mixpanel API doesn't error
@@ -265,8 +269,12 @@ extend(Analytics.prototype, {
 
     // Call `track` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.track && utils.isEnabled(provider, context))
-        provider.track(event, clone(properties), clone(context));
+      if (provider.track && utils.isEnabled(provider, context)) {
+        var args = [event, clone(properties), clone(context)];
+
+        if (provider.ready) provider.track.apply(provider, args);
+        else provider.enqueue('track', args);
+      }
     });
 
     if (callback && type(callback) === 'function') {

@@ -325,7 +325,7 @@ function set(name, value, options) {
 
   if (options.path) str += '; path=' + options.path;
   if (options.domain) str += '; domain=' + options.domain;
-  if (options.expires) str += '; expires=' + options.expires.toUTCString();
+  if (options.expires) str += '; expires=' + options.expires.toGMTString();
   if (options.secure) str += '; secure';
 
   document.cookie = str;
@@ -1589,8 +1589,12 @@ extend(Analytics.prototype, {
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.identify && utils.isEnabled(provider, context))
-        provider.identify(userId, clone(traits), clone(context));
+      if (provider.identify && utils.isEnabled(provider, context)) {
+        var args = [userId, clone(traits), clone(context)];
+
+        if (provider.ready) provider.identify.apply(provider, args);
+        else provider.enqueue('identify', args);
+      }
     });
 
     // TODO: auto-alias once mixpanel API doesn't error
@@ -1645,8 +1649,12 @@ extend(Analytics.prototype, {
 
     // Call `track` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.track && utils.isEnabled(provider, context))
-        provider.track(event, clone(properties), clone(context));
+      if (provider.track && utils.isEnabled(provider, context)) {
+        var args = [event, clone(properties), clone(context)];
+
+        if (provider.ready) provider.track.apply(provider, args);
+        else provider.enqueue('track', args);
+      }
     });
 
     if (callback && type(callback) === 'function') {
@@ -1831,7 +1839,8 @@ Analytics.prototype.trackSubmit = Analytics.prototype.trackForm;
 
 });
 require.register("analytics/src/provider.js", function(exports, require, module){
-var extend = require('extend')
+var each   = require('each')
+  , extend = require('extend')
   , type   = require('type');
 
 
@@ -1839,6 +1848,11 @@ module.exports = Provider;
 
 
 function Provider (options, ready) {
+  var self = this;
+  // Set up a queue of { method : 'identify', args : [] } to call
+  // once we are ready.
+  this.queue = [];
+  this.ready = false;
 
   // Allow for `options` to only be a string if the provider has specified
   // a default `key`, in which case convert `options` into a dictionary.
@@ -1853,8 +1867,21 @@ function Provider (options, ready) {
   }
   // Extend the options passed in with the provider's defaults.
   extend(this.options, options);
+
+  // Wrap our ready function to first read from the queue.
+  var dequeue = function () {
+    each(self.queue, function (call) {
+      var method = call.method
+        , args   = call.args;
+      self[method].apply(self, args);
+    });
+    self.ready = true;
+    self.queue = [];
+    ready();
+  };
+
   // Call the provider's initialize object.
-  this.initialize.call(this, this.options, ready);
+  this.initialize.call(this, this.options, dequeue);
 }
 
 
@@ -1891,6 +1918,18 @@ extend(Provider.prototype, {
   // and loading a Javascript library.
   initialize : function (options, ready) {
     ready();
+  },
+
+  /**
+   * Adds an item to the queue
+   * @param  {String} method ('track' or 'identify')
+   * @param  {Object} args
+   */
+  enqueue : function (method, args) {
+    this.queue.push({
+      method : method,
+      args : args
+    });
   }
 });
 });

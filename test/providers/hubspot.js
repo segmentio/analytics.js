@@ -3,21 +3,27 @@ describe('HubSpot', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
+      var spy  = sinon.spy()
+        , push = Array.prototype.push;
+
       expect(window._hsq).to.be(undefined);
 
-      var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'HubSpot' : test['HubSpot'] });
       expect(window._hsq).not.to.be(undefined);
-      expect(window._hsq.push).to.equal(Array.prototype.push);
+      expect(window._hsq.push).to.equal(push);
       expect(spy.called).to.be(true);
 
       // Once the HubSpot library comes back, the array should be transformed.
-      setTimeout(function () {
-        expect(window._hsq).to.not.equal(Array.prototype.push);
+      var interval = setInterval(function () {
+        if (window._hsq === push) return;
+        expect(window._hsq).to.not.equal(push);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
     it('should store options', function () {

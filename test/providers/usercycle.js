@@ -3,14 +3,28 @@ describe('USERcycle', function () {
 
   describe('initialize', function () {
 
-    it('should call ready and load library', function () {
+    this.timeout(10000);
+
+    it('should call ready and load library', function (done) {
+      var spy  = sinon.spy()
+        , push = Array.prototype.push;
+
       expect(window._uc).to.be(undefined);
 
-      var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'USERcycle' : test['USERcycle'] });
+
       expect(window._uc).not.to.be(undefined);
+      expect(window._uc.push).to.equal(push);
       expect(spy.called).to.be(true);
+
+      // When the library loads, it will overwrite the push method.
+      var interval = setInterval(function () {
+        if (window._uc.push === push) return;
+        expect(window._uc.push).not.to.equal(push);
+        clearInterval(interval);
+        done();
+      }, 20);
     });
 
     it('should store options', function () {

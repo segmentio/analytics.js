@@ -3,6 +3,8 @@ describe('Bitdeli', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
       expect(window._bdq).to.be(undefined);
 
@@ -18,19 +20,19 @@ describe('Bitdeli', function () {
       expect(window._bdq._version).to.be(undefined);
 
       // Once the library loads, `_version` is defined.
-      setTimeout(function () {
+      var interval = setInterval(function () {
+        if (!window._bdq._version) return;
         expect(window._bdq._version).not.to.be(undefined);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
-    it('should store options', function (done) {
-      window._bdq = [];
+    it('should store options', function () {
       analytics.initialize({ 'Bitdeli' : test['Bitdeli'] });
       var options = analytics.providers[0].options;
       expect(options.inputId).to.equal(test['Bitdeli'].inputId);
       expect(options.authToken).to.equal(test['Bitdeli'].authToken);
-      setTimeout(done, 1800);
     });
 
     it('should track a pageview', function () {
@@ -58,6 +60,7 @@ describe('Bitdeli', function () {
     });
 
   });
+
 
   describe('identify', function () {
 

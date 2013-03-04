@@ -3,6 +3,8 @@ describe('SnapEngage', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
       expect(window.SnapABug).to.be(undefined);
 
@@ -10,11 +12,13 @@ describe('SnapEngage', function () {
       analytics.ready(spy);
       analytics.initialize({ 'SnapEngage' : test['SnapEngage'] });
 
-      setTimeout(function () {
+      var interval = setInterval(function () {
+        if (!window.SnapABug) return;
         expect(window.SnapABug).not.to.be(undefined);
         expect(spy.called).to.be(true);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
     it('should store options', function () {

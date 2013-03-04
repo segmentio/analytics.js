@@ -3,6 +3,8 @@ describe('UserVoice', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
       expect(window.uvOptions).to.be(undefined);
 
@@ -13,11 +15,13 @@ describe('UserVoice', function () {
       expect(window._uvts).to.be(undefined);
 
       // Once the library loads, `_uvts` gets set.
-      setTimeout(function () {
+      var interval = setInterval(function () {
+        if (!window._uvts) return;
         expect(window._uvts).not.to.be(undefined);
         expect(spy.called).to.be(true);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
     it('should store options', function () {

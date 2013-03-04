@@ -10,6 +10,8 @@ describe('Mixpanel', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     // Initializing Mixpanel twice breaks it, so we do it all in one.
     it('should call ready and load library', function (done) {
       expect(window.mixpanel).to.be(undefined);
@@ -23,10 +25,12 @@ describe('Mixpanel', function () {
       expect(spy.called).to.be(true);
 
       // When the library loads, it sets `config`.
-      setTimeout(function () {
+      var interval = setInterval(function () {
+        if (!window.mixpanel.config) return;
         expect(window.mixpanel.config).not.to.be(undefined);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
   });
@@ -161,6 +165,7 @@ describe('Mixpanel', function () {
 
   describe('alias', function () {
 
+    // NOTE: this will fail when testing in the browser!! But won't in Phantom.
     it('should call alias', function () {
       var spy = sinon.spy(window.mixpanel, 'alias');
       analytics.alias(test.newUserId, test.oldUserId);

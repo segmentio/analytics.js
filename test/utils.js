@@ -48,7 +48,7 @@ window.test = {
 
   'Errorception' : 'x',
 
-  'FoxMetrics' : '4ec10e0c1542321b8c4caae7',
+  'FoxMetrics' : '5135085424023236bca9c08c',
 
   'Gauges' : 'x',
 
@@ -77,7 +77,7 @@ window.test = {
 
   'Mixpanel' : 'x',
 
-  'Olark' : 'x',
+  'Olark' : '5798-949-10-1692',
 
   'Perfect Audience' : '4ff6ade4361ed500020000a5',
 

@@ -1,9 +1,8 @@
-
 describe('Olark', function () {
 
   describe('initialize', function () {
 
-    it('should call ready and load library', function () {
+    it('should call ready and load library', function (done) {
       expect(window.olark).to.be(undefined);
 
       var spy = sinon.spy();
@@ -11,6 +10,14 @@ describe('Olark', function () {
       analytics.initialize({ 'Olark' : test['Olark'] });
       expect(window.olark).not.to.be(undefined);
       expect(spy.called).to.be(true);
+
+      // When the library loads, it creats a `__get_olark_key` method.
+      var interval = setInterval(function () {
+        if (!window.__get_olark_key) return;
+        expect(window.__get_olark_key).not.to.be(undefined);
+        clearInterval(interval);
+        done();
+      }, 20);
     });
 
     it('should store options', function () {

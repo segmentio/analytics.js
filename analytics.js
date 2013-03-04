@@ -1397,7 +1397,7 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.8.1';
+  this.VERSION = '0.8.2';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -2568,7 +2568,7 @@ module.exports = Provider.extend({
   initialize : function (options, ready) {
     var _fxm = window._fxm || {};
     window._fxm = _fxm.events || [];
-    load('d35tca7vmefkrc.cloudfront.net/scripts/' + options.appId + '.js');
+    load('//d35tca7vmefkrc.cloudfront.net/scripts/' + options.appId + '.js');
 
     // FoxMetrics makes a queue, so it's ready immediately.
     ready();

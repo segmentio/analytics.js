@@ -48,7 +48,7 @@ window.test = {
 
   'Errorception' : 'x',
 
-  'FoxMetrics': '4ec10e0c1542321b8c4caae7',
+  'FoxMetrics' : '4ec10e0c1542321b8c4caae7',
 
   'Gauges' : 'x',
 
@@ -64,7 +64,7 @@ window.test = {
 
   'Intercom' : 'x',
 
-  'Keen IO': {
+  'Keen IO' : {
     projectId : 'KEEN_PROJECT_ID',
     apiKey    : 'KEEN_API_KEY'
   },

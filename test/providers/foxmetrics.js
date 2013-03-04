@@ -11,6 +11,12 @@ describe('FoxMetrics', function () {
       analytics.initialize({ 'FoxMetrics' : test['FoxMetrics'] });
       expect(window._fxm).not.to.be(undefined);
       expect(spy.called).to.be(true);
+
+      // TODO: When the library loads, push will be overriden.
+      setTimeout(function () {
+        // expect(window._fxm.push).not.to.eql(Array.prototype.push);
+        // done();
+      }, 3500);
     });
 
     it ('should store options', function () {

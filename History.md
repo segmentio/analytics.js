@@ -1,3 +1,7 @@
+0.8.2 / 2013-3-3
+================
+* Fix bug in FoxMetrics provider
+
 0.8.1 / 2013-3-3
 ================
 * Fix bug in `trackForm` when submitted via jQuery

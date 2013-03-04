@@ -422,7 +422,10 @@ extend(Analytics.prototype, {
 
     // Call `pageview` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.pageview) provider.pageview(url);
+      if (provider.pageview) {
+        if (provider.ready) provider.pageview(url);
+        else provider.enqueue('pageview', [url]);
+      }
     });
   },
 
@@ -446,7 +449,10 @@ extend(Analytics.prototype, {
 
     // Call `alias` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.alias) provider.alias(newId, originalId);
+      if (provider.alias) {
+        if (provider.ready) provider.alias(newId, originalId);
+        else provider.enqueue('alias', [newId, originalId]);
+      }
     });
   }
 

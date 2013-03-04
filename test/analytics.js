@@ -1,11 +1,13 @@
 
 describe('Analytics.js', function () {
 
+  var readyTimeout = 200;
+
   var Provider = analytics.Provider.extend({
       key        : 'key',
       options    : {},
       initialize : function (options, ready) {
-          setTimeout(ready, 200);
+          setTimeout(ready, readyTimeout);
       },
       identify   : function (userId, traits) {},
       track      : function (event, properties) {},
@@ -72,7 +74,7 @@ describe('Analytics.js', function () {
         expect(spy1.called).to.be(true);
         expect(spy2.called).to.be(true);
         done();
-      }, 250);
+      }, readyTimeout + 50);
     });
 
     it('calls callbacks immediately when already initialized', function () {
@@ -87,6 +89,50 @@ describe('Analytics.js', function () {
         analytics.ready('callback');
       }).to.not.throwException();
     });
+  });
+
+
+  describe('queue', function () {
+
+    // Describes a single test of the queue against a particular method.
+    var queueTest = function (method, args) {
+      return function (done) {
+        // Reset our initialized function
+        analytics.initialized = false;
+        var spy = sinon.spy(Provider.prototype, 'enqueue');
+
+        analytics.initialize(options);
+
+        // Once initialized, the call should queue.
+        analytics[method].apply(analytics, args);
+        expect(spy.firstCall.args).to.eql([method, args]);
+        spy.restore();
+
+        // After a timeout, expect the queue to drain.
+        spy = sinon.spy(Provider.prototype, method);
+        setTimeout(function () {
+          expect(spy.firstCall.args).to.eql(args);
+          spy.restore();
+          done();
+        }, readyTimeout + 50);
+      };
+    };
+
+    it('queues track calls before ready is called',
+        queueTest('track', ['tossed a disc', { distance : 40 }, undefined])
+    );
+
+    it('queues identify calls before ready is called',
+        queueTest('identify', ['id', { name : 'achilles' }, undefined])
+    );
+
+    it('queues alias calls before ready is called',
+        queueTest('alias', ['id', 'newId'])
+    );
+
+    it('queues pageview calls before ready is called',
+        queueTest('pageview', ['/some/url'])
+    );
   });
 
 

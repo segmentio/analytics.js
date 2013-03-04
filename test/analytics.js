@@ -521,13 +521,26 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
-    it('triggers a track on a form submit', function () {
+    it('triggers a track on a $form submit', function () {
       var spy   = sinon.spy(Provider.prototype, 'track');
       var $form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
 
       analytics.trackForm($form, 'party');
 
       triggerClick($form.find('input')[0]);
+
+      expect(spy.calledWith('party')).to.be(true);
+
+      spy.restore();
+    });
+
+    it('triggers a track on a $form submitted by jQuery', function () {
+      var spy   = sinon.spy(Provider.prototype, 'track');
+      var $form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
+
+      analytics.trackForm($form, 'party');
+
+      $form.submit();
 
       expect(spy.calledWith('party')).to.be(true);
 

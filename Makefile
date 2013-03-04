@@ -33,21 +33,14 @@ test: server
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/min.html
 	make kill
 
-# Runs only the non-minified tests.
-test-dev: server
-	sleep 1
-	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/core.html
-	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/providers.html
-	make kill
-
 # Runs only the non-minified core tests.
-test-dev-core: server
+test-core: server
 	sleep 1
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/core.html
 	make kill
 
 # Runs only the non-minified provider tests.
-test-dev-providers: server
+test-providers: server
 	sleep 1
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/test/providers.html
 	make kill

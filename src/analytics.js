@@ -17,7 +17,7 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.8.0';
+  this.VERSION = '0.8.1';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -324,14 +324,14 @@ extend(Analytics.prototype, {
           // Prevent the link's default redirect in all the sane
           // browsers, and also IE.
           if (e.preventDefault)
-              e.preventDefault();
+            e.preventDefault();
           else
-              e.returnValue = false;
+            e.returnValue = false;
 
           // Navigate to the url after a small timeout, giving the
           // providers time to track the event.
           setTimeout(function () {
-              window.location.href = el.href;
+            window.location.href = el.href;
           }, self.timeout);
         }
       });
@@ -355,35 +355,41 @@ extend(Analytics.prototype, {
   trackForm : function (form, event, properties) {
     if (!form) return;
 
-    // Turn a single element into an array so that we're always handling
-    // arrays, which allows for passing jQuery objects.
+    // Turn a single element into an array so that we're always handling arrays,
+    // which allows for passing jQuery objects.
     if (utils.isElement(form)) form = [form];
 
     var self = this;
 
     each(form, function (el) {
-
-      bind(el, 'submit', function (e) {
-        // Allow for properties to be a function. And pass it the
-        // form element that was submitted.
+      var handler = function (e) {
+        // Allow for properties to be a function. And pass it the form element
+        // that was submitted.
         if (type(properties) === 'function') properties = properties(el);
 
         // Fire a normal track call.
         self.track(event, properties);
 
-        // Prevent the form's default submit in all the sane
-        // browsers, and also IE.
+        // Prevent the form's default submit in all sane browsers, and IE.
         if (e.preventDefault)
           e.preventDefault();
         else
           e.returnValue = false;
 
-        // Submit the form after a small timeout, giving the event
-        // time to get fired.
+        // Submit the form after a small timeout, giving the event time to fire.
         setTimeout(function () {
           el.submit();
         }, self.timeout);
-      });
+      };
+
+      // Support the form being submitted via jQuery instead of for real. This
+      // doesn't happen automatically because `el.submit()` doesn't actually
+      // fire submit handlers, which is what jQuery has to user internally. >_<
+      var dom = window.jQuery || window.Zepto;
+      if (dom)
+        dom(el).submit(handler);
+      else
+        bind(el, 'submit', handler);
     });
   },
 

@@ -325,7 +325,7 @@ function set(name, value, options) {
 
   if (options.path) str += '; path=' + options.path;
   if (options.domain) str += '; domain=' + options.domain;
-  if (options.expires) str += '; expires=' + options.expires.toGMTString();
+  if (options.expires) str += '; expires=' + options.expires.toUTCString();
   if (options.secure) str += '; secure';
 
   document.cookie = str;
@@ -1367,7 +1367,7 @@ module.exports = function loadScript (options, callback) {
 };
 });
 require.register("analytics/src/index.js", function(exports, require, module){
-// Analytics.js 0.7.0
+// Analytics.js
 // (c) 2013 Segment.io Inc.
 // Analytics.js may be freely distributed under the MIT license.
 
@@ -1397,7 +1397,7 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.8.0';
+  this.VERSION = '0.8.1';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -1704,14 +1704,14 @@ extend(Analytics.prototype, {
           // Prevent the link's default redirect in all the sane
           // browsers, and also IE.
           if (e.preventDefault)
-              e.preventDefault();
+            e.preventDefault();
           else
-              e.returnValue = false;
+            e.returnValue = false;
 
           // Navigate to the url after a small timeout, giving the
           // providers time to track the event.
           setTimeout(function () {
-              window.location.href = el.href;
+            window.location.href = el.href;
           }, self.timeout);
         }
       });
@@ -1735,35 +1735,41 @@ extend(Analytics.prototype, {
   trackForm : function (form, event, properties) {
     if (!form) return;
 
-    // Turn a single element into an array so that we're always handling
-    // arrays, which allows for passing jQuery objects.
+    // Turn a single element into an array so that we're always handling arrays,
+    // which allows for passing jQuery objects.
     if (utils.isElement(form)) form = [form];
 
     var self = this;
 
     each(form, function (el) {
-
-      bind(el, 'submit', function (e) {
-        // Allow for properties to be a function. And pass it the
-        // form element that was submitted.
+      var handler = function (e) {
+        // Allow for properties to be a function. And pass it the form element
+        // that was submitted.
         if (type(properties) === 'function') properties = properties(el);
 
         // Fire a normal track call.
         self.track(event, properties);
 
-        // Prevent the form's default submit in all the sane
-        // browsers, and also IE.
+        // Prevent the form's default submit in all sane browsers, and IE.
         if (e.preventDefault)
           e.preventDefault();
         else
           e.returnValue = false;
 
-        // Submit the form after a small timeout, giving the event
-        // time to get fired.
+        // Submit the form after a small timeout, giving the event time to fire.
         setTimeout(function () {
           el.submit();
         }, self.timeout);
-      });
+      };
+
+      // Support the form being submitted via jQuery instead of for real. This
+      // doesn't happen automatically because `el.submit()` doesn't actually
+      // fire submit handlers, which is what jQuery has to user internally. >_<
+      var dom = window.jQuery || window.Zepto;
+      if (dom)
+        dom(el).submit(handler);
+      else
+        bind(el, 'submit', handler);
     });
   },
 
@@ -1822,6 +1828,7 @@ extend(Analytics.prototype, {
 // Alias `trackClick` and `trackSubmit` for backwards compatibility.
 Analytics.prototype.trackClick = Analytics.prototype.trackLink;
 Analytics.prototype.trackSubmit = Analytics.prototype.trackForm;
+
 });
 require.register("analytics/src/provider.js", function(exports, require, module){
 var extend = require('extend')

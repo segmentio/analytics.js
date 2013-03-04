@@ -1,3 +1,7 @@
+0.8.1 / 2013-3-3
+================
+* Fix bug in `trackForm` when submitted via jQuery
+
 0.8.0 / 2013-3-1
 ================
 * Adding cookie-ing to keep identity and traits across page loads

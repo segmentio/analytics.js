@@ -1,6 +1,7 @@
 0.8.2 / 2013-3-3
 ================
 * Fix bug in FoxMetrics provider
+* Adding queue for providers which don't support ready immediately.
 
 0.8.1 / 2013-3-3
 ================

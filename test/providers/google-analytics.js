@@ -3,23 +3,29 @@ describe('Google Analytics', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
-      this.timeout(4000);
+      var spy  = sinon.spy()
+        , push = Array.prototype.push;
 
       expect(window._gaq).to.be(undefined);
 
-      var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Google Analytics' : test['Google Analytics'] });
+
+      // A queue is created, so it's ready immediately.
       expect(window._gaq).not.to.be(undefined);
-      expect(window._gaq.push).to.eql(Array.prototype.push);
+      expect(window._gaq.push).to.eql(push);
       expect(spy.called).to.be(true);
 
       // When the library loads, push will be overriden.
-      setTimeout(function () {
-        expect(window._gaq.push).not.to.eql(Array.prototype.push);
+      var interval = setInterval(function () {
+        if (window._gaq.push === push) return;
+        expect(window._gaq.push).not.to.eql(push);
+        clearInterval(interval);
         done();
-      }, 3500);
+      }, 20);
     });
 
     it('should store options', function () {

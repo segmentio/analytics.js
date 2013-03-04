@@ -3,14 +3,26 @@ describe('Klaviyo', function () {
 
   describe('initialize', function () {
 
-    it('should call ready and load library', function () {
+    it('should call ready and load library', function (done) {
+      var spy  = sinon.spy()
+        , push = Array.prototype.push;
+
       expect(window._learnq).to.be(undefined);
 
-      var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Klaviyo' : test['Klaviyo'] });
+
+      // Creates a queue, so it's ready immediately.
       expect(window._learnq).not.to.be(undefined);
       expect(spy.called).to.be(true);
+
+      // Once the library loads, push will be overwritten.
+      var interval = setInterval(function () {
+        if (window._learnq.push === push) return;
+        expect(window._learnq.push).not.to.eql(push);
+        clearInterval(interval);
+        done();
+      }, 20);
     });
 
     it('should store options', function () {

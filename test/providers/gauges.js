@@ -2,21 +2,29 @@ describe('Gauges', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
-      this.timeout(4000);
+      var spy  = sinon.spy()
+        , push = Array.prototype.push;
+
       expect(window._gauges).to.be(undefined);
 
-      var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Gauges' : test['Gauges'] });
+
+      // Gauges creates a queue, so it's ready immediately.
       expect(window._gauges).not.to.be(undefined);
-      expect(window._gauges.push).to.eql(Array.prototype.push);
+      expect(window._gauges.push).to.eql(push);
       expect(spy.called).to.be(true);
 
-      setTimeout(function () {
-        expect(window._gauges.push).not.to.eql(Array.prototype.push);
+      // Once the library loads, push will be overwritten.
+      var interval = setInterval(function () {
+        if (window._gauges.push === push) return;
+        expect(window._gauges.push).not.to.eql(push);
+        clearInterval(interval);
         done();
-      }, 3900);
+      }, 20);
     });
 
     it('should store options', function () {

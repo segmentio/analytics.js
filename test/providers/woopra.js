@@ -3,6 +3,8 @@ describe('Woopra', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
       expect(window.woopraReady).to.be(undefined);
       expect(window.woopraTracker).to.be(undefined);
@@ -15,11 +17,13 @@ describe('Woopra', function () {
 
       // Once the library loads the tracker will be created and the spy will
       // be called.
-      setTimeout(function () {
-      expect(window.woopraTracker).not.to.be(undefined);
-        done();
+      var interval = setInterval(function () {
+        if (!window.woopraTracker) return;
+        expect(window.woopraTracker).not.to.be(undefined);
         expect(spy.called).to.be(true);
-      }, 1900);
+        clearInterval(interval);
+        done();
+      }, 20);
     });
 
     it('should store options', function () {

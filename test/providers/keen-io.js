@@ -3,6 +3,8 @@ describe('Keen IO', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
       expect(window.Keen).not.to.exist;
 
@@ -18,10 +20,12 @@ describe('Keen IO', function () {
 
       // When the Keen IO library loads, it creates some keys we can test.
       expect(window.Keen.Base64).to.be(undefined);
-      setTimeout(function () {
+      var interval = setInterval(function () {
+        if (!window.Keen.Base64) return;
         expect(window.Keen.Base64).not.to.be(undefined);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
     it('should store options', function () {

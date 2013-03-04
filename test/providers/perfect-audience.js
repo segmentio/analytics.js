@@ -2,8 +2,9 @@ describe('Perfect Audience', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call read and load library', function (done) {
-      this.timeout(4000);
       expect(window._pa).to.be(undefined);
 
       var spy = sinon.spy();
@@ -12,11 +13,13 @@ describe('Perfect Audience', function () {
       expect(window._pa).not.to.be(undefined);
 
       // Test to make sure the library _actually_ loads.
-      setTimeout(function () {
+      var interval = setInterval(function () {
+        if (!window._pa.track) return;
         expect(window._pa.track).not.to.be(undefined);
         expect(spy.called).to.be(true);
+        clearInterval(interval);
         done();
-      }, 3900);
+      }, 20);
     });
 
     it('should call store options', function () {

@@ -3390,11 +3390,9 @@ module.exports = Provider.extend({
   // Although undocumented, Mixpanel actually supports the `originalId`. It
   // just usually defaults to the current user's `distinct_id`.
   alias : function (newId, originalId) {
-
+    // HACK: internal mixpanel API to ensure we don't overwrite.
     if(window.mixpanel.get_distinct_id &&
        window.mixpanel.get_distinct_id() === newId) return;
-
-    // HACK: internal mixpanel API to ensure we don't overwrite.
     if(window.mixpanel.get_property &&
        window.mixpanel.get_property('$people_distinct_id')) return;
 

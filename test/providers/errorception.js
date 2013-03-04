@@ -3,15 +3,35 @@ describe('Errorception', function () {
 
   describe('initialize', function () {
 
-    it('should call ready and load library', function () {
+    this.timeout(10000);
+
+    it('should call ready and load library', function (done) {
+      var spy  = sinon.spy()
+        , push = Array.prototype.push;
+
       expect(window._errs).to.be(undefined);
 
-      var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Errorception' : test['Errorception'] });
+
+      // Errorception sets up a queue, so it's ready immediately.
       expect(window._errs).not.to.be(undefined);
-      expect(analytics.providers[0].options.projectId).to.equal('x');
+      expect(window._errs.push).to.equal(push);
       expect(spy.called).to.be(true);
+
+      // When the library loads, it will overwrite the push method.
+      var interval = setInterval(function () {
+        if (window._errs.push === push) return;
+        expect(window._errs.push).not.to.equal(push);
+        clearInterval(interval);
+        done();
+      }, 20);
+    });
+
+    it('should store options', function () {
+      analytics.initialize({ 'Errorception' : test['Errorception'] });
+      var options = analytics.providers[0].options;
+      expect(options.projectId).to.equal(test['Errorception']);
     });
 
   });

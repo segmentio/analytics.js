@@ -1439,6 +1439,9 @@ extend(Analytics.prototype, {
   // Whether analytics.js has been initialized with providers.
   initialized : false,
 
+  // Whether all of our providers have loaded.
+  isReady : false,
+
   // A queue for storing `ready` callback functions to get run when
   // analytics have been initialized.
   readyCallbacks : [],
@@ -1485,7 +1488,8 @@ extend(Analytics.prototype, {
 
     // Reset our state.
     this.providers = [];
-    this.userId = null;
+    this.initialized = false;
+    this.isReady = false;
 
     // Set the user options, and load the user from our cookie.
     user.options(options);
@@ -1495,6 +1499,7 @@ extend(Analytics.prototype, {
     // initialized and loaded. We'll pass the function into each provider's
     // initialize method, so they can callback when they've loaded successfully.
     var ready = after(size(providers), function () {
+      self.isReady = true;
       // Take each callback off the queue and call it.
       var callback;
       while(callback = self.readyCallbacks.shift()) {
@@ -1532,7 +1537,7 @@ extend(Analytics.prototype, {
 
     // If we're already initialized, do it right away. Otherwise, add it to the
     // queue for when we do get initialized.
-    if (this.initialized) {
+    if (this.isReady) {
       callback();
     } else {
       this.readyCallbacks.push(callback);
@@ -3001,6 +3006,7 @@ exports['Mixpanel']         = require('./mixpanel');
 exports['Olark']            = require('./olark');
 exports['Perfect Audience'] = require('./perfect-audience');
 exports['Quantcast']        = require('./quantcast');
+exports['Sentry']           = require('./sentry');
 exports['SnapEngage']       = require('./snapengage');
 exports['USERcycle']        = require('./usercycle');
 exports['UserVoice']        = require('./uservoice');
@@ -3599,6 +3605,43 @@ module.exports = Provider.extend({
       http  : 'http://edge.quantserve.com/quant.js',
       https : 'https://secure.quantserve.com/quant.js'
     }, ready);
+  }
+
+});
+});
+require.register("analytics/src/providers/sentry.js", function(exports, require, module){
+// Sentry
+// ------
+// http://raven-js.readthedocs.org/en/latest/config/index.html
+
+var Provider = require('../provider')
+  , extend   = require('extend')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+  key : 'config',
+
+  options : {
+    config : null
+  },
+
+
+  initialize : function (options, ready) {
+    load('//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js', function () {
+      // For now, Raven basically requires `install` to be called.
+      // https://github.com/getsentry/raven-js/blob/master/src/raven.js#L87
+      window.Raven.config(options.config).install();
+      ready();
+    });
+  },
+
+
+  identify : function (userId, traits) {
+    traits || (traits = {});
+    if (userId) traits.id = userId;
+    window.Raven.setUser(traits);
   }
 
 });

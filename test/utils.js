@@ -16,6 +16,12 @@ window.test = {
     revenue : 29.99
   },
 
+  context : {
+    providers : {
+      all : true
+    }
+  },
+
   url : '/url',
 
   newUserId : 'new',
@@ -82,6 +88,8 @@ window.test = {
   'Perfect Audience' : '4ff6ade4361ed500020000a5',
 
   'Quantcast' : 'x',
+
+  'Sentry' : 'x',
 
   'SnapEngage' : '782b737e-487f-4117-8a2b-2beb32b600e5',
 

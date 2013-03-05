@@ -36,6 +36,9 @@ module.exports = Provider.extend({
     // Storyberg takes the `userId` as part of the traits object
     traits.user_id = userId;
 
+    // If there wasn't already an email and the userId is one, use it.
+    if (!traits.email && isEmail(userId)) traits.email = userId;
+
     window._sbq.push(['identify', traits]);
   },
 

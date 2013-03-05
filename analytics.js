@@ -1366,6 +1366,14 @@ module.exports = function loadScript (options, callback) {
     return script;
 };
 });
+require.register("segmentio-canonical/index.js", function(exports, require, module){
+module.exports = function canonical () {
+  var tags = document.getElementsByTagName('link');
+  for (var i = 0, tag; tag = tags[i]; i++) {
+    if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
+  }
+};
+});
 require.register("analytics/src/index.js", function(exports, require, module){
 // Analytics.js
 // (c) 2013 Segment.io Inc.
@@ -2222,9 +2230,8 @@ module.exports = Provider.extend({
 
   options : {
     // BitDeli requires two options: `inputId` and `authToken`.
-    inputId   : null,
+    inputId : null,
     authToken : null,
-
     // Whether or not to track an initial pageview when the page first
     // loads. You might not want this if you're using a single-page app.
     initialPageview : true
@@ -2671,12 +2678,13 @@ require.register("analytics/src/providers/google-analytics.js", function(exports
 // ----------------
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
 
-var Provider = require('../provider')
-  , each     = require('each')
-  , extend   = require('extend')
-  , load     = require('load-script')
-  , type     = require('type')
-  , url      = require('url');
+var Provider  = require('../provider')
+  , each      = require('each')
+  , extend    = require('extend')
+  , load      = require('load-script')
+  , type      = require('type')
+  , url       = require('url')
+  , canonical = require('canonical');
 
 
 module.exports = Provider.extend({
@@ -2684,11 +2692,20 @@ module.exports = Provider.extend({
   key : 'trackingId',
 
   options : {
-    anonymizeIp             : false,
+    // Your Google Analytics Tracking ID.
+    trackingId : null,
+    // Whether or not to track and initial pageview when initialized.
+    initialPageview : true,
+    // An optional domain setting, to restrict where events can originate from.
+    domain : null,
+    // Whether to anonymize the IP address collected for the user.
+    anonymizeIp : false,
+    // Whether to use Google Analytics's Enhanced Link Attribution feature:
+    // http://support.google.com/analytics/bin/answer.py?hl=en&answer=2558867
     enhancedLinkAttribution : false,
-    siteSpeedSampleRate     : null,
-    domain                  : null,
-    trackingId              : null
+    // The setting to use for Google Analytics's Site Speed Sample Rate feature:
+    // https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setSiteSpeedSampleRate
+    siteSpeedSampleRate : null
   },
 
 
@@ -2696,7 +2713,7 @@ module.exports = Provider.extend({
     window._gaq = window._gaq || [];
     window._gaq.push(['_setAccount', options.trackingId]);
 
-    // Apply a bunch of settings.
+    // Apply a bunch of optional settings.
     if (options.domain) {
       window._gaq.push(['_setDomainName', options.domain]);
     }
@@ -2708,19 +2725,14 @@ module.exports = Provider.extend({
     if (type(options.siteSpeedSampleRate) === 'number') {
       window._gaq.push(['_setSiteSpeedSampleRate', options.siteSpeedSampleRate]);
     }
-    if(options.anonymizeIp) {
+    if (options.anonymizeIp) {
       window._gaq.push(['_gat._anonymizeIp']);
     }
-
-    // Track the initial pageview, using the canonical URL path if available.
-    var canonicalPath
-      , metaTags = document.getElementsByTagName('meta');
-    each(metaTags, function (el) {
-      if (el.getAttribute('rel') === 'canonical') {
-        canonicalPath = url.parse(el.getAttribute('href')).pathname;
-      }
-    });
-    this.pageview(canonicalPath);
+    if (options.initialPageview) {
+      var path, canon = canonical();
+      if (canon) path = url.parse(canon).pathname;
+      this.pageview(path);
+    }
 
     load({
       http  : 'http://www.google-analytics.com/ga.js',
@@ -2898,8 +2910,9 @@ module.exports = Provider.extend({
   },
 
 
-  pageview : function () {
-    // TODO http://performabledoc.hubspot.com/display/DOC/JavaScript+API
+  // HubSpot doesn't support passing in a custom URL.
+  pageview : function (url) {
+    window._hsq.push(['_trackPageview']);
   }
 
 });
@@ -3034,7 +3047,11 @@ module.exports = Provider.extend({
   options : {
     // Keen IO has two required options: `projectId` and `apiKey`.
     projectId : null,
-    apiKey    : null
+    apiKey : null,
+    // Whether or not to pass pageviews on to Keen IO.
+    pageview : false,
+    // Whether or not to track an initial pageview on initialize.
+    initialPageview : false
   },
 
 
@@ -3044,13 +3061,15 @@ module.exports = Provider.extend({
 
     load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js');
 
+    if (options.initialPageview) this.pageview();
+
     // Keen IO defines all their functions in the snippet, so they
     // are ready immediately.
     ready();
   },
 
 
-  identify : function(userId, traits) {
+  identify : function (userId, traits) {
     // Use Keen IO global properties to include `userId` and `traits` on
     // every event sent to Keen IO.
     var globalUserProps = {};
@@ -3064,8 +3083,18 @@ module.exports = Provider.extend({
   },
 
 
-  track : function(event, properties) {
+  track : function (event, properties) {
     window.Keen.addEvent(event, properties);
+  },
+
+
+  pageview : function (url) {
+    if (!this.options.pageview) return;
+
+    var properties;
+    if (url) properties = { url : url };
+
+    this.track('Loaded a Page', properties);
   }
 
 });
@@ -3248,9 +3277,13 @@ module.exports = Provider.extend({
     // Whether to call `mixpanel.nameTag` on `identify`.
     nameTag : true,
     // Whether to use Mixpanel's People API.
-    people  : false,
+    people : false,
     // The Mixpanel API token for your account.
-    token   : null
+    token : null,
+    // Whether to track pageviews to Mixpanel.
+    pageview : false,
+    // Whether to track an initial pageview on initialize.
+    initialPageview : false
   },
 
   initialize : function (options, ready) {
@@ -3284,6 +3317,8 @@ module.exports = Provider.extend({
 
     // Pass options directly to `init` as the second argument.
     window.mixpanel.init(options.token, options);
+
+    if (options.initialPageview) this.pageview();
 
     // Mixpanel creats all of its methods in the snippet, so it's ready
     // immediately.
@@ -3330,7 +3365,7 @@ module.exports = Provider.extend({
     // Mixpanel handles revenue with a `transaction` call in their People
     // feature. So if we're using people, record a transcation.
     if (properties && properties.revenue && this.options.people) {
-        window.mixpanel.people.track_charge(properties.revenue);
+      window.mixpanel.people.track_charge(properties.revenue);
     }
   },
 
@@ -3339,15 +3374,24 @@ module.exports = Provider.extend({
   // Mixpanel stream.
   pageview : function (url) {
     window.mixpanel.track_pageview(url);
+
+    // If they don't want pageviews tracked, leave now.
+    if (!this.options.pageview) return;
+
+    var properties;
+    if (url) properties = { url : url };
+    this.track('Loaded a Page', properties);
   },
 
 
   // Although undocumented, Mixpanel actually supports the `originalId`. It
   // just usually defaults to the current user's `distinct_id`.
   alias : function (newId, originalId) {
-    // HACK: internal mixpanel API to ensure we don't overwrite.
+
     if(window.mixpanel.get_distinct_id &&
        window.mixpanel.get_distinct_id() === newId) return;
+
+    // HACK: internal mixpanel API to ensure we don't overwrite.
     if(window.mixpanel.get_property &&
        window.mixpanel.get_property('$people_distinct_id')) return;
 
@@ -3770,6 +3814,8 @@ require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js")
 
 require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
+
+require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");
 

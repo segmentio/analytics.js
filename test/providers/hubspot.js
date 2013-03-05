@@ -61,6 +61,19 @@ describe('HubSpot', function () {
       var spy = sinon.spy(window._hsq, 'push');
       analytics.track(test.event, test.properties);
       expect(spy.calledWith(['trackEvent', test.event, test.properties])).to.be(true);
+      spy.restore();
+    });
+
+  });
+
+
+  describe('pageview', function () {
+
+    it('should push "_trackPageview"', function () {
+      var stub = sinon.stub(window._hsq, 'push');
+      analytics.pageview();
+      expect(stub.calledWith(['_trackPageview'])).to.be(true);
+      stub.restore();
     });
 
   });

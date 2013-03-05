@@ -2,12 +2,13 @@
 // ----------------
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
 
-var Provider = require('../provider')
-  , each     = require('each')
-  , extend   = require('extend')
-  , load     = require('load-script')
-  , type     = require('type')
-  , url      = require('url');
+var Provider  = require('../provider')
+  , each      = require('each')
+  , extend    = require('extend')
+  , load      = require('load-script')
+  , type      = require('type')
+  , url       = require('url')
+  , canonical = require('canonical');
 
 
 module.exports = Provider.extend({
@@ -15,11 +16,20 @@ module.exports = Provider.extend({
   key : 'trackingId',
 
   options : {
-    anonymizeIp             : false,
+    // Your Google Analytics Tracking ID.
+    trackingId : null,
+    // Whether or not to track and initial pageview when initialized.
+    initialPageview : true,
+    // An optional domain setting, to restrict where events can originate from.
+    domain : null,
+    // Whether to anonymize the IP address collected for the user.
+    anonymizeIp : false,
+    // Whether to use Google Analytics's Enhanced Link Attribution feature:
+    // http://support.google.com/analytics/bin/answer.py?hl=en&answer=2558867
     enhancedLinkAttribution : false,
-    siteSpeedSampleRate     : null,
-    domain                  : null,
-    trackingId              : null
+    // The setting to use for Google Analytics's Site Speed Sample Rate feature:
+    // https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setSiteSpeedSampleRate
+    siteSpeedSampleRate : null
   },
 
 
@@ -27,7 +37,7 @@ module.exports = Provider.extend({
     window._gaq = window._gaq || [];
     window._gaq.push(['_setAccount', options.trackingId]);
 
-    // Apply a bunch of settings.
+    // Apply a bunch of optional settings.
     if (options.domain) {
       window._gaq.push(['_setDomainName', options.domain]);
     }
@@ -39,19 +49,14 @@ module.exports = Provider.extend({
     if (type(options.siteSpeedSampleRate) === 'number') {
       window._gaq.push(['_setSiteSpeedSampleRate', options.siteSpeedSampleRate]);
     }
-    if(options.anonymizeIp) {
+    if (options.anonymizeIp) {
       window._gaq.push(['_gat._anonymizeIp']);
     }
-
-    // Track the initial pageview, using the canonical URL path if available.
-    var canonicalPath
-      , metaTags = document.getElementsByTagName('meta');
-    each(metaTags, function (el) {
-      if (el.getAttribute('rel') === 'canonical') {
-        canonicalPath = url.parse(el.getAttribute('href')).pathname;
-      }
-    });
-    this.pageview(canonicalPath);
+    if (options.initialPageview) {
+      var path, canon = canonical();
+      if (canon) path = url.parse(canon).pathname;
+      this.pageview(path);
+    }
 
     load({
       http  : 'http://www.google-analytics.com/ga.js',

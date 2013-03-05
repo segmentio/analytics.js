@@ -13,9 +13,8 @@ module.exports = Provider.extend({
 
   options : {
     // BitDeli requires two options: `inputId` and `authToken`.
-    inputId   : null,
+    inputId : null,
     authToken : null,
-
     // Whether or not to track an initial pageview when the page first
     // loads. You might not want this if you're using a single-page app.
     initialPageview : true

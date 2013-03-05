@@ -118,6 +118,19 @@ describe('Google Analytics', function () {
       spy.restore();
     });
 
+    it('should load doubleclick', function () {
+      var spy  = sinon.spy()
+        , push = Array.prototype.push;
+
+      var options = extend({}, test['Google Analytics'], { doubleClick : true });
+      analytics.ready(spy);
+      analytics.initialize({ 'Google Analytics' : options });
+
+      // Make sure the script gets appended to the DOM.
+      var $script = $('script[src="http://stats.g.doubleclick.net/dc.js"]');
+      expect($script.length).to.equal(1);
+    });
+
   });
 
 

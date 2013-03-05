@@ -2750,7 +2750,9 @@ module.exports = Provider.extend({
     enhancedLinkAttribution : false,
     // The setting to use for Google Analytics's Site Speed Sample Rate feature:
     // https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setSiteSpeedSampleRate
-    siteSpeedSampleRate : null
+    siteSpeedSampleRate : null,
+    // Whether to enable GOogle's DoubleClick remarketing feature.
+    doubleClick : false
   },
 
 
@@ -2779,10 +2781,15 @@ module.exports = Provider.extend({
       this.pageview(path);
     }
 
-    load({
-      http  : 'http://www.google-analytics.com/ga.js',
-      https : 'https://ssl.google-analytics.com/ga.js'
-    });
+    // URLs change if DoubleClick is on.
+    if (options.doubleClick) {
+      load('//stats.g.doubleclick.net/dc.js');
+    } else {
+      load({
+        http  : 'http://www.google-analytics.com/ga.js',
+        https : 'https://ssl.google-analytics.com/ga.js'
+      });
+    }
 
     // Google makes a queue so it's ready immediately.
     ready();

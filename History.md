@@ -1,4 +1,9 @@
-0.8.2 / 2013-3-3
+0.8.3 / 20123-3-4
+=================
+* Adding initial pageview support to more providers
+* Allow HubSpot to recognize email `userId`
+
+0.8.2 / 2013-3-4
 ================
 * Fix bug in FoxMetrics provider
 * Adding queue for providers which don't support ready immediately.

@@ -38,17 +38,22 @@ describe('HubSpot', function () {
 
     it('should push "identify"', function () {
       var spy = sinon.spy(window._hsq, 'push');
+
       analytics.identify(test.traits);
       expect(spy.calledWith(['identify', test.traits])).to.be(true);
-
       spy.reset();
+
       analytics.identify(test.userId);
       expect(spy.calledWith(['identify', test.userId])).to.be(false);
-
       spy.reset();
+
+      // They require an email, but we try to smartly pull it from `userId`.
+      analytics.identify(test.traits.email);
+      expect(spy.calledWithMatch(['identify', { email : test.traits.email }])).to.be(true);
+      spy.reset();
+
       analytics.identify(test.userId, test.traits);
       expect(spy.calledWith(['identify', test.traits])).to.be(true);
-
       spy.restore();
     });
 

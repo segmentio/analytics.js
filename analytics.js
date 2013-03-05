@@ -1405,7 +1405,7 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.8.2';
+  this.VERSION = '0.8.3';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -2911,6 +2911,7 @@ require.register("analytics/src/providers/hubspot.js", function(exports, require
 
 var Provider = require('../provider')
   , extend   = require('extend')
+  , isEmail  = require('is-email')
   , load     = require('load-script');
 
 
@@ -2938,9 +2939,16 @@ module.exports = Provider.extend({
   },
 
 
+  // HubSpot does not use a userId, but the email address is required on
+  // the traits object.
   identify : function (userId, traits) {
-    // HubSpot does not use a userId, but the email address is required on
-    // the traits object.
+    // If there wasn't already an email and the userId is one, use it.
+    if ((!traits || !traits.email) && isEmail(userId)) {
+      traits || (traits = {});
+      traits.email = userId;
+    }
+
+    // Still don't have any traits? Get out.
     if (!traits) return;
 
     window._hsq.push(["identify", traits]);

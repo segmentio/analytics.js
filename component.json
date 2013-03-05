@@ -53,7 +53,8 @@
     "segmentio/alias": "*",
     "segmentio/extend": "*",
     "segmentio/is-email": "*",
-    "segmentio/load-script": "*"
+    "segmentio/load-script": "*",
+    "segmentio/canonical": "*"
   },
   "scripts": [
     "src/index.js",

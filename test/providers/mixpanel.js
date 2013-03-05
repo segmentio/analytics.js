@@ -122,25 +122,33 @@ describe('Mixpanel', function () {
 
   describe('track', function () {
 
+    // Mixpanel adds custom properties, so we need to have a loose match.
     it('should call track', function () {
       var spy = sinon.spy(window.mixpanel, 'track');
       analytics.track(test.event, test.properties);
-      // Mixpanel adds custom properties, so we need to have a loose match.
-      expect(spy.calledWith(test.event, sinon.match(test.properties))).to.be(true);
-
+      expect(spy.calledWithMatch(test.event, test.properties)).to.be(true);
       spy.restore();
     });
 
+    // The revenue feature requires `people` to be turned on.
     it('should call track_charge with revenue', function () {
-      // The revenue feature requires `people` to be turned on.
-      analytics.providers[0].options.people = true;
-      var spy = sinon.spy(window.mixpanel.people, 'track_charge');
+      var spy      = sinon.spy(window.mixpanel.people, 'track_charge')
+        , provider = analytics.providers[0];
 
-      analytics.track(test.event, { revenue : 9.99 });
-      expect(spy.calledWith(9.99)).to.be(true);
+      provider.options.people = true;
+
+      analytics.track(test.event, test.properties);
+      expect(spy.calledWith(test.properties.revenue)).to.be(true);
 
       spy.restore();
-      analytics.providers[0].options.people = false;
+      provider.options.people = false;
+    });
+
+    it('shouldnt call track_charge with revenue', function () {
+      var spy = sinon.spy(window.mixpanel.people, 'track_charge');
+      analytics.track(test.event, test.properties);
+      expect(spy.called).to.be(false);
+      spy.restore();
     });
 
   });
@@ -150,14 +158,35 @@ describe('Mixpanel', function () {
 
     it('should call track_pageview', function () {
       var spy = sinon.spy(window.mixpanel, 'track_pageview');
+
       analytics.pageview();
       expect(spy.called).to.be(true);
-
       spy.reset();
+
       analytics.pageview(test.url);
       expect(spy.calledWith(test.url)).to.be(true);
+      spy.restore();
+    });
+
+    it('shouldnt call track', function () {
+      var spy = sinon.spy(analytics.providers[0], 'track');
+      analytics.pageview();
+      expect(spy.called).to.be(false);
+      spy.restore();
+    });
+
+    // Mixpanel adds custom properties, so we need to have a loose match.
+    it('should call track', function () {
+      var provider = analytics.providers[0]
+        , spy      = sinon.spy(provider, 'track');
+
+      provider.options.pageview = true;
+
+      analytics.pageview(test.url);
+      expect(spy.calledWithMatch('Loaded a Page', { url : test.url })).to.be(true);
 
       spy.restore();
+      provider.options.pageview = false;
     });
 
   });
@@ -166,7 +195,7 @@ describe('Mixpanel', function () {
   describe('alias', function () {
 
     // NOTE: this will fail when testing in the browser!! But won't in Phantom.
-    it('should call alias', function () {
+    it('should call alias (doesnt work in test-browser)', function () {
       var spy = sinon.spy(window.mixpanel, 'alias');
       analytics.alias(test.newUserId, test.oldUserId);
       expect(spy.calledWith(test.newUserId, test.oldUserId)).to.be(true);

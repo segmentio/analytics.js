@@ -48,8 +48,9 @@ module.exports = Provider.extend({
   },
 
 
-  pageview : function () {
-    // TODO http://performabledoc.hubspot.com/display/DOC/JavaScript+API
+  // HubSpot doesn't support passing in a custom URL.
+  pageview : function (url) {
+    window._hsq.push(['_trackPageview']);
   }
 
 });

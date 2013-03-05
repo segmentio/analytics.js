@@ -18,9 +18,13 @@ module.exports = Provider.extend({
     // Whether to call `mixpanel.nameTag` on `identify`.
     nameTag : true,
     // Whether to use Mixpanel's People API.
-    people  : false,
+    people : false,
     // The Mixpanel API token for your account.
-    token   : null
+    token : null,
+    // Whether to track pageviews to Mixpanel.
+    pageview : false,
+    // Whether to track an initial pageview on initialize.
+    initialPageview : false
   },
 
   initialize : function (options, ready) {
@@ -54,6 +58,8 @@ module.exports = Provider.extend({
 
     // Pass options directly to `init` as the second argument.
     window.mixpanel.init(options.token, options);
+
+    if (options.initialPageview) this.pageview();
 
     // Mixpanel creats all of its methods in the snippet, so it's ready
     // immediately.
@@ -100,7 +106,7 @@ module.exports = Provider.extend({
     // Mixpanel handles revenue with a `transaction` call in their People
     // feature. So if we're using people, record a transcation.
     if (properties && properties.revenue && this.options.people) {
-        window.mixpanel.people.track_charge(properties.revenue);
+      window.mixpanel.people.track_charge(properties.revenue);
     }
   },
 
@@ -109,15 +115,24 @@ module.exports = Provider.extend({
   // Mixpanel stream.
   pageview : function (url) {
     window.mixpanel.track_pageview(url);
+
+    // If they don't want pageviews tracked, leave now.
+    if (!this.options.pageview) return;
+
+    var properties;
+    if (url) properties = { url : url };
+    this.track('Loaded a Page', properties);
   },
 
 
   // Although undocumented, Mixpanel actually supports the `originalId`. It
   // just usually defaults to the current user's `distinct_id`.
   alias : function (newId, originalId) {
-    // HACK: internal mixpanel API to ensure we don't overwrite.
+
     if(window.mixpanel.get_distinct_id &&
        window.mixpanel.get_distinct_id() === newId) return;
+
+    // HACK: internal mixpanel API to ensure we don't overwrite.
     if(window.mixpanel.get_property &&
        window.mixpanel.get_property('$people_distinct_id')) return;
 

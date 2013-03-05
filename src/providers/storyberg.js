@@ -27,7 +27,7 @@ module.exports = Provider.extend({
 
 
   identify : function (userId, traits) {
-    // Don't do anything if we just have traits, because Vero
+    // Don't do anything if we just have traits, because Storyberg
     // requires a `userId`.
     if (!userId) return;
 

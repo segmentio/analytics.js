@@ -250,6 +250,17 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
+    it('keeps normal dates the same', function () {
+      var spy  = sinon.spy(Provider.prototype, 'identify')
+        , date = new Date();
+      analytics.identify({
+        created : date
+      });
+      var traits = spy.args[0][1];
+      expect(traits.created.getTime()).to.equal(date.getTime());
+      spy.restore();
+    });
+
     /* TODO: re-enable when we fix the mixpanel logging an error
     it('calls alias when identifying from anonymous users', function () {
       var spy = sinon.spy(Provider.prototype, 'alias');

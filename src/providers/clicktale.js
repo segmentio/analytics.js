@@ -6,6 +6,7 @@ var Provider = require('../provider')
   , extend   = require('extend')
   , load     = require('load-script');
 
+var loadTime = new Date();
 
 module.exports = Provider.extend({
 

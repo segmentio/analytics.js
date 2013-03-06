@@ -2,6 +2,7 @@
 exports['Bitdeli']          = require('./bitdeli');
 exports['Chartbeat']        = require('./chartbeat');
 exports['Clicky']           = require('./clicky');
+exports['ClickTale']        = require('./clicktale');
 exports['comScore']         = require('./comscore');
 exports['CrazyEgg']         = require('./crazyegg');
 exports['Customer.io']      = require('./customerio');

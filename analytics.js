@@ -468,7 +468,7 @@ require.register("component-event/index.js", function(exports, require, module){
 
 exports.bind = function(el, type, fn, capture){
   if (el.addEventListener) {
-    el.addEventListener(type, fn, capture);
+    el.addEventListener(type, fn, capture || false);
   } else {
     el.attachEvent('on' + type, fn);
   }
@@ -488,7 +488,7 @@ exports.bind = function(el, type, fn, capture){
 
 exports.unbind = function(el, type, fn, capture){
   if (el.removeEventListener) {
-    el.removeEventListener(type, fn, capture);
+    el.removeEventListener(type, fn, capture || false);
   } else {
     el.detachEvent('on' + type, fn);
   }
@@ -2987,6 +2987,7 @@ require.register("analytics/src/providers/index.js", function(exports, require, 
 exports['Bitdeli']          = require('./bitdeli');
 exports['Chartbeat']        = require('./chartbeat');
 exports['Clicky']           = require('./clicky');
+exports['ClickTale']        = require('./clicktale');
 exports['comScore']         = require('./comscore');
 exports['CrazyEgg']         = require('./crazyegg');
 exports['Customer.io']      = require('./customerio');

@@ -1,4 +1,8 @@
-0.8.3 / 20123-3-4
+0.8.4 / 2013-3-5
+================
+* Added support for strings for the `created` trait
+
+0.8.3 / 2013-3-4
 =================
 * [Sentry](https://getsentry.com)
 * Added initial pageview support to more providers

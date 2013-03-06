@@ -1,6 +1,8 @@
 
 describe('Analytics.js', function () {
 
+  var type = require('component-type');
+
   var readyTimeout = 42;
 
   var Provider = analytics.Provider.extend({
@@ -17,6 +19,9 @@ describe('Analytics.js', function () {
   analytics.addProvider('Test', Provider);
 
   var options = { 'Test' : 'x' };
+
+  // Make sure initialize runs, so that any test can be looked at individually.
+  analytics.initialize(options);
 
 
 
@@ -46,6 +51,7 @@ describe('Analytics.js', function () {
 
 
   describe('ready', function () {
+
 
     it('calls callbacks on initialize after a timeout', function (done) {
       // Turn off our current initialized state.
@@ -229,6 +235,18 @@ describe('Analytics.js', function () {
 
       analytics.identify(test.userId, test.traits, context);
       expect(spy.called).to.be(false);
+      spy.restore();
+    });
+
+    it('parses valid strings into dates', function () {
+      var spy  = sinon.spy(Provider.prototype, 'identify')
+        , date = 'Dec 07 12';
+      analytics.identify({
+        created : date
+      });
+      var traits = spy.args[0][1];
+      expect(type(traits.created)).to.equal('date');
+      expect(traits.created.getTime()).to.equal(new Date(date).getTime());
       spy.restore();
     });
 

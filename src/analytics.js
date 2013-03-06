@@ -17,7 +17,7 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.8.3';
+  this.VERSION = '0.8.4';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -211,6 +211,15 @@ extend(Analytics.prototype, {
 
     // Update the cookie with new userId and traits.
     var alias = user.update(userId, traits);
+
+    // Before we manipulate traits, clone it so we don't do anything uncouth.
+    traits = clone(traits);
+
+    // Test for a `created` that's a valid date string and convert it.
+    if (traits && traits.created && type (traits.created) === 'string' &&
+      Date.parse(traits.created)) {
+      traits.created = new Date(traits.created);
+    }
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {

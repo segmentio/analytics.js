@@ -1,6 +1,7 @@
 0.8.4 / 2013-3-5
 ================
 * Added support for strings for the `created` trait
+* Added `load-date` for getting the page's load time
 
 0.8.3 / 2013-3-4
 =================

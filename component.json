@@ -52,10 +52,11 @@
     "component/url": "*",
     "segmentio/after": "*",
     "segmentio/alias": "*",
+    "segmentio/canonical": "*",
     "segmentio/extend": "*",
     "segmentio/is-email": "*",
-    "segmentio/load-script": "*",
-    "segmentio/canonical": "*"
+    "segmentio/load-date": "*",
+    "segmentio/load-script": "*"
   },
   "scripts": [
     "src/index.js",

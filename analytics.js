@@ -468,7 +468,7 @@ require.register("component-event/index.js", function(exports, require, module){
 
 exports.bind = function(el, type, fn, capture){
   if (el.addEventListener) {
-    el.addEventListener(type, fn, capture);
+    el.addEventListener(type, fn, capture || false);
   } else {
     el.attachEvent('on' + type, fn);
   }
@@ -488,7 +488,7 @@ exports.bind = function(el, type, fn, capture){
 
 exports.unbind = function(el, type, fn, capture){
   if (el.removeEventListener) {
-    el.removeEventListener(type, fn, capture);
+    el.removeEventListener(type, fn, capture || false);
   } else {
     el.detachEvent('on' + type, fn);
   }
@@ -1293,6 +1293,14 @@ module.exports = function alias (object, aliases) {
     }
 };
 });
+require.register("segmentio-canonical/index.js", function(exports, require, module){
+module.exports = function canonical () {
+  var tags = document.getElementsByTagName('link');
+  for (var i = 0, tag; tag = tags[i]; i++) {
+    if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
+  }
+};
+});
 require.register("segmentio-extend/index.js", function(exports, require, module){
 
 module.exports = function extend (object) {
@@ -1315,6 +1323,24 @@ require.register("segmentio-is-email/index.js", function(exports, require, modul
 module.exports = function isEmail (string) {
     return (/.+\@.+\..+/).test(string);
 };
+});
+require.register("segmentio-load-date/index.js", function(exports, require, module){
+
+
+/*
+ * Load date.
+ *
+ * For reference: http://www.html5rocks.com/en/tutorials/webperformance/basics/
+ */
+
+var time = new Date()
+  , perf = window.performance;
+
+if (perf && perf.timing && perf.timing.responseEnd) {
+  time = new Date(perf.timing.responseEnd);
+}
+
+module.exports = time;
 });
 require.register("segmentio-load-script/index.js", function(exports, require, module){
 var type = require('type');
@@ -1364,14 +1390,6 @@ module.exports = function loadScript (options, callback) {
     // Return the script element in case they want to do anything special, like
     // give it an ID or attributes.
     return script;
-};
-});
-require.register("segmentio-canonical/index.js", function(exports, require, module){
-module.exports = function canonical () {
-  var tags = document.getElementsByTagName('link');
-  for (var i = 0, tag; tag = tags[i]; i++) {
-    if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
-  }
 };
 });
 require.register("analytics/src/index.js", function(exports, require, module){
@@ -2337,11 +2355,11 @@ require.register("analytics/src/providers/chartbeat.js", function(exports, requi
 // [documentation](http://chartbeat.com/docs/configuration_variables/),
 // [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
 
-var Provider = require('../provider')
+var date     = require('load-date')
+  , Provider = require('../provider')
   , extend   = require('extend')
   , load     = require('load-script');
 
-var loadTime = new Date();
 
 module.exports = Provider.extend({
 
@@ -2358,7 +2376,7 @@ module.exports = Provider.extend({
     // Chartbeat `_sf_async_config` variable with options.
     window._sf_async_config = options;
     // Use the stored date from when we were loaded.
-    window._sf_endpt = loadTime.getTime();
+    window._sf_endpt = date.getTime();
 
     load({
       https : 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',
@@ -3920,14 +3938,16 @@ require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
 
+require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
+
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
 
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
 
+require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
+
 require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
-
-require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");
 

@@ -4,11 +4,11 @@
 // [documentation](http://chartbeat.com/docs/configuration_variables/),
 // [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
 
-var Provider = require('../provider')
+var date     = require('load-date')
+  , Provider = require('../provider')
   , extend   = require('extend')
   , load     = require('load-script');
 
-var loadTime = new Date();
 
 module.exports = Provider.extend({
 
@@ -25,7 +25,7 @@ module.exports = Provider.extend({
     // Chartbeat `_sf_async_config` variable with options.
     window._sf_async_config = options;
     // Use the stored date from when we were loaded.
-    window._sf_endpt = loadTime.getTime();
+    window._sf_endpt = date.getTime();
 
     load({
       https : 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',

@@ -1293,6 +1293,14 @@ module.exports = function alias (object, aliases) {
     }
 };
 });
+require.register("segmentio-canonical/index.js", function(exports, require, module){
+module.exports = function canonical () {
+  var tags = document.getElementsByTagName('link');
+  for (var i = 0, tag; tag = tags[i]; i++) {
+    if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
+  }
+};
+});
 require.register("segmentio-extend/index.js", function(exports, require, module){
 
 module.exports = function extend (object) {
@@ -1315,6 +1323,24 @@ require.register("segmentio-is-email/index.js", function(exports, require, modul
 module.exports = function isEmail (string) {
     return (/.+\@.+\..+/).test(string);
 };
+});
+require.register("segmentio-load-date/index.js", function(exports, require, module){
+
+
+/*
+ * Load date.
+ *
+ * For reference: http://www.html5rocks.com/en/tutorials/webperformance/basics/
+ */
+
+var time = new Date()
+  , perf = window.performance;
+
+if (perf && perf.timing && perf.timing.responseEnd) {
+  time = new Date(perf.timing.responseEnd);
+}
+
+module.exports = time;
 });
 require.register("segmentio-load-script/index.js", function(exports, require, module){
 var type = require('type');
@@ -1366,14 +1392,6 @@ module.exports = function loadScript (options, callback) {
     return script;
 };
 });
-require.register("segmentio-canonical/index.js", function(exports, require, module){
-module.exports = function canonical () {
-  var tags = document.getElementsByTagName('link');
-  for (var i = 0, tag; tag = tags[i]; i++) {
-    if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
-  }
-};
-});
 require.register("analytics/src/index.js", function(exports, require, module){
 // Analytics.js
 // (c) 2013 Segment.io Inc.
@@ -1405,7 +1423,7 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.8.3';
+  this.VERSION = '0.8.4';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -1599,6 +1617,15 @@ extend(Analytics.prototype, {
 
     // Update the cookie with new userId and traits.
     var alias = user.update(userId, traits);
+
+    // Before we manipulate traits, clone it so we don't do anything uncouth.
+    traits = clone(traits);
+
+    // Test for a `created` that's a valid date string and convert it.
+    if (traits && traits.created && type (traits.created) === 'string' &&
+      Date.parse(traits.created)) {
+      traits.created = new Date(traits.created);
+    }
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
@@ -2328,11 +2355,11 @@ require.register("analytics/src/providers/chartbeat.js", function(exports, requi
 // [documentation](http://chartbeat.com/docs/configuration_variables/),
 // [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
 
-var Provider = require('../provider')
+var date     = require('load-date')
+  , Provider = require('../provider')
   , extend   = require('extend')
   , load     = require('load-script');
 
-var loadTime = new Date();
 
 module.exports = Provider.extend({
 
@@ -2349,7 +2376,7 @@ module.exports = Provider.extend({
     // Chartbeat `_sf_async_config` variable with options.
     window._sf_async_config = options;
     // Use the stored date from when we were loaded.
-    window._sf_endpt = loadTime.getTime();
+    window._sf_endpt = date.getTime();
 
     load({
       https : 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',
@@ -3434,7 +3461,7 @@ module.exports = Provider.extend({
         var g = a;
         'undefined' !== typeof f ? g = a[f] = [] : f = 'mixpanel';
         g.people = g.people || [];
-        h = ['disable', 'track', 'track_pageview', 'track_links', 'track_forms', 'register', 'register_once', 'unregister', 'identify', 'alias', 'name_tag', 'set_config', 'people.set', 'people.increment'];
+        h = ['disable', 'track', 'track_pageview', 'track_links', 'track_forms', 'register', 'register_once', 'unregister', 'identify', 'alias', 'name_tag', 'set_config', 'people.set', 'people.increment', 'people.track_charge', 'people.append'];
         for (e = 0; e < h.length; e++) d(g, h[e]);
         a._i.push([b, c, f]);
       };
@@ -3971,14 +3998,16 @@ require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
 
+require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
+
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
 
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
 
+require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
+
 require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
-
-require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");
 

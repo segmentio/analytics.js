@@ -2,6 +2,8 @@ describe('Olark', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
       expect(window.olark).to.be(undefined);
 

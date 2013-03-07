@@ -6,7 +6,6 @@ describe('User tests', function () {
     , cookie = require('component-cookie');
 
   describe('#id()', function () {
-
     before(user.clear);
 
     it('gets an empty user id', function () {
@@ -37,11 +36,10 @@ describe('User tests', function () {
   });
 
   describe('#update()', function () {
-
     before(user.clear);
 
     it('saves a stored user', function () {
-      var alias   = user.update('someId')
+      var alias  = user.update('someId')
         , id     = user.id()
         , traits = user.traits();
       expect(alias).to.be.ok();
@@ -49,7 +47,7 @@ describe('User tests', function () {
       expect(traits).to.eql({});
     });
 
-    it('updates the user\'s traits', function () {
+    it('updates the users traits', function () {
       var alias  = user.update(null, { some : 'trait' })
         , id     = user.id()
         , traits = user.traits();
@@ -77,7 +75,7 @@ describe('User tests', function () {
     });
 
     it('resets traits for a new user', function () {
-      var alias   = user.update('thirdId')
+      var alias  = user.update('thirdId')
         , id     = user.id()
         , traits = user.traits();
       expect(alias).to.not.be.ok();
@@ -97,7 +95,6 @@ describe('User tests', function () {
   });
 
   describe('#load()', function () {
-
     before(user.clear);
 
     it('loads an empty user', function () {

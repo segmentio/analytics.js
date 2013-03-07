@@ -4,7 +4,6 @@
 
 var date     = require('load-date')
   , Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 module.exports = Provider.extend({

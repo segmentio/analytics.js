@@ -3,7 +3,6 @@
 // [Documentation](http://docs.intercom.io/).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script')
   , isEmail  = require('is-email');
 

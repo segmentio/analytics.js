@@ -1,6 +1,7 @@
 0.8.6 / 2013-3-7
 ================
 * Fixed bug in `trackLink` reported by [@quirkyjack](https://github.com/quirkyjack)
+* Fixed bug in ClickTale where it didn't create the ClickTaleDiv
 
 0.8.5 / 2013-3-7
 ================

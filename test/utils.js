@@ -44,6 +44,12 @@ window.test = {
 
   'Clicky' : 'x',
 
+  'ClickTale' : {
+    projectId      : '19370',
+    recordingRatio : '0.0089',
+    partitionId    : 'www14'
+  },
+
   'comScore' : {
     c2 : 'x'
   },

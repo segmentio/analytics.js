@@ -2400,11 +2400,10 @@ require.register("analytics/src/providers/clicktale.js", function(exports, requi
 // ---------
 // [Documentation](http://wiki.clicktale.com/Article/JavaScript_API).
 
-var Provider = require('../provider')
+var date     = require('load-date')
+  , Provider = require('../provider')
   , extend   = require('extend')
   , load     = require('load-script');
-
-var loadTime = new Date();
 
 module.exports = Provider.extend({
 
@@ -2422,7 +2421,7 @@ module.exports = Provider.extend({
 
   initialize : function (options, ready) {
 
-    window.WRInitTime = loadTime.getTime();
+    window.WRInitTime = date.getTime();
 
     var onloaded = function () {
       window.ClickTale(options.projectId, options.recordingRatio, options.partitionId);

@@ -2463,16 +2463,16 @@ module.exports = Provider.extend({
 
 
     // Make the `<div>` element and insert it at the end of the body.
-    var createClickTaleDiv = function (ready) {
+    var createClickTaleDiv = function () {
       // loop until the body is actually available
-      if (!document.body) return setTimeout(ready, 5);
+      if (!document.body) return setTimeout(createClickTaleDiv, 5);
 
       var div = document.createElement('div');
       div.setAttribute('id', 'ClickTaleDiv');
       div.setAttribute('style', 'display: none;');
       document.body.appendChild(div);
     };
-    createClickTaleDiv(createClickTaleDiv);
+    createClickTaleDiv();
 
     var onloaded = function () {
       window.ClickTale(options.projectId, options.recordingRatio, options.partitionId);

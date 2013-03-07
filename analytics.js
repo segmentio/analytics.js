@@ -2299,7 +2299,6 @@ require.register("analytics/src/providers/bitdeli.js", function(exports, require
 
 var Provider = require('../provider')
   , type     = require('type')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -2380,7 +2379,6 @@ require.register("analytics/src/providers/chartbeat.js", function(exports, requi
 
 var date     = require('load-date')
   , Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -2425,7 +2423,6 @@ require.register("analytics/src/providers/clicktale.js", function(exports, requi
 
 var date     = require('load-date')
   , Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 module.exports = Provider.extend({
@@ -2552,7 +2549,6 @@ require.register("analytics/src/providers/comscore.js", function(exports, requir
 // [Documentation](http://direct.comscore.com/clients/help/FAQ.aspx#faqTagging)
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -2584,7 +2580,6 @@ require.register("analytics/src/providers/crazyegg.js", function(exports, requir
 // [Documentation](www.crazyegg.com).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -2610,7 +2605,6 @@ require.register("analytics/src/providers/customerio.js", function(exports, requ
 // [Documentation](http://customer.io/docs/api/javascript.html).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , isEmail  = require('is-email')
   , load     = require('load-script');
 
@@ -2738,7 +2732,6 @@ require.register("analytics/src/providers/foxmetrics.js", function(exports, requ
 // [Support](http://support.foxmetrics.com)
 
 var Provider = require('../provider')
-  , extend = require('extend')
   , load   = require('load-script');
 
 
@@ -2821,7 +2814,6 @@ require.register("analytics/src/providers/gauges.js", function(exports, require,
 // [Documentation](http://get.gaug.es/documentation/tracking/).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -2858,8 +2850,6 @@ require.register("analytics/src/providers/google-analytics.js", function(exports
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
 
 var Provider  = require('../provider')
-  , each      = require('each')
-  , extend    = require('extend')
   , load      = require('load-script')
   , type      = require('type')
   , url       = require('url')
@@ -2969,8 +2959,6 @@ require.register("analytics/src/providers/gosquared.js", function(exports, requi
 
 var Provider = require('../provider')
   , user     = require('../user')
-  , extend   = require('extend')
-  , clone    = require('clone')
   , load     = require('load-script');
 
 
@@ -3026,7 +3014,6 @@ require.register("analytics/src/providers/hittail.js", function(exports, require
 // [Documentation](www.hittail.com).
 
 var Provider = require('../provider')
-  , extend = require('extend')
   , load   = require('load-script');
 
 
@@ -3051,7 +3038,6 @@ require.register("analytics/src/providers/hubspot.js", function(exports, require
 // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , isEmail  = require('is-email')
   , load     = require('load-script');
 
@@ -3152,7 +3138,6 @@ require.register("analytics/src/providers/intercom.js", function(exports, requir
 // [Documentation](http://docs.intercom.io/).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script')
   , isEmail  = require('is-email');
 
@@ -3237,7 +3222,6 @@ require.register("analytics/src/providers/keen-io.js", function(exports, require
 // [Documentation](https://keen.io/docs/).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3304,7 +3288,6 @@ require.register("analytics/src/providers/kissmetrics.js", function(exports, req
 // [Documentation](http://support.kissmetrics.com/apis/javascript).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , alias    = require('alias')
   , load     = require('load-script');
 
@@ -3363,7 +3346,6 @@ require.register("analytics/src/providers/klaviyo.js", function(exports, require
 // [Documentation](https://www.klaviyo.com/docs).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3410,7 +3392,6 @@ require.register("analytics/src/providers/livechat.js", function(exports, requir
 
 var Provider = require('../provider')
   , each     = require('each')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3463,7 +3444,6 @@ require.register("analytics/src/providers/mixpanel.js", function(exports, requir
 // [documentation](https://mixpanel.com/docs/integration-libraries/javascript-full-api).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , alias    = require('alias')
   , isEmail  = require('is-email');
 
@@ -3604,8 +3584,7 @@ require.register("analytics/src/providers/olark.js", function(exports, require, 
 // -----
 // [Documentation](http://www.olark.com/documentation).
 
-var Provider = require('../provider')
-  , extend   = require('extend');
+var Provider = require('../provider');
 
 
 module.exports = Provider.extend({
@@ -3684,7 +3663,6 @@ require.register("analytics/src/providers/perfect-audience.js", function(exports
 // [Documentation](https://www.perfectaudience.com/docs#javascript_api_autoopen)
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3718,7 +3696,6 @@ require.register("analytics/src/providers/quantcast.js", function(exports, requi
 // [Documentation](https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/)
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3748,7 +3725,6 @@ require.register("analytics/src/providers/sentry.js", function(exports, require,
 // http://raven-js.readthedocs.org/en/latest/config/index.html
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3785,7 +3761,6 @@ require.register("analytics/src/providers/snapengage.js", function(exports, requ
 // [Documentation](http://help.snapengage.com/installation-guide-getting-started-in-a-snap/).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3869,7 +3844,6 @@ require.register("analytics/src/providers/usercycle.js", function(exports, requi
 // [Documentation](http://docs.usercycle.com/javascript_api).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script')
   , user     = require('../user');
 
@@ -3912,7 +3886,6 @@ require.register("analytics/src/providers/uservoice.js", function(exports, requi
 // [Documentation](http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3938,7 +3911,6 @@ require.register("analytics/src/providers/vero.js", function(exports, require, m
 // [Documentation](https://github.com/getvero/vero-api/blob/master/sections/js.md).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , isEmail  = require('is-email')
   , load     = require('load-script');
 

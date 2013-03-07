@@ -3,7 +3,6 @@
 // [Documentation](https://github.com/getvero/vero-api/blob/master/sections/js.md).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , isEmail  = require('is-email')
   , load     = require('load-script');
 

@@ -6,7 +6,6 @@
 // [Support](http://support.foxmetrics.com)
 
 var Provider = require('../provider')
-  , extend = require('extend')
   , load   = require('load-script');
 
 

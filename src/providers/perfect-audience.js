@@ -3,7 +3,6 @@
 // [Documentation](https://www.perfectaudience.com/docs#javascript_api_autoopen)
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 

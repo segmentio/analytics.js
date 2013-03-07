@@ -3,7 +3,6 @@
 // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , isEmail  = require('is-email')
   , load     = require('load-script');
 

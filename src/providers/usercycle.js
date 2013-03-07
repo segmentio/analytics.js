@@ -3,7 +3,6 @@
 // [Documentation](http://docs.usercycle.com/javascript_api).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script')
   , user     = require('../user');
 

@@ -3,7 +3,6 @@
 // [Documentation](www.crazyegg.com).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 

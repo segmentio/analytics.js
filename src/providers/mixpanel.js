@@ -5,7 +5,6 @@
 // [documentation](https://mixpanel.com/docs/integration-libraries/javascript-full-api).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , alias    = require('alias')
   , isEmail  = require('is-email');
 

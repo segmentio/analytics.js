@@ -3,7 +3,6 @@
 // http://raven-js.readthedocs.org/en/latest/config/index.html
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 

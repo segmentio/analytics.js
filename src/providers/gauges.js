@@ -3,7 +3,6 @@
 // [Documentation](http://get.gaug.es/documentation/tracking/).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 

@@ -5,7 +5,6 @@
 
 var Provider = require('../provider')
   , type     = require('type')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 

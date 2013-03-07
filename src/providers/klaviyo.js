@@ -3,7 +3,6 @@
 // [Documentation](https://www.klaviyo.com/docs).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 

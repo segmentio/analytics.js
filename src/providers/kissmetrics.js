@@ -3,7 +3,6 @@
 // [Documentation](http://support.kissmetrics.com/apis/javascript).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , alias    = require('alias')
   , load     = require('load-script');
 

@@ -4,7 +4,6 @@
 
 var Provider = require('../provider')
   , each     = require('each')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 

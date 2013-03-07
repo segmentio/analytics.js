@@ -325,7 +325,7 @@ function set(name, value, options) {
 
   if (options.path) str += '; path=' + options.path;
   if (options.domain) str += '; domain=' + options.domain;
-  if (options.expires) str += '; expires=' + options.expires.toGMTString();
+  if (options.expires) str += '; expires=' + options.expires.toUTCString();
   if (options.secure) str += '; secure';
 
   document.cookie = str;
@@ -468,7 +468,7 @@ require.register("component-event/index.js", function(exports, require, module){
 
 exports.bind = function(el, type, fn, capture){
   if (el.addEventListener) {
-    el.addEventListener(type, fn, capture);
+    el.addEventListener(type, fn, capture || false);
   } else {
     el.attachEvent('on' + type, fn);
   }
@@ -488,7 +488,7 @@ exports.bind = function(el, type, fn, capture){
 
 exports.unbind = function(el, type, fn, capture){
   if (el.removeEventListener) {
-    el.removeEventListener(type, fn, capture);
+    el.removeEventListener(type, fn, capture || false);
   } else {
     el.detachEvent('on' + type, fn);
   }
@@ -1423,7 +1423,7 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.8.6';
+  this.VERSION = '0.8.5';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -2348,6 +2348,29 @@ module.exports = Provider.extend({
 
 });
 });
+require.register("analytics/src/providers/bugherd.js", function(exports, require, module){
+// BugHerd
+// -------
+// [Documentation](http://support.bugherd.com/home).
+
+var Provider = require('../provider')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+  key : 'apiKey',
+
+  options : {
+    apiKey : null
+  },
+
+  initialize : function (options, ready) {
+    load('//www.bugherd.com/sidebarv2.js?apikey=' + options.apiKey, ready);
+  }
+
+});
+});
 require.register("analytics/src/providers/chartbeat.js", function(exports, require, module){
 // Chartbeat
 // ---------
@@ -3091,6 +3114,7 @@ module.exports = Provider.extend({
 require.register("analytics/src/providers/index.js", function(exports, require, module){
 
 exports['Bitdeli']          = require('./bitdeli');
+exports['BugHerd']          = require('./bugherd');
 exports['Chartbeat']        = require('./chartbeat');
 exports['ClickTale']        = require('./clicktale');
 exports['Clicky']           = require('./clicky');

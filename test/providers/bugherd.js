@@ -12,7 +12,7 @@ describe('BugHerd', function () {
       analytics.ready(spy);
       analytics.initialize({ 'BugHerd' : test['BugHerd'] });
 
-      // Once the library loads, `_uvts` gets set.
+      // Once the library loads, `_bugHerd` gets set.
       var interval = setInterval(function () {
         if (!window._bugHerd) return;
         expect(window._bugHerd).not.to.be(undefined);

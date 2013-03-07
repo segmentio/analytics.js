@@ -6,18 +6,17 @@ describe('BugHerd', function () {
     this.timeout(10000);
 
     it('should call ready and load library', function (done) {
-      expect(window.uvOptions).to.be(undefined);
+      expect(window.bugherd).to.be(undefined);
 
       var spy = sinon.spy();
       analytics.ready(spy);
-      analytics.initialize({ 'UserVoice' : test['UserVoice'] });
-      expect(window.uvOptions).not.to.be(undefined);
-      expect(window._uvts).to.be(undefined);
+      analytics.initialize({ 'BugHerd' : test['BugHerd'] });
+      expect(window.bugherd).not.to.be(undefined);
 
       // Once the library loads, `_uvts` gets set.
       var interval = setInterval(function () {
-        if (!window._uvts) return;
-        expect(window._uvts).not.to.be(undefined);
+        if (!window.bugherd) return;
+        expect(window.bugherd).not.to.be(undefined);
         expect(spy.called).to.be(true);
         clearInterval(interval);
         done();
@@ -25,8 +24,8 @@ describe('BugHerd', function () {
     });
 
     it('should store options', function () {
-      analytics.initialize({ 'UserVoice' : test['UserVoice'] });
-      expect(analytics.providers[0].options.widgetId).to.equal(test['UserVoice']);
+      analytics.initialize({ 'BugHerd' : test['BugHerd'] });
+      expect(analytics.providers[0].options.apiKey).to.equal(test['BugHerd']);
     });
 
   });

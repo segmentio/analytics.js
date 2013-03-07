@@ -37,12 +37,20 @@ window.test = {
     authToken : 'y'
   },
 
+  'BugHerd' : 'xssravhxw2jxlxlhxsi7iq',
+
   'Chartbeat' : {
     uid    : 'x',
     domain : 'example.com'
   },
 
   'Clicky' : 'x',
+
+  'ClickTale' : {
+    projectId      : '19370',
+    recordingRatio : '0.0089',
+    partitionId    : 'www14'
+  },
 
   'comScore' : {
     c2 : 'x'
@@ -92,6 +100,8 @@ window.test = {
   'Sentry' : 'x',
 
   'SnapEngage' : '782b737e-487f-4117-8a2b-2beb32b600e5',
+
+  'Storyberg' : 'x',
 
   'USERcycle' : 'x',
 

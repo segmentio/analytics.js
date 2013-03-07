@@ -1,6 +1,8 @@
 
 exports['Bitdeli']          = require('./bitdeli');
+exports['BugHerd']          = require('./bugherd');
 exports['Chartbeat']        = require('./chartbeat');
+exports['ClickTale']        = require('./clicktale');
 exports['Clicky']           = require('./clicky');
 exports['comScore']         = require('./comscore');
 exports['CrazyEgg']         = require('./crazyegg');
@@ -23,6 +25,7 @@ exports['Perfect Audience'] = require('./perfect-audience');
 exports['Quantcast']        = require('./quantcast');
 exports['Sentry']           = require('./sentry');
 exports['SnapEngage']       = require('./snapengage');
+exports['Storyberg']        = require('./storyberg');
 exports['USERcycle']        = require('./usercycle');
 exports['UserVoice']        = require('./uservoice');
 exports['Vero']             = require('./vero');

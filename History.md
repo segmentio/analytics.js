@@ -1,3 +1,14 @@
+0.8.6 / 2013-3-7
+================
+* Fixed bug in `trackLink` reported by [@quirkyjack](https://github.com/quirkyjack)
+
+0.8.5 / 2013-3-7
+================
+* Storyberg by [@kevinicus](https://github.com/kevinicus)
+* [BugHerd](http://bugherd.com)
+* [ClickTale](http://clicktale.com)
+* Cleaned up extraneous `require`'s in many providers
+
 0.8.4 / 2013-3-5
 ================
 * Added support for strings for the `created` trait
@@ -22,19 +33,19 @@
 0.8.0 / 2013-3-1
 ================
 * Added cookie-ing to keep identity and traits across page loads
-* Added identify support for Clicky
-* Added identify support for GoSquared
-* Added identify support for Woopra
+* Added `identify` support for Clicky
+* Added `identify` support for GoSquared
+* Added `identify` support for Woopra
 * Updated tracking for Usercycle
 
 0.7.1 / 2013-2-26
-================
-* Added Intercom companies [@adrianrego](https://github.com/adrianrego)
+=================
+* Added Intercom companies by [@adrianrego](https://github.com/adrianrego)
 * Added Intercom setting for use_counter
 * Fixed Intercom traits passed without a created field
 
 0.7.0 / 2013-2-25
-================
+=================
 * Switched over to [Component](http://component.io/)
 
 0.6.0 / 2013-2-7

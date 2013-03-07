@@ -6,8 +6,6 @@
 
 var Provider = require('../provider')
   , user     = require('../user')
-  , extend   = require('extend')
-  , clone    = require('clone')
   , load     = require('load-script');
 
 

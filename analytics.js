@@ -1447,7 +1447,7 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.8.4';
+  this.VERSION = '0.8.6';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -2314,7 +2314,6 @@ require.register("analytics/src/providers/bitdeli.js", function(exports, require
 
 var Provider = require('../provider')
   , type     = require('type')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -2363,6 +2362,29 @@ module.exports = Provider.extend({
 
 });
 });
+require.register("analytics/src/providers/bugherd.js", function(exports, require, module){
+// BugHerd
+// -------
+// [Documentation](http://support.bugherd.com/home).
+
+var Provider = require('../provider')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+  key : 'apiKey',
+
+  options : {
+    apiKey : null
+  },
+
+  initialize : function (options, ready) {
+    load('//www.bugherd.com/sidebarv2.js?apikey=' + options.apiKey, ready);
+  }
+
+});
+});
 require.register("analytics/src/providers/chartbeat.js", function(exports, require, module){
 // Chartbeat
 // ---------
@@ -2372,7 +2394,6 @@ require.register("analytics/src/providers/chartbeat.js", function(exports, requi
 
 var date     = require('load-date')
   , Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -2406,6 +2427,84 @@ module.exports = Provider.extend({
 
     // Requires a path, so default to the current one.
     window.pSUPERFLY.virtualPage(url || window.location.pathname);
+  }
+
+});
+});
+require.register("analytics/src/providers/clicktale.js", function(exports, require, module){
+// ClickTale
+// ---------
+// [Documentation](http://wiki.clicktale.com/Article/JavaScript_API).
+
+var date     = require('load-date')
+  , Provider = require('../provider')
+  , load     = require('load-script');
+
+module.exports = Provider.extend({
+
+  key : 'projectId',
+
+  options : {
+
+    // If you sign up for a free account, this is the default http (non-ssl) CDN URL
+    // that you get. If you sign up for a premium account, you get a different
+    // custom CDN URL, so we have to leave it as an option.
+    httpCdnUrl     : 'http://s.clicktale.net/WRe0.js',
+
+    // SSL support is only for premium accounts. Each premium account seems to have
+    // a different custom secure CDN URL, so we have to leave it as an option.
+    httpsCdnUrl    : null,
+
+    // The Project ID is loaded in after the ClickTale CDN javascript has loaded.
+    projectId      : null,
+
+    // The recording ratio specifies what fraction of people to screen-record.
+    // ClickTale has a special calculator in their setup flow that tells you
+    // what number to set for this.
+    recordingRatio : 0.01,
+
+    // The Partition ID determines where ClickTale stores the data according to 
+    // http://wiki.clicktale.com/Article/JavaScript_API
+    partitionId    : null
+  },
+
+
+  initialize : function (options, ready) {
+
+    // ClickTale wants this at the "top" of the page. The
+    // analytics.js snippet sets this date synchronously now,
+    // and  makes it available via load-date.
+    window.WRInitTime = date.getTime();
+
+    var onloaded = function () {
+      window.ClickTale(options.projectId, options.recordingRatio, options.partitionId);
+      ready();
+    };
+
+    // Load the appropriate CDN library, if no
+    // ssl library is provided and we're on ssl then
+    // we can't load anything (always true for non-premium accounts.)
+    if (document.location.protocol !== 'https:')
+      load(options.httpCdnUrl, onloaded);
+    else if (options.httpsCdnUrl)
+      load(options.httpsCdnUrl, onloaded);
+  },
+
+  identify : function (userId, traits) {
+    // We set the userId as the ClickTale UID.
+    if (window.ClickTaleSetUID) window.ClickTaleSetUID(userId);
+
+    // We iterate over all the traits and set them as key-value field pairs.
+    if (window.ClickTaleField) {
+      for (var traitKey in traits) {
+        window.ClickTaleField(traitKey, traits[traitKey]);
+      }
+    }
+  },
+
+  track : function (event, properties) {
+    // ClickTaleEvent is an alias for ClickTaleTag
+    if (window.ClickTaleEvent) window.ClickTaleEvent(event);
   }
 
 });
@@ -2465,7 +2564,6 @@ require.register("analytics/src/providers/comscore.js", function(exports, requir
 // [Documentation](http://direct.comscore.com/clients/help/FAQ.aspx#faqTagging)
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -2497,7 +2595,6 @@ require.register("analytics/src/providers/crazyegg.js", function(exports, requir
 // [Documentation](www.crazyegg.com).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -2523,7 +2620,6 @@ require.register("analytics/src/providers/customerio.js", function(exports, requ
 // [Documentation](http://customer.io/docs/api/javascript.html).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , isEmail  = require('is-email')
   , load     = require('load-script');
 
@@ -2651,7 +2747,6 @@ require.register("analytics/src/providers/foxmetrics.js", function(exports, requ
 // [Support](http://support.foxmetrics.com)
 
 var Provider = require('../provider')
-  , extend = require('extend')
   , load   = require('load-script');
 
 
@@ -2734,7 +2829,6 @@ require.register("analytics/src/providers/gauges.js", function(exports, require,
 // [Documentation](http://get.gaug.es/documentation/tracking/).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -2771,8 +2865,6 @@ require.register("analytics/src/providers/google-analytics.js", function(exports
 // [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
 
 var Provider  = require('../provider')
-  , each      = require('each')
-  , extend    = require('extend')
   , load      = require('load-script')
   , type      = require('type')
   , url       = require('url')
@@ -2882,8 +2974,6 @@ require.register("analytics/src/providers/gosquared.js", function(exports, requi
 
 var Provider = require('../provider')
   , user     = require('../user')
-  , extend   = require('extend')
-  , clone    = require('clone')
   , load     = require('load-script');
 
 
@@ -2939,7 +3029,6 @@ require.register("analytics/src/providers/hittail.js", function(exports, require
 // [Documentation](www.hittail.com).
 
 var Provider = require('../provider')
-  , extend = require('extend')
   , load   = require('load-script');
 
 
@@ -2964,7 +3053,6 @@ require.register("analytics/src/providers/hubspot.js", function(exports, require
 // [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , isEmail  = require('is-email')
   , load     = require('load-script');
 
@@ -3027,7 +3115,9 @@ module.exports = Provider.extend({
 require.register("analytics/src/providers/index.js", function(exports, require, module){
 
 exports['Bitdeli']          = require('./bitdeli');
+exports['BugHerd']          = require('./bugherd');
 exports['Chartbeat']        = require('./chartbeat');
+exports['ClickTale']        = require('./clicktale');
 exports['Clicky']           = require('./clicky');
 exports['comScore']         = require('./comscore');
 exports['CrazyEgg']         = require('./crazyegg');
@@ -3050,10 +3140,12 @@ exports['Perfect Audience'] = require('./perfect-audience');
 exports['Quantcast']        = require('./quantcast');
 exports['Sentry']           = require('./sentry');
 exports['SnapEngage']       = require('./snapengage');
+exports['Storyberg']        = require('./storyberg');
 exports['USERcycle']        = require('./usercycle');
 exports['UserVoice']        = require('./uservoice');
 exports['Vero']             = require('./vero');
 exports['Woopra']           = require('./woopra');
+
 });
 require.register("analytics/src/providers/intercom.js", function(exports, require, module){
 // Intercom
@@ -3061,7 +3153,6 @@ require.register("analytics/src/providers/intercom.js", function(exports, requir
 // [Documentation](http://docs.intercom.io/).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script')
   , isEmail  = require('is-email');
 
@@ -3146,7 +3237,6 @@ require.register("analytics/src/providers/keen-io.js", function(exports, require
 // [Documentation](https://keen.io/docs/).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3213,7 +3303,6 @@ require.register("analytics/src/providers/kissmetrics.js", function(exports, req
 // [Documentation](http://support.kissmetrics.com/apis/javascript).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , alias    = require('alias')
   , load     = require('load-script');
 
@@ -3272,7 +3361,6 @@ require.register("analytics/src/providers/klaviyo.js", function(exports, require
 // [Documentation](https://www.klaviyo.com/docs).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3319,7 +3407,6 @@ require.register("analytics/src/providers/livechat.js", function(exports, requir
 
 var Provider = require('../provider')
   , each     = require('each')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3372,7 +3459,6 @@ require.register("analytics/src/providers/mixpanel.js", function(exports, requir
 // [documentation](https://mixpanel.com/docs/integration-libraries/javascript-full-api).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , alias    = require('alias')
   , isEmail  = require('is-email');
 
@@ -3513,8 +3599,7 @@ require.register("analytics/src/providers/olark.js", function(exports, require, 
 // -----
 // [Documentation](http://www.olark.com/documentation).
 
-var Provider = require('../provider')
-  , extend   = require('extend');
+var Provider = require('../provider');
 
 
 module.exports = Provider.extend({
@@ -3593,7 +3678,6 @@ require.register("analytics/src/providers/perfect-audience.js", function(exports
 // [Documentation](https://www.perfectaudience.com/docs#javascript_api_autoopen)
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3627,7 +3711,6 @@ require.register("analytics/src/providers/quantcast.js", function(exports, requi
 // [Documentation](https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/)
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3657,7 +3740,6 @@ require.register("analytics/src/providers/sentry.js", function(exports, require,
 // http://raven-js.readthedocs.org/en/latest/config/index.html
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3694,7 +3776,6 @@ require.register("analytics/src/providers/snapengage.js", function(exports, requ
 // [Documentation](http://help.snapengage.com/installation-guide-getting-started-in-a-snap/).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3713,13 +3794,71 @@ module.exports = Provider.extend({
 
 });
 });
+require.register("analytics/src/providers/storyberg.js", function(exports, require, module){
+// Storyberg
+// -----------
+// [Documentation](https://github.com/Storyberg/Docs/wiki/Javascript-Library).
+
+var Provider = require('../provider')
+  , isEmail  = require('is-email')
+  , load     = require('load-script');
+
+module.exports = Provider.extend({
+
+  key : 'apiKey',
+
+  options : {
+    apiKey : null
+  },
+
+
+  initialize : function (options, ready) {
+    window._sbq = window._sbq || [];
+    window._sbk = options.apiKey;
+    load('//storyberg.com/analytics.js');
+
+    // Storyberg creates a queue, so it's ready immediately.
+    ready();
+  },
+
+
+  identify : function (userId, traits) {
+    // Don't do anything if we just have traits, because Storyberg
+    // requires a `userId`.
+    if (!userId) return;
+
+    traits || (traits = {});
+
+    // Storyberg takes the `userId` as part of the traits object
+    traits.user_id = userId;
+
+    // If there wasn't already an email and the userId is one, use it.
+    if (!traits.email && isEmail(userId)) traits.email = userId;
+
+    window._sbq.push(['identify', traits]);
+  },
+
+
+  track : function (event, properties) {
+    properties || (properties = {});
+
+    // Storyberg uses the event for the name, to avoid losing data
+    if (properties.name) properties._name = properties.name;
+    // Storyberg takes the `userId` as part of the properties object
+    properties.name = event;
+
+    window._sbq.push(['event', properties]);
+  }
+
+});
+
+});
 require.register("analytics/src/providers/usercycle.js", function(exports, require, module){
 // USERcycle
 // -----------
 // [Documentation](http://docs.usercycle.com/javascript_api).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script')
   , user     = require('../user');
 
@@ -3762,7 +3901,6 @@ require.register("analytics/src/providers/uservoice.js", function(exports, requi
 // [Documentation](http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -3788,7 +3926,6 @@ require.register("analytics/src/providers/vero.js", function(exports, require, m
 // [Documentation](https://github.com/getvero/vero-api/blob/master/sections/js.md).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , isEmail  = require('is-email')
   , load     = require('load-script');
 

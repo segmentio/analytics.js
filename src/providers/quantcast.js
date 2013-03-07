@@ -3,7 +3,6 @@
 // [Documentation](https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/)
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 

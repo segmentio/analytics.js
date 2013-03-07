@@ -3,7 +3,6 @@
 // [Documentation](http://help.snapengage.com/installation-guide-getting-started-in-a-snap/).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 

@@ -1,6 +1,6 @@
 {
   "name": "analytics.js",
-  "version": "0.8.4",
+  "version": "0.8.6",
   "author": "Segment.io <friends@segment.io>",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "license": "MIT",
@@ -32,6 +32,7 @@
     "segment.io",
     "bitdeli",
     "chartbeat",
+    "clicktale",
     "clicky",
     "comscore",
     "crazyegg",
@@ -52,6 +53,7 @@
     "perfect audience",
     "quantcast",
     "snapengage",
+    "storyberg",
     "usercycle",
     "vero"
   ],

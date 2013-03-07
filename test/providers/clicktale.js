@@ -29,4 +29,35 @@ describe('ClickTale', function () {
 
   });
 
+
+  describe('identify', function () {
+
+    it('should call ClickTaleSetUID and ClickTaleField', function () {
+      var spyUserId = sinon.spy(window, 'ClickTaleSetUID');
+      var spyTraits = sinon.spy(window, 'ClickTaleField');
+
+      analytics.identify(test.userId);
+      expect(spyUserId.calledWith(test.userId)).to.be(true);
+      spyUserId.reset();
+
+      analytics.identify({ trait : 'test'});
+      expect(spyTraits.calledWith('trait', 'test')).to.be(true);
+      spyTraits.reset();
+
+    });
+
+  });
+
+
+  describe('track', function () {
+
+    it('should call ClickTaleEvent', function () {
+      var spy = sinon.spy(window, 'ClickTaleEvent');
+      analytics.track(test.event, test.properties);
+      expect(spy.calledWith(test.event)).to.be(true);
+      spy.restore();
+    });
+
+  });
+
 });

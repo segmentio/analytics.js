@@ -27,7 +27,7 @@ module.exports = Provider.extend({
 
 
   identify : function (userId, traits) {
-    // Don't do anything if we just have traits, because Vero
+    // Don't do anything if we just have traits, because Storyberg
     // requires a `userId`.
     if (!userId) return;
 
@@ -35,6 +35,9 @@ module.exports = Provider.extend({
 
     // Storyberg takes the `userId` as part of the traits object
     traits.user_id = userId;
+
+    // If there wasn't already an email and the userId is one, use it.
+    if (!traits.email && isEmail(userId)) traits.email = userId;
 
     window._sbq.push(['identify', traits]);
   },

@@ -56,7 +56,8 @@
     "segmentio/extend": "*",
     "segmentio/is-email": "*",
     "segmentio/load-date": "*",
-    "segmentio/load-script": "*"
+    "segmentio/load-script": "*",
+    "yields/prevent": "*"
   },
   "scripts": [
     "src/index.js",

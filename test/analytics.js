@@ -394,6 +394,25 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
+    it('allows for properties to be a function across multiple links', function () {
+      var spy   = sinon.spy(Provider.prototype, 'track')
+        , links = $('<a data-type="crazy"><a data-type="normal">');
+
+      var handler = function (link) {
+        return { type : $(link).attr('data-type') };
+      };
+
+      analytics.trackLink(links, 'party', handler);
+
+      triggerClick(links[0]);
+      expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
+      spy.reset();
+
+      triggerClick(links[1]);
+      expect(spy.calledWith('party', { type : 'normal' })).to.be(true);
+      spy.restore();
+    });
+
     it('calls a properties function with the link that was clicked', function () {
       var spy  = sinon.spy()
         , link = $('<a>')[0];

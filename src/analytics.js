@@ -1,23 +1,24 @@
-var after       = require('after')
-  , bind        = require('event').bind
-  , clone       = require('clone')
-  , each        = require('each')
-  , extend      = require('extend')
-  , size        = require('object').length
-  , Provider    = require('./provider')
-  , providers   = require('./providers')
-  , querystring = require('querystring')
-  , type        = require('type')
-  , url         = require('url')
-  , user        = require('./user')
-  , utils       = require('./utils');
+var after          = require('after')
+  , bind           = require('event').bind
+  , clone          = require('clone')
+  , each           = require('each')
+  , extend         = require('extend')
+  , size           = require('object').length
+  , preventDefault = require('prevent')
+  , Provider       = require('./provider')
+  , providers      = require('./providers')
+  , querystring    = require('querystring')
+  , type           = require('type')
+  , url            = require('url')
+  , user           = require('./user')
+  , utils          = require('./utils');
 
 
 module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.8.5';
+  this.VERSION = '0.8.6';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -317,7 +318,8 @@ extend(Analytics.prototype, {
     // arrays, which allows for passing jQuery objects.
     if (utils.isElement(links)) links = [links];
 
-    var self  = this;
+    var self       = this
+      , isFunction = 'function' === type(properties);
 
     // Bind to all the links in the array.
     each(links, function (el) {
@@ -326,32 +328,25 @@ extend(Analytics.prototype, {
 
         // Allow for properties to be a function. And pass it the
         // link element that was clicked.
-        if (type(properties) === 'function') properties = properties(el);
+        var props = isFunction ? properties(el) : properties;
 
-        // Fire a normal track call.
-        self.track(event, properties);
+        self.track(event, props);
 
         // To justify us preventing the default behavior we must:
         //
         // * Have an `href` to use.
         // * Not have a `target="_blank"` attribute.
-        // * Not have any special keys pressed, because they might
-        // be trying to open in a new tab, or window, or download
-        // the asset.
+        // * Not have any special keys pressed, because they might be trying to
+        //   open in a new tab, or window, or download.
         //
-        // This might not cover all cases, but we'd rather throw out
-        // an event than miss a case that breaks the experience.
+        // This might not cover all cases, but we'd rather throw out an event
+        // than miss a case that breaks the experience.
         if (el.href && el.target !== '_blank' && !utils.isMeta(e)) {
 
-          // Prevent the link's default redirect in all the sane
-          // browsers, and also IE.
-          if (e.preventDefault)
-            e.preventDefault();
-          else
-            e.returnValue = false;
+          preventDefault(e);
 
-          // Navigate to the url after a small timeout, giving the
-          // providers time to track the event.
+          // Navigate to the url after a small timeout, giving the providers
+          // time to track the event.
           setTimeout(function () {
             window.location.href = el.href;
           }, self.timeout);
@@ -381,24 +376,21 @@ extend(Analytics.prototype, {
     // which allows for passing jQuery objects.
     if (utils.isElement(form)) form = [form];
 
-    var self = this;
+    var self       = this
+      , isFunction = 'function' === type(properties);
 
     each(form, function (el) {
       var handler = function (e) {
+
         // Allow for properties to be a function. And pass it the form element
         // that was submitted.
-        if (type(properties) === 'function') properties = properties(el);
+        var props = isFunction ? properties(el) : properties;
 
-        // Fire a normal track call.
-        self.track(event, properties);
+        self.track(event, props);
 
-        // Prevent the form's default submit in all sane browsers, and IE.
-        if (e.preventDefault)
-          e.preventDefault();
-        else
-          e.returnValue = false;
+        preventDefault(e);
 
-        // Submit the form after a small timeout, giving the event time to fire.
+        // Submit the form after a timeout, giving the event time to fire.
         setTimeout(function () {
           el.submit();
         }, self.timeout);

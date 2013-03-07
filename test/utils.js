@@ -37,6 +37,8 @@ window.test = {
     authToken : 'y'
   },
 
+  'BugHerd' : 'xssravhxw2jxlxlhxsi7iq',
+
   'Chartbeat' : {
     uid    : 'x',
     domain : 'example.com'

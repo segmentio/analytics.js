@@ -1,5 +1,6 @@
 
 exports['Bitdeli']          = require('./bitdeli');
+exports['BugHerd']          = require('./bugherd');
 exports['Chartbeat']        = require('./chartbeat');
 exports['ClickTale']        = require('./clicktale');
 exports['Clicky']           = require('./clicky');

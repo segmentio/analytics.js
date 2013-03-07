@@ -2348,6 +2348,31 @@ module.exports = Provider.extend({
 
 });
 });
+require.register("analytics/src/providers/bugherd.js", function(exports, require, module){
+// BugHerd
+// -------
+// [Documentation](http://support.bugherd.com/home).
+
+var Provider = require('../provider')
+  , extend   = require('extend')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+  key : 'apiKey',
+
+  options : {
+    apiKey : null
+  },
+
+
+  initialize : function (options, ready) {
+    load('//www.bugherd.com/sidebarv2.js?apikey=' + options.apiKey, ready);
+  }
+
+});
+});
 require.register("analytics/src/providers/chartbeat.js", function(exports, require, module){
 // Chartbeat
 // ---------
@@ -3091,6 +3116,7 @@ module.exports = Provider.extend({
 require.register("analytics/src/providers/index.js", function(exports, require, module){
 
 exports['Bitdeli']          = require('./bitdeli');
+exports['BugHerd']          = require('./bugherd');
 exports['Chartbeat']        = require('./chartbeat');
 exports['ClickTale']        = require('./clicktale');
 exports['Clicky']           = require('./clicky');

@@ -3,7 +3,6 @@
 // [Documentation](https://github.com/Storyberg/Docs/wiki/Javascript-Library).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
   , isEmail  = require('is-email')
   , load     = require('load-script');
 

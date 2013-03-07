@@ -7,10 +7,13 @@ describe('ClickTale', function () {
 
     it('should call ready and load library', function (done) {
       expect(window.ClickTale).to.be(undefined);
+      expect($('#ClickTaleDiv').length).to.equal(0);
 
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'ClickTale' : test['ClickTale'] });
+
+      expect($('#ClickTaleDiv').length).to.equal(1);
 
       // When the library loads, `ClickTale` is created.
       var interval = setInterval(function () {

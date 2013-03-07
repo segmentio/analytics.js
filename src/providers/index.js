@@ -1,6 +1,7 @@
 
 exports['Bitdeli']          = require('./bitdeli');
 exports['Chartbeat']        = require('./chartbeat');
+exports['ClickTale']        = require('./clicktale');
 exports['Clicky']           = require('./clicky');
 exports['comScore']         = require('./comscore');
 exports['CrazyEgg']         = require('./crazyegg');

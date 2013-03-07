@@ -1,3 +1,7 @@
+0.8.5 / 2013-3-7
+================
+* Adding Storyberg by [@kevinicus](https://github.com/kevinicus)
+
 0.8.4 / 2013-3-5
 ================
 * Added support for strings for the `created` trait

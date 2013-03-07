@@ -25,6 +25,7 @@ exports['Perfect Audience'] = require('./perfect-audience');
 exports['Quantcast']        = require('./quantcast');
 exports['Sentry']           = require('./sentry');
 exports['SnapEngage']       = require('./snapengage');
+exports['Storyberg']        = require('./storyberg');
 exports['USERcycle']        = require('./usercycle');
 exports['UserVoice']        = require('./uservoice');
 exports['Vero']             = require('./vero');

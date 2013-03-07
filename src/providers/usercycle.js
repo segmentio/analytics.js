@@ -3,8 +3,8 @@
 // [Documentation](http://docs.usercycle.com/javascript_api).
 
 var Provider = require('../provider')
-  , extend   = require('extend')
-  , load     = require('load-script');
+  , load     = require('load-script')
+  , user     = require('../user');
 
 
 module.exports = Provider.extend({
@@ -27,12 +27,14 @@ module.exports = Provider.extend({
 
 
   identify : function (userId, traits) {
-    if (userId) window._uc.push(['uid', userId, traits]);
+    if (userId) window._uc.push(['uid', userId]);
   },
 
 
   track : function (event, properties) {
-    window._uc.push(['action', event, properties]);
+    // Usercycle seems to use traits instead of properties.
+    var traits = user.traits();
+    window._uc.push(['action', event, traits]);
   }
 
 });

@@ -3,23 +3,23 @@ describe('Clicky', function () {
 
   describe('initialize', function () {
 
-    // Clicky loads very slowly on travis, so we get smart and check it on an
-    // interval so that we wait for the shortest time possible.
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
-      this.timeout(10000);
       expect(window.clicky).to.be(undefined);
 
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Clicky' : test['Clicky'] });
+
+      // Once the library loads, `window.clicky` is defined.
       var interval = setInterval(function () {
-        if (window.clicky) {
-          clearInterval(interval);
-          expect(window.clicky).not.to.be(undefined);
-          expect(spy.called).to.be(true);
-          done();
-        }
-      }, 1900);
+        if (!window.clicky) return;
+        expect(window.clicky).not.to.be(undefined);
+        expect(spy.called).to.be(true);
+        clearInterval(interval);
+        done();
+      }, 20);
     });
 
     it('should store options', function () {

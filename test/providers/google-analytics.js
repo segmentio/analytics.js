@@ -3,23 +3,29 @@ describe('Google Analytics', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
-      this.timeout(4000);
+      var spy  = sinon.spy()
+        , push = Array.prototype.push;
 
       expect(window._gaq).to.be(undefined);
 
-      var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Google Analytics' : test['Google Analytics'] });
+
+      // A queue is created, so it's ready immediately.
       expect(window._gaq).not.to.be(undefined);
-      expect(window._gaq.push).to.eql(Array.prototype.push);
+      expect(window._gaq.push).to.eql(push);
       expect(spy.called).to.be(true);
 
       // When the library loads, push will be overriden.
-      setTimeout(function () {
-        expect(window._gaq.push).not.to.eql(Array.prototype.push);
+      var interval = setInterval(function () {
+        if (window._gaq.push === push) return;
+        expect(window._gaq.push).not.to.eql(push);
+        clearInterval(interval);
         done();
-      }, 3500);
+      }, 20);
     });
 
     it('should store options', function () {
@@ -27,12 +33,25 @@ describe('Google Analytics', function () {
       expect(analytics.providers[0].options.trackingId).to.equal('x');
     });
 
+    it('shouldnt track an initial pageview if not enabled', function () {
+      // Define `_gaq` so we can spy on it.
+      window._gaq = [];
+      var spy = sinon.spy(window._gaq, 'push');
+
+      var options = extend({}, test['Google Analytics'], { initialPageview : false });
+      analytics.initialize({ 'Google Analytics' : options });
+      expect(spy.calledWith(['_trackPageview', undefined])).to.be(false);
+
+      spy.restore();
+      analytics.providers[0].options.initialPageview = true;
+    });
+
     it('should set domain', function () {
       // Define `_gaq` so we can spy on it.
       window._gaq = [];
       var spy = sinon.spy(window._gaq, 'push');
 
-      var options = extend(test['Google Analytics'], { domain : 'example.com' });
+      var options = extend({}, test['Google Analytics'], { domain : 'example.com' });
       analytics.initialize({ 'Google Analytics' : options });
       expect(spy.calledWith(['_setDomainName', 'example.com'])).to.be(true);
 
@@ -44,7 +63,7 @@ describe('Google Analytics', function () {
       window._gaq = [];
       var spy = sinon.spy(window._gaq, 'push');
 
-      var options = extend(test['Google Analytics'], { enhancedLinkAttribution : true });
+      var options = extend({}, test['Google Analytics'], { enhancedLinkAttribution : true });
       analytics.initialize({ 'Google Analytics' : options });
       expect(spy.calledWith(['_require', 'inpage_linkid', 'http://www.google-analytics.com/plugins/ga/inpage_linkid.js'])).to.be(true);
 
@@ -56,7 +75,7 @@ describe('Google Analytics', function () {
       window._gaq = [];
       var spy = sinon.spy(window._gaq, 'push');
 
-      var options = extend(test['Google Analytics'], { siteSpeedSampleRate : 5 });
+      var options = extend({}, test['Google Analytics'], { siteSpeedSampleRate : 5 });
       analytics.initialize({ 'Google Analytics' : options });
       expect(spy.calledWith(['_setSiteSpeedSampleRate', 5])).to.be(true);
 
@@ -68,7 +87,7 @@ describe('Google Analytics', function () {
       window._gaq = [];
       var spy = sinon.spy(window._gaq, 'push');
 
-      var options = extend(test['Google Analytics'], { anonymizeIp : true });
+      var options = extend({}, test['Google Analytics'], { anonymizeIp : true });
       analytics.initialize({ 'Google Analytics' : options });
       expect(spy.calledWith(['_gat._anonymizeIp'])).to.be(true);
 
@@ -76,8 +95,8 @@ describe('Google Analytics', function () {
     });
 
     it('should add canonical url', function () {
-      // Add the meta tag we need.
-      var $meta = $('<meta rel="canonical" href="http://google.com/a-thing">').appendTo('head');
+      // Add the link tag we need.
+      var $link = $('<link rel="canonical" href="http://google.com/a-thing">').appendTo('head');
       // Define `_gaq` so we can spy on it.
       window._gaq = [];
       var spy = sinon.spy(window._gaq, 'push');
@@ -86,7 +105,7 @@ describe('Google Analytics', function () {
       expect(spy.calledWith(['_trackPageview', '/a-thing'])).to.be(true);
 
       spy.restore();
-      $meta.remove();
+      $link.remove();
     });
 
     it('shouldnt add canonical url', function () {
@@ -97,6 +116,19 @@ describe('Google Analytics', function () {
       expect(spy.calledWith(['_trackPageview', undefined])).to.be(true);
 
       spy.restore();
+    });
+
+    it('should load doubleclick', function () {
+      var spy  = sinon.spy()
+        , push = Array.prototype.push;
+
+      var options = extend({}, test['Google Analytics'], { doubleClick : true });
+      analytics.ready(spy);
+      analytics.initialize({ 'Google Analytics' : options });
+
+      // Make sure the script gets appended to the DOM.
+      var $script = $('script[src="http://stats.g.doubleclick.net/dc.js"]');
+      expect($script.length).to.equal(1);
     });
 
   });

@@ -3,6 +3,8 @@ describe('Keen IO', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
       expect(window.Keen).not.to.exist;
 
@@ -18,16 +20,43 @@ describe('Keen IO', function () {
 
       // When the Keen IO library loads, it creates some keys we can test.
       expect(window.Keen.Base64).to.be(undefined);
-      setTimeout(function () {
+      var interval = setInterval(function () {
+        if (!window.Keen.Base64) return;
         expect(window.Keen.Base64).not.to.be(undefined);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
     it('should store options', function () {
       analytics.initialize({ 'Keen IO' : test['Keen IO'] });
       expect(analytics.providers[0].options.projectId).to.equal(test['Keen IO'].projectId);
       expect(analytics.providers[0].options.apiKey).to.equal(test['Keen IO'].apiKey);
+    });
+
+    it('shouldnt track an initial pageview', function () {
+      var provider = analytics.providers[0]
+        , spy      = sinon.spy(provider, 'pageview');
+
+      analytics.initialize({ 'Keen IO' : test['Keen IO'] });
+      expect(spy.called).to.be(false);
+
+      spy.restore();
+    });
+
+    it('should track an initial pageview', function () {
+      var spy     = sinon.spy(window.Keen, 'addEvent')
+        , options = extend({}, test['Keen IO'], {
+            pageview        : true,
+            initialPageview : true
+          });
+
+      analytics.initialize({ 'Keen IO' : options });
+      expect(spy.called).to.be(true);
+
+      spy.restore();
+      analytics.providers[0].options.pageview = false;
+      analytics.providers[0].options.initialPageview = false;
     });
 
   });
@@ -73,13 +102,39 @@ describe('Keen IO', function () {
 
   describe('track', function () {
 
+    // Keen IO adds custom properties, so we need to have a loose match.
     it('calls addEvent on track', function () {
       var spy = sinon.spy(window.Keen, 'addEvent');
       analytics.track(test.event, test.properties);
-      // Keen IO adds custom properties, so we need to have a loose match.
       expect(spy.calledWithMatch(test.event, test.properties)).to.be(true);
+      spy.restore();
+    });
+
+  });
+
+
+  describe('pageview', function () {
+
+    it('shouldnt track pageviews', function () {
+      var provider = analytics.providers[0]
+        , spy      = sinon.spy(provider, 'track');
+
+      analytics.pageview();
+      expect(spy.called).to.be(false);
 
       spy.restore();
+    });
+
+    it('should track pageviews', function () {
+      var provider = analytics.providers[0]
+        , spy      = sinon.spy(provider, 'track');
+
+      provider.options.pageview = true;
+      analytics.pageview(test.url);
+      expect(spy.calledWith('Loaded a Page', { url : test.url })).to.be(true);
+
+      spy.restore();
+      provider.options.pageview = false;
     });
 
   });

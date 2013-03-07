@@ -16,6 +16,12 @@ window.test = {
     revenue : 29.99
   },
 
+  context : {
+    providers : {
+      all : true
+    }
+  },
+
   url : '/url',
 
   newUserId : 'new',
@@ -31,12 +37,20 @@ window.test = {
     authToken : 'y'
   },
 
+  'BugHerd' : 'xssravhxw2jxlxlhxsi7iq',
+
   'Chartbeat' : {
     uid    : 'x',
     domain : 'example.com'
   },
 
   'Clicky' : 'x',
+
+  'ClickTale' : {
+    projectId      : '19370',
+    recordingRatio : '0.0089',
+    partitionId    : 'www14'
+  },
 
   'comScore' : {
     c2 : 'x'
@@ -48,7 +62,7 @@ window.test = {
 
   'Errorception' : 'x',
 
-  'FoxMetrics': '4ec10e0c1542321b8c4caae7',
+  'FoxMetrics' : '5135085424023236bca9c08c',
 
   'Gauges' : 'x',
 
@@ -64,7 +78,7 @@ window.test = {
 
   'Intercom' : 'x',
 
-  'Keen IO': {
+  'Keen IO' : {
     projectId : 'KEEN_PROJECT_ID',
     apiKey    : 'KEEN_API_KEY'
   },
@@ -77,13 +91,17 @@ window.test = {
 
   'Mixpanel' : 'x',
 
-  'Olark' : 'x',
+  'Olark' : '5798-949-10-1692',
 
   'Perfect Audience' : '4ff6ade4361ed500020000a5',
 
   'Quantcast' : 'x',
 
+  'Sentry' : 'x',
+
   'SnapEngage' : '782b737e-487f-4117-8a2b-2beb32b600e5',
+
+  'Storyberg' : 'x',
 
   'USERcycle' : 'x',
 

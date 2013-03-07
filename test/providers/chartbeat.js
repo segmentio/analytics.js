@@ -3,6 +3,8 @@ describe('Chartbeat', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
       expect(window.pSUPERFLY).to.be(undefined);
 
@@ -12,11 +14,13 @@ describe('Chartbeat', function () {
 
       // Once the library is loaded, the global will exist and ready should have
       // been called.
-      setTimeout(function () {
+      var interval = setInterval(function () {
+        if (!window.pSUPERFLY) return;
         expect(window.pSUPERFLY).not.to.be(undefined);
         expect(spy.called).to.be(true);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
     it('should store options', function () {

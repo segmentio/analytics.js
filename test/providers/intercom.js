@@ -28,11 +28,8 @@ describe('Intercom', function () {
     });
 
     it('should store expanded options', function () {
-
       analytics.initialize({ 'Intercom' : options });
-
       options.counter = true;
-
       expect(analytics.providers[0].options).to.eql(options);
     });
   });
@@ -40,14 +37,14 @@ describe('Intercom', function () {
 
   describe('identify', function () {
 
+    this.timeout(10000);
+
     it('should load library', function (done) {
-
-      this.timeout(3000);
-
       expect(window.intercomSettings).to.be(undefined);
-
       expect(window.Intercom).to.be(undefined);
+
       analytics.identify(test.userId, traits);
+
       expect(window.intercomSettings).not.to.be(undefined);
       expect(window.intercomSettings).to.eql({
         created_at  : Math.floor(traits.created/1000),
@@ -64,12 +61,13 @@ describe('Intercom', function () {
         }
       });
 
-
-      // Once the Intercom library comes back, the array should be transformed.
-      setTimeout(function () {
+      // Once the Intercom library comes back, `Intercom` will exist.
+      var interval = setInterval(function () {
+        if (!window.Intercom) return;
         expect(window.Intercom).not.to.be(undefined);
+        clearInterval(interval);
         done();
-      }, 2500);
+      }, 20);
     });
 
     it('shouldnt load library the second time', function () {

@@ -14,10 +14,12 @@ describe('KISSmetrics', function () {
       expect(window.KM).to.be(undefined);
 
       // When the library loads, it will create a `KM` global.
-      setTimeout(function () {
+      var interval = setInterval(function () {
+        if (!window.KM) return;
         expect(window.KM).not.to.be(undefined);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
     it('should store options', function () {
@@ -29,6 +31,8 @@ describe('KISSmetrics', function () {
 
 
   describe('identify', function () {
+
+    before(analytics.user.clear);
 
     it('should push "_identify"', function () {
       var stub = sinon.stub(window._kmq, 'push');

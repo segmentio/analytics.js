@@ -1,4 +1,5 @@
-var extend = require('extend')
+var each   = require('each')
+  , extend = require('extend')
   , type   = require('type');
 
 
@@ -6,6 +7,12 @@ module.exports = Provider;
 
 
 function Provider (options, ready) {
+  var self = this;
+  // Set up a queue of { method : 'identify', args : [] } to call
+  // once we are ready.
+  this.queue = [];
+  this.ready = false;
+
   // Allow for `options` to only be a string if the provider has specified
   // a default `key`, in which case convert `options` into a dictionary.
   if (type(options) !== 'object') {
@@ -19,8 +26,21 @@ function Provider (options, ready) {
   }
   // Extend the options passed in with the provider's defaults.
   extend(this.options, options);
+
+  // Wrap our ready function to first read from the queue.
+  var dequeue = function () {
+    each(self.queue, function (call) {
+      var method = call.method
+        , args   = call.args;
+      self[method].apply(self, args);
+    });
+    self.ready = true;
+    self.queue = [];
+    ready();
+  };
+
   // Call the provider's initialize object.
-  this.initialize.call(this, this.options, ready);
+  this.initialize.call(this, this.options, dequeue);
 }
 
 
@@ -57,5 +77,17 @@ extend(Provider.prototype, {
   // and loading a Javascript library.
   initialize : function (options, ready) {
     ready();
+  },
+
+  /**
+   * Adds an item to the queue
+   * @param  {String} method ('track' or 'identify')
+   * @param  {Object} args
+   */
+  enqueue : function (method, args) {
+    this.queue.push({
+      method : method,
+      args : args
+    });
   }
 });

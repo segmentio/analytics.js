@@ -3,6 +3,8 @@ describe('Customer.io', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     // Customer.io can't be loaded twice, so we do all this in one test.
     it('should call ready and load libarary', function (done) {
       expect(window._cio).to.be(undefined);
@@ -11,21 +13,27 @@ describe('Customer.io', function () {
       analytics.ready(spy);
       analytics.initialize({ 'Customer.io' :  test['Customer.io'] });
       expect(analytics.providers[0].options.siteId).to.equal('x');
+
+      // Customer.io sets up a queue, so spy's called.
       expect(window._cio).not.to.be(undefined);
-      expect(window._cio.pageHasLoaded).to.be(undefined);
       expect(spy.called).to.be(true);
+      expect(window._cio.pageHasLoaded).to.be(undefined);
 
       // When the library is actually loaded `pageHasLoaded` is set.
-      setTimeout(function () {
+      var interval = setInterval(function () {
+        if (!window._cio.pageHasLoaded) return;
         expect(window._cio.pageHasLoaded).not.to.be(undefined);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
   });
 
 
   describe('identify', function () {
+
+    before(analytics.user.clear);
 
     it('should call identify', function () {
       var spy = sinon.spy(window._cio, 'identify');

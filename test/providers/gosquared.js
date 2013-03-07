@@ -3,6 +3,8 @@ describe('GoSquared', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
       expect(window.GoSquared).to.be(undefined);
 
@@ -14,10 +16,12 @@ describe('GoSquared', function () {
       expect(spy.called).to.be(true);
 
       // When the library loads, the tracker will be available.
-      setTimeout(function () {
+      var interval = setInterval(function () {
+        if (!window.GoSquared.DefaultTracker) return;
         expect(window.GoSquared.DefaultTracker).not.to.be(undefined);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
     it('should store options', function () {
@@ -30,9 +34,9 @@ describe('GoSquared', function () {
 
   describe('identify', function () {
 
+    beforeEach(analytics.user.clear);
+
     it('should set user id', function () {
-      // Reset GoSquared state before the test.
-      analytics.userId = null;
       window.GoSquared.UserName = undefined;
       window.GoSquared.Visitor = undefined;
       analytics.identify(test.userId);
@@ -41,8 +45,6 @@ describe('GoSquared', function () {
     });
 
     it('should set traits', function () {
-      // Reset GoSquared state before the test.
-      analytics.userId = null;
       window.GoSquared.UserName = undefined;
       window.GoSquared.Visitor = undefined;
       analytics.identify(test.traits);
@@ -51,8 +53,6 @@ describe('GoSquared', function () {
     });
 
     it('should set user id and traits', function () {
-      // Reset GoSquared state before the test.
-      analytics.userId = null;
       window.GoSquared.UserName = undefined;
       window.GoSquared.Visitor = undefined;
       analytics.identify(test.userId, test.traits);

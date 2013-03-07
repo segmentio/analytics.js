@@ -2,8 +2,7 @@
 // -----
 // [Documentation](http://www.olark.com/documentation).
 
-var Provider = require('../provider')
-  , extend   = require('extend');
+var Provider = require('../provider');
 
 
 module.exports = Provider.extend({

@@ -3,6 +3,8 @@ describe('Woopra', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
       expect(window.woopraReady).to.be(undefined);
       expect(window.woopraTracker).to.be(undefined);
@@ -15,11 +17,13 @@ describe('Woopra', function () {
 
       // Once the library loads the tracker will be created and the spy will
       // be called.
-      setTimeout(function () {
-      expect(window.woopraTracker).not.to.be(undefined);
-        done();
+      var interval = setInterval(function () {
+        if (!window.woopraTracker) return;
+        expect(window.woopraTracker).not.to.be(undefined);
         expect(spy.called).to.be(true);
-      }, 1900);
+        clearInterval(interval);
+        done();
+      }, 20);
     });
 
     it('should store options', function () {
@@ -32,9 +36,23 @@ describe('Woopra', function () {
 
   describe('identify', function () {
 
-    // TODO: We're waiting on handling our own cookie.
-    it('correctly identifies the user');
+    it('correctly adds the user properties', function () {
 
+      var spy = sinon.spy(window.woopraTracker, 'addVisitorProperty');
+      analytics.identify(test.userId, test.traits);
+      expect(spy.calledWith('email', test.traits.email)).to.be(true);
+      expect(spy.calledWith('id', test.userId)).to.be(true);
+      expect(spy.calledWith('name', test.traits.name)).to.be(true);
+      expect(spy.callCount).to.be(3);
+      spy.reset();
+    });
+
+    it('correctly makes a track request', function () {
+      var spy = sinon.spy(window.woopraTracker, 'track');
+      analytics.identify(test.userId, test.traits);
+      expect(spy.called).to.be(true);
+      spy.reset();
+    });
   });
 
 

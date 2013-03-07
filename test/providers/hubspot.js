@@ -3,21 +3,27 @@ describe('HubSpot', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
+      var spy  = sinon.spy()
+        , push = Array.prototype.push;
+
       expect(window._hsq).to.be(undefined);
 
-      var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'HubSpot' : test['HubSpot'] });
       expect(window._hsq).not.to.be(undefined);
-      expect(window._hsq.push).to.equal(Array.prototype.push);
+      expect(window._hsq.push).to.equal(push);
       expect(spy.called).to.be(true);
 
       // Once the HubSpot library comes back, the array should be transformed.
-      setTimeout(function () {
-        expect(window._hsq).to.not.equal(Array.prototype.push);
+      var interval = setInterval(function () {
+        if (window._hsq === push) return;
+        expect(window._hsq).to.not.equal(push);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
     it('should store options', function () {
@@ -32,17 +38,22 @@ describe('HubSpot', function () {
 
     it('should push "identify"', function () {
       var spy = sinon.spy(window._hsq, 'push');
+
       analytics.identify(test.traits);
       expect(spy.calledWith(['identify', test.traits])).to.be(true);
-
       spy.reset();
+
       analytics.identify(test.userId);
       expect(spy.calledWith(['identify', test.userId])).to.be(false);
-
       spy.reset();
+
+      // They require an email, but we try to smartly pull it from `userId`.
+      analytics.identify(test.traits.email);
+      expect(spy.calledWithMatch(['identify', { email : test.traits.email }])).to.be(true);
+      spy.reset();
+
       analytics.identify(test.userId, test.traits);
       expect(spy.calledWith(['identify', test.traits])).to.be(true);
-
       spy.restore();
     });
 
@@ -55,6 +66,19 @@ describe('HubSpot', function () {
       var spy = sinon.spy(window._hsq, 'push');
       analytics.track(test.event, test.properties);
       expect(spy.calledWith(['trackEvent', test.event, test.properties])).to.be(true);
+      spy.restore();
+    });
+
+  });
+
+
+  describe('pageview', function () {
+
+    it('should push "_trackPageview"', function () {
+      var stub = sinon.stub(window._hsq, 'push');
+      analytics.pageview();
+      expect(stub.calledWith(['_trackPageview'])).to.be(true);
+      stub.restore();
     });
 
   });

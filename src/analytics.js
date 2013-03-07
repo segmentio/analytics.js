@@ -1,22 +1,24 @@
-var after       = require('after')
-  , bind        = require('event').bind
-  , clone       = require('clone')
-  , each        = require('each')
-  , extend      = require('extend')
-  , size        = require('object').length
-  , Provider    = require('./provider')
-  , providers   = require('./providers')
-  , querystring = require('querystring')
-  , type        = require('type')
-  , url         = require('url')
-  , utils       = require('./utils');
+var after          = require('after')
+  , bind           = require('event').bind
+  , clone          = require('clone')
+  , each           = require('each')
+  , extend         = require('extend')
+  , size           = require('object').length
+  , preventDefault = require('prevent')
+  , Provider       = require('./provider')
+  , providers      = require('./providers')
+  , querystring    = require('querystring')
+  , type           = require('type')
+  , url            = require('url')
+  , user           = require('./user')
+  , utils          = require('./utils');
 
 
 module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.7.1';
+  this.VERSION = '0.8.6';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -40,9 +42,6 @@ extend(Analytics.prototype, {
   // Providers that can be initialized. Add using `this.addProvider`.
   initializableProviders : {},
 
-  // Cache the `userId` when a user is identified.
-  userId : null,
-
   // Store the date when the page loaded, for services that depend on it.
   date : new Date(),
 
@@ -53,6 +52,9 @@ extend(Analytics.prototype, {
   // Whether analytics.js has been initialized with providers.
   initialized : false,
 
+  // Whether all of our providers have loaded.
+  isReady : false,
+
   // A queue for storing `ready` callback functions to get run when
   // analytics have been initialized.
   readyCallbacks : [],
@@ -60,6 +62,10 @@ extend(Analytics.prototype, {
   // The amount of milliseconds to wait for requests to providers to clear
   // before navigating away from the current page.
   timeout : 300,
+
+  // Ability to access the user object.
+  // TODO: Should be removed eventually
+  user : user,
 
   providers : [],
 
@@ -90,17 +96,23 @@ extend(Analytics.prototype, {
   // * `providers` is a dictionary of the providers you want to enabled.
   // The keys are the names of the providers and their values are either
   // an api key, or dictionary of extra settings (including the api key).
-  initialize : function (providers) {
+  initialize : function (providers, options) {
     var self = this;
 
     // Reset our state.
     this.providers = [];
-    this.userId = null;
+    this.initialized = false;
+    this.isReady = false;
+
+    // Set the user options, and load the user from our cookie.
+    user.options(options);
+    user.load();
 
     // Create a ready method that will run after all of our providers have been
     // initialized and loaded. We'll pass the function into each provider's
     // initialize method, so they can callback when they've loaded successfully.
     var ready = after(size(providers), function () {
+      self.isReady = true;
       // Take each callback off the queue and call it.
       var callback;
       while(callback = self.readyCallbacks.shift()) {
@@ -138,7 +150,7 @@ extend(Analytics.prototype, {
 
     // If we're already initialized, do it right away. Otherwise, add it to the
     // queue for when we do get initialized.
-    if (this.initialized) {
+    if (this.isReady) {
       callback();
     } else {
       this.readyCallbacks.push(callback);
@@ -195,17 +207,34 @@ extend(Analytics.prototype, {
       userId = null;
     }
 
-    // Cache the `userId`, or use saved one.
-    if (userId !== null)
-      this.userId = userId;
-    else
-      userId = this.userId;
+    // Use the saved userId.
+    if (userId === null) userId = user.id();
+
+    // Update the cookie with new userId and traits.
+    var alias = user.update(userId, traits);
+
+    // Before we manipulate traits, clone it so we don't do anything uncouth.
+    traits = clone(traits);
+
+    // Test for a `created` that's a valid date string and convert it.
+    if (traits && traits.created && type (traits.created) === 'string' &&
+      Date.parse(traits.created)) {
+      traits.created = new Date(traits.created);
+    }
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.identify && utils.isEnabled(provider, context))
-        provider.identify(userId, clone(traits), clone(context));
+      if (provider.identify && utils.isEnabled(provider, context)) {
+        var args = [userId, clone(traits), clone(context)];
+
+        if (provider.ready) provider.identify.apply(provider, args);
+        else provider.enqueue('identify', args);
+      }
     });
+
+    // TODO: auto-alias once mixpanel API doesn't error
+    // If we should alias, go ahead and do it.
+    // if (alias) this.alias(userId);
 
     if (callback && type(callback) === 'function') {
       setTimeout(callback, this.timeout);
@@ -255,8 +284,12 @@ extend(Analytics.prototype, {
 
     // Call `track` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.track && utils.isEnabled(provider, context))
-        provider.track(event, clone(properties), clone(context));
+      if (provider.track && utils.isEnabled(provider, context)) {
+        var args = [event, clone(properties), clone(context)];
+
+        if (provider.ready) provider.track.apply(provider, args);
+        else provider.enqueue('track', args);
+      }
     });
 
     if (callback && type(callback) === 'function') {
@@ -285,7 +318,8 @@ extend(Analytics.prototype, {
     // arrays, which allows for passing jQuery objects.
     if (utils.isElement(links)) links = [links];
 
-    var self  = this;
+    var self       = this
+      , isFunction = 'function' === type(properties);
 
     // Bind to all the links in the array.
     each(links, function (el) {
@@ -294,34 +328,27 @@ extend(Analytics.prototype, {
 
         // Allow for properties to be a function. And pass it the
         // link element that was clicked.
-        if (type(properties) === 'function') properties = properties(el);
+        var props = isFunction ? properties(el) : properties;
 
-        // Fire a normal track call.
-        self.track(event, properties);
+        self.track(event, props);
 
         // To justify us preventing the default behavior we must:
         //
         // * Have an `href` to use.
         // * Not have a `target="_blank"` attribute.
-        // * Not have any special keys pressed, because they might
-        // be trying to open in a new tab, or window, or download
-        // the asset.
+        // * Not have any special keys pressed, because they might be trying to
+        //   open in a new tab, or window, or download.
         //
-        // This might not cover all cases, but we'd rather throw out
-        // an event than miss a case that breaks the experience.
+        // This might not cover all cases, but we'd rather throw out an event
+        // than miss a case that breaks the experience.
         if (el.href && el.target !== '_blank' && !utils.isMeta(e)) {
 
-          // Prevent the link's default redirect in all the sane
-          // browsers, and also IE.
-          if (e.preventDefault)
-              e.preventDefault();
-          else
-              e.returnValue = false;
+          preventDefault(e);
 
-          // Navigate to the url after a small timeout, giving the
-          // providers time to track the event.
+          // Navigate to the url after a small timeout, giving the providers
+          // time to track the event.
           setTimeout(function () {
-              window.location.href = el.href;
+            window.location.href = el.href;
           }, self.timeout);
         }
       });
@@ -345,35 +372,38 @@ extend(Analytics.prototype, {
   trackForm : function (form, event, properties) {
     if (!form) return;
 
-    // Turn a single element into an array so that we're always handling
-    // arrays, which allows for passing jQuery objects.
+    // Turn a single element into an array so that we're always handling arrays,
+    // which allows for passing jQuery objects.
     if (utils.isElement(form)) form = [form];
 
-    var self = this;
+    var self       = this
+      , isFunction = 'function' === type(properties);
 
     each(form, function (el) {
+      var handler = function (e) {
 
-      bind(el, 'submit', function (e) {
-        // Allow for properties to be a function. And pass it the
-        // form element that was submitted.
-        if (type(properties) === 'function') properties = properties(el);
+        // Allow for properties to be a function. And pass it the form element
+        // that was submitted.
+        var props = isFunction ? properties(el) : properties;
 
-        // Fire a normal track call.
-        self.track(event, properties);
+        self.track(event, props);
 
-        // Prevent the form's default submit in all the sane
-        // browsers, and also IE.
-        if (e.preventDefault)
-          e.preventDefault();
-        else
-          e.returnValue = false;
+        preventDefault(e);
 
-        // Submit the form after a small timeout, giving the event
-        // time to get fired.
+        // Submit the form after a timeout, giving the event time to fire.
         setTimeout(function () {
           el.submit();
         }, self.timeout);
-      });
+      };
+
+      // Support the form being submitted via jQuery instead of for real. This
+      // doesn't happen automatically because `el.submit()` doesn't actually
+      // fire submit handlers, which is what jQuery has to user internally. >_<
+      var dom = window.jQuery || window.Zepto;
+      if (dom)
+        dom(el).submit(handler);
+      else
+        bind(el, 'submit', handler);
     });
   },
 
@@ -398,7 +428,10 @@ extend(Analytics.prototype, {
 
     // Call `pageview` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.pageview) provider.pageview(url);
+      if (provider.pageview) {
+        if (provider.ready) provider.pageview(url);
+        else provider.enqueue('pageview', [url]);
+      }
     });
   },
 
@@ -422,7 +455,10 @@ extend(Analytics.prototype, {
 
     // Call `alias` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.alias) provider.alias(newId, originalId);
+      if (provider.alias) {
+        if (provider.ready) provider.alias(newId, originalId);
+        else provider.enqueue('alias', [newId, originalId]);
+      }
     });
   }
 

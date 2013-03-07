@@ -3,21 +3,28 @@ describe('Vero', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
+      var spy  = sinon.spy()
+        , push = Array.prototype.push;
+
       expect(window._veroq).to.be(undefined);
 
-      var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Vero' : test['Vero'] });
+
       expect(window._veroq).not.to.be(undefined);
-      expect(window._veroq.push).to.equal(Array.prototype.push);
+      expect(window._veroq.push).to.equal(push);
       expect(spy.called).to.be(true);
 
       // When the library loads, it will overwrite the push method.
-      setTimeout(function () {
-        expect(window._veroq.push).not.to.equal(Array.prototype.push);
+      var interval = setInterval(function () {
+        if (window._veroq.push === push) return;
+        expect(window._veroq.push).not.to.equal(push);
+        clearInterval(interval);
         done();
-      }, 1900);
+      }, 20);
     });
 
     it('should store options', function () {
@@ -29,6 +36,8 @@ describe('Vero', function () {
 
 
   describe('identify', function () {
+
+    before(analytics.user.clear);
 
     // Very requires an email and traits. Check for both separately, but do
     // traits first because otherwise the userId will be cached.
@@ -68,7 +77,5 @@ describe('Vero', function () {
 
       stub.restore();
     });
-
   });
-
 });

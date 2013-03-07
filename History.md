@@ -1,6 +1,10 @@
 0.8.5 / 2013-3-7
 ================
 * Adding Storyberg by [@kevinicus](https://github.com/kevinicus)
+* Adding [BugHerd](http://bugherd.com) provider
+* Adding [Sentry](http://sentry.com) provider
+* Adding [ClickTale](http://clicktale.com) provider
+* Cleanup for extraneous includes in many providers
 
 0.8.4 / 2013-3-5
 ================

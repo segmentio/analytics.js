@@ -1,3 +1,7 @@
+0.8.7 / 2013-3-7
+================
+* [Qualaroo](https://qualaroo.com/)
+
 0.8.6 / 2013-3-7
 ================
 * Fixed bug in `trackLink` reported by [@quirkyjack](https://github.com/quirkyjack)

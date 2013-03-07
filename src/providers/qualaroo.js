@@ -4,29 +4,24 @@
 // [Set Docs](http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties)
 
 var Provider = require('../provider')
-  , extend   = require('extend')
-  , alias    = require('alias')
   , load     = require('load-script');
 
 
 module.exports = Provider.extend({
 
-  key : 'apiKey',
-
   options : {
+    // Qualaroo has two required options.
     customerId : null,
-    siteToken  : null,
-    track      : false
+    siteToken : null,
+    // Whether to record traits when a user triggers an event. This can be
+    // useful for sending targetted questionnaries.
+    track : false
   },
 
 
-  // Qualaroo's
+  // Qualaroo's script has two options in its URL.
   initialize : function (options, ready) {
-    if (window._kiq) return;
-
     window._kiq = window._kiq || [];
-    // '//s3.amazonaws.com/ki.js/47517/9Fd.js'
-    // '//s3.amazonaws.com/ki.js/47516/9Fc.js'
     load('//s3.amazonaws.com/ki.js/' + options.customerId + '/' + options.siteToken + '.js');
 
     // Qualaroo creates a queue, so it's ready immediately.
@@ -34,8 +29,8 @@ module.exports = Provider.extend({
   },
 
 
-  // Qualaroo uses two separate methods: `identify` for storing the
-  // `userId`, and `set` for storing `traits`.
+  // Qualaroo uses two separate methods: `identify` for storing the `userId`,
+  // and `set` for storing `traits`.
   identify : function (userId, traits) {
     if (userId) window._kiq.push(['identify', userId]);
     if (traits) window._kiq.push(['set', traits]);
@@ -49,11 +44,12 @@ module.exports = Provider.extend({
     if (!this.options.track) return;
 
     // Create a name-value pair that will be pretty unique. For an event like
-    // 'Loaded a Page' this will make it 'Event: Loaded a Page'.
-    var settings = {};
-    settings['Event: ' + event] = true;
+    // 'Loaded a Page' this will make it 'Triggered: Loaded a Page'.
+    var traits = {};
+    traits['Triggered: ' + event] = true;
 
-    window._kiq.push(['set', settings]);
+    // Fire a normal identify, with traits only.
+    this.identify(null, traits);
   }
 
 });

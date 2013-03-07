@@ -22,6 +22,7 @@ exports['LiveChat']         = require('./livechat');
 exports['Mixpanel']         = require('./mixpanel');
 exports['Olark']            = require('./olark');
 exports['Perfect Audience'] = require('./perfect-audience');
+exports['Qualaroo']         = require('./qualaroo');
 exports['Quantcast']        = require('./quantcast');
 exports['Sentry']           = require('./sentry');
 exports['SnapEngage']       = require('./snapengage');

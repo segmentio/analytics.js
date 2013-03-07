@@ -97,6 +97,11 @@ window.test = {
 
   'Quantcast' : 'x',
 
+  'Qualaroo' : {
+    customerId : '47517',
+    siteToken  : '9Fd'
+  },
+
   'Sentry' : 'x',
 
   'SnapEngage' : '782b737e-487f-4117-8a2b-2beb32b600e5',

@@ -27,8 +27,8 @@ describe('ClickTale', function () {
       expect(analytics.providers[0].options.projectId).to.equal('19370');
       expect(analytics.providers[0].options.recordingRatio).to.equal('0.0089');
       expect(analytics.providers[0].options.partitionId).to.equal('www14');
-      expect(analytics.providers[0].options.normalCDNUrl).to.not.equal(null);
-      expect(analytics.providers[0].options.secureCDNUrl).to.equal(null);
+      expect(analytics.providers[0].options.httpCdnUrl).to.not.equal(null);
+      expect(analytics.providers[0].options.httpsCdnUrl).to.equal(null);
     });
 
   });

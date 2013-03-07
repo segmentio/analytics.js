@@ -2411,11 +2411,14 @@ module.exports = Provider.extend({
 
   options : {
 
-    // There's a default insecure CDN url that most projects seem to use.
-    normalCDNUrl   : 'http://s.clicktale.net/WRe0.js',
+    // If you sign up for a free account, this is the default http (non-ssl) CDN URL
+    // that you get. If you sign up for a premium account, you get a different
+    // custom CDN URL, so we have to leave it as an option.
+    httpCdnUrl     : 'http://s.clicktale.net/WRe0.js',
 
-    // SSL support is only for premium accounts.
-    secureCDNUrl   : null,
+    // SSL support is only for premium accounts. Each premium account seems to have
+    // a different custom secure CDN URL, so we have to leave it as an option.
+    httpsCdnUrl    : null,
 
     // The Project ID is loaded in after the ClickTale CDN javascript has loaded.
     projectId      : null,
@@ -2447,9 +2450,9 @@ module.exports = Provider.extend({
     // ssl library is provided and we're on ssl then
     // we can't load anything (always true for non-premium accounts.)
     if (document.location.protocol !== 'https:')
-      load(options.normalCDNUrl, onloaded);
-    else if (options.secureCDNUrl)
-      load(options.secureCDNUrl, onloaded);
+      load(options.httpCdnUrl, onloaded);
+    else if (options.httpsCdnUrl)
+      load(options.httpsCdnUrl, onloaded);
   },
 
   identify : function (userId, traits) {

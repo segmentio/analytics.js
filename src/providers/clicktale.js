@@ -63,10 +63,10 @@ module.exports = Provider.extend({
     // Load the appropriate CDN library, if no
     // ssl library is provided and we're on ssl then
     // we can't load anything (always true for non-premium accounts.)
-    if (document.location.protocol !== 'https:')
-      load(options.httpCdnUrl, onloaded);
-    else if (options.httpsCdnUrl)
-      load(options.httpsCdnUrl, onloaded);
+    load({
+      http  : options.httpCdnUrl,
+      https : options.httpsCdnUrl
+    }, onloaded);
   },
 
   identify : function (userId, traits) {

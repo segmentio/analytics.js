@@ -19,6 +19,7 @@ exports['Keen IO']          = require('./keen-io');
 exports['KISSmetrics']      = require('./kissmetrics');
 exports['Klaviyo']          = require('./klaviyo');
 exports['LiveChat']         = require('./livechat');
+exports['Lytics']           = require('./lytics');
 exports['Mixpanel']         = require('./mixpanel');
 exports['Olark']            = require('./olark');
 exports['Perfect Audience'] = require('./perfect-audience');

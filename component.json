@@ -90,6 +90,7 @@
     "src/providers/kissmetrics.js",
     "src/providers/klaviyo.js",
     "src/providers/livechat.js",
+    "src/providers/lytics.js",
     "src/providers/mixpanel.js",
     "src/providers/olark.js",
     "src/providers/perfect-audience.js",

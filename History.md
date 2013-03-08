@@ -1,6 +1,7 @@
 0.8.7 / 2013-3-7
 ================
 * [Qualaroo](https://qualaroo.com/)
+* Fixed bug with Chartbeat and page load times
 
 0.8.6 / 2013-3-7
 ================

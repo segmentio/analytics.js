@@ -28,7 +28,7 @@ module.exports = Provider.extend({
           return t
         })();
 
-        load('//c.lytics.io/static/io.js');
+        load('//c.lytics.io/static/io.min.js');
 
         // ready immediately 
         ready()

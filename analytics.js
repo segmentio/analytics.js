@@ -2392,8 +2392,7 @@ require.register("analytics/src/providers/chartbeat.js", function(exports, requi
 // [documentation](http://chartbeat.com/docs/configuration_variables/),
 // [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
 
-var date     = require('load-date')
-  , Provider = require('../provider')
+var Provider = require('../provider')
   , load     = require('load-script');
 
 
@@ -2411,13 +2410,22 @@ module.exports = Provider.extend({
     // Since all the custom options just get passed through, update the
     // Chartbeat `_sf_async_config` variable with options.
     window._sf_async_config = options;
-    // Use the stored date from when we were loaded.
-    window._sf_endpt = date.getTime();
 
-    load({
-      https : 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',
-      http  : 'http://static.chartbeat.com/js/chartbeat.js'
-    }, ready);
+    // Chartbeat's loader only loads after the body loads
+    var loadChartbeat = function () {
+      // loop until the body is actually available
+      if (!document.body) return setTimeout(loadChartbeat, 5);
+
+      // Use the stored date from when chartbeat was loaded.
+      window._sf_endpt = (new Date()).getTime();
+
+      // Load the javascript
+      load({
+        https : 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',
+        http  : 'http://static.chartbeat.com/js/chartbeat.js'
+      }, ready);
+    };
+    loadChartbeat();
   },
 
 

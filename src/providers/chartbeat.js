@@ -23,15 +23,16 @@ module.exports = Provider.extend({
     // Chartbeat `_sf_async_config` variable with options.
     window._sf_async_config = options;
 
-    // Chartbeat's loader only loads after the body loads
+    // Chartbeat's javascript should only load after the body
+    // is available, see https://github.com/segmentio/analytics.js/issues/107
     var loadChartbeat = function () {
-      // loop until the body is actually available
+      // We loop until the body is available.
       if (!document.body) return setTimeout(loadChartbeat, 5);
 
       // Use the stored date from when chartbeat was loaded.
       window._sf_endpt = (new Date()).getTime();
 
-      // Load the javascript
+      // Load the Chartbeat javascript.
       load({
         https : 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',
         http  : 'http://static.chartbeat.com/js/chartbeat.js'

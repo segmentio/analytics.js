@@ -217,9 +217,18 @@ extend(Analytics.prototype, {
     traits = clone(traits);
 
     // Test for a `created` that's a valid date string and convert it.
-    if (traits && traits.created && type (traits.created) === 'string' &&
-      Date.parse(traits.created)) {
-      traits.created = new Date(traits.created);
+    if (traits && traits.created) {
+      if (type(traits.created) === 'string' && Date.parse(traits.created)) {
+        traits.created = new Date(traits.created);
+      }
+      // Test for a `created` that's almost certainly in units of "seconds".
+      // This frequently occurs for users transitioning from Intercom.io
+      // The 31557600000 corresponds to Thu Dec 31 1970 in milliseconds, which is
+      // ridiculously old for a user created date. The 31557600000 corresponds to 
+      // Sun Jan 07 2970 in seconds, which is sufficiently far in the future to be safe.
+      else if (type(traits.created) === 'number' && traits.created < 31557600000) {
+        traits.created = new Date(traits.created * 1000);
+      }
     }
 
     // Call `identify` on all of our enabled providers that support it.

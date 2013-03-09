@@ -216,8 +216,9 @@ extend(Analytics.prototype, {
     // Before we manipulate traits, clone it so we don't do anything uncouth.
     traits = clone(traits);
 
-    // Test for a `created` that's a valid date string and convert it.
+    // Test for a `created` that's a valid date string or number and convert it.
     if (traits && traits.created) {
+      // Test for a `created` that's a valid date string
       if (type(traits.created) === 'string' && Date.parse(traits.created)) {
         traits.created = new Date(traits.created);
       }

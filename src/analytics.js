@@ -222,13 +222,18 @@ extend(Analytics.prototype, {
       if (type(traits.created) === 'string' && Date.parse(traits.created)) {
         traits.created = new Date(traits.created);
       }
-      // Test for a `created` that's almost certainly in units of "seconds".
-      // This frequently occurs for users transitioning from Intercom.io
-      // The 31557600000 corresponds to Thu Dec 31 1970 in milliseconds, which is
-      // ridiculously old for a user created date. The 31557600000 corresponds to 
-      // Sun Jan 07 2970 in seconds, which is sufficiently far in the future to be safe.
-      else if (type(traits.created) === 'number' && traits.created < 31557600000) {
-        traits.created = new Date(traits.created * 1000);
+      // Test for a `created` that's a number.
+      else if (type(traits.created) === 'number') {
+        // If the "created" number has units of "seconds since the epoch" then it will
+        // certainly be less than 31557600000 seconds (January 7, 2970).
+        if (traits.created < 31557600000) {
+          traits.created = new Date(traits.created * 1000);
+        }
+        // If the "created" number has units of "milliseconds since the epoch" then it
+        // will certainly be greater than 31557600000 milliseconds (December 31, 1970).
+        else {
+          traits.created = new Date(traits.created);
+        }
       }
     }
 

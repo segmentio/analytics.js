@@ -1,19 +1,19 @@
-// Storyberg
-// -----------
-// [Documentation](https://github.com/Storyberg/Docs/wiki/Javascript-Library).
+// https://github.com/Storyberg/Docs/wiki/Javascript-Library
 
 var Provider = require('../provider')
   , isEmail  = require('is-email')
   , load     = require('load-script');
 
+
 module.exports = Provider.extend({
+
+  name : 'Storyberg',
 
   key : 'apiKey',
 
   options : {
     apiKey : null
   },
-
 
   initialize : function (options, ready) {
     window._sbq = window._sbq || [];
@@ -23,7 +23,6 @@ module.exports = Provider.extend({
     // Storyberg creates a queue, so it's ready immediately.
     ready();
   },
-
 
   identify : function (userId, traits) {
     // Don't do anything if we just have traits, because Storyberg
@@ -40,7 +39,6 @@ module.exports = Provider.extend({
 
     window._sbq.push(['identify', traits]);
   },
-
 
   track : function (event, properties) {
     properties || (properties = {});

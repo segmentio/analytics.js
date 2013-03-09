@@ -10,6 +10,8 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Bitdeli',
+
   options : {
     // BitDeli requires two options: `inputId` and `authToken`.
     inputId : null,

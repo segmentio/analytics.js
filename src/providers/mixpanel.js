@@ -1,8 +1,6 @@
-// Mixpanel
-// --------
-// [Documentation](https://mixpanel.com/docs/integration-libraries/javascript),
-// [documentation](https://mixpanel.com/docs/people-analytics/javascript),
-// [documentation](https://mixpanel.com/docs/integration-libraries/javascript-full-api).
+// https://mixpanel.com/docs/integration-libraries/javascript
+// https://mixpanel.com/docs/people-analytics/javascript
+// https://mixpanel.com/docs/integration-libraries/javascript-full-api
 
 var Provider = require('../provider')
   , alias    = require('alias')
@@ -10,6 +8,8 @@ var Provider = require('../provider')
 
 
 module.exports = Provider.extend({
+
+  name : 'Mixpanel',
 
   key : 'token',
 
@@ -60,11 +60,9 @@ module.exports = Provider.extend({
 
     if (options.initialPageview) this.pageview();
 
-    // Mixpanel creats all of its methods in the snippet, so it's ready
-    // immediately.
+    // Mixpanel creates all its methods, so it's ready immediately.
     ready();
   },
-
 
   identify : function (userId, traits) {
     // If we have an email and no email trait, set the email trait.
@@ -98,7 +96,6 @@ module.exports = Provider.extend({
     }
   },
 
-
   track : function (event, properties) {
     window.mixpanel.track(event, properties);
 
@@ -108,7 +105,6 @@ module.exports = Provider.extend({
       window.mixpanel.people.track_charge(properties.revenue);
     }
   },
-
 
   // Mixpanel doesn't actually track the pageviews, but they do show up in the
   // Mixpanel stream.
@@ -122,7 +118,6 @@ module.exports = Provider.extend({
     if (url) properties = { url : url };
     this.track('Loaded a Page', properties);
   },
-
 
   // Although undocumented, Mixpanel actually supports the `originalId`. It
   // just usually defaults to the current user's `distinct_id`.

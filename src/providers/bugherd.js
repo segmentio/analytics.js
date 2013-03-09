@@ -8,6 +8,8 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'BugHerd',
+
   key : 'apiKey',
 
   options : {

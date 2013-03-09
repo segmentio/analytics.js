@@ -1,19 +1,16 @@
-// CrazyEgg
-// --------
-// [Documentation](www.crazyegg.com).
-
 var Provider = require('../provider')
   , load     = require('load-script');
 
 
 module.exports = Provider.extend({
 
+  name : 'CrazyEgg',
+
   key : 'accountNumber',
 
   options : {
     accountNumber : null
   },
-
 
   initialize : function (options, ready) {
     var accountPath = options.accountNumber.slice(0,4) + '/' + options.accountNumber.slice(4);

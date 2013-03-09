@@ -3,6 +3,7 @@ var after          = require('after')
   , clone          = require('clone')
   , each           = require('each')
   , extend         = require('extend')
+  , isMeta         = require('is-meta')
   , size           = require('object').length
   , preventDefault = require('prevent')
   , Provider       = require('./provider')
@@ -17,105 +18,110 @@ var after          = require('after')
 module.exports = Analytics;
 
 
+/**
+ * Analytics.
+ *
+ * @param {Object} Providers - Provider classes that the user can initialize.
+ */
+
 function Analytics (Providers) {
   this.VERSION = '0.8.7';
 
-  var self = this;
-  // Loop through and add each of our `Providers`, so they can be initialized
-  // later by the user.
-  each(Providers, function (key, Provider) {
-    self.addProvider(key, Provider);
-  });
-  // Wrap any existing `onload` function with our own that will cache the
-  // loaded state of the page.
+  each(Providers, this.addProvider);
+
+  // Wrap `onload` with our own that will cache the loaded state of the page.
   var oldonload = window.onload;
+  var self = this;
   window.onload = function () {
     self.loaded = true;
-    if (type(oldonload) === 'function') oldonload();
+    if ('function' === type(oldonload)) oldonload();
   };
 }
 
 
-// Add to the `Analytics` prototype.
+/**
+ * Extend the Analytics prototype.
+ */
+
 extend(Analytics.prototype, {
 
-  // Providers that can be initialized. Add using `this.addProvider`.
-  initializableProviders : {},
-
-  // Store the date when the page loaded, for services that depend on it.
-  date : new Date(),
-
-  // Store window.onload state so that analytics that rely on it can be loaded
-  // even after onload fires.
+  // Whether `onload` has fired.
   loaded : false,
 
-  // Whether analytics.js has been initialized with providers.
+  // Whether `analytics` has been initialized.
   initialized : false,
 
-  // Whether all of our providers have loaded.
-  isReady : false,
+  // Whether all of our analytics providers are ready to accept calls. Give it a
+  // real jank name since we already use `analytics.ready` for the method.
+  readied : false,
 
-  // A queue for storing `ready` callback functions to get run when
-  // analytics have been initialized.
-  readyCallbacks : [],
+  // A queue for ready callbacks to run when our `readied` state becomes `true`.
+  callbacks : [],
 
-  // The amount of milliseconds to wait for requests to providers to clear
-  // before navigating away from the current page.
+  // Milliseconds to wait for requests to clear before leaving the current page.
   timeout : 300,
 
-  // Ability to access the user object.
-  // TODO: Should be removed eventually
+  // A reference to the current user object.
   user : user,
 
+  // Providers that can be initialized. Add using `this.addProvider`.
+  _providers : {},
+
+  // The currently initialized providers.
   providers : [],
 
-  Provider : Provider,
 
-  // Adds a provider to the list of available providers that can be
-  // initialized.
-  addProvider : function (name, Provider) {
-    this.initializableProviders[name] = Provider;
-    // add the provider's name so that we can later match turned
-    // off providers to their context map position
-    Provider.prototype.name = name;
+  /**
+   * Add a provider to `_providers` to be initialized later.
+   *
+   * @param {String} name - The name of the provider.
+   * @param {Function} Provider - The provider's class.
+   */
+
+  addProvider : function (Provider) {
+    this._providers[Provider.prototype.name] = Provider;
   },
 
 
-  // Initialize
-  // ----------
-  // Call **initialize** to setup analytics.js before identifying or
-  // tracking any users or events. Here's what a call to **initialize**
-  // might look like:
-  //
-  //     analytics.initialize({
-  //         'Google Analytics' : 'UA-XXXXXXX-X',
-  //         'Segment.io'       : 'XXXXXXXXXXX',
-  //         'KISSmetrics'      : 'XXXXXXXXXXX'
-  //     });
-  //
-  // * `providers` is a dictionary of the providers you want to enabled.
-  // The keys are the names of the providers and their values are either
-  // an api key, or dictionary of extra settings (including the api key).
+  /**
+   * Initialize
+   *
+   * Call `initialize` to setup analytics.js before identifying or
+   * tracking any users or events. For example:
+   *
+   *     analytics.initialize({
+   *         'Google Analytics' : 'UA-XXXXXXX-X',
+   *         'Segment.io'       : 'XXXXXXXXXXX',
+   *         'KISSmetrics'      : 'XXXXXXXXXXX'
+   *     });
+   *
+   * @param {Object} providers - a dictionary of the providers you want to
+   * enable. The keys are the names of the providers and their values are either
+   * an api key, or  dictionary of extra settings (including the api key).
+   *
+   * @param {Object} options (optional) - settings.
+   */
+
   initialize : function (providers, options) {
     var self = this;
 
     // Reset our state.
     this.providers = [];
     this.initialized = false;
-    this.isReady = false;
+    this.readied = false;
 
     // Set the user options, and load the user from our cookie.
     user.options(options);
     user.load();
 
-    // Create a ready method that will run after all of our providers have been
-    // initialized and loaded. We'll pass the function into each provider's
-    // initialize method, so they can callback when they've loaded successfully.
+    // Create a ready method that will call all of our ready callbacks after all
+    // of our providers have been initialized and loaded. We'll pass the
+    // function into each provider's initialize method, so they can callback
+    // after they've loaded successfully.
     var ready = after(size(providers), function () {
-      self.isReady = true;
-      // Take each callback off the queue and call it.
+      self.readied = true;
       var callback;
-      while(callback = self.readyCallbacks.shift()) {
+      while(callback = self.callbacks.shift()) {
         callback();
       }
     });
@@ -123,13 +129,12 @@ extend(Analytics.prototype, {
     // Initialize a new instance of each provider with their `options`, and
     // copy the provider into `this.providers`.
     each(providers, function (key, options) {
-      var Provider = self.initializableProviders[key];
-      if (!Provider) throw new Error('Could not find a provider named "'+key+'"');
-
+      var Provider = self._providers[key];
+      if (!Provider) throw new Error('Couldnt find a provider named "'+key+'"');
       self.providers.push(new Provider(options, ready));
     });
 
-    // Identify/track any `ajs_uid` and `ajs_event` parameters in the URL.
+    // Identify and track any `ajs_uid` and `ajs_event` parameters in the URL.
     var query = url.parse(window.location.href).query;
     var queries = querystring.parse(query);
     if (queries.ajs_uid) this.identify(queries.ajs_uid);
@@ -140,83 +145,77 @@ extend(Analytics.prototype, {
   },
 
 
-  // Ready
-  // -----
-  // Ready lets you pass in a callback that will get called when your
-  // analytics services have been initialized. It's like jQuery's `ready`
-  // expect for analytics instead of the DOM.
+  /**
+   * Ready
+   *
+   * Add a callback that will get called when all of the analytics services you
+   * initialize are ready to be called. It's like jQuery's `ready` except for
+   * analytics instead of the DOM.
+   *
+   * If we're already ready, it will callback immediately.
+   *
+   * @param {Function} callback - The callback to attach.
+   */
+
   ready : function (callback) {
     if (type(callback) !== 'function') return;
-
-    // If we're already initialized, do it right away. Otherwise, add it to the
-    // queue for when we do get initialized.
-    if (this.isReady) {
-      callback();
-    } else {
-      this.readyCallbacks.push(callback);
-    }
+    if (this.readied) return callback();
+    this.callbacks.push(callback);
   },
 
 
-  // Identify
-  // --------
-  // Identifying a user ties all of their actions to an ID you recognize
-  // and records properties about a user. An example identify:
-  //
-  //     analytics.identify('4d3ed089fb60ab534684b7e0', {
-  //         name  : 'Achilles',
-  //         email : 'achilles@segment.io',
-  //         age   : 23
-  //     });
-  //
-  // * `userId` (optional) is the ID you know the user by. Ideally this
-  // isn't an email, because the user might be able to change their email
-  // and you don't want that to affect your analytics.
-  //
-  // * `traits` (optional) is a dictionary of traits to tie your user.
-  // Things like `name`, `age` or `friendCount`. If you have them, you
-  // should always store a `name` and `email`.
-  //
-  // * `context` (optional) is a dictionary of options that provide more
-  // information to the providers about this identify.
-  //  * `providers` {optional}: a dictionary of provider names to a
-  //  boolean specifying whether that provider will receive this identify.
-  //
-  // * `callback` (optional) is a function to call after the a small
-  // timeout to give the identify requests a chance to be sent.
-  identify : function (userId, traits, context, callback) {
+  /**
+   * Identify
+   *
+   * Identifying a user ties all of their actions to an ID you recognize
+   * and records properties about a user. For example:
+   *
+   *     analytics.identify('4d3ed089fb60ab534684b7e0', {
+   *         name  : 'Achilles',
+   *         email : 'achilles@segment.io',
+   *         age   : 23
+   *     });
+   *
+   * @param {String} userId (optional) - the ID you recognize the user by.
+   * Ideally this isn't an email, because that might change in the future.
+   *
+   * @param {Object} traits (optional) - a dictionary of traits you know about
+   * the user. Things like `name`, `age`, etc.
+   *
+   * @param {Object} options (optional) - settings for the identify call.
+   *
+   * @param {Function} callback (optional) - a function to call after a small
+   * timeout, giving the identify time to make requests.
+   */
+
+  identify : function (userId, traits, options, callback) {
     if (!this.initialized) return;
 
-    // Allow for not passing context, but passing a callback.
-    if (type(context) === 'function') {
-      callback = context;
-      context = null;
+    // Allow for optional arguments.
+    if (type(options) === 'function') {
+      callback = options;
+      options = null;
     }
-
-    // Allow for not passing traits, but passing a callback.
     if (type(traits) === 'function') {
       callback = traits;
       traits = null;
     }
-
-    // Allow for identifying traits without setting a `userId`, for
-    // anonymous users whose traits you learn.
     if (type(userId) === 'object') {
       if (traits && type(traits) === 'function') callback = traits;
       traits = userId;
       userId = null;
     }
 
-    // Use the saved userId.
+    // Use our cookied ID if they didn't provide one.
     if (userId === null) userId = user.id();
 
-    // Update the cookie with new userId and traits.
+    // Update the cookie with the new userId and traits.
     var alias = user.update(userId, traits);
 
-    // Before we manipulate traits, clone it so we don't do anything uncouth.
+    // Clone `traits` before we manipulate it, so we don't do anything uncouth.
     traits = clone(traits);
 
-    // Test for a `created` that's a valid date string and convert it.
+    // Test for a `created` property that's a valid date string and convert it.
     if (traits && traits.created && type (traits.created) === 'string' &&
       Date.parse(traits.created)) {
       traits.created = new Date(traits.created);
@@ -224,11 +223,13 @@ extend(Analytics.prototype, {
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.identify && utils.isEnabled(provider, context)) {
-        var args = [userId, clone(traits), clone(context)];
-
-        if (provider.ready) provider.identify.apply(provider, args);
-        else provider.enqueue('identify', args);
+      if (provider.identify && isEnabled(provider, options)) {
+        var args = [userId, clone(traits), clone(options)];
+        if (provider.ready) {
+          provider.identify.apply(provider, args);
+        } else {
+          provider.enqueue('identify', args);
+        }
       }
     });
 
@@ -242,41 +243,36 @@ extend(Analytics.prototype, {
   },
 
 
-  // Track
-  // -----
-  // Whenever a visitor triggers an event on your site that you're
-  // interested in, you'll want to track it. An example track:
-  //
-  //     analytics.track('Added a Friend', {
-  //         level  : 'hard',
-  //         volume : 11
-  //     });
-  //
-  // * `event` is the name of the event. The best names are human-readable
-  // so that your whole team knows what they mean when they analyze your
-  // data.
-  //
-  // * `properties` (optional) is a dictionary of properties of the event.
-  // Property keys are all camelCase (we'll alias to non-camelCase for
-  // you automatically for providers that require it).
-  //
-  // * `context` (optional) is a dictionary of options that provide more
-  // information to the providers about this track.
-  //  * `providers` {optional}: a dictionary of provider names to a
-  //  boolean specifying whether that provider will receive this track.
-  //
-  // * `callback` (optional) is a function to call after the a small
-  // timeout to give the track requests a chance to be sent.
-  track : function (event, properties, context, callback) {
+  /**
+   * Track
+   *
+   * Record an event (or action) that your user has triggered. For example:
+   *
+   *     analytics.track('Added a Friend', {
+   *         level  : 'hard',
+   *         volume : 11
+   *     });
+   *
+   * @param {String} event - The name of your event.
+   *
+   * @param {Object} properties (optional) - a dictionary of properties of the
+   * event. `properties` are all camelCase (we'll automatically conver them to
+   * the proper case each provider needs).
+   *
+   * @param {Object} options (optional) - settings for the track call.
+   *
+   * @param {Function} callback - a function to call after a small
+   * timeout, giving the identify time to make requests.
+   */
+
+  track : function (event, properties, options, callback) {
     if (!this.initialized) return;
 
-    // Allow for not passing context, but passing a callback.
-    if (type(context) === 'function') {
-      callback = context;
-      context = null;
+    // Allow for optional arguments.
+    if (type(options) === 'function') {
+      callback = options;
+      options = null;
     }
-
-    // Allow for not passing properties, but passing a callback.
     if (type(properties) === 'function') {
       callback = properties;
       properties = null;
@@ -284,11 +280,13 @@ extend(Analytics.prototype, {
 
     // Call `track` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.track && utils.isEnabled(provider, context)) {
-        var args = [event, clone(properties), clone(context)];
-
-        if (provider.ready) provider.track.apply(provider, args);
-        else provider.enqueue('track', args);
+      if (provider.track && isEnabled(provider, options)) {
+        var args = [event, clone(properties), clone(options)];
+        if (provider.ready) {
+          provider.track.apply(provider, args);
+        } else {
+          provider.enqueue('track', args);
+        }
       }
     });
 
@@ -298,19 +296,21 @@ extend(Analytics.prototype, {
   },
 
 
-  // ### trackLink
-  // A helper for tracking outbound links that would normally leave the
-  // page before the track calls went out. It works by wrapping the calls
-  // in as short of a timeout as possible to fire the track call, because
-  // [response times matter](http://theixdlibrary.com/pdf/Miller1968.pdf).
-  //
-  // * `links` is either a single link DOM element, or an array of link
-  // elements like jQuery gives you.
-  //
-  // * `event` and `properties` are passed directly to `analytics.track`
-  // and take the same options. `properties` can also be a function that
-  // will get passed the link that was clicked, and should return a
-  // dictionary of event properties.
+  /**
+   * Track Link
+   *
+   * A helper for tracking outbound links that would normally navigate away from
+   * the page before the track requests were made. It works by wrapping the
+   * calls in a short timeout, giving the requests time to fire.
+   *
+   * @param {Element|Array} links - the link element or array of link elements
+   * to bind to. (Allowing arrays makes it easy to pass in jQuery objects.)
+   *
+   * @param {String} event - passed directly to `track`.
+   *
+   * @param {Object} properties (optional) - passed directly to `track`.
+   */
+
   trackLink : function (links, event, properties) {
     if (!links) return;
 
@@ -321,9 +321,7 @@ extend(Analytics.prototype, {
     var self       = this
       , isFunction = 'function' === type(properties);
 
-    // Bind to all the links in the array.
     each(links, function (el) {
-
       bind(el, 'click', function (e) {
 
         // Allow for properties to be a function. And pass it the
@@ -340,13 +338,12 @@ extend(Analytics.prototype, {
         //   open in a new tab, or window, or download.
         //
         // This might not cover all cases, but we'd rather throw out an event
-        // than miss a case that breaks the experience.
-        if (el.href && el.target !== '_blank' && !utils.isMeta(e)) {
+        // than miss a case that breaks the user experience.
+        if (el.href && el.target !== '_blank' && !isMeta(e)) {
 
           preventDefault(e);
 
-          // Navigate to the url after a small timeout, giving the providers
-          // time to track the event.
+          // Navigate to the url after just enough of a timeout.
           setTimeout(function () {
             window.location.href = el.href;
           }, self.timeout);
@@ -356,19 +353,22 @@ extend(Analytics.prototype, {
   },
 
 
-  // ### trackForm
-  // Similar to `trackClick`, this is a helper for tracking form
-  // submissions that would normally leave the page before a track call
-  // can be sent. It works by preventing the default submit, sending a
-  // track call, and then submitting the form programmatically.
-  //
-  // * `forms` is either a single form DOM element, or an array of
-  // form elements like jQuery gives you.
-  //
-  // * `event` and `properties` are passed directly to `analytics.track`
-  // and take the same options. `properties` can also be a function that
-  // will get passed the form that was submitted, and should return a
-  // dictionary of event properties.
+  /**
+   * Track Form
+   *
+   * Similar to `trackClick`, this is a helper for tracking form submissions
+   * that would normally navigate away from the page before a track request can
+   * be sent. It works by preventing the default submit event, sending our
+   * track requests, and then submitting the form programmatically.
+   *
+   * @param {Element|Array} forms - the form element or array of form elements
+   * to bind to. (Allowing arrays makes it easy to pass in jQuery objects.)
+   *
+   * @param {String} event - passed directly to `track`.
+   *
+   * @param {Object} properties (optional) - passed directly to `track`.
+   */
+
   trackForm : function (form, event, properties) {
     if (!form) return;
 
@@ -391,73 +391,77 @@ extend(Analytics.prototype, {
         preventDefault(e);
 
         // Submit the form after a timeout, giving the event time to fire.
-        setTimeout(function () {
-          el.submit();
-        }, self.timeout);
+        setTimeout(el.submit, self.timeout);
       };
 
       // Support the form being submitted via jQuery instead of for real. This
       // doesn't happen automatically because `el.submit()` doesn't actually
-      // fire submit handlers, which is what jQuery has to user internally. >_<
+      // fire submit handlers, which is what jQuery uses internally. >_<
       var dom = window.jQuery || window.Zepto;
-      if (dom)
+      if (dom) {
         dom(el).submit(handler);
-      else
+      } else {
         bind(el, 'submit', handler);
+      }
     });
   },
 
 
-  // Pageview
-  // --------
-  // For single-page applications where real page loads don't happen, the
-  // **pageview** method simulates a page loading event for all providers
-  // that track pageviews and support it. This is the equivalent of
-  // calling `_gaq.push(['trackPageview'])` in Google Analytics.
-  //
-  // **pageview** is _not_ for sending events about which pages in your
-  // app the user has loaded. For that, use a regular track call like:
-  // `analytics.track('View Signup Page')`. Or, if you think you've come
-  // up with a badass abstraction, submit a pull request!
-  //
-  // * `url` (optional) is the url path that you want to be associated
-  // with the page. You only need to pass this argument if the URL hasn't
-  // changed but you want to register a new pageview.
+  /**
+   * Pageview
+   *
+   * Simulate a pageview in single-page applications, where real pageviews don't
+   * occur. This isn't support by all providers.
+   *
+   * @param {String} url (optional) - the path of the page (eg. '/login'). Most
+   * providers will default to the current pages URL, so you don't need this.
+   */
+
   pageview : function (url) {
     if (!this.initialized) return;
 
     // Call `pageview` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
       if (provider.pageview) {
-        if (provider.ready) provider.pageview(url);
-        else provider.enqueue('pageview', [url]);
+        var args = [url];
+        if (provider.ready) {
+          provider.pageview.apply(provider, args);
+        } else {
+          provider.enqueue('pageview', args);
+        }
       }
     });
   },
 
 
-  // Alias
-  // -----
-  // Alias combines two previously unassociated user identities. This
-  // comes in handy if the same user visits from two different devices and
-  // you want to combine their history. Some providers also don't alias
-  // automatically for you when an anonymous user signs up (like
-  // Mixpanel), so you need to call `alias` manually right after sign up
-  // with their brand new `userId`.
-  //
-  // * `newId` is the new ID you want to associate the user with.
-  //
-  // * `originalId` (optional) is the original ID that the user was
-  // recognized by. This defaults to the currently identified user's ID if
-  // there is one. In most cases you don't need to pass this argument.
-  alias : function (newId, originalId) {
+  /**
+   * Alias
+   *
+   * Merges two previously unassociate user identities. This comes in handy if
+   * the same user visits from two different devices and you want to combine
+   * their analytics history.
+   *
+   * Some providers don't support merging users.
+   *
+   * @param {String} newId - the new ID you want to recognize the user by.
+   *
+   * @param {String} originalId (optional) - the original ID that the user was
+   * recognized by. This defaults to the current identified user's ID if there
+   * is one. In most cases you don't need to pass in the `originalId`.
+   */
+
+  alias : function (newId, originalId, options) {
     if (!this.initialized) return;
 
     // Call `alias` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.alias) {
-        if (provider.ready) provider.alias(newId, originalId);
-        else provider.enqueue('alias', [newId, originalId]);
+      if (provider.alias && isEnabled(provider, options)) {
+        var args = [newId, originalId];
+        if (provider.ready) {
+          provider.alias.apply(provider, args);
+        } else {
+          provider.enqueue('alias', args);
+        }
       }
     });
   }
@@ -465,6 +469,36 @@ extend(Analytics.prototype, {
 });
 
 
-// Alias `trackClick` and `trackSubmit` for backwards compatibility.
+/**
+ * Backwards compatibility.
+ */
+
+// Alias `trackClick` and `trackSubmit`.
 Analytics.prototype.trackClick = Analytics.prototype.trackLink;
 Analytics.prototype.trackSubmit = Analytics.prototype.trackForm;
+
+
+/**
+ * Determine whether a provider is enabled or not based on the options object.
+ *
+ * @param {Object} provider - the current provider.
+ * @param {Object} options - the current call's options.
+ *
+ * @return {Boolean} - wether the provider is enabled.
+ */
+
+var isEnabled = function (provider, options) {
+  var enabled = true;
+  if (!options || !options.providers) return enabled;
+
+  // Default to the 'all' or 'All' setting.
+  var map = options.providers;
+  if (map.all !== undefined) enabled = map.all;
+  if (map.All !== undefined) enabled = map.All;
+
+  // Look for this provider's specific setting.
+  var name = provider.name;
+  if (map[name] !== undefined) enabled = map[name];
+
+  return enabled;
+};

@@ -1,6 +1,4 @@
-// Klaviyo
-// -------
-// [Documentation](https://www.klaviyo.com/docs).
+// https://www.klaviyo.com/docs
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -8,12 +6,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Klaviyo',
+
   key : 'apiKey',
 
   options : {
     apiKey : null
   },
-
 
   initialize : function (options, ready) {
     window._learnq = window._learnq || [];
@@ -24,7 +23,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   identify : function (userId, traits) {
     if (!userId && !traits) return;
 
@@ -34,7 +32,6 @@ module.exports = Provider.extend({
 
     window._learnq.push(['identify', traits]);
   },
-
 
   track : function (event, properties) {
     window._learnq.push(['track', event, properties]);

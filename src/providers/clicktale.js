@@ -8,6 +8,8 @@ var date     = require('load-date')
 
 module.exports = Provider.extend({
 
+  name : 'ClickTale',
+
   key : 'projectId',
 
   options : {
@@ -29,7 +31,7 @@ module.exports = Provider.extend({
     // what number to set for this.
     recordingRatio : 0.01,
 
-    // The Partition ID determines where ClickTale stores the data according to 
+    // The Partition ID determines where ClickTale stores the data according to
     // http://wiki.clicktale.com/Article/JavaScript_API
     partitionId    : null
   },

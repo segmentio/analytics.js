@@ -1,6 +1,4 @@
-// Intercom
-// --------
-// [Documentation](http://docs.intercom.io/).
+// http://docs.intercom.io/
 
 var Provider = require('../provider')
   , load     = require('load-script')
@@ -9,22 +7,22 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
-  // Whether Intercom has already been initialized or not. This is because
-  // since we initialize Intercom on `identify`, people can make multiple
-  // `identify` calls and we don't want that breaking anything.
+  name : 'Intercom',
+
+  // Whether Intercom has already been initialized or not. Since we initialize
+  // Intercom on `identify`, people can make multiple `identify` calls and we
+  // don't want that breaking anything.
   initialized : false,
 
   key : 'appId',
 
   options : {
     appId : null,
-
     // An optional setting to display the Intercom inbox widget.
     activator : null,
     // Whether to show the count of messages for the inbox widget.
     counter : true
   },
-
 
   // Intercom identifies when the script is loaded, so instead of initializing
   // in `initialize` we initialize in `identify`.
@@ -33,7 +31,6 @@ module.exports = Provider.extend({
     // everything from loading.
     ready();
   },
-
 
   identify : function (userId, traits) {
     // If we've already been initialized once, don't do it again since we

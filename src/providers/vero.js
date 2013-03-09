@@ -1,6 +1,4 @@
-// GetVero.com
-// -----------
-// [Documentation](https://github.com/getvero/vero-api/blob/master/sections/js.md).
+// https://github.com/getvero/vero-api/blob/master/sections/js.md
 
 var Provider = require('../provider')
   , isEmail  = require('is-email')
@@ -9,12 +7,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Vero',
+
   key : 'apiKey',
 
   options : {
     apiKey : null
   },
-
 
   initialize : function (options, ready) {
     window._veroq = window._veroq || [];
@@ -24,7 +23,6 @@ module.exports = Provider.extend({
     // Vero creates a queue, so it's ready immediately.
     ready();
   },
-
 
   identify : function (userId, traits) {
     // Don't do anything if we just have traits, because Vero
@@ -44,7 +42,6 @@ module.exports = Provider.extend({
 
     window._veroq.push(['user', traits]);
   },
-
 
   track : function (event, properties) {
     window._veroq.push(['track', event, properties]);

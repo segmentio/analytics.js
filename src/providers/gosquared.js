@@ -1,8 +1,5 @@
-// GoSquared
-// ---------
-// [Documentation](www.gosquared.com/support).
-// [Tracker Functions](https://www.gosquared.com/customer/portal/articles/612063-tracker-functions)
-// Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat).
+// http://www.gosquared.com/support
+// https://www.gosquared.com/customer/portal/articles/612063-tracker-functions
 
 var Provider = require('../provider')
   , user     = require('../user')
@@ -11,12 +8,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'GoSquared',
+
   key : 'siteToken',
 
   options : {
     siteToken : null
   },
-
 
   initialize : function (options, ready) {
     var GoSquared = window.GoSquared = {};
@@ -33,7 +31,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   identify : function (userId, traits) {
     // TODO figure out if this will actually work. Seems like GoSquared will
     // never know these values are updated.
@@ -41,13 +38,11 @@ module.exports = Provider.extend({
     if (traits) window.GoSquared.Visitor = traits;
   },
 
-
   track : function (event, properties) {
     // GoSquared sets a `gs_evt_name` property with a value of the event
     // name, so it relies on properties being an object.
     window.GoSquared.q.push(['TrackEvent', event, properties || {}]);
   },
-
 
   pageview : function (url) {
     window.GoSquared.q.push(['TrackView', url]);

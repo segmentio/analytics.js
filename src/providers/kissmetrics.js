@@ -1,6 +1,4 @@
-// KISSmetrics
-// -----------
-// [Documentation](http://support.kissmetrics.com/apis/javascript).
+// http://support.kissmetrics.com/apis/javascript
 
 var Provider = require('../provider')
   , alias    = require('alias')
@@ -9,12 +7,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'KISSmetrics',
+
   key : 'apiKey',
 
   options : {
     apiKey : null
   },
-
 
   initialize : function (options, ready) {
     window._kmq = window._kmq || [];
@@ -25,14 +24,12 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   // KISSmetrics uses two separate methods: `identify` for storing the
   // `userId`, and `set` for storing `traits`.
   identify : function (userId, traits) {
     if (userId) window._kmq.push(['identify', userId]);
     if (traits) window._kmq.push(['set', traits]);
   },
-
 
   track : function (event, properties) {
     // KISSmetrics handles revenue with the `'Billing Amount'` property by
@@ -45,7 +42,6 @@ module.exports = Provider.extend({
 
     window._kmq.push(['record', event, properties]);
   },
-
 
   // Although undocumented, KISSmetrics actually supports not passing a second
   // ID, in which case it uses the currenty identified user's ID.

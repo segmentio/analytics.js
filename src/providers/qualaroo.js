@@ -1,13 +1,13 @@
-// Qualaroo
-// --------
-// [Identify Docs](http://help.qualaroo.com/customer/portal/articles/731085-identify-survey-nudge-takers)
-// [Set Docs](http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties)
+// http://help.qualaroo.com/customer/portal/articles/731085-identify-survey-nudge-takers
+// http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties
 
 var Provider = require('../provider')
   , load     = require('load-script');
 
 
 module.exports = Provider.extend({
+
+  name : 'Qualaroo',
 
   options : {
     // Qualaroo has two required options.
@@ -18,7 +18,6 @@ module.exports = Provider.extend({
     track : false
   },
 
-
   // Qualaroo's script has two options in its URL.
   initialize : function (options, ready) {
     window._kiq = window._kiq || [];
@@ -28,14 +27,12 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   // Qualaroo uses two separate methods: `identify` for storing the `userId`,
   // and `set` for storing `traits`.
   identify : function (userId, traits) {
     if (userId) window._kiq.push(['identify', userId]);
     if (traits) window._kiq.push(['set', traits]);
   },
-
 
   // Qualaroo doesn't have `track` method yet, but to allow the users to do
   // targetted questionnaires we can set name-value pairs on the user properties

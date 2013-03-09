@@ -1,6 +1,4 @@
-// Keen IO
-// -------
-// [Documentation](https://keen.io/docs/).
+// https://keen.io/docs/
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -8,16 +6,17 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Keen IO',
+
   options : {
     // Keen IO has two required options: `projectId` and `apiKey`.
     projectId : null,
     apiKey : null,
     // Whether or not to pass pageviews on to Keen IO.
     pageview : false,
-    // Whether or not to track an initial pageview on initialize.
+    // Whether or not to track an initial pageview on `initialize`.
     initialPageview : false
   },
-
 
   initialize : function (options, ready) {
     window.Keen = window.Keen||{configure:function(a,b,c){this._pId=a;this._ak=b;this._op=c},addEvent:function(a,b,c,d){this._eq=this._eq||[];this._eq.push([a,b,c,d])},setGlobalProperties:function(a){this._gp=a},onChartsReady:function(a){this._ocrq=this._ocrq||[];this._ocrq.push(a)}};
@@ -32,7 +31,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   identify : function (userId, traits) {
     // Use Keen IO global properties to include `userId` and `traits` on
     // every event sent to Keen IO.
@@ -46,11 +44,9 @@ module.exports = Provider.extend({
     }
   },
 
-
   track : function (event, properties) {
     window.Keen.addEvent(event, properties);
   },
-
 
   pageview : function (url) {
     if (!this.options.pageview) return;

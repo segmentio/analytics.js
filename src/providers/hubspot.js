@@ -1,6 +1,4 @@
-// HubSpot
-// -------
-// [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
+// http://hubspot.clarify-it.com/d/4m62hl
 
 var Provider = require('../provider')
   , isEmail  = require('is-email')
@@ -9,12 +7,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'HubSpot',
+
   key : 'portalId',
 
   options : {
     portalId : null
   },
-
 
   initialize : function (options, ready) {
     // HubSpot checks in their snippet to make sure another script with
@@ -29,7 +28,6 @@ module.exports = Provider.extend({
     // HubSpot makes a queue, so it's ready immediately.
     ready();
   },
-
 
   // HubSpot does not use a userId, but the email address is required on
   // the traits object.
@@ -46,14 +44,12 @@ module.exports = Provider.extend({
     window._hsq.push(["identify", traits]);
   },
 
-
   // Event Tracking is available to HubSpot Enterprise customers only. In
   // addition to adding any unique event name, you can also use the id of an
   // existing custom event as the event variable.
   track : function (event, properties) {
     window._hsq.push(["trackEvent", event, properties]);
   },
-
 
   // HubSpot doesn't support passing in a custom URL.
   pageview : function (url) {

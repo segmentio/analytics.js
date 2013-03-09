@@ -1,6 +1,4 @@
-// USERcycle
-// -----------
-// [Documentation](http://docs.usercycle.com/javascript_api).
+// http://docs.usercycle.com/javascript_api
 
 var Provider = require('../provider')
   , load     = require('load-script')
@@ -9,12 +7,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'USERcycle',
+
   key : 'key',
 
   options : {
     key : null
   },
-
 
   initialize : function (options, ready) {
     window._uc = window._uc || [];
@@ -25,11 +24,9 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   identify : function (userId, traits) {
     if (userId) window._uc.push(['uid', userId]);
   },
-
 
   track : function (event, properties) {
     // Usercycle seems to use traits instead of properties.

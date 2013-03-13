@@ -1,6 +1,7 @@
 0.8.8 / 2013-3-12
 =================
 * Added `userId` to Errorception metadata
+* Made date parsing more lenient (ms & sec) for trait.created
 
 0.8.7 / 2013-3-7
 ================

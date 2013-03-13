@@ -36,9 +36,11 @@ describe('Google Analytics', function () {
     it('shouldnt track an initial pageview if not enabled', function () {
       // Define `_gaq` so we can spy on it.
       window._gaq = [];
-      var spy = sinon.spy(window._gaq, 'push');
 
-      var options = extend({}, test['Google Analytics'], { initialPageview : false });
+      var extend  = require('segmentio-extend')
+        , spy     = sinon.spy(window._gaq, 'push')
+        , options = extend({}, test['Google Analytics'], { initialPageview : false });
+
       analytics.initialize({ 'Google Analytics' : options });
       expect(spy.calledWith(['_trackPageview', undefined])).to.be(false);
 
@@ -49,9 +51,11 @@ describe('Google Analytics', function () {
     it('should set domain', function () {
       // Define `_gaq` so we can spy on it.
       window._gaq = [];
-      var spy = sinon.spy(window._gaq, 'push');
 
-      var options = extend({}, test['Google Analytics'], { domain : 'example.com' });
+      var extend  = require('segmentio-extend')
+        , spy     = sinon.spy(window._gaq, 'push')
+        , options = extend({}, test['Google Analytics'], { domain : 'example.com' });
+
       analytics.initialize({ 'Google Analytics' : options });
       expect(spy.calledWith(['_setDomainName', 'example.com'])).to.be(true);
 
@@ -61,9 +65,11 @@ describe('Google Analytics', function () {
     it('should add enhanced link attribution', function () {
       // Define `_gaq` so we can spy on it.
       window._gaq = [];
-      var spy = sinon.spy(window._gaq, 'push');
 
-      var options = extend({}, test['Google Analytics'], { enhancedLinkAttribution : true });
+      var extend  = require('segmentio-extend')
+        , spy     = sinon.spy(window._gaq, 'push')
+        , options = extend({}, test['Google Analytics'], { enhancedLinkAttribution : true });
+
       analytics.initialize({ 'Google Analytics' : options });
       expect(spy.calledWith(['_require', 'inpage_linkid', 'http://www.google-analytics.com/plugins/ga/inpage_linkid.js'])).to.be(true);
 
@@ -73,9 +79,11 @@ describe('Google Analytics', function () {
     it('should add site speed sample rate', function () {
       // Define `_gaq` so we can spy on it.
       window._gaq = [];
-      var spy = sinon.spy(window._gaq, 'push');
 
-      var options = extend({}, test['Google Analytics'], { siteSpeedSampleRate : 5 });
+      var extend  = require('segmentio-extend')
+        , spy     = sinon.spy(window._gaq, 'push')
+        , options = extend({}, test['Google Analytics'], { siteSpeedSampleRate : 5 });
+
       analytics.initialize({ 'Google Analytics' : options });
       expect(spy.calledWith(['_setSiteSpeedSampleRate', 5])).to.be(true);
 
@@ -85,9 +93,11 @@ describe('Google Analytics', function () {
     it('should add anonymize ip', function () {
       // Define `_gaq` so we can spy on it.
       window._gaq = [];
-      var spy = sinon.spy(window._gaq, 'push');
 
-      var options = extend({}, test['Google Analytics'], { anonymizeIp : true });
+      var extend  = require('segmentio-extend')
+        , spy     = sinon.spy(window._gaq, 'push')
+        , options = extend({}, test['Google Analytics'], { anonymizeIp : true });
+
       analytics.initialize({ 'Google Analytics' : options });
       expect(spy.calledWith(['_gat._anonymizeIp'])).to.be(true);
 
@@ -119,10 +129,11 @@ describe('Google Analytics', function () {
     });
 
     it('should load doubleclick', function () {
-      var spy  = sinon.spy()
-        , push = Array.prototype.push;
+      var extend  = require('segmentio-extend')
+        , spy     = sinon.spy()
+        , push    = Array.prototype.push
+        , options = extend({}, test['Google Analytics'], { doubleClick : true });
 
-      var options = extend({}, test['Google Analytics'], { doubleClick : true });
       analytics.ready(spy);
       analytics.initialize({ 'Google Analytics' : options });
 

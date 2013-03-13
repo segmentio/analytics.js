@@ -1,3 +1,7 @@
+0.8.8 / 2013-3-12
+=================
+* Added `userId` to Errorception metadata
+
 0.8.7 / 2013-3-7
 ================
 * [Qualaroo](https://qualaroo.com/)

@@ -25,7 +25,7 @@ module.exports = Analytics;
  */
 
 function Analytics (Providers) {
-  this.VERSION = '0.8.7';
+  this.VERSION = '0.8.8';
 
   each(Providers, this.addProvider);
 

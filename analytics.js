@@ -1447,7 +1447,7 @@ module.exports = Analytics;
 
 
 function Analytics (Providers) {
-  this.VERSION = '0.8.7';
+  this.VERSION = '0.8.8';
 
   var self = this;
   // Loop through and add each of our `Providers`, so they can be initialized
@@ -2749,10 +2749,14 @@ module.exports = Provider.extend({
 
 
   identify : function (userId, traits) {
-    if (!this.options.meta || !traits) return;
+    if (!this.options.meta) return;
 
     // If the custom metadata object hasn't ever been made, make it.
     window._errs.meta || (window._errs.meta = {});
+
+    // Add `userId` to traits.
+    traits || (traits = {});
+    if (userId) traits.id = userId;
 
     // Add all of the traits as metadata.
     extend(window._errs.meta, traits);

@@ -49,8 +49,11 @@ describe('Bitdeli', function () {
     it('should be able to not track a pageview', function () {
       // Create the queue before hand, so we can spy it.
       window._bdq = [];
-      var spy = sinon.spy(window._bdq, 'push');
-      var options = clone(test['Bitdeli']);
+
+      var clone   = require('component-clone')
+        , spy     = sinon.spy(window._bdq, 'push')
+        , options = clone(test['Bitdeli']);
+
       options.initialPageview = false;
 
       analytics.initialize({ 'Bitdeli' : options });

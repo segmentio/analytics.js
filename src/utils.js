@@ -1,10 +1,3 @@
-// Type detection helpers, copied from
-// [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L926-L946).
-exports.isElement = function(obj) {
-  return !!(obj && obj.nodeType === 1);
-};
-
-
 // A helper to track events based on the 'anjs' url parameter
 exports.getUrlParameter = function (urlSearchParameter, paramKey) {
   var params = urlSearchParameter.replace('?', '').split('&');

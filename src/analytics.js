@@ -316,7 +316,7 @@ extend(Analytics.prototype, {
 
     // Turn a single link into an array so that we're always handling
     // arrays, which allows for passing jQuery objects.
-    if (utils.isElement(links)) links = [links];
+    if ('element' === type(links)) links = [links];
 
     var self       = this
       , isFunction = 'function' === type(properties);
@@ -374,7 +374,7 @@ extend(Analytics.prototype, {
 
     // Turn a single element into an array so that we're always handling arrays,
     // which allows for passing jQuery objects.
-    if (utils.isElement(form)) form = [form];
+    if ('element' === type(form)) form = [form];
 
     var self       = this
       , isFunction = 'function' === type(properties);

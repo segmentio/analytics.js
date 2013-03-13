@@ -4,6 +4,7 @@ describe('Intercom', function () {
   var options = {
     appId     : 'abc123',
     activator : '#someElement',
+    counter   : true // the default
   };
 
   var extend = require('segmentio-extend')
@@ -16,11 +17,23 @@ describe('Intercom', function () {
 
   describe('initialize', function () {
 
-    it('should call ready', function () {
+    it('should load library and call ready', function (done) {
       var spy = sinon.spy();
       analytics.ready(spy);
+
+      expect(window.intercomSettings).to.be(undefined);
+      expect(window.Intercom).to.be(undefined);
+
       analytics.initialize({ 'Intercom' : test['Intercom'] });
-      expect(spy.called).to.be(true);
+
+      // Once the Intercom library comes back, `Intercom` will exist.
+      var interval = setInterval(function () {
+        if (!window.Intercom) return;
+        expect(window.Intercom).not.to.be(undefined);
+        expect(spy.called).to.be(true);
+        clearInterval(interval);
+        done();
+      }, 20);
     });
 
     it('should store options', function () {
@@ -30,7 +43,6 @@ describe('Intercom', function () {
 
     it('should store expanded options', function () {
       analytics.initialize({ 'Intercom' : options });
-      options.counter = true;
       expect(analytics.providers[0].options).to.eql(options);
     });
   });
@@ -38,46 +50,41 @@ describe('Intercom', function () {
 
   describe('identify', function () {
 
-    this.timeout(10000);
+    var settings = {
+      created_at  : Math.floor(traits.created/1000),
+      app_id      : options.appId,
+      user_id     : userId,
+      company     : traits.company,
+      custom_data : traits,
+      user_hash   : undefined,
+      email       : traits.email,
+      name        : traits.name,
+      widget      : {
+        activator   : options.activator,
+        use_counter : options.counter
+      }
+    };
 
-    it('should load library', function (done) {
-      expect(window.intercomSettings).to.be(undefined);
-      expect(window.Intercom).to.be(undefined);
 
-      analytics.identify(test.userId, traits);
-
-      expect(window.intercomSettings).not.to.be(undefined);
-      expect(window.intercomSettings).to.eql({
-        created_at  : Math.floor(traits.created/1000),
-        app_id      : options.appId,
-        user_id     : userId,
-        company     : traits.company,
-        custom_data : traits,
-        user_hash   : undefined,
-        email       : traits.email,
-        name        : traits.name,
-        widget      : {
-          activator   : options.activator,
-          use_counter : options.counter
-        }
-      });
-
-      // Once the Intercom library comes back, `Intercom` will exist.
-      var interval = setInterval(function () {
-        if (!window.Intercom) return;
-        expect(window.Intercom).not.to.be(undefined);
-        clearInterval(interval);
-        done();
-      }, 20);
+    it('should do nothing with no userId', function () {
+      var stub = sinon.stub(window, 'Intercom');
+      analytics.user.clear();
+      analytics.identify(traits);
+      expect(stub.callCount).to.equal(0);
+      stub.restore();
     });
 
-    it('shouldnt load library the second time', function () {
-      // We're going to test that `window.intercomSettings` doesnt get reset
-      // to identified values again.
-      window.intercomSettings = undefined;
+    it('should call boot the first time, update the second time', function () {
+      var stub = sinon.stub(window, 'Intercom');
+      analytics.identify(userId, traits);
+      expect(stub.calledWith('boot', settings)).to.be(true);
 
-      analytics.identify(test.userId, test.traits);
-      expect(window.intercomSettings).to.be(undefined);
+      stub.reset();
+
+      analytics.identify(userId, traits);
+      expect(stub.calledWith('update', settings)).to.be(true);
+
+      stub.restore();
     });
 
   });

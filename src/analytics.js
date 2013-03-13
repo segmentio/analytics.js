@@ -216,10 +216,25 @@ extend(Analytics.prototype, {
     // Before we manipulate traits, clone it so we don't do anything uncouth.
     traits = clone(traits);
 
-    // Test for a `created` that's a valid date string and convert it.
-    if (traits && traits.created && type (traits.created) === 'string' &&
-      Date.parse(traits.created)) {
-      traits.created = new Date(traits.created);
+    // Test for a `created` that's a valid date string or number and convert it.
+    if (traits && traits.created) {
+      // Test for a `created` that's a valid date string
+      if (type(traits.created) === 'string' && Date.parse(traits.created)) {
+        traits.created = new Date(traits.created);
+      }
+      // Test for a `created` that's a number.
+      else if (type(traits.created) === 'number') {
+        // If the "created" number has units of "seconds since the epoch" then it will
+        // certainly be less than 31557600000 seconds (January 7, 2970).
+        if (traits.created < 31557600000) {
+          traits.created = new Date(traits.created * 1000);
+        }
+        // If the "created" number has units of "milliseconds since the epoch" then it
+        // will certainly be greater than 31557600000 milliseconds (December 31, 1970).
+        else {
+          traits.created = new Date(traits.created);
+        }
+      }
     }
 
     // Call `identify` on all of our enabled providers that support it.

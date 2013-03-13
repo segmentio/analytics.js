@@ -261,6 +261,30 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
+    it('parses seconds into dates', function () {
+      var spy  = sinon.spy(Provider.prototype, 'identify')
+        , date = new Date()
+        , seconds = date.getTime()/1000;
+      analytics.identify({
+        created : seconds
+      });
+      var traits = spy.args[0][1];
+      expect(traits.created.getTime()).to.equal(date.getTime());
+      spy.restore();
+    });
+
+    it('parses milliseconds into dates', function () {
+      var spy  = sinon.spy(Provider.prototype, 'identify')
+        , date = new Date()
+        , seconds = date.getTime();
+      analytics.identify({
+        created : seconds
+      });
+      var traits = spy.args[0][1];
+      expect(traits.created.getTime()).to.equal(date.getTime());
+      spy.restore();
+    });
+
     /* TODO: re-enable when we fix the mixpanel logging an error
     it('calls alias when identifying from anonymous users', function () {
       var spy = sinon.spy(Provider.prototype, 'alias');

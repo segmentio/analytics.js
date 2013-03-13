@@ -1094,40 +1094,13 @@ exports.right = function(str){
 };
 
 });
-require.register("redventures-reduce/index.js", function(exports, require, module){
-
-/**
- * Reduce `arr` with `fn`.
- *
- * @param {Array} arr
- * @param {Function} fn
- * @param {Mixed} initial
- *
- * TODO: combatible error handling?
- */
-
-module.exports = function(arr, fn, initial){  
-  var idx = 0;
-  var len = arr.length;
-  var curr = arguments.length == 3
-    ? initial
-    : arr[idx++];
-
-  while (idx < len) {
-    curr = fn.call(null, curr, arr[idx], ++idx, arr);
-  }
-  
-  return curr;
-};
-});
 require.register("component-querystring/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var trim = require('trim')
-  , reduce = require('reduce');
+var trim = require('trim');
 
 /**
  * Parse the given query `str`.
@@ -1139,15 +1112,20 @@ var trim = require('trim')
 
 exports.parse = function(str){
   if ('string' != typeof str) return {};
+
   str = trim(str);
   if ('' == str) return {};
-  return reduce(str.split('&'), function(obj, pair){
-    var parts = pair.split('=');
+
+  var obj = {};
+  var pairs = str.split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var parts = pairs[i].split('=');
     obj[parts[0]] = null == parts[1]
       ? ''
       : decodeURIComponent(parts[1]);
-    return obj;
-  }, {});
+  }
+
+  return obj;
 };
 
 /**
@@ -1166,6 +1144,7 @@ exports.stringify = function(obj){
   }
   return pairs.join('&');
 };
+
 });
 require.register("component-type/index.js", function(exports, require, module){
 
@@ -1195,6 +1174,7 @@ module.exports = function(val){
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
+  if (val && val.nodeType === 1) return 'element';
   if (val === Object(val)) return 'object';
 
   return typeof val;
@@ -1645,10 +1625,25 @@ extend(Analytics.prototype, {
     // Before we manipulate traits, clone it so we don't do anything uncouth.
     traits = clone(traits);
 
-    // Test for a `created` that's a valid date string and convert it.
-    if (traits && traits.created && type (traits.created) === 'string' &&
-      Date.parse(traits.created)) {
-      traits.created = new Date(traits.created);
+    // Test for a `created` that's a valid date string or number and convert it.
+    if (traits && traits.created) {
+      // Test for a `created` that's a valid date string
+      if (type(traits.created) === 'string' && Date.parse(traits.created)) {
+        traits.created = new Date(traits.created);
+      }
+      // Test for a `created` that's a number.
+      else if (type(traits.created) === 'number') {
+        // If the "created" number has units of "seconds since the epoch" then it will
+        // certainly be less than 31557600000 seconds (January 7, 2970).
+        if (traits.created < 31557600000) {
+          traits.created = new Date(traits.created * 1000);
+        }
+        // If the "created" number has units of "milliseconds since the epoch" then it
+        // will certainly be greater than 31557600000 milliseconds (December 31, 1970).
+        else {
+          traits.created = new Date(traits.created);
+        }
+      }
     }
 
     // Call `identify` on all of our enabled providers that support it.
@@ -4163,8 +4158,6 @@ require.alias("component-object/index.js", "analytics/deps/object/index.js");
 
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
 require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
-
-require.alias("redventures-reduce/index.js", "component-querystring/deps/reduce/index.js");
 
 require.alias("component-type/index.js", "analytics/deps/type/index.js");
 

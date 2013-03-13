@@ -9,62 +9,66 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
-  // Whether Intercom has already been initialized or not. This is because
-  // since we initialize Intercom on `identify`, people can make multiple
-  // `identify` calls and we don't want that breaking anything.
-  initialized : false,
+  // We need to store this state to know whether to call `boot` or `update`.
+  booted : false,
 
   key : 'appId',
 
   options : {
+    // Intercom's required key.
     appId : null,
-
     // An optional setting to display the Intercom inbox widget.
     activator : null,
     // Whether to show the count of messages for the inbox widget.
     counter : true
   },
 
-
-  // Intercom identifies when the script is loaded, so instead of initializing
-  // in `initialize` we initialize in `identify`.
   initialize : function (options, ready) {
-    // Intercom is weird, so we call ready right away so that it doesn't block
-    // everything from loading.
-    ready();
+    load('https://api.intercom.io/api/js/library.js', ready);
   },
 
-
   identify : function (userId, traits) {
-    // If we've already been initialized once, don't do it again since we
-    // load the script when this happens. Intercom can only handle one
-    // identify call.
-    if (this.initialized) return;
-
-    // Don't do anything if we just have traits.
+    // Intercom requires a `userId` to associate data to a user.
     if (!userId) return;
 
-    // Pass traits directly in to Intercom's `custom_data`.
-    var settings = window.intercomSettings = {
+    // Intercom takes extra traits as `custom_data`, but needs some of our
+    // "reserved" traits as top-level properties, so we'll pull them out next.
+    var settings = {
       app_id      : this.options.appId,
-      user_id     : userId,
       user_hash   : this.options.userHash,
+      user_id     : userId,
       custom_data : traits || {}
     };
 
-    // Augment `intercomSettings` with some of the special traits. The `created`
-    // property must also be converted to `created_at` in seconds.
-    if (traits) {
-      settings.email = traits.email;
-      settings.name = traits.name;
-      settings.company = traits.company;
-      if (traits.created) settings.created_at = Math.floor(traits.created/1000);
+    // They need `created_at` as a Unix timestamp (seconds).
+    if (traits && traits.created) {
+      settings.created_at = Math.floor(traits.created/1000);
+      delete traits.created;
     }
 
-    // If they didn't pass an email, check to see if the `userId` qualifies.
-    if (isEmail(userId) && (traits && !traits.email)) settings.email = userId;
+    // Pull out an email field. Falling back to the `userId` if possible.
+    if (traits && traits.email) {
+      settings.email = traits.email;
+      delete traits.email;
+    } else if (isEmail(userId)) {
+      settings.email = userId;
+    }
 
-    // Optionally add the widget.
+    // Pull out a name field, or combine one from `firstName` and `lastName`.
+    if (traits && traits.name) {
+      settings.name = traits.name;
+      delete traits.name;
+    } else if (traits && traits.firstName && traits.lastName) {
+      settings.name = traits.firstName + ' ' + traits.lastName;
+    }
+
+    // Pull out a company field.
+    if (traits && traits.company) {
+      settings.company = traits.company;
+      delete traits.company;
+    }
+
+    // Optionally add the inbox widget.
     if (this.options.activator) {
       settings.widget = {
         activator   : this.options.activator,
@@ -72,10 +76,11 @@ module.exports = Provider.extend({
       };
     }
 
-    load('https://api.intercom.io/api/js/library.js');
+    // If this is the first time we've identified, `boot` instead of `update`.
+    var method = this.booted ? 'update' : 'boot';
+    window.Intercom(method, settings);
 
-    // Set the initialized state, so that we don't initialize again.
-    this.initialized = true;
+    this.booted = true;
   }
 
 });

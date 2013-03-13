@@ -27,6 +27,11 @@ module.exports = Provider.extend({
     traits || (traits = {});
     if (userId) traits.id = userId;
     window.Raven.setUser(traits);
+  },
+
+  // Raven will automatically use `captureMessage` if the error is a string.
+  log : function (error, properties) {
+    window.Raven.captureException(error, properties);
   }
 
 });

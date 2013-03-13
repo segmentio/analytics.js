@@ -3181,10 +3181,9 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
-  // Whether Intercom has already been initialized or not. This is because
-  // since we initialize Intercom on `identify`, people can make multiple
-  // `identify` calls and we don't want that breaking anything.
-  initialized : false,
+  // Whether Intercom has already been booted or not. Intercom becomes booted
+  // after Intercom('boot', ...) has been called on the first identify.
+  booted : false,
 
   key : 'appId',
 
@@ -3198,26 +3197,23 @@ module.exports = Provider.extend({
   },
 
 
-  // Intercom identifies when the script is loaded, so instead of initializing
-  // in `initialize` we initialize in `identify`.
+  // Intercom used to require intercomSettings to be available before you 
+  // could load the library, but the new API (2013/3/13) solves this problem.
   initialize : function (options, ready) {
-    // Intercom is weird, so we call ready right away so that it doesn't block
-    // everything from loading.
-    ready();
+    // Intercom doesn't create a queue so we have to call ready once it's loaded.
+    load('https://api.intercom.io/api/js/library.js', ready);
   },
 
 
   identify : function (userId, traits) {
-    // If we've already been initialized once, don't do it again since we
-    // load the script when this happens. Intercom can only handle one
-    // identify call.
-    if (this.initialized) return;
+
+    console.log(userId, traits);
 
     // Don't do anything if we just have traits.
-    if (!userId) return;
+    if (!this.booted && !userId) return;
 
     // Pass traits directly in to Intercom's `custom_data`.
-    var settings = window.intercomSettings = {
+    var settings = {
       app_id      : this.options.appId,
       user_id     : userId,
       user_hash   : this.options.userHash,
@@ -3244,10 +3240,17 @@ module.exports = Provider.extend({
       };
     }
 
-    load('https://api.intercom.io/api/js/library.js');
 
-    // Set the initialized state, so that we don't initialize again.
-    this.initialized = true;
+    // The first time identify is called, we need to 'boot'.
+    // Any time after that we need to call 'update' instead.
+    // See http://docs.intercom.io/#IntercomJS
+    if (!this.booted)
+      window.Intercom('boot', settings);
+    else
+      window.Intercom('update', settings);
+
+    // Set the booted state, so that we know to call 'update' next time.
+    this.booted = true;
   }
 
 });

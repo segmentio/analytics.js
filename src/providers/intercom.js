@@ -1,15 +1,18 @@
 // Intercom
 // --------
 // [Documentation](http://docs.intercom.io/).
+// http://docs.intercom.io/#IntercomJS
 
 var Provider = require('../provider')
+  , extend   = require('extend')
   , load     = require('load-script')
   , isEmail  = require('is-email');
 
 
 module.exports = Provider.extend({
 
-  // We need to store this state to know whether to call `boot` or `update`.
+  // Whether Intercom has already been booted or not. Intercom becomes booted
+  // after Intercom('boot', ...) has been called on the first identify.
   booted : false,
 
   key : 'appId',
@@ -31,12 +34,11 @@ module.exports = Provider.extend({
     // Intercom requires a `userId` to associate data to a user.
     if (!userId) return;
 
-    // Intercom takes extra traits as `custom_data`, but needs some of our
-    // "reserved" traits as top-level properties, so we'll pull them out next.
+    // Don't do anything if we just have traits.
+    if (!this.booted && !userId) return;
+
+    // Pass traits directly in to Intercom's `custom_data`.
     var settings = {
-      app_id      : this.options.appId,
-      user_hash   : this.options.userHash,
-      user_id     : userId,
       custom_data : traits || {}
     };
 
@@ -76,10 +78,20 @@ module.exports = Provider.extend({
       };
     }
 
-    // If this is the first time we've identified, `boot` instead of `update`.
-    var method = this.booted ? 'update' : 'boot';
-    window.Intercom(method, settings);
+    // If this is the first time we've identified, `boot` instead of `update`
+    // and add our one-time boot settings.
+    if (this.booted) {
+      window.Intercom('update', settings);
+    } else {
+      extend(settings, {
+        app_id    : this.options.appId,
+        user_hash : this.options.userHash,
+        user_id   : userId
+      });
+      window.Intercom('boot', settings);
+    }
 
+    // Set the booted state, so that we know to call 'update' next time.
     this.booted = true;
   }
 

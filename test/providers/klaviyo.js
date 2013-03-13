@@ -38,19 +38,20 @@ describe('Klaviyo', function () {
     before(analytics.user.clear);
 
     it('should push "_identify"', function () {
-      var spy = sinon.spy(window._learnq, 'push');
+      var extend = require('segmentio-extend')
+        , spy    = sinon.spy(window._learnq, 'push');
+
       analytics.identify(test.traits);
       expect(spy.calledWith(['identify', test.traits])).to.be(true);
-
       spy.reset();
+
       analytics.identify(test.userId);
       expect(spy.calledWith(['identify', { $id: test.userId }])).to.be(true);
-
       spy.reset();
-      var augmentedTraits = _.extend({}, test.traits, { $id: test.userId });
+
+      var augmentedTraits = extend({}, test.traits, { $id: test.userId });
       analytics.identify(test.userId, test.traits);
       expect(spy.calledWith(['identify', augmentedTraits])).to.be(true);
-
       spy.restore();
     });
 
@@ -65,7 +66,6 @@ describe('Klaviyo', function () {
       // Klaviyo adds extra properites to the event, so we don't want to check
       // for an exact match.
       expect(spy.calledWithMatch(['track', test.event, sinon.match(test.properties)])).to.be(true);
-
       spy.restore();
     });
 

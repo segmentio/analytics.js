@@ -1,4 +1,3 @@
-
 describe('Errorception', function () {
 
   describe('initialize', function () {
@@ -40,12 +39,14 @@ describe('Errorception', function () {
   describe('identify', function () {
 
     it('should add metadata', function () {
+      var extend = require('segmentio-extend');
+
       expect(window._errs.meta).to.be(undefined);
 
       analytics.providers[0].options.meta = true;
       analytics.identify(test.userId, test.traits);
 
-      expect(window._errs.meta).to.eql(test.traits);
+      expect(window._errs.meta).to.eql(extend({}, test.traits, { id : test.userId }));
     });
 
     it('shouldnt add metadata', function () {

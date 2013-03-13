@@ -45,7 +45,8 @@ describe('Keen IO', function () {
     });
 
     it('should track an initial pageview', function () {
-      var spy     = sinon.spy(window.Keen, 'addEvent')
+      var extend  = require('segmentio-extend')
+        , spy     = sinon.spy(window.Keen, 'addEvent')
         , options = extend({}, test['Keen IO'], {
             pageview        : true,
             initialPageview : true

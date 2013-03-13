@@ -6,12 +6,13 @@ describe('Intercom', function () {
     activator : '#someElement',
   };
 
-  var userId = test.userId
-    , traits = clone(test.traits);
+  var extend = require('segmentio-extend')
+    , clone  = require('component-clone');
 
-  extend(traits, {
-    company : { id : '123' }
-  });
+  var userId = test.userId
+    , traits = extend(clone(test.traits), {
+        company : { id : '123' }
+      });
 
   describe('initialize', function () {
 

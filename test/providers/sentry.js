@@ -42,7 +42,8 @@ describe('Sentry', function () {
   describe('identify', function () {
 
     it('should call `setUser`', function (done) {
-      var spy    = sinon.spy(window.Raven, 'setUser')
+      var extend = require('segmentio-extend')
+        , spy    = sinon.spy(window.Raven, 'setUser')
         , traits = extend({}, test.traits, { id : test.userId});
 
       analytics.identify(test.userId, test.traits);

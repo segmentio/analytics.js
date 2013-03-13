@@ -60,12 +60,12 @@ describe('Woopra', function () {
 
     // Woopra adds the event name to the properties hash.
     it('tracks an event with pushEvent on track', function () {
-      var augmentedProperties;
-      var spy = sinon.spy(window.woopraTracker, 'pushEvent');
-      augmentedProperties = { name : test.event };
+      var extend = require('segmentio-extend')
+        , spy = sinon.spy(window.woopraTracker, 'pushEvent')
+        , augmentedProperties = { name : test.event };
+
       analytics.track(test.event);
       expect(spy.calledWith(sinon.match(augmentedProperties))).to.be(true);
-
       spy.reset();
 
       augmentedProperties = extend({}, test.properties, { name : test.event });

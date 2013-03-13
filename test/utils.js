@@ -76,7 +76,11 @@ window.test = {
 
   'HubSpot' : 'x',
 
-  'Intercom' : 'x',
+  'Intercom' : {
+    appId     : 'x',
+    activator : '#someElement',
+    counter   : true
+  },
 
   'Keen IO' : {
     projectId : 'KEEN_PROJECT_ID',

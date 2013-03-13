@@ -25,13 +25,16 @@ module.exports = Analytics;
  */
 
 function Analytics (Providers) {
+  var self = this;
+
   this.VERSION = '0.8.8';
 
-  each(Providers, this.addProvider);
+  each(Providers, function (Provider) {
+    self.addProvider(Provider);
+  });
 
   // Wrap `onload` with our own that will cache the loaded state of the page.
   var oldonload = window.onload;
-  var self = this;
   window.onload = function () {
     self.loaded = true;
     if ('function' === type(oldonload)) oldonload();
@@ -63,6 +66,9 @@ extend(Analytics.prototype, {
 
   // A reference to the current user object.
   user : user,
+
+  // The default Provider.
+  Provider : Provider,
 
   // Providers that can be initialized. Add using `this.addProvider`.
   _providers : {},

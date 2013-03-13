@@ -1,4 +1,3 @@
-
 describe('BugHerd', function () {
 
   describe('initialize', function () {

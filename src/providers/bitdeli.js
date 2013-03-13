@@ -1,7 +1,5 @@
-// Bitdeli
-// -------
-// * [Documentation](https://bitdeli.com/docs)
-// * [JavaScript API Reference](https://bitdeli.com/docs/javascript-api.html)
+// https://bitdeli.com/docs
+// https://bitdeli.com/docs/javascript-api.html
 
 var Provider = require('../provider')
   , type     = require('type')

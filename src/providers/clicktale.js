@@ -1,6 +1,4 @@
-// ClickTale
-// ---------
-// [Documentation](http://wiki.clicktale.com/Article/JavaScript_API).
+// http://wiki.clicktale.com/Article/JavaScript_API
 
 var date     = require('load-date')
   , Provider = require('../provider')

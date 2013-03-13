@@ -1,4 +1,3 @@
-
 describe('Bitdeli', function () {
 
   describe('initialize', function () {

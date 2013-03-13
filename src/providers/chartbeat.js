@@ -1,8 +1,6 @@
-// Chartbeat
-// ---------
-// [Documentation](http://chartbeat.com/docs/adding_the_code/),
-// [documentation](http://chartbeat.com/docs/configuration_variables/),
-// [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
+// http://chartbeat.com/docs/adding_the_code/
+// http://chartbeat.com/docs/configuration_variables/
+// http://chartbeat.com/docs/handling_virtual_page_changes/
 
 var Provider = require('../provider')
   , load     = require('load-script');

@@ -1,4 +1,4 @@
-// www.hittail.com
+// http://www.hittail.com
 
 var Provider = require('../provider')
   , load     = require('load-script');

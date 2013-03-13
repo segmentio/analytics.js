@@ -1094,40 +1094,13 @@ exports.right = function(str){
 };
 
 });
-require.register("redventures-reduce/index.js", function(exports, require, module){
-
-/**
- * Reduce `arr` with `fn`.
- *
- * @param {Array} arr
- * @param {Function} fn
- * @param {Mixed} initial
- *
- * TODO: combatible error handling?
- */
-
-module.exports = function(arr, fn, initial){  
-  var idx = 0;
-  var len = arr.length;
-  var curr = arguments.length == 3
-    ? initial
-    : arr[idx++];
-
-  while (idx < len) {
-    curr = fn.call(null, curr, arr[idx], ++idx, arr);
-  }
-  
-  return curr;
-};
-});
 require.register("component-querystring/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var trim = require('trim')
-  , reduce = require('reduce');
+var trim = require('trim');
 
 /**
  * Parse the given query `str`.
@@ -1139,15 +1112,20 @@ var trim = require('trim')
 
 exports.parse = function(str){
   if ('string' != typeof str) return {};
+
   str = trim(str);
   if ('' == str) return {};
-  return reduce(str.split('&'), function(obj, pair){
-    var parts = pair.split('=');
+
+  var obj = {};
+  var pairs = str.split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var parts = pairs[i].split('=');
     obj[parts[0]] = null == parts[1]
       ? ''
       : decodeURIComponent(parts[1]);
-    return obj;
-  }, {});
+  }
+
+  return obj;
 };
 
 /**
@@ -1166,6 +1144,7 @@ exports.stringify = function(obj){
   }
   return pairs.join('&');
 };
+
 });
 require.register("component-type/index.js", function(exports, require, module){
 
@@ -1195,6 +1174,7 @@ module.exports = function(val){
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
+  if (val && val.nodeType === 1) return 'element';
   if (val === Object(val)) return 'object';
 
   return typeof val;
@@ -1324,6 +1304,22 @@ module.exports = function isEmail (string) {
     return (/.+\@.+\..+/).test(string);
 };
 });
+require.register("segmentio-is-meta/index.js", function(exports, require, module){
+module.exports = function isMeta (e) {
+    if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
+
+    // Logic that handles checks for the middle mouse button, based
+    // on [jQuery](https://github.com/jquery/jquery/blob/master/src/event.js#L466).
+    var which = e.which, button = e.button;
+    if (!which && button !== undefined) {
+      return (!button & 1) && (!button & 2) && (button & 4);
+    } else if (which === 2) {
+      return true;
+    }
+
+    return false;
+};
+});
 require.register("segmentio-load-date/index.js", function(exports, require, module){
 
 
@@ -1417,6 +1413,7 @@ module.exports = function(e){
 });
 require.register("analytics/src/index.js", function(exports, require, module){
 // Analytics.js
+//
 // (c) 2013 Segment.io Inc.
 // Analytics.js may be freely distributed under the MIT license.
 
@@ -1432,6 +1429,7 @@ var after          = require('after')
   , clone          = require('clone')
   , each           = require('each')
   , extend         = require('extend')
+  , isMeta         = require('is-meta')
   , size           = require('object').length
   , preventDefault = require('prevent')
   , Provider       = require('./provider')
@@ -1446,105 +1444,116 @@ var after          = require('after')
 module.exports = Analytics;
 
 
+/**
+ * Analytics.
+ *
+ * @param {Object} Providers - Provider classes that the user can initialize.
+ */
+
 function Analytics (Providers) {
+  var self = this;
+
   this.VERSION = '0.8.8';
 
-  var self = this;
-  // Loop through and add each of our `Providers`, so they can be initialized
-  // later by the user.
-  each(Providers, function (key, Provider) {
-    self.addProvider(key, Provider);
+  each(Providers, function (Provider) {
+    self.addProvider(Provider);
   });
-  // Wrap any existing `onload` function with our own that will cache the
-  // loaded state of the page.
+
+  // Wrap `onload` with our own that will cache the loaded state of the page.
   var oldonload = window.onload;
   window.onload = function () {
     self.loaded = true;
-    if (type(oldonload) === 'function') oldonload();
+    if ('function' === type(oldonload)) oldonload();
   };
 }
 
 
-// Add to the `Analytics` prototype.
+/**
+ * Extend the Analytics prototype.
+ */
+
 extend(Analytics.prototype, {
 
-  // Providers that can be initialized. Add using `this.addProvider`.
-  initializableProviders : {},
-
-  // Store the date when the page loaded, for services that depend on it.
-  date : new Date(),
-
-  // Store window.onload state so that analytics that rely on it can be loaded
-  // even after onload fires.
+  // Whether `onload` has fired.
   loaded : false,
 
-  // Whether analytics.js has been initialized with providers.
+  // Whether `analytics` has been initialized.
   initialized : false,
 
-  // Whether all of our providers have loaded.
-  isReady : false,
+  // Whether all of our analytics providers are ready to accept calls. Give it a
+  // real jank name since we already use `analytics.ready` for the method.
+  readied : false,
 
-  // A queue for storing `ready` callback functions to get run when
-  // analytics have been initialized.
-  readyCallbacks : [],
+  // A queue for ready callbacks to run when our `readied` state becomes `true`.
+  callbacks : [],
 
-  // The amount of milliseconds to wait for requests to providers to clear
-  // before navigating away from the current page.
+  // Milliseconds to wait for requests to clear before leaving the current page.
   timeout : 300,
 
-  // Ability to access the user object.
-  // TODO: Should be removed eventually
+  // A reference to the current user object.
   user : user,
 
-  providers : [],
-
+  // The default Provider.
   Provider : Provider,
 
-  // Adds a provider to the list of available providers that can be
-  // initialized.
-  addProvider : function (name, Provider) {
-    this.initializableProviders[name] = Provider;
-    // add the provider's name so that we can later match turned
-    // off providers to their context map position
-    Provider.prototype.name = name;
+  // Providers that can be initialized. Add using `this.addProvider`.
+  _providers : {},
+
+  // The currently initialized providers.
+  providers : [],
+
+
+  /**
+   * Add a provider to `_providers` to be initialized later.
+   *
+   * @param {String} name - The name of the provider.
+   * @param {Function} Provider - The provider's class.
+   */
+
+  addProvider : function (Provider) {
+    this._providers[Provider.prototype.name] = Provider;
   },
 
 
-  // Initialize
-  // ----------
-  // Call **initialize** to setup analytics.js before identifying or
-  // tracking any users or events. Here's what a call to **initialize**
-  // might look like:
-  //
-  //     analytics.initialize({
-  //         'Google Analytics' : 'UA-XXXXXXX-X',
-  //         'Segment.io'       : 'XXXXXXXXXXX',
-  //         'KISSmetrics'      : 'XXXXXXXXXXX'
-  //     });
-  //
-  // * `providers` is a dictionary of the providers you want to enabled.
-  // The keys are the names of the providers and their values are either
-  // an api key, or dictionary of extra settings (including the api key).
+  /**
+   * Initialize
+   *
+   * Call `initialize` to setup analytics.js before identifying or
+   * tracking any users or events. For example:
+   *
+   *     analytics.initialize({
+   *         'Google Analytics' : 'UA-XXXXXXX-X',
+   *         'Segment.io'       : 'XXXXXXXXXXX',
+   *         'KISSmetrics'      : 'XXXXXXXXXXX'
+   *     });
+   *
+   * @param {Object} providers - a dictionary of the providers you want to
+   * enable. The keys are the names of the providers and their values are either
+   * an api key, or  dictionary of extra settings (including the api key).
+   *
+   * @param {Object} options (optional) - settings.
+   */
+
   initialize : function (providers, options) {
     var self = this;
 
     // Reset our state.
     this.providers = [];
     this.initialized = false;
-    this.isReady = false;
+    this.readied = false;
 
     // Set the user options, and load the user from our cookie.
     user.options(options);
     user.load();
 
-    // Create a ready method that will run after all of our providers have been
-    // initialized and loaded. We'll pass the function into each provider's
-    // initialize method, so they can callback when they've loaded successfully.
+    // Create a ready method that will call all of our ready callbacks after all
+    // of our providers have been initialized and loaded. We'll pass the
+    // function into each provider's initialize method, so they can callback
+    // after they've loaded successfully.
     var ready = after(size(providers), function () {
-      self.isReady = true;
-      // Take each callback off the queue and call it.
+      self.readied = true;
       var callback;
-      while(callback = self.readyCallbacks.shift()) {
+      while(callback = self.callbacks.shift()) {
         callback();
       }
     });
@@ -1552,13 +1561,12 @@ extend(Analytics.prototype, {
     // Initialize a new instance of each provider with their `options`, and
     // copy the provider into `this.providers`.
     each(providers, function (key, options) {
-      var Provider = self.initializableProviders[key];
-      if (!Provider) throw new Error('Could not find a provider named "'+key+'"');
-
+      var Provider = self._providers[key];
+      if (!Provider) throw new Error('Couldnt find a provider named "'+key+'"');
       self.providers.push(new Provider(options, ready));
     });
 
-    // Identify/track any `ajs_uid` and `ajs_event` parameters in the URL.
+    // Identify and track any `ajs_uid` and `ajs_event` parameters in the URL.
     var query = url.parse(window.location.href).query;
     var queries = querystring.parse(query);
     if (queries.ajs_uid) this.identify(queries.ajs_uid);
@@ -1569,83 +1577,77 @@ extend(Analytics.prototype, {
   },
 
 
-  // Ready
-  // -----
-  // Ready lets you pass in a callback that will get called when your
-  // analytics services have been initialized. It's like jQuery's `ready`
-  // expect for analytics instead of the DOM.
+  /**
+   * Ready
+   *
+   * Add a callback that will get called when all of the analytics services you
+   * initialize are ready to be called. It's like jQuery's `ready` except for
+   * analytics instead of the DOM.
+   *
+   * If we're already ready, it will callback immediately.
+   *
+   * @param {Function} callback - The callback to attach.
+   */
+
   ready : function (callback) {
     if (type(callback) !== 'function') return;
-
-    // If we're already initialized, do it right away. Otherwise, add it to the
-    // queue for when we do get initialized.
-    if (this.isReady) {
-      callback();
-    } else {
-      this.readyCallbacks.push(callback);
-    }
+    if (this.readied) return callback();
+    this.callbacks.push(callback);
   },
 
 
-  // Identify
-  // --------
-  // Identifying a user ties all of their actions to an ID you recognize
-  // and records properties about a user. An example identify:
-  //
-  //     analytics.identify('4d3ed089fb60ab534684b7e0', {
-  //         name  : 'Achilles',
-  //         email : 'achilles@segment.io',
-  //         age   : 23
-  //     });
-  //
-  // * `userId` (optional) is the ID you know the user by. Ideally this
-  // isn't an email, because the user might be able to change their email
-  // and you don't want that to affect your analytics.
-  //
-  // * `traits` (optional) is a dictionary of traits to tie your user.
-  // Things like `name`, `age` or `friendCount`. If you have them, you
-  // should always store a `name` and `email`.
-  //
-  // * `context` (optional) is a dictionary of options that provide more
-  // information to the providers about this identify.
-  //  * `providers` {optional}: a dictionary of provider names to a
-  //  boolean specifying whether that provider will receive this identify.
-  //
-  // * `callback` (optional) is a function to call after the a small
-  // timeout to give the identify requests a chance to be sent.
-  identify : function (userId, traits, context, callback) {
+  /**
+   * Identify
+   *
+   * Identifying a user ties all of their actions to an ID you recognize
+   * and records properties about a user. For example:
+   *
+   *     analytics.identify('4d3ed089fb60ab534684b7e0', {
+   *         name  : 'Achilles',
+   *         email : 'achilles@segment.io',
+   *         age   : 23
+   *     });
+   *
+   * @param {String} userId (optional) - the ID you recognize the user by.
+   * Ideally this isn't an email, because that might change in the future.
+   *
+   * @param {Object} traits (optional) - a dictionary of traits you know about
+   * the user. Things like `name`, `age`, etc.
+   *
+   * @param {Object} options (optional) - settings for the identify call.
+   *
+   * @param {Function} callback (optional) - a function to call after a small
+   * timeout, giving the identify time to make requests.
+   */
+
+  identify : function (userId, traits, options, callback) {
     if (!this.initialized) return;
 
-    // Allow for not passing context, but passing a callback.
-    if (type(context) === 'function') {
-      callback = context;
-      context = null;
+    // Allow for optional arguments.
+    if (type(options) === 'function') {
+      callback = options;
+      options = null;
     }
-
-    // Allow for not passing traits, but passing a callback.
     if (type(traits) === 'function') {
       callback = traits;
       traits = null;
     }
-
-    // Allow for identifying traits without setting a `userId`, for
-    // anonymous users whose traits you learn.
     if (type(userId) === 'object') {
       if (traits && type(traits) === 'function') callback = traits;
       traits = userId;
       userId = null;
     }
 
-    // Use the saved userId.
+    // Use our cookied ID if they didn't provide one.
     if (userId === null) userId = user.id();
 
-    // Update the cookie with new userId and traits.
+    // Update the cookie with the new userId and traits.
     var alias = user.update(userId, traits);
 
-    // Before we manipulate traits, clone it so we don't do anything uncouth.
+    // Clone `traits` before we manipulate it, so we don't do anything uncouth.
     traits = clone(traits);
 
-    // Test for a `created` that's a valid date string and convert it.
+    // Test for a `created` property that's a valid date string and convert it.
     if (traits && traits.created && type (traits.created) === 'string' &&
       Date.parse(traits.created)) {
       traits.created = new Date(traits.created);
@@ -1653,11 +1655,13 @@ extend(Analytics.prototype, {
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.identify && utils.isEnabled(provider, context)) {
-        var args = [userId, clone(traits), clone(context)];
-
-        if (provider.ready) provider.identify.apply(provider, args);
-        else provider.enqueue('identify', args);
+      if (provider.identify && isEnabled(provider, options)) {
+        var args = [userId, clone(traits), clone(options)];
+        if (provider.ready) {
+          provider.identify.apply(provider, args);
+        } else {
+          provider.enqueue('identify', args);
+        }
       }
     });
 
@@ -1671,41 +1675,36 @@ extend(Analytics.prototype, {
   },
 
 
-  // Track
-  // -----
-  // Whenever a visitor triggers an event on your site that you're
-  // interested in, you'll want to track it. An example track:
-  //
-  //     analytics.track('Added a Friend', {
-  //         level  : 'hard',
-  //         volume : 11
-  //     });
-  //
-  // * `event` is the name of the event. The best names are human-readable
-  // so that your whole team knows what they mean when they analyze your
-  // data.
-  //
-  // * `properties` (optional) is a dictionary of properties of the event.
-  // Property keys are all camelCase (we'll alias to non-camelCase for
-  // you automatically for providers that require it).
-  //
-  // * `context` (optional) is a dictionary of options that provide more
-  // information to the providers about this track.
-  //  * `providers` {optional}: a dictionary of provider names to a
-  //  boolean specifying whether that provider will receive this track.
-  //
-  // * `callback` (optional) is a function to call after the a small
-  // timeout to give the track requests a chance to be sent.
-  track : function (event, properties, context, callback) {
+  /**
+   * Track
+   *
+   * Record an event (or action) that your user has triggered. For example:
+   *
+   *     analytics.track('Added a Friend', {
+   *         level  : 'hard',
+   *         volume : 11
+   *     });
+   *
+   * @param {String} event - The name of your event.
+   *
+   * @param {Object} properties (optional) - a dictionary of properties of the
+   * event. `properties` are all camelCase (we'll automatically conver them to
+   * the proper case each provider needs).
+   *
+   * @param {Object} options (optional) - settings for the track call.
+   *
+   * @param {Function} callback - a function to call after a small
+   * timeout, giving the identify time to make requests.
+   */
+
+  track : function (event, properties, options, callback) {
     if (!this.initialized) return;
 
-    // Allow for not passing context, but passing a callback.
-    if (type(context) === 'function') {
-      callback = context;
-      context = null;
+    // Allow for optional arguments.
+    if (type(options) === 'function') {
+      callback = options;
+      options = null;
     }
-
-    // Allow for not passing properties, but passing a callback.
     if (type(properties) === 'function') {
       callback = properties;
       properties = null;
@@ -1713,11 +1712,13 @@ extend(Analytics.prototype, {
 
     // Call `track` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.track && utils.isEnabled(provider, context)) {
-        var args = [event, clone(properties), clone(context)];
-
-        if (provider.ready) provider.track.apply(provider, args);
-        else provider.enqueue('track', args);
+      if (provider.track && isEnabled(provider, options)) {
+        var args = [event, clone(properties), clone(options)];
+        if (provider.ready) {
+          provider.track.apply(provider, args);
+        } else {
+          provider.enqueue('track', args);
+        }
       }
     });
 
@@ -1727,32 +1728,32 @@ extend(Analytics.prototype, {
   },
 
 
-  // ### trackLink
-  // A helper for tracking outbound links that would normally leave the
-  // page before the track calls went out. It works by wrapping the calls
-  // in as short of a timeout as possible to fire the track call, because
-  // [response times matter](http://theixdlibrary.com/pdf/Miller1968.pdf).
-  //
-  // * `links` is either a single link DOM element, or an array of link
-  // elements like jQuery gives you.
-  //
-  // * `event` and `properties` are passed directly to `analytics.track`
-  // and take the same options. `properties` can also be a function that
-  // will get passed the link that was clicked, and should return a
-  // dictionary of event properties.
+  /**
+   * Track Link
+   *
+   * A helper for tracking outbound links that would normally navigate away from
+   * the page before the track requests were made. It works by wrapping the
+   * calls in a short timeout, giving the requests time to fire.
+   *
+   * @param {Element|Array} links - the link element or array of link elements
+   * to bind to. (Allowing arrays makes it easy to pass in jQuery objects.)
+   *
+   * @param {String} event - passed directly to `track`.
+   *
+   * @param {Object} properties (optional) - passed directly to `track`.
+   */
+
   trackLink : function (links, event, properties) {
     if (!links) return;
 
     // Turn a single link into an array so that we're always handling
     // arrays, which allows for passing jQuery objects.
-    if (utils.isElement(links)) links = [links];
+    if ('element' === type(links)) links = [links];
 
     var self       = this
       , isFunction = 'function' === type(properties);
 
-    // Bind to all the links in the array.
     each(links, function (el) {
-
       bind(el, 'click', function (e) {
 
         // Allow for properties to be a function. And pass it the
@@ -1769,13 +1770,12 @@ extend(Analytics.prototype, {
         //   open in a new tab, or window, or download.
         //
         // This might not cover all cases, but we'd rather throw out an event
-        // than miss a case that breaks the experience.
-        if (el.href && el.target !== '_blank' && !utils.isMeta(e)) {
+        // than miss a case that breaks the user experience.
+        if (el.href && el.target !== '_blank' && !isMeta(e)) {
 
           preventDefault(e);
 
-          // Navigate to the url after a small timeout, giving the providers
-          // time to track the event.
+          // Navigate to the url after just enough of a timeout.
           setTimeout(function () {
             window.location.href = el.href;
           }, self.timeout);
@@ -1785,25 +1785,28 @@ extend(Analytics.prototype, {
   },
 
 
-  // ### trackForm
-  // Similar to `trackClick`, this is a helper for tracking form
-  // submissions that would normally leave the page before a track call
-  // can be sent. It works by preventing the default submit, sending a
-  // track call, and then submitting the form programmatically.
-  //
-  // * `forms` is either a single form DOM element, or an array of
-  // form elements like jQuery gives you.
-  //
-  // * `event` and `properties` are passed directly to `analytics.track`
-  // and take the same options. `properties` can also be a function that
-  // will get passed the form that was submitted, and should return a
-  // dictionary of event properties.
+  /**
+   * Track Form
+   *
+   * Similar to `trackClick`, this is a helper for tracking form submissions
+   * that would normally navigate away from the page before a track request can
+   * be sent. It works by preventing the default submit event, sending our
+   * track requests, and then submitting the form programmatically.
+   *
+   * @param {Element|Array} forms - the form element or array of form elements
+   * to bind to. (Allowing arrays makes it easy to pass in jQuery objects.)
+   *
+   * @param {String} event - passed directly to `track`.
+   *
+   * @param {Object} properties (optional) - passed directly to `track`.
+   */
+
   trackForm : function (form, event, properties) {
     if (!form) return;
 
     // Turn a single element into an array so that we're always handling arrays,
     // which allows for passing jQuery objects.
-    if (utils.isElement(form)) form = [form];
+    if ('element' === type(form)) form = [form];
 
     var self       = this
       , isFunction = 'function' === type(properties);
@@ -1820,73 +1823,77 @@ extend(Analytics.prototype, {
         preventDefault(e);
 
         // Submit the form after a timeout, giving the event time to fire.
-        setTimeout(function () {
-          el.submit();
-        }, self.timeout);
+        setTimeout(el.submit, self.timeout);
       };
 
       // Support the form being submitted via jQuery instead of for real. This
       // doesn't happen automatically because `el.submit()` doesn't actually
-      // fire submit handlers, which is what jQuery has to user internally. >_<
+      // fire submit handlers, which is what jQuery uses internally. >_<
       var dom = window.jQuery || window.Zepto;
-      if (dom)
+      if (dom) {
         dom(el).submit(handler);
-      else
+      } else {
         bind(el, 'submit', handler);
+      }
     });
   },
 
 
-  // Pageview
-  // --------
-  // For single-page applications where real page loads don't happen, the
-  // **pageview** method simulates a page loading event for all providers
-  // that track pageviews and support it. This is the equivalent of
-  // calling `_gaq.push(['trackPageview'])` in Google Analytics.
-  //
-  // **pageview** is _not_ for sending events about which pages in your
-  // app the user has loaded. For that, use a regular track call like:
-  // `analytics.track('View Signup Page')`. Or, if you think you've come
-  // up with a badass abstraction, submit a pull request!
-  //
-  // * `url` (optional) is the url path that you want to be associated
-  // with the page. You only need to pass this argument if the URL hasn't
-  // changed but you want to register a new pageview.
+  /**
+   * Pageview
+   *
+   * Simulate a pageview in single-page applications, where real pageviews don't
+   * occur. This isn't support by all providers.
+   *
+   * @param {String} url (optional) - the path of the page (eg. '/login'). Most
+   * providers will default to the current pages URL, so you don't need this.
+   */
+
   pageview : function (url) {
     if (!this.initialized) return;
 
     // Call `pageview` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
       if (provider.pageview) {
-        if (provider.ready) provider.pageview(url);
-        else provider.enqueue('pageview', [url]);
+        var args = [url];
+        if (provider.ready) {
+          provider.pageview.apply(provider, args);
+        } else {
+          provider.enqueue('pageview', args);
+        }
       }
     });
   },
 
 
-  // Alias
-  // -----
-  // Alias combines two previously unassociated user identities. This
-  // comes in handy if the same user visits from two different devices and
-  // you want to combine their history. Some providers also don't alias
-  // automatically for you when an anonymous user signs up (like
-  // Mixpanel), so you need to call `alias` manually right after sign up
-  // with their brand new `userId`.
-  //
-  // * `newId` is the new ID you want to associate the user with.
-  //
-  // * `originalId` (optional) is the original ID that the user was
-  // recognized by. This defaults to the currently identified user's ID if
-  // there is one. In most cases you don't need to pass this argument.
-  alias : function (newId, originalId) {
+  /**
+   * Alias
+   *
+   * Merges two previously unassociate user identities. This comes in handy if
+   * the same user visits from two different devices and you want to combine
+   * their analytics history.
+   *
+   * Some providers don't support merging users.
+   *
+   * @param {String} newId - the new ID you want to recognize the user by.
+   *
+   * @param {String} originalId (optional) - the original ID that the user was
+   * recognized by. This defaults to the current identified user's ID if there
+   * is one. In most cases you don't need to pass in the `originalId`.
+   */
+
+  alias : function (newId, originalId, options) {
     if (!this.initialized) return;
 
     // Call `alias` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.alias) {
-        if (provider.ready) provider.alias(newId, originalId);
-        else provider.enqueue('alias', [newId, originalId]);
+      if (provider.alias && isEnabled(provider, options)) {
+        var args = [newId, originalId];
+        if (provider.ready) {
+          provider.alias.apply(provider, args);
+        } else {
+          provider.enqueue('alias', args);
+        }
       }
     });
   }
@@ -1894,9 +1901,39 @@ extend(Analytics.prototype, {
 });
 
 
-// Alias `trackClick` and `trackSubmit` for backwards compatibility.
+/**
+ * Backwards compatibility.
+ */
+
+// Alias `trackClick` and `trackSubmit`.
 Analytics.prototype.trackClick = Analytics.prototype.trackLink;
 Analytics.prototype.trackSubmit = Analytics.prototype.trackForm;
+
+
+/**
+ * Determine whether a provider is enabled or not based on the options object.
+ *
+ * @param {Object} provider - the current provider.
+ * @param {Object} options - the current call's options.
+ *
+ * @return {Boolean} - wether the provider is enabled.
+ */
+
+var isEnabled = function (provider, options) {
+  var enabled = true;
+  if (!options || !options.providers) return enabled;
+
+  // Default to the 'all' or 'All' setting.
+  var map = options.providers;
+  if (map.all !== undefined) enabled = map.all;
+  if (map.All !== undefined) enabled = map.All;
+
+  // Look for this provider's specific setting.
+  var name = provider.name;
+  if (map[name] !== undefined) enabled = map[name];
+
+  return enabled;
+};
 
 });
 require.register("analytics/src/provider.js", function(exports, require, module){
@@ -1908,10 +1945,20 @@ var each   = require('each')
 module.exports = Provider;
 
 
+/**
+ * Provider
+ *
+ * @param {Object} options - settings to initialize the Provider with. This will
+ * be merged with the Provider's own defaults.
+ *
+ * @param {Function} ready - a ready callback, to be called when the provider is
+ * ready to handle analytics calls.
+ */
+
 function Provider (options, ready) {
   var self = this;
-  // Set up a queue of { method : 'identify', args : [] } to call
-  // once we are ready.
+
+  // Make a queue of `{ method : 'identify', args : [] }` to unload once ready.
   this.queue = [];
   this.ready = false;
 
@@ -1923,13 +1970,15 @@ function Provider (options, ready) {
       options = {};
       options[this.key] = key;
     } else {
-      throw new Error('Could not resolve options.');
+      throw new Error('Couldnt resolve options.');
     }
   }
-  // Extend the options passed in with the provider's defaults.
+
+  // Extend the passed-in options with our defaults.
   extend(this.options, options);
 
-  // Wrap our ready function to first read from the queue.
+  // Wrap our ready function, so that it ready from our internal queue first
+  // and then marks us as ready.
   var dequeue = function () {
     each(self.queue, function (call) {
       var method = call.method
@@ -1941,13 +1990,18 @@ function Provider (options, ready) {
     ready();
   };
 
-  // Call the provider's initialize object.
+  // Call our initialize method.
   this.initialize.call(this, this.options, dequeue);
 }
 
 
-// Helper to add provider methods to the prototype chain, for adding custom
-// providers. Modeled after [Backbone's `extend` method](https://github.com/documentcloud/backbone/blob/master/backbone.js#L1464).
+/**
+ * Inheritance helper.
+ *
+ * Modeled after Backbone's `extend` method:
+ * https://github.com/documentcloud/backbone/blob/master/backbone.js#L1464
+ */
+
 Provider.extend = function (properties) {
   var parent = this;
   var child = function () { return parent.apply(this, arguments); };
@@ -1959,32 +2013,50 @@ Provider.extend = function (properties) {
 };
 
 
-// Add to the default Provider prototype.
+/**
+ * Augment Provider's prototype.
+ */
+
 extend(Provider.prototype, {
 
-  // Override this with any default options.
+  /**
+   * Default settings for the provider.
+   */
+
   options : {},
 
-  // Override this if our provider only needs a single API key to
-  // initialize itself, in which case we can use the terse initialization
-  // syntax:
-  //
-  //     analytics.initialize({
-  //       'Provider' : 'XXXXXXX'
-  //     });
-  //
+
+  /**
+   * The single required API key for the provider. This lets us support a terse
+   * initialization syntax:
+   *
+   *     analytics.initialize({
+   *       'Provider' : 'XXXXXXX'
+   *     });
+   *
+   * Only add this if the provider has a _single_ required key.
+   */
+
   key : undefined,
 
-  // Override to provider your own initialization logic, usually a snippet
-  // and loading a Javascript library.
+
+  /**
+   * Initialize our provider.
+   *
+   * @param {Object} options - the settings for the provider.
+   * @param {Function} ready - a ready callback to call when we're ready to
+   * start accept analytics method calls.
+   */
   initialize : function (options, ready) {
     ready();
   },
 
+
   /**
-   * Adds an item to the queue
-   * @param  {String} method ('track' or 'identify')
-   * @param  {Object} args
+   * Adds an item to the our internal pre-ready queue.
+   *
+   * @param {String} method - the analytics method to call (eg. 'track').
+   * @param {Object} args - the arguments to pass to the method.
    */
   enqueue : function (method, args) {
     this.queue.push({
@@ -1992,10 +2064,10 @@ extend(Provider.prototype, {
       args : args
     });
   }
+
 });
 });
 require.register("analytics/src/user.js", function(exports, require, module){
-
 var cookieStore = require('cookie')
   , clone       = require('clone')
   , extend      = require('extend')
@@ -2003,7 +2075,16 @@ var cookieStore = require('cookie')
   , type        = require('type');
 
 
-var user   = newUser();
+/**
+ * Make a new user.
+ */
+
+var user = newUser();
+
+
+/**
+ * Default cookie settings.
+ */
 
 var cookie = exports.cookie = {
   name    : 'ajs_user',
@@ -2015,37 +2096,50 @@ var cookie = exports.cookie = {
 
 /**
  * Set the options for our user storage.
- * @param  {Object} options
- *   @field {Boolean|Object} cookie - whether to use a cookie
- *     @field {String}  name   - what to call the cookie ('ajs_user')
- *     @field {Number}  maxage - time in ms to keep the cookie. (one year)
+ *
+ * @param {Object} options - settings.
+ *
+ *   @field {Boolean|Object} cookie - whether to use a cookie.
+ *     @field {String} name - what to call the cookie (eg. 'ajs_user').
+ *     @field {Number} maxage - expiration time in milliseconds for the cookie,
+ *     defaulting to one year.
  *     @field {
  */
-exports.options = function (options) {
 
+exports.options = function (options) {
   options || (options = {});
 
-  if (type(options.cookie) === 'boolean') {
-
+  // Support just passing in a boolean for cookie.
+  if ('boolean' === type(options.cookie)) {
     cookie.enabled = options.cookie;
+  }
 
-  } else if (type(options.cookie) === 'object') {
+  else if ('object' === type(options.cookie)) {
     cookie.enabled = true;
     if (options.cookie.name)   cookie.name   = options.cookie.name;
     if (options.cookie.maxage) cookie.maxage = options.cookie.maxage;
     if (options.cookie.domain) cookie.domain = options.cookie.domain;
     if (options.cookie.path)   cookie.path   = options.cookie.path;
 
-    if (cookie.domain && cookie.domain.charAt(0) !== '.')
+    if (cookie.domain && cookie.domain.charAt(0) !== '.') {
       cookie.domain = '.' + cookie.domain;
+    }
   }
 };
 
+
+/**
+ * Get the current user's ID.
+ */
 
 exports.id = function () {
   return user.id;
 };
 
+
+/**
+ * Get the current user's traits.
+ */
 
 exports.traits = function () {
   return clone(user.traits);
@@ -2053,11 +2147,14 @@ exports.traits = function () {
 
 
 /**
- * Updates the stored user with id and trait information
- * @param  {String}  userId
- * @param  {Object}  traits
- * @return {Boolean} whether alias should be called
+ * Updates the current stored user with id and traits.
+ *
+ * @param {String} userId - the new user ID.
+ * @param {Object} traits - any new traits.
+ *
+ * @return {Boolean} whether alias should be called.
  */
+
 exports.update = function (userId, traits) {
 
   // Make an alias call if there was no previous userId, there is one
@@ -2080,8 +2177,9 @@ exports.update = function (userId, traits) {
 
 
 /**
- * Clears the user, wipes the cookie.
+ * Clears the user and wipes the cookie.
  */
+
 exports.clear = function () {
   if (cookie.enabled) cookieStore(cookie.name, null, clone(cookie));
   user = newUser();
@@ -2090,9 +2188,12 @@ exports.clear = function () {
 
 /**
  * Save the user object to a cookie
- * @param  {Object}  user
+ *
+ * @param {Object} user
+ *
  * @return {Boolean} saved
  */
+
 var save = function (user) {
   try {
     cookieStore(cookie.name, json.stringify(user), clone(cookie));
@@ -2106,21 +2207,20 @@ var save = function (user) {
 /**
  * Load the data from our cookie.
  *
- * @return {Object}
- *   @field {String} id
- *   @field {Object} traits
+ * @return {Object} - the current user.
+ *   @field {String} id - the current user's ID.
+ *   @field {Object} traits - the current user's traits.
  */
-exports.load = function () {
 
+exports.load = function () {
   if (!cookie.enabled) return user;
 
   var storedUser = cookieStore(cookie.name);
-
   if (storedUser) {
     try {
       user = json.parse(storedUser);
     } catch (e) {
-      // if we got bad json, toss the entire thing.
+      // If we got bad JSON, start from scratch.
       user = newUser();
     }
   }
@@ -2130,150 +2230,17 @@ exports.load = function () {
 
 
 /**
- * Returns a new user object
+ * Returns a new user object.
  */
+
 function newUser() {
   return {
-    id     : null,
+    id : null,
     traits : {}
   };
 }
 });
 require.register("analytics/src/utils.js", function(exports, require, module){
-
-var type  = require('type')
-  , each  = require('each')
-  , clone = require('clone');
-
-
-exports.clone = clone;
-
-// A helper to alias certain object's keys to different key names.
-// Useful for abstracting over providers that require specific key
-// names.
-exports.alias = function (obj, aliases) {
-  if (isObject(obj)) return;
-
-  each(aliases, function (property, alias) {
-    if (obj[property] !== undefined) {
-      obj[alias] = obj[property];
-      delete obj[property];
-    }
-  });
-};
-
-
-// Attach an event handler to a DOM element, even in IE.
-exports.bind = function (el, event, callback) {
-  if (el.addEventListener) {
-    el.addEventListener(event, callback, false);
-  } else if (el.attachEvent) {
-    el.attachEvent('on' + event, callback);
-  }
-};
-
-// Given a DOM event, tell us whether a meta key or button was
-// pressed that would make a link open in a new tab, window,
-// start a download, or anything else that wouldn't take the user to
-// a new page.
-exports.isMeta = function (e) {
-    if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
-
-    // Logic that handles checks for the middle mouse button, based
-    // on [jQuery](https://github.com/jquery/jquery/blob/master/src/event.js#L466).
-    var which = e.which, button = e.button;
-    if (!which && button !== undefined) {
-        return (!button & 1) && (!button & 2) && (button & 4);
-    } else if (which === 2) {
-        return true;
-    }
-
-    return false;
-};
-
-// Given a timestamp, return its value in seconds. For providers
-// that rely on Unix time instead of millis.
-exports.getSeconds = function (time) {
-  return Math.floor((+(new Date(time))) / 1000);
-};
-
-// A helper to extend objects with properties from other objects.
-// Based off of the [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L763)
-// method.
-exports.extend = function (obj) {
-  if (!isObject(obj)) return;
-
-  var args = Array.prototype.slice.call(arguments, 1);
-  each(args, function (source) {
-    if (!isObject(source)) return;
-
-    each(source, function (key, property) {
-      obj[key] = property;
-    });
-  });
-
-  return obj;
-};
-
-// Type detection helpers, copied from
-// [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L926-L946).
-exports.isElement = function(obj) {
-  return !!(obj && obj.nodeType === 1);
-};
-
-
-exports.isArray = Array.isArray || function (obj) {
-  return Object.prototype.toString.call(obj) === '[object Array]';
-};
-
-var isObject = exports.isObject = function (obj) {
-  return obj === Object(obj);
-};
-
-var isString = exports.isString = function (obj) {
-  return Object.prototype.toString.call(obj) === '[object String]';
-};
-
-exports.isFunction = function (obj) {
-  return Object.prototype.toString.call(obj) === '[object Function]';
-};
-
-exports.isNumber = function (obj) {
-  return Object.prototype.toString.call(obj) === '[object Number]';
-};
-
-var isBoolean = exports.isBoolean = function(obj) {
-  return obj === true || obj === false || toString.call(obj) == '[object Boolean]';
-};
-
-// Email detection helper to loosely validate emails.
-exports.isEmail = function (string) {
-  return (/.+\@.+\..+/).test(string);
-};
-
-
-// A helper to resolve a settings object. It allows for `settings`
-// to be a string in the case of using the shorthand where just an
-// api key is passed. `fieldName` is what the provider calls their
-// api key.
-exports.resolveSettings = function (settings, fieldName) {
-  if (!isString(settings) && !isObject(settings))
-      throw new Error('Could not resolve settings.');
-  if (!fieldName)
-      throw new Error('You must provide an api key field name.');
-
-  // Allow for settings to just be an API key, for example:
-  //
-  //     { 'Google Analytics : 'UA-XXXXXXX-X' }
-  if (isString(settings)) {
-      var apiKey = settings;
-      settings = {};
-      settings[fieldName] = apiKey;
-  }
-
-  return settings;
-};
-
 // A helper to track events based on the 'anjs' url parameter
 exports.getUrlParameter = function (urlSearchParameter, paramKey) {
   var params = urlSearchParameter.replace('?', '').split('&');
@@ -2284,33 +2251,10 @@ exports.getUrlParameter = function (urlSearchParameter, paramKey) {
     }
   }
 };
-
-// Uses the context to determine if a provider is enabled
-exports.isEnabled = function (provider, context) {
-  // if there is no context, then the provider is enabled
-  if (!isObject(context)) return true;
-  if (!isObject(context.providers)) return true;
-
-  var map = context.providers;
-
-  // determine the default provider setting
-  // if the user passes "all" or "All" : false
-  // then the provider is disabled unless told otherwise
-  var all = true;
-  if (isBoolean(map.all)) all = map.all;
-  if (isBoolean(map.All)) all = map.All;
-
-  if (isBoolean(map[provider.name]))
-      return map[provider.name];
-  else
-      return all;
-};
 });
 require.register("analytics/src/providers/bitdeli.js", function(exports, require, module){
-// Bitdeli
-// -------
-// * [Documentation](https://bitdeli.com/docs)
-// * [JavaScript API Reference](https://bitdeli.com/docs/javascript-api.html)
+// https://bitdeli.com/docs
+// https://bitdeli.com/docs/javascript-api.html
 
 var Provider = require('../provider')
   , type     = require('type')
@@ -2318,6 +2262,8 @@ var Provider = require('../provider')
 
 
 module.exports = Provider.extend({
+
+  name : 'Bitdeli',
 
   options : {
     // BitDeli requires two options: `inputId` and `authToken`.
@@ -2363,15 +2309,15 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/bugherd.js", function(exports, require, module){
-// BugHerd
-// -------
-// [Documentation](http://support.bugherd.com/home).
+// http://support.bugherd.com/home
 
 var Provider = require('../provider')
   , load     = require('load-script');
 
 
 module.exports = Provider.extend({
+
+  name : 'BugHerd',
 
   key : 'apiKey',
 
@@ -2386,17 +2332,17 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/chartbeat.js", function(exports, require, module){
-// Chartbeat
-// ---------
-// [Documentation](http://chartbeat.com/docs/adding_the_code/),
-// [documentation](http://chartbeat.com/docs/configuration_variables/),
-// [documentation](http://chartbeat.com/docs/handling_virtual_page_changes/).
+// http://chartbeat.com/docs/adding_the_code/
+// http://chartbeat.com/docs/configuration_variables/
+// http://chartbeat.com/docs/handling_virtual_page_changes/
 
 var Provider = require('../provider')
   , load     = require('load-script');
 
 
 module.exports = Provider.extend({
+
+  name : 'Chartbeat',
 
   options : {
     // Chartbeat requires two options: `domain` and `uid`. All other
@@ -2441,15 +2387,15 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/clicktale.js", function(exports, require, module){
-// ClickTale
-// ---------
-// [Documentation](http://wiki.clicktale.com/Article/JavaScript_API).
+// http://wiki.clicktale.com/Article/JavaScript_API
 
 var date     = require('load-date')
   , Provider = require('../provider')
   , load     = require('load-script');
 
 module.exports = Provider.extend({
+
+  name : 'ClickTale',
 
   key : 'projectId',
 
@@ -2472,7 +2418,7 @@ module.exports = Provider.extend({
     // what number to set for this.
     recordingRatio : 0.01,
 
-    // The Partition ID determines where ClickTale stores the data according to 
+    // The Partition ID determines where ClickTale stores the data according to
     // http://wiki.clicktale.com/Article/JavaScript_API
     partitionId    : null
   },
@@ -2532,10 +2478,8 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/clicky.js", function(exports, require, module){
-// Clicky
-// ------
-// [Documentation](http://clicky.com/help/customization/manual?new-domain).
-// [Session info](http://clicky.com/help/customization/manual?new-domain#/help/customization#session)
+// http://clicky.com/help/customization/manual?new-domain
+// http://clicky.com/help/customization/manual?new-domain#/help/customization#session
 
 var Provider = require('../provider')
   , user     = require('../user')
@@ -2545,12 +2489,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Clicky',
+
   key : 'siteId',
 
   options : {
     siteId : null
   },
-
 
   initialize : function (options, ready) {
     window.clicky_site_ids = window.clicky_site_ids || [];
@@ -2560,7 +2505,7 @@ module.exports = Provider.extend({
       , traits  = user.traits()
       , session = {};
 
-    if (userId) session.username = userId;
+    if (userId) session.id = userId;
     extend(session, traits);
 
     window.clicky_custom = { session : session };
@@ -2568,22 +2513,14 @@ module.exports = Provider.extend({
     load('//static.getclicky.com/js', ready);
   },
 
-
   track : function (event, properties) {
-    // In case the Clicky library hasn't loaded yet.
-    if (!window.clicky) return;
-
-    // We aren't guaranteed `clicky` is available until the script has been
-    // requested and run, hence the check.
     window.clicky.log(window.location.href, event);
   }
 
 });
 });
 require.register("analytics/src/providers/comscore.js", function(exports, require, module){
-// comScore
-// ---------
-// [Documentation](http://direct.comscore.com/clients/help/FAQ.aspx#faqTagging)
+// http://direct.comscore.com/clients/help/FAQ.aspx#faqTagging
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -2591,13 +2528,14 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'comScore',
+
   key : 'c2',
 
   options : {
     c1 : '2',
     c2 : null
   },
-
 
   // Pass the entire options object directly into comScore.
   initialize : function (options, ready) {
@@ -2612,22 +2550,19 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/crazyegg.js", function(exports, require, module){
-// CrazyEgg
-// --------
-// [Documentation](www.crazyegg.com).
-
 var Provider = require('../provider')
   , load     = require('load-script');
 
 
 module.exports = Provider.extend({
 
+  name : 'CrazyEgg',
+
   key : 'accountNumber',
 
   options : {
     accountNumber : null
   },
-
 
   initialize : function (options, ready) {
     var accountPath = options.accountNumber.slice(0,4) + '/' + options.accountNumber.slice(4);
@@ -2637,9 +2572,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/customerio.js", function(exports, require, module){
-// Customer.io
-// -----------
-// [Documentation](http://customer.io/docs/api/javascript.html).
+// http://customer.io/docs/api/javascript.html
 
 var Provider = require('../provider')
   , isEmail  = require('is-email')
@@ -2648,12 +2581,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Customer.io',
+
   key : 'siteId',
 
   options : {
     siteId : null
   },
-
 
   initialize : function (options, ready) {
     var _cio = window._cio = window._cio || [];
@@ -2680,7 +2614,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   identify : function (userId, traits) {
     // Don't do anything if we just have traits, because Customer.io
     // requires a `userId`.
@@ -2704,7 +2637,6 @@ module.exports = Provider.extend({
     window._cio.identify(traits);
   },
 
-
   track : function (event, properties) {
     window._cio.track(event, properties);
   }
@@ -2712,9 +2644,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/errorception.js", function(exports, require, module){
-// Errorception
-// ------------
-// [Documentation](http://errorception.com/).
+// http://errorception.com/
 
 var Provider = require('../provider')
   , extend   = require('extend')
@@ -2723,16 +2653,16 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Errorception',
+
   key : 'projectId',
 
   options : {
     projectId : null,
-
     // Whether to store metadata about the user on `identify` calls, using
     // the [Errorception `meta` API](http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html).
     meta : true
   },
-
 
   initialize : function (options, ready) {
     window._errs = window._errs || [options.projectId];
@@ -2747,7 +2677,7 @@ module.exports = Provider.extend({
     ready();
   },
 
-
+  // Add the traits to the Errorception meta object.
   identify : function (userId, traits) {
     if (!this.options.meta) return;
 
@@ -2765,25 +2695,21 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/foxmetrics.js", function(exports, require, module){
-// FoxMetrics
-// -----------
-// [Website] (http://foxmetrics.com)
-// [Documentation](http://foxmetrics.com/documentation)
-// [Documentation - JS](http://foxmetrics.com/documentation/apijavascript)
-// [Support](http://support.foxmetrics.com)
+// http://foxmetrics.com/documentation/apijavascript
 
 var Provider = require('../provider')
-  , load   = require('load-script');
+  , load     = require('load-script');
 
 
 module.exports = Provider.extend({
+
+  name : 'FoxMetrics',
 
   key : 'appId',
 
   options : {
     appId : null
   },
-
 
   initialize : function (options, ready) {
     var _fxm = window._fxm || {};
@@ -2794,7 +2720,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   identify : function (userId, traits) {
     // A `userId` is required for profile updates, otherwise its a waste of
     // resources as nothing will get updated.
@@ -2804,6 +2729,7 @@ module.exports = Provider.extend({
     var firstName = null
       , lastName  = null
       , email     = null;
+
     if (traits && traits.name) {
       firstName = traits.name.split(' ')[0];
       lastName = traits.name.split(' ')[1];
@@ -2826,7 +2752,6 @@ module.exports = Provider.extend({
     ]);
   },
 
-
   track : function (event, properties) {
     window._fxm.push([
       event,     // event name
@@ -2834,7 +2759,6 @@ module.exports = Provider.extend({
       properties // properties
     ]);
   },
-
 
   pageview : function (url) {
     window._fxm.push([
@@ -2850,9 +2774,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/gauges.js", function(exports, require, module){
-// Gauges
-// -------
-// [Documentation](http://get.gaug.es/documentation/tracking/).
+// http://get.gaug.es/documentation/tracking/
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -2860,24 +2782,24 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Gauges',
+
   key : 'siteId',
 
   options : {
     siteId : null
   },
 
-
-  // Load the library and add the `id` and `data-site-id` Gauges needs.
   initialize : function (options, ready) {
     window._gauges = window._gauges || [];
     var script = load('//secure.gaug.es/track.js');
+    // Gauges needs a few attributes on its script element.
     script.id = 'gauges-tracker';
     script.setAttribute('data-site-id', options.siteId);
 
     // Gauges make a queue so it's ready immediately.
     ready();
   },
-
 
   pageview : function (url) {
     window._gauges.push(['track']);
@@ -2886,9 +2808,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/google-analytics.js", function(exports, require, module){
-// Google Analytics
-// ----------------
-// [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
+// https://developers.google.com/analytics/devguides/collection/gajs/
 
 var Provider  = require('../provider')
   , load      = require('load-script')
@@ -2898,6 +2818,8 @@ var Provider  = require('../provider')
 
 
 module.exports = Provider.extend({
+
+  name : 'Google Analytics',
 
   key : 'trackingId',
 
@@ -2919,7 +2841,6 @@ module.exports = Provider.extend({
     // Whether to enable GOogle's DoubleClick remarketing feature.
     doubleClick : false
   },
-
 
   initialize : function (options, ready) {
     window._gaq = window._gaq || [];
@@ -2960,7 +2881,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   track : function (event, properties) {
     properties || (properties = {});
 
@@ -2983,20 +2903,15 @@ module.exports = Provider.extend({
     ]);
   },
 
-
   pageview : function (url) {
-    // If there isn't a url, that's fine.
     window._gaq.push(['_trackPageview', url]);
   }
 
 });
 });
 require.register("analytics/src/providers/gosquared.js", function(exports, require, module){
-// GoSquared
-// ---------
-// [Documentation](www.gosquared.com/support).
-// [Tracker Functions](https://www.gosquared.com/customer/portal/articles/612063-tracker-functions)
-// Will automatically [integrate with Olark](https://www.gosquared.com/support/articles/721791-setting-up-olark-live-chat).
+// http://www.gosquared.com/support
+// https://www.gosquared.com/customer/portal/articles/612063-tracker-functions
 
 var Provider = require('../provider')
   , user     = require('../user')
@@ -3005,12 +2920,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'GoSquared',
+
   key : 'siteToken',
 
   options : {
     siteToken : null
   },
-
 
   initialize : function (options, ready) {
     var GoSquared = window.GoSquared = {};
@@ -3027,7 +2943,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   identify : function (userId, traits) {
     // TODO figure out if this will actually work. Seems like GoSquared will
     // never know these values are updated.
@@ -3035,13 +2950,11 @@ module.exports = Provider.extend({
     if (traits) window.GoSquared.Visitor = traits;
   },
 
-
   track : function (event, properties) {
     // GoSquared sets a `gs_evt_name` property with a value of the event
     // name, so it relies on properties being an object.
     window.GoSquared.q.push(['TrackEvent', event, properties || {}]);
   },
-
 
   pageview : function (url) {
     window.GoSquared.q.push(['TrackView', url]);
@@ -3050,22 +2963,21 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/hittail.js", function(exports, require, module){
-// HitTail
-// -------
-// [Documentation](www.hittail.com).
+// http://www.hittail.com
 
 var Provider = require('../provider')
-  , load   = require('load-script');
+  , load     = require('load-script');
 
 
 module.exports = Provider.extend({
+
+  name : 'HitTail',
 
   key : 'siteId',
 
   options : {
     siteId : null
   },
-
 
   initialize : function (options, ready) {
     load('//' + options.siteId + '.hittail.com/mlt.js', ready);
@@ -3074,9 +2986,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/hubspot.js", function(exports, require, module){
-// HubSpot
-// -------
-// [Documentation](http://hubspot.clarify-it.com/d/4m62hl)
+// http://hubspot.clarify-it.com/d/4m62hl
 
 var Provider = require('../provider')
   , isEmail  = require('is-email')
@@ -3085,12 +2995,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'HubSpot',
+
   key : 'portalId',
 
   options : {
     portalId : null
   },
-
 
   initialize : function (options, ready) {
     // HubSpot checks in their snippet to make sure another script with
@@ -3105,7 +3016,6 @@ module.exports = Provider.extend({
     // HubSpot makes a queue, so it's ready immediately.
     ready();
   },
-
 
   // HubSpot does not use a userId, but the email address is required on
   // the traits object.
@@ -3122,14 +3032,12 @@ module.exports = Provider.extend({
     window._hsq.push(["identify", traits]);
   },
 
-
   // Event Tracking is available to HubSpot Enterprise customers only. In
   // addition to adding any unique event name, you can also use the id of an
   // existing custom event as the event variable.
   track : function (event, properties) {
     window._hsq.push(["trackEvent", event, properties]);
   },
-
 
   // HubSpot doesn't support passing in a custom URL.
   pageview : function (url) {
@@ -3139,45 +3047,43 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/index.js", function(exports, require, module){
-
-exports['Bitdeli']          = require('./bitdeli');
-exports['BugHerd']          = require('./bugherd');
-exports['Chartbeat']        = require('./chartbeat');
-exports['ClickTale']        = require('./clicktale');
-exports['Clicky']           = require('./clicky');
-exports['comScore']         = require('./comscore');
-exports['CrazyEgg']         = require('./crazyegg');
-exports['Customer.io']      = require('./customerio');
-exports['Errorception']     = require('./errorception');
-exports['FoxMetrics']       = require('./foxmetrics');
-exports['Gauges']           = require('./gauges');
-exports['Google Analytics'] = require('./google-analytics');
-exports['GoSquared']        = require('./gosquared');
-exports['HitTail']          = require('./hittail');
-exports['HubSpot']          = require('./hubspot');
-exports['Intercom']         = require('./intercom');
-exports['Keen IO']          = require('./keen-io');
-exports['KISSmetrics']      = require('./kissmetrics');
-exports['Klaviyo']          = require('./klaviyo');
-exports['LiveChat']         = require('./livechat');
-exports['Mixpanel']         = require('./mixpanel');
-exports['Olark']            = require('./olark');
-exports['Perfect Audience'] = require('./perfect-audience');
-exports['Qualaroo']         = require('./qualaroo');
-exports['Quantcast']        = require('./quantcast');
-exports['Sentry']           = require('./sentry');
-exports['SnapEngage']       = require('./snapengage');
-exports['Storyberg']        = require('./storyberg');
-exports['USERcycle']        = require('./usercycle');
-exports['UserVoice']        = require('./uservoice');
-exports['Vero']             = require('./vero');
-exports['Woopra']           = require('./woopra');
-
+module.exports = [
+  require('./bitdeli'),
+  require('./bugherd'),
+  require('./chartbeat'),
+  require('./clicktale'),
+  require('./clicky'),
+  require('./comscore'),
+  require('./crazyegg'),
+  require('./customerio'),
+  require('./errorception'),
+  require('./foxmetrics'),
+  require('./gauges'),
+  require('./google-analytics'),
+  require('./gosquared'),
+  require('./hittail'),
+  require('./hubspot'),
+  require('./intercom'),
+  require('./keen-io'),
+  require('./kissmetrics'),
+  require('./klaviyo'),
+  require('./livechat'),
+  require('./mixpanel'),
+  require('./olark'),
+  require('./perfect-audience'),
+  require('./qualaroo'),
+  require('./quantcast'),
+  require('./sentry'),
+  require('./snapengage'),
+  require('./storyberg'),
+  require('./usercycle'),
+  require('./uservoice'),
+  require('./vero'),
+  require('./woopra')
+];
 });
 require.register("analytics/src/providers/intercom.js", function(exports, require, module){
-// Intercom
-// --------
-// [Documentation](http://docs.intercom.io/).
+// http://docs.intercom.io/
 
 var Provider = require('../provider')
   , load     = require('load-script')
@@ -3186,22 +3092,22 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
-  // Whether Intercom has already been initialized or not. This is because
-  // since we initialize Intercom on `identify`, people can make multiple
-  // `identify` calls and we don't want that breaking anything.
+  name : 'Intercom',
+
+  // Whether Intercom has already been initialized or not. Since we initialize
+  // Intercom on `identify`, people can make multiple `identify` calls and we
+  // don't want that breaking anything.
   initialized : false,
 
   key : 'appId',
 
   options : {
     appId : null,
-
     // An optional setting to display the Intercom inbox widget.
     activator : null,
     // Whether to show the count of messages for the inbox widget.
     counter : true
   },
-
 
   // Intercom identifies when the script is loaded, so instead of initializing
   // in `initialize` we initialize in `identify`.
@@ -3210,7 +3116,6 @@ module.exports = Provider.extend({
     // everything from loading.
     ready();
   },
-
 
   identify : function (userId, traits) {
     // If we've already been initialized once, don't do it again since we
@@ -3259,9 +3164,7 @@ module.exports = Provider.extend({
 
 });
 require.register("analytics/src/providers/keen-io.js", function(exports, require, module){
-// Keen IO
-// -------
-// [Documentation](https://keen.io/docs/).
+// https://keen.io/docs/
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -3269,16 +3172,17 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Keen IO',
+
   options : {
     // Keen IO has two required options: `projectId` and `apiKey`.
     projectId : null,
     apiKey : null,
     // Whether or not to pass pageviews on to Keen IO.
     pageview : false,
-    // Whether or not to track an initial pageview on initialize.
+    // Whether or not to track an initial pageview on `initialize`.
     initialPageview : false
   },
-
 
   initialize : function (options, ready) {
     window.Keen = window.Keen||{configure:function(a,b,c){this._pId=a;this._ak=b;this._op=c},addEvent:function(a,b,c,d){this._eq=this._eq||[];this._eq.push([a,b,c,d])},setGlobalProperties:function(a){this._gp=a},onChartsReady:function(a){this._ocrq=this._ocrq||[];this._ocrq.push(a)}};
@@ -3293,7 +3197,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   identify : function (userId, traits) {
     // Use Keen IO global properties to include `userId` and `traits` on
     // every event sent to Keen IO.
@@ -3307,11 +3210,9 @@ module.exports = Provider.extend({
     }
   },
 
-
   track : function (event, properties) {
     window.Keen.addEvent(event, properties);
   },
-
 
   pageview : function (url) {
     if (!this.options.pageview) return;
@@ -3325,9 +3226,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/kissmetrics.js", function(exports, require, module){
-// KISSmetrics
-// -----------
-// [Documentation](http://support.kissmetrics.com/apis/javascript).
+// http://support.kissmetrics.com/apis/javascript
 
 var Provider = require('../provider')
   , alias    = require('alias')
@@ -3336,12 +3235,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'KISSmetrics',
+
   key : 'apiKey',
 
   options : {
     apiKey : null
   },
-
 
   initialize : function (options, ready) {
     window._kmq = window._kmq || [];
@@ -3352,14 +3252,12 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   // KISSmetrics uses two separate methods: `identify` for storing the
   // `userId`, and `set` for storing `traits`.
   identify : function (userId, traits) {
     if (userId) window._kmq.push(['identify', userId]);
     if (traits) window._kmq.push(['set', traits]);
   },
-
 
   track : function (event, properties) {
     // KISSmetrics handles revenue with the `'Billing Amount'` property by
@@ -3373,7 +3271,6 @@ module.exports = Provider.extend({
     window._kmq.push(['record', event, properties]);
   },
 
-
   // Although undocumented, KISSmetrics actually supports not passing a second
   // ID, in which case it uses the currenty identified user's ID.
   alias : function (newId, originalId) {
@@ -3383,9 +3280,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/klaviyo.js", function(exports, require, module){
-// Klaviyo
-// -------
-// [Documentation](https://www.klaviyo.com/docs).
+// https://www.klaviyo.com/docs
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -3393,12 +3288,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Klaviyo',
+
   key : 'apiKey',
 
   options : {
     apiKey : null
   },
-
 
   initialize : function (options, ready) {
     window._learnq = window._learnq || [];
@@ -3408,7 +3304,6 @@ module.exports = Provider.extend({
     // Klaviyo creats a queue, so it's ready immediately.
     ready();
   },
-
 
   identify : function (userId, traits) {
     if (!userId && !traits) return;
@@ -3420,7 +3315,6 @@ module.exports = Provider.extend({
     window._learnq.push(['identify', traits]);
   },
 
-
   track : function (event, properties) {
     window._learnq.push(['track', event, properties]);
   }
@@ -3428,9 +3322,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/livechat.js", function(exports, require, module){
-// LiveChat
-// --------
-// [Documentation](http://www.livechatinc.com/api/javascript-api).
+// http://www.livechatinc.com/api/javascript-api
 
 var Provider = require('../provider')
   , each     = require('each')
@@ -3438,6 +3330,8 @@ var Provider = require('../provider')
 
 
 module.exports = Provider.extend({
+
+  name : 'LiveChat',
 
   key : 'license',
 
@@ -3449,7 +3343,6 @@ module.exports = Provider.extend({
     window.__lc = { license : options.license };
     load('//cdn.livechatinc.com/tracking.js', ready);
   },
-
 
   // LiveChat isn't an analytics service, but we can use the `userId` and
   // `traits` to tag the user with their real name in the chat console.
@@ -3479,11 +3372,9 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/mixpanel.js", function(exports, require, module){
-// Mixpanel
-// --------
-// [Documentation](https://mixpanel.com/docs/integration-libraries/javascript),
-// [documentation](https://mixpanel.com/docs/people-analytics/javascript),
-// [documentation](https://mixpanel.com/docs/integration-libraries/javascript-full-api).
+// https://mixpanel.com/docs/integration-libraries/javascript
+// https://mixpanel.com/docs/people-analytics/javascript
+// https://mixpanel.com/docs/integration-libraries/javascript-full-api
 
 var Provider = require('../provider')
   , alias    = require('alias')
@@ -3491,6 +3382,8 @@ var Provider = require('../provider')
 
 
 module.exports = Provider.extend({
+
+  name : 'Mixpanel',
 
   key : 'token',
 
@@ -3541,11 +3434,9 @@ module.exports = Provider.extend({
 
     if (options.initialPageview) this.pageview();
 
-    // Mixpanel creats all of its methods in the snippet, so it's ready
-    // immediately.
+    // Mixpanel creates all its methods, so it's ready immediately.
     ready();
   },
-
 
   identify : function (userId, traits) {
     // If we have an email and no email trait, set the email trait.
@@ -3579,7 +3470,6 @@ module.exports = Provider.extend({
     }
   },
 
-
   track : function (event, properties) {
     window.mixpanel.track(event, properties);
 
@@ -3589,7 +3479,6 @@ module.exports = Provider.extend({
       window.mixpanel.people.track_charge(properties.revenue);
     }
   },
-
 
   // Mixpanel doesn't actually track the pageviews, but they do show up in the
   // Mixpanel stream.
@@ -3603,7 +3492,6 @@ module.exports = Provider.extend({
     if (url) properties = { url : url };
     this.track('Loaded a Page', properties);
   },
-
 
   // Although undocumented, Mixpanel actually supports the `originalId`. It
   // just usually defaults to the current user's `distinct_id`.
@@ -3622,24 +3510,26 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/olark.js", function(exports, require, module){
-// Olark
-// -----
-// [Documentation](http://www.olark.com/documentation).
+// http://www.olark.com/documentation
 
 var Provider = require('../provider');
 
 
 module.exports = Provider.extend({
 
+  name : 'Olark',
+
   key : 'siteId',
 
   options : {
-    siteId   : null,
+    siteId : null,
+    // Whether to use the user's name or email in the Olark chat console.
     identify : true,
-    track    : false,
+    // Whether to log pageviews to the Olark chat console.
+    track : false,
+    // Whether to log pageviews to the Olark chat console.
     pageview : true
   },
-
 
   initialize : function (options, ready) {
     window.olark||(function(c){var f=window,d=document,l=f.location.protocol=="https:"?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while(q--){(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={0:+new Date};a.P=function(u){a.p[u]=new Date-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if(!m){return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if(/MSIE[ ]+6/.test(navigator.userAgent)){b.src="javascript:false"}b.allowTransparency="true";v[j](b);try{b.contentWindow[g].open()}catch(w){c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try{var t=b.contentWindow[g];t.write(p());t.close()}catch(x){b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({loader: "static.olark.com/jsclient/loader0.js",name:"olark",methods:["configure","extend","declare","identify"]});
@@ -3649,7 +3539,6 @@ module.exports = Provider.extend({
     // immediately.
     ready();
   },
-
 
   // Olark isn't an analytics service, but we can use the `userId` and
   // `traits` to tag the user with their real name in the chat console.
@@ -3670,11 +3559,9 @@ module.exports = Provider.extend({
     });
   },
 
-
   // Again, all we're doing is logging events the user triggers to the chat
   // console, if you so desire it.
   track : function (event, properties) {
-    // Check the `track` setting to know whether log events or not.
     if (!this.options.track) return;
 
     // To stay consistent with olark's default messages, it's all lowercase.
@@ -3683,12 +3570,10 @@ module.exports = Provider.extend({
     });
   },
 
-
   // Again, not analytics, but we can mimic the functionality Olark has for
   // normal pageviews with pseudo-pageviews, telling the operator when a
   // visitor changes pages.
   pageview : function (url) {
-    // Check the `pageview` settings to know whether they want this or not.
     if (!this.options.pageview) return;
 
     // To stay consistent with olark's default messages, it's all lowercase.
@@ -3700,15 +3585,15 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/perfect-audience.js", function(exports, require, module){
-// Perfect Audience
-// ----------------
-// [Documentation](https://www.perfectaudience.com/docs#javascript_api_autoopen)
+// https://www.perfectaudience.com/docs#javascript_api_autoopen
 
 var Provider = require('../provider')
   , load     = require('load-script');
 
 
 module.exports = Provider.extend({
+
+  name : 'Perfect Audience',
 
   key : 'siteId',
 
@@ -3716,33 +3601,28 @@ module.exports = Provider.extend({
     siteId : null
   },
 
-
   initialize : function (options, ready) {
-    window._pa = window._pa || {};
+    window._pa || (window._pa = {});
     load('//tag.perfectaudience.com/serve/' + options.siteId + '.js', ready);
   },
 
-
   track : function (event, properties) {
-    // In case the Perfect Audience library hasn't loaded yet.
-    if (!window._pa.track) return;
-
     window._pa.track(event, properties);
   }
 
 });
 });
 require.register("analytics/src/providers/qualaroo.js", function(exports, require, module){
-// Qualaroo
-// --------
-// [Identify Docs](http://help.qualaroo.com/customer/portal/articles/731085-identify-survey-nudge-takers)
-// [Set Docs](http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties)
+// http://help.qualaroo.com/customer/portal/articles/731085-identify-survey-nudge-takers
+// http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties
 
 var Provider = require('../provider')
   , load     = require('load-script');
 
 
 module.exports = Provider.extend({
+
+  name : 'Qualaroo',
 
   options : {
     // Qualaroo has two required options.
@@ -3753,7 +3633,6 @@ module.exports = Provider.extend({
     track : false
   },
 
-
   // Qualaroo's script has two options in its URL.
   initialize : function (options, ready) {
     window._kiq = window._kiq || [];
@@ -3763,14 +3642,12 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   // Qualaroo uses two separate methods: `identify` for storing the `userId`,
   // and `set` for storing `traits`.
   identify : function (userId, traits) {
     if (userId) window._kiq.push(['identify', userId]);
     if (traits) window._kiq.push(['set', traits]);
   },
-
 
   // Qualaroo doesn't have `track` method yet, but to allow the users to do
   // targetted questionnaires we can set name-value pairs on the user properties
@@ -3790,9 +3667,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/quantcast.js", function(exports, require, module){
-// Quantcast
-// ---------
-// [Documentation](https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/)
+// https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -3800,12 +3675,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Quantcast',
+
   key : 'pCode',
 
   options : {
     pCode : null
   },
-
 
   initialize : function (options, ready) {
     window._qevents = window._qevents || [];
@@ -3819,8 +3695,6 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/sentry.js", function(exports, require, module){
-// Sentry
-// ------
 // http://raven-js.readthedocs.org/en/latest/config/index.html
 
 var Provider = require('../provider')
@@ -3829,12 +3703,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Sentry',
+
   key : 'config',
 
   options : {
     config : null
   },
-
 
   initialize : function (options, ready) {
     load('//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js', function () {
@@ -3845,7 +3720,6 @@ module.exports = Provider.extend({
     });
   },
 
-
   identify : function (userId, traits) {
     traits || (traits = {});
     if (userId) traits.id = userId;
@@ -3855,9 +3729,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/snapengage.js", function(exports, require, module){
-// SnapEngage
-// ----------
-// [Documentation](http://help.snapengage.com/installation-guide-getting-started-in-a-snap/).
+// http://help.snapengage.com/installation-guide-getting-started-in-a-snap/
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -3865,12 +3737,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'SnapEngage',
+
   key : 'apiKey',
 
   options : {
     apiKey : null
   },
-
 
   initialize : function (options, ready) {
     load('//commondatastorage.googleapis.com/code.snapengage.com/js/' + options.apiKey + '.js', ready);
@@ -3879,22 +3752,22 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/storyberg.js", function(exports, require, module){
-// Storyberg
-// -----------
-// [Documentation](https://github.com/Storyberg/Docs/wiki/Javascript-Library).
+// https://github.com/Storyberg/Docs/wiki/Javascript-Library
 
 var Provider = require('../provider')
   , isEmail  = require('is-email')
   , load     = require('load-script');
 
+
 module.exports = Provider.extend({
+
+  name : 'Storyberg',
 
   key : 'apiKey',
 
   options : {
     apiKey : null
   },
-
 
   initialize : function (options, ready) {
     window._sbq = window._sbq || [];
@@ -3904,7 +3777,6 @@ module.exports = Provider.extend({
     // Storyberg creates a queue, so it's ready immediately.
     ready();
   },
-
 
   identify : function (userId, traits) {
     // Don't do anything if we just have traits, because Storyberg
@@ -3922,7 +3794,6 @@ module.exports = Provider.extend({
     window._sbq.push(['identify', traits]);
   },
 
-
   track : function (event, properties) {
     properties || (properties = {});
 
@@ -3938,9 +3809,7 @@ module.exports = Provider.extend({
 
 });
 require.register("analytics/src/providers/usercycle.js", function(exports, require, module){
-// USERcycle
-// -----------
-// [Documentation](http://docs.usercycle.com/javascript_api).
+// http://docs.usercycle.com/javascript_api
 
 var Provider = require('../provider')
   , load     = require('load-script')
@@ -3949,12 +3818,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'USERcycle',
+
   key : 'key',
 
   options : {
     key : null
   },
-
 
   initialize : function (options, ready) {
     window._uc = window._uc || [];
@@ -3965,11 +3835,9 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   identify : function (userId, traits) {
     if (userId) window._uc.push(['uid', userId]);
   },
-
 
   track : function (event, properties) {
     // Usercycle seems to use traits instead of properties.
@@ -3980,9 +3848,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/uservoice.js", function(exports, require, module){
-// UserVoice
-// ---------
-// [Documentation](http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb).
+// http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -3990,12 +3856,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'UserVoice',
+
   key : 'widgetId',
 
   options : {
     widgetId : null
   },
-
 
   initialize : function (options, ready) {
     window.uvOptions = {};
@@ -4005,9 +3872,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/vero.js", function(exports, require, module){
-// GetVero.com
-// -----------
-// [Documentation](https://github.com/getvero/vero-api/blob/master/sections/js.md).
+// https://github.com/getvero/vero-api/blob/master/sections/js.md
 
 var Provider = require('../provider')
   , isEmail  = require('is-email')
@@ -4016,12 +3881,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Vero',
+
   key : 'apiKey',
 
   options : {
     apiKey : null
   },
-
 
   initialize : function (options, ready) {
     window._veroq = window._veroq || [];
@@ -4031,7 +3897,6 @@ module.exports = Provider.extend({
     // Vero creates a queue, so it's ready immediately.
     ready();
   },
-
 
   identify : function (userId, traits) {
     // Don't do anything if we just have traits, because Vero
@@ -4052,7 +3917,6 @@ module.exports = Provider.extend({
     window._veroq.push(['user', traits]);
   },
 
-
   track : function (event, properties) {
     window._veroq.push(['track', event, properties]);
   }
@@ -4060,9 +3924,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/woopra.js", function(exports, require, module){
-// Woopra
-// ------
-// [Documentation](http://www.woopra.com/docs/setup/javascript-tracking/).
+// http://www.woopra.com/docs/setup/javascript-tracking/
 
 var Provider = require('../provider')
   , each     = require('each')
@@ -4075,12 +3937,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Woopra',
+
   key : 'domain',
 
   options : {
     domain : null
   },
-
 
   initialize : function (options, ready) {
     // Woopra gives us a nice ready callback.
@@ -4104,7 +3967,6 @@ module.exports = Provider.extend({
     load('//static.woopra.com/js/woopra.js');
   },
 
-
   identify : function (userId, traits) {
 
     if (!window.woopraTracker) return;
@@ -4112,7 +3974,6 @@ module.exports = Provider.extend({
     this.addTraits(userId, traits, window.woopraTracker);
     window.woopraTracker.track();
   },
-
 
   // Convenience function for updating the userId and traits.
   addTraits : function (userId, traits, tracker) {
@@ -4127,7 +3988,6 @@ module.exports = Provider.extend({
       if (type(trait) === 'string') addTrait(name, trait);
     });
   },
-
 
   track : function (event, properties) {
     // We aren't guaranteed a tracker.
@@ -4164,8 +4024,6 @@ require.alias("component-object/index.js", "analytics/deps/object/index.js");
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
 require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
 
-require.alias("redventures-reduce/index.js", "component-querystring/deps/reduce/index.js");
-
 require.alias("component-type/index.js", "analytics/deps/type/index.js");
 
 require.alias("component-url/index.js", "analytics/deps/url/index.js");
@@ -4179,6 +4037,8 @@ require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
 
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
+
+require.alias("segmentio-is-meta/index.js", "analytics/deps/is-meta/index.js");
 
 require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
 

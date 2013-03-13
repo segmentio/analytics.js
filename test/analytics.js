@@ -1,11 +1,9 @@
-
 describe('Analytics.js', function () {
-
-  var type = require('component-type');
 
   var readyTimeout = 42;
 
   var Provider = analytics.Provider.extend({
+    name       : 'Test',
     key        : 'key',
     options    : {},
     initialize : function (options, ready) {
@@ -16,7 +14,7 @@ describe('Analytics.js', function () {
     pageview   : function () {},
     alias      : function (newId, originalId) {}
   });
-  analytics.addProvider('Test', Provider);
+  analytics.addProvider(Provider);
 
   var options = { 'Test' : 'x' };
 
@@ -52,11 +50,12 @@ describe('Analytics.js', function () {
 
   describe('ready', function () {
 
+    before(function () {
+      // Turn off our current ready state.
+      analytics.readied = false;
+    });
 
     it('calls callbacks on initialize after a timeout', function (done) {
-      // Turn off our current initialized state.
-      analytics.initialized = false;
-
       var spy1 = sinon.spy();
       var spy2 = sinon.spy();
 
@@ -78,18 +77,18 @@ describe('Analytics.js', function () {
 
     it('sets ready state', function () {
       analytics.initialize(options);
-      expect(analytics.isReady).to.be(false);
+      expect(analytics.readied).to.be(false);
       analytics.ready(function () {
-        expect(analytics.isReady).to.be(true);
+        expect(analytics.readied).to.be(true);
       });
     });
 
     it('resets ready state (after initialize)', function (done) {
       analytics.initialize(options);
       analytics.ready(function () {
-        expect(analytics.isReady).to.be(true);
+        expect(analytics.readied).to.be(true);
         analytics.initialize(options);
-        expect(analytics.isReady).to.be(false);
+        expect(analytics.readied).to.be(false);
 
         // Wait for it to come back to not interleave next tests.
         analytics.ready(done);
@@ -154,9 +153,7 @@ describe('Analytics.js', function () {
     );
   });
 
-
-  // Identify
-  // --------
+-
 
   describe('identify', function () {
 
@@ -239,11 +236,14 @@ describe('Analytics.js', function () {
     });
 
     it('parses valid strings into dates', function () {
-      var spy  = sinon.spy(Provider.prototype, 'identify')
+      var type = require('component-type')
+        , spy  = sinon.spy(Provider.prototype, 'identify')
         , date = 'Dec 07 12';
+
       analytics.identify({
         created : date
       });
+
       var traits = spy.args[0][1];
       expect(type(traits.created)).to.equal('date');
       expect(traits.created.getTime()).to.equal(new Date(date).getTime());
@@ -253,9 +253,11 @@ describe('Analytics.js', function () {
     it('keeps normal dates the same', function () {
       var spy  = sinon.spy(Provider.prototype, 'identify')
         , date = new Date();
+
       analytics.identify({
         created : date
       });
+
       var traits = spy.args[0][1];
       expect(traits.created.getTime()).to.equal(date.getTime());
       spy.restore();

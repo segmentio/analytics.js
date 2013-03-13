@@ -59,6 +59,7 @@
     "segmentio/canonical": "*",
     "segmentio/extend": "*",
     "segmentio/is-email": "*",
+    "segmentio/is-meta": "*",
     "segmentio/load-date": "*",
     "segmentio/load-script": "*",
     "yields/prevent": "*"

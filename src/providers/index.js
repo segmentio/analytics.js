@@ -1,4 +1,4 @@
-exports = [
+module.exports = [
   require('./bitdeli'),
   require('./bugherd'),
   require('./chartbeat'),

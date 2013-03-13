@@ -64,7 +64,7 @@ module.exports = Provider.extend({
 
     // Keen IO only tracks messages, so turn Error's into strings.
     // TODO: make this cross-browser.
-    if ('string' === type(error)) error = error.message;
+    if (error instanceof Error) error = error.message;
 
     // Prepend log, incase they're also tracking regular events.
     error = 'Log: ' + error;

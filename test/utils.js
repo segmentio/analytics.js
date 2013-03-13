@@ -28,6 +28,14 @@ window.test = {
 
   oldUserId : 'old',
 
+  logMessage : 'something',
+
+  logError : new Error('something'),
+
+  logProperties : {
+    date : new Date()
+  },
+
 
   // Providers
   // ---------
@@ -87,7 +95,7 @@ window.test = {
 
   'Klaviyo' : 'x',
 
-  'LiveChat' : '2328081',
+  'LiveChat' : '2328351',
 
   'Mixpanel' : 'x',
 

@@ -1,5 +1,5 @@
-
 describe('Clicky', function () {
+
 
   describe('initialize', function () {
 

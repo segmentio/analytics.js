@@ -1,5 +1,6 @@
 describe('Chartbeat', function () {
 
+
   describe('initialize', function () {
 
     this.timeout(10000);

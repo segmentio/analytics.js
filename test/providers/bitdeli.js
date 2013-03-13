@@ -1,5 +1,6 @@
 describe('Bitdeli', function () {
 
+
   describe('initialize', function () {
 
     this.timeout(10000);
@@ -66,9 +67,9 @@ describe('Bitdeli', function () {
 
   describe('identify', function () {
 
-    before(analytics.user.clear);
+    beforeEach(analytics.user.clear);
 
-    it('should push "identify" on identify', function () {
+    it('should push "identify"', function () {
       var spy = sinon.spy(window._bdq, 'push');
       analytics.identify(test.traits);
       expect(spy.calledWith(['identify', test.userId])).to.be(false);
@@ -84,7 +85,7 @@ describe('Bitdeli', function () {
       spy.restore();
     });
 
-    it('should push "set" on identify', function () {
+    it('should push "set"', function () {
       var spy = sinon.spy(window._bdq, 'push');
       analytics.identify(test.traits);
       expect(spy.calledWith(['set', test.traits])).to.be(true);
@@ -105,7 +106,7 @@ describe('Bitdeli', function () {
 
   describe('track', function () {
 
-    it('should push "track" on track', function () {
+    it('should push "track"', function () {
       var spy = sinon.spy(window._bdq, 'push');
       analytics.track(test.event, test.properties);
       expect(spy.calledWith(['track', test.event, test.properties])).to.be(true);
@@ -118,7 +119,7 @@ describe('Bitdeli', function () {
 
   describe('pageview', function () {
 
-    it('should push "trackPageview" on pageview', function () {
+    it('should push "trackPageview"', function () {
       var spy = sinon.spy(window._bdq, 'push');
       analytics.pageview();
       expect(spy.calledWith(['trackPageview', undefined])).to.be(true);
@@ -128,6 +129,33 @@ describe('Bitdeli', function () {
       expect(spy.calledWith(['trackPageview', test.url])).to.be(true);
 
       spy.restore();
+    });
+
+  });
+
+
+  describe('log', function () {
+
+    it('shouldnt track a log', function () {
+      var bitdeli = analytics.providers[0]
+        , spy     = sinon.spy(bitdeli, 'track');
+
+      analytics.log('something');
+      expect(spy.calledWith('Log: something')).to.be(false);
+      spy.restore();
+    });
+
+    it('should track a log', function () {
+      var bitdeli = analytics.providers[0]
+        , spy     = sinon.spy(bitdeli, 'track');
+
+      bitdeli.options.log = true;
+
+      analytics.log('something');
+      expect(spy.calledWith('Log: something')).to.be(true);
+
+      spy.restore();
+      bitdeli.options.log = false;
     });
 
   });

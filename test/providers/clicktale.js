@@ -1,5 +1,5 @@
-
 describe('ClickTale', function () {
+
 
   describe('initialize', function () {
 

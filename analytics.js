@@ -1531,7 +1531,7 @@ extend(Analytics.prototype, {
    * enable. The keys are the names of the providers and their values are either
    * an api key, or  dictionary of extra settings (including the api key).
    *
-   * @param {Object} options (optional) - settings.
+   * @param {Object} options (optional) - extra settings to initialize with.
    */
 
   initialize : function (providers, options) {
@@ -1608,15 +1608,15 @@ extend(Analytics.prototype, {
    *         age   : 23
    *     });
    *
-   * @param {String} userId (optional) - the ID you recognize the user by.
+   * @param {String} userId (optional) - The ID you recognize the user by.
    * Ideally this isn't an email, because that might change in the future.
    *
-   * @param {Object} traits (optional) - a dictionary of traits you know about
+   * @param {Object} traits (optional) - A dictionary of traits you know about
    * the user. Things like `name`, `age`, etc.
    *
-   * @param {Object} options (optional) - settings for the identify call.
+   * @param {Object} options (optional) - Settings for the identify call.
    *
-   * @param {Function} callback (optional) - a function to call after a small
+   * @param {Function} callback (optional) - A function to call after a small
    * timeout, giving the identify time to make requests.
    */
 
@@ -1687,13 +1687,13 @@ extend(Analytics.prototype, {
    *
    * @param {String} event - The name of your event.
    *
-   * @param {Object} properties (optional) - a dictionary of properties of the
+   * @param {Object} properties (optional) - A dictionary of properties of the
    * event. `properties` are all camelCase (we'll automatically conver them to
    * the proper case each provider needs).
    *
-   * @param {Object} options (optional) - settings for the track call.
+   * @param {Object} options (optional) - Settings for the track call.
    *
-   * @param {Function} callback - a function to call after a small
+   * @param {Function} callback - A function to call after a small
    * timeout, giving the identify time to make requests.
    */
 
@@ -1735,12 +1735,12 @@ extend(Analytics.prototype, {
    * the page before the track requests were made. It works by wrapping the
    * calls in a short timeout, giving the requests time to fire.
    *
-   * @param {Element|Array} links - the link element or array of link elements
+   * @param {Element|Array} links - The link element or array of link elements
    * to bind to. (Allowing arrays makes it easy to pass in jQuery objects.)
    *
-   * @param {String} event - passed directly to `track`.
+   * @param {String} event - Passed directly to `track`.
    *
-   * @param {Object} properties (optional) - passed directly to `track`.
+   * @param {Object} properties (optional) - Passed directly to `track`.
    */
 
   trackLink : function (links, event, properties) {
@@ -1793,12 +1793,12 @@ extend(Analytics.prototype, {
    * be sent. It works by preventing the default submit event, sending our
    * track requests, and then submitting the form programmatically.
    *
-   * @param {Element|Array} forms - the form element or array of form elements
+   * @param {Element|Array} forms - The form element or array of form elements
    * to bind to. (Allowing arrays makes it easy to pass in jQuery objects.)
    *
-   * @param {String} event - passed directly to `track`.
+   * @param {String} event - Passed directly to `track`.
    *
-   * @param {Object} properties (optional) - passed directly to `track`.
+   * @param {Object} properties (optional) - Passed directly to `track`.
    */
 
   trackForm : function (form, event, properties) {
@@ -1845,7 +1845,7 @@ extend(Analytics.prototype, {
    * Simulate a pageview in single-page applications, where real pageviews don't
    * occur. This isn't support by all providers.
    *
-   * @param {String} url (optional) - the path of the page (eg. '/login'). Most
+   * @param {String} url (optional) - The path of the page (eg. '/login'). Most
    * providers will default to the current pages URL, so you don't need this.
    */
 
@@ -1875,9 +1875,9 @@ extend(Analytics.prototype, {
    *
    * Some providers don't support merging users.
    *
-   * @param {String} newId - the new ID you want to recognize the user by.
+   * @param {String} newId - The new ID you want to recognize the user by.
    *
-   * @param {String} originalId (optional) - the original ID that the user was
+   * @param {String} originalId (optional) - The original ID that the user was
    * recognized by. This defaults to the current identified user's ID if there
    * is one. In most cases you don't need to pass in the `originalId`.
    */
@@ -1893,6 +1893,32 @@ extend(Analytics.prototype, {
           provider.alias.apply(provider, args);
         } else {
           provider.enqueue('alias', args);
+        }
+      }
+    });
+  },
+
+
+  /**
+   * Log
+   *
+   * Log an error to analytics providers that support it, like Sentry.
+   *
+   * @param {Error|String} error - The error or string to log.
+   * @param {Object} properties - Properties about the error.
+   * @param {Object} options (optional) - Settings for the log call.
+   */
+
+  log : function (error, properties, options) {
+    if (!this.initialized) return;
+
+    each(this.providers, function (provider) {
+      if (provider.log && isEnabled(provider, options)) {
+        var args = [error, properties, options];
+        if (provider.ready) {
+          provider.log.apply(provider, args);
+        } else {
+          provider.enqueue('log', args);
         }
       }
     });
@@ -2257,7 +2283,6 @@ require.register("analytics/src/providers/bitdeli.js", function(exports, require
 // https://bitdeli.com/docs/javascript-api.html
 
 var Provider = require('../provider')
-  , type     = require('type')
   , load     = require('load-script');
 
 
@@ -2271,7 +2296,9 @@ module.exports = Provider.extend({
     authToken : null,
     // Whether or not to track an initial pageview when the page first
     // loads. You might not want this if you're using a single-page app.
-    initialPageview : true
+    initialPageview : true,
+    // Whether to track log calls, prefixing them with "Log: ".
+    log : false
   },
 
 
@@ -2304,6 +2331,19 @@ module.exports = Provider.extend({
   // If `url` is undefined, Bitdeli uses the current page URL instead.
   pageview : function (url) {
     window._bdq.push(['trackPageview', url]);
+  },
+
+  log : function (error, properties) {
+    if (!this.options.log) return;
+
+    // Bitdeli only tracks messages, so turn Error's into strings.
+    // TODO: make this cross-browser.
+    if (error instanceof Error) error = error.message;
+
+    // Prepend log, incase they're also tracking regular events.
+    error = 'Log: ' + error;
+
+    this.track(error, properties);
   }
 
 });
@@ -3181,7 +3221,9 @@ module.exports = Provider.extend({
     // Whether or not to pass pageviews on to Keen IO.
     pageview : false,
     // Whether or not to track an initial pageview on `initialize`.
-    initialPageview : false
+    initialPageview : false,
+    // Whether to track log calls, prefixing them with "Log: ".
+    log : false
   },
 
   initialize : function (options, ready) {
@@ -3221,6 +3263,19 @@ module.exports = Provider.extend({
     if (url) properties = { url : url };
 
     this.track('Loaded a Page', properties);
+  },
+
+  log : function (error, properties) {
+    if (!this.options.log) return;
+
+    // Keen IO only tracks messages, so turn Error's into strings.
+    // TODO: make this cross-browser.
+    if (error instanceof Error) error = error.message;
+
+    // Prepend log, incase they're also tracking regular events.
+    error = 'Log: ' + error;
+
+    this.track(error, properties);
   }
 
 });
@@ -3724,6 +3779,11 @@ module.exports = Provider.extend({
     traits || (traits = {});
     if (userId) traits.id = userId;
     window.Raven.setUser(traits);
+  },
+
+  // Raven will automatically use `captureMessage` if the error is a string.
+  log : function (error, properties) {
+    window.Raven.captureException(error, properties);
   }
 
 });

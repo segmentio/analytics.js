@@ -2,7 +2,6 @@
 // https://bitdeli.com/docs/javascript-api.html
 
 var Provider = require('../provider')
-  , type     = require('type')
   , load     = require('load-script');
 
 
@@ -58,7 +57,7 @@ module.exports = Provider.extend({
 
     // Bitdeli only tracks messages, so turn Error's into strings.
     // TODO: make this cross-browser.
-    if ('string' === type(error)) error = error.message;
+    if (error instanceof Error) error = error.message;
 
     // Prepend log, incase they're also tracking regular events.
     error = 'Log: ' + error;

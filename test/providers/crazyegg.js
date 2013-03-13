@@ -1,5 +1,5 @@
-
 describe('CrazyEgg', function () {
+
 
   describe('initialize', function () {
 

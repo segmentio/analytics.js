@@ -1,4 +1,3 @@
-
 describe('Intercom', function () {
 
   var options = {
@@ -13,6 +12,7 @@ describe('Intercom', function () {
     , traits = extend(clone(test.traits), {
         company : { id : '123' }
       });
+
 
   describe('initialize', function () {
 

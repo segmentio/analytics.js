@@ -1,5 +1,5 @@
-
 describe('comScore', function () {
+
 
   describe('initialize', function () {
 

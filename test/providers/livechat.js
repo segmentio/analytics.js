@@ -1,5 +1,5 @@
-
 describe('LiveChat', function () {
+
 
   describe('initialize', function () {
 
@@ -38,37 +38,34 @@ describe('LiveChat', function () {
     beforeEach(analytics.user.clear);
 
     it('should set user id', function () {
-      var spy = sinon.spy(window.LC_API, 'set_custom_variables');
+      var stub = sinon.stub(window.LC_API, 'set_custom_variables');
       analytics.identify(test.userId);
-      expect(spy.calledWith([
+      expect(stub.args[0][0]).to.eql([
         { name : 'User ID', value : test.userId }
-      ])).to.be(true);
-
-      spy.restore();
+      ]);
+      stub.restore();
     });
 
     it('should set traits', function () {
       var stub = sinon.stub(window.LC_API, 'set_custom_variables');
       analytics.identify(test.traits);
-      expect(stub.calledWith([
+      expect(stub.args[0][0]).to.eql([
         { name : 'name', value : test.traits.name },
         { name : 'email', value : test.traits.email },
         { name : 'created', value : test.traits.created }
-      ])).to.be(true);
-
+      ]);
       stub.restore();
     });
 
     it('should set user id and traits', function () {
       var stub = sinon.stub(window.LC_API, 'set_custom_variables');
       analytics.identify(test.userId, test.traits);
-      expect(stub.calledWith([
+      expect(stub.args[0][0]).to.eql([
         { name : 'User ID', value : test.userId },
         { name : 'name', value : test.traits.name },
         { name : 'email', value : test.traits.email },
         { name : 'created', value : test.traits.created }
-      ])).to.be(true);
-
+      ]);
       stub.restore();
     });
 

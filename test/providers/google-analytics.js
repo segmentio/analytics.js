@@ -1,5 +1,5 @@
-
 describe('Google Analytics', function () {
+
 
   describe('initialize', function () {
 

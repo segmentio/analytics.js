@@ -1,5 +1,5 @@
-
 describe('Keen IO', function () {
+
 
   describe('initialize', function () {
 
@@ -136,6 +136,33 @@ describe('Keen IO', function () {
 
       spy.restore();
       provider.options.pageview = false;
+    });
+
+  });
+
+
+  describe('log', function () {
+
+    it('shouldnt track a log', function () {
+      var keen = analytics.providers[0]
+        , spy  = sinon.spy(keen, 'track');
+
+      analytics.log('something');
+      expect(spy.calledWith('Log: something')).to.be(false);
+      spy.restore();
+    });
+
+    it('should track a log', function () {
+      var keen = analytics.providers[0]
+        , spy  = sinon.spy(keen, 'track');
+
+      keen.options.log = true;
+
+      analytics.log('something');
+      expect(spy.calledWith('Log: something')).to.be(true);
+
+      spy.restore();
+      keen.options.log = false;
     });
 
   });

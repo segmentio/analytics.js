@@ -242,11 +242,15 @@ describe('Analytics.js', function () {
       var spy  = sinon.spy(Provider.prototype, 'identify')
         , date = 'Dec 07 12';
       analytics.identify({
-        created : date
+        created : date,
+        company : {
+          created : date
+        }
       });
       var traits = spy.args[0][1];
       expect(type(traits.created)).to.equal('date');
       expect(traits.created.getTime()).to.equal(new Date(date).getTime());
+      expect(traits.company.created.getTime()).to.equal(new Date(date).getTime());
       spy.restore();
     });
 
@@ -254,10 +258,14 @@ describe('Analytics.js', function () {
       var spy  = sinon.spy(Provider.prototype, 'identify')
         , date = new Date();
       analytics.identify({
-        created : date
+        created : date,
+        company : {
+          created : date
+        }
       });
       var traits = spy.args[0][1];
       expect(traits.created.getTime()).to.equal(date.getTime());
+      expect(traits.company.created.getTime()).to.equal(date.getTime());
       spy.restore();
     });
 
@@ -266,22 +274,30 @@ describe('Analytics.js', function () {
         , date = new Date()
         , seconds = date.getTime()/1000;
       analytics.identify({
-        created : seconds
+        created : seconds,
+        company : {
+          created : seconds
+        }
       });
       var traits = spy.args[0][1];
       expect(traits.created.getTime()).to.equal(date.getTime());
+      expect(traits.company.created.getTime()).to.equal(date.getTime());
       spy.restore();
     });
 
     it('parses milliseconds into dates', function () {
       var spy  = sinon.spy(Provider.prototype, 'identify')
         , date = new Date()
-        , seconds = date.getTime();
+        , milliseconds = date.getTime();
       analytics.identify({
-        created : seconds
+        created : milliseconds,
+        company : {
+          created : milliseconds
+        }
       });
       var traits = spy.args[0][1];
       expect(traits.created.getTime()).to.equal(date.getTime());
+      expect(traits.company.created.getTime()).to.equal(date.getTime());
       spy.restore();
     });
 

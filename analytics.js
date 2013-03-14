@@ -1625,25 +1625,38 @@ extend(Analytics.prototype, {
     // Before we manipulate traits, clone it so we don't do anything uncouth.
     traits = clone(traits);
 
-    // Test for a `created` that's a valid date string or number and convert it.
-    if (traits && traits.created) {
+    // Create a function to convert `created` date formats to date objects
+    var convertCreatedToDate = function (created) {
       // Test for a `created` that's a valid date string
-      if (type(traits.created) === 'string' && Date.parse(traits.created)) {
-        traits.created = new Date(traits.created);
+      if (type(created) === 'string' && Date.parse(created)) {
+        return new Date(created);
       }
       // Test for a `created` that's a number.
-      else if (type(traits.created) === 'number') {
+      else if (type(created) === 'number') {
         // If the "created" number has units of "seconds since the epoch" then it will
         // certainly be less than 31557600000 seconds (January 7, 2970).
-        if (traits.created < 31557600000) {
-          traits.created = new Date(traits.created * 1000);
+        if (created < 31557600000) {
+          return new Date(created * 1000);
         }
         // If the "created" number has units of "milliseconds since the epoch" then it
         // will certainly be greater than 31557600000 milliseconds (December 31, 1970).
         else {
-          traits.created = new Date(traits.created);
+          return new Date(created);
         }
       }
+      else {
+        return created;
+      }
+    };
+
+    // Test for a `created` that's a valid date string or number and convert it.
+    if (traits && traits.created) {
+      traits.created = convertCreatedToDate(traits.created);
+    }
+
+    // Test for a `created` on traits.company that's a valid date string or number and convert it
+    if (traits && traits.company && traits.company.created) {
+      traits.company.created = convertCreatedToDate(traits.company.created);
     }
 
     // Call `identify` on all of our enabled providers that support it.
@@ -3176,7 +3189,8 @@ require.register("analytics/src/providers/intercom.js", function(exports, requir
 
 var Provider = require('../provider')
   , load     = require('load-script')
-  , isEmail  = require('is-email');
+  , isEmail  = require('is-email')
+  , clone    = require('clone');
 
 
 module.exports = Provider.extend({
@@ -3207,8 +3221,6 @@ module.exports = Provider.extend({
 
   identify : function (userId, traits) {
 
-    console.log(userId, traits);
-
     // Don't do anything if we just have traits.
     if (!this.booted && !userId) return;
 
@@ -3225,8 +3237,15 @@ module.exports = Provider.extend({
     if (traits) {
       settings.email = traits.email;
       settings.name = traits.name;
-      settings.company = traits.company;
+      settings.company = clone(traits.company);
       if (traits.created) settings.created_at = Math.floor(traits.created/1000);
+    }
+
+    // The `created` property on the company trait must also be converted
+    // to `created_at` in seconds.
+    if (settings.company && settings.company.created && !settings.company.created_at) {
+      settings.company.created_at = Math.floor(settings.company.created/1000);
+      delete settings.company.created;
     }
 
     // If they didn't pass an email, check to see if the `userId` qualifies.
@@ -3239,7 +3258,6 @@ module.exports = Provider.extend({
         use_counter : this.options.counter
       };
     }
-
 
     // The first time identify is called, we need to 'boot'.
     // Any time after that we need to call 'update' instead.

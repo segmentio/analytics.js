@@ -4,7 +4,8 @@
 
 var Provider = require('../provider')
   , load     = require('load-script')
-  , isEmail  = require('is-email');
+  , isEmail  = require('is-email')
+  , clone    = require('clone');
 
 
 module.exports = Provider.extend({
@@ -35,8 +36,6 @@ module.exports = Provider.extend({
 
   identify : function (userId, traits) {
 
-    console.log(userId, traits);
-
     // Don't do anything if we just have traits.
     if (!this.booted && !userId) return;
 
@@ -53,8 +52,15 @@ module.exports = Provider.extend({
     if (traits) {
       settings.email = traits.email;
       settings.name = traits.name;
-      settings.company = traits.company;
+      settings.company = clone(traits.company);
       if (traits.created) settings.created_at = Math.floor(traits.created/1000);
+    }
+
+    // The `created` property on the company trait must also be converted
+    // to `created_at` in seconds.
+    if (settings.company && settings.company.created && !settings.company.created_at) {
+      settings.company.created_at = Math.floor(settings.company.created/1000);
+      delete settings.company.created;
     }
 
     // If they didn't pass an email, check to see if the `userId` qualifies.
@@ -67,7 +73,6 @@ module.exports = Provider.extend({
         use_counter : this.options.counter
       };
     }
-
 
     // The first time identify is called, we need to 'boot'.
     // Any time after that we need to call 'update' instead.

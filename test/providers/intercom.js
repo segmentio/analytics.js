@@ -12,7 +12,7 @@ describe('Intercom', function () {
 
   var userId = test.userId
     , traits = extend(clone(test.traits), {
-        company : { id : '123' }
+        company : { id : '123', created : new Date() }
       });
 
   describe('initialize', function () {
@@ -54,7 +54,10 @@ describe('Intercom', function () {
       created_at  : Math.floor(traits.created/1000),
       app_id      : options.appId,
       user_id     : userId,
-      company     : traits.company,
+      company     : {
+        id         : traits.company.id,
+        created_at : Math.floor(traits.company.created/1000)
+      },
       custom_data : traits,
       user_hash   : undefined,
       email       : traits.email,

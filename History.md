@@ -1,3 +1,8 @@
+0.8.9 / 2013-3-13
+=================
+* Migrated to new Intercom Javascript API
+* Removed un-used Intercom traits
+
 0.8.8 / 2013-3-12
 =================
 * Added `userId` to Errorception metadata
@@ -15,7 +20,7 @@
 
 0.8.5 / 2013-3-7
 ================
-* Storyberg by [@kevinicus](https://github.com/kevinicus)
+* [Storyberg](http://storyberg.com/) by [@kevinicus](https://github.com/kevinicus)
 * [BugHerd](http://bugherd.com)
 * [ClickTale](http://clicktale.com)
 * Cleaned up extraneous `require`'s in many providers

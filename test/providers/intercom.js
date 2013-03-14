@@ -1,6 +1,5 @@
 describe('Intercom', function () {
 
-
   describe('initialize', function () {
 
     it('should load library and call ready', function (done) {
@@ -44,8 +43,14 @@ describe('Intercom', function () {
     });
 
     var settings = {
-      company     : traits.company,
       created_at  : Math.floor(traits.created/1000),
+      app_id      : options.appId,
+      user_id     : userId,
+      company     : {
+        id         : traits.company.id,
+        created_at : Math.floor(traits.company.created/1000)
+      },
+      user_hash   : undefined,
       custom_data : {},
       email       : traits.email,
       name        : traits.name,

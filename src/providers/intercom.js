@@ -6,7 +6,8 @@
 var Provider = require('../provider')
   , extend   = require('extend')
   , load     = require('load-script')
-  , isEmail  = require('is-email');
+  , isEmail  = require('is-email')
+  , clone    = require('clone');
 
 
 module.exports = Provider.extend({
@@ -31,9 +32,6 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-    // Intercom requires a `userId` to associate data to a user.
-    if (!userId) return;
-
     // Don't do anything if we just have traits.
     if (!this.booted && !userId) return;
 
@@ -70,6 +68,13 @@ module.exports = Provider.extend({
       delete traits.company;
     }
 
+    // The `created` property on the company trait must also be converted
+    // to `created_at` in seconds.
+    if (settings.company && settings.company.created && !settings.company.created_at) {
+      settings.company.created_at = Math.floor(settings.company.created/1000);
+      delete settings.company.created;
+    }
+
     // Optionally add the inbox widget.
     if (this.options.activator) {
       settings.widget = {
@@ -77,6 +82,7 @@ module.exports = Provider.extend({
         use_counter : this.options.counter
       };
     }
+
 
     // If this is the first time we've identified, `boot` instead of `update`
     // and add our one-time boot settings.

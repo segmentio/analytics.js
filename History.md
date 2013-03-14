@@ -1,3 +1,7 @@
+0.8.10 / 2013-3-14
+==================
+* Added conversion of company dates
+
 0.8.9 / 2013-3-13
 =================
 * Migrated to new Intercom Javascript API

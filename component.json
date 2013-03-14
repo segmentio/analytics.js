@@ -62,6 +62,7 @@
     "segmentio/is-meta": "*",
     "segmentio/load-date": "*",
     "segmentio/load-script": "*",
+    "segmentio/new-date": "*",
     "yields/prevent": "*"
   },
   "scripts": [

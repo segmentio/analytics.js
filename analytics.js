@@ -1388,6 +1388,18 @@ module.exports = function loadScript (options, callback) {
     return script;
 };
 });
+require.register("segmentio-new-date/index.js", function(exports, require, module){
+var type = require('type');
+
+
+module.exports = function newDate (date) {
+  // Milliseconds would be greater than 31557600000 (December 31, 1970).
+  if ('number' === type(date) && date < 31557600000) date = date * 1000;
+
+  // By default, delegate to Date, which will return `Invalid Date`s if wrong.
+  return new Date(date);
+};
+});
 require.register("yields-prevent/index.js", function(exports, require, module){
 
 /**
@@ -1430,6 +1442,7 @@ var after          = require('after')
   , each           = require('each')
   , extend         = require('extend')
   , isMeta         = require('is-meta')
+  , newDate        = require('new-date')
   , size           = require('object').length
   , preventDefault = require('prevent')
   , Provider       = require('./provider')
@@ -1647,21 +1660,10 @@ extend(Analytics.prototype, {
     // Clone `traits` before we manipulate it, so we don't do anything uncouth.
     traits = clone(traits);
 
-    // Test for a `created` that's a valid date string or number and convert it.
-    if (traits && traits.created) {
-      var date = traits.created;
-      switch (type(date)) {
-        // If it's a string, we need it to be parseable.
-        case 'string':
-          if (Date.parse(date)) traits.created = new Date(date);
-          break;
-        // If it's in milliseconds then it should be greater than 31557600000,
-        // which would is December 31, 1970.
-        case 'number':
-          if (date < 31557600000) date = date * 1000;
-          traits.created = new Date(date);
-          break;
-      }
+    // Convert dates from more types of input into Date objects.
+    if (traits && traits.created) traits.created = newDate(traits.created);
+    if (traits && traits.company && traits.company.created) {
+      traits.company.created = newDate(traits.company.created);
     }
 
     // Call `identify` on all of our enabled providers that support it.
@@ -4137,6 +4139,9 @@ require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js
 
 require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
+
+require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
+require.alias("component-type/index.js", "segmentio-new-date/deps/type/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
 

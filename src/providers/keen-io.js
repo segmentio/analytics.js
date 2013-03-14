@@ -15,9 +15,7 @@ module.exports = Provider.extend({
     // Whether or not to pass pageviews on to Keen IO.
     pageview : false,
     // Whether or not to track an initial pageview on `initialize`.
-    initialPageview : false,
-    // Whether to track log calls, prefixing them with "Log: ".
-    log : false
+    initialPageview : false
   },
 
   initialize : function (options, ready) {
@@ -57,19 +55,6 @@ module.exports = Provider.extend({
     if (url) properties = { url : url };
 
     this.track('Loaded a Page', properties);
-  },
-
-  log : function (error, properties) {
-    if (!this.options.log) return;
-
-    // Keen IO only tracks messages, so turn Error's into strings.
-    // TODO: make this cross-browser.
-    if (error instanceof Error) error = error.message;
-
-    // Prepend log, incase they're also tracking regular events.
-    error = 'Log: ' + error;
-
-    this.track(error, properties);
   }
 
 });

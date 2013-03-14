@@ -64,8 +64,12 @@ module.exports = Provider.extend({
       settings.name = traits.firstName + ' ' + traits.lastName;
     }
 
-    // Pull out a company field.
+    // Pull out a company field, with it's own optional `created` date.
     if (traits && traits.company) {
+      if (traits.company.created) {
+        traits.company.created_at = Math.floor(traits.company.created/1000);
+        delete traits.company.created;
+      }
       settings.company = traits.company;
       delete traits.company;
     }

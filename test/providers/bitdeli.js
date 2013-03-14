@@ -133,31 +133,4 @@ describe('Bitdeli', function () {
 
   });
 
-
-  describe('log', function () {
-
-    it('shouldnt track a log', function () {
-      var bitdeli = analytics.providers[0]
-        , spy     = sinon.spy(bitdeli, 'track');
-
-      analytics.log('something');
-      expect(spy.calledWith('Log: something')).to.be(false);
-      spy.restore();
-    });
-
-    it('should track a log', function () {
-      var bitdeli = analytics.providers[0]
-        , spy     = sinon.spy(bitdeli, 'track');
-
-      bitdeli.options.log = true;
-
-      analytics.log('something');
-      expect(spy.calledWith('Log: something')).to.be(true);
-
-      spy.restore();
-      bitdeli.options.log = false;
-    });
-
-  });
-
 });

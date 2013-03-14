@@ -15,9 +15,7 @@ module.exports = Provider.extend({
     authToken : null,
     // Whether or not to track an initial pageview when the page first
     // loads. You might not want this if you're using a single-page app.
-    initialPageview : true,
-    // Whether to track log calls, prefixing them with "Log: ".
-    log : false
+    initialPageview : true
   },
 
 
@@ -50,19 +48,6 @@ module.exports = Provider.extend({
   // If `url` is undefined, Bitdeli uses the current page URL instead.
   pageview : function (url) {
     window._bdq.push(['trackPageview', url]);
-  },
-
-  log : function (error, properties) {
-    if (!this.options.log) return;
-
-    // Bitdeli only tracks messages, so turn Error's into strings.
-    // TODO: make this cross-browser.
-    if (error instanceof Error) error = error.message;
-
-    // Prepend log, incase they're also tracking regular events.
-    error = 'Log: ' + error;
-
-    this.track(error, properties);
   }
 
 });

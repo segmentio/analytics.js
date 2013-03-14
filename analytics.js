@@ -1834,7 +1834,9 @@ extend(Analytics.prototype, {
         preventDefault(e);
 
         // Submit the form after a timeout, giving the event time to fire.
-        setTimeout(el.submit, self.timeout);
+        setTimeout(function () {
+          el.submit();
+        }, self.timeout);
       };
 
       // Support the form being submitted via jQuery instead of for real. This

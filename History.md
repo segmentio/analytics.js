@@ -2,6 +2,7 @@
 =================
 * Migrated to new Intercom Javascript API
 * Removed un-used Intercom traits
+* Fix bug in `trackForm` when using jQuery
 
 0.8.8 / 2013-3-12
 =================

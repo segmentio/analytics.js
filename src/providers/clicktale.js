@@ -37,6 +37,9 @@ module.exports = Provider.extend({
 
   initialize : function (options, ready) {
 
+    // If we're on https:// but don't have a secure library, return early.
+    if (document.location.protocol === 'https:' && !options.httpsCdnUrl) return;
+
     // ClickTale wants this at the "top" of the page. The
     // analytics.js snippet sets this date synchronously now,
     // and  makes it available via load-date.

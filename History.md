@@ -2,6 +2,7 @@
 ==================
 * Added fix for conversion of `company`'s `created` date
 * Added extra tests for `trackForm`
+* Fixing issue with ClickTale https bug
 
 0.8.9 / 2013-3-13
 =================

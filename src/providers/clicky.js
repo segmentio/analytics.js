@@ -1,7 +1,5 @@
-// Clicky
-// ------
-// [Documentation](http://clicky.com/help/customization/manual?new-domain).
-// [Session info](http://clicky.com/help/customization/manual?new-domain#/help/customization#session)
+// http://clicky.com/help/customization/manual?new-domain
+// http://clicky.com/help/customization/manual?new-domain#/help/customization#session
 
 var Provider = require('../provider')
   , user     = require('../user')
@@ -11,12 +9,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Clicky',
+
   key : 'siteId',
 
   options : {
     siteId : null
   },
-
 
   initialize : function (options, ready) {
     window.clicky_site_ids = window.clicky_site_ids || [];
@@ -26,7 +25,7 @@ module.exports = Provider.extend({
       , traits  = user.traits()
       , session = {};
 
-    if (userId) session.username = userId;
+    if (userId) session.id = userId;
     extend(session, traits);
 
     window.clicky_custom = { session : session };
@@ -34,13 +33,7 @@ module.exports = Provider.extend({
     load('//static.getclicky.com/js', ready);
   },
 
-
   track : function (event, properties) {
-    // In case the Clicky library hasn't loaded yet.
-    if (!window.clicky) return;
-
-    // We aren't guaranteed `clicky` is available until the script has been
-    // requested and run, hence the check.
     window.clicky.log(window.location.href, event);
   }
 

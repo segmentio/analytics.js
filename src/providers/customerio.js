@@ -1,6 +1,4 @@
-// Customer.io
-// -----------
-// [Documentation](http://customer.io/docs/api/javascript.html).
+// http://customer.io/docs/api/javascript.html
 
 var Provider = require('../provider')
   , isEmail  = require('is-email')
@@ -9,12 +7,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Customer.io',
+
   key : 'siteId',
 
   options : {
     siteId : null
   },
-
 
   initialize : function (options, ready) {
     var _cio = window._cio = window._cio || [];
@@ -41,7 +40,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   identify : function (userId, traits) {
     // Don't do anything if we just have traits, because Customer.io
     // requires a `userId`.
@@ -64,7 +62,6 @@ module.exports = Provider.extend({
 
     window._cio.identify(traits);
   },
-
 
   track : function (event, properties) {
     window._cio.track(event, properties);

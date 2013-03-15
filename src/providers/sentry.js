@@ -1,5 +1,3 @@
-// Sentry
-// ------
 // http://raven-js.readthedocs.org/en/latest/config/index.html
 
 var Provider = require('../provider')
@@ -8,12 +6,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Sentry',
+
   key : 'config',
 
   options : {
     config : null
   },
-
 
   initialize : function (options, ready) {
     load('//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js', function () {
@@ -24,11 +23,15 @@ module.exports = Provider.extend({
     });
   },
 
-
   identify : function (userId, traits) {
     traits || (traits = {});
     if (userId) traits.id = userId;
     window.Raven.setUser(traits);
+  },
+
+  // Raven will automatically use `captureMessage` if the error is a string.
+  log : function (error, properties) {
+    window.Raven.captureException(error, properties);
   }
 
 });

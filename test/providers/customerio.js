@@ -1,5 +1,5 @@
-
 describe('Customer.io', function () {
+
 
   describe('initialize', function () {
 
@@ -33,7 +33,7 @@ describe('Customer.io', function () {
 
   describe('identify', function () {
 
-    before(analytics.user.clear);
+    beforeEach(analytics.user.clear);
 
     it('should call identify', function () {
       var spy = sinon.spy(window._cio, 'identify');

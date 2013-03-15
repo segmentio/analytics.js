@@ -1,6 +1,4 @@
-// Quantcast
-// ---------
-// [Documentation](https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/)
+// https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -8,12 +6,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Quantcast',
+
   key : 'pCode',
 
   options : {
     pCode : null
   },
-
 
   initialize : function (options, ready) {
     window._qevents = window._qevents || [];

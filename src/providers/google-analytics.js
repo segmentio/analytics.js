@@ -1,6 +1,4 @@
-// Google Analytics
-// ----------------
-// [Documentation](https://developers.google.com/analytics/devguides/collection/gajs/).
+// https://developers.google.com/analytics/devguides/collection/gajs/
 
 var Provider  = require('../provider')
   , load      = require('load-script')
@@ -10,6 +8,8 @@ var Provider  = require('../provider')
 
 
 module.exports = Provider.extend({
+
+  name : 'Google Analytics',
 
   key : 'trackingId',
 
@@ -31,7 +31,6 @@ module.exports = Provider.extend({
     // Whether to enable GOogle's DoubleClick remarketing feature.
     doubleClick : false
   },
-
 
   initialize : function (options, ready) {
     window._gaq = window._gaq || [];
@@ -72,7 +71,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   track : function (event, properties) {
     properties || (properties = {});
 
@@ -95,9 +93,7 @@ module.exports = Provider.extend({
     ]);
   },
 
-
   pageview : function (url) {
-    // If there isn't a url, that's fine.
     window._gaq.push(['_trackPageview', url]);
   }
 

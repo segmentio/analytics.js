@@ -1,5 +1,5 @@
-
 describe('Klaviyo', function () {
+
 
   describe('initialize', function () {
 
@@ -35,7 +35,7 @@ describe('Klaviyo', function () {
 
   describe('identify', function () {
 
-    before(analytics.user.clear);
+    beforeEach(analytics.user.clear);
 
     it('should push "_identify"', function () {
       var extend = require('segmentio-extend')

@@ -1,5 +1,5 @@
-
 describe('UserVoice', function () {
+
 
   describe('initialize', function () {
 

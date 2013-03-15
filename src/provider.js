@@ -6,10 +6,20 @@ var each   = require('each')
 module.exports = Provider;
 
 
+/**
+ * Provider
+ *
+ * @param {Object} options - settings to initialize the Provider with. This will
+ * be merged with the Provider's own defaults.
+ *
+ * @param {Function} ready - a ready callback, to be called when the provider is
+ * ready to handle analytics calls.
+ */
+
 function Provider (options, ready) {
   var self = this;
-  // Set up a queue of { method : 'identify', args : [] } to call
-  // once we are ready.
+
+  // Make a queue of `{ method : 'identify', args : [] }` to unload once ready.
   this.queue = [];
   this.ready = false;
 
@@ -21,13 +31,15 @@ function Provider (options, ready) {
       options = {};
       options[this.key] = key;
     } else {
-      throw new Error('Could not resolve options.');
+      throw new Error('Couldnt resolve options.');
     }
   }
-  // Extend the options passed in with the provider's defaults.
+
+  // Extend the passed-in options with our defaults.
   extend(this.options, options);
 
-  // Wrap our ready function to first read from the queue.
+  // Wrap our ready function, so that it ready from our internal queue first
+  // and then marks us as ready.
   var dequeue = function () {
     each(self.queue, function (call) {
       var method = call.method
@@ -39,13 +51,18 @@ function Provider (options, ready) {
     ready();
   };
 
-  // Call the provider's initialize object.
+  // Call our initialize method.
   this.initialize.call(this, this.options, dequeue);
 }
 
 
-// Helper to add provider methods to the prototype chain, for adding custom
-// providers. Modeled after [Backbone's `extend` method](https://github.com/documentcloud/backbone/blob/master/backbone.js#L1464).
+/**
+ * Inheritance helper.
+ *
+ * Modeled after Backbone's `extend` method:
+ * https://github.com/documentcloud/backbone/blob/master/backbone.js#L1464
+ */
+
 Provider.extend = function (properties) {
   var parent = this;
   var child = function () { return parent.apply(this, arguments); };
@@ -57,32 +74,50 @@ Provider.extend = function (properties) {
 };
 
 
-// Add to the default Provider prototype.
+/**
+ * Augment Provider's prototype.
+ */
+
 extend(Provider.prototype, {
 
-  // Override this with any default options.
+  /**
+   * Default settings for the provider.
+   */
+
   options : {},
 
-  // Override this if our provider only needs a single API key to
-  // initialize itself, in which case we can use the terse initialization
-  // syntax:
-  //
-  //     analytics.initialize({
-  //       'Provider' : 'XXXXXXX'
-  //     });
-  //
+
+  /**
+   * The single required API key for the provider. This lets us support a terse
+   * initialization syntax:
+   *
+   *     analytics.initialize({
+   *       'Provider' : 'XXXXXXX'
+   *     });
+   *
+   * Only add this if the provider has a _single_ required key.
+   */
+
   key : undefined,
 
-  // Override to provider your own initialization logic, usually a snippet
-  // and loading a Javascript library.
+
+  /**
+   * Initialize our provider.
+   *
+   * @param {Object} options - the settings for the provider.
+   * @param {Function} ready - a ready callback to call when we're ready to
+   * start accept analytics method calls.
+   */
   initialize : function (options, ready) {
     ready();
   },
 
+
   /**
-   * Adds an item to the queue
-   * @param  {String} method ('track' or 'identify')
-   * @param  {Object} args
+   * Adds an item to the our internal pre-ready queue.
+   *
+   * @param {String} method - the analytics method to call (eg. 'track').
+   * @param {Object} args - the arguments to pass to the method.
    */
   enqueue : function (method, args) {
     this.queue.push({
@@ -90,4 +125,5 @@ extend(Provider.prototype, {
       args : args
     });
   }
+
 });

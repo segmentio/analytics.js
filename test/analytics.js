@@ -1,11 +1,9 @@
-
 describe('Analytics.js', function () {
 
-  var type = require('component-type');
-
-  var readyTimeout = 42;
+  var readyTimeout = 20;
 
   var Provider = analytics.Provider.extend({
+    name       : 'Test',
     key        : 'key',
     options    : {},
     initialize : function (options, ready) {
@@ -16,12 +14,15 @@ describe('Analytics.js', function () {
     pageview   : function () {},
     alias      : function (newId, originalId) {}
   });
-  analytics.addProvider('Test', Provider);
+  analytics.addProvider(Provider);
 
   var options = { 'Test' : 'x' };
 
   // Make sure initialize runs, so that any test can be looked at individually.
   analytics.initialize(options);
+
+  // Lower timeout for tests.
+  analytics.timeout = 20;
 
 
 
@@ -52,11 +53,12 @@ describe('Analytics.js', function () {
 
   describe('ready', function () {
 
+    before(function () {
+      // Turn off our current ready state.
+      analytics.readied = false;
+    });
 
     it('calls callbacks on initialize after a timeout', function (done) {
-      // Turn off our current initialized state.
-      analytics.initialized = false;
-
       var spy1 = sinon.spy();
       var spy2 = sinon.spy();
 
@@ -78,18 +80,18 @@ describe('Analytics.js', function () {
 
     it('sets ready state', function () {
       analytics.initialize(options);
-      expect(analytics.isReady).to.be(false);
+      expect(analytics.readied).to.be(false);
       analytics.ready(function () {
-        expect(analytics.isReady).to.be(true);
+        expect(analytics.readied).to.be(true);
       });
     });
 
     it('resets ready state (after initialize)', function (done) {
       analytics.initialize(options);
       analytics.ready(function () {
-        expect(analytics.isReady).to.be(true);
+        expect(analytics.readied).to.be(true);
         analytics.initialize(options);
-        expect(analytics.isReady).to.be(false);
+        expect(analytics.readied).to.be(false);
 
         // Wait for it to come back to not interleave next tests.
         analytics.ready(done);
@@ -155,8 +157,6 @@ describe('Analytics.js', function () {
   });
 
 
-  // Identify
-  // --------
 
   describe('identify', function () {
 
@@ -239,25 +239,34 @@ describe('Analytics.js', function () {
     });
 
     it('parses valid strings into dates', function () {
-      var spy  = sinon.spy(Provider.prototype, 'identify')
+      var type = require('component-type')
+        , spy  = sinon.spy(Provider.prototype, 'identify')
         , date = 'Dec 07 12';
+
       analytics.identify({
-        created : date
+        created : date,
+        company : { created : date }
       });
+
       var traits = spy.args[0][1];
       expect(type(traits.created)).to.equal('date');
       expect(traits.created.getTime()).to.equal(new Date(date).getTime());
+      expect(traits.company.created.getTime()).to.equal(new Date(date).getTime());
       spy.restore();
     });
 
     it('keeps normal dates the same', function () {
       var spy  = sinon.spy(Provider.prototype, 'identify')
         , date = new Date();
+
       analytics.identify({
-        created : date
+        created : date,
+        company : { created : date }
       });
+
       var traits = spy.args[0][1];
       expect(traits.created.getTime()).to.equal(date.getTime());
+      expect(traits.company.created.getTime()).to.equal(date.getTime());
       spy.restore();
     });
 
@@ -266,10 +275,12 @@ describe('Analytics.js', function () {
         , date = new Date()
         , seconds = date.getTime()/1000;
       analytics.identify({
-        created : seconds
+        created : seconds,
+        company : { created : seconds }
       });
       var traits = spy.args[0][1];
       expect(traits.created.getTime()).to.equal(date.getTime());
+      expect(traits.company.created.getTime()).to.equal(date.getTime());
       spy.restore();
     });
 
@@ -278,10 +289,12 @@ describe('Analytics.js', function () {
         , date = new Date()
         , seconds = date.getTime();
       analytics.identify({
-        created : seconds
+        created : seconds,
+        company : { created : seconds }
       });
       var traits = spy.args[0][1];
       expect(traits.created.getTime()).to.equal(date.getTime());
+      expect(traits.company.created.getTime()).to.equal(date.getTime());
       spy.restore();
     });
 
@@ -533,9 +546,10 @@ describe('Analytics.js', function () {
 
   describe('trackForm', function () {
 
-    var template = '<form action="http://google.com" target="_blank"><input type="submit" /></form>';
+    var bind     = require('component-event').bind
+      , template = '<form action="http://google.com" target="_blank"><input type="submit" /></form>';
 
-    it('triggers a track on a form submit', function () {
+    it('triggers track', function () {
       var spy  = sinon.spy(Provider.prototype, 'track')
         , form = $(template)[0];
 
@@ -545,24 +559,30 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
-    it('triggers a track on a $form submit', function () {
-      var spy   = sinon.spy(Provider.prototype, 'track')
-        , $form = $(template);
+    it('triggers an existing submit handler', function () {
+      var form = $(template)[0]
+        , spy  = sinon.spy();
 
-      analytics.trackForm($form, 'party');
-      triggerClick($form.find('input')[0]);
-      expect(spy.calledWith('party')).to.be(true);
-      spy.restore();
+      analytics.trackForm(form, 'party');
+      bind(form, 'submit', spy);
+
+      triggerClick($(form).find('input')[0]);
+
+      expect(spy.called).to.be(true);
+      expect(spy.thisValues[0]).to.be(form);
     });
 
-    it('triggers a track on a $form submitted by jQuery', function () {
-      var spy   = sinon.spy(Provider.prototype, 'track')
-        , $form = $(template);
+    it('calls the forms submit method after a timeout', function (done) {
+      var form = $(template)[0]
+        , spy  = sinon.spy(form, 'submit');
 
-      analytics.trackForm($form, 'party');
-      $form.submit();
-      expect(spy.calledWith('party')).to.be(true);
-      spy.restore();
+      analytics.trackForm(form, 'party');
+      triggerClick($(form).find('input')[0]);
+
+      setTimeout(function () {
+        expect(spy.called).to.be(true);
+        done();
+      }, analytics.timeout);
     });
 
     it('allows for properties to be a function', function () {
@@ -570,7 +590,7 @@ describe('Analytics.js', function () {
         , form = $(template)[0];
 
       analytics.trackForm(form, 'party', function () {
-          return { type : 'crazy' };
+        return { type : 'crazy' };
       });
 
       triggerClick($(form).find('input')[0]);
@@ -589,6 +609,56 @@ describe('Analytics.js', function () {
 
     it('trackSubmit is aliased to trackForm for backwards compatibility', function () {
       expect(analytics.trackSubmit).to.equal(analytics.trackForm);
+    });
+
+
+    /**
+     * A jQuery Form.
+     */
+
+    it('triggers track on a $form', function () {
+      var spy   = sinon.spy(Provider.prototype, 'track')
+        , $form = $(template);
+
+      analytics.trackForm($form, 'party');
+      triggerClick($form.find('input')[0]);
+      expect(spy.calledWith('party')).to.be(true);
+      spy.restore();
+    });
+
+    it('triggers an existing jquery submit handler on a $form', function () {
+      var $form = $(template)
+        , spy   = sinon.spy();
+
+      analytics.trackForm($form, 'party');
+      $form.submit(spy);
+
+      triggerClick($form.find('input')[0]);
+
+      expect(spy.called).to.be(true);
+      expect(spy.thisValues[0]).to.be($form[0]);
+    });
+
+    it('triggers track on a $form submitted by jQuery', function () {
+      var spy   = sinon.spy(Provider.prototype, 'track')
+        , $form = $(template);
+
+      analytics.trackForm($form, 'party');
+      $form.submit();
+      expect(spy.calledWith('party')).to.be(true);
+      spy.restore();
+    });
+
+    it('triggers an existing jquery submit handler on a $form submitted by jQuery', function () {
+      var $form = $(template)
+        , spy   = sinon.spy();
+
+      analytics.trackForm($form, 'party');
+      $form.submit(spy);
+      $form.submit();
+
+      expect(spy.called).to.be(true);
+      expect(spy.thisValues[0]).to.be($form[0]);
     });
   });
 

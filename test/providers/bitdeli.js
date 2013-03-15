@@ -1,5 +1,5 @@
-
 describe('Bitdeli', function () {
+
 
   describe('initialize', function () {
 
@@ -67,9 +67,9 @@ describe('Bitdeli', function () {
 
   describe('identify', function () {
 
-    before(analytics.user.clear);
+    beforeEach(analytics.user.clear);
 
-    it('should push "identify" on identify', function () {
+    it('should push "identify"', function () {
       var spy = sinon.spy(window._bdq, 'push');
       analytics.identify(test.traits);
       expect(spy.calledWith(['identify', test.userId])).to.be(false);
@@ -85,7 +85,7 @@ describe('Bitdeli', function () {
       spy.restore();
     });
 
-    it('should push "set" on identify', function () {
+    it('should push "set"', function () {
       var spy = sinon.spy(window._bdq, 'push');
       analytics.identify(test.traits);
       expect(spy.calledWith(['set', test.traits])).to.be(true);
@@ -106,7 +106,7 @@ describe('Bitdeli', function () {
 
   describe('track', function () {
 
-    it('should push "track" on track', function () {
+    it('should push "track"', function () {
       var spy = sinon.spy(window._bdq, 'push');
       analytics.track(test.event, test.properties);
       expect(spy.calledWith(['track', test.event, test.properties])).to.be(true);
@@ -119,7 +119,7 @@ describe('Bitdeli', function () {
 
   describe('pageview', function () {
 
-    it('should push "trackPageview" on pageview', function () {
+    it('should push "trackPageview"', function () {
       var spy = sinon.spy(window._bdq, 'push');
       analytics.pageview();
       expect(spy.calledWith(['trackPageview', undefined])).to.be(true);

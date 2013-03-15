@@ -1,19 +1,18 @@
-// HitTail
-// -------
-// [Documentation](www.hittail.com).
+// http://www.hittail.com
 
 var Provider = require('../provider')
-  , load   = require('load-script');
+  , load     = require('load-script');
 
 
 module.exports = Provider.extend({
+
+  name : 'HitTail',
 
   key : 'siteId',
 
   options : {
     siteId : null
   },
-
 
   initialize : function (options, ready) {
     load('//' + options.siteId + '.hittail.com/mlt.js', ready);

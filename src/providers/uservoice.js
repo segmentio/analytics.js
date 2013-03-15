@@ -1,6 +1,4 @@
-// UserVoice
-// ---------
-// [Documentation](http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb).
+// http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -8,12 +6,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'UserVoice',
+
   key : 'widgetId',
 
   options : {
     widgetId : null
   },
-
 
   initialize : function (options, ready) {
     window.uvOptions = {};

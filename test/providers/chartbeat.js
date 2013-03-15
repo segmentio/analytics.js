@@ -1,5 +1,5 @@
-
 describe('Chartbeat', function () {
+
 
   describe('initialize', function () {
 

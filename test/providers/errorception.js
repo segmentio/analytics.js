@@ -1,5 +1,6 @@
 describe('Errorception', function () {
 
+
   describe('initialize', function () {
 
     this.timeout(10000);

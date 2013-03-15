@@ -1,6 +1,4 @@
-// LiveChat
-// --------
-// [Documentation](http://www.livechatinc.com/api/javascript-api).
+// http://www.livechatinc.com/api/javascript-api
 
 var Provider = require('../provider')
   , each     = require('each')
@@ -8,6 +6,8 @@ var Provider = require('../provider')
 
 
 module.exports = Provider.extend({
+
+  name : 'LiveChat',
 
   key : 'license',
 
@@ -19,7 +19,6 @@ module.exports = Provider.extend({
     window.__lc = { license : options.license };
     load('//cdn.livechatinc.com/tracking.js', ready);
   },
-
 
   // LiveChat isn't an analytics service, but we can use the `userId` and
   // `traits` to tag the user with their real name in the chat console.

@@ -1,6 +1,4 @@
-// Woopra
-// ------
-// [Documentation](http://www.woopra.com/docs/setup/javascript-tracking/).
+// http://www.woopra.com/docs/setup/javascript-tracking/
 
 var Provider = require('../provider')
   , each     = require('each')
@@ -13,12 +11,13 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
+  name : 'Woopra',
+
   key : 'domain',
 
   options : {
     domain : null
   },
-
 
   initialize : function (options, ready) {
     // Woopra gives us a nice ready callback.
@@ -42,7 +41,6 @@ module.exports = Provider.extend({
     load('//static.woopra.com/js/woopra.js');
   },
 
-
   identify : function (userId, traits) {
 
     if (!window.woopraTracker) return;
@@ -50,7 +48,6 @@ module.exports = Provider.extend({
     this.addTraits(userId, traits, window.woopraTracker);
     window.woopraTracker.track();
   },
-
 
   // Convenience function for updating the userId and traits.
   addTraits : function (userId, traits, tracker) {
@@ -65,7 +62,6 @@ module.exports = Provider.extend({
       if (type(trait) === 'string') addTrait(name, trait);
     });
   },
-
 
   track : function (event, properties) {
     // We aren't guaranteed a tracker.

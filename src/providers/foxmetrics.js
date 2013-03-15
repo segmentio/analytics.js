@@ -1,22 +1,18 @@
-// FoxMetrics
-// -----------
-// [Website] (http://foxmetrics.com)
-// [Documentation](http://foxmetrics.com/documentation)
-// [Documentation - JS](http://foxmetrics.com/documentation/apijavascript)
-// [Support](http://support.foxmetrics.com)
+// http://foxmetrics.com/documentation/apijavascript
 
 var Provider = require('../provider')
-  , load   = require('load-script');
+  , load     = require('load-script');
 
 
 module.exports = Provider.extend({
+
+  name : 'FoxMetrics',
 
   key : 'appId',
 
   options : {
     appId : null
   },
-
 
   initialize : function (options, ready) {
     var _fxm = window._fxm || {};
@@ -27,7 +23,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-
   identify : function (userId, traits) {
     // A `userId` is required for profile updates, otherwise its a waste of
     // resources as nothing will get updated.
@@ -37,6 +32,7 @@ module.exports = Provider.extend({
     var firstName = null
       , lastName  = null
       , email     = null;
+
     if (traits && traits.name) {
       firstName = traits.name.split(' ')[0];
       lastName = traits.name.split(' ')[1];
@@ -59,7 +55,6 @@ module.exports = Provider.extend({
     ]);
   },
 
-
   track : function (event, properties) {
     window._fxm.push([
       event,     // event name
@@ -67,7 +62,6 @@ module.exports = Provider.extend({
       properties // properties
     ]);
   },
-
 
   pageview : function (url) {
     window._fxm.push([

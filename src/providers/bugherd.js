@@ -1,12 +1,12 @@
-// BugHerd
-// -------
-// [Documentation](http://support.bugherd.com/home).
+// http://support.bugherd.com/home
 
 var Provider = require('../provider')
   , load     = require('load-script');
 
 
 module.exports = Provider.extend({
+
+  name : 'BugHerd',
 
   key : 'apiKey',
 

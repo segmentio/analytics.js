@@ -1,5 +1,5 @@
-
 describe('Vero', function () {
+
 
   describe('initialize', function () {
 
@@ -37,7 +37,7 @@ describe('Vero', function () {
 
   describe('identify', function () {
 
-    before(analytics.user.clear);
+    beforeEach(analytics.user.clear);
 
     // Very requires an email and traits. Check for both separately, but do
     // traits first because otherwise the userId will be cached.

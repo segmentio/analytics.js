@@ -1,5 +1,6 @@
 describe('Olark', function () {
 
+
   describe('initialize', function () {
 
     this.timeout(10000);
@@ -32,7 +33,7 @@ describe('Olark', function () {
 
   describe('identify', function () {
 
-    before(analytics.user.clear);
+    beforeEach(analytics.user.clear);
 
     it('should updates visitor nickname with the best name', function () {
       var spy = sinon.spy(window, 'olark');

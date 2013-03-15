@@ -1,6 +1,4 @@
-// Intercom
-// --------
-// [Documentation](http://docs.intercom.io/).
+// http://docs.intercom.io/
 // http://docs.intercom.io/#IntercomJS
 
 var Provider = require('../provider')
@@ -10,6 +8,8 @@ var Provider = require('../provider')
 
 
 module.exports = Provider.extend({
+
+  name : 'Intercom',
 
   // Whether Intercom has already been booted or not. Intercom becomes booted
   // after Intercom('boot', ...) has been called on the first identify.
@@ -64,8 +64,12 @@ module.exports = Provider.extend({
       settings.name = traits.firstName + ' ' + traits.lastName;
     }
 
-    // Pull out a company field.
+    // Pull out a company field, with it's own optional `created` date.
     if (traits && traits.company) {
+      if (traits.company.created) {
+        traits.company.created_at = Math.floor(traits.company.created/1000);
+        delete traits.company.created;
+      }
       settings.company = traits.company;
       delete traits.company;
     }

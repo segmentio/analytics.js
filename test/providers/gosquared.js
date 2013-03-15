@@ -1,5 +1,5 @@
-
 describe('GoSquared', function () {
+
 
   describe('initialize', function () {
 

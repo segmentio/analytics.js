@@ -1,5 +1,5 @@
-
 describe('FoxMetrics', function () {
+
 
   describe('initialize', function () {
 
@@ -34,7 +34,7 @@ describe('FoxMetrics', function () {
 
   describe('identify', function () {
 
-    before(analytics.user.clear);
+    beforeEach(analytics.user.clear);
 
     it('should push "_fxm.visitor.profile"', function () {
       var stub = sinon.stub(window._fxm, 'push');

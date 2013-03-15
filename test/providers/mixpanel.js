@@ -1,4 +1,3 @@
-
 describe('Mixpanel', function () {
 
   // Mixpanel needs specially aliased traits.
@@ -7,6 +6,7 @@ describe('Mixpanel', function () {
     $email   : test.traits.email,
     $created : test.traits.created
   };
+
 
   describe('initialize', function () {
 
@@ -41,79 +41,74 @@ describe('Mixpanel', function () {
     beforeEach(analytics.user.clear);
 
     it('should call identify with a user id', function () {
-
       var spy = sinon.spy(window.mixpanel, 'identify');
+
       analytics.identify(test.traits);
       expect(spy.called).to.be(false);
-
       spy.reset();
+
       analytics.identify(test.userId);
       expect(spy.calledWith(test.userId)).to.be(true);
-
       spy.reset();
+
       analytics.identify(test.userId, test.traits);
       expect(spy.calledWith(test.userId)).to.be(true);
-
       spy.restore();
     });
 
     it('should call register with traits', function () {
-
       var spy = sinon.spy(window.mixpanel, 'register');
+
       analytics.identify(test.traits);
       expect(spy.calledWith(aliasedTraits)).to.be(true);
-
       spy.reset();
+
       analytics.identify(test.userId);
       expect(spy.called).to.be(false);
-
       spy.reset();
+
       analytics.identify(test.userId, test.traits);
       expect(spy.calledWith(aliasedTraits)).to.be(true);
-
       spy.restore();
     });
 
     // TODO name tag with options flag
 
     it('should call name_tag with the optimal id', function () {
-
       var spy = sinon.spy(window.mixpanel, 'name_tag');
-      analytics.identify(test.traits);
-      expect(spy.called).to.be(false);
 
+      analytics.identify(test.traits);
+      expect(spy.calledWith(test.traits.email)).to.be(false);
       spy.reset();
+
       analytics.identify(test.userId);
       expect(spy.calledWith(test.userId)).to.be(true);
-
       spy.reset();
+
       analytics.identify(test.userId, test.traits);
       expect(spy.calledWith(test.traits.email)).to.be(true);
-
       spy.restore();
     });
 
     it('should call people.set with traits', function () {
-
       analytics.providers[0].options.people = true;
       var spy = sinon.spy(window.mixpanel.people, 'set');
+
       analytics.identify(test.traits);
       expect(spy.calledWith(aliasedTraits)).to.be(true);
-
       spy.reset();
+
       analytics.identify(test.userId, test.traits);
       expect(spy.calledWith(aliasedTraits)).to.be(true);
-
       spy.restore();
     });
 
     it('shouldnt call people.set', function () {
-
       analytics.providers[0].options.people = false;
       var spy = sinon.spy(window.mixpanel.people, 'set');
+
       analytics.identify(test.userId, test.traits);
       expect(spy.called).to.be(false);
-
       spy.restore();
     });
 

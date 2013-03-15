@@ -1,4 +1,3 @@
-
 var cookieStore = require('cookie')
   , clone       = require('clone')
   , extend      = require('extend')
@@ -6,7 +5,16 @@ var cookieStore = require('cookie')
   , type        = require('type');
 
 
-var user   = newUser();
+/**
+ * Make a new user.
+ */
+
+var user = newUser();
+
+
+/**
+ * Default cookie settings.
+ */
 
 var cookie = exports.cookie = {
   name    : 'ajs_user',
@@ -18,37 +26,50 @@ var cookie = exports.cookie = {
 
 /**
  * Set the options for our user storage.
- * @param  {Object} options
- *   @field {Boolean|Object} cookie - whether to use a cookie
- *     @field {String}  name   - what to call the cookie ('ajs_user')
- *     @field {Number}  maxage - time in ms to keep the cookie. (one year)
+ *
+ * @param {Object} options - settings.
+ *
+ *   @field {Boolean|Object} cookie - whether to use a cookie.
+ *     @field {String} name - what to call the cookie (eg. 'ajs_user').
+ *     @field {Number} maxage - expiration time in milliseconds for the cookie,
+ *     defaulting to one year.
  *     @field {
  */
-exports.options = function (options) {
 
+exports.options = function (options) {
   options || (options = {});
 
-  if (type(options.cookie) === 'boolean') {
-
+  // Support just passing in a boolean for cookie.
+  if ('boolean' === type(options.cookie)) {
     cookie.enabled = options.cookie;
+  }
 
-  } else if (type(options.cookie) === 'object') {
+  else if ('object' === type(options.cookie)) {
     cookie.enabled = true;
     if (options.cookie.name)   cookie.name   = options.cookie.name;
     if (options.cookie.maxage) cookie.maxage = options.cookie.maxage;
     if (options.cookie.domain) cookie.domain = options.cookie.domain;
     if (options.cookie.path)   cookie.path   = options.cookie.path;
 
-    if (cookie.domain && cookie.domain.charAt(0) !== '.')
+    if (cookie.domain && cookie.domain.charAt(0) !== '.') {
       cookie.domain = '.' + cookie.domain;
+    }
   }
 };
 
+
+/**
+ * Get the current user's ID.
+ */
 
 exports.id = function () {
   return user.id;
 };
 
+
+/**
+ * Get the current user's traits.
+ */
 
 exports.traits = function () {
   return clone(user.traits);
@@ -56,11 +77,14 @@ exports.traits = function () {
 
 
 /**
- * Updates the stored user with id and trait information
- * @param  {String}  userId
- * @param  {Object}  traits
- * @return {Boolean} whether alias should be called
+ * Updates the current stored user with id and traits.
+ *
+ * @param {String} userId - the new user ID.
+ * @param {Object} traits - any new traits.
+ *
+ * @return {Boolean} whether alias should be called.
  */
+
 exports.update = function (userId, traits) {
 
   // Make an alias call if there was no previous userId, there is one
@@ -83,8 +107,9 @@ exports.update = function (userId, traits) {
 
 
 /**
- * Clears the user, wipes the cookie.
+ * Clears the user and wipes the cookie.
  */
+
 exports.clear = function () {
   if (cookie.enabled) cookieStore(cookie.name, null, clone(cookie));
   user = newUser();
@@ -93,9 +118,12 @@ exports.clear = function () {
 
 /**
  * Save the user object to a cookie
- * @param  {Object}  user
+ *
+ * @param {Object} user
+ *
  * @return {Boolean} saved
  */
+
 var save = function (user) {
   try {
     cookieStore(cookie.name, json.stringify(user), clone(cookie));
@@ -109,21 +137,20 @@ var save = function (user) {
 /**
  * Load the data from our cookie.
  *
- * @return {Object}
- *   @field {String} id
- *   @field {Object} traits
+ * @return {Object} - the current user.
+ *   @field {String} id - the current user's ID.
+ *   @field {Object} traits - the current user's traits.
  */
-exports.load = function () {
 
+exports.load = function () {
   if (!cookie.enabled) return user;
 
   var storedUser = cookieStore(cookie.name);
-
   if (storedUser) {
     try {
       user = json.parse(storedUser);
     } catch (e) {
-      // if we got bad json, toss the entire thing.
+      // If we got bad JSON, start from scratch.
       user = newUser();
     }
   }
@@ -133,11 +160,12 @@ exports.load = function () {
 
 
 /**
- * Returns a new user object
+ * Returns a new user object.
  */
+
 function newUser() {
   return {
-    id     : null,
+    id : null,
     traits : {}
   };
 }

@@ -1,14 +1,13 @@
-// Bitdeli
-// -------
-// * [Documentation](https://bitdeli.com/docs)
-// * [JavaScript API Reference](https://bitdeli.com/docs/javascript-api.html)
+// https://bitdeli.com/docs
+// https://bitdeli.com/docs/javascript-api.html
 
 var Provider = require('../provider')
-  , type     = require('type')
   , load     = require('load-script');
 
 
 module.exports = Provider.extend({
+
+  name : 'Bitdeli',
 
   options : {
     // BitDeli requires two options: `inputId` and `authToken`.

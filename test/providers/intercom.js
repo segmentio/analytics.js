@@ -1,6 +1,7 @@
 describe('Intercom', function () {
 
 
+
   describe('initialize', function () {
 
     it('should load library and call ready', function (done) {
@@ -36,15 +37,22 @@ describe('Intercom', function () {
 
     var extend = require('segmentio-extend');
 
+    // Augment `traits` to test for Intercom's special `company` property.
     var traits = extend({}, test.traits, {
       company : {
-        name : 'Segment.io',
-        id   : '123'
+        created : new Date(),
+        name    : 'Segment.io',
+        id      : '123'
       }
     });
 
+    // These are the settings that we expect to be sent to Intercom.
     var settings = {
-      company     : traits.company,
+      company : {
+        created_at : Math.floor(traits.company.created/1000),
+        name       : 'Segment.io',
+        id         : '123'
+      },
       created_at  : Math.floor(traits.created/1000),
       custom_data : {},
       email       : traits.email,
@@ -55,6 +63,7 @@ describe('Intercom', function () {
       }
     };
 
+    // When booted, we also expect these settings to be sent to Intercom.
     var bootSettings = {
       app_id    : test['Intercom'].appId,
       user_id   : test.userId,

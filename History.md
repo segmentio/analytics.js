@@ -1,6 +1,7 @@
 0.8.10 / 2013-3-14
 ==================
 * Added fix for conversion of `company`'s `created` date
+* Added extra tests for `trackForm`
 
 0.8.9 / 2013-3-13
 =================

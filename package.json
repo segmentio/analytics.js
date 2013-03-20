@@ -1,6 +1,6 @@
 {
   "name": "analytics.js",
-  "version": "0.8.10",
+  "version": "0.8.11",
   "author": "Segment.io <friends@segment.io>",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "license": "MIT",
@@ -39,8 +39,9 @@
     "customer.io",
     "errorception",
     "foxmetrics",
-    "google analytics",
     "gauges",
+    "get satisfaction",
+    "google analytics",
     "gosquared",
     "hittail",
     "hubspot",

@@ -1,3 +1,7 @@
+0.8.11 / 2013-3-19
+==================
+* [Get Satisfaction](https://getsatisfaction.com/)
+
 0.8.10 / 2013-3-14
 ==================
 * Added fix for conversion of `company`'s `created` date

@@ -2,7 +2,7 @@
   "name": "analytics",
   "repo": "segmentio/analytics.js",
   "description": "The hassle-free way to integrate analytics into any web application.",
-  "version": "0.8.10",
+  "version": "0.8.11",
   "keywords": [
     "analytics",
     "analytics.js",
@@ -22,6 +22,7 @@
     "foxmetrics",
     "google analytics",
     "gauges",
+    "get satisfaction",
     "gosquared",
     "hittail",
     "hubspot",
@@ -63,6 +64,7 @@
     "segmentio/load-date": "*",
     "segmentio/load-script": "*",
     "segmentio/new-date": "*",
+    "segmentio/on-body": "*",
     "yields/prevent": "*"
   },
   "scripts": [
@@ -82,6 +84,7 @@
     "src/providers/errorception.js",
     "src/providers/foxmetrics.js",
     "src/providers/gauges.js",
+    "src/providers/get-satisfaction.js",
     "src/providers/google-analytics.js",
     "src/providers/gosquared.js",
     "src/providers/hittail.js",

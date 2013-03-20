@@ -3111,6 +3111,7 @@ module.exports = [
   require('./kissmetrics'),
   require('./klaviyo'),
   require('./livechat'),
+  require('./lytics'),
   require('./mixpanel'),
   require('./olark'),
   require('./perfect-audience'),
@@ -3437,6 +3438,73 @@ module.exports = Provider.extend({
   }
 
 });
+});
+require.register("analytics/src/providers/lytics.js", function(exports, require, module){
+// Lytics
+// --------
+// [Documentation](http://developer.lytics.io/doc#jstag),
+
+var Provider = require('../provider')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+    name : 'Lytics', 
+    
+    key : 'cid',
+
+    options : {
+        cid: null
+    },
+
+
+    initialize : function (options, ready) {
+        window.jstag = (function () {
+          var t={_q:[],_c:{cid:options.cid,url:'//c.lytics.io'},ts:(new Date()).getTime()};
+          t.send=function(){
+            this._q.push(["ready","send",Array.prototype.slice.call(arguments)]);
+            return this;
+          }
+          return t
+        })();
+
+        load('//c.lytics.io/static/io.min.js');
+
+        // ready immediately 
+        ready()
+    },
+
+
+    // Identify
+    // --------
+
+    identify: function (userId, traits) {
+        traits['_uid'] = userId;
+        window.jstag.send(traits);
+    },
+
+
+    // Track
+    // -----
+
+    track: function (event, properties) {
+        properties['_e'] = event;
+        window.jstag.send(properties);
+    },
+
+    // Pageview
+    // ----------
+    pageview: function (url) {
+        window.jstag.send();
+    }
+
+
+});
+
+
+
+
 });
 require.register("analytics/src/providers/mixpanel.js", function(exports, require, module){
 // https://mixpanel.com/docs/integration-libraries/javascript

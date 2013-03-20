@@ -3,8 +3,6 @@
 // [Documentation](http://developer.lytics.io/doc#jstag),
 
 var Provider = require('../provider')
-  , user     = require('../user')
-  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -40,10 +38,8 @@ module.exports = Provider.extend({
     // --------
 
     identify: function (userId, traits) {
-        if (analytics.utils.isObject(traits)){
-            traits._uid = userId
-        }
-        window.jstag.send(traits)
+        traits['_uid'] = userId;
+        window.jstag.send(traits);
     },
 
 
@@ -51,15 +47,14 @@ module.exports = Provider.extend({
     // -----
 
     track: function (event, properties) {
-        if (!window.jstag) return;
-        window.jstag.send(properties)
+        properties['_e'] = event;
+        window.jstag.send(properties);
     },
 
     // Pageview
     // ----------
     pageview: function (url) {
-        if (!window.jstag) return;
-        window.jstag.send()
+        window.jstag.send();
     }
 
 

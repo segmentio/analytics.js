@@ -1,3 +1,4 @@
+//var sinon = require('sinon');
 
 describe('Lytics', function () {
 
@@ -12,21 +13,77 @@ describe('Lytics', function () {
       analytics.ready(spy);
       analytics.initialize({ 'Lytics' : test['Lytics'] });
 
-      // When the library loads `jstag` is created.
-      var interval = setInterval(function () {
-        if (!window.jstag) return;
-        expect(window.jstag).not.to.be(undefined);
-        expect(spy.called).to.be(true);
-        clearInterval(interval);
-        done();
-      }, 20);
+      expect(window.jstag).not.to.be(undefined);
+      expect(spy.called).to.be(true);
+      done();
+
     });
 
     it('should store options', function () {
       analytics.initialize({ 'Lytics' : test['Lytics'] });
       expect(analytics.providers[0].options.cid).to.equal(test['Lytics']);
     });
+    
+  });
+  
+  describe('pageview', function () {
+
+    it('calls jstag.send on pageview', function () {
+      var spy = sinon.spy(window.jstag, 'send');
+      analytics.pageview();
+      expect(spy.called).to.be(true);
+      spy.restore();
+    });
 
   });
 
+  describe('track', function () {
+
+    it('should track an event send', function (done) {
+      analytics.initialize({ 'Lytics' : test['Lytics'] });
+      expect(window.jstag).not.to.be(undefined);
+
+      var interval = setInterval(function () {
+        // wait for full load, bind will exist once js has loaded from cdn
+        // if cdn hasn't loaded, then this test will fail for timeout
+        if (!window.jstag.bind ) return;
+
+        var spy = sinon.spy(window.jstag, 'send');
+
+        analytics.track(test.event, test.properties);
+
+        expect(spy.called).to.be(true);
+
+        clearInterval(interval);
+        done();
+
+        expect(spy.calledWith( 
+          sinon.match({ type : test.properties.type }) 
+        )).to.be(true);
+        spy.restore();
+        
+      }, 20);
+ 
+    });
+
+  });
+
+  describe('identify', function () {
+
+    beforeEach(analytics.user.clear);
+
+    it('should accept user traits', function () {
+      var spy = sinon.spy(window.jstag, 'send');
+
+      analytics.identify(test.userId, test.traits);
+      expect(spy.called).to.be(true);
+      expect(spy.calledWith( 
+        sinon.match({ email : 'zeus@segment.io'}) 
+      )).to.be(true);
+
+      spy.restore();
+    });
+
+  });
+  
 });

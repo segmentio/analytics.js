@@ -118,8 +118,6 @@ window.test = {
 
   'SnapEngage' : '782b737e-487f-4117-8a2b-2beb32b600e5',
 
-  'Storyberg' : 'x',
-
   'USERcycle' : 'x',
 
   'UserVoice' : 'qTSuuylq5nZrsjC0L8bmg',

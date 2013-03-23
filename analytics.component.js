@@ -1,11 +1,4 @@
 
-
-/**
- * hasOwnProperty.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
 /**
  * Require the given path.
  *
@@ -82,10 +75,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (has.call(require.modules, path)) return path;
+    if (require.modules.hasOwnProperty(path)) return path;
   }
 
-  if (has.call(require.aliases, index)) {
+  if (require.aliases.hasOwnProperty(index)) {
     return require.aliases[index];
   }
 };
@@ -139,7 +132,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!has.call(require.modules, from)) {
+  if (!require.modules.hasOwnProperty(from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -201,7 +194,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return has.call(require.modules, localRequire.resolve(path));
+    return require.modules.hasOwnProperty(localRequire.resolve(path));
   };
 
   return localRequire;
@@ -330,7 +323,7 @@ require.register("analytics/src/providers/hubspot.js", Function("exports, requir
 "// http://hubspot.clarify-it.com/d/4m62hl\n\nvar Provider = require('../provider')\n  , isEmail  = require('is-email')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'HubSpot',\n\n  key : 'portalId',\n\n  options : {\n    portalId : null\n  },\n\n  initialize : function (options, ready) {\n    // HubSpot checks in their snippet to make sure another script with\n    // `hs-analytics` isn't already in the DOM. Seems excessive, but who knows\n    // if there's weird deprecation going on :p\n    if (!document.getElementById('hs-analytics')) {\n      window._hsq = window._hsq || [];\n      var script = load('https://js.hubspot.com/analytics/' + (Math.ceil(new Date()/300000)*300000) + '/' + options.portalId + '.js');\n      script.id = 'hs-analytics';\n    }\n\n    // HubSpot makes a queue, so it's ready immediately.\n    ready();\n  },\n\n  // HubSpot does not use a userId, but the email address is required on\n  // the traits object.\n  identify : function (userId, traits) {\n    // If there wasn't already an email and the userId is one, use it.\n    if ((!traits || !traits.email) && isEmail(userId)) {\n      traits || (traits = {});\n      traits.email = userId;\n    }\n\n    // Still don't have any traits? Get out.\n    if (!traits) return;\n\n    window._hsq.push([\"identify\", traits]);\n  },\n\n  // Event Tracking is available to HubSpot Enterprise customers only. In\n  // addition to adding any unique event name, you can also use the id of an\n  // existing custom event as the event variable.\n  track : function (event, properties) {\n    window._hsq.push([\"trackEvent\", event, properties]);\n  },\n\n  // HubSpot doesn't support passing in a custom URL.\n  pageview : function (url) {\n    window._hsq.push(['_trackPageview']);\n  }\n\n});//@ sourceURL=analytics/src/providers/hubspot.js"
 ));
 require.register("analytics/src/providers/index.js", Function("exports, require, module",
-"module.exports = [\n  require('./bitdeli'),\n  require('./bugherd'),\n  require('./chartbeat'),\n  require('./clicktale'),\n  require('./clicky'),\n  require('./comscore'),\n  require('./crazyegg'),\n  require('./customerio'),\n  require('./errorception'),\n  require('./foxmetrics'),\n  require('./gauges'),\n  require('./google-analytics'),\n  require('./gosquared'),\n  require('./hittail'),\n  require('./hubspot'),\n  require('./intercom'),\n  require('./keen-io'),\n  require('./kissmetrics'),\n  require('./klaviyo'),\n  require('./livechat'),\n  require('./mixpanel'),\n  require('./olark'),\n  require('./perfect-audience'),\n  require('./qualaroo'),\n  require('./quantcast'),\n  require('./sentry'),\n  require('./snapengage'),\n  require('./storyberg'),\n  require('./usercycle'),\n  require('./uservoice'),\n  require('./vero'),\n  require('./woopra')\n];//@ sourceURL=analytics/src/providers/index.js"
+"module.exports = [\n  require('./bitdeli'),\n  require('./bugherd'),\n  require('./chartbeat'),\n  require('./clicktale'),\n  require('./clicky'),\n  require('./comscore'),\n  require('./crazyegg'),\n  require('./customerio'),\n  require('./errorception'),\n  require('./foxmetrics'),\n  require('./gauges'),\n  require('./google-analytics'),\n  require('./gosquared'),\n  require('./hittail'),\n  require('./hubspot'),\n  require('./intercom'),\n  require('./keen-io'),\n  require('./kissmetrics'),\n  require('./klaviyo'),\n  require('./livechat'),\n  require('./mixpanel'),\n  require('./olark'),\n  require('./perfect-audience'),\n  require('./qualaroo'),\n  require('./quantcast'),\n  require('./sentry'),\n  require('./snapengage'),\n  require('./usercycle'),\n  require('./uservoice'),\n  require('./vero'),\n  require('./woopra')\n];//@ sourceURL=analytics/src/providers/index.js"
 ));
 require.register("analytics/src/providers/intercom.js", Function("exports, require, module",
 "// http://docs.intercom.io/\n// http://docs.intercom.io/#IntercomJS\n\nvar Provider = require('../provider')\n  , extend   = require('extend')\n  , load     = require('load-script')\n  , isEmail  = require('is-email');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Intercom',\n\n  // Whether Intercom has already been booted or not. Intercom becomes booted\n  // after Intercom('boot', ...) has been called on the first identify.\n  booted : false,\n\n  key : 'appId',\n\n  options : {\n    // Intercom's required key.\n    appId : null,\n    // An optional setting to display the Intercom inbox widget.\n    activator : null,\n    // Whether to show the count of messages for the inbox widget.\n    counter : true\n  },\n\n  initialize : function (options, ready) {\n    load('https://api.intercom.io/api/js/library.js', ready);\n  },\n\n  identify : function (userId, traits) {\n    // Intercom requires a `userId` to associate data to a user.\n    if (!userId) return;\n\n    // Don't do anything if we just have traits.\n    if (!this.booted && !userId) return;\n\n    // Pass traits directly in to Intercom's `custom_data`.\n    var settings = {\n      custom_data : traits || {}\n    };\n\n    // They need `created_at` as a Unix timestamp (seconds).\n    if (traits && traits.created) {\n      settings.created_at = Math.floor(traits.created/1000);\n      delete traits.created;\n    }\n\n    // Pull out an email field. Falling back to the `userId` if possible.\n    if (traits && traits.email) {\n      settings.email = traits.email;\n      delete traits.email;\n    } else if (isEmail(userId)) {\n      settings.email = userId;\n    }\n\n    // Pull out a name field, or combine one from `firstName` and `lastName`.\n    if (traits && traits.name) {\n      settings.name = traits.name;\n      delete traits.name;\n    } else if (traits && traits.firstName && traits.lastName) {\n      settings.name = traits.firstName + ' ' + traits.lastName;\n    }\n\n    // Pull out a company field, with it's own optional `created` date.\n    if (traits && traits.company) {\n      if (traits.company.created) {\n        traits.company.created_at = Math.floor(traits.company.created/1000);\n        delete traits.company.created;\n      }\n      settings.company = traits.company;\n      delete traits.company;\n    }\n\n    // Optionally add the inbox widget.\n    if (this.options.activator) {\n      settings.widget = {\n        activator   : this.options.activator,\n        use_counter : this.options.counter\n      };\n    }\n\n    // If this is the first time we've identified, `boot` instead of `update`\n    // and add our one-time boot settings.\n    if (this.booted) {\n      window.Intercom('update', settings);\n    } else {\n      extend(settings, {\n        app_id    : this.options.appId,\n        user_hash : this.options.userHash,\n        user_id   : userId\n      });\n      window.Intercom('boot', settings);\n    }\n\n    // Set the booted state, so that we know to call 'update' next time.\n    this.booted = true;\n  }\n\n});\n//@ sourceURL=analytics/src/providers/intercom.js"
@@ -367,9 +360,6 @@ require.register("analytics/src/providers/sentry.js", Function("exports, require
 ));
 require.register("analytics/src/providers/snapengage.js", Function("exports, require, module",
 "// http://help.snapengage.com/installation-guide-getting-started-in-a-snap/\n\nvar Provider = require('../provider')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'SnapEngage',\n\n  key : 'apiKey',\n\n  options : {\n    apiKey : null\n  },\n\n  initialize : function (options, ready) {\n    load('//commondatastorage.googleapis.com/code.snapengage.com/js/' + options.apiKey + '.js', ready);\n  }\n\n});//@ sourceURL=analytics/src/providers/snapengage.js"
-));
-require.register("analytics/src/providers/storyberg.js", Function("exports, require, module",
-"// https://github.com/Storyberg/Docs/wiki/Javascript-Library\n\nvar Provider = require('../provider')\n  , isEmail  = require('is-email')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Storyberg',\n\n  key : 'apiKey',\n\n  options : {\n    apiKey : null\n  },\n\n  initialize : function (options, ready) {\n    window._sbq = window._sbq || [];\n    window._sbk = options.apiKey;\n    load('//storyberg.com/analytics.js');\n\n    // Storyberg creates a queue, so it's ready immediately.\n    ready();\n  },\n\n  identify : function (userId, traits) {\n    // Don't do anything if we just have traits, because Storyberg\n    // requires a `userId`.\n    if (!userId) return;\n\n    traits || (traits = {});\n\n    // Storyberg takes the `userId` as part of the traits object\n    traits.user_id = userId;\n\n    // If there wasn't already an email and the userId is one, use it.\n    if (!traits.email && isEmail(userId)) traits.email = userId;\n\n    window._sbq.push(['identify', traits]);\n  },\n\n  track : function (event, properties) {\n    properties || (properties = {});\n\n    // Storyberg uses the event for the name, to avoid losing data\n    if (properties.name) properties._name = properties.name;\n    // Storyberg takes the `userId` as part of the properties object\n    properties.name = event;\n\n    window._sbq.push(['event', properties]);\n  }\n\n});\n//@ sourceURL=analytics/src/providers/storyberg.js"
 ));
 require.register("analytics/src/providers/usercycle.js", Function("exports, require, module",
 "// http://docs.usercycle.com/javascript_api\n\nvar Provider = require('../provider')\n  , load     = require('load-script')\n  , user     = require('../user');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'USERcycle',\n\n  key : 'key',\n\n  options : {\n    key : null\n  },\n\n  initialize : function (options, ready) {\n    window._uc = window._uc || [];\n    window._uc.push(['_key', options.key]);\n    load('//api.usercycle.com/javascripts/track.js');\n\n    // USERcycle makes a queue, so it's ready immediately.\n    ready();\n  },\n\n  identify : function (userId, traits) {\n    if (userId) window._uc.push(['uid', userId]);\n  },\n\n  track : function (event, properties) {\n    // Usercycle seems to use traits instead of properties.\n    var traits = user.traits();\n    window._uc.push(['action', event, traits]);\n  }\n\n});//@ sourceURL=analytics/src/providers/usercycle.js"

@@ -1,12 +1,5 @@
 ;(function(){
 
-
-/**
- * hasOwnProperty.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
 /**
  * Require the given path.
  *
@@ -83,10 +76,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (has.call(require.modules, path)) return path;
+    if (require.modules.hasOwnProperty(path)) return path;
   }
 
-  if (has.call(require.aliases, index)) {
+  if (require.aliases.hasOwnProperty(index)) {
     return require.aliases[index];
   }
 };
@@ -140,7 +133,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!has.call(require.modules, from)) {
+  if (!require.modules.hasOwnProperty(from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -202,7 +195,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return has.call(require.modules, localRequire.resolve(path));
+    return require.modules.hasOwnProperty(localRequire.resolve(path));
   };
 
   return localRequire;
@@ -3118,7 +3111,6 @@ module.exports = [
   require('./quantcast'),
   require('./sentry'),
   require('./snapengage'),
-  require('./storyberg'),
   require('./usercycle'),
   require('./uservoice'),
   require('./vero'),
@@ -3822,63 +3814,6 @@ module.exports = Provider.extend({
   }
 
 });
-});
-require.register("analytics/src/providers/storyberg.js", function(exports, require, module){
-// https://github.com/Storyberg/Docs/wiki/Javascript-Library
-
-var Provider = require('../provider')
-  , isEmail  = require('is-email')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'Storyberg',
-
-  key : 'apiKey',
-
-  options : {
-    apiKey : null
-  },
-
-  initialize : function (options, ready) {
-    window._sbq = window._sbq || [];
-    window._sbk = options.apiKey;
-    load('//storyberg.com/analytics.js');
-
-    // Storyberg creates a queue, so it's ready immediately.
-    ready();
-  },
-
-  identify : function (userId, traits) {
-    // Don't do anything if we just have traits, because Storyberg
-    // requires a `userId`.
-    if (!userId) return;
-
-    traits || (traits = {});
-
-    // Storyberg takes the `userId` as part of the traits object
-    traits.user_id = userId;
-
-    // If there wasn't already an email and the userId is one, use it.
-    if (!traits.email && isEmail(userId)) traits.email = userId;
-
-    window._sbq.push(['identify', traits]);
-  },
-
-  track : function (event, properties) {
-    properties || (properties = {});
-
-    // Storyberg uses the event for the name, to avoid losing data
-    if (properties.name) properties._name = properties.name;
-    // Storyberg takes the `userId` as part of the properties object
-    properties.name = event;
-
-    window._sbq.push(['event', properties]);
-  }
-
-});
-
 });
 require.register("analytics/src/providers/usercycle.js", function(exports, require, module){
 // http://docs.usercycle.com/javascript_api

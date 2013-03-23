@@ -1,3 +1,7 @@
+0.8.11 / 2013-3-14
+==================
+* Removed [Storyberg](http://storyberg.com/2013/03/18/the-end.html), best of luck guys
+
 0.8.10 / 2013-3-14
 ==================
 * Added fix for conversion of `company`'s `created` date

@@ -26,7 +26,6 @@ module.exports = [
   require('./quantcast'),
   require('./sentry'),
   require('./snapengage'),
-  require('./storyberg'),
   require('./usercycle'),
   require('./uservoice'),
   require('./vero'),

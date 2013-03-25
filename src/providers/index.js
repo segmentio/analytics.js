@@ -12,6 +12,7 @@ module.exports = [
   require('./gauges'),
   require('./google-analytics'),
   require('./gosquared'),
+  require('./heap'),
   require('./hittail'),
   require('./hubspot'),
   require('./intercom'),

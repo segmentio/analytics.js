@@ -80,6 +80,8 @@ window.test = {
 
   'GoSquared' : 'x',
 
+  'Heap' : 'x',
+
   'HitTail' : 'x',
 
   'HubSpot' : 'x',

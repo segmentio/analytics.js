@@ -1,4 +1,8 @@
-0.8.11 / 2013-3-14
+0.8.12 / 2013-3-25
+==================
+* Added [Heap](https://heapanalytics.com)
+
+0.8.11 / 2013-3-24
 ==================
 * Removed [Storyberg](http://storyberg.com/2013/03/18/the-end.html), best of luck guys
 

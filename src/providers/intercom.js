@@ -82,6 +82,13 @@ module.exports = Provider.extend({
       };
     }
 
+    this.call(userId, settings);
+  },
+
+   // Calls the intercom method with the intercom settings provided
+   // Moved into its own thread so other implementations can
+   // override this method to add secure mode
+  call: function (userId, settings) {
     // If this is the first time we've identified, `boot` instead of `update`
     // and add our one-time boot settings.
     if (this.booted) {

@@ -2,6 +2,7 @@
 ==================
 * Changed default Keen IO settings to record all pageviews by default
 * Removed Keen IO API Key option since that is no longer used for data "writes" to their API
+* Renamed Keen IO projectId to projectToken to match their docs
 
 0.8.13 / 2013-3-25
 ==================

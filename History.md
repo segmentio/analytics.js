@@ -1,3 +1,8 @@
+0.8.14 / 2013-3-27
+==================
+* Changed default Keen IO settings to record all pageviews by default
+* Removed Keen IO API Key option since that is no longer used for data "writes" to their API
+
 0.8.13 / 2013-3-25
 ==================
 * Added ability to pass variables into `intercomSettings` via `context.intercom`

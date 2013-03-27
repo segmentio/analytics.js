@@ -93,8 +93,7 @@ window.test = {
   },
 
   'Keen IO' : {
-    projectId : 'KEEN_PROJECT_ID',
-    apiKey    : 'KEEN_API_KEY'
+    projectToken : 'KEEN_PROJECT_TOKEN'
   },
 
   'KISSmetrics' : '67f57ae9d61a6981fa07d141bec8c6c37e8b88c7',

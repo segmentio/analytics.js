@@ -9,8 +9,10 @@ module.exports = Provider.extend({
   name : 'Keen IO',
 
   options : {
-    // Keen IO has two required options: `projectId` and `apiKey`.
+    // Keen IO has one required options: `projectId`
     projectId : null,
+    // The API Key option is only required if you want to query data
+    // through Keen IO... unlikely if you're using analytics.js
     apiKey : null,
     // Whether or not to pass pageviews on to Keen IO.
     pageview : false,

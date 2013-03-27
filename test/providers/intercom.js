@@ -1,7 +1,5 @@
 describe('Intercom', function () {
 
-
-
   describe('initialize', function () {
 
     it('should load library and call ready', function (done) {
@@ -66,8 +64,7 @@ describe('Intercom', function () {
     // When booted, we also expect these settings to be sent to Intercom.
     var bootSettings = {
       app_id    : test['Intercom'].appId,
-      user_id   : test.userId,
-      user_hash : undefined
+      user_id   : test.userId
     };
 
     it('should do nothing with no userId', function () {
@@ -87,6 +84,19 @@ describe('Intercom', function () {
 
       analytics.identify(test.userId, traits);
       expect(stub.calledWith('update', settings)).to.be(true);
+      stub.restore();
+    });
+
+    it('should allow adding context variables to settings', function () {
+
+      var userHash = 'sdfj38fj382r9j29dj29dj29dj29dj2d';
+
+      var stub = sinon.stub(window, 'Intercom');
+      analytics.identify(test.userId, traits, {
+        intercom: { user_hash: userHash }
+      });
+
+      expect(stub.calledWith('update', extend(settings, { user_hash: userHash }))).to.be(true);
       stub.restore();
     });
 

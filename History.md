@@ -1,3 +1,7 @@
+0.8.13 / 2013-3-25
+==================
+* Added ability to pass variables into `intercomSettings` via `context.intercom`
+
 0.8.12 / 2013-3-25
 ==================
 * Added [Heap](https://heapanalytics.com)

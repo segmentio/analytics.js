@@ -1,4 +1,4 @@
-0.8.14 / 2013-3-27
+0.9.0 / 2013-3-27
 ==================
 * Changed default Keen IO settings to record all pageviews by default
 * Removed Keen IO API Key option since that is no longer used for data "writes" to their API

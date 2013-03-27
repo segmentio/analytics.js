@@ -15,9 +15,9 @@ module.exports = Provider.extend({
     // through Keen IO... unlikely if you're using analytics.js
     apiKey : null,
     // Whether or not to pass pageviews on to Keen IO.
-    pageview : false,
+    pageview : true,
     // Whether or not to track an initial pageview on `initialize`.
-    initialPageview : false
+    initialPageview : true
   },
 
   initialize : function (options, ready) {

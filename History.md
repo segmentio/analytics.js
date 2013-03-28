@@ -1,6 +1,12 @@
-0.8.14 / 2013-3-28
+0.9.1 / 2013-3-28
 ==================
 * Woopra no longer tracks after each identify so that duplicate page views aren't generated.
+
+0.9.0 / 2013-3-27
+==================
+* Changed default Keen IO settings to record all pageviews by default
+* Removed Keen IO API Key option since that is no longer used for data "writes" to their API
+* Renamed Keen IO projectId to projectToken to match their docs
 
 0.8.13 / 2013-3-25
 ==================

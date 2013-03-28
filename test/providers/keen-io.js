@@ -14,8 +14,7 @@ describe('Keen IO', function () {
       expect(window.Keen).not.to.be(undefined);
       expect(window.Keen.setGlobalProperties).not.to.be(undefined);
       expect(window.Keen.addEvent).not.to.be(undefined);
-      expect(window.Keen._pId).to.equal('KEEN_PROJECT_ID');
-      expect(window.Keen._ak).to.equal('KEEN_API_KEY');
+      expect(window.Keen._pId).to.equal('KEEN_PROJECT_TOKEN');
       expect(spy.called).to.be(true);
 
       // When the Keen IO library loads, it creates some keys we can test.
@@ -30,8 +29,7 @@ describe('Keen IO', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Keen IO' : test['Keen IO'] });
-      expect(analytics.providers[0].options.projectId).to.equal(test['Keen IO'].projectId);
-      expect(analytics.providers[0].options.apiKey).to.equal(test['Keen IO'].apiKey);
+      expect(analytics.providers[0].options.projectToken).to.equal(test['Keen IO'].projectToken);
     });
 
     it('shouldnt track an initial pageview', function () {

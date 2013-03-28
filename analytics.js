@@ -1,5 +1,12 @@
 ;(function(){
 
+
+/**
+ * hasOwnProperty.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
 /**
  * Require the given path.
  *
@@ -76,10 +83,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (require.modules.hasOwnProperty(path)) return path;
+    if (has.call(require.modules, path)) return path;
   }
 
-  if (require.aliases.hasOwnProperty(index)) {
+  if (has.call(require.aliases, index)) {
     return require.aliases[index];
   }
 };
@@ -133,7 +140,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!require.modules.hasOwnProperty(from)) {
+  if (!has.call(require.modules, from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -195,7 +202,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return require.modules.hasOwnProperty(localRequire.resolve(path));
+    return has.call(require.modules, localRequire.resolve(path));
   };
 
   return localRequire;
@@ -3272,18 +3279,17 @@ module.exports = Provider.extend({
   name : 'Keen IO',
 
   options : {
-    // Keen IO has two required options: `projectId` and `apiKey`.
-    projectId : null,
-    apiKey : null,
+    // Keen IO has one required option: `projectToken`
+    projectToken : null,
     // Whether or not to pass pageviews on to Keen IO.
-    pageview : false,
+    pageview : true,
     // Whether or not to track an initial pageview on `initialize`.
-    initialPageview : false
+    initialPageview : true
   },
 
   initialize : function (options, ready) {
     window.Keen = window.Keen||{configure:function(a,b,c){this._pId=a;this._ak=b;this._op=c},addEvent:function(a,b,c,d){this._eq=this._eq||[];this._eq.push([a,b,c,d])},setGlobalProperties:function(a){this._gp=a},onChartsReady:function(a){this._ocrq=this._ocrq||[];this._ocrq.push(a)}};
-    window.Keen.configure(options.projectId, options.apiKey);
+    window.Keen.configure(options.projectToken);
 
     load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js');
 

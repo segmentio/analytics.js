@@ -1,3 +1,7 @@
+0.8.14 / 2013-3-28
+==================
+* Woopra no longer tracks after each identify so that duplicate page views aren't generated.
+
 0.8.13 / 2013-3-25
 ==================
 * Added ability to pass variables into `intercomSettings` via `context.intercom`

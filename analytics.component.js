@@ -1,4 +1,11 @@
 
+
+/**
+ * hasOwnProperty.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
 /**
  * Require the given path.
  *
@@ -75,10 +82,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (require.modules.hasOwnProperty(path)) return path;
+    if (has.call(require.modules, path)) return path;
   }
 
-  if (require.aliases.hasOwnProperty(index)) {
+  if (has.call(require.aliases, index)) {
     return require.aliases[index];
   }
 };
@@ -132,7 +139,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!require.modules.hasOwnProperty(from)) {
+  if (!has.call(require.modules, from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -194,7 +201,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return require.modules.hasOwnProperty(localRequire.resolve(path));
+    return has.call(require.modules, localRequire.resolve(path));
   };
 
   return localRequire;
@@ -353,7 +360,7 @@ require.register("analytics/src/providers/perfect-audience.js", Function("export
 "// https://www.perfectaudience.com/docs#javascript_api_autoopen\n\nvar Provider = require('../provider')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Perfect Audience',\n\n  key : 'siteId',\n\n  options : {\n    siteId : null\n  },\n\n  initialize : function (options, ready) {\n    window._pa || (window._pa = {});\n    load('//tag.perfectaudience.com/serve/' + options.siteId + '.js', ready);\n  },\n\n  track : function (event, properties) {\n    window._pa.track(event, properties);\n  }\n\n});//@ sourceURL=analytics/src/providers/perfect-audience.js"
 ));
 require.register("analytics/src/providers/qualaroo.js", Function("exports, require, module",
-"// http://help.qualaroo.com/customer/portal/articles/731085-identify-survey-nudge-takers\n// http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties\n\nvar Provider = require('../provider')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Qualaroo',\n\n  options : {\n    // Qualaroo has two required options.\n    customerId : null,\n    siteToken : null,\n    // Whether to record traits when a user triggers an event. This can be\n    // useful for sending targetted questionnaries.\n    track : false\n  },\n\n  // Qualaroo's script has two options in its URL.\n  initialize : function (options, ready) {\n    window._kiq = window._kiq || [];\n    load('//s3.amazonaws.com/ki.js/' + options.customerId + '/' + options.siteToken + '.js');\n\n    // Qualaroo creates a queue, so it's ready immediately.\n    ready();\n  },\n\n  // Qualaroo uses two separate methods: `identify` for storing the `userId`,\n  // and `set` for storing `traits`.\n  identify : function (userId, traits) {\n    if (userId) window._kiq.push(['identify', userId]);\n    if (traits) window._kiq.push(['set', traits]);\n  },\n\n  // Qualaroo doesn't have `track` method yet, but to allow the users to do\n  // targetted questionnaires we can set name-value pairs on the user properties\n  // that apply to the current visit.\n  track : function (event, properties) {\n    if (!this.options.track) return;\n\n    // Create a name-value pair that will be pretty unique. For an event like\n    // 'Loaded a Page' this will make it 'Triggered: Loaded a Page'.\n    var traits = {};\n    traits['Triggered: ' + event] = true;\n\n    // Fire a normal identify, with traits only.\n    this.identify(null, traits);\n  }\n\n});//@ sourceURL=analytics/src/providers/qualaroo.js"
+"// http://help.qualaroo.com/customer/portal/articles/731085-identify-survey-nudge-takers\n// http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties\n\nvar Provider = require('../provider')\n  , isEmail  = require('is-email')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Qualaroo',\n\n  options : {\n    // Qualaroo has two required options.\n    customerId : null,\n    siteToken : null,\n    // Whether to record traits when a user triggers an event. This can be\n    // useful for sending targetted questionnaries.\n    track : false\n  },\n\n  // Qualaroo's script has two options in its URL.\n  initialize : function (options, ready) {\n    window._kiq = window._kiq || [];\n    load('//s3.amazonaws.com/ki.js/' + options.customerId + '/' + options.siteToken + '.js');\n\n    // Qualaroo creates a queue, so it's ready immediately.\n    ready();\n  },\n\n  // Qualaroo uses two separate methods: `identify` for storing the `userId`,\n  // and `set` for storing `traits`.\n  identify : function (userId, traits) {\n    var identity = userId;\n    if (traits && traits.email && !isEmail(userId)) identity = traits.email;\n    if (identity) window._kiq.push(['identify', identity]);\n    if (traits) window._kiq.push(['set', traits]);\n  },\n\n  // Qualaroo doesn't have `track` method yet, but to allow the users to do\n  // targetted questionnaires we can set name-value pairs on the user properties\n  // that apply to the current visit.\n  track : function (event, properties) {\n    if (!this.options.track) return;\n\n    // Create a name-value pair that will be pretty unique. For an event like\n    // 'Loaded a Page' this will make it 'Triggered: Loaded a Page'.\n    var traits = {};\n    traits['Triggered: ' + event] = true;\n\n    // Fire a normal identify, with traits only.\n    this.identify(null, traits);\n  }\n\n});//@ sourceURL=analytics/src/providers/qualaroo.js"
 ));
 require.register("analytics/src/providers/quantcast.js", Function("exports, require, module",
 "// https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/\n\nvar Provider = require('../provider')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Quantcast',\n\n  key : 'pCode',\n\n  options : {\n    pCode : null\n  },\n\n  initialize : function (options, ready) {\n    window._qevents = window._qevents || [];\n    window._qevents.push({ qacct: options.pCode });\n    load({\n      http  : 'http://edge.quantserve.com/quant.js',\n      https : 'https://secure.quantserve.com/quant.js'\n    }, ready);\n  }\n\n});//@ sourceURL=analytics/src/providers/quantcast.js"

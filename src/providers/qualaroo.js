@@ -2,6 +2,7 @@
 // http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties
 
 var Provider = require('../provider')
+  , isEmail  = require('is-email')
   , load     = require('load-script');
 
 
@@ -30,7 +31,9 @@ module.exports = Provider.extend({
   // Qualaroo uses two separate methods: `identify` for storing the `userId`,
   // and `set` for storing `traits`.
   identify : function (userId, traits) {
-    if (userId) window._kiq.push(['identify', userId]);
+    var identity = userId;
+    if (traits && traits.email && !isEmail(userId)) identity = traits.email;
+    if (identity) window._kiq.push(['identify', identity]);
     if (traits) window._kiq.push(['set', traits]);
   },
 

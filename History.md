@@ -1,3 +1,7 @@
+0.9.2 / 2013-3-28
+=================
+* Qualaroo provider now prefers to identify with traits.email over a non-email userId --- makes the survey responses human readable.
+
 0.9.1 / 2013-3-28
 ==================
 * Woopra no longer tracks after each identify so that duplicate page views aren't generated.

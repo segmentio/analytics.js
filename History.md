@@ -1,3 +1,7 @@
+0.9.3 / 2013-4-2
+=================
+* Olark provider now only notifies the operator of track and pageview when the chat box is expanded.
+
 0.9.2 / 2013-3-28
 =================
 * Qualaroo provider now prefers to identify with traits.email over a non-email userId --- makes the survey responses human readable.

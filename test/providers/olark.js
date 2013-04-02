@@ -95,17 +95,22 @@ describe('Olark', function () {
       spy.restore();
     });
 
-    it('should log event to operator when track enabled and box expanded', function () {
+    it('should log event to operator when track enabled and box expanded', function (done) {
       analytics.providers[0].options.track = true;
       var spy = sinon.spy(window, 'olark');
       window.olark('api.box.expand');
-      analytics.track(test.event, test.properties);
-      expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
-        body : 'visitor triggered "' + test.event + '"'
-      })).to.be(true);
 
-      window.olark('api.box.shrink');
-      spy.restore();
+      setTimeout(function () {
+        analytics.track(test.event, test.properties);
+        expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
+          body : 'visitor triggered "' + test.event + '"'
+        })).to.be(true);
+
+        window.olark('api.box.shrink');
+        spy.restore();
+
+        done();
+      }, 900);
     });
 
   });
@@ -131,17 +136,22 @@ describe('Olark', function () {
       spy.restore();
     });
 
-    it('should log event to operator when pageview enabled and box expanded', function () {
+    it('should log event to operator when pageview enabled and box expanded', function (done) {
       analytics.providers[0].options.pageview = true;
       var spy = sinon.spy(window, 'olark');
       window.olark('api.box.expand');
-      analytics.pageview();
-      expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
-        body : 'looking at ' + window.location.href
-      })).to.be(true);
 
-      window.olark('api.box.shrink');
-      spy.restore();
+      setTimeout(function () {
+        analytics.pageview();
+        expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
+          body : 'looking at ' + window.location.href
+        })).to.be(true);
+
+        window.olark('api.box.shrink');
+        spy.restore();
+
+        done();
+      }, 900);
     });
   });
 

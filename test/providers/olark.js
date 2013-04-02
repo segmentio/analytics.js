@@ -77,18 +77,7 @@ describe('Olark', function () {
 
   describe('track', function () {
 
-    it('should log event to operator', function () {
-      analytics.providers[0].options.track = true;
-      var spy = sinon.spy(window, 'olark');
-      analytics.track(test.event, test.properties);
-      expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
-        body : 'visitor triggered "' + test.event + '"'
-      })).to.be(true);
-
-      spy.restore();
-    });
-
-    it('shouldnt load event to operator', function () {
+    it('shouldnt log event to operator when track disabled', function () {
       analytics.providers[0].options.track = false;
       var spy = sinon.spy(window, 'olark');
       analytics.track(test.event, test.properties);
@@ -97,23 +86,34 @@ describe('Olark', function () {
       spy.restore();
     });
 
+    it('shouldnt log event to operator when track enabled but box shrunk', function () {
+      analytics.providers[0].options.track = true;
+      var spy = sinon.spy(window, 'olark');
+      analytics.track(test.event, test.properties);
+      expect(spy.called).to.be(false);
+
+      spy.restore();
+    });
+
+    it('should log event to operator when track enabled and box expanded', function () {
+      analytics.providers[0].options.track = true;
+      var spy = sinon.spy(window, 'olark');
+      window.olark('api.box.expand');
+      analytics.track(test.event, test.properties);
+      expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
+        body : 'visitor triggered "' + test.event + '"'
+      })).to.be(true);
+
+      window.olark('api.box.shrink');
+      spy.restore();
+    });
+
   });
 
 
   describe('pageview', function () {
 
-    it('should log event to operator', function () {
-      analytics.providers[0].options.pageview = true;
-      var spy = sinon.spy(window, 'olark');
-      analytics.pageview();
-      expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
-        body : 'looking at ' + window.location.href
-      })).to.be(true);
-
-      spy.restore();
-    });
-
-    it('shouldnt log event to operator', function () {
+    it('shouldnt log pageview to operator when pageview disabled', function () {
       analytics.providers[0].options.pageview = false;
       var spy = sinon.spy(window, 'olark');
       analytics.pageview();
@@ -122,6 +122,27 @@ describe('Olark', function () {
       spy.restore();
     });
 
+    it('shouldnt log event to operator when pageview enabled but box shrunk', function () {
+      analytics.providers[0].options.pageview = true;
+      var spy = sinon.spy(window, 'olark');
+      analytics.pageview();
+      expect(spy.called).to.be(false);
+
+      spy.restore();
+    });
+
+    it('should log event to operator when pageview enabled and box expanded', function () {
+      analytics.providers[0].options.pageview = true;
+      var spy = sinon.spy(window, 'olark');
+      window.olark('api.box.expand');
+      analytics.pageview();
+      expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
+        body : 'looking at ' + window.location.href
+      })).to.be(true);
+
+      window.olark('api.box.shrink');
+      spy.restore();
+    });
   });
 
 });

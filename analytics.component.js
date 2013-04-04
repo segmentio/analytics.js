@@ -1,11 +1,4 @@
 
-
-/**
- * hasOwnProperty.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
 /**
  * Require the given path.
  *
@@ -82,10 +75,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (has.call(require.modules, path)) return path;
+    if (require.modules.hasOwnProperty(path)) return path;
   }
 
-  if (has.call(require.aliases, index)) {
+  if (require.aliases.hasOwnProperty(index)) {
     return require.aliases[index];
   }
 };
@@ -139,7 +132,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!has.call(require.modules, from)) {
+  if (!require.modules.hasOwnProperty(from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -201,7 +194,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return has.call(require.modules, localRequire.resolve(path));
+    return require.modules.hasOwnProperty(localRequire.resolve(path));
   };
 
   return localRequire;
@@ -375,7 +368,7 @@ require.register("analytics/src/providers/usercycle.js", Function("exports, requ
 "// http://docs.usercycle.com/javascript_api\n\nvar Provider = require('../provider')\n  , load     = require('load-script')\n  , user     = require('../user');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'USERcycle',\n\n  key : 'key',\n\n  options : {\n    key : null\n  },\n\n  initialize : function (options, ready) {\n    window._uc = window._uc || [];\n    window._uc.push(['_key', options.key]);\n    load('//api.usercycle.com/javascripts/track.js');\n\n    // USERcycle makes a queue, so it's ready immediately.\n    ready();\n  },\n\n  identify : function (userId, traits) {\n    if (userId) window._uc.push(['uid', userId]);\n  },\n\n  track : function (event, properties) {\n    // Usercycle seems to use traits instead of properties.\n    var traits = user.traits();\n    window._uc.push(['action', event, traits]);\n  }\n\n});//@ sourceURL=analytics/src/providers/usercycle.js"
 ));
 require.register("analytics/src/providers/uservoice.js", Function("exports, require, module",
-"// http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb\n\nvar Provider = require('../provider')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'UserVoice',\n\n  key : 'widgetId',\n\n  options : {\n    widgetId : null\n  },\n\n  initialize : function (options, ready) {\n    window.uvOptions = {};\n    load('//widget.uservoice.com/' + options.widgetId + '.js', ready);\n  }\n\n});//@ sourceURL=analytics/src/providers/uservoice.js"
+"// http://feedback.uservoice.com/knowledgebase/articles/225-how-do-i-pass-custom-data-through-the-widget-and-i\n\nvar Provider = require('../provider')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'UserVoice',\n\n  key : 'widgetId',\n\n  options : {\n    widgetId : null\n  },\n\n  initialize : function (options, ready) {\n    window.UserVoice = [];\n    load('//widget.uservoice.com/' + options.widgetId + '.js', ready);\n  }\n\n});//@ sourceURL=analytics/src/providers/uservoice.js"
 ));
 require.register("analytics/src/providers/vero.js", Function("exports, require, module",
 "// https://github.com/getvero/vero-api/blob/master/sections/js.md\n\nvar Provider = require('../provider')\n  , isEmail  = require('is-email')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Vero',\n\n  key : 'apiKey',\n\n  options : {\n    apiKey : null\n  },\n\n  initialize : function (options, ready) {\n    window._veroq = window._veroq || [];\n    window._veroq.push(['init', { api_key: options.apiKey }]);\n    load('//www.getvero.com/assets/m.js');\n\n    // Vero creates a queue, so it's ready immediately.\n    ready();\n  },\n\n  identify : function (userId, traits) {\n    // Don't do anything if we just have traits, because Vero\n    // requires a `userId`.\n    if (!userId) return;\n\n    traits || (traits = {});\n\n    // Vero takes the `userId` as part of the traits object.\n    traits.id = userId;\n\n    // If there wasn't already an email and the userId is one, use it.\n    if (!traits.email && isEmail(userId)) traits.email = userId;\n\n    // Vero *requires* an email and an id\n    if (!traits.id || !traits.email) return;\n\n    window._veroq.push(['user', traits]);\n  },\n\n  track : function (event, properties) {\n    window._veroq.push(['track', event, properties]);\n  }\n\n});//@ sourceURL=analytics/src/providers/vero.js"

@@ -1,4 +1,4 @@
-// http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb
+// http://feedback.uservoice.com/knowledgebase/articles/225-how-do-i-pass-custom-data-through-the-widget-and-i
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -15,7 +15,7 @@ module.exports = Provider.extend({
   },
 
   initialize : function (options, ready) {
-    window.uvOptions = {};
+    window.UserVoice = [];
     load('//widget.uservoice.com/' + options.widgetId + '.js', ready);
   }
 

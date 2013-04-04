@@ -6,18 +6,18 @@ describe('UserVoice', function () {
     this.timeout(10000);
 
     it('should call ready and load library', function (done) {
-      expect(window.uvOptions).to.be(undefined);
+      expect(window.UserVoice).to.be(undefined);
 
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'UserVoice' : test['UserVoice'] });
-      expect(window.uvOptions).not.to.be(undefined);
-      expect(window._uvts).to.be(undefined);
+      expect(window.UserVoice).not.to.be(undefined);
+      expect(window.UserVoice.push).to.be(Array.prototype.push);
 
       // Once the library loads, `_uvts` gets set.
       var interval = setInterval(function () {
-        if (!window._uvts) return;
-        expect(window._uvts).not.to.be(undefined);
+        if (window.UserVoice.push === Array.prototype.push) return;
+        expect(window.UserVoice.push).not.to.be(Array.prototype.push);
         expect(spy.called).to.be(true);
         clearInterval(interval);
         done();

@@ -318,7 +318,7 @@ function set(name, value, options) {
 
   if (options.path) str += '; path=' + options.path;
   if (options.domain) str += '; domain=' + options.domain;
-  if (options.expires) str += '; expires=' + options.expires.toGMTString();
+  if (options.expires) str += '; expires=' + options.expires.toUTCString();
   if (options.secure) str += '; secure';
 
   document.cookie = str;
@@ -461,7 +461,7 @@ require.register("component-event/index.js", function(exports, require, module){
 
 exports.bind = function(el, type, fn, capture){
   if (el.addEventListener) {
-    el.addEventListener(type, fn, capture);
+    el.addEventListener(type, fn, capture || false);
   } else {
     el.attachEvent('on' + type, fn);
   }
@@ -481,7 +481,7 @@ exports.bind = function(el, type, fn, capture){
 
 exports.unbind = function(el, type, fn, capture){
   if (el.removeEventListener) {
-    el.removeEventListener(type, fn, capture);
+    el.removeEventListener(type, fn, capture || false);
   } else {
     el.detachEvent('on' + type, fn);
   }
@@ -1087,40 +1087,13 @@ exports.right = function(str){
 };
 
 });
-require.register("redventures-reduce/index.js", function(exports, require, module){
-
-/**
- * Reduce `arr` with `fn`.
- *
- * @param {Array} arr
- * @param {Function} fn
- * @param {Mixed} initial
- *
- * TODO: combatible error handling?
- */
-
-module.exports = function(arr, fn, initial){  
-  var idx = 0;
-  var len = arr.length;
-  var curr = arguments.length == 3
-    ? initial
-    : arr[idx++];
-
-  while (idx < len) {
-    curr = fn.call(null, curr, arr[idx], ++idx, arr);
-  }
-  
-  return curr;
-};
-});
 require.register("component-querystring/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var trim = require('trim')
-  , reduce = require('reduce');
+var trim = require('trim');
 
 /**
  * Parse the given query `str`.
@@ -1132,15 +1105,20 @@ var trim = require('trim')
 
 exports.parse = function(str){
   if ('string' != typeof str) return {};
+
   str = trim(str);
   if ('' == str) return {};
-  return reduce(str.split('&'), function(obj, pair){
-    var parts = pair.split('=');
+
+  var obj = {};
+  var pairs = str.split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var parts = pairs[i].split('=');
     obj[parts[0]] = null == parts[1]
       ? ''
       : decodeURIComponent(parts[1]);
-    return obj;
-  }, {});
+  }
+
+  return obj;
 };
 
 /**
@@ -1159,6 +1137,7 @@ exports.stringify = function(obj){
   }
   return pairs.join('&');
 };
+
 });
 require.register("component-type/index.js", function(exports, require, module){
 
@@ -1188,6 +1167,7 @@ module.exports = function(val){
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
+  if (val && val.nodeType === 1) return 'element';
   if (val === Object(val)) return 'object';
 
   return typeof val;
@@ -1479,7 +1459,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.9.1';
+  this.VERSION = '0.9.4';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -3996,7 +3976,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/uservoice.js", function(exports, require, module){
-// http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb
+// http://feedback.uservoice.com/knowledgebase/articles/225-how-do-i-pass-custom-data-through-the-widget-and-i
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -4013,7 +3993,7 @@ module.exports = Provider.extend({
   },
 
   initialize : function (options, ready) {
-    window.uvOptions = {};
+    window.UserVoice = [];
     load('//widget.uservoice.com/' + options.widgetId + '.js', ready);
   }
 
@@ -4170,8 +4150,6 @@ require.alias("component-object/index.js", "analytics/deps/object/index.js");
 
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
 require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
-
-require.alias("redventures-reduce/index.js", "component-querystring/deps/reduce/index.js");
 
 require.alias("component-type/index.js", "analytics/deps/type/index.js");
 

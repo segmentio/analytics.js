@@ -20,6 +20,7 @@ module.exports = [
   require('./kissmetrics'),
   require('./klaviyo'),
   require('./livechat'),
+  require('./lytics'),
   require('./mixpanel'),
   require('./olark'),
   require('./perfect-audience'),

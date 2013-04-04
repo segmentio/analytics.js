@@ -1,12 +1,5 @@
 ;(function(){
 
-
-/**
- * hasOwnProperty.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
 /**
  * Require the given path.
  *
@@ -83,10 +76,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (has.call(require.modules, path)) return path;
+    if (require.modules.hasOwnProperty(path)) return path;
   }
 
-  if (has.call(require.aliases, index)) {
+  if (require.aliases.hasOwnProperty(index)) {
     return require.aliases[index];
   }
 };
@@ -140,7 +133,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!has.call(require.modules, from)) {
+  if (!require.modules.hasOwnProperty(from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -202,7 +195,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return has.call(require.modules, localRequire.resolve(path));
+    return require.modules.hasOwnProperty(localRequire.resolve(path));
   };
 
   return localRequire;
@@ -325,7 +318,7 @@ function set(name, value, options) {
 
   if (options.path) str += '; path=' + options.path;
   if (options.domain) str += '; domain=' + options.domain;
-  if (options.expires) str += '; expires=' + options.expires.toUTCString();
+  if (options.expires) str += '; expires=' + options.expires.toGMTString();
   if (options.secure) str += '; secure';
 
   document.cookie = str;
@@ -468,7 +461,7 @@ require.register("component-event/index.js", function(exports, require, module){
 
 exports.bind = function(el, type, fn, capture){
   if (el.addEventListener) {
-    el.addEventListener(type, fn, capture || false);
+    el.addEventListener(type, fn, capture);
   } else {
     el.attachEvent('on' + type, fn);
   }
@@ -488,7 +481,7 @@ exports.bind = function(el, type, fn, capture){
 
 exports.unbind = function(el, type, fn, capture){
   if (el.removeEventListener) {
-    el.removeEventListener(type, fn, capture || false);
+    el.removeEventListener(type, fn, capture);
   } else {
     el.detachEvent('on' + type, fn);
   }
@@ -1094,13 +1087,40 @@ exports.right = function(str){
 };
 
 });
+require.register("redventures-reduce/index.js", function(exports, require, module){
+
+/**
+ * Reduce `arr` with `fn`.
+ *
+ * @param {Array} arr
+ * @param {Function} fn
+ * @param {Mixed} initial
+ *
+ * TODO: combatible error handling?
+ */
+
+module.exports = function(arr, fn, initial){  
+  var idx = 0;
+  var len = arr.length;
+  var curr = arguments.length == 3
+    ? initial
+    : arr[idx++];
+
+  while (idx < len) {
+    curr = fn.call(null, curr, arr[idx], ++idx, arr);
+  }
+  
+  return curr;
+};
+});
 require.register("component-querystring/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var trim = require('trim');
+var trim = require('trim')
+  , reduce = require('reduce');
 
 /**
  * Parse the given query `str`.
@@ -1112,20 +1132,15 @@ var trim = require('trim');
 
 exports.parse = function(str){
   if ('string' != typeof str) return {};
-
   str = trim(str);
   if ('' == str) return {};
-
-  var obj = {};
-  var pairs = str.split('&');
-  for (var i = 0; i < pairs.length; i++) {
-    var parts = pairs[i].split('=');
+  return reduce(str.split('&'), function(obj, pair){
+    var parts = pair.split('=');
     obj[parts[0]] = null == parts[1]
       ? ''
       : decodeURIComponent(parts[1]);
-  }
-
-  return obj;
+    return obj;
+  }, {});
 };
 
 /**
@@ -1144,7 +1159,6 @@ exports.stringify = function(obj){
   }
   return pairs.join('&');
 };
-
 });
 require.register("component-type/index.js", function(exports, require, module){
 
@@ -1174,7 +1188,6 @@ module.exports = function(val){
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
-  if (val && val.nodeType === 1) return 'element';
   if (val === Object(val)) return 'object';
 
   return typeof val;
@@ -3146,6 +3159,7 @@ module.exports = [
   require('./kissmetrics'),
   require('./klaviyo'),
   require('./livechat'),
+  require('./lytics'),
   require('./mixpanel'),
   require('./olark'),
   require('./perfect-audience'),
@@ -3473,6 +3487,73 @@ module.exports = Provider.extend({
   }
 
 });
+});
+require.register("analytics/src/providers/lytics.js", function(exports, require, module){
+// Lytics
+// --------
+// [Documentation](http://developer.lytics.io/doc#jstag),
+
+var Provider = require('../provider')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+    name : 'Lytics', 
+    
+    key : 'cid',
+
+    options : {
+        cid: null
+    },
+
+
+    initialize : function (options, ready) {
+        window.jstag = (function () {
+          var t={_q:[],_c:{cid:options.cid,url:'//c.lytics.io'},ts:(new Date()).getTime()};
+          t.send=function(){
+            this._q.push(["ready","send",Array.prototype.slice.call(arguments)]);
+            return this;
+          }
+          return t
+        })();
+
+        load('//c.lytics.io/static/io.min.js');
+
+        // ready immediately 
+        ready()
+    },
+
+
+    // Identify
+    // --------
+
+    identify: function (userId, traits) {
+        traits['_uid'] = userId;
+        window.jstag.send(traits);
+    },
+
+
+    // Track
+    // -----
+
+    track: function (event, properties) {
+        properties['_e'] = event;
+        window.jstag.send(properties);
+    },
+
+    // Pageview
+    // ----------
+    pageview: function (url) {
+        window.jstag.send();
+    }
+
+
+});
+
+
+
+
 });
 require.register("analytics/src/providers/mixpanel.js", function(exports, require, module){
 // https://mixpanel.com/docs/integration-libraries/javascript
@@ -4089,6 +4170,8 @@ require.alias("component-object/index.js", "analytics/deps/object/index.js");
 
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
 require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
+
+require.alias("redventures-reduce/index.js", "component-querystring/deps/reduce/index.js");
 
 require.alias("component-type/index.js", "analytics/deps/type/index.js");
 

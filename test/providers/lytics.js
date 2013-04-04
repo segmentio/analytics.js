@@ -23,9 +23,9 @@ describe('Lytics', function () {
       analytics.initialize({ 'Lytics' : test['Lytics'] });
       expect(analytics.providers[0].options.cid).to.equal(test['Lytics']);
     });
-    
+
   });
-  
+
   describe('pageview', function () {
 
     it('calls jstag.send on pageview', function () {
@@ -57,13 +57,13 @@ describe('Lytics', function () {
         clearInterval(interval);
         done();
 
-        expect(spy.calledWith( 
-          sinon.match({ type : test.properties.type }) 
+        expect(spy.calledWith(
+          sinon.match({ type : test.properties.type })
         )).to.be(true);
         spy.restore();
-        
+
       }, 20);
- 
+
     });
 
   });
@@ -77,13 +77,13 @@ describe('Lytics', function () {
 
       analytics.identify(test.userId, test.traits);
       expect(spy.called).to.be(true);
-      expect(spy.calledWith( 
-        sinon.match({ email : 'zeus@segment.io'}) 
+      expect(spy.calledWith(
+        sinon.match({ email : 'zeus@segment.io'})
       )).to.be(true);
 
       spy.restore();
     });
 
   });
-  
+
 });

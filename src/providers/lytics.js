@@ -8,8 +8,8 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
-    name : 'Lytics', 
-    
+    name : 'Lytics',
+
     key : 'cid',
 
     options : {
@@ -23,14 +23,14 @@ module.exports = Provider.extend({
           t.send=function(){
             this._q.push(["ready","send",Array.prototype.slice.call(arguments)]);
             return this;
-          }
-          return t
+          };
+          return t;
         })();
 
         load('//c.lytics.io/static/io.min.js');
 
-        // ready immediately 
-        ready()
+        // ready immediately
+        ready();
     },
 
 

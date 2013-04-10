@@ -3743,10 +3743,12 @@ module.exports = Provider.extend({
     // Set the full name for the user.
     if (traits.name)
       window.olark('api.visitor.updateFullName', { fullName : traits.name });
+    else if (traits.firstName && traits.lastName)
+      window.olark('api.visitor.updateFullName', { fullName : traits.firstName + ' ' + traits.lastName });
 
     // Set the phone number for the user.
-    if (traits.phoneNumber)
-      window.olark('api.visitor.updatePhoneNumber', { phoneNumber : traits.phoneNumber });
+    if (traits.phone)
+      window.olark('api.visitor.updatePhoneNumber', { phoneNumber : traits.phone });
 
     // Set any additional custom fields from the traits.
     window.olark('api.visitor.updateCustomFields', traits);

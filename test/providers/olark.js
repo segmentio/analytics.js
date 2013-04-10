@@ -82,7 +82,7 @@ describe('Olark', function () {
     it('should update the visitor phone number', function () {
       var spy = sinon.spy(window, 'olark');
       analytics.identify({
-        phoneNumber : '(555) 555-5555'
+        phone : '(555) 555-5555'
       });
 
       expect(spy.calledWithMatch('api.visitor.updatePhoneNumber', {
@@ -97,7 +97,15 @@ describe('Olark', function () {
       analytics.identify({
         name : 'Hallucinating Chipmunk'
       });
+      expect(spy.calledWithMatch('api.visitor.updateFullName', {
+        fullName : 'Hallucinating Chipmunk'
+      })).to.be(true);
 
+      spy.reset();
+      analytics.identify({
+        firstName : 'Hallucinating',
+        lastName  : 'Chipmunk'
+      });
       expect(spy.calledWithMatch('api.visitor.updateFullName', {
         fullName : 'Hallucinating Chipmunk'
       })).to.be(true);

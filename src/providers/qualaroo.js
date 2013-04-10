@@ -10,7 +10,7 @@ module.exports = Provider.extend({
 
   name : 'Qualaroo',
 
-  options : {
+  defaults : {
     // Qualaroo has two required options.
     customerId : null,
     siteToken : null,

@@ -12,7 +12,7 @@ module.exports = Provider.extend({
 
   chatInProgress : false,
 
-  options : {
+  defaults : {
     siteId : null,
     // Whether to use the user's name or email in the Olark chat console.
     identify : true,

@@ -75,7 +75,13 @@ window.test = {
   'Gauges' : 'x',
 
   'Google Analytics' : {
-    trackingId : 'x'
+    classic: {
+      trackingId : 'x'
+    },
+    universal: {
+      universalClient: true,
+      trackingId : 'x'
+    }
   },
 
   'GoSquared' : 'x',

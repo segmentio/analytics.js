@@ -11,7 +11,7 @@ module.exports = Provider.extend({
 
   key : 'license',
 
-  options : {
+  defaults : {
     license : null
   },
 

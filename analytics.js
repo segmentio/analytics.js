@@ -1,12 +1,5 @@
 ;(function(){
 
-
-/**
- * hasOwnProperty.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
 /**
  * Require the given path.
  *
@@ -83,10 +76,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (has.call(require.modules, path)) return path;
+    if (require.modules.hasOwnProperty(path)) return path;
   }
 
-  if (has.call(require.aliases, index)) {
+  if (require.aliases.hasOwnProperty(index)) {
     return require.aliases[index];
   }
 };
@@ -140,7 +133,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!has.call(require.modules, from)) {
+  if (!require.modules.hasOwnProperty(from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -202,7 +195,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return has.call(require.modules, localRequire.resolve(path));
+    return require.modules.hasOwnProperty(localRequire.resolve(path));
   };
 
   return localRequire;
@@ -1466,7 +1459,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.9.4';
+  this.VERSION = '0.9.6';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -2016,7 +2009,7 @@ function Provider (options, ready) {
   }
 
   // Extend the passed-in options with our defaults.
-  extend(this.options, options);
+  this.options = extend({}, this.defaults, options);
 
   // Wrap our ready function, so that it ready from our internal queue first
   // and then marks us as ready.
@@ -2305,7 +2298,7 @@ module.exports = Provider.extend({
 
   name : 'Bitdeli',
 
-  options : {
+  defaults : {
     // BitDeli requires two options: `inputId` and `authToken`.
     inputId : null,
     authToken : null,
@@ -2361,7 +2354,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 
@@ -2384,7 +2377,7 @@ module.exports = Provider.extend({
 
   name : 'Chartbeat',
 
-  options : {
+  defaults : {
     // Chartbeat requires two options: `domain` and `uid`. All other
     // configuration options are passed straight in!
     domain : null,
@@ -2439,7 +2432,7 @@ module.exports = Provider.extend({
 
   key : 'projectId',
 
-  options : {
+  defaults : {
 
     // If you sign up for a free account, this is the default http (non-ssl) CDN URL
     // that you get. If you sign up for a premium account, you get a different
@@ -2536,7 +2529,7 @@ module.exports = Provider.extend({
 
   key : 'siteId',
 
-  options : {
+  defaults : {
     siteId : null
   },
 
@@ -2575,7 +2568,7 @@ module.exports = Provider.extend({
 
   key : 'c2',
 
-  options : {
+  defaults : {
     c1 : '2',
     c2 : null
   },
@@ -2603,7 +2596,7 @@ module.exports = Provider.extend({
 
   key : 'accountNumber',
 
-  options : {
+  defaults : {
     accountNumber : null
   },
 
@@ -2628,7 +2621,7 @@ module.exports = Provider.extend({
 
   key : 'siteId',
 
-  options : {
+  defaults : {
     siteId : null
   },
 
@@ -2700,7 +2693,7 @@ module.exports = Provider.extend({
 
   key : 'projectId',
 
-  options : {
+  defaults : {
     projectId : null,
     // Whether to store metadata about the user on `identify` calls, using
     // the [Errorception `meta` API](http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html).
@@ -2750,7 +2743,7 @@ module.exports = Provider.extend({
 
   key : 'appId',
 
-  options : {
+  defaults : {
     appId : null
   },
 
@@ -2829,7 +2822,7 @@ module.exports = Provider.extend({
 
   key : 'siteId',
 
-  options : {
+  defaults : {
     siteId : null
   },
 
@@ -2866,7 +2859,8 @@ module.exports = Provider.extend({
 
   key : 'trackingId',
 
-  options : {
+  defaults : {
+    universalClient: false,
     // Your Google Analytics Tracking ID.
     trackingId : null,
     // Whether or not to track and initial pageview when initialized.
@@ -2885,7 +2879,16 @@ module.exports = Provider.extend({
     doubleClick : false
   },
 
+  //
+  // Initialize
+  //
+
   initialize : function (options, ready) {
+    if (options.universalClient) this.initializeUniversal(options, ready);
+    else this.initializeClassic(options, ready);
+  },
+
+  initializeClassic: function (options, ready) {
     window._gaq = window._gaq || [];
     window._gaq.push(['_setAccount', options.trackingId]);
 
@@ -2924,7 +2927,53 @@ module.exports = Provider.extend({
     ready();
   },
 
+  initializeUniversal: function (options, ready) {
+
+    // GA-universal lets you set your own queue name
+    var global = this.global = 'ga';
+
+    // and needs to know about this queue name in this special object
+    // so that future plugins can also operate on the object
+    window['GoogleAnalyticsObject'] = global;
+
+    // setup the global variable
+    window[global] = window[global] || function () {
+      (window[global].q = window[global].q || []).push(arguments);
+    };
+
+    // GA also needs to know the current time (all from their snippet)
+    window[global].l = 1 * new Date();
+
+    var createOpts = {};
+
+    // Apply a bunch of optional settings.
+    if (options.domain)
+      createOpts.cookieDomain = options.domain || 'none';
+    if (type(options.siteSpeedSampleRate) === 'number')
+      createOpts.siteSpeedSampleRate = options.siteSpeedSampleRate;
+    if (options.anonymizeIp)
+      ga('set', 'anonymizeIp', true);
+
+    ga('create', options.trackingId, createOpts);
+
+    if (options.initialPageview) {
+      var path, canon = canonical();
+      if (canon) path = url.parse(canon).pathname;
+      this.pageview(path);
+    }
+
+    load('//www.google-analytics.com/analytics.js');
+
+    // Google makes a queue so it's ready immediately.
+    ready();
+  },
+
+  //
+  // Track
+  //
+
   track : function (event, properties) {
+
     properties || (properties = {});
 
     var value;
@@ -2936,18 +2985,46 @@ module.exports = Provider.extend({
     // so if it's not there we use `'All'` as a default. We can safely push
     // undefined if the special properties don't exist. Try using revenue
     // first, but fall back to a generic `value` as well.
-    window._gaq.push([
-      '_trackEvent',
-      properties.category || 'All',
-      event,
-      properties.label,
-      Math.round(properties.revenue) || value,
-      properties.noninteraction
-    ]);
+    if (this.options.universalClient) {
+
+      var opts = {};
+      if (properties.noninteraction)
+        opts.nonInteraction = properties.noninteraction;
+
+      window[this.global](
+         'send',
+         'event',
+         properties.category || 'All',
+         event,
+         properties.label,
+         Math.round(properties.revenue) || value,
+         opts
+      );
+
+    } else {
+
+      window._gaq.push([
+        '_trackEvent',
+        properties.category || 'All',
+        event,
+        properties.label,
+        Math.round(properties.revenue) || value,
+        properties.noninteraction
+      ]);
+    }
   },
 
+
+  //
+  // Page View
+  //
+
   pageview : function (url) {
-    window._gaq.push(['_trackPageview', url]);
+    if (this.options.universalClient) {
+      window[this.global]('send', 'pageview', url);
+    } else {
+      window._gaq.push(['_trackPageview', url]);
+    }
   }
 
 });
@@ -2967,7 +3044,7 @@ module.exports = Provider.extend({
 
   key : 'siteToken',
 
-  options : {
+  defaults : {
     siteToken : null
   },
 
@@ -3017,7 +3094,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 
@@ -3052,7 +3129,7 @@ module.exports = Provider.extend({
 
   key : 'siteId',
 
-  options : {
+  defaults : {
     siteId : null
   },
 
@@ -3076,7 +3153,7 @@ module.exports = Provider.extend({
 
   key : 'portalId',
 
-  options : {
+  defaults : {
     portalId : null
   },
 
@@ -3180,7 +3257,7 @@ module.exports = Provider.extend({
 
   key : 'appId',
 
-  options : {
+  defaults : {
     // Intercom's required key.
     appId : null,
     // An optional setting to display the Intercom inbox widget.
@@ -3279,7 +3356,7 @@ module.exports = Provider.extend({
 
   name : 'Keen IO',
 
-  options : {
+  defaults : {
     // Keen IO has one required option: `projectToken`
     projectToken : null,
     // Whether or not to pass pageviews on to Keen IO.
@@ -3343,7 +3420,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 
@@ -3396,7 +3473,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 
@@ -3439,7 +3516,7 @@ module.exports = Provider.extend({
 
   key : 'license',
 
-  options : {
+  defaults : {
     license : null
   },
 
@@ -3490,7 +3567,7 @@ module.exports = Provider.extend({
 
     key : 'cid',
 
-    options : {
+    defaults : {
         cid: null
     },
 
@@ -3558,7 +3635,7 @@ module.exports = Provider.extend({
 
   key : 'token',
 
-  options : {
+  defaults : {
     // Whether to call `mixpanel.nameTag` on `identify`.
     nameTag : true,
     // Whether to use Mixpanel's People API.
@@ -3695,7 +3772,7 @@ module.exports = Provider.extend({
 
   chatInProgress : false,
 
-  options : {
+  defaults : {
     siteId : null,
     // Whether to use the user's name or email in the Olark chat console.
     identify : true,
@@ -3805,7 +3882,7 @@ module.exports = Provider.extend({
 
   key : 'siteId',
 
-  options : {
+  defaults : {
     siteId : null
   },
 
@@ -3833,7 +3910,7 @@ module.exports = Provider.extend({
 
   name : 'Qualaroo',
 
-  options : {
+  defaults : {
     // Qualaroo has two required options.
     customerId : null,
     siteToken : null,
@@ -3890,7 +3967,7 @@ module.exports = Provider.extend({
 
   key : 'pCode',
 
-  options : {
+  defaults : {
     pCode : null
   },
 
@@ -3918,7 +3995,7 @@ module.exports = Provider.extend({
 
   key : 'config',
 
-  options : {
+  defaults : {
     config : null
   },
 
@@ -3957,7 +4034,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 
@@ -3981,7 +4058,7 @@ module.exports = Provider.extend({
 
   key : 'key',
 
-  options : {
+  defaults : {
     key : null
   },
 
@@ -4019,7 +4096,7 @@ module.exports = Provider.extend({
 
   key : 'widgetId',
 
-  options : {
+  defaults : {
     widgetId : null
   },
 
@@ -4044,7 +4121,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 
@@ -4100,7 +4177,7 @@ module.exports = Provider.extend({
 
   key : 'domain',
 
-  options : {
+  defaults : {
     domain : null
   },
 

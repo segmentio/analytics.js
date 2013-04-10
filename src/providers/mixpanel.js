@@ -13,7 +13,7 @@ module.exports = Provider.extend({
 
   key : 'token',
 
-  options : {
+  defaults : {
     // Whether to call `mixpanel.nameTag` on `identify`.
     nameTag : true,
     // Whether to use Mixpanel's People API.

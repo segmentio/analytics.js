@@ -12,7 +12,7 @@ module.exports = Provider.extend({
 
     key : 'cid',
 
-    options : {
+    defaults : {
         cid: null
     },
 

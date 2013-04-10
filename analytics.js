@@ -1,5 +1,12 @@
 ;(function(){
 
+
+/**
+ * hasOwnProperty.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
 /**
  * Require the given path.
  *
@@ -76,10 +83,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (require.modules.hasOwnProperty(path)) return path;
+    if (has.call(require.modules, path)) return path;
   }
 
-  if (require.aliases.hasOwnProperty(index)) {
+  if (has.call(require.aliases, index)) {
     return require.aliases[index];
   }
 };
@@ -133,7 +140,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!require.modules.hasOwnProperty(from)) {
+  if (!has.call(require.modules, from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -195,7 +202,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return require.modules.hasOwnProperty(localRequire.resolve(path));
+    return has.call(require.modules, localRequire.resolve(path));
   };
 
   return localRequire;
@@ -3479,8 +3486,8 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
-    name : 'Lytics', 
-    
+    name : 'Lytics',
+
     key : 'cid',
 
     options : {
@@ -3494,14 +3501,14 @@ module.exports = Provider.extend({
           t.send=function(){
             this._q.push(["ready","send",Array.prototype.slice.call(arguments)]);
             return this;
-          }
-          return t
+          };
+          return t;
         })();
 
         load('//c.lytics.io/static/io.min.js');
 
-        // ready immediately 
-        ready()
+        // ready immediately
+        ready();
     },
 
 
@@ -3676,7 +3683,8 @@ module.exports = Provider.extend({
 require.register("analytics/src/providers/olark.js", function(exports, require, module){
 // http://www.olark.com/documentation
 
-var Provider = require('../provider');
+var Provider = require('../provider')
+  , isEmail  = require('is-email');
 
 
 module.exports = Provider.extend({
@@ -3722,17 +3730,38 @@ module.exports = Provider.extend({
   identify : function (userId, traits) {
     if (!this.options.identify) return;
 
-    // Choose the best name for the user that we can get.
-    var name = userId;
-    if (traits && traits.email) name = traits.email;
-    if (traits && traits.name) name = traits.name;
-    if (traits && traits.name && traits.email) name += ' ('+traits.email+')';
+    // Make an empty default traits object if it doesn't exist yet.
+    traits || (traits = {});
 
-    // If we ended up with no name after all that, get out of there.
-    if (!name) return;
+    // If there wasn't already an email and the userId is one, use it.
+    if (!traits.email && isEmail(userId)) traits.email = userId;
+
+    // Set the email address for the user.
+    if (traits.email)
+      window.olark('api.visitor.updateEmailAddress', { emailAddress : traits.email });
+
+    // Set the full name for the user.
+    if (traits.name)
+      window.olark('api.visitor.updateFullName', { fullName : traits.name });
+
+    // Set the phone number for the user.
+    if (traits.phoneNumber)
+      window.olark('api.visitor.updatePhoneNumber', { phoneNumber : traits.phoneNumber });
+
+    // Set any additional custom fields from the traits.
+    window.olark('api.visitor.updateCustomFields', traits);
+
+    // Choose the best possible nickname for the user.
+    var nickname = userId;
+    if (traits.email) nickname = traits.email;
+    if (traits.name) nickname = traits.name;
+    if (traits.name && traits.email) nickname += ' ('+traits.email+')';
+
+    // If we ended up with no nickname after all that, get out of here.
+    if (!nickname) return;
 
     window.olark('api.chat.updateVisitorNickname', {
-      snippet : name
+      snippet : nickname
     });
   },
 

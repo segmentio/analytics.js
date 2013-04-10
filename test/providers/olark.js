@@ -72,7 +72,7 @@ describe('Olark', function () {
         email : 'zeus@segment.io'
       });
 
-      expect(spy.calledWithMatch('api.chat.updateEmailAddress', {
+      expect(spy.calledWithMatch('api.visitor.updateEmailAddress', {
         emailAddress : 'zeus@segment.io'
       })).to.be(true);
 
@@ -85,7 +85,7 @@ describe('Olark', function () {
         phoneNumber : '(555) 555-5555'
       });
 
-      expect(spy.calledWithMatch('api.chat.updatePhoneNumber', {
+      expect(spy.calledWithMatch('api.visitor.updatePhoneNumber', {
         phoneNumber : '(555) 555-5555'
       })).to.be(true);
 
@@ -98,8 +98,8 @@ describe('Olark', function () {
         name : 'Hallucinating Chipmunk'
       });
 
-      expect(spy.calledWithMatch('api.chat.updateFullName', {
-        name : 'Hallucinating Chipmunk'
+      expect(spy.calledWithMatch('api.visitor.updateFullName', {
+        fullName : 'Hallucinating Chipmunk'
       })).to.be(true);
 
       spy.restore();

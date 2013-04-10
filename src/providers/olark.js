@@ -1,6 +1,7 @@
 // http://www.olark.com/documentation
 
-var Provider = require('../provider');
+var Provider = require('../provider')
+  , isEmail  = require('is-email');
 
 
 module.exports = Provider.extend({

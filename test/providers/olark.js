@@ -38,12 +38,6 @@ describe('Olark', function () {
     it('should updates visitor nickname with the best name', function () {
       var spy = sinon.spy(window, 'olark');
       analytics.identify({
-        dogs : 1
-      });
-      expect(spy.called).to.be(false);
-
-      spy.reset();
-      analytics.identify({
         email : 'zeus@segment.io'
       });
 
@@ -71,6 +65,60 @@ describe('Olark', function () {
 
       spy.restore();
     });
+
+    it('should update the visitor email', function () {
+      var spy = sinon.spy(window, 'olark');
+      analytics.identify({
+        email : 'zeus@segment.io'
+      });
+
+      expect(spy.calledWithMatch('api.chat.updateEmailAddress', {
+        emailAddress : 'zeus@segment.io'
+      })).to.be(true);
+
+      spy.restore();
+    });
+
+    it('should update the visitor phone number', function () {
+      var spy = sinon.spy(window, 'olark');
+      analytics.identify({
+        phoneNumber : '(555) 555-5555'
+      });
+
+      expect(spy.calledWithMatch('api.chat.updatePhoneNumber', {
+        phoneNumber : '(555) 555-5555'
+      })).to.be(true);
+
+      spy.restore();
+    });
+
+    it('should update the visitor full name', function () {
+      var spy = sinon.spy(window, 'olark');
+      analytics.identify({
+        name : 'Hallucinating Chipmunk'
+      });
+
+      expect(spy.calledWithMatch('api.chat.updateFullName', {
+        name : 'Hallucinating Chipmunk'
+      })).to.be(true);
+
+      spy.restore();
+    });
+
+    it('should update the visitor custom fields', function () {
+      var spy = sinon.spy(window, 'olark');
+      analytics.identify({
+        dogs : 1
+      });
+      expect(spy.calledWithMatch('api.visitor.updateCustomFields', {
+        dogs : 1
+      })).to.be(true);
+
+      spy.restore();
+    });
+
+
+          
 
   });
 

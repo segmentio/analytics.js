@@ -1,12 +1,5 @@
 ;(function(){
 
-
-/**
- * hasOwnProperty.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
 /**
  * Require the given path.
  *
@@ -83,10 +76,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (has.call(require.modules, path)) return path;
+    if (require.modules.hasOwnProperty(path)) return path;
   }
 
-  if (has.call(require.aliases, index)) {
+  if (require.aliases.hasOwnProperty(index)) {
     return require.aliases[index];
   }
 };
@@ -140,7 +133,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!has.call(require.modules, from)) {
+  if (!require.modules.hasOwnProperty(from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -202,7 +195,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return has.call(require.modules, localRequire.resolve(path));
+    return require.modules.hasOwnProperty(localRequire.resolve(path));
   };
 
   return localRequire;
@@ -1466,7 +1459,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.9.1';
+  this.VERSION = '0.9.4';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -3146,6 +3139,7 @@ module.exports = [
   require('./kissmetrics'),
   require('./klaviyo'),
   require('./livechat'),
+  require('./lytics'),
   require('./mixpanel'),
   require('./olark'),
   require('./perfect-audience'),
@@ -3473,6 +3467,73 @@ module.exports = Provider.extend({
   }
 
 });
+});
+require.register("analytics/src/providers/lytics.js", function(exports, require, module){
+// Lytics
+// --------
+// [Documentation](http://developer.lytics.io/doc#jstag),
+
+var Provider = require('../provider')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+    name : 'Lytics', 
+    
+    key : 'cid',
+
+    options : {
+        cid: null
+    },
+
+
+    initialize : function (options, ready) {
+        window.jstag = (function () {
+          var t={_q:[],_c:{cid:options.cid,url:'//c.lytics.io'},ts:(new Date()).getTime()};
+          t.send=function(){
+            this._q.push(["ready","send",Array.prototype.slice.call(arguments)]);
+            return this;
+          }
+          return t
+        })();
+
+        load('//c.lytics.io/static/io.min.js');
+
+        // ready immediately 
+        ready()
+    },
+
+
+    // Identify
+    // --------
+
+    identify: function (userId, traits) {
+        traits['_uid'] = userId;
+        window.jstag.send(traits);
+    },
+
+
+    // Track
+    // -----
+
+    track: function (event, properties) {
+        properties['_e'] = event;
+        window.jstag.send(properties);
+    },
+
+    // Pageview
+    // ----------
+    pageview: function (url) {
+        window.jstag.send();
+    }
+
+
+});
+
+
+
+
 });
 require.register("analytics/src/providers/mixpanel.js", function(exports, require, module){
 // https://mixpanel.com/docs/integration-libraries/javascript
@@ -3915,7 +3976,7 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/src/providers/uservoice.js", function(exports, require, module){
-// http://feedback.uservoice.com/knowledgebase/articles/16797-how-do-i-customize-and-install-the-uservoice-feedb
+// http://feedback.uservoice.com/knowledgebase/articles/225-how-do-i-pass-custom-data-through-the-widget-and-i
 
 var Provider = require('../provider')
   , load     = require('load-script');
@@ -3932,7 +3993,7 @@ module.exports = Provider.extend({
   },
 
   initialize : function (options, ready) {
-    window.uvOptions = {};
+    window.UserVoice = [];
     load('//widget.uservoice.com/' + options.widgetId + '.js', ready);
   }
 

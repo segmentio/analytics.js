@@ -1,3 +1,10 @@
+0.9.4 / 2013-4-4
+=================
+* Fixing Uservoice integration
+* Fixing ready tests.
+* Adding lytics integration by  [@araddon](https://github.com/araddon)
+* Adding bower support by  [@jede](https://github.com/jede)
+
 0.9.3 / 2013-4-2
 =================
 * Olark provider now only notifies the operator of track and pageview when the chat box is expanded.

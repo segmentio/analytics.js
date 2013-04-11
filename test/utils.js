@@ -116,6 +116,10 @@ window.test = {
 
   'Perfect Audience' : '4ff6ade4361ed500020000a5',
 
+  'Preact' : {
+    projectCode : 'x'
+  },
+
   'Quantcast' : 'x',
 
   'Qualaroo' : {

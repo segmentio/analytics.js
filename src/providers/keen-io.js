@@ -8,7 +8,7 @@ module.exports = Provider.extend({
 
   name : 'Keen IO',
 
-  options : {
+  defaults : {
     // Keen IO has one required option: `projectToken`
     projectToken : null,
     // Whether or not to pass pageviews on to Keen IO.

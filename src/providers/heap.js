@@ -9,7 +9,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 

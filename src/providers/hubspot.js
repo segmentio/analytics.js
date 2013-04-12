@@ -11,7 +11,7 @@ module.exports = Provider.extend({
 
   key : 'portalId',
 
-  options : {
+  defaults : {
     portalId : null
   },
 

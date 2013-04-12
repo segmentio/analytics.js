@@ -1,3 +1,12 @@
+0.9.6 / 2013-4-10
+=================
+* Renaming Provider.options to Provider.defaults
+* Adding universal analytics support to Google Analytics
+
+0.9.5 / 2013-4-10
+=================
+* Adding support for new Olark Javascript API functions, see #121
+
 0.9.4 / 2013-4-4
 =================
 * Fixing Uservoice integration

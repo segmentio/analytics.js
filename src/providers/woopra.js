@@ -15,7 +15,7 @@ module.exports = Provider.extend({
 
   key : 'domain',
 
-  options : {
+  defaults : {
     domain : null
   },
 

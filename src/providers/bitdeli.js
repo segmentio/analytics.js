@@ -9,7 +9,7 @@ module.exports = Provider.extend({
 
   name : 'Bitdeli',
 
-  options : {
+  defaults : {
     // BitDeli requires two options: `inputId` and `authToken`.
     inputId : null,
     authToken : null,

@@ -10,7 +10,7 @@ module.exports = Provider.extend({
 
   name : 'Chartbeat',
 
-  options : {
+  defaults : {
     // Chartbeat requires two options: `domain` and `uid`. All other
     // configuration options are passed straight in!
     domain : null,

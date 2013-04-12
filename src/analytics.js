@@ -28,7 +28,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.9.4';
+  this.VERSION = '0.9.5';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -219,8 +219,9 @@ extend(Analytics.prototype, {
     // Update the cookie with the new userId and traits.
     var alias = user.update(userId, traits);
 
-    // Clone `traits` before we manipulate it, so we don't do anything uncouth.
-    traits = clone(traits);
+    // Clone `traits` before we manipulate it, so we don't do anything uncouth
+    // and take the user.traits() so anonymous users carry over traits.
+    traits = clone(user.traits());
 
     // Convert dates from more types of input into Date objects.
     if (traits && traits.created) traits.created = newDate(traits.created);
@@ -242,7 +243,7 @@ extend(Analytics.prototype, {
 
     // TODO: auto-alias once mixpanel API doesn't error
     // If we should alias, go ahead and do it.
-    // if (alias) this.alias(userId);
+    if (alias) this.alias(userId);
 
     if (callback && type(callback) === 'function') {
       setTimeout(callback, this.timeout);

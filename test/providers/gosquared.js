@@ -41,7 +41,7 @@ describe('GoSquared', function () {
       window.GoSquared.Visitor = undefined;
       analytics.identify(test.userId);
       expect(window.GoSquared.UserName).to.equal(test.userId);
-      expect(window.GoSquared.Visitor).to.be(undefined);
+      expect(window.GoSquared.Visitor).to.eql({});
     });
 
     it('should set traits', function () {

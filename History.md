@@ -1,3 +1,10 @@
+0.9.5 / 2013-4-12
+=================
+* Fixing LiveChat test
+* Adding auto-aliasing
+* Updating mixpanel snippet to wait for ready until script loads
+* Adding full traits pulled in from identify.
+
 0.9.4 / 2013-4-4
 =================
 * Fixing Uservoice integration

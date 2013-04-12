@@ -54,10 +54,13 @@ describe('KISSmetrics', function () {
       var stub = sinon.stub(window._kmq, 'push');
       analytics.identify(test.traits);
       expect(stub.calledWith(['set', test.traits])).to.be(true);
+      analytics.user.clear();
 
       stub.reset();
       analytics.identify(test.userId);
-      expect(stub.calledWith(['set', test.traits])).to.be(false);
+      expect(stub.calledWith(['set', {}])).to.be(true);
+      analytics.user.clear();
+
       stub.reset();
       analytics.identify(test.userId, test.traits);
       expect(stub.calledWith(['set', test.traits])).to.be(true);

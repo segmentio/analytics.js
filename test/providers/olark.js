@@ -33,47 +33,51 @@ describe('Olark', function () {
 
   describe('identify', function () {
 
-    beforeEach(analytics.user.clear);
+    var spy;
+    beforeEach(function () {
+      analytics.user.clear();
+      spy = sinon.spy(window, 'olark');
+    });
+    afterEach(function () { spy.restore(); });
 
-    it('should updates visitor nickname with the best name', function () {
-      var spy = sinon.spy(window, 'olark');
+
+    it('should not update for a random trait', function () {
       analytics.identify({
         dogs : 1
       });
       expect(spy.called).to.be(false);
+    });
 
-      spy.reset();
+    it('should update with the email', function () {
       analytics.identify({
         email : 'zeus@segment.io'
       });
-
       expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
         snippet : 'zeus@segment.io'
       })).to.be(true);
+    });
 
-      spy.reset();
+    it('should update with the name and email when called', function () {
       analytics.identify(test.traits);
       expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
         snippet : 'Zeus (zeus@segment.io)'
       })).to.be(true);
+    });
 
-      spy.reset();
+    it('should update with the user id', function () {
       analytics.identify(test.userId);
       expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
         snippet : test.userId
       })).to.be(true);
+    });
 
-      spy.reset();
+    it('should update with the email, name, and traits with userId', function () {
       analytics.identify(test.userId, test.traits);
       expect(spy.calledWith('api.chat.updateVisitorNickname', {
         snippet : 'Zeus (zeus@segment.io)'
       })).to.be(true);
-
-      spy.restore();
     });
-
   });
-
 
   describe('track', function () {
 

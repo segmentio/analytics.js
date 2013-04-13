@@ -1632,20 +1632,20 @@ extend(Analytics.prototype, {
     // Allow for optional arguments.
     if (type(options) === 'function') {
       callback = options;
-      options = null;
+      options = undefined;
     }
     if (type(traits) === 'function') {
       callback = traits;
-      traits = null;
+      traits = undefined;
     }
     if (type(userId) === 'object') {
       if (traits && type(traits) === 'function') callback = traits;
       traits = userId;
-      userId = null;
+      userId = undefined;
     }
 
     // Use our cookied ID if they didn't provide one.
-    if (userId === null) userId = user.id();
+    if (userId === undefined || user === null) userId = user.id();
 
     // Update the cookie with the new userId and traits.
     var alias = user.update(userId, traits);
@@ -1672,9 +1672,8 @@ extend(Analytics.prototype, {
       }
     });
 
-    // TODO: auto-alias once mixpanel API doesn't error
     // If we should alias, go ahead and do it.
-    if (alias) this.alias(userId);
+    // if (alias) this.alias(userId);
 
     if (callback && type(callback) === 'function') {
       setTimeout(callback, this.timeout);
@@ -1710,11 +1709,11 @@ extend(Analytics.prototype, {
     // Allow for optional arguments.
     if (type(options) === 'function') {
       callback = options;
-      options = null;
+      options = undefined;
     }
     if (type(properties) === 'function') {
       callback = properties;
-      properties = null;
+      properties = undefined;
     }
 
     // Call `track` on all of our enabled providers that support it.
@@ -1893,6 +1892,11 @@ extend(Analytics.prototype, {
 
   alias : function (newId, originalId, options) {
     if (!this.initialized) return;
+
+    if (type(originalId) === 'object') {
+      options    = originalId;
+      originalId = undefined;
+    }
 
     // Call `alias` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
@@ -3662,7 +3666,7 @@ module.exports = Provider.extend({
 
     // HACK: internal mixpanel API to ensure we don't overwrite.
     if(window.mixpanel.get_property &&
-       window.mixpanel.get_property('$people_distinct_id')) return;
+       window.mixpanel.get_property('$people_distinct_id') === newId) return;
 
     window.mixpanel.alias(newId, originalId);
   }

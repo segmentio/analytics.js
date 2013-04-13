@@ -305,6 +305,7 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
+    /*
     it('calls alias when identifying from anonymous users', function () {
       var spy = sinon.spy(Provider.prototype, 'alias');
 
@@ -335,13 +336,12 @@ describe('Analytics.js', function () {
       expect(spy.called).to.be(false);
 
       spy.restore();
-    });
+    });*/
 
     it('calls with all stored traits', function () {
       analytics.user.clear();
       var spy    = sinon.spy(Provider.prototype, 'identify')
         , traits = test.traits;
-
 
       analytics.identify({ name : traits.name });
       expect(spy.calledWith(null, { name : traits.name })).to.be(true);
@@ -354,8 +354,8 @@ describe('Analytics.js', function () {
       })).to.be(true);
       spy.reset();
 
-      analytics.identify(traits.userId);
-      expect(spy.calledWith(traits.userId, {
+      analytics.identify(test.userId);
+      expect(spy.calledWith(test.userId, {
         name  : traits.name,
         email : traits.email
       })).to.be(true);

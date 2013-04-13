@@ -123,7 +123,7 @@ module.exports = Provider.extend({
 
     // HACK: internal mixpanel API to ensure we don't overwrite.
     if(window.mixpanel.get_property &&
-       window.mixpanel.get_property('$people_distinct_id')) return;
+       window.mixpanel.get_property('$people_distinct_id') === newId) return;
 
     window.mixpanel.alias(newId, originalId);
   }

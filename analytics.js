@@ -1,5 +1,12 @@
 ;(function(){
 
+
+/**
+ * hasOwnProperty.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
 /**
  * Require the given path.
  *
@@ -76,10 +83,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (require.modules.hasOwnProperty(path)) return path;
+    if (has.call(require.modules, path)) return path;
   }
 
-  if (require.aliases.hasOwnProperty(index)) {
+  if (has.call(require.aliases, index)) {
     return require.aliases[index];
   }
 };
@@ -133,7 +140,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!require.modules.hasOwnProperty(from)) {
+  if (!has.call(require.modules, from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -195,7 +202,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return require.modules.hasOwnProperty(localRequire.resolve(path));
+    return has.call(require.modules, localRequire.resolve(path));
   };
 
   return localRequire;
@@ -3227,6 +3234,7 @@ module.exports = [
   require('./mixpanel'),
   require('./olark'),
   require('./perfect-audience'),
+  require('./pingdom'),
   require('./qualaroo'),
   require('./quantcast'),
   require('./sentry'),
@@ -3893,6 +3901,41 @@ module.exports = Provider.extend({
 
   track : function (event, properties) {
     window._pa.track(event, properties);
+  }
+
+});
+});
+require.register("analytics/src/providers/pingdom.js", function(exports, require, module){
+var date     = require('load-date')
+  , Provider = require('../provider')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+  name : 'Pingdom',
+
+  key : 'id',
+
+  defaults : {
+    id : null
+  },
+
+  initialize : function (options, ready) {
+    window._prum = { id : options.id };
+    window.PRUM_EPISODES = window.PRUM_EPISODES || {};
+    window.PRUM_EPISODES.q = [];
+    window.PRUM_EPISODES.mark = function(b,a){PRUM_EPISODES.q.push(['mark',b,a||new Date().getTime()])};
+    window.PRUM_EPISODES.measure = function(b,a,b){PRUM_EPISODES.q.push(['measure',b,a,b||new Date().getTime()])};
+    window.PRUM_EPISODES.done = function(a){PRUM_EPISODES.q.push(['done',a])};
+
+    // In the original snippet they don't pass the time, but
+    // since we load this async, we need to pass in the actual start time.
+    window.PRUM_EPISODES.mark('firstbyte', date.getTime());
+
+    // We've replaced the original snippet loader with our
+    // own load method.
+    load('//rum-static.pingdom.net/prum.min.js', ready);
   }
 
 });

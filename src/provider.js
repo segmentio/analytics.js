@@ -33,7 +33,7 @@ function Provider (options, ready) {
   }
 
   // Extend the passed-in options with our defaults.
-  extend(this.options, options);
+  this.options = extend({}, this.defaults, options);
 
   // Wrap our ready function, so that it ready from our internal queue first
   // and then marks us as ready.

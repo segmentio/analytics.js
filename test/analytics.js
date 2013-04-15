@@ -5,7 +5,7 @@ describe('Analytics.js', function () {
   var Provider = analytics.Provider.extend({
     name       : 'Test',
     key        : 'key',
-    options    : {},
+    defaults   : {},
     initialize : function (options, ready) {
       setTimeout(ready, readyTimeout);
     },
@@ -89,12 +89,19 @@ describe('Analytics.js', function () {
     it('resets ready state (after initialize)', function (done) {
       analytics.initialize(options);
       analytics.ready(function () {
-        expect(analytics.readied).to.be(true);
-        analytics.initialize(options);
-        expect(analytics.readied).to.be(false);
 
-        // Wait for it to come back to not interleave next tests.
-        analytics.ready(done);
+        setTimeout(function () {
+          expect(analytics.readied).to.be(true);
+          analytics.initialize(options);
+          expect(analytics.readied).to.be(false);
+          // Wait for it to come back to not interleave next tests.
+          analytics.ready(function () {
+            setTimeout(function () {
+              expect(analytics.readied).to.be(true);
+              done();
+            }, 20);
+          });
+        }, 20);
       });
     });
 

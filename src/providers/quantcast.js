@@ -10,7 +10,7 @@ module.exports = Provider.extend({
 
   key : 'pCode',
 
-  options : {
+  defaults : {
     pCode : null
   },
 

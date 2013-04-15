@@ -42,7 +42,7 @@ describe('Qualaroo', function () {
       var stub = sinon.stub(window._kiq, 'push');
 
       analytics.identify(test.traits);
-      expect(stub.calledWith(['identify', test.userId])).to.be(false);
+      expect(stub.calledWith(['identify', test.traits.email])).to.be(true);
       stub.reset();
 
       analytics.identify(test.userId);
@@ -50,7 +50,7 @@ describe('Qualaroo', function () {
       stub.reset();
 
       analytics.identify(test.userId, test.traits);
-      expect(stub.calledWith(['identify', test.userId])).to.be(true);
+      expect(stub.calledWith(['identify', test.traits.email])).to.be(true);
       stub.restore();
     });
 

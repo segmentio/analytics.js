@@ -1,6 +1,52 @@
-0.8.11 / 2013-3-19
+0.9.7 / 2013-3-19
 ==================
 * [Get Satisfaction](https://getsatisfaction.com/)
+
+0.9.6 / 2013-4-10
+=================
+* Renaming Provider.options to Provider.defaults
+* Adding universal analytics support to Google Analytics
+
+0.9.5 / 2013-4-10
+=================
+* Adding support for new Olark Javascript API functions, see #121
+
+0.9.4 / 2013-4-4
+=================
+* Fixing Uservoice integration
+* Fixing ready tests.
+* Adding lytics integration by  [@araddon](https://github.com/araddon)
+* Adding bower support by  [@jede](https://github.com/jede)
+
+0.9.3 / 2013-4-2
+=================
+* Olark provider now only notifies the operator of track and pageview when the chat box is expanded.
+
+0.9.2 / 2013-3-28
+=================
+* Qualaroo provider now prefers to identify with traits.email over a non-email userId --- makes the survey responses human readable.
+
+0.9.1 / 2013-3-28
+==================
+* Woopra no longer tracks after each identify so that duplicate page views aren't generated.
+
+0.9.0 / 2013-3-27
+==================
+* Changed default Keen IO settings to record all pageviews by default
+* Removed Keen IO API Key option since that is no longer used for data "writes" to their API
+* Renamed Keen IO projectId to projectToken to match their docs
+
+0.8.13 / 2013-3-25
+==================
+* Added ability to pass variables into `intercomSettings` via `context.intercom`
+
+0.8.12 / 2013-3-25
+==================
+* Added [Heap](https://heapanalytics.com)
+
+0.8.11 / 2013-3-24
+==================
+* Removed [Storyberg](http://storyberg.com/2013/03/18/the-end.html), best of luck guys
 
 0.8.10 / 2013-3-14
 ==================

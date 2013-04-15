@@ -17,7 +17,7 @@ module.exports = Provider.extend({
 
   key : 'appId',
 
-  options : {
+  defaults : {
     // Intercom's required key.
     appId : null,
     // An optional setting to display the Intercom inbox widget.
@@ -30,7 +30,7 @@ module.exports = Provider.extend({
     load('https://api.intercom.io/api/js/library.js', ready);
   },
 
-  identify : function (userId, traits) {
+  identify : function (userId, traits, context) {
     // Intercom requires a `userId` to associate data to a user.
     if (!userId) return;
 
@@ -38,9 +38,9 @@ module.exports = Provider.extend({
     if (!this.booted && !userId) return;
 
     // Pass traits directly in to Intercom's `custom_data`.
-    var settings = {
+    var settings = extend({
       custom_data : traits || {}
-    };
+    }, (context && context.intercom) ? context.intercom : {});
 
     // They need `created_at` as a Unix timestamp (seconds).
     if (traits && traits.created) {
@@ -89,9 +89,12 @@ module.exports = Provider.extend({
     } else {
       extend(settings, {
         app_id    : this.options.appId,
-        user_hash : this.options.userHash,
         user_id   : userId
       });
+
+      if (this.options.userHash)
+        settings.user_hash = this.options.userHash;
+
       window.Intercom('boot', settings);
     }
 

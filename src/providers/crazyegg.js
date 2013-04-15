@@ -8,7 +8,7 @@ module.exports = Provider.extend({
 
   key : 'accountNumber',
 
-  options : {
+  defaults : {
     accountNumber : null
   },
 

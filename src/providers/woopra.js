@@ -15,7 +15,7 @@ module.exports = Provider.extend({
 
   key : 'domain',
 
-  options : {
+  defaults : {
     domain : null
   },
 
@@ -46,7 +46,6 @@ module.exports = Provider.extend({
     if (!window.woopraTracker) return;
 
     this.addTraits(userId, traits, window.woopraTracker);
-    window.woopraTracker.track();
   },
 
   // Convenience function for updating the userId and traits.

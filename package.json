@@ -1,6 +1,6 @@
 {
   "name": "analytics.js",
-  "version": "0.8.11",
+  "version": "0.9.7",
   "author": "Segment.io <friends@segment.io>",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "license": "MIT",
@@ -43,6 +43,7 @@
     "get satisfaction",
     "google analytics",
     "gosquared",
+    "heap",
     "hittail",
     "hubspot",
     "intercom",
@@ -55,7 +56,6 @@
     "qualaroo",
     "quantcast",
     "snapengage",
-    "storyberg",
     "usercycle",
     "vero"
   ],

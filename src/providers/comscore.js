@@ -10,7 +10,7 @@ module.exports = Provider.extend({
 
   key : 'c2',
 
-  options : {
+  defaults : {
     c1 : '2',
     c2 : null
   },

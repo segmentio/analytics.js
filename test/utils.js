@@ -77,10 +77,18 @@ window.test = {
   'Get Satisfaction' : 5005,
 
   'Google Analytics' : {
-    trackingId : 'x'
+    classic: {
+      trackingId : 'x'
+    },
+    universal: {
+      universalClient: true,
+      trackingId : 'x'
+    }
   },
 
   'GoSquared' : 'x',
+
+  'Heap' : 'x',
 
   'HitTail' : 'x',
 
@@ -93,8 +101,7 @@ window.test = {
   },
 
   'Keen IO' : {
-    projectId : 'KEEN_PROJECT_ID',
-    apiKey    : 'KEEN_API_KEY'
+    projectToken : 'KEEN_PROJECT_TOKEN'
   },
 
   'KISSmetrics' : '67f57ae9d61a6981fa07d141bec8c6c37e8b88c7',
@@ -102,6 +109,8 @@ window.test = {
   'Klaviyo' : 'x',
 
   'LiveChat' : '2328351',
+
+  'Lytics' : 'x',
 
   'Mixpanel' : 'x',
 
@@ -119,8 +128,6 @@ window.test = {
   'Sentry' : 'x',
 
   'SnapEngage' : '782b737e-487f-4117-8a2b-2beb32b600e5',
-
-  'Storyberg' : 'x',
 
   'USERcycle' : 'x',
 

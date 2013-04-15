@@ -47,12 +47,6 @@ describe('Woopra', function () {
       spy.reset();
     });
 
-    it('correctly makes a track request', function () {
-      var spy = sinon.spy(window.woopraTracker, 'track');
-      analytics.identify(test.userId, test.traits);
-      expect(spy.called).to.be(true);
-      spy.reset();
-    });
   });
 
 

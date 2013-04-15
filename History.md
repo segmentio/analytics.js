@@ -1,3 +1,7 @@
+0.9.7 / 2013-3-19
+==================
+* [Get Satisfaction](https://getsatisfaction.com/)
+
 0.9.6 / 2013-4-10
 =================
 * Renaming Provider.options to Provider.defaults

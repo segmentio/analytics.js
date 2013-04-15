@@ -2,7 +2,8 @@
 
 var date     = require('load-date')
   , Provider = require('../provider')
-  , load     = require('load-script');
+  , load     = require('load-script')
+  , onBody   = require('on-body');
 
 module.exports = Provider.extend({
 
@@ -36,36 +37,32 @@ module.exports = Provider.extend({
 
 
   initialize : function (options, ready) {
-
     // If we're on https:// but don't have a secure library, return early.
     if (document.location.protocol === 'https:' && !options.httpsCdnUrl) return;
 
-    // ClickTale wants this at the "top" of the page. The
-    // analytics.js snippet sets this date synchronously now,
-    // and  makes it available via load-date.
+    // ClickTale wants this at the "top" of the page. The analytics.js snippet
+    // sets this date synchronously now, and makes it available via load-date.
     window.WRInitTime = date.getTime();
 
-
-    // Make the `<div>` element and insert it at the end of the body.
-    var createClickTaleDiv = function () {
-      // loop until the body is actually available
-      if (!document.body) return setTimeout(createClickTaleDiv, 5);
-
+    // Add the required ClickTale div to the body.
+    onBody(function (body) {
       var div = document.createElement('div');
       div.setAttribute('id', 'ClickTaleDiv');
       div.setAttribute('style', 'display: none;');
-      document.body.appendChild(div);
-    };
-    createClickTaleDiv();
+      body.appendChild(div);
+    });
 
     var onloaded = function () {
-      window.ClickTale(options.projectId, options.recordingRatio, options.partitionId);
+      window.ClickTale(
+        options.projectId,
+        options.recordingRatio,
+        options.partitionId
+      );
       ready();
     };
 
-    // Load the appropriate CDN library, if no
-    // ssl library is provided and we're on ssl then
-    // we can't load anything (always true for non-premium accounts.)
+    // If no SSL library is provided and we're on SSL then we can't load
+    // anything (always true for non-premium accounts).
     load({
       http  : options.httpCdnUrl,
       https : options.httpsCdnUrl

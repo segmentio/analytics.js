@@ -74,6 +74,8 @@ window.test = {
 
   'Gauges' : 'x',
 
+  'Get Satisfaction' : 5005,
+
   'Google Analytics' : {
     classic: {
       trackingId : 'x'

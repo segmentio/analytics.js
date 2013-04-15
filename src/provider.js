@@ -26,13 +26,10 @@ function Provider (options, ready) {
   // Allow for `options` to only be a string if the provider has specified
   // a default `key`, in which case convert `options` into a dictionary.
   if (type(options) !== 'object') {
-    if (type(options) === 'string' && this.key) {
-      var key = options;
-      options = {};
-      options[this.key] = key;
-    } else {
-      throw new Error('Couldnt resolve options.');
-    }
+    if (!this.key) throw new Error('Couldnt resolve options.');
+    var key = options;
+    options = {};
+    options[this.key] = key;
   }
 
   // Extend the passed-in options with our defaults.

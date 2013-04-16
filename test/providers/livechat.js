@@ -16,9 +16,8 @@ describe('LiveChat', function () {
 
       // When the library loads, `LC_API` and `LC_Invite` will be defined.
       var interval = setInterval(function () {
-        if (!window.LC_API || !window.LC_Invite) return;
+        if (!window.LC_API) return;
         expect(window.LC_API).not.to.be(undefined);
-        expect(window.LC_Invite).not.to.be(undefined);
         expect(spy.called).to.be(true);
         clearInterval(interval);
         done();

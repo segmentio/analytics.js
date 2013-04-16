@@ -22,7 +22,7 @@ module.exports = Provider.extend({
       var s = document.createElement('script');
       var el = document.getElementsByTagName('script')[0];
       s.async = true;
-      s.src = (document.location.protocol == 'https:' ? 'https://' : 'http://') + 'api.preact.io/cdn/ln-2.2.min.js';
+      s.src = (document.location.protocol == 'https:' ? 'https://' : 'http://') + 'd2bbvl6dq48fa6.cloudfront.net/js/ln-2.3.min.js';
       el.parentNode.insertBefore(s, el);
     })();
 
@@ -53,16 +53,12 @@ module.exports = Provider.extend({
   },
 
   track : function (event, properties) {
+    properties || (properties = {});
+    
     var personEvent = {
       name : event,
-      target_id : null,
-      note : null
-    }
-    if(properties.target_id) {
-      personEvent.target_id = properties.target_id;
-    }
-    if(properties.note) {
-      personEvent.note = properties.note;
+      target_id : properties.target_id,
+      note : properties.note
     }
 
     window._lnq.push(['_logEvent', personEvent, properties]);

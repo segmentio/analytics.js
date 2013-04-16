@@ -1,3 +1,9 @@
+0.9.7 / 2013-4-16
+=================
+* Fixing LiveChat test
+* Updating mixpanel snippet to wait for ready until script loads
+* Adding full traits pulled in from identify.
+
 0.9.6 / 2013-4-10
 =================
 * Renaming Provider.options to Provider.defaults

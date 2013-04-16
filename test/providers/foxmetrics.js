@@ -40,10 +40,12 @@ describe('FoxMetrics', function () {
       var stub = sinon.stub(window._fxm, 'push');
       analytics.identify(test.traits);
       expect(stub.called).to.be(false);
+      analytics.user.clear();
 
       stub.reset();
       analytics.identify(test.userId);
-      expect(stub.calledWith(['_fxm.visitor.profile', test.userId, null, null, null, null, null, null, null])).to.be(true);
+      expect(stub.calledWith(['_fxm.visitor.profile', test.userId, null, null, null, null, null, null, {}])).to.be(true);
+      analytics.user.clear();
 
       stub.reset();
       analytics.identify(test.userId, test.traits);

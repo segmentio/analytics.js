@@ -17,6 +17,7 @@ describe('Vero', function () {
       expect(window._veroq).not.to.be(undefined);
       expect(window._veroq.push).to.equal(push);
       expect(spy.called).to.be(true);
+      expect(analytics.providers[0].options.apiKey).to.equal('x');
 
       // When the library loads, it will overwrite the push method.
       var interval = setInterval(function () {
@@ -26,33 +27,30 @@ describe('Vero', function () {
         done();
       }, 20);
     });
-
-    it('should store options', function () {
-      analytics.initialize({ 'Vero' : test['Vero'] });
-      expect(analytics.providers[0].options.apiKey).to.equal('x');
-    });
-
   });
 
 
   describe('identify', function () {
-
-    beforeEach(analytics.user.clear);
+    var stub;
+    beforeEach(function () {
+      analytics.user.clear();
+      stub = sinon.stub(window._veroq, 'push');
+    });
+    afterEach(function () { stub.restore(); });
 
     // Very requires an email and traits. Check for both separately, but do
     // traits first because otherwise the userId will be cached.
-    it('should push "users"', function () {
-      // Vero alters passed in array, use a stub to track count
-      var stub = sinon.stub(window._veroq, 'push');
+    it('should not push "users" without a userId', function () {
       analytics.identify(test.traits);
       expect(stub.called).to.be(false);
+    });
 
-      stub.reset();
+    it('should not push "users" without traits', function () {
       analytics.identify(test.userId);
       expect(stub.called).to.be(false);
+    });
 
-      stub.reset();
-
+    it('should push "users" with traits and userId', function () {
       analytics.identify(test.userId, test.traits);
       expect(stub.calledWith(['user', {
         id      : test.userId,
@@ -60,10 +58,7 @@ describe('Vero', function () {
         name    : test.traits.name,
         created : test.traits.created
       }])).to.be(true);
-
-      stub.restore();
     });
-
   });
 
 

@@ -63,13 +63,11 @@ describe('Keen IO', function () {
 
   describe('identify', function () {
 
+    before(analytics.user.clear);
+
     it('should call setGlobalProperties', function () {
       // Reset internal `userId` state from any previous identifies.
       analytics.userId = null;
-
-      var spy = sinon.spy(window.Keen, 'setGlobalProperties');
-      analytics.identify();
-      expect(spy.called).to.be(false);
 
       // a custom checker for code re-use. just makes sure that the function
       // passed as the globalProperties, when invoked, returns sane values.
@@ -77,7 +75,7 @@ describe('Keen IO', function () {
         expect(spy.calledWithMatch(function (value) {
           if (typeof value === "function") {
             var result = value("some event name");
-            expect(result.user.userId).to.equal(expectedUserId);
+            expect(result.user.userId).to.be(expectedUserId);
             expect(result.user.traits).to.eql(expectedTraits);
             return true;
           }
@@ -85,9 +83,13 @@ describe('Keen IO', function () {
         })).to.be(true);
       };
 
+      var spy = sinon.spy(window.Keen, 'setGlobalProperties');
+      analytics.identify();
+      customChecker(undefined, {});
+
       spy.reset();
       analytics.identify(test.userId);
-      customChecker(test.userId);
+      customChecker(test.userId, {});
 
       spy.reset();
       analytics.identify(test.userId, test.traits);

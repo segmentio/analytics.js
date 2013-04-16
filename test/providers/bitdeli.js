@@ -89,14 +89,17 @@ describe('Bitdeli', function () {
       var spy = sinon.spy(window._bdq, 'push');
       analytics.identify(test.traits);
       expect(spy.calledWith(['set', test.traits])).to.be(true);
+      analytics.user.clear();
 
       spy.reset();
       analytics.identify(test.userId);
       expect(spy.calledWith(['set', test.traits])).to.be(false);
+      analytics.user.clear();
 
       spy.reset();
       analytics.identify(test.userId, test.traits);
       expect(spy.calledWith(['set', test.traits])).to.be(true);
+      analytics.user.clear();
 
       spy.restore();
     });

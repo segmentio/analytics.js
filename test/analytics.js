@@ -305,7 +305,7 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
-    /* TODO: re-enable when we fix the mixpanel logging an error
+    /*
     it('calls alias when identifying from anonymous users', function () {
       var spy = sinon.spy(Provider.prototype, 'alias');
 
@@ -338,6 +338,48 @@ describe('Analytics.js', function () {
       spy.restore();
     });*/
 
+    it('calls with all stored traits', function () {
+      analytics.user.clear();
+      var spy    = sinon.spy(Provider.prototype, 'identify')
+        , traits = test.traits;
+
+      analytics.identify({ name : traits.name });
+      expect(spy.calledWith(null, { name : traits.name })).to.be(true);
+      spy.reset();
+
+      analytics.identify({ email : traits.email });
+      expect(spy.calledWith(null, {
+        name  : traits.name,
+        email : traits.email
+      })).to.be(true);
+      spy.reset();
+
+      analytics.identify(test.userId);
+      expect(spy.calledWith(test.userId, {
+        name  : traits.name,
+        email : traits.email
+      })).to.be(true);
+      spy.restore();
+    });
+
+
+    it('overwrites stored traits', function () {
+      analytics.user.clear();
+      var spy    = sinon.spy(Provider.prototype, 'identify')
+        , traits = {
+            name : 'Zeus',
+            email : 'zeus@email.com'
+          };
+
+      analytics.identify(test.userId, traits);
+      expect(spy.calledWith(test.userId, traits)).to.be(true);
+      spy.reset();
+
+      analytics.identify({ name : 'Poseidon' });
+      traits.name = 'Poseidon';
+      expect(spy.calledWith(test.userId, traits)).to.be(true);
+      spy.restore();
+    });
   });
 
 

@@ -5,7 +5,7 @@ describe('Analytics.js', function () {
   var Provider = analytics.Provider.extend({
     name       : 'Test',
     key        : 'key',
-    options    : {},
+    defaults   : {},
     initialize : function (options, ready) {
       setTimeout(ready, readyTimeout);
     },

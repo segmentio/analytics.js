@@ -40,14 +40,6 @@ describe('Olark', function () {
     });
     afterEach(function () { spy.restore(); });
 
-
-    it('should not update for a random trait', function () {
-      analytics.identify({
-        dogs : 1
-      });
-      expect(spy.called).to.be(false);
-    });
-
     it('should update with the email', function () {
       analytics.identify({
         email : 'zeus@segment.io'
@@ -75,6 +67,53 @@ describe('Olark', function () {
       analytics.identify(test.userId, test.traits);
       expect(spy.calledWith('api.chat.updateVisitorNickname', {
         snippet : 'Zeus (zeus@segment.io)'
+      })).to.be(true);
+    });
+
+    it('should update the visitor email', function () {
+      analytics.identify({
+        email : 'zeus@segment.io'
+      });
+
+      expect(spy.calledWithMatch('api.visitor.updateEmailAddress', {
+        emailAddress : 'zeus@segment.io'
+      })).to.be(true);
+    });
+
+    it('should update the visitor phone number', function () {
+      analytics.identify({
+        phone : '(555) 555-5555'
+      });
+
+      expect(spy.calledWithMatch('api.visitor.updatePhoneNumber', {
+        phoneNumber : '(555) 555-5555'
+      })).to.be(true);
+    });
+
+    it('should update the visitor full name', function () {
+      analytics.identify({
+        name : 'Hallucinating Chipmunk'
+      });
+      expect(spy.calledWithMatch('api.visitor.updateFullName', {
+        fullName : 'Hallucinating Chipmunk'
+      })).to.be(true);
+
+      spy.reset();
+      analytics.identify({
+        firstName : 'Hallucinating',
+        lastName  : 'Chipmunk'
+      });
+      expect(spy.calledWithMatch('api.visitor.updateFullName', {
+        fullName : 'Hallucinating Chipmunk'
+      })).to.be(true);
+    });
+
+    it('should update the visitor custom fields', function () {
+      analytics.identify({
+        dogs : 1
+      });
+      expect(spy.calledWithMatch('api.visitor.updateCustomFields', {
+        dogs : 1
       })).to.be(true);
     });
   });

@@ -12,7 +12,7 @@ module.exports = Provider.extend({
 
   key : 'siteToken',
 
-  options : {
+  defaults : {
     siteToken : null
   },
 

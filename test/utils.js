@@ -75,7 +75,13 @@ window.test = {
   'Gauges' : 'x',
 
   'Google Analytics' : {
-    trackingId : 'x'
+    classic: {
+      trackingId : 'x'
+    },
+    universal: {
+      universalClient: true,
+      trackingId : 'x'
+    }
   },
 
   'GoSquared' : 'x',
@@ -109,6 +115,8 @@ window.test = {
   'Olark' : '5798-949-10-1692',
 
   'Perfect Audience' : '4ff6ade4361ed500020000a5',
+
+  'Pingdom' : '5168f8c6abe53db732000000',
 
   'Quantcast' : 'x',
 

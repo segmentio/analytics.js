@@ -13,7 +13,7 @@ module.exports = Provider.extend({
 
   key : 'siteId',
 
-  options : {
+  defaults : {
     siteId : null
   },
 

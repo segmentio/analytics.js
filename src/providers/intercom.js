@@ -17,7 +17,7 @@ module.exports = Provider.extend({
 
   key : 'appId',
 
-  options : {
+  defaults : {
     // Intercom's required key.
     appId : null,
     // An optional setting to display the Intercom inbox widget.

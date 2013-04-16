@@ -10,7 +10,7 @@ module.exports = Provider.extend({
 
   key : 'projectId',
 
-  options : {
+  defaults : {
 
     // If you sign up for a free account, this is the default http (non-ssl) CDN URL
     // that you get. If you sign up for a premium account, you get a different

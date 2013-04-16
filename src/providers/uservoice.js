@@ -10,7 +10,7 @@ module.exports = Provider.extend({
 
   key : 'widgetId',
 
-  options : {
+  defaults : {
     widgetId : null
   },
 

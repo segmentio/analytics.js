@@ -1459,7 +1459,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.9.5';
+  this.VERSION = '0.9.7';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -2014,7 +2014,7 @@ function Provider (options, ready) {
   }
 
   // Extend the passed-in options with our defaults.
-  extend(this.options, options);
+  this.options = extend({}, this.defaults, options);
 
   // Wrap our ready function, so that it ready from our internal queue first
   // and then marks us as ready.
@@ -2303,7 +2303,7 @@ module.exports = Provider.extend({
 
   name : 'Bitdeli',
 
-  options : {
+  defaults : {
     // BitDeli requires two options: `inputId` and `authToken`.
     inputId : null,
     authToken : null,
@@ -2359,7 +2359,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 
@@ -2382,7 +2382,7 @@ module.exports = Provider.extend({
 
   name : 'Chartbeat',
 
-  options : {
+  defaults : {
     // Chartbeat requires two options: `domain` and `uid`. All other
     // configuration options are passed straight in!
     domain : null,
@@ -2437,7 +2437,7 @@ module.exports = Provider.extend({
 
   key : 'projectId',
 
-  options : {
+  defaults : {
 
     // If you sign up for a free account, this is the default http (non-ssl) CDN URL
     // that you get. If you sign up for a premium account, you get a different
@@ -2534,7 +2534,7 @@ module.exports = Provider.extend({
 
   key : 'siteId',
 
-  options : {
+  defaults : {
     siteId : null
   },
 
@@ -2573,7 +2573,7 @@ module.exports = Provider.extend({
 
   key : 'c2',
 
-  options : {
+  defaults : {
     c1 : '2',
     c2 : null
   },
@@ -2601,7 +2601,7 @@ module.exports = Provider.extend({
 
   key : 'accountNumber',
 
-  options : {
+  defaults : {
     accountNumber : null
   },
 
@@ -2626,7 +2626,7 @@ module.exports = Provider.extend({
 
   key : 'siteId',
 
-  options : {
+  defaults : {
     siteId : null
   },
 
@@ -2698,7 +2698,7 @@ module.exports = Provider.extend({
 
   key : 'projectId',
 
-  options : {
+  defaults : {
     projectId : null,
     // Whether to store metadata about the user on `identify` calls, using
     // the [Errorception `meta` API](http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html).
@@ -2748,7 +2748,7 @@ module.exports = Provider.extend({
 
   key : 'appId',
 
-  options : {
+  defaults : {
     appId : null
   },
 
@@ -2827,7 +2827,7 @@ module.exports = Provider.extend({
 
   key : 'siteId',
 
-  options : {
+  defaults : {
     siteId : null
   },
 
@@ -2864,7 +2864,8 @@ module.exports = Provider.extend({
 
   key : 'trackingId',
 
-  options : {
+  defaults : {
+    universalClient: false,
     // Your Google Analytics Tracking ID.
     trackingId : null,
     // Whether or not to track and initial pageview when initialized.
@@ -2883,7 +2884,16 @@ module.exports = Provider.extend({
     doubleClick : false
   },
 
+  //
+  // Initialize
+  //
+
   initialize : function (options, ready) {
+    if (options.universalClient) this.initializeUniversal(options, ready);
+    else this.initializeClassic(options, ready);
+  },
+
+  initializeClassic: function (options, ready) {
     window._gaq = window._gaq || [];
     window._gaq.push(['_setAccount', options.trackingId]);
 
@@ -2922,7 +2932,53 @@ module.exports = Provider.extend({
     ready();
   },
 
+  initializeUniversal: function (options, ready) {
+
+    // GA-universal lets you set your own queue name
+    var global = this.global = 'ga';
+
+    // and needs to know about this queue name in this special object
+    // so that future plugins can also operate on the object
+    window['GoogleAnalyticsObject'] = global;
+
+    // setup the global variable
+    window[global] = window[global] || function () {
+      (window[global].q = window[global].q || []).push(arguments);
+    };
+
+    // GA also needs to know the current time (all from their snippet)
+    window[global].l = 1 * new Date();
+
+    var createOpts = {};
+
+    // Apply a bunch of optional settings.
+    if (options.domain)
+      createOpts.cookieDomain = options.domain || 'none';
+    if (type(options.siteSpeedSampleRate) === 'number')
+      createOpts.siteSpeedSampleRate = options.siteSpeedSampleRate;
+    if (options.anonymizeIp)
+      ga('set', 'anonymizeIp', true);
+
+    ga('create', options.trackingId, createOpts);
+
+    if (options.initialPageview) {
+      var path, canon = canonical();
+      if (canon) path = url.parse(canon).pathname;
+      this.pageview(path);
+    }
+
+    load('//www.google-analytics.com/analytics.js');
+
+    // Google makes a queue so it's ready immediately.
+    ready();
+  },
+
+  //
+  // Track
+  //
+
   track : function (event, properties) {
+
     properties || (properties = {});
 
     var value;
@@ -2934,18 +2990,46 @@ module.exports = Provider.extend({
     // so if it's not there we use `'All'` as a default. We can safely push
     // undefined if the special properties don't exist. Try using revenue
     // first, but fall back to a generic `value` as well.
-    window._gaq.push([
-      '_trackEvent',
-      properties.category || 'All',
-      event,
-      properties.label,
-      Math.round(properties.revenue) || value,
-      properties.noninteraction
-    ]);
+    if (this.options.universalClient) {
+
+      var opts = {};
+      if (properties.noninteraction)
+        opts.nonInteraction = properties.noninteraction;
+
+      window[this.global](
+         'send',
+         'event',
+         properties.category || 'All',
+         event,
+         properties.label,
+         Math.round(properties.revenue) || value,
+         opts
+      );
+
+    } else {
+
+      window._gaq.push([
+        '_trackEvent',
+        properties.category || 'All',
+        event,
+        properties.label,
+        Math.round(properties.revenue) || value,
+        properties.noninteraction
+      ]);
+    }
   },
 
+
+  //
+  // Page View
+  //
+
   pageview : function (url) {
-    window._gaq.push(['_trackPageview', url]);
+    if (this.options.universalClient) {
+      window[this.global]('send', 'pageview', url);
+    } else {
+      window._gaq.push(['_trackPageview', url]);
+    }
   }
 
 });
@@ -2965,7 +3049,7 @@ module.exports = Provider.extend({
 
   key : 'siteToken',
 
-  options : {
+  defaults : {
     siteToken : null
   },
 
@@ -3015,7 +3099,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 
@@ -3050,7 +3134,7 @@ module.exports = Provider.extend({
 
   key : 'siteId',
 
-  options : {
+  defaults : {
     siteId : null
   },
 
@@ -3074,7 +3158,7 @@ module.exports = Provider.extend({
 
   key : 'portalId',
 
-  options : {
+  defaults : {
     portalId : null
   },
 
@@ -3148,6 +3232,7 @@ module.exports = [
   require('./mixpanel'),
   require('./olark'),
   require('./perfect-audience'),
+  require('./pingdom'),
   require('./qualaroo'),
   require('./quantcast'),
   require('./sentry'),
@@ -3178,7 +3263,7 @@ module.exports = Provider.extend({
 
   key : 'appId',
 
-  options : {
+  defaults : {
     // Intercom's required key.
     appId : null,
     // An optional setting to display the Intercom inbox widget.
@@ -3277,7 +3362,7 @@ module.exports = Provider.extend({
 
   name : 'Keen IO',
 
-  options : {
+  defaults : {
     // Keen IO has one required option: `projectToken`
     projectToken : null,
     // Whether or not to pass pageviews on to Keen IO.
@@ -3341,7 +3426,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 
@@ -3394,7 +3479,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 
@@ -3437,7 +3522,7 @@ module.exports = Provider.extend({
 
   key : 'license',
 
-  options : {
+  defaults : {
     license : null
   },
 
@@ -3488,7 +3573,7 @@ module.exports = Provider.extend({
 
     key : 'cid',
 
-    options : {
+    defaults : {
         cid: null
     },
 
@@ -3557,7 +3642,7 @@ module.exports = Provider.extend({
 
   key : 'token',
 
-  options : {
+  defaults : {
     // Whether to call `mixpanel.nameTag` on `identify`.
     nameTag : true,
     // Whether to use Mixpanel's People API.
@@ -3676,7 +3761,8 @@ module.exports = Provider.extend({
 require.register("analytics/src/providers/olark.js", function(exports, require, module){
 // http://www.olark.com/documentation
 
-var Provider = require('../provider');
+var Provider = require('../provider')
+  , isEmail  = require('is-email');
 
 
 module.exports = Provider.extend({
@@ -3687,7 +3773,7 @@ module.exports = Provider.extend({
 
   chatInProgress : false,
 
-  options : {
+  defaults : {
     siteId : null,
     // Whether to use the user's name or email in the Olark chat console.
     identify : true,
@@ -3722,17 +3808,40 @@ module.exports = Provider.extend({
   identify : function (userId, traits) {
     if (!this.options.identify) return;
 
-    // Choose the best name for the user that we can get.
-    var name = userId;
-    if (traits && traits.email) name = traits.email;
-    if (traits && traits.name) name = traits.name;
-    if (traits && traits.name && traits.email) name += ' ('+traits.email+')';
+    // Make an empty default traits object if it doesn't exist yet.
+    traits || (traits = {});
 
-    // If we ended up with no name after all that, get out of there.
-    if (!name) return;
+    // If there wasn't already an email and the userId is one, use it.
+    if (!traits.email && isEmail(userId)) traits.email = userId;
+
+    // Set the email address for the user.
+    if (traits.email)
+      window.olark('api.visitor.updateEmailAddress', { emailAddress : traits.email });
+
+    // Set the full name for the user.
+    if (traits.name)
+      window.olark('api.visitor.updateFullName', { fullName : traits.name });
+    else if (traits.firstName && traits.lastName)
+      window.olark('api.visitor.updateFullName', { fullName : traits.firstName + ' ' + traits.lastName });
+
+    // Set the phone number for the user.
+    if (traits.phone)
+      window.olark('api.visitor.updatePhoneNumber', { phoneNumber : traits.phone });
+
+    // Set any additional custom fields from the traits.
+    window.olark('api.visitor.updateCustomFields', traits);
+
+    // Choose the best possible nickname for the user.
+    var nickname = userId;
+    if (traits.email) nickname = traits.email;
+    if (traits.name) nickname = traits.name;
+    if (traits.name && traits.email) nickname += ' ('+traits.email+')';
+
+    // If we ended up with no nickname after all that, get out of here.
+    if (!nickname) return;
 
     window.olark('api.chat.updateVisitorNickname', {
-      snippet : name
+      snippet : nickname
     });
   },
 
@@ -3774,7 +3883,7 @@ module.exports = Provider.extend({
 
   key : 'siteId',
 
-  options : {
+  defaults : {
     siteId : null
   },
 
@@ -3785,6 +3894,41 @@ module.exports = Provider.extend({
 
   track : function (event, properties) {
     window._pa.track(event, properties);
+  }
+
+});
+});
+require.register("analytics/src/providers/pingdom.js", function(exports, require, module){
+var date     = require('load-date')
+  , Provider = require('../provider')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+  name : 'Pingdom',
+
+  key : 'id',
+
+  defaults : {
+    id : null
+  },
+
+  initialize : function (options, ready) {
+    window._prum = { id : options.id };
+    window.PRUM_EPISODES = window.PRUM_EPISODES || {};
+    window.PRUM_EPISODES.q = [];
+    window.PRUM_EPISODES.mark = function(b,a){PRUM_EPISODES.q.push(['mark',b,a||new Date().getTime()])};
+    window.PRUM_EPISODES.measure = function(b,a,b){PRUM_EPISODES.q.push(['measure',b,a,b||new Date().getTime()])};
+    window.PRUM_EPISODES.done = function(a){PRUM_EPISODES.q.push(['done',a])};
+
+    // In the original snippet they don't pass the time, but
+    // since we load this async, we need to pass in the actual start time.
+    window.PRUM_EPISODES.mark('firstbyte', date.getTime());
+
+    // We've replaced the original snippet loader with our
+    // own load method.
+    load('//rum-static.pingdom.net/prum.min.js', ready);
   }
 
 });
@@ -3802,7 +3946,7 @@ module.exports = Provider.extend({
 
   name : 'Qualaroo',
 
-  options : {
+  defaults : {
     // Qualaroo has two required options.
     customerId : null,
     siteToken : null,
@@ -3859,7 +4003,7 @@ module.exports = Provider.extend({
 
   key : 'pCode',
 
-  options : {
+  defaults : {
     pCode : null
   },
 
@@ -3887,7 +4031,7 @@ module.exports = Provider.extend({
 
   key : 'config',
 
-  options : {
+  defaults : {
     config : null
   },
 
@@ -3926,7 +4070,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 
@@ -3950,7 +4094,7 @@ module.exports = Provider.extend({
 
   key : 'key',
 
-  options : {
+  defaults : {
     key : null
   },
 
@@ -3988,7 +4132,7 @@ module.exports = Provider.extend({
 
   key : 'widgetId',
 
-  options : {
+  defaults : {
     widgetId : null
   },
 
@@ -4013,7 +4157,7 @@ module.exports = Provider.extend({
 
   key : 'apiKey',
 
-  options : {
+  defaults : {
     apiKey : null
   },
 
@@ -4069,7 +4213,7 @@ module.exports = Provider.extend({
 
   key : 'domain',
 
-  options : {
+  defaults : {
     domain : null
   },
 

@@ -40,6 +40,11 @@ window.test = {
   // Providers
   // ---------
 
+  'Adroll' : {
+    advId : 'LYFRCUIPPZCCTOBGRH7G32',
+    pixId : 'V7TLXL5WWBA5NOU5MOJQW4'
+  },
+
   'Bitdeli' : {
     inputId   : 'x',
     authToken : 'y'

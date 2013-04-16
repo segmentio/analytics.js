@@ -2293,6 +2293,35 @@ exports.getUrlParameter = function (urlSearchParameter, paramKey) {
   }
 };
 });
+require.register("analytics/src/providers/adroll.js", function(exports, require, module){
+var Provider = require('../provider')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+  name : 'Adroll',
+
+  key : 'advId',
+
+  defaults : {
+    advId : null,
+    pixId : null
+  },
+
+  initialize : function (options, ready) {
+    window.adroll_adv_id = options.advId;
+    window.adroll_pix_id = options.pixId;
+    window.__adroll_loaded = true;
+
+    load({
+      http  : 'http://a.adroll.com/j/roundtrip.js',
+      https : 'https://s.adroll.com/j/roundtrip.js'
+    }, ready);
+  }
+
+});
+});
 require.register("analytics/src/providers/bitdeli.js", function(exports, require, module){
 // https://bitdeli.com/docs
 // https://bitdeli.com/docs/javascript-api.html
@@ -3209,6 +3238,7 @@ module.exports = Provider.extend({
 });
 require.register("analytics/src/providers/index.js", function(exports, require, module){
 module.exports = [
+  require('./adroll'),
   require('./bitdeli'),
   require('./bugherd'),
   require('./chartbeat'),

@@ -109,8 +109,11 @@ module.exports = Provider.extend({
     // If they don't want pageviews tracked, leave now.
     if (!this.options.pageview) return;
 
-    var properties;
-    if (url) properties = { url : url };
+    var properties = {
+      url  : url || document.location.href,
+      name : document.title
+    };
+
     this.track('Loaded a Page', properties);
   },
 

@@ -188,7 +188,7 @@ describe('Mixpanel', function () {
       spy.restore();
     });
 
-    it('shouldnt call track', function () {
+    it('shouldnt call track by default', function () {
       var spy = sinon.spy(analytics.providers[0], 'track');
       analytics.pageview();
       expect(spy.called).to.be(false);
@@ -196,14 +196,17 @@ describe('Mixpanel', function () {
     });
 
     // Mixpanel adds custom properties, so we need to have a loose match.
-    it('should call track', function () {
+    it('should call track with pageview set to true', function () {
       var provider = analytics.providers[0]
         , spy      = sinon.spy(provider, 'track');
 
       provider.options.pageview = true;
 
       analytics.pageview(test.url);
-      expect(spy.calledWithMatch('Loaded a Page', { url : test.url })).to.be(true);
+      expect(spy.calledWithMatch('Loaded a Page', {
+        url : test.url,
+        name : document.title
+      })).to.be(true);
 
       spy.restore();
       provider.options.pageview = false;

@@ -1400,6 +1400,61 @@ module.exports = function newDate (date) {
   return new Date(date);
 };
 });
+require.register("segmentio-on-body/index.js", function(exports, require, module){
+var each = require('each');
+
+
+/**
+ * Cache whether `<body>` exists.
+ */
+
+var body = false;
+
+
+/**
+ * Callbacks to call when the body exists.
+ */
+
+var callbacks = [];
+
+
+/**
+ * Export a way to add handlers to be invoked once the body exists.
+ *
+ * @param {Function} callback  A function to call when the body exists.
+ */
+
+module.exports = function onBody (callback) {
+  if (body) {
+    call(callback);
+  } else {
+    callbacks.push(callback);
+  }
+};
+
+
+/**
+ * Set an interval to check for `document.body`.
+ */
+
+var interval = setInterval(function () {
+  if (!document.body) return;
+  body = true;
+  each(callbacks, call);
+  clearInterval(interval);
+}, 5);
+
+
+/**
+ * Call a callback, passing it the body.
+ *
+ * @param {Function} callback  The callback to call.
+ */
+
+function call (callback) {
+  callback(document.body);
+}
+});
 require.register("yields-prevent/index.js", function(exports, require, module){
 
 /**
@@ -3077,7 +3132,8 @@ require.register("analytics/src/providers/gosquared.js", function(exports, requi
 
 var Provider = require('../provider')
   , user     = require('../user')
-  , load     = require('load-script');
+  , load     = require('load-script')
+  , onBody   = require('on-body');
 
 
 module.exports = Provider.extend({
@@ -3091,18 +3147,21 @@ module.exports = Provider.extend({
   },
 
   initialize : function (options, ready) {
-    var GoSquared = window.GoSquared = {};
-    GoSquared.acct = options.siteToken;
-    GoSquared.q = [];
-    window._gstc_lt =+ (new Date());
+    // GoSquared assumes a body in their script, so we need this wrapper.
+    onBody(function () {
+      var GoSquared = window.GoSquared = {};
+      GoSquared.acct = options.siteToken;
+      GoSquared.q = [];
+      window._gstc_lt =+ (new Date());
 
-    GoSquared.VisitorName = user.id();
-    GoSquared.Visitor = user.traits();
+      GoSquared.VisitorName = user.id();
+      GoSquared.Visitor = user.traits();
 
-    load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
+      load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
 
-    // GoSquared makes a queue, so it's ready immediately.
-    ready();
+      // GoSquared makes a queue, so it's ready immediately.
+      ready();
+    });
   },
 
   identify : function (userId, traits) {
@@ -4356,6 +4415,10 @@ require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.
 
 require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
 require.alias("component-type/index.js", "segmentio-new-date/deps/type/index.js");
+
+require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
+require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
+require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
 

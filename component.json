@@ -65,6 +65,7 @@
     "segmentio/load-date": "*",
     "segmentio/load-script": "*",
     "segmentio/new-date": "*",
+    "segmentio/on-body": "*",
     "yields/prevent": "*"
   },
   "scripts": [

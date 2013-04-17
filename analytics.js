@@ -1521,7 +1521,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.9.6';
+  this.VERSION = '0.9.7';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -1694,26 +1694,27 @@ extend(Analytics.prototype, {
     // Allow for optional arguments.
     if (type(options) === 'function') {
       callback = options;
-      options = null;
+      options = undefined;
     }
     if (type(traits) === 'function') {
       callback = traits;
-      traits = null;
+      traits = undefined;
     }
     if (type(userId) === 'object') {
       if (traits && type(traits) === 'function') callback = traits;
       traits = userId;
-      userId = null;
+      userId = undefined;
     }
 
     // Use our cookied ID if they didn't provide one.
-    if (userId === null) userId = user.id();
+    if (userId === undefined || user === null) userId = user.id();
 
     // Update the cookie with the new userId and traits.
     var alias = user.update(userId, traits);
 
-    // Clone `traits` before we manipulate it, so we don't do anything uncouth.
-    traits = clone(traits);
+    // Clone `traits` before we manipulate it, so we don't do anything uncouth
+    // and take the user.traits() so anonymous users carry over traits.
+    traits = clone(user.traits());
 
     // Convert dates from more types of input into Date objects.
     if (traits && traits.created) traits.created = newDate(traits.created);
@@ -1733,7 +1734,6 @@ extend(Analytics.prototype, {
       }
     });
 
-    // TODO: auto-alias once mixpanel API doesn't error
     // If we should alias, go ahead and do it.
     // if (alias) this.alias(userId);
 
@@ -1771,11 +1771,11 @@ extend(Analytics.prototype, {
     // Allow for optional arguments.
     if (type(options) === 'function') {
       callback = options;
-      options = null;
+      options = undefined;
     }
     if (type(properties) === 'function') {
       callback = properties;
-      properties = null;
+      properties = undefined;
     }
 
     // Call `track` on all of our enabled providers that support it.
@@ -1954,6 +1954,11 @@ extend(Analytics.prototype, {
 
   alias : function (newId, originalId, options) {
     if (!this.initialized) return;
+
+    if (type(originalId) === 'object') {
+      options    = originalId;
+      originalId = undefined;
+    }
 
     // Call `alias` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
@@ -2347,6 +2352,36 @@ exports.getUrlParameter = function (urlSearchParameter, paramKey) {
     }
   }
 };
+});
+require.register("analytics/src/providers/adroll.js", function(exports, require, module){
+// https://www.adroll.com/dashboard
+
+var Provider = require('../provider')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+  name : 'AdRoll',
+
+  defaults : {
+    // Adroll requires two options: `advId` and `pixId`.
+    advId : null,
+    pixId : null
+  },
+
+  initialize : function (options, ready) {
+    window.adroll_adv_id = options.advId;
+    window.adroll_pix_id = options.pixId;
+    window.__adroll_loaded = true;
+
+    load({
+      http  : 'http://a.adroll.com/j/roundtrip.js',
+      https : 'https://s.adroll.com/j/roundtrip.js'
+    }, ready);
+  }
+
+});
 });
 require.register("analytics/src/providers/bitdeli.js", function(exports, require, module){
 // https://bitdeli.com/docs
@@ -3268,6 +3303,7 @@ module.exports = Provider.extend({
 });
 require.register("analytics/src/providers/index.js", function(exports, require, module){
 module.exports = [
+  require('./adroll'),
   require('./bitdeli'),
   require('./bugherd'),
   require('./chartbeat'),
@@ -3293,6 +3329,7 @@ module.exports = [
   require('./mixpanel'),
   require('./olark'),
   require('./perfect-audience'),
+  require('./pingdom'),
   require('./qualaroo'),
   require('./quantcast'),
   require('./sentry'),
@@ -3692,7 +3729,8 @@ require.register("analytics/src/providers/mixpanel.js", function(exports, requir
 
 var Provider = require('../provider')
   , alias    = require('alias')
-  , isEmail  = require('is-email');
+  , isEmail  = require('is-email')
+  , load     = require('load-script');
 
 
 module.exports = Provider.extend({
@@ -3716,40 +3754,34 @@ module.exports = Provider.extend({
 
   initialize : function (options, ready) {
     (function (c, a) {
-      window.mixpanel = a;
-      var b, d, h, e;
-      b = c.createElement('script');
-      b.type = 'text/javascript';
-      b.async = true;
-      b.src = ('https:' === c.location.protocol ? 'https:' : 'http:') + '//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';
-      d = c.getElementsByTagName('script')[0];
-      d.parentNode.insertBefore(b, d);
-      a._i = [];
-      a.init = function (b, c, f) {
-        function d(a, b) {
-          var c = b.split('.');
-          2 == c.length && (a = a[c[0]], b = c[1]);
-          a[b] = function () {
-              a.push([b].concat(Array.prototype.slice.call(arguments, 0)));
-          };
-        }
-        var g = a;
-        'undefined' !== typeof f ? g = a[f] = [] : f = 'mixpanel';
-        g.people = g.people || [];
-        h = ['disable', 'track', 'track_pageview', 'track_links', 'track_forms', 'register', 'register_once', 'unregister', 'identify', 'alias', 'name_tag', 'set_config', 'people.set', 'people.increment', 'people.track_charge', 'people.append'];
-        for (e = 0; e < h.length; e++) d(g, h[e]);
-        a._i.push([b, c, f]);
-      };
-      a.__SV = 1.2;
-    })(document, window.mixpanel || []);
+        window.mixpanel = a;
+        var b, d, h, e;
+        a._i = [];
+        a.init = function (b, c, f) {
+          function d(a, b) {
+            var c = b.split('.');
+            2 == c.length && (a = a[c[0]], b = c[1]);
+            a[b] = function () {
+                a.push([b].concat(Array.prototype.slice.call(arguments, 0)));
+            };
+          }
+          var g = a;
+          'undefined' !== typeof f ? g = a[f] = [] : f = 'mixpanel';
+          g.people = g.people || [];
+          h = ['disable', 'track', 'track_pageview', 'track_links', 'track_forms', 'register', 'register_once', 'unregister', 'identify', 'alias', 'name_tag', 'set_config', 'people.set', 'people.increment', 'people.track_charge', 'people.append'];
+          for (e = 0; e < h.length; e++) d(g, h[e]);
+          a._i.push([b, c, f]);
+        };
+        a.__SV = 1.2;
+        // Modification to the snippet: call ready whenever the library has
+        // fully loaded.
+        load('//cdn.mxpnl.com/libs/mixpanel-2.2.min.js', ready);
+      })(document, window.mixpanel || []);
 
-    // Pass options directly to `init` as the second argument.
-    window.mixpanel.init(options.token, options);
+      // Pass options directly to `init` as the second argument.
+      window.mixpanel.init(options.token, options);
 
-    if (options.initialPageview) this.pageview();
-
-    // Mixpanel creates all its methods, so it's ready immediately.
-    ready();
+      if (options.initialPageview) this.pageview();
   },
 
   identify : function (userId, traits) {
@@ -3816,7 +3848,7 @@ module.exports = Provider.extend({
 
     // HACK: internal mixpanel API to ensure we don't overwrite.
     if(window.mixpanel.get_property &&
-       window.mixpanel.get_property('$people_distinct_id')) return;
+       window.mixpanel.get_property('$people_distinct_id') === newId) return;
 
     window.mixpanel.alias(newId, originalId);
   }
@@ -3959,6 +3991,41 @@ module.exports = Provider.extend({
 
   track : function (event, properties) {
     window._pa.track(event, properties);
+  }
+
+});
+});
+require.register("analytics/src/providers/pingdom.js", function(exports, require, module){
+var date     = require('load-date')
+  , Provider = require('../provider')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+  name : 'Pingdom',
+
+  key : 'id',
+
+  defaults : {
+    id : null
+  },
+
+  initialize : function (options, ready) {
+    window._prum = { id : options.id };
+    window.PRUM_EPISODES = window.PRUM_EPISODES || {};
+    window.PRUM_EPISODES.q = [];
+    window.PRUM_EPISODES.mark = function(b,a){PRUM_EPISODES.q.push(['mark',b,a||new Date().getTime()])};
+    window.PRUM_EPISODES.measure = function(b,a,b){PRUM_EPISODES.q.push(['measure',b,a,b||new Date().getTime()])};
+    window.PRUM_EPISODES.done = function(a){PRUM_EPISODES.q.push(['done',a])};
+
+    // In the original snippet they don't pass the time, but
+    // since we load this async, we need to pass in the actual start time.
+    window.PRUM_EPISODES.mark('firstbyte', date.getTime());
+
+    // We've replaced the original snippet loader with our
+    // own load method.
+    load('//rum-static.pingdom.net/prum.min.js', ready);
   }
 
 });

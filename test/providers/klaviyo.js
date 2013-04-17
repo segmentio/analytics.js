@@ -44,10 +44,12 @@ describe('Klaviyo', function () {
       analytics.identify(test.traits);
       expect(spy.calledWith(['identify', test.traits])).to.be(true);
       spy.reset();
+      analytics.user.clear();
 
       analytics.identify(test.userId);
       expect(spy.calledWith(['identify', { $id: test.userId }])).to.be(true);
       spy.reset();
+      analytics.user.clear();
 
       var augmentedTraits = extend({}, test.traits, { $id: test.userId });
       analytics.identify(test.userId, test.traits);

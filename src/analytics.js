@@ -28,7 +28,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.9.6';
+  this.VERSION = '0.9.7';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -201,26 +201,27 @@ extend(Analytics.prototype, {
     // Allow for optional arguments.
     if (type(options) === 'function') {
       callback = options;
-      options = null;
+      options = undefined;
     }
     if (type(traits) === 'function') {
       callback = traits;
-      traits = null;
+      traits = undefined;
     }
     if (type(userId) === 'object') {
       if (traits && type(traits) === 'function') callback = traits;
       traits = userId;
-      userId = null;
+      userId = undefined;
     }
 
     // Use our cookied ID if they didn't provide one.
-    if (userId === null) userId = user.id();
+    if (userId === undefined || user === null) userId = user.id();
 
     // Update the cookie with the new userId and traits.
     var alias = user.update(userId, traits);
 
-    // Clone `traits` before we manipulate it, so we don't do anything uncouth.
-    traits = clone(traits);
+    // Clone `traits` before we manipulate it, so we don't do anything uncouth
+    // and take the user.traits() so anonymous users carry over traits.
+    traits = clone(user.traits());
 
     // Convert dates from more types of input into Date objects.
     if (traits && traits.created) traits.created = newDate(traits.created);
@@ -240,7 +241,6 @@ extend(Analytics.prototype, {
       }
     });
 
-    // TODO: auto-alias once mixpanel API doesn't error
     // If we should alias, go ahead and do it.
     // if (alias) this.alias(userId);
 
@@ -278,11 +278,11 @@ extend(Analytics.prototype, {
     // Allow for optional arguments.
     if (type(options) === 'function') {
       callback = options;
-      options = null;
+      options = undefined;
     }
     if (type(properties) === 'function') {
       callback = properties;
-      properties = null;
+      properties = undefined;
     }
 
     // Call `track` on all of our enabled providers that support it.
@@ -461,6 +461,11 @@ extend(Analytics.prototype, {
 
   alias : function (newId, originalId, options) {
     if (!this.initialized) return;
+
+    if (type(originalId) === 'object') {
+      options    = originalId;
+      originalId = undefined;
+    }
 
     // Call `alias` on all of our enabled providers that support it.
     each(this.providers, function (provider) {

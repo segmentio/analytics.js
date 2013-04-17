@@ -1,5 +1,12 @@
 ;(function(){
 
+
+/**
+ * hasOwnProperty.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
 /**
  * Require the given path.
  *
@@ -76,10 +83,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (require.modules.hasOwnProperty(path)) return path;
+    if (has.call(require.modules, path)) return path;
   }
 
-  if (require.aliases.hasOwnProperty(index)) {
+  if (has.call(require.aliases, index)) {
     return require.aliases[index];
   }
 };
@@ -133,7 +140,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!require.modules.hasOwnProperty(from)) {
+  if (!has.call(require.modules, from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -195,7 +202,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return require.modules.hasOwnProperty(localRequire.resolve(path));
+    return has.call(require.modules, localRequire.resolve(path));
   };
 
   return localRequire;
@@ -2291,6 +2298,36 @@ exports.getUrlParameter = function (urlSearchParameter, paramKey) {
   }
 };
 });
+require.register("analytics/src/providers/adroll.js", function(exports, require, module){
+// https://www.adroll.com/dashboard
+
+var Provider = require('../provider')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+  name : 'AdRoll',
+
+  defaults : {
+    // Adroll requires two options: `advId` and `pixId`.
+    advId : null,
+    pixId : null
+  },
+
+  initialize : function (options, ready) {
+    window.adroll_adv_id = options.advId;
+    window.adroll_pix_id = options.pixId;
+    window.__adroll_loaded = true;
+
+    load({
+      http  : 'http://a.adroll.com/j/roundtrip.js',
+      https : 'https://s.adroll.com/j/roundtrip.js'
+    }, ready);
+  }
+
+});
+});
 require.register("analytics/src/providers/bitdeli.js", function(exports, require, module){
 // https://bitdeli.com/docs
 // https://bitdeli.com/docs/javascript-api.html
@@ -3207,6 +3244,7 @@ module.exports = Provider.extend({
 });
 require.register("analytics/src/providers/index.js", function(exports, require, module){
 module.exports = [
+  require('./adroll'),
   require('./bitdeli'),
   require('./bugherd'),
   require('./chartbeat'),

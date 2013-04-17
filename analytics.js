@@ -2299,6 +2299,8 @@ exports.getUrlParameter = function (urlSearchParameter, paramKey) {
 };
 });
 require.register("analytics/src/providers/adroll.js", function(exports, require, module){
+// https://www.adroll.com/dashboard
+
 var Provider = require('../provider')
   , load     = require('load-script');
 
@@ -2307,9 +2309,8 @@ module.exports = Provider.extend({
 
   name : 'Adroll',
 
-  key : 'advId',
-
   defaults : {
+    // Adroll requires two options: `advId` and `pixId`.
     advId : null,
     pixId : null
   },

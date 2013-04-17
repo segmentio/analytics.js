@@ -1,3 +1,8 @@
+0.9.8 / 2013-4-16
+=================
+* Adding support for Pingdom RUM
+* Adding support for AdRoll
+
 0.9.7 / 2013-4-16
 =================
 * Fixing LiveChat test

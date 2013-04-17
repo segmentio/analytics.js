@@ -1,4 +1,4 @@
-describe('Adroll', function () {
+describe('AdRoll', function () {
 
   describe('initialize', function () {
 
@@ -11,7 +11,7 @@ describe('Adroll', function () {
 
       var spy = sinon.spy();
       analytics.ready(spy);
-      analytics.initialize({ 'Adroll' : test['Adroll'] });
+      analytics.initialize({ 'AdRoll' : test['AdRoll'] });
 
       // When the library loads, `__adroll` is created.
       var interval = setInterval(function () {
@@ -26,9 +26,9 @@ describe('Adroll', function () {
     });
 
     it('should store options', function () {
-      analytics.initialize({ 'Adroll' : test['Adroll'] });
-      expect(analytics.providers[0].options.advId).to.equal(test['Adroll'].advId);
-      expect(analytics.providers[0].options.pixId).to.equal(test['Adroll'].pixId);
+      analytics.initialize({ 'AdRoll' : test['AdRoll'] });
+      expect(analytics.providers[0].options.advId).to.equal(test['AdRoll'].advId);
+      expect(analytics.providers[0].options.pixId).to.equal(test['AdRoll'].pixId);
     });
 
   });

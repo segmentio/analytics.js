@@ -6,7 +6,7 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
-  name : 'Adroll',
+  name : 'AdRoll',
 
   defaults : {
     // Adroll requires two options: `advId` and `pixId`.

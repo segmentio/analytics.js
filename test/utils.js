@@ -40,7 +40,7 @@ window.test = {
   // Providers
   // ---------
 
-  'Adroll' : {
+  'AdRoll' : {
     advId : 'LYFRCUIPPZCCTOBGRH7G32',
     pixId : 'V7TLXL5WWBA5NOU5MOJQW4'
   },

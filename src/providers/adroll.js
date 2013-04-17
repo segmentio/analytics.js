@@ -8,9 +8,8 @@ module.exports = Provider.extend({
 
   name : 'Adroll',
 
-  key : 'advId',
-
   defaults : {
+    // Adroll requires two options: `advId` and `pixId`.
     advId : null,
     pixId : null
   },

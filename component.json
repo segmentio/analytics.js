@@ -38,6 +38,7 @@
     "pingdom",
     "qualaroo",
     "quantcast",
+    "rollbar",
     "sentry",
     "snapengage",
     "usercycle",
@@ -109,7 +110,8 @@
     "src/providers/usercycle.js",
     "src/providers/uservoice.js",
     "src/providers/vero.js",
-    "src/providers/woopra.js"
+    "src/providers/woopra.js",
+    "src/providers/rollbar.js"
   ],
   "main": "src/index.js"
 }

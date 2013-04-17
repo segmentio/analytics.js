@@ -33,5 +33,6 @@ module.exports = [
   require('./usercycle'),
   require('./uservoice'),
   require('./vero'),
-  require('./woopra')
+  require('./woopra'),
+  require('./rollbar')
 ];

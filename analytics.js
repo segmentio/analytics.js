@@ -1,12 +1,5 @@
 ;(function(){
 
-
-/**
- * hasOwnProperty.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
 /**
  * Require the given path.
  *
@@ -83,10 +76,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (has.call(require.modules, path)) return path;
+    if (require.modules.hasOwnProperty(path)) return path;
   }
 
-  if (has.call(require.aliases, index)) {
+  if (require.aliases.hasOwnProperty(index)) {
     return require.aliases[index];
   }
 };
@@ -140,7 +133,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!has.call(require.modules, from)) {
+  if (!require.modules.hasOwnProperty(from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -202,7 +195,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return has.call(require.modules, localRequire.resolve(path));
+    return require.modules.hasOwnProperty(localRequire.resolve(path));
   };
 
   return localRequire;
@@ -1197,7 +1190,7 @@ exports.parse = function(url){
   return {
     href: a.href,
     host: a.host || location.host,
-    port: a.port || location.port,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
     hostname: a.hostname || location.hostname,
     pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
@@ -3337,8 +3330,10 @@ module.exports = [
   require('./usercycle'),
   require('./uservoice'),
   require('./vero'),
-  require('./woopra')
+  require('./woopra'),
+  require('./rollbar')
 ];
+
 });
 require.register("analytics/src/providers/intercom.js", function(exports, require, module){
 // http://docs.intercom.io/
@@ -4372,6 +4367,79 @@ module.exports = Provider.extend({
   }
 
 });
+});
+require.register("analytics/src/providers/rollbar.js", function(exports, require, module){
+// http://rollbar.com/
+
+var Provider = require('../provider')
+  , extend   = require('extend')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+  name : 'Rollbar',
+
+  key : 'accessToken',
+
+  defaults : {
+    accessToken : null,
+    track: true,
+    meta : true
+  },
+
+  initialize : function (options, ready) {
+    var rollbarOptions = {
+      checkIgnore: options.checkIgnore,
+      context: options.context,
+      itemsPerMinute: options.itemsPerMinute,
+      level: options.level,
+      'server.branch': options['server.branch'],
+      'server.environment': options['server.environment'],
+      'server.host': options['server.host']
+    };
+    window._rollbar = window._rollbar || 
+                      window._ratchet || 
+                      [options.accessToken, rollbarOptions];
+    load('//d37gvrvc0wt4s1.cloudfront.net/js/6/rollbar.min.js');
+
+    // Attach the window `onerror` event.
+    window.onerror = function () {
+      window._rollbar.push(arguments);
+    };
+
+    // Rollbar is ready right away since window._rollbar is available
+    ready();
+  },
+
+  identify : function (userId, traits) {
+    // Don't set any person metadata if meta is false
+    if (!this.options.meta) return;
+
+    traits = traits || {};
+    if (userId) traits.id = userId;
+
+    if (window._rollbar.shift) {
+      var extraParams = window._rollbar[1] || {};
+      extend(extraParams, {person: traits});
+      window._rollbar[1] = extraParams;
+    } else {
+      var extraParams = window._rollbar.extraParams || {};
+      extend(extraParams, {person: traits});
+      window._rollbar.extraParams = extraParams;
+    }
+  },
+
+  track: function (event, properties) {
+    if (!this.options.track) return;
+
+    var obj = extend({msg: event, level: 'info'}, properties);
+    console.log(obj);
+    window._rollbar.push(obj);
+  }
+
+});
+
 });
 require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");

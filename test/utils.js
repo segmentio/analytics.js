@@ -140,6 +140,27 @@ window.test = {
 
   'Vero' : 'x',
 
-  'Woopra' : 'x'
+  'Woopra' : 'x',
+
+  'Rollbar' : {
+    basic: {
+      accessToken: 'e1674422cbe9419987eb2e7f98adc5ec'
+    },
+    advanced: {
+      accessToken: 'e1674422cbe9419987eb2e7f98adc5ec',
+      track: true,
+      checkIgnore: function(errMsg, url, lineNo) {
+        return [errMsg, url, lineNo]
+      },
+      context: 'RollbarContext',
+      itemsPerMinute: 10,
+      level: 'error',
+      'server.branch' : 'TestBranch',
+      'server.environment' : 'TestEnvironment',
+      'server.host' : 'TestHost',
+      customMsg: 'CustomMessage',
+      customObj: {foo: 'bar'}
+    }
+  }
 
 };

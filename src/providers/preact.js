@@ -18,21 +18,14 @@ module.exports = Provider.extend({
     var _lnq = window._lnq = window._lnq || [];
     _lnq.push(["_setCode", options.projectCode]);
 
-    (function() {
-      var s = document.createElement('script');
-      var el = document.getElementsByTagName('script')[0];
-      s.async = true;
-      s.src = (document.location.protocol == 'https:' ? 'https://' : 'http://') + 'd2bbvl6dq48fa6.cloudfront.net/js/ln-2.3.min.js';
-      el.parentNode.insertBefore(s, el);
-    })();
-
+    load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.3.min.js');
     ready();
   },
 
   identify : function (userId, traits) {
     // Don't do anything if we just have traits, because Preact
     // requires a `userId`.
-    if (!userId || !traits) return;
+    if (!userId) return;
 
     // If there wasn't already an email and the userId is one, use it.
     if (!traits.email && isEmail(userId)) traits.email = userId;
@@ -54,7 +47,7 @@ module.exports = Provider.extend({
 
   track : function (event, properties) {
     properties || (properties = {});
-    
+
     var personEvent = {
       name : event,
       target_id : properties.target_id,

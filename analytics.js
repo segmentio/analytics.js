@@ -1514,7 +1514,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.9.9';
+  this.VERSION = '0.9.10';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -3494,8 +3494,10 @@ module.exports = Provider.extend({
   pageview : function (url) {
     if (!this.options.pageview) return;
 
-    var properties;
-    if (url) properties = { url : url };
+    var properties = {
+      url  : url || document.location.href,
+      name : document.title
+    };
 
     this.track('Loaded a Page', properties);
   }

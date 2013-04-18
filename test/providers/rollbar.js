@@ -82,7 +82,7 @@ describe('Rollbar', function () {
       expect(window._rollbar.length).to.equal(2);
       expect(window._rollbar[1].person).to.be(undefined);
 
-      analytics.providers[0].options.meta = true;
+      analytics.providers[0].options.identify = true;
       analytics.identify(test.userId, test.traits);
 
       expect(window._rollbar[1].person.id).to.equal('user');

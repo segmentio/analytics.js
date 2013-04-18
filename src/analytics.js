@@ -22,7 +22,7 @@ module.exports = Analytics;
 /**
  * Analytics.
  *
- * @param {Object} Providers - Provider classes that the user can initialize.
+ * @param {Object} Providers  Provider classes that the user can initialize.
  */
 
 function Analytics (Providers) {
@@ -81,8 +81,7 @@ extend(Analytics.prototype, {
   /**
    * Add a provider to `_providers` to be initialized later.
    *
-   * @param {String} name - The name of the provider.
-   * @param {Function} Provider - The provider's class.
+   * @param {Function} Provider  The provider's class.
    */
 
   addProvider : function (Provider) {
@@ -102,11 +101,11 @@ extend(Analytics.prototype, {
    *         'KISSmetrics'      : 'XXXXXXXXXXX'
    *     });
    *
-   * @param {Object} providers - a dictionary of the providers you want to
-   * enable. The keys are the names of the providers and their values are either
-   * an api key, or  dictionary of extra settings (including the api key).
-   *
-   * @param {Object} options (optional) - extra settings to initialize with.
+   * @param {Object} providers  A dictionary of the providers to enable. The
+   *                            keys are the names of the providers and their
+   *                            values are either an api key, or  dictionary of
+   *                            extra settings (including the api key).
+   * @param {Object} [options]  Extra settings to initialize with.
    */
 
   initialize : function (providers, options) {
@@ -161,7 +160,7 @@ extend(Analytics.prototype, {
    *
    * If we're already ready, it will callback immediately.
    *
-   * @param {Function} callback - The callback to attach.
+   * @param {Function} callback  The callback to attach.
    */
 
   ready : function (callback) {
@@ -183,16 +182,14 @@ extend(Analytics.prototype, {
    *         age   : 23
    *     });
    *
-   * @param {String} userId (optional) - The ID you recognize the user by.
-   * Ideally this isn't an email, because that might change in the future.
-   *
-   * @param {Object} traits (optional) - A dictionary of traits you know about
-   * the user. Things like `name`, `age`, etc.
-   *
-   * @param {Object} options (optional) - Settings for the identify call.
-   *
-   * @param {Function} callback (optional) - A function to call after a small
-   * timeout, giving the identify time to make requests.
+   * @param {String}   [userId]    The ID you recognize the user by. Ideally
+   *                               this isn't an email, because that might
+   *                               change in the future.
+   * @param {Object}   [traits]    A dictionary of traits you know about the
+   *                               user. Things like `name`, `age`, etc.
+   * @param {Object}   [options]   Settings for the identify call.
+   * @param {Function} [callback]  A function to call after a small timeout,
+   *                               giving the identify time to make requests.
    */
 
   identify : function (userId, traits, options, callback) {
@@ -260,16 +257,14 @@ extend(Analytics.prototype, {
    *         volume : 11
    *     });
    *
-   * @param {String} event - The name of your event.
-   *
-   * @param {Object} properties (optional) - A dictionary of properties of the
-   * event. `properties` are all camelCase (we'll automatically conver them to
-   * the proper case each provider needs).
-   *
-   * @param {Object} options (optional) - Settings for the track call.
-   *
-   * @param {Function} callback - A function to call after a small
-   * timeout, giving the identify time to make requests.
+   * @param {String}   event         The name of your event.
+   * @param {Object}   [properties]  A dictionary of properties of the event.
+   *                                 `properties` are all camelCase (we'll
+   *                                 automatically conver them to the proper
+   *                                 case each provider needs).
+   * @param {Object}   [options]     Settings for the track call.
+   * @param {Function} [callback]    A function to call after a small timeout,
+   *                                 giving the identify time to make requests.
    */
 
   track : function (event, properties, options, callback) {
@@ -310,12 +305,12 @@ extend(Analytics.prototype, {
    * the page before the track requests were made. It works by wrapping the
    * calls in a short timeout, giving the requests time to fire.
    *
-   * @param {Element|Array} links - The link element or array of link elements
-   * to bind to. (Allowing arrays makes it easy to pass in jQuery objects.)
-   *
-   * @param {String} event - Passed directly to `track`.
-   *
-   * @param {Object} properties (optional) - Passed directly to `track`.
+   * @param {Element|Array} links         The link element or array of link
+   *                                      elements to bind to. (Allowing arrays
+   *                                      makes it easy to pass in jQuery
+   *                                      objects.)
+   * @param {String}        event         Passed directly to `track`.
+   * @param {Object}        [properties]  Passed directly to `track`.
    */
 
   trackLink : function (links, event, properties) {
@@ -368,12 +363,12 @@ extend(Analytics.prototype, {
    * be sent. It works by preventing the default submit event, sending our
    * track requests, and then submitting the form programmatically.
    *
-   * @param {Element|Array} forms - The form element or array of form elements
-   * to bind to. (Allowing arrays makes it easy to pass in jQuery objects.)
-   *
-   * @param {String} event - Passed directly to `track`.
-   *
-   * @param {Object} properties (optional) - Passed directly to `track`.
+   * @param {Element|Array} forms         The form element or array of form
+   *                                      elements to bind to. (Allowing arrays
+   *                                      makes it easy to pass in jQuery
+   *                                      objects.)
+   * @param {String}        event         Passed directly to `track`.
+   * @param {Object}        [properties]  Passed directly to `track`.
    */
 
   trackForm : function (form, event, properties) {
@@ -422,8 +417,9 @@ extend(Analytics.prototype, {
    * Simulate a pageview in single-page applications, where real pageviews don't
    * occur. This isn't support by all providers.
    *
-   * @param {String} url (optional) - The path of the page (eg. '/login'). Most
-   * providers will default to the current pages URL, so you don't need this.
+   * @param {String} [url]  The path of the page (eg. '/login'). Most providers
+   *                        will default to the current pages URL, so you don't
+   *                        need this argument.
    */
 
   pageview : function (url) {
@@ -452,11 +448,11 @@ extend(Analytics.prototype, {
    *
    * Some providers don't support merging users.
    *
-   * @param {String} newId - The new ID you want to recognize the user by.
-   *
-   * @param {String} originalId (optional) - The original ID that the user was
-   * recognized by. This defaults to the current identified user's ID if there
-   * is one. In most cases you don't need to pass in the `originalId`.
+   * @param {String} newId         The new ID you want to recognize the user by.
+   * @param {String} [originalId]  The original ID that the user was recognized
+   *                               by. This defaults to the current identified
+   *                               user's ID if there is one. In most cases you
+   *                               don't need to pass in the `originalId`.
    */
 
   alias : function (newId, originalId, options) {
@@ -486,13 +482,28 @@ extend(Analytics.prototype, {
    *
    * Log an error to analytics providers that support it, like Sentry.
    *
-   * @param {Error|String} error - The error or string to log.
-   * @param {Object} properties - Properties about the error.
-   * @param {Object} options (optional) - Settings for the log call.
+   * @param {String}       [level]       The log level for the message. Can be
+   *                                     'debug', 'info', 'warn', or 'error'
+   * @param {Error|String} error         The error or string to log.
+   * @param {Object}       [properties]  Properties about the error.
+   * @param {Object}       [options]     Settings for the log call.
    */
 
-  log : function (error, properties, options) {
+  log : function (level, error, properties, options) {
     if (!this.initialized) return;
+
+    // Allow for optional `level`.
+    if (!(error instanceof Error) || type(error) !== 'string') {
+
+      // If `level` isn't something we can use, get out.
+      if (!(level instanceof Error) && type(level) !== 'string') return;
+
+      // Otherwise continue, defaulting `level` to `warn`.
+      options    = properties;
+      properties = error;
+      error      = level;
+      level      = 'warn';
+    }
 
     each(this.providers, function (provider) {
       if (provider.log && isEnabled(provider, options)) {
@@ -521,10 +532,9 @@ Analytics.prototype.trackSubmit = Analytics.prototype.trackForm;
 /**
  * Determine whether a provider is enabled or not based on the options object.
  *
- * @param {Object} provider - the current provider.
- * @param {Object} options - the current call's options.
- *
- * @return {Boolean} - wether the provider is enabled.
+ * @param  {Object}  provider  The current provider.
+ * @param  {Object}  options   The current call's options.
+ * @return {Boolean}           Whether the provider is enabled.
  */
 
 var isEnabled = function (provider, options) {

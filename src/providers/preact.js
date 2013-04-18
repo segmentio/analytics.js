@@ -51,7 +51,8 @@ module.exports = Provider.extend({
     var personEvent = {
       name : event,
       target_id : properties.target_id,
-      note : properties.note
+      note : properties.note,
+      revenue : properties.revenue
     }
 
     window._lnq.push(['_logEvent', personEvent, properties]);

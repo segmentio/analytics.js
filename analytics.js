@@ -4385,7 +4385,7 @@ module.exports = Provider.extend({
   defaults : {
     accessToken : null,
     track: true,
-    meta : true
+    identify : true
   },
 
   initialize : function (options, ready) {
@@ -4413,8 +4413,8 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-    // Don't set any person metadata if meta is false
-    if (!this.options.meta) return;
+    // Don't set any person metadata if identify is false
+    if (!this.options.identify) return;
 
     traits = traits || {};
     if (userId) traits.id = userId;
@@ -4434,7 +4434,6 @@ module.exports = Provider.extend({
     if (!this.options.track) return;
 
     var obj = extend({msg: event, level: 'info'}, properties);
-    console.log(obj);
     window._rollbar.push(obj);
   }
 

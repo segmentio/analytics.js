@@ -12,11 +12,11 @@ describe('Pingdom', function () {
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Pingdom' : test['Pingdom'] });
+      expect(window._prum).not.to.be(undefined);
 
       // When the library loads, `_prum` is created.
       var interval = setInterval(function () {
-        if (!window._prum) return;
-        expect(window._prum).not.to.be(undefined);
+        if (!window.PRUM_EPISODES) return;
         expect(window.PRUM_EPISODES).not.to.be(undefined);
         expect(spy.called).to.be(true);
         clearInterval(interval);

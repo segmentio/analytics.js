@@ -1,3 +1,12 @@
+0.9.10 / 2013-4-17
+=================
+* Adding url and title to mixpanel pageviews
+* Addiung url and title to keen pageviews
+
+0.9.9 / 2013-4-17
+=================
+* Fixed GoSquared relying on `document.body
+
 0.9.8 / 2013-4-16
 =================
 * Adding support for Pingdom RUM

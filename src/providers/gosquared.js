@@ -3,7 +3,8 @@
 
 var Provider = require('../provider')
   , user     = require('../user')
-  , load     = require('load-script');
+  , load     = require('load-script')
+  , onBody   = require('on-body');
 
 
 module.exports = Provider.extend({
@@ -17,18 +18,21 @@ module.exports = Provider.extend({
   },
 
   initialize : function (options, ready) {
-    var GoSquared = window.GoSquared = {};
-    GoSquared.acct = options.siteToken;
-    GoSquared.q = [];
-    window._gstc_lt =+ (new Date());
+    // GoSquared assumes a body in their script, so we need this wrapper.
+    onBody(function () {
+      var GoSquared = window.GoSquared = {};
+      GoSquared.acct = options.siteToken;
+      GoSquared.q = [];
+      window._gstc_lt =+ (new Date());
 
-    GoSquared.VisitorName = user.id();
-    GoSquared.Visitor = user.traits();
+      GoSquared.VisitorName = user.id();
+      GoSquared.Visitor = user.traits();
 
-    load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
+      load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
 
-    // GoSquared makes a queue, so it's ready immediately.
-    ready();
+      // GoSquared makes a queue, so it's ready immediately.
+      ready();
+    });
   },
 
   identify : function (userId, traits) {

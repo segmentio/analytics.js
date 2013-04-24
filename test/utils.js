@@ -50,7 +50,7 @@ window.test = {
     authToken : 'y'
   },
 
-  'BugHerd' : 'xssravhxw2jxlxlhxsi7iq',
+  'BugHerd' : '7917d741-16cc-4c2b-bb1a-bdd903d53d72',
 
   'Chartbeat' : {
     uid    : 'x',
@@ -111,7 +111,7 @@ window.test = {
 
   'Klaviyo' : 'x',
 
-  'LiveChat' : '2328351',
+  'LiveChat' : '1520', //'2328351',
 
   'Lytics' : 'x',
 

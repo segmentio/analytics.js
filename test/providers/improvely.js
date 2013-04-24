@@ -61,19 +61,17 @@ describe('Improvely', function () {
       stub.restore();
     });
 
-  });
-
-
-  describe('alias', function () {
-
-    it('should call window.improvely.label', function () {
-      var stub = sinon.stub(window.improvely, 'label');
-      analytics.identify(test.newUserId, test.oldUserId);
-      expect(stub.calledWith(test.newUserId)).to.be(true);
+    it('should call window.improvely.goal with the correct `type`', function () {
+      var stub = sinon.stub(window.improvely, 'goal');
+      analytics.track(test.event);
+      expect(stub.calledWith({
+        'type'   : test.event
+      })).to.be(true);
 
       stub.restore();
     });
 
   });
+
 
 });

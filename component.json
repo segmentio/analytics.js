@@ -71,6 +71,7 @@
   "scripts": [
     "src/index.js",
     "src/analytics.js",
+    "src/logger.js",
     "src/provider.js",
     "src/user.js",
     "src/utils.js",

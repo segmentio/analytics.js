@@ -4,6 +4,7 @@ var after          = require('after')
   , each           = require('each')
   , extend         = require('extend')
   , isMeta         = require('is-meta')
+  , Logger         = require('./logger')
   , newDate        = require('new-date')
   , size           = require('object').length
   , preventDefault = require('prevent')
@@ -515,6 +516,20 @@ extend(Analytics.prototype, {
         }
       }
     });
+  },
+
+
+  /**
+   * Logger
+   *
+   * Creates a logger instance with all of the currently enabled providers and
+   * backed by optional properties, that will get sent along with each log call.
+   *
+   * @param {Object} properties  Properties to send with every call.
+   */
+
+  logger : function (properties) {
+    return new Logger(this.providers, properties);
   }
 
 });

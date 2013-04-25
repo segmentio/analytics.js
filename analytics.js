@@ -1,12 +1,5 @@
 ;(function(){
 
-
-/**
- * hasOwnProperty.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
 /**
  * Require the given path.
  *
@@ -83,10 +76,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (has.call(require.modules, path)) return path;
+    if (require.modules.hasOwnProperty(path)) return path;
   }
 
-  if (has.call(require.aliases, index)) {
+  if (require.aliases.hasOwnProperty(index)) {
     return require.aliases[index];
   }
 };
@@ -140,7 +133,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!has.call(require.modules, from)) {
+  if (!require.modules.hasOwnProperty(from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -202,7 +195,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return has.call(require.modules, localRequire.resolve(path));
+    return require.modules.hasOwnProperty(localRequire.resolve(path));
   };
 
   return localRequire;
@@ -1197,7 +1190,7 @@ exports.parse = function(url){
   return {
     href: a.href,
     host: a.host || location.host,
-    port: a.port || location.port,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
     hostname: a.hostname || location.hostname,
     pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
@@ -3365,6 +3358,8 @@ module.exports = Provider.extend({
     appId : null,
     // An optional setting to display the Intercom inbox widget.
     activator : null,
+    // An optional function used to control the display of the inbox counter (requires activator)
+    activator_html: null,
     // Whether to show the count of messages for the inbox widget.
     counter : true
   },
@@ -3423,6 +3418,9 @@ module.exports = Provider.extend({
         activator   : this.options.activator,
         use_counter : this.options.counter
       };
+
+      if (this.options.activator_html)
+        settings.widget.activator_html = activator_html
     }
 
     // If this is the first time we've identified, `boot` instead of `update`
@@ -4371,53 +4369,74 @@ module.exports = Provider.extend({
 });
 });
 require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
+require.alias("component-clone/index.js", "clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-cookie/index.js", "analytics/deps/cookie/index.js");
+require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
+require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
+require.alias("component-event/index.js", "event/index.js");
 
 require.alias("component-json/index.js", "analytics/deps/json/index.js");
+require.alias("component-json/index.js", "json/index.js");
 
 require.alias("component-json-fallback/index.js", "analytics/deps/json-fallback/index.js");
+require.alias("component-json-fallback/index.js", "json-fallback/index.js");
 
 require.alias("component-object/index.js", "analytics/deps/object/index.js");
+require.alias("component-object/index.js", "object/index.js");
 
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
+require.alias("component-querystring/index.js", "querystring/index.js");
 require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
 
 require.alias("component-type/index.js", "analytics/deps/type/index.js");
+require.alias("component-type/index.js", "type/index.js");
 
 require.alias("component-url/index.js", "analytics/deps/url/index.js");
+require.alias("component-url/index.js", "url/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
+require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
+require.alias("segmentio-alias/index.js", "alias/index.js");
 
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
+require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
+require.alias("segmentio-extend/index.js", "extend/index.js");
 
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
+require.alias("segmentio-is-email/index.js", "is-email/index.js");
 
 require.alias("segmentio-is-meta/index.js", "analytics/deps/is-meta/index.js");
+require.alias("segmentio-is-meta/index.js", "is-meta/index.js");
 
 require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
+require.alias("segmentio-load-date/index.js", "load-date/index.js");
 
 require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
+require.alias("segmentio-load-script/index.js", "load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
 
 require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
+require.alias("segmentio-new-date/index.js", "new-date/index.js");
 require.alias("component-type/index.js", "segmentio-new-date/deps/type/index.js");
 
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
+require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
+require.alias("yields-prevent/index.js", "prevent/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");
 
@@ -4426,5 +4445,5 @@ if (typeof exports == "object") {
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("analytics"); });
 } else {
-  window["analytics"] = require("analytics");
+  this["analytics"] = require("analytics");
 }})();

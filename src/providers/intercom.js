@@ -22,6 +22,8 @@ module.exports = Provider.extend({
     appId : null,
     // An optional setting to display the Intercom inbox widget.
     activator : null,
+    // An optional function used to control the display of the inbox counter (requires activator)
+    activator_html: null,
     // Whether to show the count of messages for the inbox widget.
     counter : true
   },
@@ -80,6 +82,9 @@ module.exports = Provider.extend({
         activator   : this.options.activator,
         use_counter : this.options.counter
       };
+
+      if (this.options.activator_html)
+        settings.widget.activator_html = activator_html
     }
 
     // If this is the first time we've identified, `boot` instead of `update`

@@ -26,6 +26,7 @@ describe('Intercom', function () {
       expect(analytics.providers[0].options.appId).to.equal(test['Intercom'].appId);
       expect(analytics.providers[0].options.activator).to.equal(test['Intercom'].activator);
       expect(analytics.providers[0].options.counter).to.equal(test['Intercom'].counter);
+      expect(analytics.providers[0].options.activatorHtml).to.equal(test['Intercom'].activatorHtml);
     });
 
   });

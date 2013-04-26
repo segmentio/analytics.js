@@ -98,9 +98,10 @@ window.test = {
   'HubSpot' : 'x',
 
   'Intercom' : {
-    appId     : 'x',
-    activator : '#someElement',
-    counter   : true
+    appId         : 'x',
+    activator     : '#someElement',
+    counter       : true,
+    activatorHtml : null
   },
 
   'Keen IO' : {

@@ -84,7 +84,7 @@ module.exports = Provider.extend({
       };
 
       if (this.options.activatorHtml)
-        settings.widget.activatorHtml = this.options.activatorHtml
+        settings.widget.activator_html = this.options.activatorHtml
     }
 
     // If this is the first time we've identified, `boot` instead of `update`

@@ -136,7 +136,10 @@ window.test = {
 
   'USERcycle' : 'x',
 
-  'UserVoice' : 'qTSuuylq5nZrsjC0L8bmg',
+  'UserVoice' : {
+    widgetId : 'qTSuuylq5nZrsjC0L8bmg',
+    forumId  : 193715
+  },
 
   'Vero' : 'x',
 

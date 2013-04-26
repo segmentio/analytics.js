@@ -26,7 +26,9 @@ describe('UserVoice', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'UserVoice' : test['UserVoice'] });
-      expect(analytics.providers[0].options.widgetId).to.equal(test['UserVoice']);
+      expect(analytics.providers[0].options.widgetId).to.equal(test['UserVoice'].widgetId);
+      expect(analytics.providers[0].options.forumId).to.equal(test['UserVoice'].forumId);
+      expect(analytics.providers[0].options.showTab).to.equal(true);
     });
 
   });

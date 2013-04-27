@@ -27,6 +27,10 @@ describe('BugHerd', function () {
       expect(analytics.providers[0].options.apiKey).to.equal(test['BugHerd']);
     });
 
+    it('should not show tab if set', function () {
+      analytics.initialize({ 'BugHerd' : { apiKey : test['BugHerd'], showFeedbackTab : false } });
+    });
+
   });
 
 });

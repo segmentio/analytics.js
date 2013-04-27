@@ -138,7 +138,8 @@ window.test = {
 
   'UserVoice' : {
     widgetId : 'qTSuuylq5nZrsjC0L8bmg',
-    forumId  : 193715
+    forumId  : 193715,
+    tab_label : 'Operations'
   },
 
   'Vero' : 'x',

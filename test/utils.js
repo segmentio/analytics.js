@@ -138,6 +138,8 @@ window.test = {
 
   'UserVoice' : 'qTSuuylq5nZrsjC0L8bmg',
 
+  'Userfox' : '4v2erxr9c5vzqsy35z9gnk6az',
+
   'Vero' : 'x',
 
   'Woopra' : 'x'

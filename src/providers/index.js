@@ -31,6 +31,7 @@ module.exports = [
   require('./sentry'),
   require('./snapengage'),
   require('./usercycle'),
+  require('./userfox'),
   require('./uservoice'),
   require('./vero'),
   require('./woopra')

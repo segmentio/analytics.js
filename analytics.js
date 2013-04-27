@@ -2973,7 +2973,9 @@ module.exports = Provider.extend({
     // https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setSiteSpeedSampleRate
     siteSpeedSampleRate : null,
     // Whether to enable GOogle's DoubleClick remarketing feature.
-    doubleClick : false
+    doubleClick : false,
+    // A domain to ignore for referrers. Maps to _addIgnoredRef
+    ignoreReferrer : null
   },
 
   //
@@ -3008,6 +3010,9 @@ module.exports = Provider.extend({
       var path, canon = canonical();
       if (canon) path = url.parse(canon).pathname;
       this.pageview(path);
+    }
+    if (options.ignoreReferrer) {
+      window._gaq.push(['_addIgnoredRef', options.ignoreReferrer]);
     }
 
     // URLs change if DoubleClick is on.

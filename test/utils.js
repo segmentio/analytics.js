@@ -136,7 +136,11 @@ window.test = {
 
   'USERcycle' : 'x',
 
-  'UserVoice' : 'qTSuuylq5nZrsjC0L8bmg',
+  'UserVoice' : {
+    widgetId : 'qTSuuylq5nZrsjC0L8bmg',
+    forumId  : 193715,
+    tab_label : 'Operations'
+  },
 
   'userfox' : '4v2erxr9c5vzqsy35z9gnk6az',
 

@@ -2811,8 +2811,6 @@ module.exports = Provider.extend({
     // Attach the window `onerror` event.
     var oldOnError = window.onerror;
     window.onerror = function () {
-      console.log('called new onerror');
-      console.log(oldOnError);
       window._errs.push(arguments);
       // Chain the old onerror handler after we finish our work.
       if ('function' === type(oldOnError)) {

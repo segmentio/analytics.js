@@ -3,6 +3,7 @@
 * Adding new ignoreReferrer option to Google Analytics provider
 * Adding new showFeedbackTab option to BugHerd provider
 * Updating UserVoice provider to work with their new snippet(s)
+* Fixing Errorception window.onerror binding to be friendlier
 
 0.9.10 / 2013-4-17
 =================

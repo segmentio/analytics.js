@@ -142,6 +142,8 @@ window.test = {
     tab_label : 'Operations'
   },
 
+  'userfox' : '4v2erxr9c5vzqsy35z9gnk6az',
+
   'Vero' : 'x',
 
   'Woopra' : 'x'

@@ -148,6 +148,20 @@ describe('Google Analytics', function () {
         expect($script.length).to.equal(1);
       });
 
+      it('should add an ignored referrer', function () {
+        // Define `_gaq` so we can spy on it.
+        window._gaq = [];
+
+        var extend  = require('segmentio-extend')
+          , spy     = sinon.spy(window._gaq, 'push')
+          , options = extend({}, test['Google Analytics'].classic, { ignoreReferrer : 'segment.io' });
+
+        analytics.initialize({ 'Google Analytics' : options });
+        expect(spy.calledWith(['_addIgnoredRef', 'segment.io'])).to.be(true);
+
+        spy.restore();
+      });
+
     });
 
 

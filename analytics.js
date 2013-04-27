@@ -4218,7 +4218,8 @@ require.register("analytics/src/providers/uservoice.js", function(exports, requi
 
 var Provider = require('../provider')
   , load     = require('load-script')
-  , alias    = require('alias');
+  , alias    = require('alias')
+  , clone    = require('clone');
 
 
 module.exports = Provider.extend({
@@ -4248,7 +4249,8 @@ module.exports = Provider.extend({
     window.UserVoice = window.UserVoice || [];
     load('//widget.uservoice.com/' + options.widgetId + '.js', ready);
 
-    alias(options, {
+    var optionsClone = clone(options);
+    alias(optionsClone, {
       'forumId'         : 'forum_id',
       'primaryColor'    : 'primary_color',
       'linkColor'       : 'link_color',
@@ -4264,7 +4266,7 @@ module.exports = Provider.extend({
     // If we don't automatically show the tab, let them show it via 
     // javascript. This is the default name for the function in their snippet.
     window.showClassicWidget = function (showWhat) {
-      window.UserVoice.push([showWhat || 'showLightbox', 'classic_widget', options]);
+      window.UserVoice.push([showWhat || 'showLightbox', 'classic_widget', optionsClone]);
     };
 
     // If we *do* automatically show the tab, get on with it!

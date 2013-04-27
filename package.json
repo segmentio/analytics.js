@@ -58,6 +58,8 @@
     "quantcast",
     "snapengage",
     "usercycle",
+    "userfox",
+    "uservoice",
     "vero"
   ],
   "url": "https://github.com/segmentio/analytics.js",

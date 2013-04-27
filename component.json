@@ -41,6 +41,7 @@
     "sentry",
     "snapengage",
     "usercycle",
+    "userfox",
     "uservoice",
     "vero",
     "woopra"
@@ -107,6 +108,7 @@
     "src/providers/sentry.js",
     "src/providers/snapengage.js",
     "src/providers/usercycle.js",
+    "src/providers/userfox.js",
     "src/providers/uservoice.js",
     "src/providers/vero.js",
     "src/providers/woopra.js"

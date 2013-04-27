@@ -34,6 +34,17 @@ describe('Errorception', function () {
       expect(options.projectId).to.equal(test['Errorception']);
     });
 
+    it('should call the old onerror when an error happens', function () {
+      var spy = sinon.spy()
+      window.onerror = spy;
+
+      analytics.initialize({ 'Errorception' : test['Errorception'] });
+      window.onerror('asdf', 'asdf');
+
+      expect(spy.called).to.be(true);
+      expect(spy.calledWith('asdf', 'asdf')).to.be(true);
+    });
+
   });
 
 

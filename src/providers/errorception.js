@@ -23,8 +23,11 @@ module.exports = Provider.extend({
     load('//d15qhc0lu1ghnk.cloudfront.net/beacon.js');
 
     // Attach the window `onerror` event.
+    var oldOnError = window.onerror;
     window.onerror = function () {
       window._errs.push(arguments);
+      // Chain the old onerror handler after we finish our work.
+      oldOnError(arguments);
     };
 
     // Errorception makes a queue, so it's ready immediately.

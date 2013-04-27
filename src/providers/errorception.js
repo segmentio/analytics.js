@@ -2,7 +2,8 @@
 
 var Provider = require('../provider')
   , extend   = require('extend')
-  , load     = require('load-script');
+  , load     = require('load-script')
+  , type     = require('type');
 
 
 module.exports = Provider.extend({
@@ -25,9 +26,13 @@ module.exports = Provider.extend({
     // Attach the window `onerror` event.
     var oldOnError = window.onerror;
     window.onerror = function () {
+      console.log('called new onerror');
+      console.log(oldOnError);
       window._errs.push(arguments);
       // Chain the old onerror handler after we finish our work.
-      oldOnError(arguments);
+      if ('function' === type(oldOnError)) {
+        oldOnError.apply(this, arguments);
+      }
     };
 
     // Errorception makes a queue, so it's ready immediately.

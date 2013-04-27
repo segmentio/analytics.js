@@ -1,3 +1,7 @@
+0.9.12 / 2013-4-27
+==================
+* Adding support for [userfox](https://www.userfox.com)
+
 0.9.11 / 2013-4-26
 ==================
 * Adding new ignoreReferrer option to Google Analytics provider

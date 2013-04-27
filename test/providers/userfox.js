@@ -1,4 +1,4 @@
-describe('Userfox', function () {
+describe('userfox', function () {
 
   describe('initialize', function () {
 
@@ -7,14 +7,14 @@ describe('Userfox', function () {
 
       var spy = sinon.spy();
       analytics.ready(spy);
-      analytics.initialize({ 'Userfox' : test['Userfox'] });
+      analytics.initialize({ 'userfox' : test['userfox'] });
       expect(spy.called).to.be(true);
       expect(window._ufq).not.to.be(undefined);
     });
 
     it('should store options', function () {
-      analytics.initialize({ 'Userfox' : test['Userfox'] });
-      expect(analytics.providers[0].options.clientId).to.equal(test['Userfox']);
+      analytics.initialize({ 'userfox' : test['userfox'] });
+      expect(analytics.providers[0].options.clientId).to.equal(test['userfox']);
     });
 
   });
@@ -34,7 +34,7 @@ describe('Userfox', function () {
       var spy = sinon.spy(window._ufq, 'push');
       analytics.identify(test.userId, test.traits);
       expect(spy.calledWith(['init', { 
-        clientId : test['Userfox'],
+        clientId : test['userfox'],
         email    : test.traits.email
       }])).to.be(true);
       spy.restore();

@@ -8,7 +8,7 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
-  name : 'Userfox',
+  name : 'userfox',
 
   key : 'clientId',
 
@@ -26,12 +26,10 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits, context) {
-    console.log(userId, traits, context);
-    // Userfox requires an email.
+    // userfox requires an email.
     var email;
     if (userId && isEmail(userId)) email = userId;
     if (traits && isEmail(traits.email)) email = traits.email;
-    console.log(email);
     if (!email) return;
 
     // Initialize the library with the email now that we have it.

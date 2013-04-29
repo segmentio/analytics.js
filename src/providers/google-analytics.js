@@ -63,13 +63,13 @@ module.exports = Provider.extend({
     if (options.anonymizeIp) {
       window._gaq.push(['_gat._anonymizeIp']);
     }
+    if (options.ignoreReferrer) {
+      window._gaq.push(['_addIgnoredRef', options.ignoreReferrer]);
+    }
     if (options.initialPageview) {
       var path, canon = canonical();
       if (canon) path = url.parse(canon).pathname;
       this.pageview(path);
-    }
-    if (options.ignoreReferrer) {
-      window._gaq.push(['_addIgnoredRef', options.ignoreReferrer]);
     }
 
     // URLs change if DoubleClick is on.

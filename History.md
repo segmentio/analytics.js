@@ -1,3 +1,7 @@
+0.9.13 / 2013-4-29
+==================
+* Fixing ordering of ignore referrer option in Google Analytics
+
 0.9.12 / 2013-4-27
 ==================
 * Adding support for [userfox](https://www.userfox.com)

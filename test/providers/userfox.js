@@ -50,12 +50,14 @@ describe('userfox', function () {
 
     it('should call _ufq track if theres a created date', function () {
       var spy = sinon.spy(window._ufq, 'push');
+      analytics.user.clear();
       var created = new Date();
       analytics.identify(test.userId, {
         email   : test.traits.email,
         created : created
       });
-      expect(spy.calledWith(['track', { signup_date: created.getTime()+'' }])).to.be(true);
+
+      expect(spy.calledWith(['track', { signup_date: created.getTime()+'', created : created, email : test.traits.email }])).to.be(true);
       spy.restore();
     });
   });

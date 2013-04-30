@@ -1,3 +1,7 @@
+0.9.14 / 2013-4-29
+==================
+* Fixing userfox integration to accept all traits not just signup_date
+
 0.9.13 / 2013-4-29
 ==================
 * Fixing ordering of ignore referrer option in Google Analytics

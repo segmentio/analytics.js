@@ -38,9 +38,10 @@ module.exports = Provider.extend({
       email    : email
     }]);
 
-    // Track the signup date if we have it.
+    // Record traits to "track" if we have the required signup date "created".
     if (traits && traits.created) {
-      window._ufq.push(['track', { signup_date: traits.created.getTime()+'' }]);
+      traits.signup_date = traits.created.getTime()+'';
+      window._ufq.push(['track', traits]);
     }
   }
 

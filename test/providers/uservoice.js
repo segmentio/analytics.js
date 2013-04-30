@@ -49,4 +49,19 @@ describe('UserVoice', function () {
 
   });
 
+
+  describe('identify', function () {
+
+    var extend = require('segmentio-extend');
+
+    it('should call setCustomFields', function () {
+      var stub = sinon.stub(window.UserVoice, 'push');
+
+      analytics.identify(test.userId, test.traits);
+      expect(stub.called).to.be(true);
+      expect(stub.calledWith(['setCustomFields', extend({}, test.traits, { id : test.userId })])).to.be(true);
+    });
+
+  });
+
 });

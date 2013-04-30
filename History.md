@@ -1,3 +1,7 @@
+0.9.15 / 2013-4-30
+==================
+* Added identify to UserVoice
+
 0.9.14 / 2013-4-29
 ==================
 * Fixing userfox integration to accept all traits not just signup_date

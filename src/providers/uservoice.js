@@ -47,7 +47,7 @@ module.exports = Provider.extend({
       'tabInverted'     : 'tab_inverted'
     });
 
-    // If we don't automatically show the tab, let them show it via 
+    // If we don't automatically show the tab, let them show it via
     // javascript. This is the default name for the function in their snippet.
     window.showClassicWidget = function (showWhat) {
       window.UserVoice.push([showWhat || 'showLightbox', 'classic_widget', optionsClone]);
@@ -57,6 +57,13 @@ module.exports = Provider.extend({
     if (options.showTab) {
       window.showClassicWidget('showTab');
     }
+  },
+
+  identify : function (userId, traits) {
+    // Pull the ID into traits.
+    traits.id = userId;
+
+    window.UserVoice.push(['setCustomFields', traits]);
   }
 
 });

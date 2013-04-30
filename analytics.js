@@ -1,12 +1,5 @@
 ;(function(){
 
-
-/**
- * hasOwnProperty.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
 /**
  * Require the given path.
  *
@@ -83,10 +76,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (has.call(require.modules, path)) return path;
+    if (require.modules.hasOwnProperty(path)) return path;
   }
 
-  if (has.call(require.aliases, index)) {
+  if (require.aliases.hasOwnProperty(index)) {
     return require.aliases[index];
   }
 };
@@ -140,7 +133,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!has.call(require.modules, from)) {
+  if (!require.modules.hasOwnProperty(from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -202,7 +195,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return has.call(require.modules, localRequire.resolve(path));
+    return require.modules.hasOwnProperty(localRequire.resolve(path));
   };
 
   return localRequire;
@@ -1521,7 +1514,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.9.10';
+  this.VERSION = '0.9.15';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -4332,7 +4325,7 @@ module.exports = Provider.extend({
       'tabInverted'     : 'tab_inverted'
     });
 
-    // If we don't automatically show the tab, let them show it via 
+    // If we don't automatically show the tab, let them show it via
     // javascript. This is the default name for the function in their snippet.
     window.showClassicWidget = function (showWhat) {
       window.UserVoice.push([showWhat || 'showLightbox', 'classic_widget', optionsClone]);
@@ -4342,6 +4335,13 @@ module.exports = Provider.extend({
     if (options.showTab) {
       window.showClassicWidget('showTab');
     }
+  },
+
+  identify : function (userId, traits) {
+    // Pull the ID into traits.
+    traits.id = userId;
+
+    window.UserVoice.push(['setCustomFields', traits]);
   }
 
 });
@@ -4535,5 +4535,5 @@ if (typeof exports == "object") {
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("analytics"); });
 } else {
-  window["analytics"] = require("analytics");
+  this["analytics"] = require("analytics");
 }})();

@@ -1,3 +1,7 @@
+0.9.17 / 2013-5-1
+=================
+* Updated Keen to version 2.1.0
+
 0.9.16 / 2013-4-30
 ==================
 * Fixed bug affecting Pingdom users

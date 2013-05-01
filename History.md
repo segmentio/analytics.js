@@ -1,3 +1,7 @@
+0.9.16 / 2013-4-30
+==================
+* Fixed bug affecting Pingdom users
+
 0.9.15 / 2013-4-30
 ==================
 * Added identify to UserVoice

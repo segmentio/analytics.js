@@ -1514,7 +1514,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.9.15';
+  this.VERSION = '0.9.16';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -4029,8 +4029,10 @@ module.exports = Provider.extend({
 
   initialize : function (options, ready) {
 
-    window._prum = [['id', '5168f8c6abe53db732000000'],
-                 ['mark', 'firstbyte', date.getTime()]];
+    window._prum = [
+      ['id', options.id],
+      ['mark', 'firstbyte', date.getTime()]
+    ];
 
     // We've replaced the original snippet loader with our own load method.
     load('//rum-static.pingdom.net/prum.min.js', ready);

@@ -3491,7 +3491,7 @@ module.exports = Provider.extend({
       readKey   : options.readKey
     });
 
-    load('//cloudfront.keen.io/code/keen-2.1.0-min.js');
+    load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.1.0-min.js');
 
     if (options.initialPageview) this.pageview();
 

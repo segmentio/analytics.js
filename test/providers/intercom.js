@@ -2,6 +2,8 @@ describe('Intercom', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should load library and call ready', function (done) {
       var spy = sinon.spy();
       analytics.ready(spy);

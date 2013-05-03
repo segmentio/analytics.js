@@ -192,7 +192,7 @@ extend(Analytics.prototype, {
    * @param {Object} options (optional) - Settings for the identify call.
    *
    * @param {Function} callback (optional) - A function to call after a small
-   * timeout, giving the identify time to make requests.
+   * timeout, giving the identify call time to make requests.
    */
 
   identify : function (userId, traits, options, callback) {
@@ -243,6 +243,74 @@ extend(Analytics.prototype, {
 
     // If we should alias, go ahead and do it.
     // if (alias) this.alias(userId);
+
+    if (callback && type(callback) === 'function') {
+      setTimeout(callback, this.timeout);
+    }
+  },
+
+
+
+  /**
+   * Group
+   *
+   * Groups multiple users together under one "account" or "team" or "company".
+   * Acts on the currently identified user, so you need to call identify before
+   * calling group. For example:
+   *
+   *     analytics.identify('4d3ed089fb60ab534684b7e0', {
+   *         name  : 'Achilles',
+   *         email : 'achilles@segment.io',
+   *         age   : 23
+   *     });
+   *
+   *     analytics.group('5we93je3889fb60a937dk033', {
+   *         name              : 'Acme Co.',
+   *         numberOfEmployees : 42,
+   *         location          : 'San Francisco'
+   *     });
+   *
+   * @param {String} groupId - The ID you recognize the group by.
+   *
+   * @param {Object} properties (optional) - A dictionary of properties you know
+   * about the group. Things like `numberOfEmployees`, `location`, etc.
+   *
+   * @param {Object} options (optional) - Settings for the group call.
+   *
+   * @param {Function} callback (optional) - A function to call after a small
+   * timeout, giving the group call time to make requests.
+   */
+
+  group : function (groupId, properties, options, callback) {
+    if (!this.initialized) return;
+
+    // Allow for optional arguments.
+    if (type(options) === 'function') {
+      callback = options;
+      options = undefined;
+    }
+    if (type(properties) === 'function') {
+      callback = properties;
+      properties = undefined;
+    }
+
+    // Clone `properties` before we manipulate it, so we don't do anything bad.
+    properties = clone(properties) || {};
+
+    // Convert dates from more types of input into Date objects.
+    if (properties.created) properties.created = newDate(properties.created);
+
+    // Call `group` on all of our enabled providers that support it.
+    each(this.providers, function (provider) {
+      if (provider.group && isEnabled(provider, options)) {
+        var args = [groupId, clone(properties), clone(options)];
+        if (provider.ready) {
+          provider.group.apply(provider, args);
+        } else {
+          provider.enqueue('group', args);
+        }
+      }
+    });
 
     if (callback && type(callback) === 'function') {
       setTimeout(callback, this.timeout);

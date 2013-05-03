@@ -294,7 +294,8 @@ extend(Analytics.prototype, {
       properties = undefined;
     }
 
-    // Clone `properties` before we manipulate it, so we don't do anything bad.
+    // Clone `properties` before we manipulate it, so we don't do anything bad,
+    // and back it by an empty object so that providers can assume it exists.
     properties = clone(properties) || {};
 
     // Convert dates from more types of input into Date objects.
@@ -312,6 +313,7 @@ extend(Analytics.prototype, {
       }
     });
 
+    // If we have a callback, call it after a small timeout.
     if (callback && type(callback) === 'function') {
       setTimeout(callback, this.timeout);
     }

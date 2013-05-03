@@ -9,6 +9,13 @@ window.test = {
     created : new Date()
   },
 
+  groupId : 'group',
+
+  groupProperties : {
+    employees : 42,
+    plan      : 'Gold'
+  },
+
   event : 'event',
 
   properties : {

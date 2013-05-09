@@ -131,6 +131,10 @@ window.test = {
 
   'Pingdom' : '5168f8c6abe53db732000000',
 
+  'Preact' : {
+    projectCode : 'x'
+  },
+
   'Quantcast' : 'x',
 
   'Qualaroo' : {

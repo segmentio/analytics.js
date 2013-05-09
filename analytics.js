@@ -1514,7 +1514,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.9.17';
+  this.VERSION = '0.10.0';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -1780,7 +1780,8 @@ extend(Analytics.prototype, {
       properties = undefined;
     }
 
-    // Clone `properties` before we manipulate it, so we don't do anything bad.
+    // Clone `properties` before we manipulate it, so we don't do anything bad,
+    // and back it by an empty object so that providers can assume it exists.
     properties = clone(properties) || {};
 
     // Convert dates from more types of input into Date objects.
@@ -1798,6 +1799,7 @@ extend(Analytics.prototype, {
       }
     });
 
+    // If we have a callback, call it after a small timeout.
     if (callback && type(callback) === 'function') {
       setTimeout(callback, this.timeout);
     }
@@ -3408,6 +3410,7 @@ module.exports = [
   require('./olark'),
   require('./perfect-audience'),
   require('./pingdom'),
+  require('./preact'),
   require('./qualaroo'),
   require('./quantcast'),
   require('./sentry'),
@@ -4111,6 +4114,69 @@ module.exports = Provider.extend({
 
     // We've replaced the original snippet loader with our own load method.
     load('//rum-static.pingdom.net/prum.min.js', ready);
+  }
+
+});
+});
+require.register("analytics/src/providers/preact.js", function(exports, require, module){
+// http://www.preact.io/api/javascript
+
+var Provider = require('../provider')
+  , isEmail  = require('is-email')
+  , load     = require('load-script');
+
+module.exports = Provider.extend({
+
+  name : 'Preact',
+
+  key : 'projectCode',
+
+  defaults : {
+    projectCode    : null
+  },
+
+  initialize : function (options, ready) {
+    var _lnq = window._lnq = window._lnq || [];
+    _lnq.push(["_setCode", options.projectCode]);
+
+    load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.3.min.js');
+    ready();
+  },
+
+  identify : function (userId, traits) {
+    // Don't do anything if we just have traits, because Preact
+    // requires a `userId`.
+    if (!userId) return;
+
+    // If there wasn't already an email and the userId is one, use it.
+    if (!traits.email && isEmail(userId)) traits.email = userId;
+
+    // Swap the `created` trait to the `created_at` that Preact needs
+    // and convert it from milliseconds to seconds.
+    if (traits.created) {
+      traits.created_at = Math.floor(traits.created/1000);
+      delete traits.created;
+    }
+
+    window._lnq.push(['_setPersonData', {
+      name : traits.name,
+      email : traits.email,
+      uid : userId,
+      properties : traits
+    }]);
+  },
+
+  track : function (event, properties) {
+    properties || (properties = {});
+
+    var personEvent = {
+      name : event,
+      target_id : properties.target_id,
+      note : properties.note,
+      revenue : properties.revenue
+    }
+
+    window._lnq.push(['_logEvent', personEvent, properties]);
   }
 
 });

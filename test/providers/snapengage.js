@@ -3,7 +3,7 @@ describe('SnapEngage', function () {
 
   describe('initialize', function () {
 
-    this.timeout(10000);
+    this.timeout(15000);
 
     it('should call ready and load library', function (done) {
       expect(window.SnapABug).to.be(undefined);

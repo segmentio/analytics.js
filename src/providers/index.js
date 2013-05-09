@@ -26,6 +26,7 @@ module.exports = [
   require('./olark'),
   require('./perfect-audience'),
   require('./pingdom'),
+  require('./preact'),
   require('./qualaroo'),
   require('./quantcast'),
   require('./sentry'),

@@ -3270,17 +3270,25 @@ module.exports = Provider.extend({
     load('https://api.intercom.io/api/js/library.js', ready);
   },
 
-  identify : function (userId, traits, context) {
+  identify : function (userId, traits, options) {
     // Intercom requires a `userId` to associate data to a user.
     if (!userId) return;
 
     // Don't do anything if we just have traits.
     if (!this.booted && !userId) return;
 
+    options = options || {};
+
+    // Intercom specific settings could be lowercase or upper-case
+    var intercom = options.intercom || options.Intercom || {};
+
     // Pass traits directly in to Intercom's `custom_data`.
-    var settings = extend({
-      custom_data : traits || {}
-    }, (context && context.intercom) ? context.intercom : {});
+    var settings = { custom_data : traits || {} };
+
+    // pick specific options from the options.intercom
+    if (intercom.increments) settings.increments = increments;
+    if (intercom.user_hash) settings.user_hash = intercom.user_hash;
+    if (intercom.userHash) settings.user_hash = intercom.userHash;
 
     // They need `created_at` as a Unix timestamp (seconds).
     if (traits && traits.created) {

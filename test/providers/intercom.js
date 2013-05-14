@@ -93,7 +93,7 @@ describe('Intercom', function () {
 
       var stub = sinon.stub(window, 'Intercom');
       analytics.identify(test.userId, traits, {
-        intercom: { user_hash: userHash }
+        intercom: { userHash: userHash }
       });
 
       expect(stub.calledWith('update', extend(settings, { user_hash: userHash }))).to.be(true);

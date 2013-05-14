@@ -1514,7 +1514,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.10.0';
+  this.VERSION = '0.10.1';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -4309,6 +4309,7 @@ require.register("analytics/src/providers/snapengage.js", function(exports, requ
 // http://help.snapengage.com/installation-guide-getting-started-in-a-snap/
 
 var Provider = require('../provider')
+  , isEmail  = require('is-email')
   , load     = require('load-script');
 
 
@@ -4324,6 +4325,12 @@ module.exports = Provider.extend({
 
   initialize : function (options, ready) {
     load('//commondatastorage.googleapis.com/code.snapengage.com/js/' + options.apiKey + '.js', ready);
+  },
+
+  // Set the email in the chat window if we have it.
+  identify : function (userId, traits, options) {
+    if (!traits.email && !isEmail(userId)) return;
+    window.SnapABug.setUserEmail(traits.email || userId);
   }
 
 });

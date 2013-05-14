@@ -1,3 +1,7 @@
+0.10.2 / 2013-5-14
+==================
+* Intercom: Picking out `increments`, user_hash`, and `userHash` from options.intercom or options.Intercom
+
 0.10.1 / 2013-5-14
 ==================
 * Added `identify` to SnapEngage integration

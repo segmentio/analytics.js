@@ -4693,5 +4693,5 @@ if (typeof exports == "object") {
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("analytics"); });
 } else {
-  this["analytics"] = require("analytics");
+  window["analytics"] = require("analytics");
 }})();

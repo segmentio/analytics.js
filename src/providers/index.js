@@ -1,4 +1,5 @@
 module.exports = [
+  require('./adroll'),
   require('./bitdeli'),
   require('./bugherd'),
   require('./chartbeat'),
@@ -24,11 +25,14 @@ module.exports = [
   require('./mixpanel'),
   require('./olark'),
   require('./perfect-audience'),
+  require('./pingdom'),
+  require('./preact'),
   require('./qualaroo'),
   require('./quantcast'),
   require('./sentry'),
   require('./snapengage'),
   require('./usercycle'),
+  require('./userfox'),
   require('./uservoice'),
   require('./vero'),
   require('./woopra')

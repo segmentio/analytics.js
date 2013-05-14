@@ -34,40 +34,41 @@ describe('Qualaroo', function () {
 
 
   describe('identify', function () {
-
-    it('should push "_identify"', function () {
-      // Reset our user state.
+    var stub;
+    beforeEach(function () {
+      stub = sinon.stub(window._kiq, 'push');
       analytics.user.clear();
+    });
+    afterEach(function () { stub.restore(); });
 
-      var stub = sinon.stub(window._kiq, 'push');
-
+    it('should push "_identify" with email traits', function () {
       analytics.identify(test.traits);
       expect(stub.calledWith(['identify', test.traits.email])).to.be(true);
-      stub.reset();
-
-      analytics.identify(test.userId);
-      expect(stub.calledWith(['identify', test.userId])).to.be(true);
-      stub.reset();
-
-      analytics.identify(test.userId, test.traits);
-      expect(stub.calledWith(['identify', test.traits.email])).to.be(true);
-      stub.restore();
     });
 
-    it('should push "_set"', function () {
-      var stub = sinon.stub(window._kiq, 'push');
+    it('should push "_identify" with userId', function () {
+      analytics.identify(test.userId);
+      expect(stub.calledWith(['identify', test.userId])).to.be(true);
+    });
 
+    it('should prefer email to userId', function () {
+      analytics.identify(test.userId, test.traits);
+      expect(stub.calledWith(['identify', test.traits.email])).to.be(true);
+    });
+
+    it('should push "_set" with all traits', function () {
       analytics.identify(test.traits);
       expect(stub.calledWith(['set', test.traits])).to.be(true);
-      stub.reset();
+    });
 
+    it('should not call set without traits', function () {
       analytics.identify(test.userId);
       expect(stub.calledWith(['set', test.traits])).to.be(false);
-      stub.reset();
+    });
 
+    it('should call identify with traits and userId', function () {
       analytics.identify(test.userId, test.traits);
       expect(stub.calledWith(['set', test.traits])).to.be(true);
-      stub.restore();
     });
 
   });

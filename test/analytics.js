@@ -10,6 +10,7 @@ describe('Analytics.js', function () {
       setTimeout(ready, readyTimeout);
     },
     identify   : function (userId, traits) {},
+    group      : function (groupId, properties) {},
     track      : function (event, properties) {},
     pageview   : function () {},
     alias      : function (newId, originalId) {}
@@ -278,13 +279,15 @@ describe('Analytics.js', function () {
     });
 
     it('parses seconds into dates', function () {
-      var spy  = sinon.spy(Provider.prototype, 'identify')
-        , date = new Date()
+      var spy     = sinon.spy(Provider.prototype, 'identify')
+        , date    = new Date()
         , seconds = date.getTime()/1000;
+
       analytics.identify({
         created : seconds,
         company : { created : seconds }
       });
+
       var traits = spy.args[0][1];
       expect(traits.created.getTime()).to.equal(date.getTime());
       expect(traits.company.created.getTime()).to.equal(date.getTime());
@@ -292,20 +295,22 @@ describe('Analytics.js', function () {
     });
 
     it('parses milliseconds into dates', function () {
-      var spy  = sinon.spy(Provider.prototype, 'identify')
-        , date = new Date()
-        , seconds = date.getTime();
+      var spy          = sinon.spy(Provider.prototype, 'identify')
+        , date         = new Date()
+        , milliseconds = date.getTime();
+
       analytics.identify({
-        created : seconds,
-        company : { created : seconds }
+        created : milliseconds,
+        company : { created : milliseconds }
       });
+
       var traits = spy.args[0][1];
       expect(traits.created.getTime()).to.equal(date.getTime());
       expect(traits.company.created.getTime()).to.equal(date.getTime());
       spy.restore();
     });
 
-    /* TODO: re-enable when we fix the mixpanel logging an error
+    /*
     it('calls alias when identifying from anonymous users', function () {
       var spy = sinon.spy(Provider.prototype, 'alias');
 
@@ -338,6 +343,174 @@ describe('Analytics.js', function () {
       spy.restore();
     });*/
 
+    it('calls with all stored traits', function () {
+      analytics.user.clear();
+      var spy    = sinon.spy(Provider.prototype, 'identify')
+        , traits = test.traits;
+
+      analytics.identify({ name : traits.name });
+      expect(spy.calledWith(null, { name : traits.name })).to.be(true);
+      spy.reset();
+
+      analytics.identify({ email : traits.email });
+      expect(spy.calledWith(null, {
+        name  : traits.name,
+        email : traits.email
+      })).to.be(true);
+      spy.reset();
+
+      analytics.identify(test.userId);
+      expect(spy.calledWith(test.userId, {
+        name  : traits.name,
+        email : traits.email
+      })).to.be(true);
+      spy.restore();
+    });
+
+
+    it('overwrites stored traits', function () {
+      analytics.user.clear();
+      var spy    = sinon.spy(Provider.prototype, 'identify')
+        , traits = {
+            name : 'Zeus',
+            email : 'zeus@email.com'
+          };
+
+      analytics.identify(test.userId, traits);
+      expect(spy.calledWith(test.userId, traits)).to.be(true);
+      spy.reset();
+
+      analytics.identify({ name : 'Poseidon' });
+      traits.name = 'Poseidon';
+      expect(spy.calledWith(test.userId, traits)).to.be(true);
+      spy.restore();
+    });
+  });
+
+
+
+  describe('group', function () {
+
+    it('is called on providers', function () {
+      var spy = sinon.spy(Provider.prototype, 'group');
+      analytics.group();
+      expect(spy.called).to.be(true);
+      spy.restore();
+    });
+
+    it('sends groupId along', function () {
+      var spy = sinon.spy(Provider.prototype, 'group');
+      analytics.group(test.groupId);
+      expect(spy.calledWith(test.groupId));
+      spy.restore();
+    });
+
+    it('sends a clone of properties along', function  () {
+      var spy = sinon.spy(Provider.prototype, 'group');
+      analytics.group(test.groupId, test.groupProperties);
+      expect(spy.args[0][1]).not.to.equal(test.groupProperties);
+      expect(spy.args[0][1]).to.eql(test.groupProperties);
+      spy.restore();
+    });
+
+    it('sends a clone of context along', function  () {
+      var spy = sinon.spy(Provider.prototype, 'group');
+      analytics.group(test.groupId, test.groupProperties, test.context);
+      expect(spy.args[0][2]).not.to.equal(test.context);
+      expect(spy.args[0][2]).to.eql(test.context);
+      spy.restore();
+    });
+
+    it('calls the callback after the timeout duration', function (done) {
+      var callback = sinon.spy();
+
+      analytics.group(test.groupId, test.groupProperties, callback);
+      expect(callback.called).to.be(false);
+
+      setTimeout(function () {
+        expect(callback.called).to.be(true);
+        done();
+      }, analytics.timeout);
+    });
+
+    it('takes a callback with optional properties or context', function (done) {
+      var callback = sinon.spy();
+
+      analytics.group(test.groupId, callback);
+      analytics.group(test.groupId, test.groupProperties, callback);
+      analytics.group(test.groupId, test.groupProperties, test.context, callback);
+
+      setTimeout(function () {
+        expect(callback.callCount).to.be(3);
+        done();
+      }, analytics.timeout);
+    });
+
+    it('is turned off by the all providers flag', function  () {
+      var spy     = sinon.spy(Provider.prototype, 'group')
+        , context = { providers: { all: false } };
+
+      analytics.group(test.groupId, test.group, context);
+      expect(spy.called).to.be(false);
+      spy.restore();
+    });
+
+    it('is turned off by the single provider flag', function  () {
+      var spy     = sinon.spy(Provider.prototype, 'group')
+        , context = { providers: { Test: false } };
+
+      analytics.group(test.groupId, test.group, context);
+      expect(spy.called).to.be(false);
+      spy.restore();
+    });
+
+    it('parses valid strings into dates', function () {
+      var type = require('component-type')
+        , spy  = sinon.spy(Provider.prototype, 'group')
+        , date = 'Dec 07 12';
+
+      analytics.group(test.groupId, { created : date });
+
+      var properties = spy.args[0][1];
+      expect(type(properties.created)).to.equal('date');
+      expect(properties.created.getTime()).to.equal(new Date(date).getTime());
+      spy.restore();
+    });
+
+    it('keeps normal dates the same', function () {
+      var spy  = sinon.spy(Provider.prototype, 'group')
+        , date = new Date();
+
+      analytics.group(test.groupId, { created : date });
+
+      var properties = spy.args[0][1];
+      expect(properties.created.getTime()).to.equal(date.getTime());
+      spy.restore();
+    });
+
+    it('parses seconds into dates', function () {
+      var spy     = sinon.spy(Provider.prototype, 'group')
+        , date    = new Date()
+        , seconds = date.getTime()/1000;
+
+      analytics.group(test.groupId, { created : seconds });
+
+      var properties = spy.args[0][1];
+      expect(properties.created.getTime()).to.equal(date.getTime());
+      spy.restore();
+    });
+
+    it('parses milliseconds into dates', function () {
+      var spy          = sinon.spy(Provider.prototype, 'group')
+        , date         = new Date()
+        , milliseconds = date.getTime();
+
+      analytics.group(test.groupId, { created : milliseconds });
+
+      var properties = spy.args[0][1];
+      expect(properties.created.getTime()).to.equal(date.getTime());
+      spy.restore();
+    });
   });
 
 

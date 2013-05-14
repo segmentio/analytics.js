@@ -30,7 +30,9 @@ module.exports = Provider.extend({
     // https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setSiteSpeedSampleRate
     siteSpeedSampleRate : null,
     // Whether to enable GOogle's DoubleClick remarketing feature.
-    doubleClick : false
+    doubleClick : false,
+    // A domain to ignore for referrers. Maps to _addIgnoredRef
+    ignoreReferrer : null
   },
 
   //
@@ -60,6 +62,9 @@ module.exports = Provider.extend({
     }
     if (options.anonymizeIp) {
       window._gaq.push(['_gat._anonymizeIp']);
+    }
+    if (options.ignoreReferrer) {
+      window._gaq.push(['_addIgnoredRef', options.ignoreReferrer]);
     }
     if (options.initialPageview) {
       var path, canon = canonical();

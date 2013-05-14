@@ -1,3 +1,66 @@
+0.10.1 / 2013-5-14
+==================
+* Added `identify` to SnapEngage integration
+
+0.10.0 / 2013-5-9
+=================
+* Added `group` method
+
+0.9.18 / 2013-5-9
+=================
+* Added [preact](http://www.preact.io/) support by [@azcoov](https://github.com/azcoov)
+
+0.9.17 / 2013-5-1
+=================
+* Updated Keen to version 2.1.0
+
+0.9.16 / 2013-4-30
+==================
+* Fixed bug affecting Pingdom users
+
+0.9.15 / 2013-4-30
+==================
+* Added identify to UserVoice
+
+0.9.14 / 2013-4-29
+==================
+* Fixing userfox integration to accept all traits not just signup_date
+
+0.9.13 / 2013-4-29
+==================
+* Fixing ordering of ignore referrer option in Google Analytics
+
+0.9.12 / 2013-4-27
+==================
+* Adding support for [userfox](https://www.userfox.com)
+
+0.9.11 / 2013-4-26
+==================
+* Adding new ignoreReferrer option to Google Analytics provider
+* Adding new showFeedbackTab option to BugHerd provider
+* Updating UserVoice provider to work with their new snippet(s)
+* Fixing Errorception window.onerror binding to be friendlier
+
+0.9.10 / 2013-4-17
+=================
+* Adding url and title to mixpanel pageviews
+* Addiung url and title to keen pageviews
+
+0.9.9 / 2013-4-17
+=================
+* Fixed GoSquared relying on `document.body
+
+0.9.8 / 2013-4-16
+=================
+* Adding support for Pingdom RUM
+* Adding support for AdRoll
+
+0.9.7 / 2013-4-16
+=================
+* Fixing LiveChat test
+* Updating mixpanel snippet to wait for ready until script loads
+* Adding full traits pulled in from identify.
+
 0.9.6 / 2013-4-10
 =================
 * Renaming Provider.options to Provider.defaults
@@ -285,7 +348,7 @@
 * Added "Enhanced Link Attribution" for Google Analytics by [@nscott](https://github.com/nscott)
 * Added "Site Speed Sample Rate" for Google Analytics by [@nscott](https://github.com/nscott)
 
-0.1.0 / 2012-10-11 
+0.1.0 / 2012-10-11
 ==================
 * [Olark](http://www.olark.com/)
 * Added terse `initialize` syntax

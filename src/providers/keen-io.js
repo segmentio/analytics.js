@@ -9,8 +9,12 @@ module.exports = Provider.extend({
   name : 'Keen IO',
 
   defaults : {
-    // Keen IO has one required option: `projectToken`
-    projectToken : null,
+    // The Project ID is **required**.
+    projectId : null,
+    // The Write Key is **required** to send events.
+    writeKey : null,
+    // The Read Key is optional, only if you want to "do analysis".
+    readKey : null,
     // Whether or not to pass pageviews on to Keen IO.
     pageview : true,
     // Whether or not to track an initial pageview on `initialize`.
@@ -18,15 +22,18 @@ module.exports = Provider.extend({
   },
 
   initialize : function (options, ready) {
-    window.Keen = window.Keen||{configure:function(a,b,c){this._pId=a;this._ak=b;this._op=c},addEvent:function(a,b,c,d){this._eq=this._eq||[];this._eq.push([a,b,c,d])},setGlobalProperties:function(a){this._gp=a},onChartsReady:function(a){this._ocrq=this._ocrq||[];this._ocrq.push(a)}};
-    window.Keen.configure(options.projectToken);
+    window.Keen = window.Keen||{configure:function(e){this._cf=e},addEvent:function(e,t,n,i){this._eq=this._eq||[],this._eq.push([e,t,n,i])},setGlobalProperties:function(e){this._gp=e},onChartsReady:function(e){this._ocrq=this._ocrq||[],this._ocrq.push(e)}};
+    window.Keen.configure({
+      projectId : options.projectId,
+      writeKey  : options.writeKey,
+      readKey   : options.readKey
+    });
 
-    load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.0.0-min.js');
+    load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.1.0-min.js');
 
     if (options.initialPageview) this.pageview();
 
-    // Keen IO defines all their functions in the snippet, so they
-    // are ready immediately.
+    // Keen IO defines all their functions in the snippet, so they're ready.
     ready();
   },
 
@@ -50,8 +57,10 @@ module.exports = Provider.extend({
   pageview : function (url) {
     if (!this.options.pageview) return;
 
-    var properties;
-    if (url) properties = { url : url };
+    var properties = {
+      url  : url || document.location.href,
+      name : document.title
+    };
 
     this.track('Loaded a Page', properties);
   }

@@ -16,20 +16,27 @@ module.exports = Provider;
  * ready to handle analytics calls.
  */
 
-function Provider (options, ready) {
+function Provider (options, ready, analytics) {
   var self = this;
+
+  // Store the reference to the global `analytics` object.
+  this.analytics = analytics;
 
   // Make a queue of `{ method : 'identify', args : [] }` to unload once ready.
   this.queue = [];
   this.ready = false;
 
   // Allow for `options` to only be a string if the provider has specified
-  // a default `key`, in which case convert `options` into a dictionary.
+  // a default `key`, in which case convert `options` into a dictionary. Also
+  // allow for it to be `true`, like in Optimizely's case where there is no need
+  // for any default key.
   if (type(options) !== 'object') {
     if (type(options) === 'string' && this.key) {
       var key = options;
       options = {};
       options[this.key] = key;
+    } else if (options === true) {
+      options = {};
     } else {
       throw new Error('Couldnt resolve options.');
     }

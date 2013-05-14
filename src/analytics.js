@@ -138,7 +138,7 @@ extend(Analytics.prototype, {
     each(providers, function (key, options) {
       var Provider = self._providers[key];
       if (!Provider) throw new Error('Couldnt find a provider named "'+key+'"');
-      self.providers.push(new Provider(options, ready));
+      self.providers.push(new Provider(options, ready, self));
     });
 
     // Identify and track any `ajs_uid` and `ajs_event` parameters in the URL.

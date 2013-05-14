@@ -1624,7 +1624,7 @@ extend(Analytics.prototype, {
     each(providers, function (key, options) {
       var Provider = self._providers[key];
       if (!Provider) throw new Error('Couldnt find a provider named "'+key+'"');
-      self.providers.push(new Provider(options, ready));
+      self.providers.push(new Provider(options, ready, self));
     });
 
     // Identify and track any `ajs_uid` and `ajs_event` parameters in the URL.
@@ -2119,20 +2119,27 @@ module.exports = Provider;
  * ready to handle analytics calls.
  */
 
-function Provider (options, ready) {
+function Provider (options, ready, analytics) {
   var self = this;
+
+  // Store the reference to the global `analytics` object.
+  this.analytics = analytics;
 
   // Make a queue of `{ method : 'identify', args : [] }` to unload once ready.
   this.queue = [];
   this.ready = false;
 
   // Allow for `options` to only be a string if the provider has specified
-  // a default `key`, in which case convert `options` into a dictionary.
+  // a default `key`, in which case convert `options` into a dictionary. Also
+  // allow for it to be `true`, like in Optimizely's case where there is no need
+  // for any default key.
   if (type(options) !== 'object') {
     if (type(options) === 'string' && this.key) {
       var key = options;
       options = {};
       options[this.key] = key;
+    } else if (options === true) {
+      options = {};
     } else {
       throw new Error('Couldnt resolve options.');
     }
@@ -3408,6 +3415,7 @@ module.exports = [
   require('./lytics'),
   require('./mixpanel'),
   require('./olark'),
+  require('./optimizely'),
   require('./perfect-audience'),
   require('./pingdom'),
   require('./preact'),
@@ -4057,6 +4065,64 @@ module.exports = Provider.extend({
     window.olark('api.chat.sendNotificationToOperator', {
       body : 'looking at ' + window.location.href
     });
+  }
+
+});
+});
+require.register("analytics/src/providers/optimizely.js", function(exports, require, module){
+// https://www.optimizely.com/docs/api
+
+var each      = require('each')
+  , Provider  = require('../provider');
+
+
+module.exports = Provider.extend({
+
+  name : 'Optimizely',
+
+  defaults : {
+    // Whether to replay variations into other enabled integrations as traits.
+    variations : true
+  },
+
+  initialize : function (options, ready, analytics) {
+    // Create the `optimizely` object in case it doesn't exist already.
+    // https://www.optimizely.com/docs/api#function-calls
+    window.optimizely = window.optimizely || [];
+
+    // If the `variations` option is true, replay all of our variations.
+    if (options.variations) this.replay();
+
+    // Optimizely should be on the page already, so it's always ready.
+    ready();
+  },
+
+  track : function (event, properties) {
+    // Optimizely takes revenue as cents, not dollars.
+    if (properties && properties.revenue) properties.revenue = properties.revenue * 100;
+
+    window.optimizely.push(['trackEvent', event, properties]);
+  },
+
+  replay : function () {
+    // Make sure we have access to Optimizely's `data` dictionary.
+    var data = window.optimizely.data;
+    if (!data) return;
+
+    // Grab a few pieces of data we'll need for replaying.
+    var experiements      = data.experiments
+      , variationNamesMap = data.state.variationNamesMap;
+
+    // Create our traits object to add variations to.
+    var traits = {};
+
+    // Loop through all the experiement the user has been assigned a variation
+    // for and add them to our traits.
+    each(variationNamesMap, function (experimentId, variation) {
+      traits[experiements[experimentId]] = variation;
+    });
+
+    this.analytics.identify(traits);
   }
 
 });

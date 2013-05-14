@@ -41,7 +41,7 @@ describe('Preact', function () {
 
       spy.reset();
       analytics.identify(test.userId, test.traits);
-      
+
       expect(spy.calledWith(['_setPersonData', {
         name : test.traits.name,
         email : test.traits.email,

@@ -24,6 +24,7 @@ module.exports = [
   require('./lytics'),
   require('./mixpanel'),
   require('./olark'),
+  require('./optimizely'),
   require('./perfect-audience'),
   require('./pingdom'),
   require('./preact'),

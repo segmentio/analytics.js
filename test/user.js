@@ -95,6 +95,9 @@ describe('User tests', function () {
   });
 
   describe('#load()', function () {
+
+    var clone = require('component-clone');
+
     before(user.clear);
 
     it('loads an empty user', function () {

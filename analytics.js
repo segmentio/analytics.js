@@ -1514,7 +1514,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.10.0';
+  this.VERSION = '0.10.3';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -3463,17 +3463,25 @@ module.exports = Provider.extend({
     load('https://api.intercom.io/api/js/library.js', ready);
   },
 
-  identify : function (userId, traits, context) {
+  identify : function (userId, traits, options) {
     // Intercom requires a `userId` to associate data to a user.
     if (!userId) return;
 
     // Don't do anything if we just have traits.
     if (!this.booted && !userId) return;
 
+    options = options || {};
+
+    // Intercom specific settings could be lowercase or upper-case
+    var intercom = options.intercom || options.Intercom || {};
+
     // Pass traits directly in to Intercom's `custom_data`.
-    var settings = extend({
-      custom_data : traits || {}
-    }, (context && context.intercom) ? context.intercom : {});
+    var settings = { custom_data : traits || {} };
+
+    // pick specific options from the options.intercom
+    if (intercom.increments) settings.increments = increments;
+    if (intercom.user_hash) settings.user_hash = intercom.user_hash;
+    if (intercom.userHash) settings.user_hash = intercom.userHash;
 
     // They need `created_at` as a Unix timestamp (seconds).
     if (traits && traits.created) {
@@ -4375,6 +4383,7 @@ require.register("analytics/src/providers/snapengage.js", function(exports, requ
 // http://help.snapengage.com/installation-guide-getting-started-in-a-snap/
 
 var Provider = require('../provider')
+  , isEmail  = require('is-email')
   , load     = require('load-script');
 
 
@@ -4390,6 +4399,12 @@ module.exports = Provider.extend({
 
   initialize : function (options, ready) {
     load('//commondatastorage.googleapis.com/code.snapengage.com/js/' + options.apiKey + '.js', ready);
+  },
+
+  // Set the email in the chat window if we have it.
+  identify : function (userId, traits, options) {
+    if (!traits.email && !isEmail(userId)) return;
+    window.SnapABug.setUserEmail(traits.email || userId);
   }
 
 });

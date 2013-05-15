@@ -28,4 +28,18 @@ describe('SnapEngage', function () {
 
   });
 
+
+  describe('identify', function () {
+
+    var user = require('analytics/src/user.js');
+    before(user.clear);
+
+    it('should tag the user with their email', function () {
+      var spy = sinon.spy(window.SnapABug, 'setUserEmail');
+      analytics.identify(test.userId, test.traits);
+      expect(spy.calledWith(test.traits.email)).to.be(true);
+    });
+
+  });
+
 });

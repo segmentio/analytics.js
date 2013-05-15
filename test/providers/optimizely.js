@@ -11,9 +11,15 @@ describe('Optimizely', function () {
     });
 
     it('should replay variation traits', function () {
+      // Set up the fake Optimizely data.
+      window.optimizely.data = {
+        experiments : { 0 : { name : 'Test' } },
+        state : { variationNamesMap : { 0 : 'Variation' } }
+      };
+
       var spy = sinon.spy(analytics, 'identify');
       analytics.initialize({ 'Optimizely' : test['Optimizely'] });
-      expect(spy.calledWith({})).to.be(true);
+      expect(spy.calledWith({'Experiment: Test' : 'Variation'})).to.be(true);
     });
 
   });

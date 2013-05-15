@@ -38,7 +38,7 @@ module.exports = Provider.extend({
     if (!data) return;
 
     // Grab a few pieces of data we'll need for replaying.
-    var experiements      = data.experiments
+    var experiments       = data.experiments
       , variationNamesMap = data.state.variationNamesMap;
 
     // Create our traits object to add variations to.
@@ -47,7 +47,7 @@ module.exports = Provider.extend({
     // Loop through all the experiement the user has been assigned a variation
     // for and add them to our traits.
     each(variationNamesMap, function (experimentId, variation) {
-      traits[experiements[experimentId]] = variation;
+      traits['Experiment: ' + experiments[experimentId].name] = variation;
     });
 
     this.analytics.identify(traits);

@@ -69,6 +69,7 @@
     "segmentio/load-script": "*",
     "segmentio/new-date": "*",
     "segmentio/on-body": "*",
+    "timoxley/next-tick": "*",
     "yields/prevent": "*"
   },
   "scripts": [

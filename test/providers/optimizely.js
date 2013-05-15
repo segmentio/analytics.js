@@ -10,7 +10,7 @@ describe('Optimizely', function () {
       expect(spy.called).to.be(true);
     });
 
-    it('should replay variation traits', function () {
+    it('should replay variation traits', function (done) {
       // Set up the fake Optimizely data.
       window.optimizely.data = {
         experiments : { 0 : { name : 'Test' } },
@@ -19,7 +19,12 @@ describe('Optimizely', function () {
 
       var spy = sinon.spy(analytics, 'identify');
       analytics.initialize({ 'Optimizely' : test['Optimizely'] });
-      expect(spy.calledWith({'Experiment: Test' : 'Variation'})).to.be(true);
+
+      // The replay runs on next tick.
+      setTimeout(function () {
+        expect(spy.calledWith({'Experiment: Test' : 'Variation'})).to.be(true);
+        done();
+      }, 5);
     });
 
   });

@@ -1448,6 +1448,40 @@ function call (callback) {
   callback(document.body);
 }
 });
+require.register("timoxley-next-tick/index.js", function(exports, require, module){
+if (typeof setImmediate == 'function') {
+  module.exports = function(ƒ){ setImmediate(ƒ) }
+}
+// legacy node.js
+else if (typeof process != 'undefined' && typeof process.nextTick == 'function') {
+  module.exports = process.nextTick
+}
+// fallback for other environments / postMessage behaves badly on IE8
+else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMessage) {
+  module.exports = function(ƒ){ setTimeout(ƒ) };
+} else {
+  var q = [];
+
+  window.addEventListener('message', function(){
+    var i = 0;
+    while (i < q.length) {
+      try { q[i++](); }
+      catch (e) {
+        q = q.slice(i);
+        window.postMessage('tic!', '*');
+        throw e;
+      }
+    }
+    q.length = 0;
+  }, true);
+
+  module.exports = function(fn){
+    if (!q.length) window.postMessage('tic!', '*');
+    q.push(fn);
+  }
+}
+
+});
 require.register("yields-prevent/index.js", function(exports, require, module){
 
 /**
@@ -4081,6 +4115,7 @@ require.register("analytics/src/providers/optimizely.js", function(exports, requ
 // https://www.optimizely.com/docs/api
 
 var each      = require('each')
+  , nextTick  = require('next-tick')
   , Provider  = require('../provider');
 
 
@@ -4098,8 +4133,12 @@ module.exports = Provider.extend({
     // https://www.optimizely.com/docs/api#function-calls
     window.optimizely = window.optimizely || [];
 
-    // If the `variations` option is true, replay all of our variations.
-    if (options.variations) this.replay();
+    // If the `variations` option is true, replay our variations on the next
+    // tick to wait for the entire library to be ready for replays.
+    if (options.variations) {
+      var self = this;
+      nextTick(function () { self.replay(); });
+    }
 
     // Optimizely should be on the page already, so it's always ready.
     ready();
@@ -4749,6 +4788,8 @@ require.alias("component-type/index.js", "segmentio-new-date/deps/type/index.js"
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
 

@@ -1,6 +1,7 @@
 // https://www.optimizely.com/docs/api
 
 var each      = require('each')
+  , nextTick  = require('next-tick')
   , Provider  = require('../provider');
 
 
@@ -18,8 +19,12 @@ module.exports = Provider.extend({
     // https://www.optimizely.com/docs/api#function-calls
     window.optimizely = window.optimizely || [];
 
-    // If the `variations` option is true, replay all of our variations.
-    if (options.variations) this.replay();
+    // If the `variations` option is true, replay our variations on the next
+    // tick to wait for the entire library to be ready for replays.
+    if (options.variations) {
+      var self = this;
+      nextTick(function () { self.replay(); });
+    }
 
     // Optimizely should be on the page already, so it's always ready.
     ready();

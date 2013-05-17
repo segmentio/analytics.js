@@ -1,5 +1,6 @@
 module.exports = [
   require('./adroll'),
+  require('./amplitude'),
   require('./bitdeli'),
   require('./bugherd'),
   require('./chartbeat'),

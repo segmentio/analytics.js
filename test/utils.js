@@ -52,6 +52,8 @@ window.test = {
     pixId : 'V7TLXL5WWBA5NOU5MOJQW4'
   },
 
+  'Amplitude' : '07808866adb2510adf19ee69e8fc2201',
+
   'Bitdeli' : {
     inputId   : 'x',
     authToken : 'y'

@@ -13,7 +13,6 @@ describe('Amplitude', function () {
       analytics.initialize({ 'Amplitude' : test['Amplitude'] });
       expect(spy.called).to.be(true);
       expect(window.amplitude).not.to.be(undefined);
-      expect(window.amplitude.sendEvents).to.be(undefined);
 
       // When the library loads, it will replace the `logEvent` method.
       var stub = window.amplitude.logEvent;

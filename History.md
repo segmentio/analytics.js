@@ -1,3 +1,7 @@
+0.10.4 / 2013-5-17
+==================
+* Fixed bug with Google Analytics being ready to soon
+
 0.10.3 / 2013-5-15
 ==================
 * Added [Optimizely](https://www.optimizely.com)

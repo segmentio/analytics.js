@@ -15,10 +15,11 @@ describe('Amplitude', function () {
       expect(window.amplitude).not.to.be(undefined);
       expect(window.amplitude.sendEvents).to.be(undefined);
 
-      // When the library loads, it will create a `sendEvents` method.
+      // When the library loads, it will replace the `logEvent` method.
+      var stub = window.amplitude.logEvent;
       var interval = setInterval(function () {
-        if (!window.amplitude.sendEvents) return;
-        expect(window.amplitude.sendEvents).not.to.be(undefined);
+        if (window.amplitude.logEvent === stub) return;
+        expect(window.amplitude.logEvent).not.to.be(stub);
         clearInterval(interval);
         done();
       }, 20);
@@ -78,6 +79,35 @@ describe('Amplitude', function () {
       analytics.track(test.event, test.properties);
       expect(stub.calledWith(test.event, test.properties)).to.be(true);
       stub.restore();
+    });
+
+  });
+
+
+  describe('pageview', function () {
+
+    it('shouldnt call track by default', function () {
+      var spy = sinon.spy(analytics.providers[0], 'track');
+      analytics.pageview();
+      expect(spy.called).to.be(false);
+      spy.restore();
+    });
+
+    // Mixpanel adds custom properties, so we need to have a loose match.
+    it('should call track with pageview set to true', function () {
+      var provider = analytics.providers[0]
+        , spy      = sinon.spy(provider, 'track');
+
+      provider.options.pageview = true;
+
+      analytics.pageview(test.url);
+      expect(spy.calledWithMatch('Loaded a Page', {
+        url : test.url,
+        name : document.title
+      })).to.be(true);
+
+      spy.restore();
+      provider.options.pageview = false;
     });
 
   });

@@ -12,7 +12,10 @@ module.exports = Provider.extend({
   key : 'apiKey',
 
   defaults : {
-    apiKey : null
+    // Amplitude's required API key.
+    apiKey : null,
+    // Whether to track pageviews to Amplitude.
+    pageview : false
   },
 
   initialize : function (options, ready) {
@@ -37,6 +40,17 @@ module.exports = Provider.extend({
 
   track : function (event, properties) {
     window.amplitude.logEvent(event, properties);
+  },
+
+  pageview : function (url) {
+    if (!this.options.pageview) return;
+
+    var properties = {
+      url  : url || document.location.href,
+      name : document.title
+    };
+
+    this.track('Loaded a Page', properties);
   }
 
 });

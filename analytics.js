@@ -1486,14 +1486,14 @@ require.register("yields-prevent/index.js", function(exports, require, module){
 
 /**
  * prevent default on the given `e`.
- *
+ * 
  * examples:
- *
+ * 
  *      anchor.onclick = prevent;
  *      anchor.onclick = function(e){
  *        if (something) return prevent(e);
  *      };
- *
+ * 
  * @param {Event} e
  */
 
@@ -2420,14 +2420,14 @@ var save = function (user) {
 exports.load = function () {
   if (!cookie.enabled) return user;
 
-  var storedUser = cookieStore(cookie.name);
-  if (storedUser) {
-    try {
-      user = json.parse(storedUser);
-    } catch (e) {
-      // If we got bad JSON, start from scratch.
-      user = newUser();
-    }
+  try {
+    var storedUser = cookieStore(cookie.name);
+
+    if (storedUser) user = json.parse(storedUser);
+    else user = newUser();
+  } catch (e) {
+    // If the json or cookie is bad
+    user = newUser();
   }
 
   return user;
@@ -4798,5 +4798,5 @@ if (typeof exports == "object") {
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("analytics"); });
 } else {
-  this["analytics"] = require("analytics");
+  window["analytics"] = require("analytics");
 }})();

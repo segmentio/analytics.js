@@ -145,14 +145,14 @@ var save = function (user) {
 exports.load = function () {
   if (!cookie.enabled) return user;
 
-  var storedUser = cookieStore(cookie.name);
-  if (storedUser) {
-    try {
-      user = json.parse(storedUser);
-    } catch (e) {
-      // If we got bad JSON, start from scratch.
-      user = newUser();
-    }
+  try {
+    var storedUser = cookieStore(cookie.name);
+
+    if (storedUser) user = json.parse(storedUser);
+    else user = newUser();
+  } catch (e) {
+    // If the json or cookie is bad
+    user = newUser();
   }
 
   return user;

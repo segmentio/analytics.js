@@ -125,6 +125,15 @@ describe('User tests', function () {
         traits : { dog : 'dog' }
       });
     });
+
+    it('does not throw on a malformed cookie', function () {
+      cookie(user.cookie.name, 'xxx', clone(user.cookie));
+      var stored = user.load();
+      expect(stored).to.eql({
+        id     : null,
+        traits : {}
+      });
+    });
   });
 
   describe('#clear()', function () {

@@ -362,7 +362,13 @@ function parse(str) {
   if ('' == pairs[0]) return obj;
   for (var i = 0; i < pairs.length; ++i) {
     pair = pairs[i].split('=');
-    obj[decode(pair[0])] = decode(pair[1]);
+    try {
+      obj[decode(pair[0])] = decode(pair[1]);
+    } catch (e) {
+      obj[decode(pair[0])] = pair[1];
+    } finally {
+      obj[pair[0]] = pair[1];
+    };
   }
   return obj;
 }
@@ -1190,7 +1196,7 @@ exports.parse = function(url){
   return {
     href: a.href,
     host: a.host || location.host,
-    port: a.port || location.port,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
     hostname: a.hostname || location.hostname,
     pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
@@ -1385,13 +1391,42 @@ require.register("segmentio-new-date/index.js", function(exports, require, modul
 var type = require('type');
 
 
-module.exports = function newDate (date) {
-  // Milliseconds would be greater than 31557600000 (December 31, 1970).
-  if ('number' === type(date) && date < 31557600000) date = date * 1000;
+/**
+ * Returns a new Javascript Date object, allowing a variety of extra input types
+ * over the native one.
+ *
+ * @param {Date|String|Number} input
+ */
+
+module.exports = function newDate (input) {
+
+  // Convert input from seconds to milliseconds.
+  input = toMilliseconds(input);
 
   // By default, delegate to Date, which will return `Invalid Date`s if wrong.
-  return new Date(date);
+  var date = new Date(input);
+
+  // If we have a string that the Date constructor couldn't parse, convert it.
+  if (isNaN(date.getTime()) && 'string' === type(input)) {
+    var milliseconds = toMilliseconds(parseInt(input, 10));
+    date = new Date(milliseconds);
+  }
+
+  return date;
 };
+
+
+/**
+ * If the number passed in is seconds from the epoch, turn it into milliseconds.
+ * Milliseconds would be greater than 31557600000 (December 31, 1970).
+ *
+ * @param seconds
+ */
+
+function toMilliseconds (seconds) {
+  if ('number' === type(seconds) && seconds < 31557600000) return seconds * 1000;
+  return seconds;
+}
 });
 require.register("segmentio-on-body/index.js", function(exports, require, module){
 var each = require('each');
@@ -4741,55 +4776,77 @@ module.exports = Provider.extend({
 });
 });
 require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
+require.alias("component-clone/index.js", "clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-cookie/index.js", "analytics/deps/cookie/index.js");
+require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
+require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
+require.alias("component-event/index.js", "event/index.js");
 
 require.alias("component-json/index.js", "analytics/deps/json/index.js");
+require.alias("component-json/index.js", "json/index.js");
 
 require.alias("component-json-fallback/index.js", "analytics/deps/json-fallback/index.js");
+require.alias("component-json-fallback/index.js", "json-fallback/index.js");
 
 require.alias("component-object/index.js", "analytics/deps/object/index.js");
+require.alias("component-object/index.js", "object/index.js");
 
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
+require.alias("component-querystring/index.js", "querystring/index.js");
 require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
 
 require.alias("component-type/index.js", "analytics/deps/type/index.js");
+require.alias("component-type/index.js", "type/index.js");
 
 require.alias("component-url/index.js", "analytics/deps/url/index.js");
+require.alias("component-url/index.js", "url/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
+require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
+require.alias("segmentio-alias/index.js", "alias/index.js");
 
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
+require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
+require.alias("segmentio-extend/index.js", "extend/index.js");
 
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
+require.alias("segmentio-is-email/index.js", "is-email/index.js");
 
 require.alias("segmentio-is-meta/index.js", "analytics/deps/is-meta/index.js");
+require.alias("segmentio-is-meta/index.js", "is-meta/index.js");
 
 require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
+require.alias("segmentio-load-date/index.js", "load-date/index.js");
 
 require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
+require.alias("segmentio-load-script/index.js", "load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
 
 require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
+require.alias("segmentio-new-date/index.js", "new-date/index.js");
 require.alias("component-type/index.js", "segmentio-new-date/deps/type/index.js");
 
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
+require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
+require.alias("timoxley-next-tick/index.js", "next-tick/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
+require.alias("yields-prevent/index.js", "prevent/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");
 

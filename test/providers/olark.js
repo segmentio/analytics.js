@@ -1,6 +1,10 @@
 describe('Olark', function () {
 
 
+  /**
+   * Initialize.
+   */
+
   describe('initialize', function () {
 
     this.timeout(10000);
@@ -31,92 +35,148 @@ describe('Olark', function () {
   });
 
 
+  /**
+   * Identify.
+   */
+
   describe('identify', function () {
 
     var spy;
+
     beforeEach(function () {
       analytics.user.clear();
       spy = sinon.spy(window, 'olark');
     });
-    afterEach(function () { spy.restore(); });
 
-    it('should update with the email', function () {
-      analytics.identify({
-        email : 'zeus@segment.io'
-      });
-      expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
-        snippet : 'zeus@segment.io'
-      })).to.be(true);
-    });
-
-    it('should update with the name and email when called', function () {
-      analytics.identify(test.traits);
-      expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
-        snippet : 'Zeus (zeus@segment.io)'
-      })).to.be(true);
-    });
-
-    it('should update with the user id', function () {
-      analytics.identify(test.userId);
-      expect(spy.calledWithMatch('api.chat.updateVisitorNickname', {
-        snippet : test.userId
-      })).to.be(true);
-    });
-
-    it('should update with the email, name, and traits with userId', function () {
-      analytics.identify(test.userId, test.traits);
-      expect(spy.calledWith('api.chat.updateVisitorNickname', {
-        snippet : 'Zeus (zeus@segment.io)'
-      })).to.be(true);
-    });
-
-    it('should update the visitor email', function () {
-      analytics.identify({
-        email : 'zeus@segment.io'
-      });
-
-      expect(spy.calledWithMatch('api.visitor.updateEmailAddress', {
-        emailAddress : 'zeus@segment.io'
-      })).to.be(true);
-    });
-
-    it('should update the visitor phone number', function () {
-      analytics.identify({
-        phone : '(555) 555-5555'
-      });
-
-      expect(spy.calledWithMatch('api.visitor.updatePhoneNumber', {
-        phoneNumber : '(555) 555-5555'
-      })).to.be(true);
-    });
-
-    it('should update the visitor full name', function () {
-      analytics.identify({
-        name : 'Hallucinating Chipmunk'
-      });
-      expect(spy.calledWithMatch('api.visitor.updateFullName', {
-        fullName : 'Hallucinating Chipmunk'
-      })).to.be(true);
-
-      spy.reset();
-      analytics.identify({
-        firstName : 'Hallucinating',
-        lastName  : 'Chipmunk'
-      });
-      expect(spy.calledWithMatch('api.visitor.updateFullName', {
-        fullName : 'Hallucinating Chipmunk'
-      })).to.be(true);
+    afterEach(function () {
+      spy.restore();
     });
 
     it('should update the visitor custom fields', function () {
-      analytics.identify({
-        dogs : 1
-      });
-      expect(spy.calledWithMatch('api.visitor.updateCustomFields', {
-        dogs : 1
-      })).to.be(true);
+      analytics.identify(test.userId, test.traits);
+      expect(spy.calledWith('api.visitor.updateCustomFields', test.traits)).to.be(true);
     });
+
+    describe('email', function () {
+
+      var method = 'api.visitor.updateEmailAddress';
+
+      it('should use the email trait', function () {
+        analytics.identify(test.userId, test.traits);
+        expect(spy.calledWith(method, { emailAddress : test.traits.email })).to.be(true);
+      });
+
+      it('should use the userId if its an email', function () {
+        analytics.identify(test.traits.email);
+        expect(spy.calledWith(method, { emailAddress : test.traits.email })).to.be(true);
+      });
+
+      it('shouldnt use the userId if its not an email', function () {
+        analytics.identify(test.userId);
+        expect(spy.calledWith(method)).to.be(false);
+      });
+
+    });
+
+    describe('name', function () {
+
+      var method = 'api.visitor.updateFullName';
+
+      it('should use the name trait', function () {
+        analytics.identify({
+          name      : 'name',
+          firstName : 'first',
+          lastName  : 'last'
+        });
+        expect(spy.calledWith(method, { fullName : 'name' })).to.be(true);
+      });
+
+      it('should use the first name if possible', function () {
+        analytics.identify({ firstName : 'first' });
+        expect(spy.calledWith(method, { fullName : 'first' })).to.be(true);
+      });
+
+      it('should use the first and last name if possible', function () {
+        analytics.identify({
+          firstName : 'first',
+          lastName  : 'last'
+        });
+        expect(spy.calledWith(method, { fullName : 'first last' })).to.be(true);
+      });
+
+    });
+
+    describe('phone', function () {
+
+      var method = 'api.visitor.updatePhoneNumber';
+
+      it('should use the phone trait', function () {
+        analytics.identify({ phone : '1' });
+        expect(spy.calledWith(method, { phoneNumber : '1' })).to.be(true);
+      });
+
+    });
+
+    describe('nickname', function () {
+
+      var method = 'api.visitor.updateVisitorNickname';
+
+      it('should use the name and email', function () {
+        analytics.identify('id', {
+          name      : 'name',
+          firstName : 'first',
+          lastName  : 'last',
+          email     : 'email'
+        });
+        expect(spy.calledWith(method, { snippet : 'name (email)' })).to.be(true);
+      });
+
+      it('should falback to name', function () {
+        analytics.identify('id', {
+          name      : 'name',
+          firstName : 'first',
+          lastName  : 'last'
+        });
+        expect(spy.calledWith(method, { snippet : 'name' })).to.be(true);
+      });
+
+      it('should fallback to first and last names', function () {
+        analytics.identify('id', {
+          firstName : 'first',
+          lastName  : 'last',
+          email     : 'email'
+        });
+        expect(spy.calledWith(method, { snippet : 'first last (email)' })).to.be(true);
+      });
+
+      it('should fallback to first', function () {
+        analytics.identify('id', {
+          firstName : 'first',
+          email     : 'email'
+        });
+        expect(spy.calledWith(method, { snippet : 'first (email)' })).to.be(true);
+      });
+
+      it('should fallback to email', function () {
+        analytics.identify('id', {
+          email : 'email'
+        });
+        expect(spy.calledWith(method, { snippet : 'email' })).to.be(true);
+      });
+
+      it('should fallback to userId', function () {
+        analytics.identify('id');
+        expect(spy.calledWith(method, { snippet : 'id' })).to.be(true);
+      });
+
+    });
+
   });
+
+
+  /**
+   * Track.
+   */
 
   describe('track', function () {
 
@@ -158,6 +218,10 @@ describe('Olark', function () {
 
   });
 
+
+  /**
+   * Pageview.
+   */
 
   describe('pageview', function () {
 

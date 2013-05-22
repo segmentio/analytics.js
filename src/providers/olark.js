@@ -10,7 +10,7 @@ module.exports = Provider.extend({
 
   key : 'siteId',
 
-  chatInProgress : false,
+  chatting : false,
 
   defaults : {
     siteId : null,
@@ -30,64 +30,48 @@ module.exports = Provider.extend({
     // we know whether a conversation is active. If it is active,
     // then we'll send track and pageview information.
     var self = this;
-    window.olark('api.box.onExpand', function () {
-      self.chatInProgress = true;
-    });
-    window.olark('api.box.onShrink', function () {
-      self.chatInProgress = false;
-    });
+    window.olark('api.box.onExpand', function () { self.chatting = true; });
+    window.olark('api.box.onShrink', function () { self.chatting = false; });
 
-    // Olark creates all of it's method in the snippet, so it's ready
-    // immediately.
+    // Olark creates it's method in the snippet, so it's ready immediately.
     ready();
   },
 
-  // Olark isn't an analytics service, but we can use the `userId` and
-  // `traits` to tag the user with their real name in the chat console.
+  // Update traits about the user in Olark to make the operator's life easier.
   identify : function (userId, traits) {
     if (!this.options.identify) return;
 
-    // Make an empty default traits object if it doesn't exist yet.
-    traits || (traits = {});
+    var email = traits.email
+      , name  = traits.name
+      , phone = traits.phone
+      , nickname;
 
-    // If there wasn't already an email and the userId is one, use it.
-    if (!traits.email && isEmail(userId)) traits.email = userId;
+    // Email: If there wasn't already an email and the userId is one, use it.
+    if (!email && isEmail(userId)) email = userId;
 
-    // Set the email address for the user.
-    if (traits.email)
-      window.olark('api.visitor.updateEmailAddress', { emailAddress : traits.email });
+    // Name: check for a name trait, or fallback to trying to use the first name
+    // and/or last name.
+    if (!name) {
+      if (traits.firstName) name = traits.firstName;
+      if (traits.firstName && traits.lastName) name += ' ' + traits.lastName;
+    }
 
-    // Set the full name for the user.
-    if (traits.name)
-      window.olark('api.visitor.updateFullName', { fullName : traits.name });
-    else if (traits.firstName && traits.lastName)
-      window.olark('api.visitor.updateFullName', { fullName : traits.firstName + ' ' + traits.lastName });
+    // Nickname: try using name, email, or userId. If we have both a name and an
+    // email, then we can add the email too to be more helpful.
+    nickname = name || email || userId;
+    if (name && email) nickname += ' ('+email+')';
 
-    // Set the phone number for the user.
-    if (traits.phone)
-      window.olark('api.visitor.updatePhoneNumber', { phoneNumber : traits.phone });
-
-    // Set any additional custom fields from the traits.
+    // Call all of Olark's settings APIs.
     window.olark('api.visitor.updateCustomFields', traits);
-
-    // Choose the best possible nickname for the user.
-    var nickname = userId;
-    if (traits.email) nickname = traits.email;
-    if (traits.name) nickname = traits.name;
-    if (traits.name && traits.email) nickname += ' ('+traits.email+')';
-
-    // If we ended up with no nickname after all that, get out of here.
-    if (!nickname) return;
-
-    window.olark('api.chat.updateVisitorNickname', {
-      snippet : nickname
-    });
+    if (email)    window.olark('api.visitor.updateEmailAddress', { emailAddress : email });
+    if (name)     window.olark('api.visitor.updateFullName', { fullName : name });
+    if (phone)    window.olark('api.visitor.updatePhoneNumber', { phoneNumber : phone });
+    if (nickname) window.olark('api.visitor.updateVisitorNickname', { snippet : nickname });
   },
 
-  // Again, all we're doing is logging events the user triggers to the chat
-  // console, if you so desire it.
+  // Log events the user triggers to the chat console, if you so desire it.
   track : function (event, properties) {
-    if (!this.options.track || !this.chatInProgress) return;
+    if (!this.options.track || !this.chatting) return;
 
     // To stay consistent with olark's default messages, it's all lowercase.
     window.olark('api.chat.sendNotificationToOperator', {
@@ -95,11 +79,10 @@ module.exports = Provider.extend({
     });
   },
 
-  // Again, not analytics, but we can mimic the functionality Olark has for
-  // normal pageviews with pseudo-pageviews, telling the operator when a
-  // visitor changes pages.
+  // Mimic the functionality Olark has for normal pageviews with pseudo-
+  // pageviews, telling the operator when a visitor changes pages.
   pageview : function (url) {
-    if (!this.options.pageview || !this.chatInProgress) return;
+    if (!this.options.pageview || !this.chatting) return;
 
     // To stay consistent with olark's default messages, it's all lowercase.
     window.olark('api.chat.sendNotificationToOperator', {

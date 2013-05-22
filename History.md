@@ -1,6 +1,6 @@
 0.10.5 / 2013-5-22
 ==================
-* Adding amplitude support
+* Adding [Amplitude](https://amplitude.com/) support
 * Fix for improperly parsed cookies
 
 0.10.4 / 2013-5-17

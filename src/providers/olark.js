@@ -54,7 +54,7 @@ module.exports = Provider.extend({
     if (email)    window.olark('api.visitor.updateEmailAddress', { emailAddress : email });
     if (name)     window.olark('api.visitor.updateFullName', { fullName : name });
     if (phone)    window.olark('api.visitor.updatePhoneNumber', { phoneNumber : phone });
-    if (nickname) window.olark('api.visitor.updateVisitorNickname', { snippet : nickname });
+    if (nickname) window.olark('api.chat.updateVisitorNickname', { snippet : nickname });
   },
 
   // Log events the user triggers to the chat console, if you so desire it.

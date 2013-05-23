@@ -119,16 +119,16 @@ describe('Olark', function () {
 
     describe('nickname', function () {
 
-      var method = 'api.visitor.updateVisitorNickname';
+      var method = 'api.chat.updateVisitorNickname';
 
       it('should use the name and email', function () {
         analytics.identify('id', {
           name      : 'name',
           firstName : 'first',
           lastName  : 'last',
-          email     : 'email'
+          email     : 'email@example.com'
         });
-        expect(spy.calledWith(method, { snippet : 'name (email)' })).to.be(true);
+        expect(spy.calledWith(method, { snippet : 'name (email@example.com)' })).to.be(true);
       });
 
       it('should falback to name', function () {
@@ -144,24 +144,24 @@ describe('Olark', function () {
         analytics.identify('id', {
           firstName : 'first',
           lastName  : 'last',
-          email     : 'email'
+          email     : 'email@example.com'
         });
-        expect(spy.calledWith(method, { snippet : 'first last (email)' })).to.be(true);
+        expect(spy.calledWith(method, { snippet : 'first last (email@example.com)' })).to.be(true);
       });
 
       it('should fallback to first', function () {
         analytics.identify('id', {
           firstName : 'first',
-          email     : 'email'
+          email     : 'email@example.com'
         });
-        expect(spy.calledWith(method, { snippet : 'first (email)' })).to.be(true);
+        expect(spy.calledWith(method, { snippet : 'first (email@example.com)' })).to.be(true);
       });
 
       it('should fallback to email', function () {
         analytics.identify('id', {
-          email : 'email'
+          email : 'email@example.com'
         });
-        expect(spy.calledWith(method, { snippet : 'email' })).to.be(true);
+        expect(spy.calledWith(method, { snippet : 'email@example.com' })).to.be(true);
       });
 
       it('should fallback to userId', function () {
@@ -180,38 +180,38 @@ describe('Olark', function () {
 
   describe('track', function () {
 
+    var spy;
+
+    beforeEach(function () {
+      spy = sinon.spy(window, 'olark');
+    });
+
+    afterEach(function () {
+      spy.restore();
+      window.olark('api.box.shrink');
+    });
+
     it('shouldnt log event to operator when track disabled', function () {
       analytics.providers[0].options.track = false;
-      var spy = sinon.spy(window, 'olark');
       analytics.track(test.event, test.properties);
       expect(spy.called).to.be(false);
-
-      spy.restore();
     });
 
     it('shouldnt log event to operator when track enabled but box shrunk', function () {
       analytics.providers[0].options.track = true;
-      var spy = sinon.spy(window, 'olark');
       analytics.track(test.event, test.properties);
       expect(spy.called).to.be(false);
-
-      spy.restore();
     });
 
     it('should log event to operator when track enabled and box expanded', function (done) {
       analytics.providers[0].options.track = true;
-      var spy = sinon.spy(window, 'olark');
       window.olark('api.box.expand');
-
       setTimeout(function () {
         analytics.track(test.event, test.properties);
         expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
           body : 'visitor triggered "' + test.event + '"'
         })).to.be(true);
-
         window.olark('api.box.shrink');
-        spy.restore();
-
         done();
       }, 900);
     });
@@ -225,38 +225,37 @@ describe('Olark', function () {
 
   describe('pageview', function () {
 
+    var spy;
+
+    beforeEach(function () {
+      spy = sinon.spy(window, 'olark');
+    });
+
+    afterEach(function () {
+      spy.restore();
+      window.olark('api.box.shrink');
+    });
+
     it('shouldnt log pageview to operator when pageview disabled', function () {
       analytics.providers[0].options.pageview = false;
-      var spy = sinon.spy(window, 'olark');
       analytics.pageview();
       expect(spy.called).to.be(false);
-
-      spy.restore();
     });
 
     it('shouldnt log event to operator when pageview enabled but box shrunk', function () {
       analytics.providers[0].options.pageview = true;
-      var spy = sinon.spy(window, 'olark');
       analytics.pageview();
       expect(spy.called).to.be(false);
-
-      spy.restore();
     });
 
     it('should log event to operator when pageview enabled and box expanded', function (done) {
       analytics.providers[0].options.pageview = true;
-      var spy = sinon.spy(window, 'olark');
       window.olark('api.box.expand');
-
       setTimeout(function () {
         analytics.pageview();
         expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
           body : 'looking at ' + window.location.href
         })).to.be(true);
-
-        window.olark('api.box.shrink');
-        spy.restore();
-
         done();
       }, 900);
     });

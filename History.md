@@ -1,10 +1,10 @@
-0.10.6 / 2013-5-22
+0.10.6 / 2013-5-23
 ==================
 * Moved trait parsing logic to the global level
 * Added [Improvely](http://www.improvely.com/)
 * Added [Get Satisfaction](https://getsatisfaction.com/)
 * Added a `$phone` alias for Mixpanel
-* Allow functions for `event` in `trackLink` and `trackForm`
+* Added the ability to pass a function for the `event` to `trackLink` and `trackForm`
 
 0.10.5 / 2013-5-22
 ==================

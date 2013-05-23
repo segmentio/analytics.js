@@ -1898,9 +1898,13 @@ extend(Analytics.prototype, {
    * @param {Element|Array} links - The link element or array of link elements
    * to bind to. (Allowing arrays makes it easy to pass in jQuery objects.)
    *
-   * @param {String} event - Passed directly to `track`.
+   * @param {String|Function} event - Passed directly to `track`. Or in the case
+   * that it's a function, it will be called with the link element as the first
+   * argument.
    *
-   * @param {Object} properties (optional) - Passed directly to `track`.
+   * @param {Object|Function} properties (optional) - Passed directly to
+   * `track`. Or in the case that it's a function, it will be called with the
+   * link element as the first argument.
    */
 
   trackLink : function (links, event, properties) {
@@ -1910,17 +1914,19 @@ extend(Analytics.prototype, {
     // arrays, which allows for passing jQuery objects.
     if ('element' === type(links)) links = [links];
 
-    var self       = this
-      , isFunction = 'function' === type(properties);
+    var self               = this
+      , eventFunction      = 'function' === type(event)
+      , propertiesFunction = 'function' === type(properties);
 
     each(links, function (el) {
       bind(el, 'click', function (e) {
 
-        // Allow for properties to be a function. And pass it the
+        // Allow for `event` or `properties` to be a function. And pass it the
         // link element that was clicked.
-        var props = isFunction ? properties(el) : properties;
+        var newEvent      = eventFunction ? event(el) : event;
+        var newProperties = propertiesFunction ? properties(el) : properties;
 
-        self.track(event, props);
+        self.track(newEvent, newProperties);
 
         // To justify us preventing the default behavior we must:
         //
@@ -1956,9 +1962,13 @@ extend(Analytics.prototype, {
    * @param {Element|Array} forms - The form element or array of form elements
    * to bind to. (Allowing arrays makes it easy to pass in jQuery objects.)
    *
-   * @param {String} event - Passed directly to `track`.
+   * @param {String|Function} event - Passed directly to `track`. Or in the case
+   * that it's a function, it will be called with the form element as the first
+   * argument.
    *
-   * @param {Object} properties (optional) - Passed directly to `track`.
+   * @param {Object|Function} properties (optional) - Passed directly to
+   * `track`. Or in the case that it's a function, it will be called with the
+   * form element as the first argument.
    */
 
   trackForm : function (form, event, properties) {
@@ -1968,17 +1978,19 @@ extend(Analytics.prototype, {
     // which allows for passing jQuery objects.
     if ('element' === type(form)) form = [form];
 
-    var self       = this
-      , isFunction = 'function' === type(properties);
+    var self               = this
+      , eventFunction      = 'function' === type(event)
+      , propertiesFunction = 'function' === type(properties);
 
     each(form, function (el) {
       var handler = function (e) {
 
-        // Allow for properties to be a function. And pass it the form element
-        // that was submitted.
-        var props = isFunction ? properties(el) : properties;
+        // Allow for `event` or `properties` to be a function. And pass it the
+        // form element that was submitted.
+        var newEvent      = eventFunction ? event(el) : event;
+        var newProperties = propertiesFunction ? properties(el) : properties;
 
-        self.track(event, props);
+        self.track(newEvent, newProperties);
 
         preventDefault(e);
 
@@ -4046,7 +4058,8 @@ module.exports = Provider.extend({
       'lastName'  : '$last_name',
       'lastSeen'  : '$last_seen',
       'name'      : '$name',
-      'username'  : '$username'
+      'username'  : '$username',
+      'phone'     : '$phone'
     });
 
     // Finally, call all of the identify equivalents. Verify certain calls

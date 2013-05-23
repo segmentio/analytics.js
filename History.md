@@ -4,6 +4,7 @@
 * Added [Improvely](http://www.improvely.com/)
 * Added [Get Satisfaction](https://getsatisfaction.com/)
 * Added a `$phone` alias for Mixpanel
+* Allow functions for `event` in `trackLink` and `trackForm`
 
 0.10.5 / 2013-5-22
 ==================

@@ -24,53 +24,46 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-    // A `userId` is required for profile updates, otherwise its a waste of
-    // resources as nothing will get updated.
+    // A `userId` is required for profile updates.
     if (!userId) return;
 
-    // FoxMetrics needs the first and last name seperately.
-    var firstName = null
-      , lastName  = null
-      , email     = null;
+    // FoxMetrics needs the first and last name seperately. Fallback to
+    // splitting the `name` trait if we don't have what we need.
+    var firstName = traits.firstName
+      , lastName  = traits.lastName;
 
-    if (traits && traits.name) {
-      firstName = traits.name.split(' ')[0];
-      lastName = traits.name.split(' ')[1];
-    }
-    if (traits && traits.email) {
-      email = traits.email;
-    }
+    if (!firstName && traits.name) firstName = traits.name.split(' ')[0];
+    if (!lastName && traits.name)  lastName  = traits.name.split(' ')[1];
 
-    // We should probably remove name and email before passing as attributes.
     window._fxm.push([
       '_fxm.visitor.profile',
-      userId,        // user id
-      firstName,     // first name
-      lastName,      // last name
-      email,         // email
-      null,          // address
-      null,          // social
-      null,          // partners
-      traits || null // attributes
+      userId,         // user id
+      firstName,      // first name
+      lastName,       // last name
+      traits.email,   // email
+      traits.address, // address
+      undefined,      // social
+      undefined,      // partners
+      traits          // attributes
     ]);
   },
 
   track : function (event, properties) {
     window._fxm.push([
-      event,     // event name
-      null,      // category
-      properties // properties
+      event,               // event name
+      properties.category, // category
+      properties           // properties
     ]);
   },
 
   pageview : function (url) {
     window._fxm.push([
       '_fxm.pages.view',
-      null,        // title
-      null,        // name
-      null,        // category
-      url || null, // url
-      null         // referrer
+      undefined, // title
+      undefined, // name
+      undefined, // category
+      url,       // url
+      undefined  // referrer
     ]);
   }
 

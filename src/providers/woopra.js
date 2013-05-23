@@ -30,8 +30,7 @@ module.exports = Provider.extend({
       var userId = user.id()
         , traits = user.traits();
 
-      self.addTraits(userId, traits, tracker);
-
+      addTraits(userId, traits, tracker);
       tracker.track();
 
       ready();
@@ -42,38 +41,38 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-
+    // We aren't guaranteed a tracker.
     if (!window.woopraTracker) return;
-
-    this.addTraits(userId, traits, window.woopraTracker);
-  },
-
-  // Convenience function for updating the userId and traits.
-  addTraits : function (userId, traits, tracker) {
-
-    var addTrait = tracker.addVisitorProperty;
-
-    if (userId) addTrait('id', userId);
-    if (isEmail(userId)) addTrait('email', userId);
-
-    // Seems to only support strings
-    each(traits, function (name, trait) {
-      if (type(trait) === 'string') addTrait(name, trait);
-    });
+    addTraits(userId, traits, window.woopraTracker);
   },
 
   track : function (event, properties) {
     // We aren't guaranteed a tracker.
     if (!window.woopraTracker) return;
 
-    // Woopra takes its event as dictionaries with the `name` key.
-    var settings = {};
-    settings.name = event;
+    // Woopra takes its `event` as the `name` key.
+    properties || (properties = {});
+    properties.name = event;
 
-    // If we have properties, add them to the settings.
-    if (properties) settings = extend({}, properties, settings);
-
-    window.woopraTracker.pushEvent(settings);
+    window.woopraTracker.pushEvent(properties);
   }
 
 });
+
+
+/**
+ * Convenience function for updating the userId and traits.
+ *
+ * @param {String} userId    The user's ID.
+ * @param {Object} traits    The user's traits.
+ * @param {Tracker} tracker  The Woopra tracker object.
+ */
+
+function addTraits (userId, traits, tracker) {
+  // Move a `userId` into `traits`.
+  if (userId) traits.id = userId;
+  each(traits, function (key, value) {
+    // Woopra seems to only support strings as trait values.
+    if ('string' === type(value)) tracker.addVisitorProperty(key, value);
+  });
+}

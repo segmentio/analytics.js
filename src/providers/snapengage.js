@@ -21,8 +21,8 @@ module.exports = Provider.extend({
 
   // Set the email in the chat window if we have it.
   identify : function (userId, traits, options) {
-    if (!traits.email && !isEmail(userId)) return;
-    window.SnapABug.setUserEmail(traits.email || userId);
+    if (!traits.email) return;
+    window.SnapABug.setUserEmail(traits.email);
   }
 
 });

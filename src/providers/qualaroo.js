@@ -31,8 +31,7 @@ module.exports = Provider.extend({
   // Qualaroo uses two separate methods: `identify` for storing the `userId`,
   // and `set` for storing `traits`.
   identify : function (userId, traits) {
-    var identity = userId;
-    if (traits && traits.email && !isEmail(userId)) identity = traits.email;
+    var identity = traits.email || userId;
     if (identity) window._kiq.push(['identify', identity]);
     if (traits) window._kiq.push(['set', traits]);
   },

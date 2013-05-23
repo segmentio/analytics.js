@@ -60,24 +60,16 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-    // If we have an email and no email trait, set the email trait.
-    if (userId && isEmail(userId) && (traits && !traits.email)) {
-      traits || (traits = {});
-      traits.email = userId;
-    }
-
     // Alias the traits' keys with dollar signs for Mixpanel's API.
-    if (traits) {
-      alias(traits, {
-        'created'   : '$created',
-        'email'     : '$email',
-        'firstName' : '$first_name',
-        'lastName'  : '$last_name',
-        'lastSeen'  : '$last_seen',
-        'name'      : '$name',
-        'username'  : '$username'
-      });
-    }
+    alias(traits, {
+      'created'   : '$created',
+      'email'     : '$email',
+      'firstName' : '$first_name',
+      'lastName'  : '$last_name',
+      'lastSeen'  : '$last_seen',
+      'name'      : '$name',
+      'username'  : '$username'
+    });
 
     // Finally, call all of the identify equivalents. Verify certain calls
     // against options to make sure they're enabled.

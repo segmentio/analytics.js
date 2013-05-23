@@ -8,57 +8,41 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
-    name : 'Lytics',
+  name : 'Lytics',
 
-    key : 'cid',
+  key : 'cid',
 
-    defaults : {
-        cid: null
-    },
+  defaults : {
+    cid: null
+  },
 
+  initialize : function (options, ready) {
+    window.jstag = (function () {
+      var t={_q:[],_c:{cid:options.cid,url:'//c.lytics.io'},ts:(new Date()).getTime()};
+      t.send=function(){
+      this._q.push(["ready","send",Array.prototype.slice.call(arguments)]);
+      return this;
+      };
+      return t;
+    })();
 
-    initialize : function (options, ready) {
-        window.jstag = (function () {
-          var t={_q:[],_c:{cid:options.cid,url:'//c.lytics.io'},ts:(new Date()).getTime()};
-          t.send=function(){
-            this._q.push(["ready","send",Array.prototype.slice.call(arguments)]);
-            return this;
-          };
-          return t;
-        })();
+    load('//c.lytics.io/static/io.min.js');
 
-        load('//c.lytics.io/static/io.min.js');
+    ready();
+  },
 
-        // ready immediately
-        ready();
-    },
+  identify: function (userId, traits) {
+    traits._uid = userId;
+    window.jstag.send(traits);
+  },
 
+  track: function (event, properties) {
+    properties._e = event;
+    window.jstag.send(properties);
+  },
 
-    // Identify
-    // --------
-
-    identify: function (userId, traits) {
-        traits['_uid'] = userId;
-        window.jstag.send(traits);
-    },
-
-
-    // Track
-    // -----
-
-    track: function (event, properties) {
-        properties['_e'] = event;
-        window.jstag.send(properties);
-    },
-
-    // Pageview
-    // ----------
-    pageview: function (url) {
-        window.jstag.send();
-    }
-
+  pageview: function (url) {
+    window.jstag.send();
+  }
 
 });
-
-
-

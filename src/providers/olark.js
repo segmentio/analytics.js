@@ -41,24 +41,12 @@ module.exports = Provider.extend({
   identify : function (userId, traits) {
     if (!this.options.identify) return;
 
-    var email = traits.email
-      , name  = traits.name
-      , phone = traits.phone
-      , nickname;
+    var email    = traits.email
+      , name     = traits.name || traits.firstName
+      , phone    = traits.phone
+      , nickname = name || email || userId;
 
-    // Email: If there wasn't already an email and the userId is one, use it.
-    if (!email && isEmail(userId)) email = userId;
-
-    // Name: check for a name trait, or fallback to trying to use the first name
-    // and/or last name.
-    if (!name) {
-      if (traits.firstName) name = traits.firstName;
-      if (traits.firstName && traits.lastName) name += ' ' + traits.lastName;
-    }
-
-    // Nickname: try using name, email, or userId. If we have both a name and an
-    // email, then we can add the email too to be more helpful.
-    nickname = name || email || userId;
+    // If we have a name and an email, add the email too to be more helpful.
     if (name && email) nickname += ' ('+email+')';
 
     // Call all of Olark's settings APIs.

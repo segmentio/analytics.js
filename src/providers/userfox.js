@@ -25,21 +25,18 @@ module.exports = Provider.extend({
     ready();
   },
 
-  identify : function (userId, traits, context) {
+  identify : function (userId, traits) {
     // userfox requires an email.
-    var email;
-    if (userId && isEmail(userId)) email = userId;
-    if (traits && isEmail(traits.email)) email = traits.email;
-    if (!email) return;
+    if (!traits.email) return;
 
     // Initialize the library with the email now that we have it.
     window._ufq.push(['init', {
       clientId : this.options.clientId,
-      email    : email
+      email    : traits.email
     }]);
 
-    // Record traits to "track" if we have the required signup date "created".
-    if (traits && traits.created) {
+    // Record traits to "track" if we have the required signup date `created`.
+    if (traits.created) {
       traits.signup_date = traits.created.getTime()+'';
       window._ufq.push(['track', traits]);
     }

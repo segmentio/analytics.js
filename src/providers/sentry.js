@@ -24,8 +24,7 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-    traits || (traits = {});
-    if (userId) traits.id = userId;
+    traits.id = userId;
     window.Raven.setUser(traits);
   },
 

@@ -45,13 +45,8 @@ module.exports = Provider.extend({
     // requires a `userId`.
     if (!userId) return;
 
-    traits || (traits = {});
-
     // Customer.io takes the `userId` as part of the traits object.
     traits.id = userId;
-
-    // If there wasn't already an email and the userId is one, use it.
-    if (!traits.email && isEmail(userId)) traits.email = userId;
 
     // Swap the `created` trait to the `created_at` that Customer.io needs
     // and convert it from milliseconds to seconds.

@@ -3,6 +3,7 @@ var after          = require('after')
   , clone          = require('clone')
   , each           = require('each')
   , extend         = require('extend')
+  , isEmail        = require('is-email')
   , isMeta         = require('is-meta')
   , newDate        = require('new-date')
   , size           = require('object').length
@@ -221,13 +222,7 @@ extend(Analytics.prototype, {
 
     // Clone `traits` before we manipulate it, so we don't do anything uncouth
     // and take the user.traits() so anonymous users carry over traits.
-    traits = clone(user.traits());
-
-    // Convert dates from more types of input into Date objects.
-    if (traits && traits.created) traits.created = newDate(traits.created);
-    if (traits && traits.company && traits.company.created) {
-      traits.company.created = newDate(traits.company.created);
-    }
+    traits = cleanTraits(userId, clone(user.traits()));
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
@@ -611,4 +606,33 @@ var isEnabled = function (provider, options) {
   if (map[name] !== undefined) enabled = map[name];
 
   return enabled;
+};
+
+
+/**
+ * Clean up traits, default some useful things both so the user doesn't have to
+ * and so we don't have to do it on a provider-basis.
+ *
+ * @param {Object}  traits  The traits object.
+ * @return {Object}         The new traits object.
+ */
+
+var cleanTraits = function (userId, traits) {
+
+  // Add the `email` trait if it doesn't exist and the `userId` is an email.
+  if (!traits.email && isEmail(userId)) traits.email = userId;
+
+  // Create the `name` trait if it doesn't exist and `firstName` and `lastName`
+  // are both supplied.
+  if (!traits.name && traits.firstName && traits.lastName) {
+    traits.name = traits.firstName + ' ' + traits.lastName;
+  }
+
+  // Convert dates from more types of input into Date objects.
+  if (traits.created) traits.created = newDate(traits.created);
+  if (traits.company && traits.company.created) {
+    traits.company.created = newDate(traits.company.created);
+  }
+
+  return traits;
 };

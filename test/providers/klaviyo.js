@@ -35,26 +35,32 @@ describe('Klaviyo', function () {
 
   describe('identify', function () {
 
-    beforeEach(analytics.user.clear);
+    var extend = require('segmentio-extend');
+    var spy;
 
-    it('should push "_identify"', function () {
-      var extend = require('segmentio-extend')
-        , spy    = sinon.spy(window._learnq, 'push');
-
-      analytics.identify(test.traits);
-      expect(spy.calledWith(['identify', test.traits])).to.be(true);
-      spy.reset();
+    beforeEach(function () {
       analytics.user.clear();
+      spy = sinon.spy(window._learnq, 'push');
+    });
 
+    afterEach(function () {
+      spy.restore();
+    });
+
+    it('should push "_identify" with a userId', function () {
       analytics.identify(test.userId);
       expect(spy.calledWith(['identify', { $id: test.userId }])).to.be(true);
-      spy.reset();
-      analytics.user.clear();
+    });
 
+    it('shouldnt push "_identify" with traits', function () {
+      analytics.identify(test.traits);
+      expect(spy.called).to.be(false);
+    });
+
+    it('should push "_identify" with a userId and traits', function () {
       var augmentedTraits = extend({}, test.traits, { $id: test.userId });
       analytics.identify(test.userId, test.traits);
       expect(spy.calledWith(['identify', augmentedTraits])).to.be(true);
-      spy.restore();
     });
 
   });

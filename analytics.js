@@ -1523,6 +1523,7 @@ var after          = require('after')
   , clone          = require('clone')
   , each           = require('each')
   , extend         = require('extend')
+  , isEmail        = require('is-email')
   , isMeta         = require('is-meta')
   , newDate        = require('new-date')
   , size           = require('object').length
@@ -1741,13 +1742,7 @@ extend(Analytics.prototype, {
 
     // Clone `traits` before we manipulate it, so we don't do anything uncouth
     // and take the user.traits() so anonymous users carry over traits.
-    traits = clone(user.traits());
-
-    // Convert dates from more types of input into Date objects.
-    if (traits && traits.created) traits.created = newDate(traits.created);
-    if (traits && traits.company && traits.company.created) {
-      traits.company.created = newDate(traits.company.created);
-    }
+    traits = cleanTraits(userId, clone(user.traits()));
 
     // Call `identify` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
@@ -2133,6 +2128,34 @@ var isEnabled = function (provider, options) {
   return enabled;
 };
 
+
+/**
+ * Clean up traits, default some useful things both so the user doesn't have to
+ * and so we don't have to do it on a provider-basis.
+ *
+ * @param {Object}  traits  The traits object.
+ * @return {Object}         The new traits object.
+ */
+
+var cleanTraits = function (userId, traits) {
+
+  // Add the `email` trait if it doesn't exist and the `userId` is an email.
+  if (!traits.email && isEmail(userId)) traits.email = userId;
+
+  // Create the `name` trait if it doesn't exist and `firstName` and `lastName`
+  // are both supplied.
+  if (!traits.name && traits.firstName && traits.lastName) {
+    traits.name = traits.firstName + ' ' + traits.lastName;
+  }
+
+  // Convert dates from more types of input into Date objects.
+  if (traits.created) traits.created = newDate(traits.created);
+  if (traits.company && traits.company.created) {
+    traits.company.created = newDate(traits.company.created);
+  }
+
+  return traits;
+};
 });
 require.register("analytics/src/provider.js", function(exports, require, module){
 var each   = require('each')
@@ -2920,13 +2943,8 @@ module.exports = Provider.extend({
     // requires a `userId`.
     if (!userId) return;
 
-    traits || (traits = {});
-
     // Customer.io takes the `userId` as part of the traits object.
     traits.id = userId;
-
-    // If there wasn't already an email and the userId is one, use it.
-    if (!traits.email && isEmail(userId)) traits.email = userId;
 
     // Swap the `created` trait to the `created_at` that Customer.io needs
     // and convert it from milliseconds to seconds.
@@ -2992,8 +3010,7 @@ module.exports = Provider.extend({
     window._errs.meta || (window._errs.meta = {});
 
     // Add `userId` to traits.
-    traits || (traits = {});
-    if (userId) traits.id = userId;
+    traits.id = userId;
 
     // Add all of the traits as metadata.
     extend(window._errs.meta, traits);
@@ -3028,53 +3045,46 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-    // A `userId` is required for profile updates, otherwise its a waste of
-    // resources as nothing will get updated.
+    // A `userId` is required for profile updates.
     if (!userId) return;
 
-    // FoxMetrics needs the first and last name seperately.
-    var firstName = null
-      , lastName  = null
-      , email     = null;
+    // FoxMetrics needs the first and last name seperately. Fallback to
+    // splitting the `name` trait if we don't have what we need.
+    var firstName = traits.firstName
+      , lastName  = traits.lastName;
 
-    if (traits && traits.name) {
-      firstName = traits.name.split(' ')[0];
-      lastName = traits.name.split(' ')[1];
-    }
-    if (traits && traits.email) {
-      email = traits.email;
-    }
+    if (!firstName && traits.name) firstName = traits.name.split(' ')[0];
+    if (!lastName && traits.name)  lastName  = traits.name.split(' ')[1];
 
-    // We should probably remove name and email before passing as attributes.
     window._fxm.push([
       '_fxm.visitor.profile',
-      userId,        // user id
-      firstName,     // first name
-      lastName,      // last name
-      email,         // email
-      null,          // address
-      null,          // social
-      null,          // partners
-      traits || null // attributes
+      userId,         // user id
+      firstName,      // first name
+      lastName,       // last name
+      traits.email,   // email
+      traits.address, // address
+      undefined,      // social
+      undefined,      // partners
+      traits          // attributes
     ]);
   },
 
   track : function (event, properties) {
     window._fxm.push([
-      event,     // event name
-      null,      // category
-      properties // properties
+      event,               // event name
+      properties.category, // category
+      properties           // properties
     ]);
   },
 
   pageview : function (url) {
     window._fxm.push([
       '_fxm.pages.view',
-      null,        // title
-      null,        // name
-      null,        // category
-      url || null, // url
-      null         // referrer
+      undefined, // title
+      undefined, // name
+      undefined, // category
+      url,       // url
+      undefined  // referrer
     ]);
   }
 
@@ -3452,15 +3462,6 @@ module.exports = Provider.extend({
   // HubSpot does not use a userId, but the email address is required on
   // the traits object.
   identify : function (userId, traits) {
-    // If there wasn't already an email and the userId is one, use it.
-    if ((!traits || !traits.email) && isEmail(userId)) {
-      traits || (traits = {});
-      traits.email = userId;
-    }
-
-    // Still don't have any traits? Get out.
-    if (!traits) return;
-
     window._hsq.push(["identify", traits]);
   },
 
@@ -3580,20 +3581,16 @@ module.exports = Provider.extend({
       delete traits.created;
     }
 
-    // Pull out an email field. Falling back to the `userId` if possible.
-    if (traits && traits.email) {
+    // Pull out an email field.
+    if (traits.email) {
       settings.email = traits.email;
       delete traits.email;
-    } else if (isEmail(userId)) {
-      settings.email = userId;
     }
 
     // Pull out a name field, or combine one from `firstName` and `lastName`.
     if (traits && traits.name) {
       settings.name = traits.name;
       delete traits.name;
-    } else if (traits && traits.firstName && traits.lastName) {
-      settings.name = traits.firstName + ' ' + traits.lastName;
     }
 
     // Pull out a company field, with it's own optional `created` date.
@@ -3788,12 +3785,9 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-    if (!userId && !traits) return;
-
-    // Klaviyo takes the user ID on the traits object itself.
-    traits || (traits = {});
-    if (userId) traits.$id = userId;
-
+    // Klaviyo requires a `userId` and takes the it on the traits object itself.
+    if (!userId) return;
+    traits.$id = userId;
     window._learnq.push(['identify', traits]);
   },
 
@@ -3832,9 +3826,6 @@ module.exports = Provider.extend({
     // In case the LiveChat library hasn't loaded yet.
     if (!window.LC_API) return;
 
-    // We need either a `userId` or `traits`.
-    if (!userId && !traits) return;
-
     // LiveChat takes them in an array format.
     var variables = [];
 
@@ -3864,61 +3855,44 @@ var Provider = require('../provider')
 
 module.exports = Provider.extend({
 
-    name : 'Lytics',
+  name : 'Lytics',
 
-    key : 'cid',
+  key : 'cid',
 
-    defaults : {
-        cid: null
-    },
+  defaults : {
+    cid: null
+  },
 
+  initialize : function (options, ready) {
+    window.jstag = (function () {
+      var t={_q:[],_c:{cid:options.cid,url:'//c.lytics.io'},ts:(new Date()).getTime()};
+      t.send=function(){
+      this._q.push(["ready","send",Array.prototype.slice.call(arguments)]);
+      return this;
+      };
+      return t;
+    })();
 
-    initialize : function (options, ready) {
-        window.jstag = (function () {
-          var t={_q:[],_c:{cid:options.cid,url:'//c.lytics.io'},ts:(new Date()).getTime()};
-          t.send=function(){
-            this._q.push(["ready","send",Array.prototype.slice.call(arguments)]);
-            return this;
-          };
-          return t;
-        })();
+    load('//c.lytics.io/static/io.min.js');
 
-        load('//c.lytics.io/static/io.min.js');
+    ready();
+  },
 
-        // ready immediately
-        ready();
-    },
+  identify: function (userId, traits) {
+    traits._uid = userId;
+    window.jstag.send(traits);
+  },
 
+  track: function (event, properties) {
+    properties._e = event;
+    window.jstag.send(properties);
+  },
 
-    // Identify
-    // --------
-
-    identify: function (userId, traits) {
-        traits['_uid'] = userId;
-        window.jstag.send(traits);
-    },
-
-
-    // Track
-    // -----
-
-    track: function (event, properties) {
-        properties['_e'] = event;
-        window.jstag.send(properties);
-    },
-
-    // Pageview
-    // ----------
-    pageview: function (url) {
-        window.jstag.send();
-    }
-
+  pageview: function (url) {
+    window.jstag.send();
+  }
 
 });
-
-
-
-
 });
 require.register("analytics/src/providers/mixpanel.js", function(exports, require, module){
 // https://mixpanel.com/docs/integration-libraries/javascript
@@ -3983,24 +3957,16 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-    // If we have an email and no email trait, set the email trait.
-    if (userId && isEmail(userId) && (traits && !traits.email)) {
-      traits || (traits = {});
-      traits.email = userId;
-    }
-
     // Alias the traits' keys with dollar signs for Mixpanel's API.
-    if (traits) {
-      alias(traits, {
-        'created'   : '$created',
-        'email'     : '$email',
-        'firstName' : '$first_name',
-        'lastName'  : '$last_name',
-        'lastSeen'  : '$last_seen',
-        'name'      : '$name',
-        'username'  : '$username'
-      });
-    }
+    alias(traits, {
+      'created'   : '$created',
+      'email'     : '$email',
+      'firstName' : '$first_name',
+      'lastName'  : '$last_name',
+      'lastSeen'  : '$last_seen',
+      'name'      : '$name',
+      'username'  : '$username'
+    });
 
     // Finally, call all of the identify equivalents. Verify certain calls
     // against options to make sure they're enabled.
@@ -4100,24 +4066,12 @@ module.exports = Provider.extend({
   identify : function (userId, traits) {
     if (!this.options.identify) return;
 
-    var email = traits.email
-      , name  = traits.name
-      , phone = traits.phone
-      , nickname;
+    var email    = traits.email
+      , name     = traits.name || traits.firstName
+      , phone    = traits.phone
+      , nickname = name || email || userId;
 
-    // Email: If there wasn't already an email and the userId is one, use it.
-    if (!email && isEmail(userId)) email = userId;
-
-    // Name: check for a name trait, or fallback to trying to use the first name
-    // and/or last name.
-    if (!name) {
-      if (traits.firstName) name = traits.firstName;
-      if (traits.firstName && traits.lastName) name += ' ' + traits.lastName;
-    }
-
-    // Nickname: try using name, email, or userId. If we have both a name and an
-    // email, then we can add the email too to be more helpful.
-    nickname = name || email || userId;
+    // If we have a name and an email, add the email too to be more helpful.
     if (name && email) nickname += ' ('+email+')';
 
     // Call all of Olark's settings APIs.
@@ -4297,12 +4251,8 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-    // Don't do anything if we just have traits, because Preact
-    // requires a `userId`.
+    // Don't do anything if we just have traits. Preact requires a `userId`.
     if (!userId) return;
-
-    // If there wasn't already an email and the userId is one, use it.
-    if (!traits.email && isEmail(userId)) traits.email = userId;
 
     // Swap the `created` trait to the `created_at` that Preact needs
     // and convert it from milliseconds to seconds.
@@ -4312,9 +4262,9 @@ module.exports = Provider.extend({
     }
 
     window._lnq.push(['_setPersonData', {
-      name : traits.name,
-      email : traits.email,
-      uid : userId,
+      name       : traits.name,
+      email      : traits.email,
+      uid        : userId,
       properties : traits
     }]);
   },
@@ -4323,10 +4273,10 @@ module.exports = Provider.extend({
     properties || (properties = {});
 
     var personEvent = {
-      name : event,
+      name      : event,
       target_id : properties.target_id,
-      note : properties.note,
-      revenue : properties.revenue
+      note      : properties.note,
+      revenue   : properties.revenue
     }
 
     window._lnq.push(['_logEvent', personEvent, properties]);
@@ -4368,8 +4318,7 @@ module.exports = Provider.extend({
   // Qualaroo uses two separate methods: `identify` for storing the `userId`,
   // and `set` for storing `traits`.
   identify : function (userId, traits) {
-    var identity = userId;
-    if (traits && traits.email && !isEmail(userId)) identity = traits.email;
+    var identity = traits.email || userId;
     if (identity) window._kiq.push(['identify', identity]);
     if (traits) window._kiq.push(['set', traits]);
   },
@@ -4446,8 +4395,7 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-    traits || (traits = {});
-    if (userId) traits.id = userId;
+    traits.id = userId;
     window.Raven.setUser(traits);
   },
 
@@ -4482,8 +4430,8 @@ module.exports = Provider.extend({
 
   // Set the email in the chat window if we have it.
   identify : function (userId, traits, options) {
-    if (!traits.email && !isEmail(userId)) return;
-    window.SnapABug.setUserEmail(traits.email || userId);
+    if (!traits.email) return;
+    window.SnapABug.setUserEmail(traits.email);
   }
 
 });
@@ -4555,21 +4503,18 @@ module.exports = Provider.extend({
     ready();
   },
 
-  identify : function (userId, traits, context) {
+  identify : function (userId, traits) {
     // userfox requires an email.
-    var email;
-    if (userId && isEmail(userId)) email = userId;
-    if (traits && isEmail(traits.email)) email = traits.email;
-    if (!email) return;
+    if (!traits.email) return;
 
     // Initialize the library with the email now that we have it.
     window._ufq.push(['init', {
       clientId : this.options.clientId,
-      email    : email
+      email    : traits.email
     }]);
 
-    // Record traits to "track" if we have the required signup date "created".
-    if (traits && traits.created) {
+    // Record traits to "track" if we have the required signup date `created`.
+    if (traits.created) {
       traits.signup_date = traits.created.getTime()+'';
       window._ufq.push(['track', traits]);
     }
@@ -4643,7 +4588,6 @@ module.exports = Provider.extend({
   identify : function (userId, traits) {
     // Pull the ID into traits.
     traits.id = userId;
-
     window.UserVoice.push(['setCustomFields', traits]);
   }
 
@@ -4679,18 +4623,10 @@ module.exports = Provider.extend({
   identify : function (userId, traits) {
     // Don't do anything if we just have traits, because Vero
     // requires a `userId`.
-    if (!userId) return;
-
-    traits || (traits = {});
+    if (!userId || !traits.email) return;
 
     // Vero takes the `userId` as part of the traits object.
     traits.id = userId;
-
-    // If there wasn't already an email and the userId is one, use it.
-    if (!traits.email && isEmail(userId)) traits.email = userId;
-
-    // Vero *requires* an email and an id
-    if (!traits.id || !traits.email) return;
 
     window._veroq.push(['user', traits]);
   },
@@ -4734,8 +4670,7 @@ module.exports = Provider.extend({
       var userId = user.id()
         , traits = user.traits();
 
-      self.addTraits(userId, traits, tracker);
-
+      addTraits(userId, traits, tracker);
       tracker.track();
 
       ready();
@@ -4746,41 +4681,41 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-
+    // We aren't guaranteed a tracker.
     if (!window.woopraTracker) return;
-
-    this.addTraits(userId, traits, window.woopraTracker);
-  },
-
-  // Convenience function for updating the userId and traits.
-  addTraits : function (userId, traits, tracker) {
-
-    var addTrait = tracker.addVisitorProperty;
-
-    if (userId) addTrait('id', userId);
-    if (isEmail(userId)) addTrait('email', userId);
-
-    // Seems to only support strings
-    each(traits, function (name, trait) {
-      if (type(trait) === 'string') addTrait(name, trait);
-    });
+    addTraits(userId, traits, window.woopraTracker);
   },
 
   track : function (event, properties) {
     // We aren't guaranteed a tracker.
     if (!window.woopraTracker) return;
 
-    // Woopra takes its event as dictionaries with the `name` key.
-    var settings = {};
-    settings.name = event;
+    // Woopra takes its `event` as the `name` key.
+    properties || (properties = {});
+    properties.name = event;
 
-    // If we have properties, add them to the settings.
-    if (properties) settings = extend({}, properties, settings);
-
-    window.woopraTracker.pushEvent(settings);
+    window.woopraTracker.pushEvent(properties);
   }
 
 });
+
+
+/**
+ * Convenience function for updating the userId and traits.
+ *
+ * @param {String} userId    The user's ID.
+ * @param {Object} traits    The user's traits.
+ * @param {Tracker} tracker  The Woopra tracker object.
+ */
+
+function addTraits (userId, traits, tracker) {
+  // Move a `userId` into `traits`.
+  if (userId) traits.id = userId;
+  each(traits, function (key, value) {
+    // Woopra seems to only support strings as trait values.
+    if ('string' === type(value)) tracker.addVisitorProperty(key, value);
+  });
+}
 });
 require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");

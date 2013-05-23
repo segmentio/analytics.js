@@ -62,7 +62,6 @@ module.exports = Provider.extend({
   identify : function (userId, traits) {
     // Pull the ID into traits.
     traits.id = userId;
-
     window.UserVoice.push(['setCustomFields', traits]);
   }
 

@@ -24,12 +24,9 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-    if (!userId && !traits) return;
-
-    // Klaviyo takes the user ID on the traits object itself.
-    traits || (traits = {});
-    if (userId) traits.$id = userId;
-
+    // Klaviyo requires a `userId` and takes the it on the traits object itself.
+    if (!userId) return;
+    traits.$id = userId;
     window._learnq.push(['identify', traits]);
   },
 

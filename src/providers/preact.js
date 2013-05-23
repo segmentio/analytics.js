@@ -23,12 +23,8 @@ module.exports = Provider.extend({
   },
 
   identify : function (userId, traits) {
-    // Don't do anything if we just have traits, because Preact
-    // requires a `userId`.
+    // Don't do anything if we just have traits. Preact requires a `userId`.
     if (!userId) return;
-
-    // If there wasn't already an email and the userId is one, use it.
-    if (!traits.email && isEmail(userId)) traits.email = userId;
 
     // Swap the `created` trait to the `created_at` that Preact needs
     // and convert it from milliseconds to seconds.
@@ -38,9 +34,9 @@ module.exports = Provider.extend({
     }
 
     window._lnq.push(['_setPersonData', {
-      name : traits.name,
-      email : traits.email,
-      uid : userId,
+      name       : traits.name,
+      email      : traits.email,
+      uid        : userId,
       properties : traits
     }]);
   },
@@ -49,10 +45,10 @@ module.exports = Provider.extend({
     properties || (properties = {});
 
     var personEvent = {
-      name : event,
+      name      : event,
       target_id : properties.target_id,
-      note : properties.note,
-      revenue : properties.revenue
+      note      : properties.note,
+      revenue   : properties.revenue
     }
 
     window._lnq.push(['_logEvent', personEvent, properties]);

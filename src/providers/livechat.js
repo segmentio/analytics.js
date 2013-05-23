@@ -26,9 +26,6 @@ module.exports = Provider.extend({
     // In case the LiveChat library hasn't loaded yet.
     if (!window.LC_API) return;
 
-    // We need either a `userId` or `traits`.
-    if (!userId && !traits) return;
-
     // LiveChat takes them in an array format.
     var variables = [];
 

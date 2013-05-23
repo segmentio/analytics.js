@@ -27,18 +27,10 @@ module.exports = Provider.extend({
   identify : function (userId, traits) {
     // Don't do anything if we just have traits, because Vero
     // requires a `userId`.
-    if (!userId) return;
-
-    traits || (traits = {});
+    if (!userId || !traits.email) return;
 
     // Vero takes the `userId` as part of the traits object.
     traits.id = userId;
-
-    // If there wasn't already an email and the userId is one, use it.
-    if (!traits.email && isEmail(userId)) traits.email = userId;
-
-    // Vero *requires* an email and an id
-    if (!traits.id || !traits.email) return;
 
     window._veroq.push(['user', traits]);
   },

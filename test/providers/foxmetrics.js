@@ -34,27 +34,33 @@ describe('FoxMetrics', function () {
 
   describe('identify', function () {
 
-    beforeEach(analytics.user.clear);
+    var stub;
 
-    it('should push "_fxm.visitor.profile"', function () {
-      var stub = sinon.stub(window._fxm, 'push');
+    beforeEach(function () {
+      stub = sinon.stub(window._fxm, 'push');
+      analytics.user.clear();
+    });
+
+    afterEach(function () {
+      stub.restore();
+    });
+
+    it('should do nothing without a userId', function () {
       analytics.identify(test.traits);
       expect(stub.called).to.be(false);
-      analytics.user.clear();
+    });
 
-      stub.reset();
+    it('should push "visitor.profile" with just a userId', function () {
       analytics.identify(test.userId);
-      expect(stub.calledWith(['_fxm.visitor.profile', test.userId, null, null, null, null, null, null, {}])).to.be(true);
-      analytics.user.clear();
+      expect(stub.calledWith(['_fxm.visitor.profile', test.userId, undefined, undefined, undefined, undefined, undefined, undefined, {}])).to.be(true);
+    });
 
-      stub.reset();
+    it('should push "visitor.profile" with traits', function () {
       analytics.identify(test.userId, test.traits);
       // FoxMetrics slices the name into first and last.
       var firstName = test.traits.name.split(' ')[0];
       var lastName = test.traits.name.split(' ')[1];
-      expect(stub.calledWith(['_fxm.visitor.profile', test.userId, firstName, lastName, test.traits.email, null, null, null, test.traits])).to.be(true);
-
-      stub.restore();
+      expect(stub.calledWith(['_fxm.visitor.profile', test.userId, firstName, lastName, test.traits.email, undefined, undefined, undefined, test.traits])).to.be(true);
     });
 
   });
@@ -65,7 +71,7 @@ describe('FoxMetrics', function () {
     it('should push custom event', function () {
       var stub = sinon.stub(window._fxm, 'push');
       analytics.track(test.event, test.properties);
-      expect(stub.calledWith([test.event, null, test.properties])).to.be(true);
+      expect(stub.calledWith([test.event, undefined, test.properties])).to.be(true);
 
       stub.restore();
     });
@@ -78,11 +84,11 @@ describe('FoxMetrics', function () {
     it('calls [fxm.pages.view] on pageview', function () {
       var stub = sinon.stub(window._fxm, 'push');
       analytics.pageview();
-      expect(stub.calledWith(['_fxm.pages.view', null, null, null, null, null])).to.be(true);
+      expect(stub.calledWith(['_fxm.pages.view', undefined, undefined, undefined, undefined, undefined])).to.be(true);
 
       stub.reset();
       analytics.pageview(test.url);
-      expect(stub.calledWith(['_fxm.pages.view', null, null, null, test.url, null])).to.be(true);
+      expect(stub.calledWith(['_fxm.pages.view', undefined, undefined, undefined, test.url, undefined])).to.be(true);
 
       stub.restore();
     });

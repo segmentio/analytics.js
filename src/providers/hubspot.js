@@ -32,15 +32,6 @@ module.exports = Provider.extend({
   // HubSpot does not use a userId, but the email address is required on
   // the traits object.
   identify : function (userId, traits) {
-    // If there wasn't already an email and the userId is one, use it.
-    if ((!traits || !traits.email) && isEmail(userId)) {
-      traits || (traits = {});
-      traits.email = userId;
-    }
-
-    // Still don't have any traits? Get out.
-    if (!traits) return;
-
     window._hsq.push(["identify", traits]);
   },
 

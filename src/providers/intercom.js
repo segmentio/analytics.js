@@ -56,20 +56,16 @@ module.exports = Provider.extend({
       delete traits.created;
     }
 
-    // Pull out an email field. Falling back to the `userId` if possible.
-    if (traits && traits.email) {
+    // Pull out an email field.
+    if (traits.email) {
       settings.email = traits.email;
       delete traits.email;
-    } else if (isEmail(userId)) {
-      settings.email = userId;
     }
 
     // Pull out a name field, or combine one from `firstName` and `lastName`.
     if (traits && traits.name) {
       settings.name = traits.name;
       delete traits.name;
-    } else if (traits && traits.firstName && traits.lastName) {
-      settings.name = traits.firstName + ' ' + traits.lastName;
     }
 
     // Pull out a company field, with it's own optional `created` date.

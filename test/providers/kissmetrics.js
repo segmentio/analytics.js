@@ -3,6 +3,8 @@ describe('KISSmetrics', function () {
 
   describe('initialize', function () {
 
+    this.timeout(10000);
+
     it('should call ready and load library', function (done) {
       expect(window._kmq).to.be(undefined);
 

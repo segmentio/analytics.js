@@ -12,9 +12,9 @@ module.exports = Provider.extend({
   name : 'Improvely',
 
   defaults : {
-    // Improvely requires two options: `im_domain` and `im_project_id`.
-    im_domain : null,
-    im_project_id : 1
+    // Improvely requires two options: `domain` and `projectId`.
+    domain : null,
+    projectId : null
   },
 
   initialize : function (options, ready) {
@@ -25,8 +25,8 @@ module.exports = Provider.extend({
       label : function (e) { window._improvely.push(["label", e]); }
     };
 
-    load('//' + options.im_domain + '.iljmp.com/improvely.js');
-    window.improvely.init(options.im_domain, options.im_project_id);
+    load('//' + options.domain + '.iljmp.com/improvely.js');
+    window.improvely.init(options.domain, options.projectId);
 
     // Improvely creates a queue, so it's ready immediately.
     ready();

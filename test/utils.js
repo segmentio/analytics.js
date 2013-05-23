@@ -109,8 +109,8 @@ window.test = {
   'HubSpot' : 'x',
 
   'Improvely' : {
-    im_domain     : 'demo',
-    im_project_id : 1
+    domain    : 'demo',
+    projectId : 1
   },
 
   'Intercom' : {

@@ -1,5 +1,12 @@
 ;(function(){
 
+
+/**
+ * hasOwnProperty.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
 /**
  * Require the given path.
  *
@@ -76,10 +83,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (require.modules.hasOwnProperty(path)) return path;
+    if (has.call(require.modules, path)) return path;
   }
 
-  if (require.aliases.hasOwnProperty(index)) {
+  if (has.call(require.aliases, index)) {
     return require.aliases[index];
   }
 };
@@ -133,7 +140,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!require.modules.hasOwnProperty(from)) {
+  if (!has.call(require.modules, from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -195,7 +202,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return require.modules.hasOwnProperty(localRequire.resolve(path));
+    return has.call(require.modules, localRequire.resolve(path));
   };
 
   return localRequire;
@@ -1448,6 +1455,7 @@ function call (callback) {
   callback(document.body);
 }
 });
+<<<<<<< HEAD
 require.register("timoxley-next-tick/index.js", function(exports, require, module){
 if (typeof setImmediate == 'function') {
   module.exports = function(ƒ){ setImmediate(ƒ) }
@@ -1482,6 +1490,8 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 }
 
 });
+=======
+>>>>>>> getsatisfaction
 require.register("yields-prevent/index.js", function(exports, require, module){
 
 /**
@@ -1549,7 +1559,11 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
+<<<<<<< HEAD
   this.VERSION = '0.10.5';
+=======
+  this.VERSION = '0.9.7';
+>>>>>>> getsatisfaction
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -2191,6 +2205,7 @@ function Provider (options, ready, analytics) {
   // allow for it to be `true`, like in Optimizely's case where there is no need
   // for any default key.
   if (type(options) !== 'object') {
+<<<<<<< HEAD
     if (type(options) === 'string' && this.key) {
       var key = options;
       options = {};
@@ -2200,6 +2215,12 @@ function Provider (options, ready, analytics) {
     } else {
       throw new Error('Couldnt resolve options.');
     }
+=======
+    if (!this.key) throw new Error('Couldnt resolve options.');
+    var key = options;
+    options = {};
+    options[this.key] = key;
+>>>>>>> getsatisfaction
   }
 
   // Extend the passed-in options with our defaults.
@@ -2712,7 +2733,8 @@ require.register("analytics/src/providers/clicktale.js", function(exports, requi
 
 var date     = require('load-date')
   , Provider = require('../provider')
-  , load     = require('load-script');
+  , load     = require('load-script')
+  , onBody   = require('on-body');
 
 module.exports = Provider.extend({
 
@@ -2746,36 +2768,32 @@ module.exports = Provider.extend({
 
 
   initialize : function (options, ready) {
-
     // If we're on https:// but don't have a secure library, return early.
     if (document.location.protocol === 'https:' && !options.httpsCdnUrl) return;
 
-    // ClickTale wants this at the "top" of the page. The
-    // analytics.js snippet sets this date synchronously now,
-    // and  makes it available via load-date.
+    // ClickTale wants this at the "top" of the page. The analytics.js snippet
+    // sets this date synchronously now, and makes it available via load-date.
     window.WRInitTime = date.getTime();
 
-
-    // Make the `<div>` element and insert it at the end of the body.
-    var createClickTaleDiv = function () {
-      // loop until the body is actually available
-      if (!document.body) return setTimeout(createClickTaleDiv, 5);
-
+    // Add the required ClickTale div to the body.
+    onBody(function (body) {
       var div = document.createElement('div');
       div.setAttribute('id', 'ClickTaleDiv');
       div.setAttribute('style', 'display: none;');
-      document.body.appendChild(div);
-    };
-    createClickTaleDiv();
+      body.appendChild(div);
+    });
 
     var onloaded = function () {
-      window.ClickTale(options.projectId, options.recordingRatio, options.partitionId);
+      window.ClickTale(
+        options.projectId,
+        options.recordingRatio,
+        options.partitionId
+      );
       ready();
     };
 
-    // Load the appropriate CDN library, if no
-    // ssl library is provided and we're on ssl then
-    // we can't load anything (always true for non-premium accounts.)
+    // If no SSL library is provided and we're on SSL then we can't load
+    // anything (always true for non-premium accounts).
     load({
       http  : options.httpCdnUrl,
       https : options.httpsCdnUrl
@@ -3120,6 +3138,47 @@ module.exports = Provider.extend({
 
   pageview : function (url) {
     window._gauges.push(['track']);
+  }
+
+});
+});
+require.register("analytics/src/providers/get-satisfaction.js", function(exports, require, module){
+// You have to be signed in to access the snippet code:
+// https://console.getsatisfaction.com/start/101022?signup=true#engage
+
+var Provider = require('../provider')
+  , load     = require('load-script')
+  , onBody   = require('on-body');
+
+
+module.exports = Provider.extend({
+
+  name : 'Get Satisfaction',
+
+  key : 'widgetId',
+
+  defaults : {
+    widgetId : null
+  },
+
+  initialize : function (options, ready) {
+    // Get Satisfaction requires a div that will become their widget tab. Append
+    // it once `document.body` exists.
+    var div = document.createElement('div');
+    var id = div.id = 'getsat-widget-' + options.widgetId;
+    onBody(function (body) {
+      body.appendChild(div);
+    });
+
+    // Usually they load their snippet synchronously, so we need to wait for it
+    // to come back before initializing the tab.
+    load('https://loader.engage.gsfn.us/loader.js', function () {
+      if (window.GSFN !== undefined) {
+        window.GSFN.loadWidget(options.widgetId, { containerId : id });
+      }
+      ready();
+    });
+
   }
 
 });
@@ -3494,6 +3553,7 @@ module.exports = [
   require('./errorception'),
   require('./foxmetrics'),
   require('./gauges'),
+  require('./get-satisfaction'),
   require('./google-analytics'),
   require('./gosquared'),
   require('./heap'),
@@ -4817,8 +4877,11 @@ require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
+<<<<<<< HEAD
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
 
+=======
+>>>>>>> getsatisfaction
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");

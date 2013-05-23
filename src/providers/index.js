@@ -12,6 +12,7 @@ module.exports = [
   require('./errorception'),
   require('./foxmetrics'),
   require('./gauges'),
+  require('./get-satisfaction'),
   require('./google-analytics'),
   require('./gosquared'),
   require('./heap'),

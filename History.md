@@ -1,11 +1,13 @@
 0.10.6 / 2013-5-22
 ==================
 * Moved trait parsing logic to the global level
+* Added [Improvely](http://www.improvely.com/)
+* Added [Get Satisfaction](https://getsatisfaction.com/)
 
 0.10.5 / 2013-5-22
 ==================
-* Adding [Amplitude](https://amplitude.com/) support
-* Fix for improperly parsed cookies
+* Added [Amplitude](https://amplitude.com/) support
+* Fixed improperly parsed cookies
 
 0.10.4 / 2013-5-17
 ==================
@@ -147,7 +149,7 @@
 
 0.8.7 / 2013-3-7
 ================
-* [Qualaroo](https://qualaroo.com/)
+* Added [Qualaroo](https://qualaroo.com/)
 * Fixed bug with Chartbeat and page load times
 
 0.8.6 / 2013-3-7
@@ -157,9 +159,9 @@
 
 0.8.5 / 2013-3-7
 ================
-* [Storyberg](http://storyberg.com/) by [@kevinicus](https://github.com/kevinicus)
-* [BugHerd](http://bugherd.com)
-* [ClickTale](http://clicktale.com)
+* Added [Storyberg](http://storyberg.com/) by [@kevinicus](https://github.com/kevinicus)
+* Added [BugHerd](http://bugherd.com)
+* Added [ClickTale](http://clicktale.com)
 * Cleaned up extraneous `require`'s in many providers
 
 0.8.4 / 2013-3-5
@@ -169,7 +171,7 @@
 
 0.8.3 / 2013-3-4
 =================
-* [Sentry](https://getsentry.com)
+* Added [Sentry](https://getsentry.com)
 * Added initial pageview support to more providers
 * Allowed HubSpot to recognize email `userId`
 * Added support for DoubleClick [via Google Analytics](http://support.google.com/analytics/bin/answer.py?hl=en&answer=2444872)
@@ -250,7 +252,7 @@
 
 0.4.4 / 2013-1-21
 =================
-* [Bitdeli](https://bitdeli.com/) by [@jtuulos](https://github.com/jtuulos)
+* Added [Bitdeli](https://bitdeli.com/) by [@jtuulos](https://github.com/jtuulos)
 * Added Mixpanel `$first_name` and `$last_name` aliases by [@dwradcliffe](https://github.com/dwradcliffe)
 * Fixed Mixpanel `$last_seen` alias
 * Added `parseUrl` util
@@ -266,8 +268,8 @@
 
 0.4.1 / 2013-1-18
 =================
-* [Keen.io](http://keen.io/) by [@dkador](https://github.com/dkador)
-* [Foxmetrics](http://foxmetrics.com/) by [@rawsoft](https://github.com/rawsoft)
+* Added [Keen.io](http://keen.io/) by [@dkador](https://github.com/dkador)
+* Added [Foxmetrics](http://foxmetrics.com/) by [@rawsoft](https://github.com/rawsoft)
 * Updated Google Analytics to include noninteraction and value added by [@rantav](https://github.com/rantav)
 * Moved to expect.js from chai for cross-broser support
 
@@ -282,13 +284,13 @@
 
 0.3.7 / 2013-1-17
 =================
-* [HitTail](http://hittail.com)
-* [USERcycle](http://usercycle.com)
+* Added [HitTail](http://hittail.com)
+* Added [USERcycle](http://usercycle.com)
 * Fixed Travis testing
 
 0.3.6 / 2013-1-14
 =================
-* [SnapEngage](http://snapengage.com)
+* Added [SnapEngage](http://snapengage.com)
 
 0.3.5 / 2013-1-14
 =================
@@ -300,11 +302,11 @@
 
 0.3.3 / 2013-1-11
 =================
-* [comScore Direct](http://direct.comscore.com)
+* Added [comScore Direct](http://direct.comscore.com)
 
 0.3.2 / 2013-1-11
 =================
-* [Quantcast](http://quantcast.com)
+* Added [Quantcast](http://quantcast.com)
 * Fixed breaking issue on Clicky
 * Updated Makefile for new providers
 
@@ -315,14 +317,14 @@
 
 0.3.0 / 2013-1-9
 ================
-* [Gauges](http://get.gaug.es/) by [@bdougherty](https://github.com/bdougherty)
-* [Vero](http://www.getvero.com/)
+* Added [Gauges](http://get.gaug.es/) by [@bdougherty](https://github.com/bdougherty)
+* Added [Vero](http://www.getvero.com/)
 * Added optional `url` argument to `pageview` method
 
 0.2.5 / 2013-1-8
 ================
-* [Errorception](http://errorception.com/)
-* [Clicky](http://clicky.com/)
+* Added [Errorception](http://errorception.com/)
+* Added [Clicky](http://clicky.com/)
 * Fixed IE 7 bug reported by [@yefremov](https://github.com/yefremov)
 
 0.2.4 / 2013-1-3
@@ -360,9 +362,9 @@
 ==================
 * Fixed bug with HubSpot calls pre-script load
 * Upgraded sinon-chai to use [callWithMatch version](https://github.com/obmarg/sinon-chai/blob/f7aa7eccd6c0c18a3e1fc524a246a50c1a29c916/lib/sinon-chai.js)
-* [Klaviyo](http://www.klaviyo.com/) by [@bialecki](https://github.com/bialecki)
-* [HubSpot](http://www.hubspot.com/) by [@jessbrandi](https://github.com/jessbrandi)
-* [GoSquared](https://www.gosquared.com/) by [@simontabor](https://github.com/simontabor)
+* Added [Klaviyo](http://www.klaviyo.com/) by [@bialecki](https://github.com/bialecki)
+* Added [HubSpot](http://www.hubspot.com/) by [@jessbrandi](https://github.com/jessbrandi)
+* Added [GoSquared](https://www.gosquared.com/) by [@simontabor](https://github.com/simontabor)
 
 0.1.1 / 2012-10-25
 ==================
@@ -371,7 +373,7 @@
 
 0.1.0 / 2012-10-11
 ==================
-* [Olark](http://www.olark.com/)
+* Added [Olark](http://www.olark.com/)
 * Added terse `initialize` syntax
 * Added tests for all providers
 * Added README

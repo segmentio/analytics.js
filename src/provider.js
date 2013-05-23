@@ -31,12 +31,12 @@ function Provider (options, ready, analytics) {
   // allow for it to be `true`, like in Optimizely's case where there is no need
   // for any default key.
   if (type(options) !== 'object') {
-    if (type(options) === 'string' && this.key) {
+    if (options === true) {
+      options = {};
+    } else if (this.key) {
       var key = options;
       options = {};
       options[this.key] = key;
-    } else if (options === true) {
-      options = {};
     } else {
       throw new Error('Couldnt resolve options.');
     }

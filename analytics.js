@@ -1,12 +1,5 @@
 ;(function(){
 
-
-/**
- * hasOwnProperty.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
 /**
  * Require the given path.
  *
@@ -83,10 +76,10 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (has.call(require.modules, path)) return path;
+    if (require.modules.hasOwnProperty(path)) return path;
   }
 
-  if (has.call(require.aliases, index)) {
+  if (require.aliases.hasOwnProperty(index)) {
     return require.aliases[index];
   }
 };
@@ -140,7 +133,7 @@ require.register = function(path, definition) {
  */
 
 require.alias = function(from, to) {
-  if (!has.call(require.modules, from)) {
+  if (!require.modules.hasOwnProperty(from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
   require.aliases[to] = from;
@@ -202,7 +195,7 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return has.call(require.modules, localRequire.resolve(path));
+    return require.modules.hasOwnProperty(localRequire.resolve(path));
   };
 
   return localRequire;
@@ -1455,7 +1448,6 @@ function call (callback) {
   callback(document.body);
 }
 });
-<<<<<<< HEAD
 require.register("timoxley-next-tick/index.js", function(exports, require, module){
 if (typeof setImmediate == 'function') {
   module.exports = function(ƒ){ setImmediate(ƒ) }
@@ -1490,8 +1482,6 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 }
 
 });
-=======
->>>>>>> getsatisfaction
 require.register("yields-prevent/index.js", function(exports, require, module){
 
 /**
@@ -1559,11 +1549,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-<<<<<<< HEAD
-  this.VERSION = '0.10.5';
-=======
-  this.VERSION = '0.9.7';
->>>>>>> getsatisfaction
+  this.VERSION = '0.10.6';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -2170,6 +2156,7 @@ var cleanTraits = function (userId, traits) {
 
   return traits;
 };
+
 });
 require.register("analytics/src/provider.js", function(exports, require, module){
 var each   = require('each')
@@ -2205,22 +2192,15 @@ function Provider (options, ready, analytics) {
   // allow for it to be `true`, like in Optimizely's case where there is no need
   // for any default key.
   if (type(options) !== 'object') {
-<<<<<<< HEAD
-    if (type(options) === 'string' && this.key) {
+    if (options === true) {
+      options = {};
+    } else if (this.key) {
       var key = options;
       options = {};
       options[this.key] = key;
-    } else if (options === true) {
-      options = {};
     } else {
       throw new Error('Couldnt resolve options.');
     }
-=======
-    if (!this.key) throw new Error('Couldnt resolve options.');
-    var key = options;
-    options = {};
-    options[this.key] = key;
->>>>>>> getsatisfaction
   }
 
   // Extend the passed-in options with our defaults.
@@ -3200,30 +3180,27 @@ module.exports = Provider.extend({
   key : 'trackingId',
 
   defaults : {
-    universalClient: false,
-    // Your Google Analytics Tracking ID.
-    trackingId : null,
-    // Whether or not to track and initial pageview when initialized.
-    initialPageview : true,
-    // An optional domain setting, to restrict where events can originate from.
-    domain : null,
     // Whether to anonymize the IP address collected for the user.
     anonymizeIp : false,
+    // An optional domain setting, to restrict where events can originate from.
+    domain : null,
+    // Whether to enable GOogle's DoubleClick remarketing feature.
+    doubleClick : false,
     // Whether to use Google Analytics's Enhanced Link Attribution feature:
     // http://support.google.com/analytics/bin/answer.py?hl=en&answer=2558867
     enhancedLinkAttribution : false,
+    // A domain to ignore for referrers. Maps to _addIgnoredRef
+    ignoreReferrer : null,
+    // Whether or not to track and initial pageview when initialized.
+    initialPageview : true,
     // The setting to use for Google Analytics's Site Speed Sample Rate feature:
     // https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setSiteSpeedSampleRate
     siteSpeedSampleRate : null,
-    // Whether to enable GOogle's DoubleClick remarketing feature.
-    doubleClick : false,
-    // A domain to ignore for referrers. Maps to _addIgnoredRef
-    ignoreReferrer : null
+    // Your Google Analytics Tracking ID.
+    trackingId : null,
+    // Whether you're using the new Universal Analytics or not.
+    universalClient: false
   },
-
-  //
-  // Initialize
-  //
 
   initialize : function (options, ready) {
     if (options.universalClient) this.initializeUniversal(options, ready);
@@ -3311,10 +3288,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-  //
-  // Track
-  //
-
   track : function (event, properties) {
 
     properties || (properties = {});
@@ -3335,13 +3308,13 @@ module.exports = Provider.extend({
         opts.nonInteraction = properties.noninteraction;
 
       window[this.global](
-         'send',
-         'event',
-         properties.category || 'All',
-         event,
-         properties.label,
-         Math.round(properties.revenue) || value,
-         opts
+        'send',
+        'event',
+        properties.category || 'All',
+        event,
+        properties.label,
+        Math.round(properties.revenue) || value,
+        opts
       );
 
     } else {
@@ -3356,11 +3329,6 @@ module.exports = Provider.extend({
       ]);
     }
   },
-
-
-  //
-  // Page View
-  //
 
   pageview : function (url) {
     if (this.options.universalClient) {
@@ -4877,11 +4845,8 @@ require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
-<<<<<<< HEAD
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
 
-=======
->>>>>>> getsatisfaction
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");

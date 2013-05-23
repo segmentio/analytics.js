@@ -14,30 +14,27 @@ module.exports = Provider.extend({
   key : 'trackingId',
 
   defaults : {
-    universalClient: false,
-    // Your Google Analytics Tracking ID.
-    trackingId : null,
-    // Whether or not to track and initial pageview when initialized.
-    initialPageview : true,
-    // An optional domain setting, to restrict where events can originate from.
-    domain : null,
     // Whether to anonymize the IP address collected for the user.
     anonymizeIp : false,
+    // An optional domain setting, to restrict where events can originate from.
+    domain : null,
+    // Whether to enable GOogle's DoubleClick remarketing feature.
+    doubleClick : false,
     // Whether to use Google Analytics's Enhanced Link Attribution feature:
     // http://support.google.com/analytics/bin/answer.py?hl=en&answer=2558867
     enhancedLinkAttribution : false,
+    // A domain to ignore for referrers. Maps to _addIgnoredRef
+    ignoreReferrer : null,
+    // Whether or not to track and initial pageview when initialized.
+    initialPageview : true,
     // The setting to use for Google Analytics's Site Speed Sample Rate feature:
     // https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setSiteSpeedSampleRate
     siteSpeedSampleRate : null,
-    // Whether to enable GOogle's DoubleClick remarketing feature.
-    doubleClick : false,
-    // A domain to ignore for referrers. Maps to _addIgnoredRef
-    ignoreReferrer : null
+    // Your Google Analytics Tracking ID.
+    trackingId : null,
+    // Whether you're using the new Universal Analytics or not.
+    universalClient: false
   },
-
-  //
-  // Initialize
-  //
 
   initialize : function (options, ready) {
     if (options.universalClient) this.initializeUniversal(options, ready);
@@ -125,10 +122,6 @@ module.exports = Provider.extend({
     ready();
   },
 
-  //
-  // Track
-  //
-
   track : function (event, properties) {
 
     properties || (properties = {});
@@ -149,13 +142,13 @@ module.exports = Provider.extend({
         opts.nonInteraction = properties.noninteraction;
 
       window[this.global](
-         'send',
-         'event',
-         properties.category || 'All',
-         event,
-         properties.label,
-         Math.round(properties.revenue) || value,
-         opts
+        'send',
+        'event',
+        properties.category || 'All',
+        event,
+        properties.label,
+        Math.round(properties.revenue) || value,
+        opts
       );
 
     } else {
@@ -170,11 +163,6 @@ module.exports = Provider.extend({
       ]);
     }
   },
-
-
-  //
-  // Page View
-  //
 
   pageview : function (url) {
     if (this.options.universalClient) {

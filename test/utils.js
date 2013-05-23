@@ -106,6 +106,11 @@ window.test = {
 
   'HubSpot' : 'x',
 
+  'Improvely' : {
+    im_domain     : 'demo',
+    im_project_id : 1
+  },
+
   'Intercom' : {
     appId     : 'x',
     activator : '#someElement',

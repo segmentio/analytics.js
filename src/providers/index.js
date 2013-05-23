@@ -17,6 +17,7 @@ module.exports = [
   require('./heap'),
   require('./hittail'),
   require('./hubspot'),
+  require('./improvely'),
   require('./intercom'),
   require('./keen-io'),
   require('./kissmetrics'),

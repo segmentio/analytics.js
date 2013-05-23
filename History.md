@@ -1,3 +1,7 @@
+0.10.6 / 2013-5-22
+==================
+* Moved trait parsing logic to the global level
+
 0.10.5 / 2013-5-22
 ==================
 * Adding [Amplitude](https://amplitude.com/) support

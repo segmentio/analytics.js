@@ -3499,6 +3499,7 @@ module.exports = [
   require('./heap'),
   require('./hittail'),
   require('./hubspot'),
+  require('./improvely'),
   require('./intercom'),
   require('./keen-io'),
   require('./kissmetrics'),
@@ -3521,6 +3522,58 @@ module.exports = [
   require('./vero'),
   require('./woopra')
 ];
+
+});
+require.register("analytics/src/providers/improvely.js", function(exports, require, module){
+// http://www.improvely.com/docs/landing-page-code
+// http://www.improvely.com/docs/conversion-code
+// http://www.improvely.com/docs/labeling-visitors
+
+var Provider = require('../provider')
+  , alias    = require('alias')
+  , load     = require('load-script');
+
+
+module.exports = Provider.extend({
+
+  name : 'Improvely',
+
+  defaults : {
+    // Improvely requires two options: `im_domain` and `im_project_id`.
+    im_domain : null,
+    im_project_id : 1
+  },
+
+  initialize : function (options, ready) {
+    window._improvely = window._improvely || [];
+    window.improvely = window.improvely || {
+      init  : function (e, t) { window._improvely.push(["init", e, t]); },
+      goal  : function (e) { window._improvely.push(["goal", e]); },
+      label : function (e) { window._improvely.push(["label", e]); }
+    };
+
+    load('//' + options.im_domain + '.iljmp.com/improvely.js');
+    window.improvely.init(options.im_domain, options.im_project_id);
+
+    // Improvely creates a queue, so it's ready immediately.
+    ready();
+  },
+
+  identify : function (userId, traits) {
+    if (userId) window.improvely.label(userId);
+  },
+
+  track : function (event, properties) {
+    // Improvely calls `revenue` `amount`, and puts the `event` in properties as
+    // the `type`.
+    properties || (properties = {});
+    properties.type = event;
+    alias(properties, { 'revenue' : 'amount' });
+    window.improvely.goal(properties);
+  }
+
+});
+
 });
 require.register("analytics/src/providers/intercom.js", function(exports, require, module){
 // http://docs.intercom.io/

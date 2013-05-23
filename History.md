@@ -3,6 +3,7 @@
 * Moved trait parsing logic to the global level
 * Added [Improvely](http://www.improvely.com/)
 * Added [Get Satisfaction](https://getsatisfaction.com/)
+* Added a `$phone` alias for Mixpanel
 
 0.10.5 / 2013-5-22
 ==================

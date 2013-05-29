@@ -1,3 +1,7 @@
+0.11.0 / 2013-5-28
+==================
+* Switched from cookie-ing to localStorage
+
 0.10.6 / 2013-5-23
 ==================
 * Moved trait parsing logic to the global level

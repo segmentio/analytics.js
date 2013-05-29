@@ -2,7 +2,7 @@
   "name": "analytics",
   "repo": "segmentio/analytics.js",
   "description": "The hassle-free way to integrate analytics into any web application.",
-  "version": "0.10.6",
+  "version": "0.11.0",
   "keywords": [
     "analytics",
     "analytics.js",
@@ -58,6 +58,7 @@
     "component/each": "*",
     "component/event": "*",
     "component/json": "*",
+    "component/json-fallback": "*",
     "component/object": "*",
     "component/querystring": "*",
     "component/type": "*",

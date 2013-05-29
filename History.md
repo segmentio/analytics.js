@@ -1,3 +1,7 @@
+0.11.1 / 2013-5-29
+==================
+* Fixed bug with Google Analytics not tracking integer `value`s.
+
 0.11.0 / 2013-5-28
 ==================
 * Switched from cookie-ing to localStorage

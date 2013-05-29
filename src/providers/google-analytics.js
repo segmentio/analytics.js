@@ -123,24 +123,21 @@ module.exports = Provider.extend({
   },
 
   track : function (event, properties) {
-
     properties || (properties = {});
 
     var value;
 
-    // Since value is a common property name, ensure it is a number
-    if (type(properties.value) === 'number') value = properties.value;
+    // Since value is a common property name, ensure it is a number and Google
+    // requires that it be an integer.
+    if (type(properties.value) === 'number') value = Math.round(properties.value);
 
     // Try to check for a `category` and `label`. A `category` is required,
     // so if it's not there we use `'All'` as a default. We can safely push
     // undefined if the special properties don't exist. Try using revenue
     // first, but fall back to a generic `value` as well.
     if (this.options.universalClient) {
-
       var opts = {};
-      if (properties.noninteraction)
-        opts.nonInteraction = properties.noninteraction;
-
+      if (properties.noninteraction) opts.nonInteraction = properties.noninteraction;
       window[this.global](
         'send',
         'event',
@@ -150,9 +147,7 @@ module.exports = Provider.extend({
         Math.round(properties.revenue) || value,
         opts
       );
-
     } else {
-
       window._gaq.push([
         '_trackEvent',
         properties.category || 'All',

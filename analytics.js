@@ -521,7 +521,7 @@ exports.unbind = function(el, type, fn, capture){
 require.register("component-json/index.js", function(exports, require, module){
 
 module.exports = 'undefined' == typeof JSON
-  ? require('component-json-fallback')
+  ? require('json-fallback')
   : JSON;
 
 });
@@ -1219,7 +1219,7 @@ exports.parse = function(url){
   return {
     href: a.href,
     host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
+    port: a.port || location.port,
     hash: a.hash,
     hostname: a.hostname || location.hostname,
     pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
@@ -1455,42 +1455,13 @@ require.register("segmentio-new-date/index.js", function(exports, require, modul
 var type = require('type');
 
 
-/**
- * Returns a new Javascript Date object, allowing a variety of extra input types
- * over the native one.
- *
- * @param {Date|String|Number} input
- */
-
-module.exports = function newDate (input) {
-
-  // Convert input from seconds to milliseconds.
-  input = toMilliseconds(input);
+module.exports = function newDate (date) {
+  // Milliseconds would be greater than 31557600000 (December 31, 1970).
+  if ('number' === type(date) && date < 31557600000) date = date * 1000;
 
   // By default, delegate to Date, which will return `Invalid Date`s if wrong.
-  var date = new Date(input);
-
-  // If we have a string that the Date constructor couldn't parse, convert it.
-  if (isNaN(date.getTime()) && 'string' === type(input)) {
-    var milliseconds = toMilliseconds(parseInt(input, 10));
-    date = new Date(milliseconds);
-  }
-
-  return date;
+  return new Date(date);
 };
-
-
-/**
- * If the number passed in is seconds from the epoch, turn it into milliseconds.
- * Milliseconds would be greater than 31557600000 (December 31, 1970).
- *
- * @param seconds
- */
-
-function toMilliseconds (seconds) {
-  if ('number' === type(seconds) && seconds < 31557600000) return seconds * 1000;
-  return seconds;
-}
 });
 require.register("segmentio-on-body/index.js", function(exports, require, module){
 var each = require('each');
@@ -1803,7 +1774,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.11.0';
+  this.VERSION = '0.11.1';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -3775,24 +3746,21 @@ module.exports = Provider.extend({
   },
 
   track : function (event, properties) {
-
     properties || (properties = {});
 
     var value;
 
-    // Since value is a common property name, ensure it is a number
-    if (type(properties.value) === 'number') value = properties.value;
+    // Since value is a common property name, ensure it is a number and Google
+    // requires that it be an integer.
+    if (type(properties.value) === 'number') value = Math.round(properties.value);
 
     // Try to check for a `category` and `label`. A `category` is required,
     // so if it's not there we use `'All'` as a default. We can safely push
     // undefined if the special properties don't exist. Try using revenue
     // first, but fall back to a generic `value` as well.
     if (this.options.universalClient) {
-
       var opts = {};
-      if (properties.noninteraction)
-        opts.nonInteraction = properties.noninteraction;
-
+      if (properties.noninteraction) opts.nonInteraction = properties.noninteraction;
       window[this.global](
         'send',
         'event',
@@ -3802,9 +3770,7 @@ module.exports = Provider.extend({
         Math.round(properties.revenue) || value,
         opts
       );
-
     } else {
-
       window._gaq.push([
         '_trackEvent',
         properties.category || 'All',
@@ -5359,5 +5325,5 @@ if (typeof exports == "object") {
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("analytics"); });
 } else {
-  window["analytics"] = require("analytics");
+  this["analytics"] = require("analytics");
 }})();

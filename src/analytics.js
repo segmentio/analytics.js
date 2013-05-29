@@ -1,10 +1,12 @@
 var after          = require('after')
   , bind           = require('event').bind
   , clone          = require('clone')
+  , cookie         = require('./cookie')
   , each           = require('each')
   , extend         = require('extend')
   , isEmail        = require('is-email')
   , isMeta         = require('is-meta')
+  , localStore     = require('./localStore')
   , newDate        = require('new-date')
   , size           = require('object').length
   , preventDefault = require('prevent')
@@ -111,6 +113,8 @@ extend(Analytics.prototype, {
    */
 
   initialize : function (providers, options) {
+    options || (options = {});
+
     var self = this;
 
     // Reset our state.
@@ -118,8 +122,12 @@ extend(Analytics.prototype, {
     this.initialized = false;
     this.readied = false;
 
-    // Set the user options, and load the user from our cookie.
-    user.options(options);
+    // Set the storage options
+    cookie.options(options.cookie);
+    localStore.options(options.localStorage);
+
+    // Set the options for loading and saving the user
+    user.options(options.user);
     user.load();
 
     // Create a ready method that will call all of our ready callbacks after all

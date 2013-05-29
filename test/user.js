@@ -3,7 +3,8 @@
 describe('User tests', function () {
 
   var user   = require('analytics/src/user.js')
-    , cookie = require('component-cookie');
+    , cookie = require('analytics/src/cookie.js')
+    , json   = require('component-json');
 
   describe('#id()', function () {
     before(user.clear);
@@ -108,7 +109,7 @@ describe('User tests', function () {
       });
     });
 
-    it('loads properly from the cookie', function () {
+    it('loads id properly from the cookie', function () {
       user.update('newId', { dog : 'dog' });
       var stored = user.load();
       expect(stored).to.eql({
@@ -116,23 +117,26 @@ describe('User tests', function () {
         traits : { dog : 'dog' }
       });
 
-      var cookieStr = cookie(user.cookie.name);
+      var cookieStr = cookie.get(user.cookie().key);
       user.clear();
-      cookie(user.cookie.name, cookieStr, clone(user.cookie));
+      cookie.set(user.cookie().key, cookieStr);
       stored = user.load();
       expect(stored).to.eql({
         id : 'newId',
-        traits : { dog : 'dog' }
+        traits : {}
       });
     });
 
-    it('does not throw on a malformed cookie', function () {
-      cookie(user.cookie.name, 'xxx', clone(user.cookie));
-      var stored = user.load();
-      expect(stored).to.eql({
-        id     : null,
-        traits : {}
-      });
+    it('loads from an old cookie', function () {
+      user.clear();
+      var oldUser = {
+        id     : 'oldId',
+        traits : { cat : 'dog' }
+      };
+      cookie.set(user.cookie().oldKey, oldUser);
+      user.load();
+      expect(user.id()).to.eql(oldUser.id);
+      expect(user.traits()).to.eql(oldUser.traits);
     });
   });
 
@@ -144,33 +148,32 @@ describe('User tests', function () {
       expect(user.id()).to.be(null);
       expect(user.traits()).to.eql({});
       expect(user.load()).to.eql({ id : null, traits : {}});
-      expect(cookie(user.cookie.name)).to.be(undefined);
+      expect(cookie.get(user.cookie().key)).to.be(null);
     });
   });
 
 
   describe('#options()', function () {
 
-    it('sets cookie options', function () {
-      user.options({ cookie : false });
-      expect(user.cookie.enabled).to.be(false);
+    it('properly saves the options', function () {
+      user.options({
+        cookie : {
+          key : 'new_key'
+        },
+        localStorage : {
+          key : 'x'
+        }
+      });
 
-      user.options({ cookie : {
-                      name   : 'test_cookie',
-                      maxage : 123,
-                      path   : '/test',
-                      domain : 'segment.io'
-                   }});
-      expect(user.cookie.name).to.be('test_cookie');
-      expect(user.cookie.enabled).to.be(true);
-      expect(user.cookie.maxage).to.be(123);
-      expect(user.cookie.path).to.be('/test');
-      expect(user.cookie.domain).to.be('.segment.io');
+      expect(user.localStorage()).to.eql({ key : 'x' });
+      expect(user.cookie()).to.eql({ key : 'new_key', oldKey : 'ajs_user' });
+      expect(user.persist).to.be(true);
     });
 
-    it('doesn\'t use the cookie if cookie === false', function () {
+
+    it('doesn\'t use the storage if persist === false', function () {
       user.clear();
-      user.options({ cookie : false });
+      user.options({ persist : false });
       var stored = user.load();
       expect(stored).to.eql({
         id     : null,
@@ -180,7 +183,7 @@ describe('User tests', function () {
       user.update('myId', { trait : 4 });
       expect(user.id()).to.be('myId');
       expect(user.traits()).to.eql({ trait: 4 });
-      expect(cookie(user.cookie.name)).to.be(undefined);
+      expect(cookie.get(user.cookie().key)).to.be(null);
     });
   });
 });

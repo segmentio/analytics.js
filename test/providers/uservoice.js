@@ -23,8 +23,6 @@ describe('UserVoice', function () {
         primary_color     : '#cc6d00',
         link_color        : '#007dbf',
         default_mode      : 'support',
-        support_tab_name  : null,
-        feedback_tab_name : null,
         tab_label         : 'Feedback & Support',
         tab_color         : '#cc6d00',
         tab_position      : 'middle-right',

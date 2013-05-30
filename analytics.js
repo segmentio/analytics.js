@@ -521,7 +521,7 @@ exports.unbind = function(el, type, fn, capture){
 require.register("component-json/index.js", function(exports, require, module){
 
 module.exports = 'undefined' == typeof JSON
-  ? require('json-fallback')
+  ? require('component-json-fallback')
   : JSON;
 
 });
@@ -1219,7 +1219,7 @@ exports.parse = function(url){
   return {
     href: a.href,
     host: a.host || location.host,
-    port: a.port || location.port,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
     hostname: a.hostname || location.hostname,
     pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
@@ -1455,13 +1455,42 @@ require.register("segmentio-new-date/index.js", function(exports, require, modul
 var type = require('type');
 
 
-module.exports = function newDate (date) {
-  // Milliseconds would be greater than 31557600000 (December 31, 1970).
-  if ('number' === type(date) && date < 31557600000) date = date * 1000;
+/**
+ * Returns a new Javascript Date object, allowing a variety of extra input types
+ * over the native one.
+ *
+ * @param {Date|String|Number} input
+ */
+
+module.exports = function newDate (input) {
+
+  // Convert input from seconds to milliseconds.
+  input = toMilliseconds(input);
 
   // By default, delegate to Date, which will return `Invalid Date`s if wrong.
-  return new Date(date);
+  var date = new Date(input);
+
+  // If we have a string that the Date constructor couldn't parse, convert it.
+  if (isNaN(date.getTime()) && 'string' === type(input)) {
+    var milliseconds = toMilliseconds(parseInt(input, 10));
+    date = new Date(milliseconds);
+  }
+
+  return date;
 };
+
+
+/**
+ * If the number passed in is seconds from the epoch, turn it into milliseconds.
+ * Milliseconds would be greater than 31557600000 (December 31, 1970).
+ *
+ * @param seconds
+ */
+
+function toMilliseconds (seconds) {
+  if ('number' === type(seconds) && seconds < 31557600000) return seconds * 1000;
+  return seconds;
+}
 });
 require.register("segmentio-on-body/index.js", function(exports, require, module){
 var each = require('each');
@@ -5081,8 +5110,6 @@ module.exports = Provider.extend({
     primaryColor      : '#cc6d00',
     linkColor         : '#007dbf',
     defaultMode       : 'support',
-    supportTabName    : null,
-    feedbackTabName   : null,
     tabLabel          : 'Feedback & Support',
     tabColor          : '#cc6d00',
     tabPosition       : 'middle-right',
@@ -5099,8 +5126,6 @@ module.exports = Provider.extend({
       'primaryColor'    : 'primary_color',
       'linkColor'       : 'link_color',
       'defaultMode'     : 'default_mode',
-      'supportTabName'  : 'support_tab_name',
-      'feedbackTabName' : 'feedback_tab_name',
       'tabLabel'        : 'tab_label',
       'tabColor'        : 'tab_color',
       'tabPosition'     : 'tab_position',
@@ -5325,5 +5350,5 @@ if (typeof exports == "object") {
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("analytics"); });
 } else {
-  this["analytics"] = require("analytics");
+  window["analytics"] = require("analytics");
 }})();

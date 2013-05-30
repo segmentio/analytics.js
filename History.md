@@ -1,3 +1,8 @@
+0.11.2 / 2013-5-30
+==================
+* Adding fix for UserVoice displaying 'null'
+* Adding make clean before running components (fixes json fallback)
+
 0.11.1 / 2013-5-29
 ==================
 * Fixed bug with Google Analytics not tracking integer `value`s.

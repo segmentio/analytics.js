@@ -62,14 +62,16 @@ module.exports = Provider.extend({
   identify : function (userId, traits) {
     // Alias the traits' keys with dollar signs for Mixpanel's API.
     alias(traits, {
-      'created'   : '$created',
-      'email'     : '$email',
-      'firstName' : '$first_name',
-      'lastName'  : '$last_name',
-      'lastSeen'  : '$last_seen',
-      'name'      : '$name',
-      'username'  : '$username',
-      'phone'     : '$phone'
+      'created'           : '$created',
+      'email'             : '$email',
+      'firstName'         : '$first_name',
+      'lastName'          : '$last_name',
+      'lastSeen'          : '$last_seen',
+      'name'              : '$name',
+      'username'          : '$username',
+      'phone'             : '$phone',
+      'referrer'          : '$referrer',
+      'initial_referrer'  : '$initial_referrer'
     });
 
     // Finally, call all of the identify equivalents. Verify certain calls

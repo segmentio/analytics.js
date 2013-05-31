@@ -64,7 +64,7 @@ User.prototype.localStorage = function (options) {
 
   options || (options = {});
   defaults(options, {
-    key    : 'ajs_user_traits',
+    key    : 'ajs_user_traits'
   });
   this.localStorageOptions = options;
 };

@@ -1803,7 +1803,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.11.1';
+  this.VERSION = '0.11.3';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -2809,7 +2809,7 @@ User.prototype.localStorage = function (options) {
 
   options || (options = {});
   defaults(options, {
-    key    : 'ajs_user_traits',
+    key    : 'ajs_user_traits'
   });
   this.localStorageOptions = options;
 };

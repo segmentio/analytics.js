@@ -1,3 +1,7 @@
+0.11.3 / 2013-5-31
+==================
+* Adding trailing comma fix
+
 0.11.2 / 2013-5-30
 ==================
 * Adding fix for UserVoice displaying 'null'

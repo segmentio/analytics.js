@@ -1,15 +1,19 @@
+0.11.4 / 2013-05-31
+===================
+* Updated Intercom's library URL
+
 0.11.3 / 2013-5-31
 ==================
-* Adding trailing comma fix
+* Added trailing comma fix
 
 0.11.2 / 2013-5-30
 ==================
-* Adding fix for UserVoice displaying 'null'
-* Adding make clean before running components (fixes json fallback)
+* Added fix for UserVoice displaying `'null'`
+* Added `make clean` before running components (fixes json fallback)
 
 0.11.1 / 2013-5-29
 ==================
-* Fixed bug with Google Analytics not tracking integer `value`s.
+* Fixed bug with Google Analytics not tracking integer `value`s
 
 0.11.0 / 2013-5-28
 ==================

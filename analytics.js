@@ -1803,7 +1803,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.11.3';
+  this.VERSION = '0.11.4';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -4114,7 +4114,7 @@ module.exports = Provider.extend({
   },
 
   initialize : function (options, ready) {
-    load('https://api.intercom.io/api/js/library.js', ready);
+    load('https://static.intercomcdn.com/intercom.v1.js', ready);
   },
 
   identify : function (userId, traits, options) {
@@ -5350,5 +5350,5 @@ if (typeof exports == "object") {
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("analytics"); });
 } else {
-  window["analytics"] = require("analytics");
+  this["analytics"] = require("analytics");
 }})();

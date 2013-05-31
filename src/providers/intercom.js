@@ -27,7 +27,7 @@ module.exports = Provider.extend({
   },
 
   initialize : function (options, ready) {
-    load('https://api.intercom.io/api/js/library.js', ready);
+    load('https://static.intercomcdn.com/intercom.v1.js', ready);
   },
 
   identify : function (userId, traits, options) {

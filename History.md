@@ -1,4 +1,8 @@
-0.11.4 / 2013-05-31
+0.11.5 / 2013-6-3
+=================
+* Adding segmentio/json temporarily, fixing json-fallback
+
+0.11.4 / 2013-5-31
 ===================
 * Updated Intercom's library URL
 

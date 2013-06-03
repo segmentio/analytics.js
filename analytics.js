@@ -518,12 +518,375 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 });
-require.register("component-json/index.js", function(exports, require, module){
+require.register("component-object/index.js", function(exports, require, module){
 
-module.exports = 'undefined' == typeof JSON
-  ? require('component-json-fallback')
-  : JSON;
+/**
+ * HOP ref.
+ */
 
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Return own keys in `obj`.
+ *
+ * @param {Object} obj
+ * @return {Array}
+ * @api public
+ */
+
+exports.keys = Object.keys || function(obj){
+  var keys = [];
+  for (var key in obj) {
+    if (has.call(obj, key)) {
+      keys.push(key);
+    }
+  }
+  return keys;
+};
+
+/**
+ * Return own values in `obj`.
+ *
+ * @param {Object} obj
+ * @return {Array}
+ * @api public
+ */
+
+exports.values = function(obj){
+  var vals = [];
+  for (var key in obj) {
+    if (has.call(obj, key)) {
+      vals.push(obj[key]);
+    }
+  }
+  return vals;
+};
+
+/**
+ * Merge `b` into `a`.
+ *
+ * @param {Object} a
+ * @param {Object} b
+ * @return {Object} a
+ * @api public
+ */
+
+exports.merge = function(a, b){
+  for (var key in b) {
+    if (has.call(b, key)) {
+      a[key] = b[key];
+    }
+  }
+  return a;
+};
+
+/**
+ * Return length of `obj`.
+ *
+ * @param {Object} obj
+ * @return {Number}
+ * @api public
+ */
+
+exports.length = function(obj){
+  return exports.keys(obj).length;
+};
+
+/**
+ * Check if `obj` is empty.
+ *
+ * @param {Object} obj
+ * @return {Boolean}
+ * @api public
+ */
+
+exports.isEmpty = function(obj){
+  return 0 == exports.length(obj);
+};
+});
+require.register("component-trim/index.js", function(exports, require, module){
+
+exports = module.exports = trim;
+
+function trim(str){
+  return str.replace(/^\s*|\s*$/g, '');
+}
+
+exports.left = function(str){
+  return str.replace(/^\s*/, '');
+};
+
+exports.right = function(str){
+  return str.replace(/\s*$/, '');
+};
+
+});
+require.register("component-querystring/index.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var trim = require('trim');
+
+/**
+ * Parse the given query `str`.
+ *
+ * @param {String} str
+ * @return {Object}
+ * @api public
+ */
+
+exports.parse = function(str){
+  if ('string' != typeof str) return {};
+
+  str = trim(str);
+  if ('' == str) return {};
+
+  var obj = {};
+  var pairs = str.split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var parts = pairs[i].split('=');
+    obj[parts[0]] = null == parts[1]
+      ? ''
+      : decodeURIComponent(parts[1]);
+  }
+
+  return obj;
+};
+
+/**
+ * Stringify the given `obj`.
+ *
+ * @param {Object} obj
+ * @return {String}
+ * @api public
+ */
+
+exports.stringify = function(obj){
+  if (!obj) return '';
+  var pairs = [];
+  for (var key in obj) {
+    pairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
+  }
+  return pairs.join('&');
+};
+
+});
+require.register("component-type/index.js", function(exports, require, module){
+
+/**
+ * toString ref.
+ */
+
+var toString = Object.prototype.toString;
+
+/**
+ * Return the type of `val`.
+ *
+ * @param {Mixed} val
+ * @return {String}
+ * @api public
+ */
+
+module.exports = function(val){
+  switch (toString.call(val)) {
+    case '[object Function]': return 'function';
+    case '[object Date]': return 'date';
+    case '[object RegExp]': return 'regexp';
+    case '[object Arguments]': return 'arguments';
+    case '[object Array]': return 'array';
+    case '[object String]': return 'string';
+  }
+
+  if (val === null) return 'null';
+  if (val === undefined) return 'undefined';
+  if (val && val.nodeType === 1) return 'element';
+  if (val === Object(val)) return 'object';
+
+  return typeof val;
+};
+
+});
+require.register("component-url/index.js", function(exports, require, module){
+
+/**
+ * Parse the given `url`.
+ *
+ * @param {String} str
+ * @return {Object}
+ * @api public
+ */
+
+exports.parse = function(url){
+  var a = document.createElement('a');
+  a.href = url;
+  return {
+    href: a.href,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
+    hash: a.hash,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    search: a.search,
+    query: a.search.slice(1)
+  };
+};
+
+/**
+ * Check if `url` is absolute.
+ *
+ * @param {String} url
+ * @return {Boolean}
+ * @api public
+ */
+
+exports.isAbsolute = function(url){
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+};
+
+/**
+ * Check if `url` is relative.
+ *
+ * @param {String} url
+ * @return {Boolean}
+ * @api public
+ */
+
+exports.isRelative = function(url){
+  return !exports.isAbsolute(url);
+};
+
+/**
+ * Check if `url` is cross domain.
+ *
+ * @param {String} url
+ * @return {Boolean}
+ * @api public
+ */
+
+exports.isCrossDomain = function(url){
+  url = exports.parse(url);
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
+};
+});
+require.register("segmentio-after/index.js", function(exports, require, module){
+
+module.exports = function after (times, func) {
+  // After 0, really?
+  if (times <= 0) return func();
+
+  // That's more like it.
+  return function() {
+    if (--times < 1) {
+      return func.apply(this, arguments);
+    }
+  };
+};
+});
+require.register("segmentio-alias/index.js", function(exports, require, module){
+
+module.exports = function alias (object, aliases) {
+    // For each of our aliases, rename our object's keys.
+    for (var oldKey in aliases) {
+        var newKey = aliases[oldKey];
+        if (object[oldKey] !== undefined) {
+            object[newKey] = object[oldKey];
+            delete object[oldKey];
+        }
+    }
+};
+});
+require.register("component-bind/index.js", function(exports, require, module){
+
+/**
+ * Slice reference.
+ */
+
+var slice = [].slice;
+
+/**
+ * Bind `obj` to `fn`.
+ *
+ * @param {Object} obj
+ * @param {Function|String} fn or string
+ * @return {Function}
+ * @api public
+ */
+
+module.exports = function(obj, fn){
+  if ('string' == typeof fn) fn = obj[fn];
+  if ('function' != typeof fn) throw new Error('bind() requires a function');
+  var args = [].slice.call(arguments, 2);
+  return function(){
+    return fn.apply(obj, args.concat(slice.call(arguments)));
+  }
+};
+
+});
+require.register("segmentio-bindAll/index.js", function(exports, require, module){
+
+var bind   = require('bind')
+  , type   = require('type');
+
+
+module.exports = function (obj) {
+  for (var key in obj) {
+    var val = obj[key];
+    if (type(val) === 'function') obj[key] = bind(obj, obj[key]);
+  }
+  return obj;
+};
+});
+require.register("segmentio-canonical/index.js", function(exports, require, module){
+module.exports = function canonical () {
+  var tags = document.getElementsByTagName('link');
+  for (var i = 0, tag; tag = tags[i]; i++) {
+    if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
+  }
+};
+});
+require.register("segmentio-extend/index.js", function(exports, require, module){
+
+module.exports = function extend (object) {
+    // Takes an unlimited number of extenders.
+    var args = Array.prototype.slice.call(arguments, 1);
+
+    // For each extender, copy their properties on our object.
+    for (var i = 0, source; source = args[i]; i++) {
+        if (!source) continue;
+        for (var property in source) {
+            object[property] = source[property];
+        }
+    }
+
+    return object;
+};
+});
+require.register("segmentio-is-email/index.js", function(exports, require, module){
+
+module.exports = function isEmail (string) {
+    return (/.+\@.+\..+/).test(string);
+};
+});
+require.register("segmentio-is-meta/index.js", function(exports, require, module){
+module.exports = function isMeta (e) {
+    if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
+
+    // Logic that handles checks for the middle mouse button, based
+    // on [jQuery](https://github.com/jquery/jquery/blob/master/src/event.js#L466).
+    var which = e.which, button = e.button;
+    if (!which && button !== undefined) {
+      return (!button & 1) && (!button & 2) && (button & 4);
+    } else if (which === 2) {
+      return true;
+    }
+
+    return false;
+};
 });
 require.register("component-json-fallback/index.js", function(exports, require, module){
 /*
@@ -1013,375 +1376,12 @@ var JSON = {};
 
 module.exports = JSON
 });
-require.register("component-object/index.js", function(exports, require, module){
+require.register("segmentio-json/index.js", function(exports, require, module){
 
-/**
- * HOP ref.
- */
+module.exports = 'undefined' == typeof JSON
+  ? require('json-fallback')
+  : JSON;
 
-var has = Object.prototype.hasOwnProperty;
-
-/**
- * Return own keys in `obj`.
- *
- * @param {Object} obj
- * @return {Array}
- * @api public
- */
-
-exports.keys = Object.keys || function(obj){
-  var keys = [];
-  for (var key in obj) {
-    if (has.call(obj, key)) {
-      keys.push(key);
-    }
-  }
-  return keys;
-};
-
-/**
- * Return own values in `obj`.
- *
- * @param {Object} obj
- * @return {Array}
- * @api public
- */
-
-exports.values = function(obj){
-  var vals = [];
-  for (var key in obj) {
-    if (has.call(obj, key)) {
-      vals.push(obj[key]);
-    }
-  }
-  return vals;
-};
-
-/**
- * Merge `b` into `a`.
- *
- * @param {Object} a
- * @param {Object} b
- * @return {Object} a
- * @api public
- */
-
-exports.merge = function(a, b){
-  for (var key in b) {
-    if (has.call(b, key)) {
-      a[key] = b[key];
-    }
-  }
-  return a;
-};
-
-/**
- * Return length of `obj`.
- *
- * @param {Object} obj
- * @return {Number}
- * @api public
- */
-
-exports.length = function(obj){
-  return exports.keys(obj).length;
-};
-
-/**
- * Check if `obj` is empty.
- *
- * @param {Object} obj
- * @return {Boolean}
- * @api public
- */
-
-exports.isEmpty = function(obj){
-  return 0 == exports.length(obj);
-};
-});
-require.register("component-trim/index.js", function(exports, require, module){
-
-exports = module.exports = trim;
-
-function trim(str){
-  return str.replace(/^\s*|\s*$/g, '');
-}
-
-exports.left = function(str){
-  return str.replace(/^\s*/, '');
-};
-
-exports.right = function(str){
-  return str.replace(/\s*$/, '');
-};
-
-});
-require.register("component-querystring/index.js", function(exports, require, module){
-
-/**
- * Module dependencies.
- */
-
-var trim = require('trim');
-
-/**
- * Parse the given query `str`.
- *
- * @param {String} str
- * @return {Object}
- * @api public
- */
-
-exports.parse = function(str){
-  if ('string' != typeof str) return {};
-
-  str = trim(str);
-  if ('' == str) return {};
-
-  var obj = {};
-  var pairs = str.split('&');
-  for (var i = 0; i < pairs.length; i++) {
-    var parts = pairs[i].split('=');
-    obj[parts[0]] = null == parts[1]
-      ? ''
-      : decodeURIComponent(parts[1]);
-  }
-
-  return obj;
-};
-
-/**
- * Stringify the given `obj`.
- *
- * @param {Object} obj
- * @return {String}
- * @api public
- */
-
-exports.stringify = function(obj){
-  if (!obj) return '';
-  var pairs = [];
-  for (var key in obj) {
-    pairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
-  }
-  return pairs.join('&');
-};
-
-});
-require.register("component-type/index.js", function(exports, require, module){
-
-/**
- * toString ref.
- */
-
-var toString = Object.prototype.toString;
-
-/**
- * Return the type of `val`.
- *
- * @param {Mixed} val
- * @return {String}
- * @api public
- */
-
-module.exports = function(val){
-  switch (toString.call(val)) {
-    case '[object Function]': return 'function';
-    case '[object Date]': return 'date';
-    case '[object RegExp]': return 'regexp';
-    case '[object Arguments]': return 'arguments';
-    case '[object Array]': return 'array';
-    case '[object String]': return 'string';
-  }
-
-  if (val === null) return 'null';
-  if (val === undefined) return 'undefined';
-  if (val && val.nodeType === 1) return 'element';
-  if (val === Object(val)) return 'object';
-
-  return typeof val;
-};
-
-});
-require.register("component-url/index.js", function(exports, require, module){
-
-/**
- * Parse the given `url`.
- *
- * @param {String} str
- * @return {Object}
- * @api public
- */
-
-exports.parse = function(url){
-  var a = document.createElement('a');
-  a.href = url;
-  return {
-    href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
-    hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
-    search: a.search,
-    query: a.search.slice(1)
-  };
-};
-
-/**
- * Check if `url` is absolute.
- *
- * @param {String} url
- * @return {Boolean}
- * @api public
- */
-
-exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
-};
-
-/**
- * Check if `url` is relative.
- *
- * @param {String} url
- * @return {Boolean}
- * @api public
- */
-
-exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
-};
-
-/**
- * Check if `url` is cross domain.
- *
- * @param {String} url
- * @return {Boolean}
- * @api public
- */
-
-exports.isCrossDomain = function(url){
-  url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
-};
-});
-require.register("segmentio-after/index.js", function(exports, require, module){
-
-module.exports = function after (times, func) {
-  // After 0, really?
-  if (times <= 0) return func();
-
-  // That's more like it.
-  return function() {
-    if (--times < 1) {
-      return func.apply(this, arguments);
-    }
-  };
-};
-});
-require.register("segmentio-alias/index.js", function(exports, require, module){
-
-module.exports = function alias (object, aliases) {
-    // For each of our aliases, rename our object's keys.
-    for (var oldKey in aliases) {
-        var newKey = aliases[oldKey];
-        if (object[oldKey] !== undefined) {
-            object[newKey] = object[oldKey];
-            delete object[oldKey];
-        }
-    }
-};
-});
-require.register("component-bind/index.js", function(exports, require, module){
-
-/**
- * Slice reference.
- */
-
-var slice = [].slice;
-
-/**
- * Bind `obj` to `fn`.
- *
- * @param {Object} obj
- * @param {Function|String} fn or string
- * @return {Function}
- * @api public
- */
-
-module.exports = function(obj, fn){
-  if ('string' == typeof fn) fn = obj[fn];
-  if ('function' != typeof fn) throw new Error('bind() requires a function');
-  var args = [].slice.call(arguments, 2);
-  return function(){
-    return fn.apply(obj, args.concat(slice.call(arguments)));
-  }
-};
-
-});
-require.register("segmentio-bindAll/index.js", function(exports, require, module){
-
-var bind   = require('bind')
-  , type   = require('type');
-
-
-module.exports = function (obj) {
-  for (var key in obj) {
-    var val = obj[key];
-    if (type(val) === 'function') obj[key] = bind(obj, obj[key]);
-  }
-  return obj;
-};
-});
-require.register("segmentio-canonical/index.js", function(exports, require, module){
-module.exports = function canonical () {
-  var tags = document.getElementsByTagName('link');
-  for (var i = 0, tag; tag = tags[i]; i++) {
-    if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
-  }
-};
-});
-require.register("segmentio-extend/index.js", function(exports, require, module){
-
-module.exports = function extend (object) {
-    // Takes an unlimited number of extenders.
-    var args = Array.prototype.slice.call(arguments, 1);
-
-    // For each extender, copy their properties on our object.
-    for (var i = 0, source; source = args[i]; i++) {
-        if (!source) continue;
-        for (var property in source) {
-            object[property] = source[property];
-        }
-    }
-
-    return object;
-};
-});
-require.register("segmentio-is-email/index.js", function(exports, require, module){
-
-module.exports = function isEmail (string) {
-    return (/.+\@.+\..+/).test(string);
-};
-});
-require.register("segmentio-is-meta/index.js", function(exports, require, module){
-module.exports = function isMeta (e) {
-    if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
-
-    // Logic that handles checks for the middle mouse button, based
-    // on [jQuery](https://github.com/jquery/jquery/blob/master/src/event.js#L466).
-    var which = e.which, button = e.button;
-    if (!which && button !== undefined) {
-      return (!button & 1) && (!button & 2) && (button & 4);
-    } else if (which === 2) {
-      return true;
-    }
-
-    return false;
-};
 });
 require.register("segmentio-load-date/index.js", function(exports, require, module){
 
@@ -1803,7 +1803,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.11.4';
+  this.VERSION = '0.11.5';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -5277,36 +5277,44 @@ function addTraits (userId, traits, tracker) {
 }
 });
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
+require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
 require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
+require.alias("component-clone/index.js", "clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-cookie/index.js", "analytics/deps/cookie/index.js");
+require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
+require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
-
-require.alias("component-json/index.js", "analytics/deps/json/index.js");
-
-require.alias("component-json-fallback/index.js", "analytics/deps/json-fallback/index.js");
+require.alias("component-event/index.js", "event/index.js");
 
 require.alias("component-object/index.js", "analytics/deps/object/index.js");
+require.alias("component-object/index.js", "object/index.js");
 
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
+require.alias("component-querystring/index.js", "querystring/index.js");
 require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
 
 require.alias("component-type/index.js", "analytics/deps/type/index.js");
+require.alias("component-type/index.js", "type/index.js");
 
 require.alias("component-url/index.js", "analytics/deps/url/index.js");
+require.alias("component-url/index.js", "url/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
+require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
+require.alias("segmentio-alias/index.js", "alias/index.js");
 
 require.alias("segmentio-bindAll/index.js", "analytics/deps/bindAll/index.js");
 require.alias("segmentio-bindAll/index.js", "analytics/deps/bindAll/index.js");
+require.alias("segmentio-bindAll/index.js", "bindAll/index.js");
 require.alias("component-bind/index.js", "segmentio-bindAll/deps/bind/index.js");
 
 require.alias("component-type/index.js", "segmentio-bindAll/deps/type/index.js");
@@ -5314,34 +5322,50 @@ require.alias("component-type/index.js", "segmentio-bindAll/deps/type/index.js")
 require.alias("segmentio-bindAll/index.js", "segmentio-bindAll/index.js");
 
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
+require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
+require.alias("segmentio-extend/index.js", "extend/index.js");
 
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
+require.alias("segmentio-is-email/index.js", "is-email/index.js");
 
 require.alias("segmentio-is-meta/index.js", "analytics/deps/is-meta/index.js");
+require.alias("segmentio-is-meta/index.js", "is-meta/index.js");
+
+require.alias("segmentio-json/index.js", "analytics/deps/json/index.js");
+require.alias("segmentio-json/index.js", "json/index.js");
+require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
+require.alias("segmentio-load-date/index.js", "load-date/index.js");
 
 require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
+require.alias("segmentio-load-script/index.js", "load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
 
 require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
+require.alias("segmentio-new-date/index.js", "new-date/index.js");
 require.alias("component-type/index.js", "segmentio-new-date/deps/type/index.js");
 
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
+require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/index.js");
-require.alias("component-json/index.js", "segmentio-store.js/deps/json/index.js");
+require.alias("segmentio-store.js/store.js", "store/index.js");
+require.alias("segmentio-json/index.js", "segmentio-store.js/deps/json/index.js");
+require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-store.js/store.js", "segmentio-store.js/index.js");
 
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
+require.alias("timoxley-next-tick/index.js", "next-tick/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
+require.alias("yields-prevent/index.js", "prevent/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");
 

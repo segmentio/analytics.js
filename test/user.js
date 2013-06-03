@@ -4,7 +4,7 @@ describe('User tests', function () {
 
   var user   = require('analytics/src/user.js')
     , cookie = require('analytics/src/cookie.js')
-    , json   = require('component-json');
+    , json   = require('segmentio-json');
 
   describe('#id()', function () {
     before(user.clear);

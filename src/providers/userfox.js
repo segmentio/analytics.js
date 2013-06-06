@@ -21,12 +21,11 @@ module.exports = Provider.extend({
     window._ufq = window._ufq || [];
     load('//d2y71mjhnajxcg.cloudfront.net/js/userfox-stable.js');
 
-    // userfox creates its own queue, so we're ready right away
+    // userfox creates its own queue, so we're ready right away.
     ready();
   },
 
   identify : function (userId, traits) {
-    // userfox requires an email.
     if (!traits.email) return;
 
     // Initialize the library with the email now that we have it.
@@ -37,7 +36,7 @@ module.exports = Provider.extend({
 
     // Record traits to "track" if we have the required signup date `created`.
     if (traits.created) {
-      traits.signup_date = traits.created.getTime()+'';
+      traits.signup_date = '' + traits.created.getTime();
       window._ufq.push(['track', traits]);
     }
   }

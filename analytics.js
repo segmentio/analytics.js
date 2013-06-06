@@ -5028,12 +5028,15 @@ module.exports = Provider.extend({
 
   identify : function (userId, traits) {
     if (userId) window._uc.push(['uid', userId]);
+
+    // USERcycle has a special "hidden" event that is used just for retention measurement.
+    // Lukas suggested on 6/4/2013 that we send traits on that event, since they use the
+    // the latest value of every event property as a "trait"
+    window._uc.push(['action', 'came_back', traits]);
   },
 
   track : function (event, properties) {
-    // Usercycle seems to use traits instead of properties.
-    var traits = user.traits();
-    window._uc.push(['action', event, traits]);
+    window._uc.push(['action', event, properties]);
   }
 
 });
@@ -5062,12 +5065,11 @@ module.exports = Provider.extend({
     window._ufq = window._ufq || [];
     load('//d2y71mjhnajxcg.cloudfront.net/js/userfox-stable.js');
 
-    // userfox creates its own queue, so we're ready right away
+    // userfox creates its own queue, so we're ready right away.
     ready();
   },
 
   identify : function (userId, traits) {
-    // userfox requires an email.
     if (!traits.email) return;
 
     // Initialize the library with the email now that we have it.
@@ -5078,7 +5080,7 @@ module.exports = Provider.extend({
 
     // Record traits to "track" if we have the required signup date `created`.
     if (traits.created) {
-      traits.signup_date = traits.created.getTime()+'';
+      traits.signup_date = '' + traits.created.getTime();
       window._ufq.push(['track', traits]);
     }
   }

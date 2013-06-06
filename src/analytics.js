@@ -509,14 +509,17 @@ extend(Analytics.prototype, {
    *
    * @param {String} url (optional) - The path of the page (eg. '/login'). Most
    * providers will default to the current pages URL, so you don't need this.
+   *
+   * @param {Object} options (optional) - Settings for the pageview call.
+   *
    */
 
-  pageview : function (url) {
+  pageview : function (url,options) {
     if (!this.initialized) return;
 
     // Call `pageview` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
-      if (provider.pageview) {
+      if (provider.pageview && isEnabled(provider, options)) {
         var args = [url];
         if (provider.ready) {
           provider.pageview.apply(provider, args);

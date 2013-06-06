@@ -845,6 +845,22 @@ describe('Analytics.js', function () {
       expect(spy.called).to.be(true);
       spy.restore();
     });
+
+    it('sends a url along', function  () {
+      var spy = sinon.spy(Provider.prototype, 'track');
+      analytics.track(test.url);
+      expect(spy.calledWith(test.url)).to.be(true);
+      spy.restore();
+    });
+
+    it('sends a clone of context along', function  () {
+      var spy = sinon.spy(Provider.prototype, 'track');
+      analytics.track(test.url,test.context);
+      expect(spy.args[0][1]).not.to.equal(test.context);
+      expect(spy.args[0][1]).to.eql(test.context);
+      spy.restore();
+    });
+
   });
 
 

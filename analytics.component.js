@@ -422,50 +422,38 @@ require.register("analytics/src/providers/uservoice.js", Function("exports, requ
 "// http://feedback.uservoice.com/knowledgebase/articles/225-how-do-i-pass-custom-data-through-the-widget-and-i\n\nvar Provider = require('../provider')\n  , load     = require('load-script')\n  , alias    = require('alias')\n  , clone    = require('clone');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'UserVoice',\n\n  defaults : {\n    // These first two options are required.\n    widgetId          : null,\n    forumId           : null,\n    // Should we show the tab automatically?\n    showTab           : true,\n    // There's tons of options for the tab.\n    mode              : 'full',\n    primaryColor      : '#cc6d00',\n    linkColor         : '#007dbf',\n    defaultMode       : 'support',\n    tabLabel          : 'Feedback & Support',\n    tabColor          : '#cc6d00',\n    tabPosition       : 'middle-right',\n    tabInverted       : false\n  },\n\n  initialize : function (options, ready) {\n    window.UserVoice = window.UserVoice || [];\n    load('//widget.uservoice.com/' + options.widgetId + '.js', ready);\n\n    var optionsClone = clone(options);\n    alias(optionsClone, {\n      'forumId'         : 'forum_id',\n      'primaryColor'    : 'primary_color',\n      'linkColor'       : 'link_color',\n      'defaultMode'     : 'default_mode',\n      'tabLabel'        : 'tab_label',\n      'tabColor'        : 'tab_color',\n      'tabPosition'     : 'tab_position',\n      'tabInverted'     : 'tab_inverted'\n    });\n\n    // If we don't automatically show the tab, let them show it via\n    // javascript. This is the default name for the function in their snippet.\n    window.showClassicWidget = function (showWhat) {\n      window.UserVoice.push([showWhat || 'showLightbox', 'classic_widget', optionsClone]);\n    };\n\n    // If we *do* automatically show the tab, get on with it!\n    if (options.showTab) {\n      window.showClassicWidget('showTab');\n    }\n  },\n\n  identify : function (userId, traits) {\n    // Pull the ID into traits.\n    traits.id = userId;\n    window.UserVoice.push(['setCustomFields', traits]);\n  }\n\n});//@ sourceURL=analytics/src/providers/uservoice.js"
 ));
 require.register("analytics/src/providers/vero.js", Function("exports, require, module",
-"// https://github.com/getvero/vero-api/blob/master/sections/js.md\n\nvar Provider = require('../provider')\n  , isEmail  = require('is-email')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Vero',\n\n  key : 'apiKey',\n\n  defaults : {\n    apiKey : null\n  },\n\n  initialize : function (options, ready) {\n    window._veroq = window._veroq || [];\n    window._veroq.push(['init', { api_key: options.apiKey }]);\n    load('//www.getvero.com/assets/m.js');\n\n    // Vero creates a queue, so it's ready immediately.\n    ready();\n  },\n\n  identify : function (userId, traits) {\n    // Don't do anything if we just have traits, because Vero\n    // requires a `userId`.\n    if (!userId || !traits.email) return;\n\n    // Vero takes the `userId` as part of the traits object.\n    traits.id = userId;\n\n    window._veroq.push(['user', traits]);\n  },\n\n  track : function (event, properties) {\n    window._veroq.push(['track', event, properties]);\n  }\n\n});//@ sourceURL=analytics/src/providers/vero.js"
+"// https://github.com/getvero/vero-api/blob/master/sections/js.md\n\nvar Provider = require('../provider')\n  , isEmail  = require('is-email')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Vero',\n\n  key : 'apiKey',\n\n  defaults : {\n    apiKey : null\n  },\n\n  initialize : function (options, ready) {\n    window._veroq = window._veroq || [];\n    window._veroq.push(['init', { api_key: options.apiKey }]);\n    load('//d3qxef4rp70elm.cloudfront.net/m.js');\n\n    // Vero creates a queue, so it's ready immediately.\n    ready();\n  },\n\n  identify : function (userId, traits) {\n    // Don't do anything if we just have traits, because Vero\n    // requires a `userId`.\n    if (!userId || !traits.email) return;\n\n    // Vero takes the `userId` as part of the traits object.\n    traits.id = userId;\n\n    window._veroq.push(['user', traits]);\n  },\n\n  track : function (event, properties) {\n    window._veroq.push(['track', event, properties]);\n  }\n\n});//@ sourceURL=analytics/src/providers/vero.js"
 ));
 require.register("analytics/src/providers/woopra.js", Function("exports, require, module",
 "// http://www.woopra.com/docs/setup/javascript-tracking/\n\nvar Provider = require('../provider')\n  , each     = require('each')\n  , extend   = require('extend')\n  , isEmail  = require('is-email')\n  , load     = require('load-script')\n  , type     = require('type')\n  , user     = require('../user');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Woopra',\n\n  key : 'domain',\n\n  defaults : {\n    domain : null\n  },\n\n  initialize : function (options, ready) {\n    // Woopra gives us a nice ready callback.\n    var self = this;\n\n    window.woopraReady = function (tracker) {\n      tracker.setDomain(self.options.domain);\n      tracker.setIdleTimeout(300000);\n\n      var userId = user.id()\n        , traits = user.traits();\n\n      addTraits(userId, traits, tracker);\n      tracker.track();\n\n      ready();\n      return false;\n    };\n\n    load('//static.woopra.com/js/woopra.js');\n  },\n\n  identify : function (userId, traits) {\n    // We aren't guaranteed a tracker.\n    if (!window.woopraTracker) return;\n    addTraits(userId, traits, window.woopraTracker);\n  },\n\n  track : function (event, properties) {\n    // We aren't guaranteed a tracker.\n    if (!window.woopraTracker) return;\n\n    // Woopra takes its `event` as the `name` key.\n    properties || (properties = {});\n    properties.name = event;\n\n    window.woopraTracker.pushEvent(properties);\n  }\n\n});\n\n\n/**\n * Convenience function for updating the userId and traits.\n *\n * @param {String} userId    The user's ID.\n * @param {Object} traits    The user's traits.\n * @param {Tracker} tracker  The Woopra tracker object.\n */\n\nfunction addTraits (userId, traits, tracker) {\n  // Move a `userId` into `traits`.\n  if (userId) traits.id = userId;\n  each(traits, function (key, value) {\n    // Woopra seems to only support strings as trait values.\n    if ('string' === type(value)) tracker.addVisitorProperty(key, value);\n  });\n}//@ sourceURL=analytics/src/providers/woopra.js"
 ));
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
-require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
 require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
-require.alias("component-clone/index.js", "clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-cookie/index.js", "analytics/deps/cookie/index.js");
-require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
-require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
-require.alias("component-event/index.js", "event/index.js");
 
 require.alias("component-object/index.js", "analytics/deps/object/index.js");
-require.alias("component-object/index.js", "object/index.js");
 
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
-require.alias("component-querystring/index.js", "querystring/index.js");
 require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
 
 require.alias("component-type/index.js", "analytics/deps/type/index.js");
-require.alias("component-type/index.js", "type/index.js");
 
 require.alias("component-url/index.js", "analytics/deps/url/index.js");
-require.alias("component-url/index.js", "url/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
-require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
-require.alias("segmentio-alias/index.js", "alias/index.js");
 
 require.alias("segmentio-bindAll/index.js", "analytics/deps/bindAll/index.js");
 require.alias("segmentio-bindAll/index.js", "analytics/deps/bindAll/index.js");
-require.alias("segmentio-bindAll/index.js", "bindAll/index.js");
 require.alias("component-bind/index.js", "segmentio-bindAll/deps/bind/index.js");
 
 require.alias("component-type/index.js", "segmentio-bindAll/deps/type/index.js");
@@ -473,50 +461,38 @@ require.alias("component-type/index.js", "segmentio-bindAll/deps/type/index.js")
 require.alias("segmentio-bindAll/index.js", "segmentio-bindAll/index.js");
 
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
-require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
-require.alias("segmentio-extend/index.js", "extend/index.js");
 
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
-require.alias("segmentio-is-email/index.js", "is-email/index.js");
 
 require.alias("segmentio-is-meta/index.js", "analytics/deps/is-meta/index.js");
-require.alias("segmentio-is-meta/index.js", "is-meta/index.js");
 
 require.alias("segmentio-json/index.js", "analytics/deps/json/index.js");
-require.alias("segmentio-json/index.js", "json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
-require.alias("segmentio-load-date/index.js", "load-date/index.js");
 
 require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
-require.alias("segmentio-load-script/index.js", "load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
 
 require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
-require.alias("segmentio-new-date/index.js", "new-date/index.js");
 require.alias("component-type/index.js", "segmentio-new-date/deps/type/index.js");
 
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
-require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/index.js");
-require.alias("segmentio-store.js/store.js", "store/index.js");
 require.alias("segmentio-json/index.js", "segmentio-store.js/deps/json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-store.js/store.js", "segmentio-store.js/index.js");
 
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
-require.alias("timoxley-next-tick/index.js", "next-tick/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
-require.alias("yields-prevent/index.js", "prevent/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");
 

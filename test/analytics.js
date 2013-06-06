@@ -28,14 +28,19 @@ describe('Analytics.js', function () {
 
 
   describe('initialize', function () {
-
     it('stores enabled providers', function () {
       analytics.providers = [];
       analytics.initialize(options);
       expect(analytics.providers[0] instanceof Provider).to.be(true);
     });
 
-    it('sends options to enabled providers initialize', function () {
+    it('doesnt error on unknown provider', function () {
+      expect(function () {
+        analytics.initialize({ 'Unknown' : '' });
+      }).not.to.throwException();
+    });
+
+    it('sends options to provider.initialize', function () {
       var spy = sinon.spy(Provider.prototype, 'initialize');
       analytics.initialize(options);
       expect(spy.calledWith(sinon.match({ key : 'x' }))).to.be(true);

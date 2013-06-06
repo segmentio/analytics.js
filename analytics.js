@@ -1918,7 +1918,7 @@ extend(Analytics.prototype, {
     // copy the provider into `this.providers`.
     each(providers, function (key, options) {
       var Provider = self._providers[key];
-      if (!Provider) throw new Error('Couldnt find a provider named "'+key+'"');
+      if (!Provider) return;
       self.providers.push(new Provider(options, ready, self));
     });
 

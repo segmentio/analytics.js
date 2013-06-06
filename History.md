@@ -1,3 +1,11 @@
+0.11.6 / 2013-6-6
+=================
+* Added `group` support to Preact by [@azcoov](https://github.com/azcoov)
+* Fixed `created` bug with userfox
+* Changed to new Vero CDN URL
+* Fixed bug when initializing unknown providers
+* Added `options` object to `pageview` by [@debangpaliwal](https://github.com/devangpaliwal)
+
 0.11.5 / 2013-6-3
 =================
 * Adding segmentio/json temporarily, fixing json-fallback

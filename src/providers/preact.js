@@ -18,8 +18,20 @@ module.exports = Provider.extend({
     var _lnq = window._lnq = window._lnq || [];
     _lnq.push(["_setCode", options.projectCode]);
 
-    load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.3.min.js');
+    load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.4.min.js');
     ready();
+  },
+
+  group : function (groupId, properties) {
+    // Don't do anything if we just have properties
+    if (!groupId) return;
+
+    properties || (properties = {});
+
+    window._lnq.push(['_setAccount', {
+      id   : groupId,
+      name : properties.name
+    }]);
   },
 
   identify : function (userId, traits) {
@@ -32,13 +44,13 @@ module.exports = Provider.extend({
       traits.created_at = Math.floor(traits.created/1000);
       delete traits.created;
     }
-
+    
     window._lnq.push(['_setPersonData', {
       name       : traits.name,
       email      : traits.email,
       uid        : userId,
       properties : traits
-    }]);
+    }])
   },
 
   track : function (event, properties) {

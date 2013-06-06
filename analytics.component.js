@@ -398,7 +398,7 @@ require.register("analytics/src/providers/pingdom.js", Function("exports, requir
 "var date     = require('load-date')\n  , Provider = require('../provider')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Pingdom',\n\n  key : 'id',\n\n  defaults : {\n    id : null\n  },\n\n  initialize : function (options, ready) {\n\n    window._prum = [\n      ['id', options.id],\n      ['mark', 'firstbyte', date.getTime()]\n    ];\n\n    // We've replaced the original snippet loader with our own load method.\n    load('//rum-static.pingdom.net/prum.min.js', ready);\n  }\n\n});//@ sourceURL=analytics/src/providers/pingdom.js"
 ));
 require.register("analytics/src/providers/preact.js", Function("exports, require, module",
-"// http://www.preact.io/api/javascript\n\nvar Provider = require('../provider')\n  , isEmail  = require('is-email')\n  , load     = require('load-script');\n\nmodule.exports = Provider.extend({\n\n  name : 'Preact',\n\n  key : 'projectCode',\n\n  defaults : {\n    projectCode    : null\n  },\n\n  initialize : function (options, ready) {\n    var _lnq = window._lnq = window._lnq || [];\n    _lnq.push([\"_setCode\", options.projectCode]);\n\n    load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.3.min.js');\n    ready();\n  },\n\n  identify : function (userId, traits) {\n    // Don't do anything if we just have traits. Preact requires a `userId`.\n    if (!userId) return;\n\n    // Swap the `created` trait to the `created_at` that Preact needs\n    // and convert it from milliseconds to seconds.\n    if (traits.created) {\n      traits.created_at = Math.floor(traits.created/1000);\n      delete traits.created;\n    }\n\n    window._lnq.push(['_setPersonData', {\n      name       : traits.name,\n      email      : traits.email,\n      uid        : userId,\n      properties : traits\n    }]);\n  },\n\n  track : function (event, properties) {\n    properties || (properties = {});\n\n    var personEvent = {\n      name      : event,\n      target_id : properties.target_id,\n      note      : properties.note,\n      revenue   : properties.revenue\n    }\n\n    window._lnq.push(['_logEvent', personEvent, properties]);\n  }\n\n});//@ sourceURL=analytics/src/providers/preact.js"
+"// http://www.preact.io/api/javascript\n\nvar Provider = require('../provider')\n  , isEmail  = require('is-email')\n  , load     = require('load-script');\n\nmodule.exports = Provider.extend({\n\n  name : 'Preact',\n\n  key : 'projectCode',\n\n  defaults : {\n    projectCode    : null\n  },\n\n  initialize : function (options, ready) {\n    var _lnq = window._lnq = window._lnq || [];\n    _lnq.push([\"_setCode\", options.projectCode]);\n\n    load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.4.min.js');\n    ready();\n  },\n\n  group : function (groupId, properties) {\n    // Don't do anything if we just have properties\n    if (!groupId) return;\n\n    properties || (properties = {});\n\n    window._lnq.push(['_setAccount', {\n      id   : groupId,\n      name : properties.name\n    }]);\n  },\n\n  identify : function (userId, traits) {\n    // Don't do anything if we just have traits. Preact requires a `userId`.\n    if (!userId) return;\n\n    // Swap the `created` trait to the `created_at` that Preact needs\n    // and convert it from milliseconds to seconds.\n    if (traits.created) {\n      traits.created_at = Math.floor(traits.created/1000);\n      delete traits.created;\n    }\n    \n    window._lnq.push(['_setPersonData', {\n      name       : traits.name,\n      email      : traits.email,\n      uid        : userId,\n      properties : traits\n    }])\n  },\n\n  track : function (event, properties) {\n    properties || (properties = {});\n\n    var personEvent = {\n      name      : event,\n      target_id : properties.target_id,\n      note      : properties.note,\n      revenue   : properties.revenue\n    }\n\n    window._lnq.push(['_logEvent', personEvent, properties]);\n  }\n\n});//@ sourceURL=analytics/src/providers/preact.js"
 ));
 require.register("analytics/src/providers/qualaroo.js", Function("exports, require, module",
 "// http://help.qualaroo.com/customer/portal/articles/731085-identify-survey-nudge-takers\n// http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties\n\nvar Provider = require('../provider')\n  , isEmail  = require('is-email')\n  , load     = require('load-script');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Qualaroo',\n\n  defaults : {\n    // Qualaroo has two required options.\n    customerId : null,\n    siteToken : null,\n    // Whether to record traits when a user triggers an event. This can be\n    // useful for sending targetted questionnaries.\n    track : false\n  },\n\n  // Qualaroo's script has two options in its URL.\n  initialize : function (options, ready) {\n    window._kiq = window._kiq || [];\n    load('//s3.amazonaws.com/ki.js/' + options.customerId + '/' + options.siteToken + '.js');\n\n    // Qualaroo creates a queue, so it's ready immediately.\n    ready();\n  },\n\n  // Qualaroo uses two separate methods: `identify` for storing the `userId`,\n  // and `set` for storing `traits`.\n  identify : function (userId, traits) {\n    var identity = traits.email || userId;\n    if (identity) window._kiq.push(['identify', identity]);\n    if (traits) window._kiq.push(['set', traits]);\n  },\n\n  // Qualaroo doesn't have `track` method yet, but to allow the users to do\n  // targetted questionnaires we can set name-value pairs on the user properties\n  // that apply to the current visit.\n  track : function (event, properties) {\n    if (!this.options.track) return;\n\n    // Create a name-value pair that will be pretty unique. For an event like\n    // 'Loaded a Page' this will make it 'Triggered: Loaded a Page'.\n    var traits = {};\n    traits['Triggered: ' + event] = true;\n\n    // Fire a normal identify, with traits only.\n    this.identify(null, traits);\n  }\n\n});//@ sourceURL=analytics/src/providers/qualaroo.js"
@@ -428,44 +428,32 @@ require.register("analytics/src/providers/woopra.js", Function("exports, require
 "// http://www.woopra.com/docs/setup/javascript-tracking/\n\nvar Provider = require('../provider')\n  , each     = require('each')\n  , extend   = require('extend')\n  , isEmail  = require('is-email')\n  , load     = require('load-script')\n  , type     = require('type')\n  , user     = require('../user');\n\n\nmodule.exports = Provider.extend({\n\n  name : 'Woopra',\n\n  key : 'domain',\n\n  defaults : {\n    domain : null\n  },\n\n  initialize : function (options, ready) {\n    // Woopra gives us a nice ready callback.\n    var self = this;\n\n    window.woopraReady = function (tracker) {\n      tracker.setDomain(self.options.domain);\n      tracker.setIdleTimeout(300000);\n\n      var userId = user.id()\n        , traits = user.traits();\n\n      addTraits(userId, traits, tracker);\n      tracker.track();\n\n      ready();\n      return false;\n    };\n\n    load('//static.woopra.com/js/woopra.js');\n  },\n\n  identify : function (userId, traits) {\n    // We aren't guaranteed a tracker.\n    if (!window.woopraTracker) return;\n    addTraits(userId, traits, window.woopraTracker);\n  },\n\n  track : function (event, properties) {\n    // We aren't guaranteed a tracker.\n    if (!window.woopraTracker) return;\n\n    // Woopra takes its `event` as the `name` key.\n    properties || (properties = {});\n    properties.name = event;\n\n    window.woopraTracker.pushEvent(properties);\n  }\n\n});\n\n\n/**\n * Convenience function for updating the userId and traits.\n *\n * @param {String} userId    The user's ID.\n * @param {Object} traits    The user's traits.\n * @param {Tracker} tracker  The Woopra tracker object.\n */\n\nfunction addTraits (userId, traits, tracker) {\n  // Move a `userId` into `traits`.\n  if (userId) traits.id = userId;\n  each(traits, function (key, value) {\n    // Woopra seems to only support strings as trait values.\n    if ('string' === type(value)) tracker.addVisitorProperty(key, value);\n  });\n}//@ sourceURL=analytics/src/providers/woopra.js"
 ));
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
-require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
 require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
-require.alias("component-clone/index.js", "clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-cookie/index.js", "analytics/deps/cookie/index.js");
-require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
-require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
-require.alias("component-event/index.js", "event/index.js");
 
 require.alias("component-object/index.js", "analytics/deps/object/index.js");
-require.alias("component-object/index.js", "object/index.js");
 
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
-require.alias("component-querystring/index.js", "querystring/index.js");
 require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
 
 require.alias("component-type/index.js", "analytics/deps/type/index.js");
-require.alias("component-type/index.js", "type/index.js");
 
 require.alias("component-url/index.js", "analytics/deps/url/index.js");
-require.alias("component-url/index.js", "url/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
-require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
-require.alias("segmentio-alias/index.js", "alias/index.js");
 
 require.alias("segmentio-bindAll/index.js", "analytics/deps/bindAll/index.js");
 require.alias("segmentio-bindAll/index.js", "analytics/deps/bindAll/index.js");
-require.alias("segmentio-bindAll/index.js", "bindAll/index.js");
 require.alias("component-bind/index.js", "segmentio-bindAll/deps/bind/index.js");
 
 require.alias("component-type/index.js", "segmentio-bindAll/deps/type/index.js");
@@ -473,50 +461,41 @@ require.alias("component-type/index.js", "segmentio-bindAll/deps/type/index.js")
 require.alias("segmentio-bindAll/index.js", "segmentio-bindAll/index.js");
 
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
-require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
-require.alias("segmentio-extend/index.js", "extend/index.js");
 
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
-require.alias("segmentio-is-email/index.js", "is-email/index.js");
 
 require.alias("segmentio-is-meta/index.js", "analytics/deps/is-meta/index.js");
-require.alias("segmentio-is-meta/index.js", "is-meta/index.js");
 
 require.alias("segmentio-json/index.js", "analytics/deps/json/index.js");
-require.alias("segmentio-json/index.js", "json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
-require.alias("segmentio-load-date/index.js", "load-date/index.js");
 
 require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
-require.alias("segmentio-load-script/index.js", "load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
 
 require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
-require.alias("segmentio-new-date/index.js", "new-date/index.js");
 require.alias("component-type/index.js", "segmentio-new-date/deps/type/index.js");
 
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
-require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/index.js");
-require.alias("segmentio-store.js/store.js", "store/index.js");
 require.alias("segmentio-json/index.js", "segmentio-store.js/deps/json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-store.js/store.js", "segmentio-store.js/index.js");
 
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
-require.alias("timoxley-next-tick/index.js", "next-tick/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
-require.alias("yields-prevent/index.js", "prevent/index.js");
+
+require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
+require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");
 

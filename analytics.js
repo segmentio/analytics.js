@@ -5082,8 +5082,10 @@ module.exports = Provider.extend({
     }]);
 
     // Record traits to "track" if we have the required signup date `created`.
+    // userfox takes `signup_date` as a string of seconds since the epoch.
     if (traits.created) {
-      traits.signup_date = '' + traits.created.getTime();
+      traits.signup_date = (traits.created.getTime() / 1000).toString();
+      delete traits.created;
       window._ufq.push(['track', traits]);
     }
   }

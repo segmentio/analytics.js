@@ -4809,8 +4809,20 @@ module.exports = Provider.extend({
     var _lnq = window._lnq = window._lnq || [];
     _lnq.push(["_setCode", options.projectCode]);
 
-    load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.3.min.js');
+    load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.4.min.js');
     ready();
+  },
+
+  group : function (groupId, properties) {
+    // Don't do anything if we just have properties
+    if (!groupId) return;
+
+    properties || (properties = {});
+
+    window._lnq.push(['_setAccount', {
+      id   : groupId,
+      name : properties.name
+    }]);
   },
 
   identify : function (userId, traits) {
@@ -4823,13 +4835,13 @@ module.exports = Provider.extend({
       traits.created_at = Math.floor(traits.created/1000);
       delete traits.created;
     }
-
+    
     window._lnq.push(['_setPersonData', {
       name       : traits.name,
       email      : traits.email,
       uid        : userId,
       properties : traits
-    }]);
+    }])
   },
 
   track : function (event, properties) {
@@ -5277,44 +5289,32 @@ function addTraits (userId, traits, tracker) {
 }
 });
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
-require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
 require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
-require.alias("component-clone/index.js", "clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-cookie/index.js", "analytics/deps/cookie/index.js");
-require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
-require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
-require.alias("component-event/index.js", "event/index.js");
 
 require.alias("component-object/index.js", "analytics/deps/object/index.js");
-require.alias("component-object/index.js", "object/index.js");
 
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
-require.alias("component-querystring/index.js", "querystring/index.js");
 require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
 
 require.alias("component-type/index.js", "analytics/deps/type/index.js");
-require.alias("component-type/index.js", "type/index.js");
 
 require.alias("component-url/index.js", "analytics/deps/url/index.js");
-require.alias("component-url/index.js", "url/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
-require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
-require.alias("segmentio-alias/index.js", "alias/index.js");
 
 require.alias("segmentio-bindAll/index.js", "analytics/deps/bindAll/index.js");
 require.alias("segmentio-bindAll/index.js", "analytics/deps/bindAll/index.js");
-require.alias("segmentio-bindAll/index.js", "bindAll/index.js");
 require.alias("component-bind/index.js", "segmentio-bindAll/deps/bind/index.js");
 
 require.alias("component-type/index.js", "segmentio-bindAll/deps/type/index.js");
@@ -5322,50 +5322,41 @@ require.alias("component-type/index.js", "segmentio-bindAll/deps/type/index.js")
 require.alias("segmentio-bindAll/index.js", "segmentio-bindAll/index.js");
 
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
-require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
-require.alias("segmentio-extend/index.js", "extend/index.js");
 
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
-require.alias("segmentio-is-email/index.js", "is-email/index.js");
 
 require.alias("segmentio-is-meta/index.js", "analytics/deps/is-meta/index.js");
-require.alias("segmentio-is-meta/index.js", "is-meta/index.js");
 
 require.alias("segmentio-json/index.js", "analytics/deps/json/index.js");
-require.alias("segmentio-json/index.js", "json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
-require.alias("segmentio-load-date/index.js", "load-date/index.js");
 
 require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
-require.alias("segmentio-load-script/index.js", "load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
 
 require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
-require.alias("segmentio-new-date/index.js", "new-date/index.js");
 require.alias("component-type/index.js", "segmentio-new-date/deps/type/index.js");
 
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
-require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/index.js");
-require.alias("segmentio-store.js/store.js", "store/index.js");
 require.alias("segmentio-json/index.js", "segmentio-store.js/deps/json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-store.js/store.js", "segmentio-store.js/index.js");
 
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
-require.alias("timoxley-next-tick/index.js", "next-tick/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
-require.alias("yields-prevent/index.js", "prevent/index.js");
+
+require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
+require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");
 
@@ -5374,5 +5365,5 @@ if (typeof exports == "object") {
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("analytics"); });
 } else {
-  this["analytics"] = require("analytics");
+  window["analytics"] = require("analytics");
 }})();

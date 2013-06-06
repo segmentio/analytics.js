@@ -18,7 +18,7 @@ module.exports = Provider.extend({
     var _lnq = window._lnq = window._lnq || [];
     _lnq.push(["_setCode", options.projectCode]);
 
-    load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.3.min.js');
+    load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.4.min.js');
     ready();
   },
 
@@ -41,17 +41,31 @@ module.exports = Provider.extend({
     }]);
   },
 
+  group : function (groupId, properties) {
+    if (!groupId) return;
+    properties.id = groupId;
+    window._lnq.push(['_setAccount', properties]);
+  },
+
   track : function (event, properties) {
     properties || (properties = {});
 
-    var personEvent = {
-      name      : event,
-      target_id : properties.target_id,
-      note      : properties.note,
-      revenue   : properties.revenue
+    // Preact takes a few special properties, and the rest in `extras`. So first
+    // convert and remove the special ones from `properties`.
+    var special = { name : event };
+
+    // They take `revenue` in cents.
+    if (properties.revenue) {
+      special.revenue = properties.revenue * 100;
+      delete properties.revenue;
     }
 
-    window._lnq.push(['_logEvent', personEvent, properties]);
+    if (properties.note) {
+      special.note = properties.note;
+      delete properties.note;
+    }
+
+    window._lnq.push(['_logEvent', special, properties]);
   }
 
 });

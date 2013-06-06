@@ -12,6 +12,7 @@ window.test = {
   groupId : 'group',
 
   groupProperties : {
+    name      : 'Group',
     employees : 42,
     plan      : 'Gold'
   },

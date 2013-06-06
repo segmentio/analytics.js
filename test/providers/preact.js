@@ -10,7 +10,6 @@ describe('Preact', function () {
 
       var spy = sinon.spy();
       analytics.ready(spy);
-      analytics.initialize({ 'Preact' :  test['Preact'] });
       analytics.initialize({ 'Preact' : test['Preact'] });
       expect(analytics.providers[0].options.projectCode).to.equal('x');
 
@@ -27,56 +26,95 @@ describe('Preact', function () {
 
 
   describe('identify', function () {
+    var stub;
 
-    beforeEach(analytics.user.clear);
+    beforeEach(function () {
+      analytics.user.clear();
+      stub = sinon.stub(window._lnq, 'push');
+    });
+
+    afterEach(function () {
+      stub.restore();
+    });
 
     it('should push _setPersonData', function () {
-      var spy = sinon.spy(window._lnq, 'push');
       analytics.identify();
-      expect(spy.called).to.be(false);
+      expect(stub.called).to.be(false);
 
-      spy.reset();
+      stub.reset();
       analytics.identify(test.traits);
-      expect(spy.called).to.be(false);
+      expect(stub.called).to.be(false);
 
-      spy.reset();
+      stub.reset();
       analytics.identify(test.userId, test.traits);
 
-      expect(spy.calledWith(['_setPersonData', {
-        name : test.traits.name,
-        email : test.traits.email,
-        uid : test.userId,
+      // Swap the `created` trait to the `created_at` that Preact needs
+      // and convert it from milliseconds to seconds.
+      if (test.traits.created) {
+        test.traits.created_at = Math.floor(test.traits.created/1000);
+        delete test.traits.created;
+      }
+
+      expect(stub.calledWith(['_setPersonData', {
+        name       : test.traits.name,
+        email      : test.traits.email,
+        uid        : test.userId,
         properties : test.traits
       }])).to.be(true);
 
-      spy.restore();
+    });
+
+  });
+
+
+  describe('group', function () {
+    var stub;
+    beforeEach(function () { stub = sinon.stub(window._lnq, 'push'); });
+    afterEach(function () { stub.restore(); });
+
+    it('should push _setAccount', function () {
+      analytics.group('group', {
+        name      : 'Group',
+        employees : 42
+      });
+      expect(stub.calledWith(['_setAccount', {
+        id        : 'group',
+        name      : 'Group',
+        employees : 42
+      }])).to.be(true);
     });
 
   });
 
 
   describe('track', function () {
+    var stub;
 
-    // Preact adds custom properties, so we need to have a loose match.
+    beforeEach(function () {
+      stub = sinon.stub(window._lnq, 'push');
+    });
+
+    afterEach(function () {
+      stub.restore();
+    });
+
     it('should call track', function () {
-      var personEvent = {
-        name : test.event,
-        target_id : 'abc',
-        note : null,
-        properties.created_at : Math.floor(traits.created/1000);
-      }
       var properties = {
-        item_count : 99,
-        target_id : 'abc'
+        note    : 'A Note',
+        revenue : 49.99
       };
-
-      var spy = sinon.spy(window._lnq, 'push');
       analytics.track(test.event, properties);
-      expect(spy.calledWith(['_logEvent', sinon.match(personEvent), sinon.match(properties)])).to.be(true);
-
-      spy.restore();
+      expect(stub.calledWith(['_logEvent',
+        sinon.match({
+          name    : test.event,
+          note    : 'A Note',
+          revenue : 4999
+        }),
+        sinon.match({})
+      ])).to.be(true);
     });
 
   });
+
 
 });

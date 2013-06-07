@@ -1,3 +1,8 @@
+0.11.7 / 2013-6-7
+=================
+* Fix for cookie domains, now sets to subdomain friendly by default.
+* Renaming bindAll -> bind-all
+
 0.11.6 / 2013-6-6
 =================
 * Added `group` support to Preact by [@azcoov](https://github.com/azcoov)

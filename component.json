@@ -2,7 +2,7 @@
   "name": "analytics",
   "repo": "segmentio/analytics.js",
   "description": "The hassle-free way to integrate analytics into any web application.",
-  "version": "0.11.6",
+  "version": "0.11.7",
   "keywords": [
     "analytics",
     "analytics.js",
@@ -63,7 +63,7 @@
     "component/url": "*",
     "segmentio/after": "*",
     "segmentio/alias": "*",
-    "segmentio/bindAll": "*",
+    "segmentio/bind-all": "*",
     "segmentio/canonical": "*",
     "segmentio/extend": "*",
     "segmentio/is-email": "*",
@@ -74,6 +74,7 @@
     "segmentio/new-date": "*",
     "segmentio/on-body": "*",
     "segmentio/store.js": "*",
+    "segmentio/top-domain": "*",
     "timoxley/next-tick": "*",
     "yields/prevent": "*"
   },

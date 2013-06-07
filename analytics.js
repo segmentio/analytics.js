@@ -827,7 +827,7 @@ module.exports = function(obj, fn){
 };
 
 });
-require.register("segmentio-bindAll/index.js", function(exports, require, module){
+require.register("segmentio-bind-all/index.js", function(exports, require, module){
 
 var bind   = require('bind')
   , type   = require('type');
@@ -1700,6 +1700,21 @@ store.enabled = !store.disabled
 
 module.exports = store;
 });
+require.register("segmentio-top-domain/index.js", function(exports, require, module){
+
+var url = require('url');
+
+// Official Grammar: http://tools.ietf.org/html/rfc883#page-56
+// Look for tlds with up to 2-6 characters.
+
+module.exports = function (urlStr) {
+
+  var host     = url.parse(urlStr).hostname
+    , topLevel = host.match(/[a-z0-9][a-z0-9\-]*[a-z0-9]\.[a-z\.]{2,6}$/i);
+
+  return topLevel ? topLevel[0] : host;
+};
+});
 require.register("timoxley-next-tick/index.js", function(exports, require, module){
 if (typeof setImmediate == 'function') {
   module.exports = function(ƒ){ setImmediate(ƒ) }
@@ -2435,11 +2450,12 @@ var cleanTraits = function (userId, traits) {
 });
 require.register("analytics/src/cookie.js", function(exports, require, module){
 
-var bindAll  = require('bindAll')
-  , cookie   = require('cookie')
-  , clone    = require('clone')
-  , defaults = require('defaults')
-  , json     = require('json');
+var bindAll   = require('bind-all')
+  , cookie    = require('cookie')
+  , clone     = require('clone')
+  , defaults  = require('defaults')
+  , json      = require('json')
+  , topDomain = require('top-domain');
 
 
 function Cookie (options) {
@@ -2461,9 +2477,15 @@ Cookie.prototype.options = function (options) {
 
   options || (options = {});
 
+  var domain = '.' + topDomain(window.location.href);
+
+  // localhost cookies are special: http://curl.haxx.se/rfc/cookie_spec.html
+  if (domain === '.localhost') domain = '';
+
   defaults(options, {
     maxage  : 31536000000, // default to a year
-    path    : '/'
+    path    : '/',
+    domain  : domain
   });
 
   this._options = options;
@@ -2535,7 +2557,7 @@ module.exports.Cookie = Cookie;
 });
 require.register("analytics/src/localStore.js", function(exports, require, module){
 
-var bindAll  = require('bindAll')
+var bindAll  = require('bind-all')
   , defaults = require('defaults')
   , store    = require('store');
 
@@ -2746,7 +2768,7 @@ extend(Provider.prototype, {
 });
 });
 require.register("analytics/src/user.js", function(exports, require, module){
-var bindAll    = require('bindAll')
+var bindAll    = require('bind-all')
   , clone      = require('clone')
   , cookie     = require('./cookie')
   , defaults   = require('defaults')
@@ -5298,71 +5320,102 @@ function addTraits (userId, traits, tracker) {
 }
 });
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
+require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
 require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
+require.alias("component-clone/index.js", "clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-cookie/index.js", "analytics/deps/cookie/index.js");
+require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
+require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
+require.alias("component-event/index.js", "event/index.js");
 
 require.alias("component-object/index.js", "analytics/deps/object/index.js");
+require.alias("component-object/index.js", "object/index.js");
 
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
+require.alias("component-querystring/index.js", "querystring/index.js");
 require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
 
 require.alias("component-type/index.js", "analytics/deps/type/index.js");
+require.alias("component-type/index.js", "type/index.js");
 
 require.alias("component-url/index.js", "analytics/deps/url/index.js");
+require.alias("component-url/index.js", "url/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
+require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
+require.alias("segmentio-alias/index.js", "alias/index.js");
 
-require.alias("segmentio-bindAll/index.js", "analytics/deps/bindAll/index.js");
-require.alias("segmentio-bindAll/index.js", "analytics/deps/bindAll/index.js");
-require.alias("component-bind/index.js", "segmentio-bindAll/deps/bind/index.js");
+require.alias("segmentio-bind-all/index.js", "analytics/deps/bind-all/index.js");
+require.alias("segmentio-bind-all/index.js", "analytics/deps/bind-all/index.js");
+require.alias("segmentio-bind-all/index.js", "bind-all/index.js");
+require.alias("component-bind/index.js", "segmentio-bind-all/deps/bind/index.js");
 
-require.alias("component-type/index.js", "segmentio-bindAll/deps/type/index.js");
+require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js");
 
-require.alias("segmentio-bindAll/index.js", "segmentio-bindAll/index.js");
+require.alias("segmentio-bind-all/index.js", "segmentio-bind-all/index.js");
 
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
+require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
+require.alias("segmentio-extend/index.js", "extend/index.js");
 
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
+require.alias("segmentio-is-email/index.js", "is-email/index.js");
 
 require.alias("segmentio-is-meta/index.js", "analytics/deps/is-meta/index.js");
+require.alias("segmentio-is-meta/index.js", "is-meta/index.js");
 
 require.alias("segmentio-json/index.js", "analytics/deps/json/index.js");
+require.alias("segmentio-json/index.js", "json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
+require.alias("segmentio-load-date/index.js", "load-date/index.js");
 
 require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
+require.alias("segmentio-load-script/index.js", "load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
 
 require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
+require.alias("segmentio-new-date/index.js", "new-date/index.js");
 require.alias("component-type/index.js", "segmentio-new-date/deps/type/index.js");
 
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
+require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/index.js");
+require.alias("segmentio-store.js/store.js", "store/index.js");
 require.alias("segmentio-json/index.js", "segmentio-store.js/deps/json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-store.js/store.js", "segmentio-store.js/index.js");
 
+require.alias("segmentio-top-domain/index.js", "analytics/deps/top-domain/index.js");
+require.alias("segmentio-top-domain/index.js", "analytics/deps/top-domain/index.js");
+require.alias("segmentio-top-domain/index.js", "top-domain/index.js");
+require.alias("component-url/index.js", "segmentio-top-domain/deps/url/index.js");
+
+require.alias("segmentio-top-domain/index.js", "segmentio-top-domain/index.js");
+
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
+require.alias("timoxley-next-tick/index.js", "next-tick/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
+require.alias("yields-prevent/index.js", "prevent/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");
 

@@ -1,9 +1,10 @@
 
-var bindAll  = require('bindAll')
-  , cookie   = require('cookie')
-  , clone    = require('clone')
-  , defaults = require('defaults')
-  , json     = require('json');
+var bindAll   = require('bind-all')
+  , cookie    = require('cookie')
+  , clone     = require('clone')
+  , defaults  = require('defaults')
+  , json      = require('json')
+  , topDomain = require('top-domain');
 
 
 function Cookie (options) {
@@ -25,9 +26,15 @@ Cookie.prototype.options = function (options) {
 
   options || (options = {});
 
+  var domain = '.' + topDomain(window.location.href);
+
+  // localhost cookies are special: http://curl.haxx.se/rfc/cookie_spec.html
+  if (domain === '.localhost') domain = '';
+
   defaults(options, {
     maxage  : 31536000000, // default to a year
-    path    : '/'
+    path    : '/',
+    domain  : domain
   });
 
   this._options = options;

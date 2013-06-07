@@ -1,5 +1,5 @@
 
-var bindAll  = require('bindAll')
+var bindAll  = require('bind-all')
   , defaults = require('defaults')
   , store    = require('store');
 

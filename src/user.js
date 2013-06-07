@@ -1,4 +1,4 @@
-var bindAll    = require('bindAll')
+var bindAll    = require('bind-all')
   , clone      = require('clone')
   , cookie     = require('./cookie')
   , defaults   = require('defaults')

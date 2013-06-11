@@ -1,3 +1,7 @@
+0.11.8 / 2013-6-10
+==================
+* Intercom: added `group` support
+
 0.11.7 / 2013-6-7
 =================
 * Fix for cookie domains, now sets to subdomain friendly by default.

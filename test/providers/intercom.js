@@ -1,7 +1,6 @@
 describe('Intercom', function () {
 
   describe('initialize', function () {
-
     this.timeout(10000);
 
     it('should load library and call ready', function (done) {
@@ -35,14 +34,18 @@ describe('Intercom', function () {
 
   describe('identify', function () {
 
-    var extend = require('segmentio-extend');
+    var stub;
+    beforeEach(function () { stub = sinon.stub(window, 'Intercom'); });
+    afterEach(function () { stub.restore(); });
+
+    var extend = require('extend');
 
     // Augment `traits` to test for Intercom's special `company` property.
     var traits = extend({}, test.traits, {
       company : {
         created : new Date(),
-        name    : 'Segment.io',
-        id      : '123'
+        name : 'Segment.io',
+        id : '123'
       }
     });
 
@@ -50,56 +53,64 @@ describe('Intercom', function () {
     var settings = {
       company : {
         created_at : Math.floor(traits.company.created/1000),
-        name       : 'Segment.io',
-        id         : '123'
+        name : 'Segment.io',
+        id : '123'
       },
-      created_at  : Math.floor(traits.created/1000),
-      custom_data : {},
-      email       : traits.email,
-      name        : traits.name,
-      widget      : {
-        activator   : test['Intercom'].activator,
+      created_at : Math.floor(traits.created/1000),
+      email : traits.email,
+      name : traits.name,
+      increments : undefined,
+      user_hash : undefined,
+      widget : {
+        activator : test['Intercom'].activator,
         use_counter : test['Intercom'].counter
       }
     };
 
     // When booted, we also expect these settings to be sent to Intercom.
     var bootSettings = {
-      app_id    : test['Intercom'].appId,
-      user_id   : test.userId
+      app_id : test['Intercom'].appId,
+      user_id : test.userId
     };
 
     it('should do nothing with no userId', function () {
-      var stub = sinon.stub(window, 'Intercom');
       analytics.user.clear();
       analytics.identify(traits);
       expect(stub.called).to.be(false);
-      stub.restore();
     });
 
     it('should call boot the first time and update the second', function () {
-      var stub = sinon.stub(window, 'Intercom');
-
       analytics.identify(test.userId, traits);
       expect(stub.calledWith('boot', extend({}, settings, bootSettings))).to.be(true);
       stub.reset();
-
       analytics.identify(test.userId, traits);
       expect(stub.calledWith('update', settings)).to.be(true);
-      stub.restore();
     });
 
     it('should allow adding context variables to settings', function () {
-
       var userHash = 'sdfj38fj382r9j29dj29dj29dj29dj2d';
-
-      var stub = sinon.stub(window, 'Intercom');
       analytics.identify(test.userId, traits, {
-        intercom: { userHash: userHash }
+        Intercom: { userHash: userHash }
       });
-
       expect(stub.calledWith('update', extend(settings, { user_hash: userHash }))).to.be(true);
-      stub.restore();
+    });
+
+  });
+
+
+  describe('group', function () {
+    var stub;
+    beforeEach(function () { stub = sinon.stub(window, 'Intercom'); });
+    afterEach(function () { stub.restore(); });
+
+    it('should push call "update" with the "company"', function () {
+      analytics.group('group', { name : 'Group' });
+      expect(stub.calledWith('update', {
+        company : {
+          id : 'group',
+          name : 'Group'
+        }
+      })).to.be(true);
     });
 
   });

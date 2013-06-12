@@ -1,11 +1,8 @@
 
 PHANTOM = node_modules/.bin/mocha-phantomjs
 PHANTOM_OPTS = --setting web-security=false --setting local-to-remote-url-access=true
-PORT = 8000
 
-ifneq ("$PORT", "/dev/null")
-    PORT = $PORT
-endif
+PORT ?= 8000
 
 # Compiles a one-file copy of analytics.js from all the development files.
 analytics.js: install

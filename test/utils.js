@@ -12,6 +12,7 @@ window.test = {
   groupId : 'group',
 
   groupProperties : {
+    name      : 'Group',
     employees : 42,
     plan      : 'Gold'
   },
@@ -109,8 +110,8 @@ window.test = {
   'HubSpot' : 'x',
 
   'Improvely' : {
-    im_domain     : 'demo',
-    im_project_id : 1
+    domain    : 'demo',
+    projectId : 1
   },
 
   'Intercom' : {
@@ -168,6 +169,8 @@ window.test = {
   'userfox' : '4v2erxr9c5vzqsy35z9gnk6az',
 
   'Vero' : 'x',
+
+  'Visual Website Optimizer' : 44207,
 
   'Woopra' : 'x'
 

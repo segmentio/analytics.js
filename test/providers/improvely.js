@@ -28,8 +28,8 @@ describe('Improvely', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Improvely' : test['Improvely'] });
-      expect(analytics.providers[0].options.im_domain).to.equal(test['Improvely'].im_domain);
-      expect(analytics.providers[0].options.im_project_id).to.equal(test['Improvely'].im_project_id);
+      expect(analytics.providers[0].options.domain).to.equal(test['Improvely'].domain);
+      expect(analytics.providers[0].options.projectId).to.equal(test['Improvely'].projectId);
     });
 
   });

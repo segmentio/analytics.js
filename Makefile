@@ -22,6 +22,9 @@ kill:
 install:
 	component install
 
+clean:
+	rm -rf components
+
 component:
 	component build --out . --name analytics.component --dev
 
@@ -53,8 +56,9 @@ test-browser: server
 	open http://localhost:8000/test/min.html
 
 # Compiles, minfies, component, and tests analytics.js - wrapped up and good to go.
-release: analytics.js min component test
+release: clean analytics.js min component test
 
 
 
-.PHONY: analytics.js
+
+.PHONY: analytics.js min clean install component test release

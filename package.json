@@ -1,6 +1,6 @@
 {
   "name": "analytics.js",
-  "version": "0.10.6",
+  "version": "0.11.9",
   "author": "Segment.io <friends@segment.io>",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "license": "MIT",
@@ -64,6 +64,7 @@
     "usercycle",
     "userfox",
     "uservoice",
-    "vero"
+    "vero",
+    "visual website optimizer"
   ]
 }

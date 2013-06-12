@@ -26,12 +26,15 @@ module.exports = Provider.extend({
 
   identify : function (userId, traits) {
     if (userId) window._uc.push(['uid', userId]);
+
+    // USERcycle has a special "hidden" event that is used just for retention measurement.
+    // Lukas suggested on 6/4/2013 that we send traits on that event, since they use the
+    // the latest value of every event property as a "trait"
+    window._uc.push(['action', 'came_back', traits]);
   },
 
   track : function (event, properties) {
-    // Usercycle seems to use traits instead of properties.
-    var traits = user.traits();
-    window._uc.push(['action', event, traits]);
+    window._uc.push(['action', event, properties]);
   }
 
 });

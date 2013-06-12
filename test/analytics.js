@@ -28,14 +28,19 @@ describe('Analytics.js', function () {
 
 
   describe('initialize', function () {
-
     it('stores enabled providers', function () {
       analytics.providers = [];
       analytics.initialize(options);
       expect(analytics.providers[0] instanceof Provider).to.be(true);
     });
 
-    it('sends options to enabled providers initialize', function () {
+    it('doesnt error on unknown provider', function () {
+      expect(function () {
+        analytics.initialize({ 'Unknown' : '' });
+      }).not.to.throwException();
+    });
+
+    it('sends options to provider.initialize', function () {
       var spy = sinon.spy(Provider.prototype, 'initialize');
       analytics.initialize(options);
       expect(spy.calledWith(sinon.match({ key : 'x' }))).to.be(true);
@@ -578,143 +583,135 @@ describe('Analytics.js', function () {
 
   describe('trackLink', function () {
 
-    it('triggers a track on a link click', function () {
-      var spy  = sinon.spy(Provider.prototype, 'track')
-        , link = $('<a>')[0];
+    var spy;
 
+    beforeEach(function () {
+      spy = sinon.spy(Provider.prototype, 'track');
+      window.location.hash = '';
+    });
+
+    afterEach(function () {
+      spy.restore();
+    });
+
+    it('triggers a track on a link click', function () {
+      var link = $('<a>')[0];
       analytics.trackLink(link, 'party');
       triggerClick(link);
       expect(spy.calledWith('party')).to.be(true);
-      spy.restore();
     });
 
     it('triggers a track on a $link click', function () {
-      var spy   = sinon.spy(Provider.prototype, 'track')
-        , $link = $('<a>');
-
+      var $link = $('<a>');
       analytics.trackLink($link, 'party');
       triggerClick($link[0]);
       expect(spy.calledWith('party')).to.be(true);
-      spy.restore();
+    });
+
+    it('allows for event to be a function', function () {
+      var link = $('<a>')[0];
+      analytics.trackLink(link, function () { return 'party'; });
+      triggerClick(link);
+      expect(spy.calledWith('party')).to.be(true);
+    });
+
+    it('allows for event to be a function across multiple links', function () {
+      var links = $('<a data-type="crazy"><a data-type="normal">');
+      var handler = function (link) { return $(link).attr('data-type'); };
+      analytics.trackLink(links, handler);
+      triggerClick(links[0]);
+      expect(spy.calledWith('crazy')).to.be(true);
+      spy.reset();
+      triggerClick(links[1]);
+      expect(spy.calledWith('normal')).to.be(true);
+    });
+
+    it('calls a event function with the link that was clicked', function () {
+      var spy  = sinon.spy()
+        , link = $('<a>')[0];
+      analytics.trackLink(link, spy);
+      triggerClick(link);
+      expect(spy.calledWith(link)).to.be(true);
     });
 
     it('allows for properties to be a function', function () {
-      var spy  = sinon.spy(Provider.prototype, 'track')
-        , link = $('<a>')[0];
-
+      var link = $('<a>')[0];
       analytics.trackLink(link, 'party', function () {
         return { type : 'crazy' };
       });
-
       triggerClick(link);
       expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
-      spy.restore();
     });
 
     it('allows for properties to be a function across multiple links', function () {
-      var spy   = sinon.spy(Provider.prototype, 'track')
-        , links = $('<a data-type="crazy"><a data-type="normal">');
-
+      var links = $('<a data-type="crazy"><a data-type="normal">');
       var handler = function (link) {
         return { type : $(link).attr('data-type') };
       };
-
       analytics.trackLink(links, 'party', handler);
-
       triggerClick(links[0]);
       expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
       spy.reset();
-
       triggerClick(links[1]);
       expect(spy.calledWith('party', { type : 'normal' })).to.be(true);
-      spy.restore();
     });
 
     it('calls a properties function with the link that was clicked', function () {
       var spy  = sinon.spy()
         , link = $('<a>')[0];
-
       analytics.trackLink(link, 'party', spy);
       triggerClick(link);
       expect(spy.calledWith(link)).to.be(true);
     });
 
     it('triggers a track and loads an href on a link click with an href', function (done) {
-      var spy  = sinon.spy(Provider.prototype, 'track')
-        , link = $('<a href="#test">')[0];
-
-      // Make sure hash is reset.
-      window.location.hash = '';
-
+      var link = $('<a href="#test">')[0];
       analytics.trackLink(link, 'party');
       triggerClick(link);
-
       // Expect the track call to have happened, but for the href not to have
       // been applied yet.
       expect(spy.calledWith('party')).to.be(true);
       expect(window.location.hash).not.to.equal('#test');
-
       // Expect the href to be applied after the timeout that gives events
       // time to send requests.
       setTimeout(function () {
         expect(window.location.hash).to.equal('#test');
-        spy.restore();
         done();
       }, analytics.timeout);
     });
 
     it('triggers a track and loads the correct href on a link click with multiple links', function (done) {
-      var spy   = sinon.spy(Provider.prototype, 'track')
-        , link1 = $('<a href="#test1">')[0]
+      var link1 = $('<a href="#test1">')[0]
         , link2 = $('<a href="#test2">')[0]
         , link3 = $('<a href="#test3">')[0];
-
-      // Make sure hash is reset.
-      window.location.hash = '';
-
       analytics.trackLink([link1, link2, link3], 'party');
       triggerClick(link2);
-
       // Expect the track call to have happened, but for the href not to have
       // been applied yet.
       expect(spy.calledWith('party')).to.be(true);
       expect(window.location.hash).not.to.equal('#test2');
-
       // Expect the href to be applied after the timeout that gives events
       // time to send requests.
       setTimeout(function () {
         expect(window.location.hash).to.equal('#test2');
-        spy.restore();
         done();
       }, analytics.timeout);
     });
 
     it('triggers a track but doesnt load an href on an href with blank target', function () {
-      var spy  = sinon.spy(Provider.prototype, 'track')
-        , link = $('<a href="http://google.com" target="_blank">')[0];
-
-      // Make sure hash is reset.
-      window.location.hash = '';
-
+      var link = $('<a href="http://google.com" target="_blank">')[0];
       analytics.trackLink(link, 'party');
       triggerClick(link);
       expect(spy.calledWith('party')).to.be(true);
       expect(window.location.hash).not.to.equal('#test');
-      spy.restore();
     });
 
     it('triggers a track but doesnt load an href on a meta link click with an href', function () {
-      var spy  = sinon.spy(Provider.prototype, 'track')
-        , link = $('<a href="http://google.com">')[0];
-
-      // Make sure hash is reset.
-      window.location.hash = '';
-
+      var link = $('<a href="http://google.com">')[0];
       analytics.trackLink(link, 'party');
       triggerClick(link, true);
       expect(spy.calledWith('party')).to.be(true);
       expect(window.location.hash).not.to.equal('#test');
-      spy.restore();
     });
 
     it('trackClick is aliased to trackLink for backwards compatibility', function () {
@@ -726,28 +723,32 @@ describe('Analytics.js', function () {
 
   describe('trackForm', function () {
 
-    var bind     = require('component-event').bind
+    var spy
+      , bind     = require('component-event').bind
       , template = '<form action="http://google.com" target="_blank"><input type="submit" /></form>';
 
-    it('triggers track', function () {
-      var spy  = sinon.spy(Provider.prototype, 'track')
-        , form = $(template)[0];
+    beforeEach(function () {
+      spy = sinon.spy(Provider.prototype, 'track');
+      window.location.hash = '';
+    });
 
+    afterEach(function () {
+      spy.restore();
+    });
+
+    it('triggers track', function () {
+      var form = $(template)[0];
       analytics.trackForm(form, 'party');
       triggerClick($(form).find('input')[0]);
       expect(spy.calledWith('party')).to.be(true);
-      spy.restore();
     });
 
     it('triggers an existing submit handler', function () {
       var form = $(template)[0]
         , spy  = sinon.spy();
-
       analytics.trackForm(form, 'party');
       bind(form, 'submit', spy);
-
       triggerClick($(form).find('input')[0]);
-
       expect(spy.called).to.be(true);
       expect(spy.thisValues[0]).to.be(form);
     });
@@ -755,33 +756,41 @@ describe('Analytics.js', function () {
     it('calls the forms submit method after a timeout', function (done) {
       var form = $(template)[0]
         , spy  = sinon.spy(form, 'submit');
-
       analytics.trackForm(form, 'party');
       triggerClick($(form).find('input')[0]);
-
       setTimeout(function () {
         expect(spy.called).to.be(true);
         done();
       }, analytics.timeout);
     });
 
-    it('allows for properties to be a function', function () {
-      var spy  = sinon.spy(Provider.prototype, 'track')
-        , form = $(template)[0];
+    it('allows for event to be a function', function () {
+      var form = $(template)[0];
+      analytics.trackForm(form, function () { return 'crazy'; });
+      triggerClick($(form).find('input')[0]);
+      expect(spy.calledWith('crazy')).to.be(true);
+    });
 
+    it('calls a event function with the form that was clicked', function () {
+      var spy  = sinon.spy()
+        , form = $(template)[0];
+      analytics.trackForm(form, spy);
+      triggerClick($(form).find('input')[0]);
+      expect(spy.calledWith(form)).to.be(true);
+    });
+
+    it('allows for properties to be a function', function () {
+      var form = $(template)[0];
       analytics.trackForm(form, 'party', function () {
         return { type : 'crazy' };
       });
-
       triggerClick($(form).find('input')[0]);
       expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
-      spy.restore();
     });
 
     it('calls a properties function with the form that was clicked', function () {
       var spy  = sinon.spy()
         , form = $(template)[0];
-
       analytics.trackForm(form, 'party', spy);
       triggerClick($(form).find('input')[0]);
       expect(spy.calledWith(form)).to.be(true);
@@ -797,46 +806,35 @@ describe('Analytics.js', function () {
      */
 
     it('triggers track on a $form', function () {
-      var spy   = sinon.spy(Provider.prototype, 'track')
-        , $form = $(template);
-
+      var $form = $(template);
       analytics.trackForm($form, 'party');
       triggerClick($form.find('input')[0]);
       expect(spy.calledWith('party')).to.be(true);
-      spy.restore();
     });
 
     it('triggers an existing jquery submit handler on a $form', function () {
       var $form = $(template)
         , spy   = sinon.spy();
-
       analytics.trackForm($form, 'party');
       $form.submit(spy);
-
       triggerClick($form.find('input')[0]);
-
       expect(spy.called).to.be(true);
       expect(spy.thisValues[0]).to.be($form[0]);
     });
 
     it('triggers track on a $form submitted by jQuery', function () {
-      var spy   = sinon.spy(Provider.prototype, 'track')
-        , $form = $(template);
-
+      var $form = $(template);
       analytics.trackForm($form, 'party');
       $form.submit();
       expect(spy.calledWith('party')).to.be(true);
-      spy.restore();
     });
 
     it('triggers an existing jquery submit handler on a $form submitted by jQuery', function () {
       var $form = $(template)
         , spy   = sinon.spy();
-
       analytics.trackForm($form, 'party');
       $form.submit(spy);
       $form.submit();
-
       expect(spy.called).to.be(true);
       expect(spy.thisValues[0]).to.be($form[0]);
     });
@@ -852,6 +850,22 @@ describe('Analytics.js', function () {
       expect(spy.called).to.be(true);
       spy.restore();
     });
+
+    it('sends a url along', function  () {
+      var spy = sinon.spy(Provider.prototype, 'track');
+      analytics.track(test.url);
+      expect(spy.calledWith(test.url)).to.be(true);
+      spy.restore();
+    });
+
+    it('sends a clone of context along', function  () {
+      var spy = sinon.spy(Provider.prototype, 'track');
+      analytics.track(test.url,test.context);
+      expect(spy.args[0][1]).not.to.equal(test.context);
+      expect(spy.args[0][1]).to.eql(test.context);
+      spy.restore();
+    });
+
   });
 
 

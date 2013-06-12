@@ -68,7 +68,8 @@ module.exports = Provider.extend({
       'lastName'  : '$last_name',
       'lastSeen'  : '$last_seen',
       'name'      : '$name',
-      'username'  : '$username'
+      'username'  : '$username',
+      'phone'     : '$phone'
     });
 
     // Finally, call all of the identify equivalents. Verify certain calls

@@ -39,5 +39,6 @@ module.exports = [
   require('./userfox'),
   require('./uservoice'),
   require('./vero'),
+  require('./visual-website-optimizer'),
   require('./woopra')
 ];

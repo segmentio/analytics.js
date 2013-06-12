@@ -1,9 +1,56 @@
-0.10.6 / 2013-5-22
+0.11.9 / 2013-6-11
+==================
+* Added [Visual Website Optimizer](http://visualwebsiteoptimizer.com/)
+
+0.11.8 / 2013-6-10
+==================
+* Intercom: added `group` support
+
+0.11.7 / 2013-6-7
+=================
+* Fix for cookie domains, now sets to subdomain friendly by default.
+* Renaming bindAll -> bind-all
+
+0.11.6 / 2013-6-6
+=================
+* Added `group` support to Preact by [@azcoov](https://github.com/azcoov)
+* Fixed `created` bug with userfox
+* Changed to new Vero CDN URL
+* Fixed bug when initializing unknown providers
+* Added `options` object to `pageview` by [@debangpaliwal](https://github.com/devangpaliwal)
+
+0.11.5 / 2013-6-3
+=================
+* Adding segmentio/json temporarily, fixing json-fallback
+
+0.11.4 / 2013-5-31
+===================
+* Updated Intercom's library URL
+
+0.11.3 / 2013-5-31
+==================
+* Added trailing comma fix
+
+0.11.2 / 2013-5-30
+==================
+* Added fix for UserVoice displaying `'null'`
+* Added `make clean` before running components (fixes json fallback)
+
+0.11.1 / 2013-5-29
+==================
+* Fixed bug with Google Analytics not tracking integer `value`s
+
+0.11.0 / 2013-5-28
+==================
+* Switched from cookie-ing to localStorage
+
+0.10.6 / 2013-5-23
 ==================
 * Moved trait parsing logic to the global level
 * Added [Improvely](http://www.improvely.com/)
 * Added [Get Satisfaction](https://getsatisfaction.com/)
-* Added [Visual Website Optimizer](http://visualwebsiteoptimizer.com/)
+* Added a `$phone` alias for Mixpanel
+* Added the ability to pass a function for the `event` to `trackLink` and `trackForm`
 
 0.10.5 / 2013-5-22
 ==================

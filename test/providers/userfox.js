@@ -33,7 +33,7 @@ describe('userfox', function () {
     it('should call _ufq identify if theres an email', function () {
       var spy = sinon.spy(window._ufq, 'push');
       analytics.identify(test.userId, test.traits);
-      expect(spy.calledWith(['init', { 
+      expect(spy.calledWith(['init', {
         clientId : test['userfox'],
         email    : test.traits.email
       }])).to.be(true);
@@ -51,13 +51,16 @@ describe('userfox', function () {
     it('should call _ufq track if theres a created date', function () {
       var spy = sinon.spy(window._ufq, 'push');
       analytics.user.clear();
-      var created = new Date();
+      var created = 1370542617;
       analytics.identify(test.userId, {
         email   : test.traits.email,
         created : created
       });
 
-      expect(spy.calledWith(['track', { signup_date: created.getTime()+'', created : created, email : test.traits.email }])).to.be(true);
+      expect(spy.calledWith(['track', {
+        signup_date : created.toString(),
+        email       : test.traits.email
+      }])).to.be(true);
       spy.restore();
     });
   });

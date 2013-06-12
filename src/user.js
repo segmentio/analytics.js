@@ -1,78 +1,98 @@
-var cookieStore = require('cookie')
-  , clone       = require('clone')
-  , extend      = require('extend')
-  , json        = require('json')
-  , type        = require('type');
+var bindAll    = require('bind-all')
+  , clone      = require('clone')
+  , cookie     = require('./cookie')
+  , defaults   = require('defaults')
+  , extend     = require('extend')
+  , localStore = require('./localStore');
+
+
+function User (options) {
+  this._id     = null;
+  this._traits = {};
+  this.options(options);
+}
 
 
 /**
- * Make a new user.
- */
-
-var user = newUser();
-
-
-/**
- * Default cookie settings.
- */
-
-var cookie = exports.cookie = {
-  name    : 'ajs_user',
-  maxage  : 31536000000, // default to a year
-  enabled : true,
-  path    : '/',
-};
-
-
-/**
- * Set the options for our user storage.
+ * Sets the options for the user
  *
- * @param {Object} options - settings.
- *
- *   @field {Boolean|Object} cookie - whether to use a cookie.
- *     @field {String} name - what to call the cookie (eg. 'ajs_user').
- *     @field {Number} maxage - expiration time in milliseconds for the cookie,
- *     defaulting to one year.
- *     @field {
+ * @param  {Object} options
+ *   @field {Object}  cookie
+ *   @field {Object}  localStorage
+ *   @field {Boolean} persist (true)
  */
 
-exports.options = function (options) {
+User.prototype.options = function (options) {
   options || (options = {});
 
-  // Support just passing in a boolean for cookie.
-  if ('boolean' === type(options.cookie)) {
-    cookie.enabled = options.cookie;
-  }
+  defaults(options, {
+    persist : true
+  });
 
-  else if ('object' === type(options.cookie)) {
-    cookie.enabled = true;
-    if (options.cookie.name)   cookie.name   = options.cookie.name;
-    if (options.cookie.maxage) cookie.maxage = options.cookie.maxage;
-    if (options.cookie.domain) cookie.domain = options.cookie.domain;
-    if (options.cookie.path)   cookie.path   = options.cookie.path;
-
-    if (cookie.domain && cookie.domain.charAt(0) !== '.') {
-      cookie.domain = '.' + cookie.domain;
-    }
-  }
+  this.cookie(options.cookie);
+  this.localStorage(options.localStorage);
+  this.persist = options.persist;
 };
 
 
 /**
- * Get the current user's ID.
+ * Get or set cookie options
+ *
+ * @param  {Object} options
  */
 
-exports.id = function () {
-  return user.id;
+User.prototype.cookie = function (options) {
+  if (arguments.length === 0) return this.cookieOptions;
+
+  options || (options = {});
+  defaults(options, {
+    key    : 'ajs_user_id',
+    oldKey : 'ajs_user'
+  });
+  this.cookieOptions = options;
 };
 
 
 /**
- * Get the current user's traits.
+ * Get or set local storage options
+ *
+ * @param  {Object} options
  */
 
-exports.traits = function () {
-  return clone(user.traits);
+User.prototype.localStorage = function (options) {
+  if (arguments.length === 0) return this.localStorageOptions;
+
+  options || (options = {});
+  defaults(options, {
+    key    : 'ajs_user_traits'
+  });
+  this.localStorageOptions = options;
+};
+
+
+/**
+ * Get or set the user id
+ *
+ * @param  {String} id
+ */
+
+User.prototype.id = function (id) {
+  if (arguments.length === 0) return this._id;
+  this._id = id;
+};
+
+
+/**
+ * Get or set the user traits
+ *
+ * @param  {Object} traits
+ */
+
+User.prototype.traits = function (traits) {
+  if (arguments.length === 0) return clone(this._traits);
+  traits || (traits = {});
+
+  this._traits = traits;
 };
 
 
@@ -81,91 +101,110 @@ exports.traits = function () {
  *
  * @param {String} userId - the new user ID.
  * @param {Object} traits - any new traits.
- *
  * @return {Boolean} whether alias should be called.
  */
 
-exports.update = function (userId, traits) {
+User.prototype.update = function (userId, traits) {
 
   // Make an alias call if there was no previous userId, there is one
   // now, and we are using a cookie between page loads.
-  var alias = !user.id && userId && cookie.enabled;
+  var alias = !this.id() && userId && this.persist;
 
   traits || (traits = {});
 
   // If there is a current user and the new user isn't the same,
   // we want to just replace their traits. Otherwise extend.
-  if (user.id && userId && user.id !== userId) user.traits = traits;
-  else extend(user.traits, traits);
+  if (this.id() && userId && this.id() !== userId) this.traits(traits);
+  else this.traits(extend(this.traits(), traits));
 
-  if (userId) user.id = userId;
+  if (userId) this.id(userId);
 
-  if (cookie.enabled) save(user);
+  this.save();
 
   return alias;
 };
 
 
 /**
- * Clears the user and wipes the cookie.
- */
-
-exports.clear = function () {
-  if (cookie.enabled) cookieStore(cookie.name, null, clone(cookie));
-  user = newUser();
-};
-
-
-/**
- * Save the user object to a cookie
- *
- * @param {Object} user
+ * Save the user to localstorage and cookie
  *
  * @return {Boolean} saved
  */
 
-var save = function (user) {
-  try {
-    cookieStore(cookie.name, json.stringify(user), clone(cookie));
-    return true;
-  } catch (e) {
-    return false;
-  }
+User.prototype.save = function () {
+  if (!this.persist) return false;
+
+  cookie.set(this.cookie().key, this.id());
+  localStore.set(this.localStorage().key, this.traits());
+  return true;
 };
 
 
 /**
- * Load the data from our cookie.
+ * Loads a saved user, and set its information
  *
- * @return {Object} - the current user.
- *   @field {String} id - the current user's ID.
- *   @field {Object} traits - the current user's traits.
+ * @return {Object} user
  */
 
-exports.load = function () {
-  if (!cookie.enabled) return user;
+User.prototype.load = function () {
+  if (this.loadOldCookie()) return this.toJSON();
 
-  try {
-    var storedUser = cookieStore(cookie.name);
+  var id     = cookie.get(this.cookie().key)
+    , traits = localStore.get(this.localStorage().key);
 
-    if (storedUser) user = json.parse(storedUser);
-    else user = newUser();
-  } catch (e) {
-    // If the json or cookie is bad
-    user = newUser();
-  }
-
-  return user;
+  this.id(id);
+  this.traits(traits);
+  return this.toJSON();
 };
 
 
 /**
- * Returns a new user object.
+ * Clears the user, and removes the stored version
+ *
  */
 
-function newUser() {
+User.prototype.clear = function () {
+  cookie.remove(this.cookie().key);
+  localStore.remove(this.localStorage().key);
+  this.id(null);
+  this.traits({});
+};
+
+
+/**
+ * Load the old user from the cookie. Should be phased
+ * out at some point
+ *
+ * @return {Boolean} loaded
+ */
+
+User.prototype.loadOldCookie = function () {
+  var user = cookie.get(this.cookie().oldKey);
+  if (!user) return false;
+
+  this.id(user.id);
+  this.traits(user.traits);
+  cookie.remove(this.cookie().oldKey);
+  return true;
+};
+
+
+/**
+ * Get the user info
+ *
+ * @return {Object}
+ */
+
+User.prototype.toJSON = function () {
   return {
-    id : null,
-    traits : {}
+    id     : this.id(),
+    traits : this.traits()
   };
-}
+};
+
+
+/**
+ * Export the new user as a singleton.
+ */
+
+module.exports = bindAll(new User());

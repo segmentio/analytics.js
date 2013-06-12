@@ -6,7 +6,23 @@
   <title>Minified Tests | Analytics.js</title>
 
   <link rel="stylesheet" href="libs/mocha/mocha-1.8.1.css">
+
+  <!-- Synchronous providers -->
   <script src="//cdn.optimizely.com/js/170430035.js"></script>
+  <script type='text/javascript'>
+    var _vis_opt_account_id = 44207;
+    var _vis_opt_protocol = (('https:' == document.location.protocol) ? 'https://' : 'http://');
+    document.write('<s' + 'cript src="' + _vis_opt_protocol +
+    'dev.visualwebsiteoptimizer.com/deploy/js_visitor_settings.php?v=1&a='+_vis_opt_account_id+'&url='
+    +encodeURIComponent(document.URL)+'&random='+Math.random()+'" type="text/javascript">' + '<\/s' + 'cript>');
+    if(typeof(_vis_opt_settings_loaded) == "boolean") { document.write('<s' + 'cript src="' + _vis_opt_protocol +
+    'd5phz18u4wuww.cloudfront.net/vis_opt.js" type="text/javascript">' + '<\/s' + 'cript>'); }
+    // if your site already has jQuery 1.4.2, replace vis_opt.js with vis_opt_no_jquery.js above
+    if(typeof(_vis_opt_settings_loaded) == "boolean" && typeof(_vis_opt_top_initialize) == "function") {
+            _vis_opt_top_initialize(); vwo_$(document).ready(function() { _vis_opt_bottom_initialize(); });
+    }
+  </script>
+
   <script src="libs/sinon/sinon-1.5.2.js"></script>
   <script src="libs/expect/expect-0.1.2.js"></script>
   <script src="libs/mocha/mocha-1.8.1.js"></script>
@@ -57,6 +73,7 @@
   <script src="providers/userfox.js"></script>
   <script src="providers/uservoice.js"></script>
   <script src="providers/vero.js"></script>
+  <script src="providers/visual-website-optimizer.js"></script>
   <script src="providers/woopra.js"></script>
 
   <script src="analytics.js"></script>

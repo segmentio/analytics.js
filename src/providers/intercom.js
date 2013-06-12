@@ -27,60 +27,35 @@ module.exports = Provider.extend({
   },
 
   initialize : function (options, ready) {
-    load('https://api.intercom.io/api/js/library.js', ready);
+    load('https://static.intercomcdn.com/intercom.v1.js', ready);
   },
 
   identify : function (userId, traits, options) {
-    // Intercom requires a `userId` to associate data to a user.
-    if (!userId) return;
-
-    // Don't do anything if we just have traits.
+    // Don't do anything if we just have traits the first time.
     if (!this.booted && !userId) return;
 
-    options = options || {};
-
-    // Intercom specific settings could be lowercase or upper-case
-    var intercom = options.intercom || options.Intercom || {};
-
-    // Pass traits directly in to Intercom's `custom_data`.
-    var settings = { custom_data : traits || {} };
-
-    // pick specific options from the options.intercom
-    if (intercom.increments) settings.increments = increments;
-    if (intercom.user_hash) settings.user_hash = intercom.user_hash;
-    if (intercom.userHash) settings.user_hash = intercom.userHash;
+    // Intercom specific settings. BACKWARDS COMPATIBILITY: we need to check for
+    // the lowercase variant as well.
+    options || (options = {});
+    var Intercom = options.Intercom || options.intercom || {};
+    traits.increments = Intercom.increments;
+    traits.user_hash = Intercom.userHash || Intercom.user_hash;
 
     // They need `created_at` as a Unix timestamp (seconds).
-    if (traits && traits.created) {
-      settings.created_at = Math.floor(traits.created/1000);
+    if (traits.created) {
+      traits.created_at = Math.floor(traits.created/1000);
       delete traits.created;
     }
 
-    // Pull out an email field.
-    if (traits.email) {
-      settings.email = traits.email;
-      delete traits.email;
-    }
-
-    // Pull out a name field, or combine one from `firstName` and `lastName`.
-    if (traits && traits.name) {
-      settings.name = traits.name;
-      delete traits.name;
-    }
-
-    // Pull out a company field, with it's own optional `created` date.
-    if (traits && traits.company) {
-      if (traits.company.created) {
-        traits.company.created_at = Math.floor(traits.company.created/1000);
-        delete traits.company.created;
-      }
-      settings.company = traits.company;
-      delete traits.company;
+    // Convert a `company`'s `created` date.
+    if (traits.company && traits.company.created) {
+      traits.company.created_at = Math.floor(traits.company.created/1000);
+      delete traits.company.created;
     }
 
     // Optionally add the inbox widget.
     if (this.options.activator) {
-      settings.widget = {
+      traits.widget = {
         activator   : this.options.activator,
         use_counter : this.options.counter
       };
@@ -89,21 +64,24 @@ module.exports = Provider.extend({
     // If this is the first time we've identified, `boot` instead of `update`
     // and add our one-time boot settings.
     if (this.booted) {
-      window.Intercom('update', settings);
+      window.Intercom('update', traits);
     } else {
-      extend(settings, {
-        app_id    : this.options.appId,
-        user_id   : userId
+      extend(traits, {
+        app_id  : this.options.appId,
+        user_id : userId
       });
-
-      if (this.options.userHash)
-        settings.user_hash = this.options.userHash;
-
-      window.Intercom('boot', settings);
+      window.Intercom('boot', traits);
     }
 
     // Set the booted state, so that we know to call 'update' next time.
     this.booted = true;
+  },
+
+  // Intercom doesn't have a separate `group` method, but they take a
+  // `companies` trait for the user.
+  group : function (groupId, properties, options) {
+    properties.id = groupId;
+    window.Intercom('update', { company : properties });
   }
 
 });

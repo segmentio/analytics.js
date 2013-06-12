@@ -2262,6 +2262,7 @@ extend(Analytics.prototype, {
 
         if (handlerObj.el === el) {
           unbind(el, 'click', handlerObj.handler);
+          self._linkHandlers.splice(i, 1);
         }
       }
     });

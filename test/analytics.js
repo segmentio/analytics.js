@@ -721,38 +721,6 @@ describe('Analytics.js', function () {
 
 
 
-  describe('untrackLink', function () {
-
-    var spy;
-
-    beforeEach(function () {
-      spy = sinon.spy(Provider.prototype, 'track');
-      window.location.hash = '';
-    });
-
-    afterEach(function () {
-      spy.restore();
-    });
-
-    it('does not trigger a track on a link after untrack', function () {
-      var link = $('<a>')[0];
-      analytics.trackLink(link, 'party');
-      analytics.untrackLink(link);
-      triggerClick(link);
-      expect(spy.called).to.be(false);
-    });
-
-    it('does not trigger a track on a $link after untrack', function () {
-      var $link = $('<a>');
-      analytics.trackLink($link, 'party');
-      analytics.untrackLink($link);
-      triggerClick($link[0]);
-      expect(spy.called).to.be(false);
-    });
-  });
-
-
-
   describe('trackForm', function () {
 
     var spy

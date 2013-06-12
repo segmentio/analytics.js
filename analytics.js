@@ -1785,6 +1785,7 @@ module.exports = new Analytics(providers);
 require.register("analytics/src/analytics.js", function(exports, require, module){
 var after          = require('after')
   , bind           = require('event').bind
+  , unbind         = require('event').unbind
   , clone          = require('clone')
   , cookie         = require('./cookie')
   , each           = require('each')
@@ -1864,6 +1865,8 @@ extend(Analytics.prototype, {
 
   // The currently initialized providers.
   providers : [],
+
+  _linkHandlers : [],
 
 
   /**
@@ -2192,7 +2195,7 @@ extend(Analytics.prototype, {
       , propertiesFunction = 'function' === type(properties);
 
     each(links, function (el) {
-      bind(el, 'click', function (e) {
+      var handler = function (e) {
 
         // Allow for `event` or `properties` to be a function. And pass it the
         // link element that was clicked.
@@ -2219,7 +2222,49 @@ extend(Analytics.prototype, {
             window.location.href = el.href;
           }, self.timeout);
         }
+      };
+
+      self._linkHandlers.push({
+        el: el,
+        handler: handler
       });
+
+      bind(el, 'click', handler);
+    });
+  },
+
+
+  /**
+   * Untrack Link
+   *
+   * A helper for removing handlers added to elements in `trackLink` calls.
+   * Useful for cleaning up references to handlers before removing the elements
+   * to prevent memory leaks when manipulating the DOM.
+   *
+   * @param {Element|Array} links - The link element or array of link elements
+   * to bind to. (Allowing arrays makes it easy to pass in jQuery objects.)
+   */
+
+  untrackLink : function (links) {
+    if (!links) return;
+
+    // Turn a single link into an array so that we're always handling
+    // arrays, which allows for passing jQuery objects.
+    if ('element' === type(links)) links = [links];
+
+    var self = this;
+
+    each(links, function (el) {
+      var i = self._linkHandlers.length;
+
+      while (i--) {
+        var handlerObj = self._linkHandlers[i];
+
+        if (handlerObj.el === el) {
+          unbind(el, 'click', handlerObj.handler);
+          self._linkHandlers.splice(i, 1);
+        }
+      }
     });
   },
 

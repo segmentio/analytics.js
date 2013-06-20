@@ -131,7 +131,11 @@ window.test = {
 
   'LiveChat' : '1520', //'2328351',
 
-  'Lytics' : 'x',
+  'Lytics' : {
+    cid: 'x',
+    cookie: 'c',
+    qsargs: [ 'a', 'b' ]
+  },
 
   'Mixpanel' : 'x',
 

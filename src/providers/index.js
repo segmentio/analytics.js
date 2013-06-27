@@ -26,6 +26,7 @@ module.exports = [
   require('./livechat'),
   require('./lytics'),
   require('./mixpanel'),
+  require('./mousestats'),
   require('./olark'),
   require('./optimizely'),
   require('./perfect-audience'),

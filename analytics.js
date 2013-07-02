@@ -4822,7 +4822,7 @@ require.register("analytics/src/providers/piwik.js", function(Exports, require, 
 
     initialize : function (options, ready) {
 
-      var scheme = ("https:" == document.location.protocol)  ? 'https://' : 'https://';
+      var scheme = ("https:" == document.location.protocol)  ? 'https://' : 'http://';
       var domain = options.url;
 
       window._paq = window._paq || [];
@@ -4834,7 +4834,7 @@ require.register("analytics/src/providers/piwik.js", function(Exports, require, 
 
 
       load({
-          http  : 'https://' + domain + "/piwik.js",
+          http  : 'http://' + domain + "/piwik.js",
           https : 'https://' + domain + "/piwik.js",
       }, ready);
     },

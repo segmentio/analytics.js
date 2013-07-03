@@ -6,7 +6,7 @@ describe("Piwik", function() {
 
 	    it('should call ready and load library', function (done) {
 	      expect(window._paq).to.be(undefined);
-
+s
 	      var spy = sinon.spy();
 	      analytics.ready(spy);
 

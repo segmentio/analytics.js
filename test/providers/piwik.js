@@ -30,11 +30,6 @@ describe("Piwik", function() {
 
 	  });
 
-	describe("track", function() {
-		it('should push "_trackEvent"', function () {
-	        analytics.track('setDocumentTitle', 'New Page Title');
-	    });
-	});
 	describe("pageview", function() {
 		it('should push "_pageview"', function () {
 	        analytics.pageview();

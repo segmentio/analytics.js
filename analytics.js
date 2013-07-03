@@ -4839,16 +4839,6 @@ require.register("analytics/src/providers/piwik.js", function(Exports, require, 
       }, ready);
     },
 
-    track : function (event, properties) {
-
-      if (properties == undefined)
-        window._paq.push([event]);
-      else
-        window._paq.push([event, properties]);
-
-      window._paq.push(['trackPageView']);
-    },
-
     pageview : function(url) {
 
       window._paq.push(['trackPageView']);

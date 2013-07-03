@@ -143,6 +143,11 @@ window.test = {
 
   'Pingdom' : '5168f8c6abe53db732000000',
 
+  'Piwik' : {
+    url : null,
+    id : 1
+  },
+
   'Preact' : {
     projectCode : 'x'
   },

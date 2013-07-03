@@ -30,6 +30,7 @@ module.exports = [
   require('./optimizely'),
   require('./perfect-audience'),
   require('./pingdom'),
+  require('./piwik'),
   require('./preact'),
   require('./qualaroo'),
   require('./quantcast'),

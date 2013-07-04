@@ -1,0 +1,85 @@
+defaultTasks 'analyticsJs'
+
+project.ext {
+    PROJECT_DIR = project.projectDir.toString()
+    PHANTOM = PROJECT_DIR + '/node_modules/.bin/mocha-phantomjs'
+    PHANTOM_OPTS = '--setting web-security=false --setting local-to-remote-url-access=true'
+    EXPORT_FILE = hasProperty('export') ? export : 'analytics.js'
+}
+
+task install(type : Exec){
+    description = 'Default component install'
+    workingDir PROJECT_DIR
+    commandLine 'component'
+    args 'install'
+}
+
+task analyticsJs(type : Exec, dependsOn: 'install'){
+    description = 'Compiles a one-file copy of analytics.js from all the development files'
+    workingDir PROJECT_DIR
+    commandLine 'component'
+    args (* ('build --standalone analytics --out . --name analytics'.split(" ")) )
+}
+
+task min(type : Exec, dependsOn: 'analyticsJs'){
+    description = 'Adds a minified copy of analytics.js'
+    workingDir PROJECT_DIR
+    commandLine 'uglifyjs'
+    args '-o', 'analytics.min.js', 'analytics.js'
+}
+
+task component(type : Exec){
+    description = 'Components'
+    workingDir PROJECT_DIR
+    commandLine 'component'
+    args (* ('build --out . --name analytics.component --dev'.split(" ")) )
+}
+
+task cleanComponent(type : Exec){
+    description = 'Clean all components'
+    workingDir PROJECT_DIR
+    commandLine 'rm'
+    args '-rf', 'components'
+}
+
+task server(type : Exec){
+    description = 'Starts the testing server'
+    workingDir PROJECT_DIR
+    commandLine 'node'
+    args 'test/server.js'
+}
+
+task testCore(type : Exec){
+    description = 'Runs only the non-minified core tests'
+    workingDir PROJECT_DIR
+    commandLine PHANTOM
+    args (* ((PHANTOM_OPTS + ' http://localhost:8000/test/core.html').split(" ")) )
+}
+
+task testProviders(type : Exec){
+    description = 'Runs only the non-minified provider tests'
+    workingDir PROJECT_DIR
+    commandLine PHANTOM
+    args (* ((PHANTOM_OPTS + ' http://localhost:8000/test/providers.html').split(" ")) )
+}
+
+task testMin(type : Exec){
+    description = 'Runs only the minified provider tests'
+    workingDir PROJECT_DIR
+    commandLine PHANTOM
+    args (* ((PHANTOM_OPTS + ' http://localhost:8000/test/min.html').split(" ")) )
+}
+
+task test(type : Exec, dependsOn:['testCore', 'testProviders', 'testMin']){
+    description = 'Runs all the tests on travis'
+    workingDir PROJECT_DIR
+    commandLine 'echo'
+    args 'DONE TEST!'
+}
+
+task release(type : Exec, dependsOn:['cleanComponent', 'analyticsJs', 'min', 'component', 'test']){
+    description = 'Compiles, minfies, component, and tests analytics.js - wrapped up and good to go.'
+    workingDir PROJECT_DIR
+    commandLine 'echo'
+    args 'DONE!'
+}

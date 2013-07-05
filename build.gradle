@@ -4,14 +4,14 @@ project.ext {
     PROJECT_DIR = project.projectDir.toString()
     PHANTOM = PROJECT_DIR + '/node_modules/.bin/mocha-phantomjs'
     PHANTOM_OPTS = '--setting web-security=false --setting local-to-remote-url-access=true'
-    EXPORT_FILE = hasProperty('export') ? export : 'analytics.js'
+    EXPORT_FILE = project.hasProperty('export') ? export : '~/analytics.js'
 }
 
-task install(type : Exec){
+task install(type : Exec, dependsOn: 'clean'){
     description = 'Default component install'
     workingDir PROJECT_DIR
     commandLine 'component'
-    args 'install'
+    args 'install', '-f'
 }
 
 task analyticsJs(type : Exec, dependsOn: 'install'){
@@ -25,17 +25,17 @@ task min(type : Exec, dependsOn: 'analyticsJs'){
     description = 'Adds a minified copy of analytics.js'
     workingDir PROJECT_DIR
     commandLine 'uglifyjs'
-    args '-o', 'analytics.min.js', 'analytics.js'
+    args (* ('-o analytics.min.js analytics.js'.split(" ")) )
 }
 
-task component(type : Exec){
+task component(type : Exec, dependsOn: 'install'){
     description = 'Components'
     workingDir PROJECT_DIR
     commandLine 'component'
     args (* ('build --out . --name analytics.component --dev'.split(" ")) )
 }
 
-task cleanComponent(type : Exec){
+task clean(overwrite: true, type : Exec){
     description = 'Clean all components'
     workingDir PROJECT_DIR
     commandLine 'rm'
@@ -77,9 +77,16 @@ task test(type : Exec, dependsOn:['testCore', 'testProviders', 'testMin']){
     args 'DONE TEST!'
 }
 
-task release(type : Exec, dependsOn:['cleanComponent', 'analyticsJs', 'min', 'component', 'test']){
+task release(type : Exec, dependsOn:['min', 'component']){
     description = 'Compiles, minfies, component, and tests analytics.js - wrapped up and good to go.'
     workingDir PROJECT_DIR
     commandLine 'echo'
-    args 'DONE!'
+    args 'DONE RELEASE!'
+}
+
+task export(type : Exec){
+    description = 'Export analytics.js min release'
+    workingDir PROJECT_DIR
+    commandLine 'cp'
+    args 'analytics.min.js', EXPORT_FILE
 }

@@ -77,7 +77,7 @@ task test(type : Exec, dependsOn:['testCore', 'testProviders', 'testMin']){
     args 'DONE TEST!'
 }
 
-task release(type : Exec, dependsOn:['min', 'component']){
+task release(type : Exec, dependsOn:['min', 'component', 'test']){
     description = 'Compiles, minfies, component, and tests analytics.js - wrapped up and good to go.'
     workingDir PROJECT_DIR
     commandLine 'echo'

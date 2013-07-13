@@ -1,3 +1,7 @@
+0.11.10 / 2013-7-12
+===================
+* Added cookieName to Mixpanel options - 0a53afd
+
 0.11.9 / 2013-6-11
 ==================
 * Added [Visual Website Optimizer](http://visualwebsiteoptimizer.com/)

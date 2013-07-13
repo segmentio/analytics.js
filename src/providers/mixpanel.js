@@ -24,7 +24,9 @@ module.exports = Provider.extend({
     // Whether to track pageviews to Mixpanel.
     pageview : false,
     // Whether to track an initial pageview on initialize.
-    initialPageview : false
+    initialPageview : false,
+    // A custom cookie name to use
+    cookieName : null
   },
 
   initialize : function (options, ready) {
@@ -51,12 +53,15 @@ module.exports = Provider.extend({
         // Modification to the snippet: call ready whenever the library has
         // fully loaded.
         load('//cdn.mxpnl.com/libs/mixpanel-2.2.min.js', ready);
-      })(document, window.mixpanel || []);
+    })(document, window.mixpanel || []);
 
-      // Pass options directly to `init` as the second argument.
-      window.mixpanel.init(options.token, options);
+    // Mixpanel only accepts snake_case options
+    options.cookie_name = options.cookieName;
 
-      if (options.initialPageview) this.pageview();
+    // Pass options directly to `init` as the second argument.
+    window.mixpanel.init(options.token, options);
+
+    if (options.initialPageview) this.pageview();
   },
 
   identify : function (userId, traits) {

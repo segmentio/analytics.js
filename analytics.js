@@ -1456,6 +1456,41 @@ module.exports = function loadScript (options, callback) {
     return script;
 };
 });
+require.register("segmentio-type/index.js", function(exports, require, module){
+
+/**
+ * toString ref.
+ */
+
+var toString = Object.prototype.toString;
+
+/**
+ * Return the type of `val`.
+ *
+ * @param {Mixed} val
+ * @return {String}
+ * @api public
+ */
+
+module.exports = function(val){
+  switch (toString.call(val)) {
+    case '[object Function]': return 'function';
+    case '[object Date]': return 'date';
+    case '[object RegExp]': return 'regexp';
+    case '[object Arguments]': return 'arguments';
+    case '[object Array]': return 'array';
+    case '[object String]': return 'string';
+  }
+
+  if (val === null) return 'null';
+  if (val === undefined) return 'undefined';
+  if (val && val.nodeType === 1) return 'element';
+  if (val === Object(val)) return 'object';
+
+  return typeof val;
+};
+
+});
 require.register("segmentio-new-date/index.js", function(exports, require, module){
 var type = require('type');
 
@@ -4494,7 +4529,9 @@ module.exports = Provider.extend({
     // Whether to track pageviews to Mixpanel.
     pageview : false,
     // Whether to track an initial pageview on initialize.
-    initialPageview : false
+    initialPageview : false,
+    // A custom cookie name to use
+    cookieName : null
   },
 
   initialize : function (options, ready) {
@@ -4521,12 +4558,15 @@ module.exports = Provider.extend({
         // Modification to the snippet: call ready whenever the library has
         // fully loaded.
         load('//cdn.mxpnl.com/libs/mixpanel-2.2.min.js', ready);
-      })(document, window.mixpanel || []);
+    })(document, window.mixpanel || []);
 
-      // Pass options directly to `init` as the second argument.
-      window.mixpanel.init(options.token, options);
+    // Mixpanel only accepts snake_case options
+    options.cookie_name = options.cookieName;
 
-      if (options.initialPageview) this.pageview();
+    // Pass options directly to `init` as the second argument.
+    window.mixpanel.init(options.token, options);
+
+    if (options.initialPageview) this.pageview();
   },
 
   identify : function (userId, traits) {
@@ -5499,7 +5539,7 @@ require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.
 
 require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
 require.alias("segmentio-new-date/index.js", "new-date/index.js");
-require.alias("component-type/index.js", "segmentio-new-date/deps/type/index.js");
+require.alias("segmentio-type/index.js", "segmentio-new-date/deps/type/index.js");
 
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");

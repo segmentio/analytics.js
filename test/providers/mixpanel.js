@@ -19,7 +19,10 @@ describe('Mixpanel', function () {
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Mixpanel' : test['Mixpanel'] });
-      expect(analytics.providers[0].options.token).to.equal(test['Mixpanel']);
+
+      var options = analytics.providers[0].options;
+      expect(options.token).to.equal(test['Mixpanel']);
+      expect(options.hasOwnProperty('cookieName')).to.be(true);
       expect(window.mixpanel).not.to.be(undefined);
       expect(window.mixpanel.config).to.be(undefined);
 

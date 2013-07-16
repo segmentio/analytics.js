@@ -4092,6 +4092,7 @@ module.exports = [
   require('./quantcast'),
   require('./sentry'),
   require('./snapengage'),
+  require('./spinnakr'),
   require('./usercycle'),
   require('./userfox'),
   require('./uservoice'),

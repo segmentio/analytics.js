@@ -729,7 +729,7 @@ exports.parse = function(url){
   return {
     href: a.href,
     host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
+    port: a.port || location.port,
     hash: a.hash,
     hostname: a.hostname || location.hostname,
     pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
@@ -1460,42 +1460,13 @@ require.register("segmentio-new-date/index.js", function(exports, require, modul
 var type = require('type');
 
 
-/**
- * Returns a new Javascript Date object, allowing a variety of extra input types
- * over the native one.
- *
- * @param {Date|String|Number} input
- */
-
-module.exports = function newDate (input) {
-
-  // Convert input from seconds to milliseconds.
-  input = toMilliseconds(input);
+module.exports = function newDate (date) {
+  // Milliseconds would be greater than 31557600000 (December 31, 1970).
+  if ('number' === type(date) && date < 31557600000) date = date * 1000;
 
   // By default, delegate to Date, which will return `Invalid Date`s if wrong.
-  var date = new Date(input);
-
-  // If we have a string that the Date constructor couldn't parse, convert it.
-  if (isNaN(date.getTime()) && 'string' === type(input)) {
-    var milliseconds = toMilliseconds(parseInt(input, 10));
-    date = new Date(milliseconds);
-  }
-
-  return date;
+  return new Date(date);
 };
-
-
-/**
- * If the number passed in is seconds from the epoch, turn it into milliseconds.
- * Milliseconds would be greater than 31557600000 (December 31, 1970).
- *
- * @param seconds
- */
-
-function toMilliseconds (seconds) {
-  if ('number' === type(seconds) && seconds < 31557600000) return seconds * 1000;
-  return seconds;
-}
 });
 require.register("segmentio-on-body/index.js", function(exports, require, module){
 var each = require('each');
@@ -1825,7 +1796,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.11.9';
+  this.VERSION = '0.11.10';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -4420,7 +4391,7 @@ module.exports = Provider.extend({
 require.register("analytics/src/providers/lytics.js", function(exports, require, module){
 // Lytics
 // --------
-// [Documentation](http://developer.lytics.io/doc#jstag),
+// [Documentation](http://admin.lytics.io/doc#jstag),
 
 var Provider = require('../provider')
   , extend   = require('extend')
@@ -4442,7 +4413,7 @@ module.exports = Provider.extend({
     delay: 200,
     // Cookie name storing unique identifier
     cookie: 'seerid',
-    // Lytics data stream (optional)
+    // Lytics data stream (optional), a string identifier of this data type
     stream: null,
     // Length of time before considering a session inactive
     sessecs: 1800,
@@ -4516,7 +4487,9 @@ module.exports = Provider.extend({
     // Whether to track pageviews to Mixpanel.
     pageview : false,
     // Whether to track an initial pageview on initialize.
-    initialPageview : false
+    initialPageview : false,
+    // A custom cookie name to use
+    cookieName : null
   },
 
   initialize : function (options, ready) {
@@ -4543,12 +4516,15 @@ module.exports = Provider.extend({
         // Modification to the snippet: call ready whenever the library has
         // fully loaded.
         load('//cdn.mxpnl.com/libs/mixpanel-2.2.min.js', ready);
-      })(document, window.mixpanel || []);
+    })(document, window.mixpanel || []);
 
-      // Pass options directly to `init` as the second argument.
-      window.mixpanel.init(options.token, options);
+    // Mixpanel only accepts snake_case options
+    options.cookie_name = options.cookieName;
 
-      if (options.initialPageview) this.pageview();
+    // Pass options directly to `init` as the second argument.
+    window.mixpanel.init(options.token, options);
+
+    if (options.initialPageview) this.pageview();
   },
 
   identify : function (userId, traits) {
@@ -5448,6 +5424,32 @@ function addTraits (userId, traits, tracker) {
   });
 }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -5495,7 +5497,6 @@ require.alias("component-bind/index.js", "segmentio-bind-all/deps/bind/index.js"
 require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js");
 
 require.alias("segmentio-bind-all/index.js", "segmentio-bind-all/index.js");
-
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
@@ -5535,23 +5536,19 @@ require.alias("segmentio-json/index.js", "segmentio-store.js/deps/json/index.js"
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-store.js/store.js", "segmentio-store.js/index.js");
-
 require.alias("segmentio-top-domain/index.js", "analytics/deps/top-domain/index.js");
 require.alias("segmentio-top-domain/index.js", "analytics/deps/top-domain/index.js");
 require.alias("segmentio-top-domain/index.js", "top-domain/index.js");
 require.alias("component-url/index.js", "segmentio-top-domain/deps/url/index.js");
 
 require.alias("segmentio-top-domain/index.js", "segmentio-top-domain/index.js");
-
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
 require.alias("timoxley-next-tick/index.js", "next-tick/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
 require.alias("yields-prevent/index.js", "prevent/index.js");
 
-require.alias("analytics/src/index.js", "analytics/index.js");
-
-if (typeof exports == "object") {
+require.alias("analytics/src/index.js", "analytics/index.js");if (typeof exports == "object") {
   module.exports = require("analytics");
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("analytics"); });

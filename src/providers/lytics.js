@@ -1,6 +1,6 @@
 // Lytics
 // --------
-// [Documentation](http://developer.lytics.io/doc#jstag),
+// [Documentation](http://admin.lytics.io/doc#jstag),
 
 var Provider = require('../provider')
   , extend   = require('extend')
@@ -22,7 +22,7 @@ module.exports = Provider.extend({
     delay: 200,
     // Cookie name storing unique identifier
     cookie: 'seerid',
-    // Lytics data stream (optional)
+    // Lytics data stream (optional), a string identifier of this data type
     stream: null,
     // Length of time before considering a session inactive
     sessecs: 1800,

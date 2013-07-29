@@ -64,6 +64,7 @@ require.aliases = {};
 
 require.resolve = function(path) {
   if (path.charAt(0) === '/') path = path.slice(1);
+  var index = path + '/index.js';
 
   var paths = [
     path,
@@ -76,7 +77,10 @@ require.resolve = function(path) {
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
     if (require.modules.hasOwnProperty(path)) return path;
-    if (require.aliases.hasOwnProperty(path)) return require.aliases[path];
+  }
+
+  if (require.aliases.hasOwnProperty(index)) {
+    return require.aliases[index];
   }
 };
 
@@ -4092,6 +4096,7 @@ module.exports = [
   require('./quantcast'),
   require('./sentry'),
   require('./snapengage'),
+  require('./trak.io'),
   require('./usercycle'),
   require('./userfox'),
   require('./uservoice'),
@@ -5064,6 +5069,87 @@ module.exports = Provider.extend({
 
 });
 });
+require.register("analytics/src/providers/trak.io.js", function(exports, require, module){
+// https://docs.trak.io
+
+var Provider = require('../provider')
+  , alias    = require('alias')
+  , isEmail  = require('is-email')
+  , load     = require('load-script');
+
+module.exports = Provider.extend({
+
+  name : 'trak.io',
+
+  key : 'api_token',
+
+  defaults : {
+    // The trak.io API token for your account.
+    token : null,
+    // A customer context object
+    context: {},
+    // A custom chanel to use
+    channel: null,
+    // Whether to auto track page views
+    auto_track_page_views: true
+  },
+
+  initialize : function (options, ready) {
+
+    window.trak = window.trak || [];
+    window.trak.io = window.trak.io || {};
+    window.trak.io.load = function(e) {
+      var t = document.createElement("script");
+      t.type = "text/javascript"
+      ,t.async =! 0
+      ,t.src = ("https:" === document.location.protocol ? "https://":"http://") + "d29p64779x43zo.cloudfront.net/v1/trak.io.min.js";
+      var n = document.getElementsByTagName("script")[0];
+      n.parentNode.insertBefore(t,n);
+      var r = function(e) {
+        return function() {
+          window.trak.push([e].concat(Array.prototype.slice.call(arguments,0)))
+        }
+      }
+      ,i=["initialize","identify","track","alias","channel","source","host","protocol","page_view"];
+      for (var s=0;s<i.length;s++) trak.io[i[s]]=r(i[s]);
+      trak.io.initialize.apply(trak.io,arguments)
+    };
+
+    // Pass options directly to `init` as the second argument.
+    window.trak.io.load(options.api_token, options);
+
+    // trak.io makes a queue, so it's ready immediately.
+    ready();
+  },
+
+  identify : function (userId, traits) {
+    if (userId) {
+      window.trak.io.identify(userId, traits);
+    } else {
+      window.trak.io.identify(traits);
+    }
+  },
+
+  track : function (event, properties) {
+    window.trak.io.track(event, properties);
+  },
+
+  pageview : function (url) {
+    window.trak.io.page_view(url);
+  },
+
+  alias : function (newId, originalId) {
+
+    if(window.trak.io.distinct_id() === newId) return;
+
+    if (originalId)
+      window.trak.io.alias(originalId, newId);
+    else
+      window.trak.io.alias(newId);
+  }
+
+});
+});
 require.register("analytics/src/providers/usercycle.js", function(exports, require, module){
 // http://docs.usercycle.com/javascript_api
 
@@ -5467,47 +5553,34 @@ function addTraits (userId, traits, tracker) {
 }
 });
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
-require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
 require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
-require.alias("component-clone/index.js", "clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-cookie/index.js", "analytics/deps/cookie/index.js");
-require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
-require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
-require.alias("component-event/index.js", "event/index.js");
 
 require.alias("component-inherit/index.js", "analytics/deps/inherit/index.js");
-require.alias("component-inherit/index.js", "inherit/index.js");
 
 require.alias("component-object/index.js", "analytics/deps/object/index.js");
-require.alias("component-object/index.js", "object/index.js");
 
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
-require.alias("component-querystring/index.js", "querystring/index.js");
 require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
 
 require.alias("component-type/index.js", "analytics/deps/type/index.js");
-require.alias("component-type/index.js", "type/index.js");
 
 require.alias("component-url/index.js", "analytics/deps/url/index.js");
-require.alias("component-url/index.js", "url/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
-require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
-require.alias("segmentio-alias/index.js", "alias/index.js");
 
 require.alias("segmentio-bind-all/index.js", "analytics/deps/bind-all/index.js");
 require.alias("segmentio-bind-all/index.js", "analytics/deps/bind-all/index.js");
-require.alias("segmentio-bind-all/index.js", "bind-all/index.js");
 require.alias("component-bind/index.js", "segmentio-bind-all/deps/bind/index.js");
 
 require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js");
@@ -5515,40 +5588,30 @@ require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js"
 require.alias("segmentio-bind-all/index.js", "segmentio-bind-all/index.js");
 
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
-require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
-require.alias("segmentio-extend/index.js", "extend/index.js");
 
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
-require.alias("segmentio-is-email/index.js", "is-email/index.js");
 
 require.alias("segmentio-is-meta/index.js", "analytics/deps/is-meta/index.js");
-require.alias("segmentio-is-meta/index.js", "is-meta/index.js");
 
 require.alias("segmentio-json/index.js", "analytics/deps/json/index.js");
-require.alias("segmentio-json/index.js", "json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
-require.alias("segmentio-load-date/index.js", "load-date/index.js");
 
 require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
-require.alias("segmentio-load-script/index.js", "load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
 
 require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
-require.alias("segmentio-new-date/index.js", "new-date/index.js");
 require.alias("segmentio-type/index.js", "segmentio-new-date/deps/type/index.js");
 
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
-require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/index.js");
-require.alias("segmentio-store.js/store.js", "store/index.js");
 require.alias("segmentio-json/index.js", "segmentio-store.js/deps/json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
@@ -5556,16 +5619,13 @@ require.alias("segmentio-store.js/store.js", "segmentio-store.js/index.js");
 
 require.alias("segmentio-top-domain/index.js", "analytics/deps/top-domain/index.js");
 require.alias("segmentio-top-domain/index.js", "analytics/deps/top-domain/index.js");
-require.alias("segmentio-top-domain/index.js", "top-domain/index.js");
 require.alias("component-url/index.js", "segmentio-top-domain/deps/url/index.js");
 
 require.alias("segmentio-top-domain/index.js", "segmentio-top-domain/index.js");
 
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
-require.alias("timoxley-next-tick/index.js", "next-tick/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
-require.alias("yields-prevent/index.js", "prevent/index.js");
 
 require.alias("analytics/src/index.js", "analytics/index.js");
 
@@ -5574,5 +5634,5 @@ if (typeof exports == "object") {
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("analytics"); });
 } else {
-  this["analytics"] = require("analytics");
+  window["analytics"] = require("analytics");
 }})();

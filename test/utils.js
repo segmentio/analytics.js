@@ -158,6 +158,11 @@ window.test = {
 
   'SnapEngage' : '782b737e-487f-4117-8a2b-2beb32b600e5',
 
+  'trak.io' : {
+    api_token: 'x',
+    channel: 'my_channel'
+  },
+
   'USERcycle' : 'x',
 
   'UserVoice' : {

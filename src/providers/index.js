@@ -35,6 +35,7 @@ module.exports = [
   require('./quantcast'),
   require('./sentry'),
   require('./snapengage'),
+  require('./trak.io'),
   require('./usercycle'),
   require('./userfox'),
   require('./uservoice'),

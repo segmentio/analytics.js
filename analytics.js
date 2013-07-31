@@ -64,6 +64,7 @@ require.aliases = {};
 
 require.resolve = function(path) {
   if (path.charAt(0) === '/') path = path.slice(1);
+  var index = path + '/index.js';
 
   var paths = [
     path,
@@ -76,7 +77,10 @@ require.resolve = function(path) {
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
     if (require.modules.hasOwnProperty(path)) return path;
-    if (require.aliases.hasOwnProperty(path)) return require.aliases[path];
+  }
+
+  if (require.aliases.hasOwnProperty(index)) {
+    return require.aliases[index];
   }
 };
 
@@ -4422,7 +4426,9 @@ module.exports = Provider.extend({
     // Query string parameters to automatically to events
     qsargs: [],
     // Whether to load minified or unminified source
-    minified: true
+    minified: true,
+    // Should we capture initial Page view on load?
+    initialPageview: true
   },
 
   initialize : function (options, ready) {
@@ -4440,6 +4446,10 @@ module.exports = Provider.extend({
     })();
 
     load('//c.lytics.io/static/io' + (options.minified ? '.min' : '') + '.js');
+
+    if (options.initialPageview) {
+      this.pageview();
+    }
 
     ready();
   },
@@ -5424,32 +5434,6 @@ function addTraits (userId, traits, tracker) {
   });
 }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -5497,6 +5481,7 @@ require.alias("component-bind/index.js", "segmentio-bind-all/deps/bind/index.js"
 require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js");
 
 require.alias("segmentio-bind-all/index.js", "segmentio-bind-all/index.js");
+
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
@@ -5536,19 +5521,23 @@ require.alias("segmentio-json/index.js", "segmentio-store.js/deps/json/index.js"
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-store.js/store.js", "segmentio-store.js/index.js");
+
 require.alias("segmentio-top-domain/index.js", "analytics/deps/top-domain/index.js");
 require.alias("segmentio-top-domain/index.js", "analytics/deps/top-domain/index.js");
 require.alias("segmentio-top-domain/index.js", "top-domain/index.js");
 require.alias("component-url/index.js", "segmentio-top-domain/deps/url/index.js");
 
 require.alias("segmentio-top-domain/index.js", "segmentio-top-domain/index.js");
+
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
 require.alias("timoxley-next-tick/index.js", "next-tick/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
 require.alias("yields-prevent/index.js", "prevent/index.js");
 
-require.alias("analytics/src/index.js", "analytics/index.js");if (typeof exports == "object") {
+require.alias("analytics/src/index.js", "analytics/index.js");
+
+if (typeof exports == "object") {
   module.exports = require("analytics");
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("analytics"); });

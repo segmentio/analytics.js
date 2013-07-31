@@ -31,7 +31,9 @@ module.exports = Provider.extend({
     // Query string parameters to automatically to events
     qsargs: [],
     // Whether to load minified or unminified source
-    minified: true
+    minified: true,
+    // Should we capture initial Page view on load?
+    initialPageview: true
   },
 
   initialize : function (options, ready) {
@@ -49,6 +51,10 @@ module.exports = Provider.extend({
     })();
 
     load('//c.lytics.io/static/io' + (options.minified ? '.min' : '') + '.js');
+
+    if (options.initialPageview) {
+      this.pageview();
+    }
 
     ready();
   },

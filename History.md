@@ -1,3 +1,7 @@
+0.11.11 / 2013-8-9
+===================
+* Added LeadLander
+
 0.11.10 / 2013-7-12
 ===================
 * Added cookieName to Mixpanel options - 0a53afd

@@ -23,56 +23,50 @@ module.exports = Provider.extend({
     // Woopra gives us a nice ready callback.
     var self = this;
 
-    window.woopraReady = function (tracker) {
-      tracker.setDomain(self.options.domain);
-      tracker.setIdleTimeout(300000);
+    (function () {
+        var i, s, z, w = window, d = document, a = arguments, q = 'script',
+            f = ['config', 'track', 'identify', 'visit', 'push', 'call'],
+            c = function () {
+                var i, self = this;
+                self._e = [];
+                for (i = 0; i < f.length; i++) {
+                    (function (f) {
+                        self[f] = function () {
+                            // need to do this so params get called properly
+                            self._e.push([f].concat(Array.prototype.slice.call(arguments, 0)));
+                            return self;
+                        };
+                    })(f[i]);
+                }
+            };
 
-      var userId = user.id()
-        , traits = user.traits();
+        w._w = w._w || {};
+        // check if instance of tracker exists
+        for (i = 0; i < a.length; i++) {
+            w._w[a[i]] = w[a[i]] = w[a[i]] || new c();
+        }
+    })('woopra');
+    load('//static.woopra.com/js/w.js', ready);
 
-      addTraits(userId, traits, tracker);
-      tracker.track();
-
-      ready();
-      return false;
-    };
-
-    load('//static.woopra.com/js/woopra.js');
+    window.woopra.config('domain', this.options.domain);
   },
 
   identify : function (userId, traits) {
-    // We aren't guaranteed a tracker.
-    if (!window.woopraTracker) return;
-    addTraits(userId, traits, window.woopraTracker);
+    var _traits = traits;
+    _traits.id = userId;
+
+    // identify the user without sending an event
+    window.woopra.identify(_traits).push();
   },
 
-  track : function (event, properties) {
-    // We aren't guaranteed a tracker.
-    if (!window.woopraTracker) return;
+  track : function (event, properties, options, callback) {
+    window.woopra.track(event, properties, callback);
+  },
 
-    // Woopra takes its `event` as the `name` key.
-    properties || (properties = {});
-    properties.name = event;
-
-    window.woopraTracker.pushEvent(properties);
+  pageview : function (url, options) {
+    window.woopra.track('pv', {
+      url: url
+    });
   }
 
 });
-
-
-/**
- * Convenience function for updating the userId and traits.
- *
- * @param {String} userId    The user's ID.
- * @param {Object} traits    The user's traits.
- * @param {Tracker} tracker  The Woopra tracker object.
- */
-
-function addTraits (userId, traits, tracker) {
-  // Move a `userId` into `traits`.
-  if (userId) traits.id = userId;
-  each(traits, function (key, value) {
-    // Woopra seems to only support strings as trait values.
-    if ('string' === type(value)) tracker.addVisitorProperty(key, value);
-  });
-}

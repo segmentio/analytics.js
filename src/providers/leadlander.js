@@ -13,7 +13,7 @@ module.exports = Provider.extend({
 
   initialize : function (options, ready) {
     window.llactid = options.llactid;
-    load('http://t2.trackalyzer.com/trackalyze.js', ready);
+    load('//trackalyzer.com/trackalyze.js', ready);
   }
 
 });

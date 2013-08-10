@@ -4569,7 +4569,7 @@ module.exports = Provider.extend({\n\
 \n\
   initialize : function (options, ready) {\n\
     window.llactid = options.llactid;\n\
-    load('http://t2.trackalyzer.com/trackalyze.js', ready);\n\
+    load('//trackalyzer.com/trackalyze.js', ready);\n\
   }\n\
 \n\
 });//@ sourceURL=analytics/src/providers/leadlander.js"

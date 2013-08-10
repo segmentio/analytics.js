@@ -16,9 +16,9 @@ describe('Woopra', function () {
       // Once the library loads the tracker will be created and the spy will
       // be called.
       var interval = setInterval(function () {
-        if (!window.woopra._loaded) return;
+        if (!window.woopra.loaded) return;
         expect(window.woopra).to.not.be(undefined);
-        expect(window.woopra._loaded).to.be(true);
+        expect(window.woopra.loaded).to.be(true);
         expect(spy.called).to.be(true);
         clearInterval(interval);
         done();

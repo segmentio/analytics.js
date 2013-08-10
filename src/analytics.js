@@ -358,6 +358,8 @@ extend(Analytics.prototype, {
       properties = undefined;
     }
 
+    properties = clone(properties) || {};
+
     // Call `track` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
       if (provider.track && isEnabled(provider, options)) {

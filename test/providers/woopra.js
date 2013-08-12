@@ -6,20 +6,19 @@ describe('Woopra', function () {
     this.timeout(10000);
 
     it('should call ready and load library', function (done) {
-      expect(window.woopraReady).to.be(undefined);
-      expect(window.woopraTracker).to.be(undefined);
+      expect(window.woopra).to.be(undefined);
 
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Woopra' : test['Woopra'] });
-      expect(window.woopraReady).not.to.be(undefined);
-      expect(window.woopraTracker).to.be(undefined);
+      expect(window.woopra).to.not.be(undefined);
 
       // Once the library loads the tracker will be created and the spy will
       // be called.
       var interval = setInterval(function () {
-        if (!window.woopraTracker) return;
-        expect(window.woopraTracker).not.to.be(undefined);
+        if (!window.woopra.loaded) return;
+        expect(window.woopra).to.not.be(undefined);
+        expect(window.woopra.loaded).to.be(true);
         expect(spy.called).to.be(true);
         clearInterval(interval);
         done();
@@ -37,13 +36,14 @@ describe('Woopra', function () {
   describe('identify', function () {
 
     it('correctly adds the user properties', function () {
-
-      var spy = sinon.spy(window.woopraTracker, 'addVisitorProperty');
+      var spy = sinon.spy(window.woopra, 'identify');
       analytics.identify(test.userId, test.traits);
-      expect(spy.calledWith('email', test.traits.email)).to.be(true);
-      expect(spy.calledWith('id', test.userId)).to.be(true);
-      expect(spy.calledWith('name', test.traits.name)).to.be(true);
-      expect(spy.callCount).to.be(3);
+      expect(spy.calledWith(sinon.match({
+          id: test.userId,
+          name: test.traits.name,
+          email: test.traits.email
+      }))).to.be(true);
+      expect(spy.callCount).to.be(1);
       spy.reset();
     });
 
@@ -52,23 +52,29 @@ describe('Woopra', function () {
 
   describe('track', function () {
 
-    // Woopra adds the event name to the properties hash.
-    it('tracks an event with pushEvent on track', function () {
-      var extend = require('segmentio-extend')
-        , spy = sinon.spy(window.woopraTracker, 'pushEvent')
-        , augmentedProperties = { name : test.event };
+    it('tracks an event with track', function () {
+      var spy = sinon.spy(window.woopra, 'track');
 
       analytics.track(test.event);
-      expect(spy.calledWith(sinon.match(augmentedProperties))).to.be(true);
+      expect(spy.calledWith(test.event)).to.be(true);
       spy.reset();
 
-      augmentedProperties = extend({}, test.properties, { name : test.event });
       analytics.track(test.event, test.properties);
-      expect(spy.calledWith(sinon.match(augmentedProperties))).to.be(true);
+      expect(spy.calledWithMatch(test.event, test.properties)).to.be(true);
 
       spy.restore();
     });
 
+  });
+
+  describe('pageview', function() {
+    it('sends a "pv" event with track', function() {
+      var spy = sinon.spy(window.woopra, 'track');
+
+      analytics.pageview(test.url);
+      expect(spy.calledWithMatch('pv', {url: test.url})).to.be(true);
+      spy.restore();
+    });
   });
 
 });

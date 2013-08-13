@@ -105,10 +105,17 @@ module.exports = Provider.extend({
       createOpts.cookieDomain = options.domain || 'none';
     if (type(options.siteSpeedSampleRate) === 'number')
       createOpts.siteSpeedSampleRate = options.siteSpeedSampleRate;
+    if (options.allowLinker)
+      createOpts.allowLinker = true;
     if (options.anonymizeIp)
       ga('set', 'anonymizeIp', true);
 
     ga('create', options.trackingId, createOpts);
+
+    if (options.autoLink instanceof Array) {
+      ga('require', 'linker');
+      ga('linker:autoLink', options.autoLink);
+    }
 
     if (options.initialPageview) {
       var path, canon = canonical();

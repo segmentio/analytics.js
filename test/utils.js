@@ -160,6 +160,12 @@ window.test = {
 
   'SnapEngage' : '782b737e-487f-4117-8a2b-2beb32b600e5',
 
+  'Tapstream' : {
+      accountName: 'tapstreamTestAccount',
+      trackerName: 'js_tracker',
+      tags: ['x', 'y']
+  },
+
   'USERcycle' : 'x',
 
   'UserVoice' : {

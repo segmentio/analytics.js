@@ -36,6 +36,7 @@ module.exports = [
   require('./quantcast'),
   require('./sentry'),
   require('./snapengage'),
+  require('./tapstream'),
   require('./usercycle'),
   require('./userfox'),
   require('./uservoice'),

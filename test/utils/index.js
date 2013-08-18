@@ -16,15 +16,6 @@ module.exports = {
     revenue : 29.99
   },
 
-  url : '/url',
-
-
-  // Providers
-  // ---------
-
-  'Bitdeli' : {
-    inputId   : 'x',
-    authToken : 'y'
-  }
+  url : '/url'
 
 };

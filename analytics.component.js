@@ -2334,6 +2334,8 @@ extend(Analytics.prototype, {\n\
       properties = undefined;\n\
     }\n\
 \n\
+    properties = clone(properties) || {};\n\
+\n\
     // Call `track` on all of our enabled providers that support it.\n\
     each(this.providers, function (provider) {\n\
       if (provider.track && isEnabled(provider, options)) {\n\
@@ -3269,61 +3271,6 @@ module.exports = Provider.extend({\n\
 \n\
 });//@ sourceURL=analytics/src/providers/amplitude.js"
 ));
-require.register("analytics/src/providers/bitdeli.js", Function("exports, require, module",
-"// https://bitdeli.com/docs\n\
-// https://bitdeli.com/docs/javascript-api.html\n\
-\n\
-var Provider = require('../provider')\n\
-  , load     = require('load-script');\n\
-\n\
-\n\
-module.exports = Provider.extend({\n\
-\n\
-  name : 'Bitdeli',\n\
-\n\
-  defaults : {\n\
-    // BitDeli requires two options: `inputId` and `authToken`.\n\
-    inputId : null,\n\
-    authToken : null,\n\
-    // Whether or not to track an initial pageview when the page first\n\
-    // loads. You might not want this if you're using a single-page app.\n\
-    initialPageview : true\n\
-  },\n\
-\n\
-\n\
-  initialize : function (options, ready) {\n\
-    window._bdq = window._bdq || [];\n\
-    window._bdq.push([\"setAccount\", options.inputId, options.authToken]);\n\
-\n\
-    if (options.initialPageview) this.pageview();\n\
-\n\
-    load('//d2flrkr957qc5j.cloudfront.net/bitdeli.min.js');\n\
-\n\
-    // Bitdeli just uses a queue, so it's ready right away.\n\
-    ready();\n\
-  },\n\
-\n\
-\n\
-  // Bitdeli uses two separate methods: `identify` for storing the `userId`\n\
-  // and `set` for storing `traits`.\n\
-  identify : function (userId, traits) {\n\
-    if (userId) window._bdq.push(['identify', userId]);\n\
-    if (traits) window._bdq.push(['set', traits]);\n\
-  },\n\
-\n\
-\n\
-  track : function (event, properties) {\n\
-    window._bdq.push(['track', event, properties]);\n\
-  },\n\
-\n\
-\n\
-  // If `url` is undefined, Bitdeli uses the current page URL instead.\n\
-  pageview : function (url) {\n\
-    window._bdq.push(['trackPageview', url]);\n\
-  }\n\
-\n\
-});//@ sourceURL=analytics/src/providers/bitdeli.js"
-));
 require.register("analytics/src/providers/bugherd.js", Function("exports, require, module",
 "// http://support.bugherd.com/home\n\
 \n\
@@ -4205,7 +4152,6 @@ require.register("analytics/src/providers/index.js", Function("exports, require,
 "module.exports = [\n\
   require('./adroll'),\n\
   require('./amplitude'),\n\
-  require('./bitdeli'),\n\
   require('./bugherd'),\n\
   require('./chartbeat'),\n\
   require('./clicktale'),\n\

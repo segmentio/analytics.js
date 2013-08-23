@@ -1800,7 +1800,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.11.10';
+  this.VERSION = '0.11.11';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -2126,6 +2126,8 @@ extend(Analytics.prototype, {
       callback = properties;
       properties = undefined;
     }
+
+    properties = clone(properties) || {};
 
     // Call `track` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
@@ -4020,6 +4022,7 @@ module.exports = [
   require('./keen-io'),
   require('./kissmetrics'),
   require('./klaviyo'),
+  require('./leadlander'),
   require('./livechat'),
   require('./lytics'),
   require('./mixpanel'),
@@ -4341,6 +4344,27 @@ module.exports = Provider.extend({
 
   track : function (event, properties) {
     window._learnq.push(['track', event, properties]);
+  }
+
+});
+});
+require.register("analytics/src/providers/leadlander.js", function(exports, require, module){
+var Provider = require('../provider')
+  , load     = require('load-script');
+
+module.exports = Provider.extend({
+
+  name : 'LeadLander',
+
+  key : 'llactid',
+
+  defaults : {
+    llactid : null
+  },
+
+  initialize : function (options, ready) {
+    window.llactid = options.llactid;
+    load('//trackalyzer.com/trackalyze.js', ready);
   }
 
 });

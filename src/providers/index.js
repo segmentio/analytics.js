@@ -23,6 +23,7 @@ module.exports = [
   require('./keen-io'),
   require('./kissmetrics'),
   require('./klaviyo'),
+  require('./leadlander'),
   require('./livechat'),
   require('./lytics'),
   require('./mixpanel'),

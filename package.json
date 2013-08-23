@@ -1,6 +1,6 @@
 {
   "name": "analytics.js",
-  "version": "0.11.10",
+  "version": "0.11.11",
   "author": "Segment.io <friends@segment.io>",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "license": "MIT",
@@ -47,6 +47,7 @@
     "heap",
     "hittail",
     "hubspot",
+    "lead lander",
     "improvely",
     "intercom",
     "keen io",

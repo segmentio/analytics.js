@@ -31,7 +31,7 @@ module.exports = Analytics;
 function Analytics (Providers) {
   var self = this;
 
-  this.VERSION = '0.11.10';
+  this.VERSION = '0.11.11';
 
   each(Providers, function (Provider) {
     self.addProvider(Provider);
@@ -357,6 +357,8 @@ extend(Analytics.prototype, {
       callback = properties;
       properties = undefined;
     }
+
+    properties = clone(properties) || {};
 
     // Call `track` on all of our enabled providers that support it.
     each(this.providers, function (provider) {

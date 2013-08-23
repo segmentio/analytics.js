@@ -64,6 +64,7 @@ require.aliases = {};
 
 require.resolve = function(path) {
   if (path.charAt(0) === '/') path = path.slice(1);
+  var index = path + '/index.js';
 
   var paths = [
     path,
@@ -76,7 +77,10 @@ require.resolve = function(path) {
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
     if (require.modules.hasOwnProperty(path)) return path;
-    if (require.aliases.hasOwnProperty(path)) return require.aliases[path];
+  }
+
+  if (require.aliases.hasOwnProperty(index)) {
+    return require.aliases[index];
   }
 };
 
@@ -393,121 +397,13 @@ function parse(str) {
 }
 
 });
-require.register("component-to-function/index.js", function(exports, require, module){
-
-/**
- * Expose `toFunction()`.
- */
-
-module.exports = toFunction;
-
-/**
- * Convert `obj` to a `Function`.
- *
- * @param {Mixed} obj
- * @return {Function}
- * @api private
- */
-
-function toFunction(obj) {
-  switch ({}.toString.call(obj)) {
-    case '[object Object]':
-      return objectToFunction(obj);
-    case '[object Function]':
-      return obj;
-    case '[object String]':
-      return stringToFunction(obj);
-    case '[object RegExp]':
-      return regexpToFunction(obj);
-    default:
-      return defaultToFunction(obj);
-  }
-}
-
-/**
- * Default to strict equality.
- *
- * @param {Mixed} val
- * @return {Function}
- * @api private
- */
-
-function defaultToFunction(val) {
-  return function(obj){
-    return val === obj;
-  }
-}
-
-/**
- * Convert `re` to a function.
- *
- * @param {RegExp} re
- * @return {Function}
- * @api private
- */
-
-function regexpToFunction(re) {
-  return function(obj){
-    return re.test(obj);
-  }
-}
-
-/**
- * Convert property `str` to a function.
- *
- * @param {String} str
- * @return {Function}
- * @api private
- */
-
-function stringToFunction(str) {
-  // immediate such as "> 20"
-  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
-
-  // properties such as "name.first" or "age > 18"
-  return new Function('_', 'return _.' + str);
-}
-
-/**
- * Convert `object` to a function.
- *
- * @param {Object} object
- * @return {Function}
- * @api private
- */
-
-function objectToFunction(obj) {
-  var match = {}
-  for (var key in obj) {
-    match[key] = typeof obj[key] === 'string'
-      ? defaultToFunction(obj[key])
-      : toFunction(obj[key])
-  }
-  return function(val){
-    if (typeof val !== 'object') return false;
-    for (var key in match) {
-      if (!(key in val)) return false;
-      if (!match[key](val[key])) return false;
-    }
-    return true;
-  }
-}
-
-});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var toFunction = require('to-function');
-var type;
-
-try {
-  type = require('type-component');
-} catch (e) {
-  type = require('type');
-}
+var type = require('type');
 
 /**
  * HOP reference.
@@ -524,7 +420,6 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
-  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -579,7 +474,6 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
-
 });
 require.register("component-event/index.js", function(exports, require, module){
 
@@ -839,7 +733,7 @@ exports.parse = function(url){
   return {
     href: a.href,
     host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
+    port: a.port || location.port,
     hash: a.hash,
     hostname: a.hostname || location.hostname,
     pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
@@ -983,30 +877,9 @@ module.exports = function extend (object) {
 });
 require.register("segmentio-is-email/index.js", function(exports, require, module){
 
-/**
- * Expose `isEmail`.
- */
-
-module.exports = isEmail;
-
-
-/**
- * Email address matcher.
- */
-
-var matcher = /.+\@.+\..+/;
-
-
-/**
- * Loosely validate an email address.
- *
- * @param {String} string
- * @return {Boolean}
- */
-
-function isEmail (string) {
-  return matcher.test(string);
-}
+module.exports = function isEmail (string) {
+    return (/.+\@.+\..+/).test(string);
+};
 });
 require.register("segmentio-is-meta/index.js", function(exports, require, module){
 module.exports = function isMeta (e) {
@@ -1547,8 +1420,7 @@ module.exports = function loadScript (options, callback) {
     // Allow for the simplest case, just passing a `src` string.
     if (type(options) === 'string') options = { src : options };
 
-    var https = document.location.protocol === 'https:' ||
-                document.location.protocol === 'chrome-extension:';
+    var https = document.location.protocol === 'https:';
 
     // If you use protocol relative URLs, third-party scripts like Google
     // Analytics break when testing with `file:` so this fixes that.
@@ -1587,83 +1459,18 @@ module.exports = function loadScript (options, callback) {
     // give it an ID or attributes.
     return script;
 };
-
-});
-require.register("segmentio-type/index.js", function(exports, require, module){
-
-/**
- * toString ref.
- */
-
-var toString = Object.prototype.toString;
-
-/**
- * Return the type of `val`.
- *
- * @param {Mixed} val
- * @return {String}
- * @api public
- */
-
-module.exports = function(val){
-  switch (toString.call(val)) {
-    case '[object Function]': return 'function';
-    case '[object Date]': return 'date';
-    case '[object RegExp]': return 'regexp';
-    case '[object Arguments]': return 'arguments';
-    case '[object Array]': return 'array';
-    case '[object String]': return 'string';
-  }
-
-  if (val === null) return 'null';
-  if (val === undefined) return 'undefined';
-  if (val && val.nodeType === 1) return 'element';
-  if (val === Object(val)) return 'object';
-
-  return typeof val;
-};
-
 });
 require.register("segmentio-new-date/index.js", function(exports, require, module){
 var type = require('type');
 
 
-/**
- * Returns a new Javascript Date object, allowing a variety of extra input types
- * over the native one.
- *
- * @param {Date|String|Number} input
- */
-
-module.exports = function newDate (input) {
-
-  // Convert input from seconds to milliseconds.
-  input = toMilliseconds(input);
+module.exports = function newDate (date) {
+  // Milliseconds would be greater than 31557600000 (December 31, 1970).
+  if ('number' === type(date) && date < 31557600000) date = date * 1000;
 
   // By default, delegate to Date, which will return `Invalid Date`s if wrong.
-  var date = new Date(input);
-
-  // If we have a string that the Date constructor couldn't parse, convert it.
-  if (isNaN(date.getTime()) && 'string' === type(input)) {
-    var milliseconds = toMilliseconds(parseInt(input, 10));
-    date = new Date(milliseconds);
-  }
-
-  return date;
+  return new Date(date);
 };
-
-
-/**
- * If the number passed in is seconds from the epoch, turn it into milliseconds.
- * Milliseconds would be greater than 31557600000 (December 31, 1970).
- *
- * @param seconds
- */
-
-function toMilliseconds (seconds) {
-  if ('number' === type(seconds) && seconds < 31557600000) return seconds * 1000;
-  return seconds;
-}
 });
 require.register("segmentio-on-body/index.js", function(exports, require, module){
 var each = require('each');
@@ -2319,6 +2126,8 @@ extend(Analytics.prototype, {
       callback = properties;
       properties = undefined;
     }
+
+    properties = clone(properties) || {};
 
     // Call `track` on all of our enabled providers that support it.
     each(this.providers, function (provider) {
@@ -4610,9 +4419,10 @@ module.exports = Provider.extend({
 require.register("analytics/src/providers/lytics.js", function(exports, require, module){
 // Lytics
 // --------
-// [Documentation](http://developer.lytics.io/doc#jstag),
+// [Documentation](http://admin.lytics.io/doc#jstag),
 
 var Provider = require('../provider')
+  , extend   = require('extend')
   , load     = require('load-script');
 
 
@@ -4623,20 +4433,47 @@ module.exports = Provider.extend({
   key : 'cid',
 
   defaults : {
-    cid: null
+    // Account identifier (required)
+    cid: null,
+    // Collector URL
+    url: '//c.lytics.io',
+    // How long to give collector requests
+    delay: 200,
+    // Cookie name storing unique identifier
+    cookie: 'seerid',
+    // Lytics data stream (optional), a string identifier of this data type
+    stream: null,
+    // Length of time before considering a session inactive
+    sessecs: 1800,
+    // Transport mechanism: 'Form' or 'Gif'
+    channel: 'Form',
+    // Query string parameters to automatically to events
+    qsargs: [],
+    // Whether to load minified or unminified source
+    minified: true,
+    // Should we capture initial Page view on load?
+    initialPageview: true
   },
 
   initialize : function (options, ready) {
     window.jstag = (function () {
-      var t={_q:[],_c:{cid:options.cid,url:'//c.lytics.io'},ts:(new Date()).getTime()};
-      t.send=function(){
-      this._q.push(["ready","send",Array.prototype.slice.call(arguments)]);
-      return this;
+      var t = {
+        _q: [],
+        _c: extend(options),
+        ts: (new Date()).getTime()
+      };
+      t.send = function() {
+        this._q.push([ 'ready', 'send', Array.prototype.slice.call(arguments) ]);
+        return this;
       };
       return t;
     })();
 
-    load('//c.lytics.io/static/io.min.js');
+    load('//c.lytics.io/static/io' + (options.minified ? '.min' : '') + '.js');
+
+    if (options.initialPageview) {
+      this.pageview();
+    }
 
     ready();
   },
@@ -5621,32 +5458,6 @@ function addTraits (userId, traits, tracker) {
   });
 }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -5659,8 +5470,6 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
@@ -5696,6 +5505,7 @@ require.alias("component-bind/index.js", "segmentio-bind-all/deps/bind/index.js"
 require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js");
 
 require.alias("segmentio-bind-all/index.js", "segmentio-bind-all/index.js");
+
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
@@ -5721,13 +5531,11 @@ require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.
 
 require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
 require.alias("segmentio-new-date/index.js", "new-date/index.js");
-require.alias("segmentio-type/index.js", "segmentio-new-date/deps/type/index.js");
+require.alias("component-type/index.js", "segmentio-new-date/deps/type/index.js");
 
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");
@@ -5737,19 +5545,23 @@ require.alias("segmentio-json/index.js", "segmentio-store.js/deps/json/index.js"
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
 require.alias("segmentio-store.js/store.js", "segmentio-store.js/index.js");
+
 require.alias("segmentio-top-domain/index.js", "analytics/deps/top-domain/index.js");
 require.alias("segmentio-top-domain/index.js", "analytics/deps/top-domain/index.js");
 require.alias("segmentio-top-domain/index.js", "top-domain/index.js");
 require.alias("component-url/index.js", "segmentio-top-domain/deps/url/index.js");
 
 require.alias("segmentio-top-domain/index.js", "segmentio-top-domain/index.js");
+
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
 require.alias("timoxley-next-tick/index.js", "next-tick/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
 require.alias("yields-prevent/index.js", "prevent/index.js");
 
-require.alias("analytics/src/index.js", "analytics/index.js");if (typeof exports == "object") {
+require.alias("analytics/src/index.js", "analytics/index.js");
+
+if (typeof exports == "object") {
   module.exports = require("analytics");
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("analytics"); });

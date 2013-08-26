@@ -1,5 +1,7 @@
 describe('Intercom', function () {
 
+  var analytics = require('analytics');
+
   describe('initialize', function () {
     this.timeout(10000);
 
@@ -23,10 +25,9 @@ describe('Intercom', function () {
     });
 
     it('should store options', function () {
-      analytics.initialize({ 'Intercom' : test['Intercom'] });
-      expect(analytics.providers[0].options.appId).to.equal(test['Intercom'].appId);
-      expect(analytics.providers[0].options.activator).to.equal(test['Intercom'].activator);
-      expect(analytics.providers[0].options.counter).to.equal(test['Intercom'].counter);
+      expect(analytics._providers[0].options.appId).to.equal(test['Intercom'].appId);
+      expect(analytics._providers[0].options.activator).to.equal(test['Intercom'].activator);
+      expect(analytics._providers[0].options.counter).to.equal(test['Intercom'].counter);
     });
 
   });
@@ -74,7 +75,7 @@ describe('Intercom', function () {
     };
 
     it('should do nothing with no userId', function () {
-      analytics.user.clear();
+      analytics._user.clear();
       analytics.identify(traits);
       expect(stub.called).to.be(false);
     });

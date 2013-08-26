@@ -1,5 +1,7 @@
 describe('Preact', function () {
 
+  var analytics = require('analytics');
+
 
   describe('initialize', function () {
 
@@ -11,7 +13,7 @@ describe('Preact', function () {
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Preact' : test['Preact'] });
-      expect(analytics.providers[0].options.projectCode).to.equal('x');
+      expect(analytics._providers[0].options.projectCode).to.equal('x');
 
       // When the library loads, it will create a `_lnq` global.
       var interval = setInterval(function () {
@@ -29,7 +31,7 @@ describe('Preact', function () {
     var stub;
 
     beforeEach(function () {
-      analytics.user.clear();
+      analytics._user.clear();
       stub = sinon.stub(window._lnq, 'push');
     });
 

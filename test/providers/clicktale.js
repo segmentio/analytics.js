@@ -1,5 +1,7 @@
 describe('ClickTale', function () {
 
+  var analytics = require('analytics');
+
 
   describe('initialize', function () {
 
@@ -26,12 +28,11 @@ describe('ClickTale', function () {
     });
 
     it('should store options', function () {
-      analytics.initialize({ 'ClickTale' : test['ClickTale'] });
-      expect(analytics.providers[0].options.projectId).to.equal('19370');
-      expect(analytics.providers[0].options.recordingRatio).to.equal('0.0089');
-      expect(analytics.providers[0].options.partitionId).to.equal('www14');
-      expect(analytics.providers[0].options.httpCdnUrl).to.not.equal(null);
-      expect(analytics.providers[0].options.httpsCdnUrl).to.equal(null);
+      expect(analytics._providers[0].options.projectId).to.equal('19370');
+      expect(analytics._providers[0].options.recordingRatio).to.equal('0.0089');
+      expect(analytics._providers[0].options.partitionId).to.equal('www14');
+      expect(analytics._providers[0].options.httpCdnUrl).to.not.equal(null);
+      expect(analytics._providers[0].options.httpsCdnUrl).to.equal(null);
     });
 
   });

@@ -1,5 +1,8 @@
 describe('KISSmetrics', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -11,9 +14,12 @@ describe('KISSmetrics', function () {
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'KISSmetrics' : test['KISSmetrics'] });
-      expect(spy.called).to.be(true);
       expect(window._kmq).not.to.be(undefined);
       expect(window.KM).to.be(undefined);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // When the library loads, it will create a `KM` global.
       var interval = setInterval(function () {
@@ -26,7 +32,7 @@ describe('KISSmetrics', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'KISSmetrics' : test['KISSmetrics'] });
-      expect(analytics.providers[0].options.apiKey).to.equal(test['KISSmetrics']);
+      expect(analytics._providers[0].options.apiKey).to.equal(test['KISSmetrics']);
     });
 
   });
@@ -34,7 +40,7 @@ describe('KISSmetrics', function () {
 
   describe('identify', function () {
 
-    beforeEach(analytics.user.clear);
+    beforeEach(analytics._user.clear);
 
     it('should push "_identify"', function () {
       var stub = sinon.stub(window._kmq, 'push');
@@ -56,12 +62,12 @@ describe('KISSmetrics', function () {
       var stub = sinon.stub(window._kmq, 'push');
       analytics.identify(test.traits);
       expect(stub.calledWith(['set', test.traits])).to.be(true);
-      analytics.user.clear();
+      analytics._user.clear();
 
       stub.reset();
       analytics.identify(test.userId);
       expect(stub.calledWith(['set', {}])).to.be(true);
-      analytics.user.clear();
+      analytics._user.clear();
 
       stub.reset();
       analytics.identify(test.userId, test.traits);

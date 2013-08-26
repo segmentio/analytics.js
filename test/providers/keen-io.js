@@ -1,5 +1,8 @@
 describe('Keen IO', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -14,7 +17,10 @@ describe('Keen IO', function () {
       expect(window.Keen).not.to.be(undefined);
       expect(window.Keen.setGlobalProperties).not.to.be(undefined);
       expect(window.Keen.addEvent).not.to.be(undefined);
-      expect(spy.called).to.be(true);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // When the Keen IO library loads, it creates some keys we can test.
       expect(window.Keen.Base64).to.be(undefined);
@@ -28,12 +34,12 @@ describe('Keen IO', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Keen IO' : test['Keen IO'] });
-      expect(analytics.providers[0].options.projectId).to.equal(test['Keen IO'].projectId);
-      expect(analytics.providers[0].options.writeKey).to.equal(test['Keen IO'].writeKey);
+      expect(analytics._providers[0].options.projectId).to.equal(test['Keen IO'].projectId);
+      expect(analytics._providers[0].options.writeKey).to.equal(test['Keen IO'].writeKey);
     });
 
     it('shouldnt track an initial pageview by default', function () {
-      var provider = analytics.providers[0]
+      var provider = analytics._providers[0]
         , spy      = sinon.spy(provider, 'pageview');
 
       analytics.initialize({ 'Keen IO' : test['Keen IO'] });
@@ -54,8 +60,8 @@ describe('Keen IO', function () {
       expect(spy.called).to.be(true);
 
       spy.restore();
-      analytics.providers[0].options.pageview = false;
-      analytics.providers[0].options.initialPageview = false;
+      analytics._providers[0].options.pageview = false;
+      analytics._providers[0].options.initialPageview = false;
     });
 
   });
@@ -63,7 +69,7 @@ describe('Keen IO', function () {
 
   describe('identify', function () {
 
-    before(analytics.user.clear);
+    before(analytics._user.clear);
 
     it('should call setGlobalProperties', function () {
       // Reset internal `userId` state from any previous identifies.
@@ -117,7 +123,7 @@ describe('Keen IO', function () {
   describe('pageview', function () {
 
     it('shouldnt track pageviews by default', function () {
-      var provider = analytics.providers[0]
+      var provider = analytics._providers[0]
         , spy      = sinon.spy(provider, 'track');
 
       analytics.pageview();
@@ -127,7 +133,7 @@ describe('Keen IO', function () {
     });
 
     it('should track pageviews with the pageview option set', function () {
-      var provider = analytics.providers[0]
+      var provider = analytics._providers[0]
         , spy      = sinon.spy(provider, 'track');
 
       provider.options.pageview = true;

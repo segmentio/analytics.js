@@ -1,5 +1,7 @@
 describe('Get Satisfaction', function () {
 
+  var analytics = require('analytics');
+
 
   describe('initialize', function () {
 
@@ -28,7 +30,7 @@ describe('Get Satisfaction', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Get Satisfaction' : test['Get Satisfaction'] });
-      expect(analytics.providers[0].options.widgetId).to.equal(test['Get Satisfaction']);
+      expect(analytics._providers[0].options.widgetId).to.equal(test['Get Satisfaction']);
     });
 
   });

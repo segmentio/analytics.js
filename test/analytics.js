@@ -1,13 +1,16 @@
 describe('Analytics.js', function () {
 
-  var readyTimeout = 20;
+  var analytics = require('analytics');
+
+  // lower timeout for tests
+  var timeout = analytics._timeout = 3;
 
   var Provider = analytics.Provider.extend({
     name       : 'Test',
     key        : 'key',
     defaults   : {},
     initialize : function (options, ready) {
-      setTimeout(ready, readyTimeout);
+      setTimeout(ready, timeout);
     },
     identify   : function (userId, traits) {},
     group      : function (groupId, properties) {},
@@ -15,23 +18,20 @@ describe('Analytics.js', function () {
     pageview   : function () {},
     alias      : function (newId, originalId) {}
   });
-  analytics.addProvider(Provider);
+  analytics.provider(Provider);
 
   var options = { 'Test' : 'x' };
 
   // Make sure initialize runs, so that any test can be looked at individually.
   analytics.initialize(options);
 
-  // Lower timeout for tests.
-  analytics.timeout = 20;
-
 
 
   describe('initialize', function () {
     it('stores enabled providers', function () {
-      analytics.providers = [];
+      analytics._providers = [];
       analytics.initialize(options);
-      expect(analytics.providers[0] instanceof Provider).to.be(true);
+      expect(analytics._providers[0] instanceof Provider).to.be(true);
     });
 
     it('doesnt error on unknown provider', function () {
@@ -49,9 +49,9 @@ describe('Analytics.js', function () {
 
     it('resets enabled providers', function () {
       analytics.initialize(options);
-      expect(analytics.providers.length).to.equal(1);
+      expect(analytics._providers.length).to.equal(1);
       analytics.initialize(options);
-      expect(analytics.providers.length).to.equal(1);
+      expect(analytics._providers.length).to.equal(1);
     });
   });
 
@@ -61,7 +61,7 @@ describe('Analytics.js', function () {
 
     before(function () {
       // Turn off our current ready state.
-      analytics.readied = false;
+      analytics._readied = false;
     });
 
     it('calls callbacks on initialize after a timeout', function (done) {
@@ -81,40 +81,24 @@ describe('Analytics.js', function () {
         expect(spy1.called).to.be(true);
         expect(spy2.called).to.be(true);
         done();
-      }, readyTimeout + 10);
+      }, timeout);
     });
 
-    it('sets ready state', function () {
+    it('sets ready state', function (done) {
       analytics.initialize(options);
-      expect(analytics.readied).to.be(false);
       analytics.ready(function () {
-        expect(analytics.readied).to.be(true);
+        expect(analytics._readied).to.be(true);
+        done();
       });
     });
 
-    it('resets ready state (after initialize)', function (done) {
-      analytics.initialize(options);
-      analytics.ready(function () {
-
-        setTimeout(function () {
-          expect(analytics.readied).to.be(true);
-          analytics.initialize(options);
-          expect(analytics.readied).to.be(false);
-          // Wait for it to come back to not interleave next tests.
-          analytics.ready(function () {
-            setTimeout(function () {
-              expect(analytics.readied).to.be(true);
-              done();
-            }, 20);
-          });
-        }, 20);
-      });
-    });
-
-    it('calls callbacks immediately when already ready', function () {
+    it('calls backs on next tick when already ready', function (done) {
       var spy = sinon.spy();
       analytics.ready(spy);
-      expect(spy.called).to.be(true);
+      setTimeout(function () {
+        expect(spy.called).to.be(true);
+        done();
+      }, 1);
     });
 
     it('doesnt break on being passed a non-function', function () {
@@ -128,29 +112,26 @@ describe('Analytics.js', function () {
 
   describe('queue', function () {
 
-    // Describes a single test of the queue against a particular method.
-    var queueTest = function (method, args) {
+    function queueTest (method, args) {
       return function (done) {
-        // Reset our initialized function
-        analytics.initialized = false;
-        var spy = sinon.spy(Provider.prototype, 'enqueue');
-
+        analytics._user.clear();
         analytics.initialize(options);
 
         // Once initialized, the call should queue.
+        var enqueueSpy = sinon.spy(Provider.prototype, 'enqueue');
         analytics[method].apply(analytics, args);
-        expect(spy.firstCall.args).to.eql([method, args]);
-        spy.restore();
+        expect(enqueueSpy.firstCall.args).to.eql([method, args]);
+        enqueueSpy.restore();
 
         // After a timeout, expect the queue to drain.
-        spy = sinon.spy(Provider.prototype, method);
+        var methodSpy = sinon.spy(Provider.prototype, method);
         setTimeout(function () {
-          expect(spy.firstCall.args).to.eql(args);
-          spy.restore();
+          expect(methodSpy.firstCall.args).to.eql(args);
+          methodSpy.restore();
           done();
-        }, readyTimeout + 10);
+        }, timeout);
       };
-    };
+    }
 
     it('queues track calls before ready is called',
       queueTest('track', ['tossed a disc', { distance : 40 }, undefined])
@@ -161,11 +142,11 @@ describe('Analytics.js', function () {
     );
 
     it('queues alias calls before ready is called',
-      queueTest('alias', ['id', 'newId'])
+      queueTest('alias', ['id', 'newId', undefined])
     );
 
     it('queues pageview calls before ready is called',
-      queueTest('pageview', ['/some/url'])
+      queueTest('pageview', ['/some/url', undefined])
     );
   });
 
@@ -203,7 +184,7 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
-    it('calls the callback after the timeout duration', function (done) {
+    it('calls back after the timeout duration', function (done) {
       var callback = sinon.spy();
 
       analytics.identify(test.userId, test.traits, callback);
@@ -212,7 +193,7 @@ describe('Analytics.js', function () {
       setTimeout(function () {
         expect(callback.called).to.be(true);
         done();
-      }, analytics.timeout);
+      }, timeout);
     });
 
     it('takes a callback with optional traits, userId or context', function (done) {
@@ -226,7 +207,7 @@ describe('Analytics.js', function () {
       setTimeout(function () {
         expect(callback.callCount).to.be(4);
         done();
-      }, analytics.timeout);
+      }, timeout);
     });
 
     it('is turned off by the all providers flag', function  () {
@@ -349,7 +330,7 @@ describe('Analytics.js', function () {
     });*/
 
     it('calls with all stored traits', function () {
-      analytics.user.clear();
+      analytics._user.clear();
       var spy    = sinon.spy(Provider.prototype, 'identify')
         , traits = test.traits;
 
@@ -374,7 +355,7 @@ describe('Analytics.js', function () {
 
 
     it('overwrites stored traits', function () {
-      analytics.user.clear();
+      analytics._user.clear();
       var spy    = sinon.spy(Provider.prototype, 'identify')
         , traits = {
             name : 'Zeus',
@@ -435,7 +416,7 @@ describe('Analytics.js', function () {
       setTimeout(function () {
         expect(callback.called).to.be(true);
         done();
-      }, analytics.timeout);
+      }, timeout);
     });
 
     it('takes a callback with optional properties or context', function (done) {
@@ -448,7 +429,7 @@ describe('Analytics.js', function () {
       setTimeout(function () {
         expect(callback.callCount).to.be(3);
         done();
-      }, analytics.timeout);
+      }, timeout);
     });
 
     it('is turned off by the all providers flag', function  () {
@@ -561,7 +542,7 @@ describe('Analytics.js', function () {
       setTimeout(function () {
         expect(callback.called).to.be(true);
         done();
-      }, analytics.timeout);
+      }, timeout);
     });
 
     it('takes a callback with optional eventName, propertes or context', function (done) {
@@ -575,7 +556,7 @@ describe('Analytics.js', function () {
       setTimeout(function () {
         expect(callback.callCount).to.be(4);
         done();
-      }, analytics.timeout);
+      }, timeout);
     });
   });
 
@@ -677,7 +658,7 @@ describe('Analytics.js', function () {
       setTimeout(function () {
         expect(window.location.hash).to.equal('#test');
         done();
-      }, analytics.timeout);
+      }, timeout);
     });
 
     it('triggers a track and loads the correct href on a link click with multiple links', function (done) {
@@ -695,7 +676,7 @@ describe('Analytics.js', function () {
       setTimeout(function () {
         expect(window.location.hash).to.equal('#test2');
         done();
-      }, analytics.timeout);
+      }, timeout);
     });
 
     it('triggers a track but doesnt load an href on an href with blank target', function () {
@@ -761,7 +742,7 @@ describe('Analytics.js', function () {
       setTimeout(function () {
         expect(spy.called).to.be(true);
         done();
-      }, analytics.timeout);
+      }, timeout);
     });
 
     it('allows for event to be a function', function () {

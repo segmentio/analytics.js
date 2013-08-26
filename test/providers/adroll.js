@@ -1,5 +1,7 @@
 describe('AdRoll', function () {
 
+  var analytics = require('analytics');
+
   describe('initialize', function () {
 
     this.timeout(10000);
@@ -27,8 +29,8 @@ describe('AdRoll', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'AdRoll' : test['AdRoll'] });
-      expect(analytics.providers[0].options.advId).to.equal(test['AdRoll'].advId);
-      expect(analytics.providers[0].options.pixId).to.equal(test['AdRoll'].pixId);
+      expect(analytics._providers[0].options.advId).to.equal(test['AdRoll'].advId);
+      expect(analytics._providers[0].options.pixId).to.equal(test['AdRoll'].pixId);
     });
 
   });

@@ -2,8 +2,8 @@
 
 describe('User tests', function () {
 
-  var user   = require('analytics/src/user.js')
-    , cookie = require('analytics/src/cookie.js')
+  var user   = require('analytics/lib/user.js')
+    , cookie = require('analytics/lib/cookie.js')
     , json   = require('segmentio-json');
 
   describe('#id()', function () {

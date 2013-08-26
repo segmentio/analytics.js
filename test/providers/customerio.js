@@ -1,5 +1,8 @@
 describe('Customer.io', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -12,12 +15,15 @@ describe('Customer.io', function () {
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Customer.io' :  test['Customer.io'] });
-      expect(analytics.providers[0].options.siteId).to.equal('x');
+      expect(analytics._providers[0].options.siteId).to.equal('x');
 
       // Customer.io sets up a queue, so spy's called.
       expect(window._cio).not.to.be(undefined);
-      expect(spy.called).to.be(true);
       expect(window._cio.pageHasLoaded).to.be(undefined);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // When the library is actually loaded `pageHasLoaded` is set.
       var interval = setInterval(function () {
@@ -33,7 +39,7 @@ describe('Customer.io', function () {
 
   describe('identify', function () {
 
-    beforeEach(analytics.user.clear);
+    beforeEach(analytics._user.clear);
 
     it('should call identify', function () {
       var spy = sinon.spy(window._cio, 'identify');

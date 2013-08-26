@@ -1,5 +1,8 @@
 describe('HubSpot', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -15,7 +18,10 @@ describe('HubSpot', function () {
       analytics.initialize({ 'HubSpot' : test['HubSpot'] });
       expect(window._hsq).not.to.be(undefined);
       expect(window._hsq.push).to.equal(push);
-      expect(spy.called).to.be(true);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // Once the HubSpot library comes back, the array should be transformed.
       var interval = setInterval(function () {
@@ -28,7 +34,7 @@ describe('HubSpot', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'HubSpot' : test['HubSpot'] });
-      expect(analytics.providers[0].options.portalId).to.equal(test['HubSpot']);
+      expect(analytics._providers[0].options.portalId).to.equal(test['HubSpot']);
     });
 
   });

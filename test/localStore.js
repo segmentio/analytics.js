@@ -2,7 +2,7 @@
 
 describe('Local Storage tests', function () {
 
-  var localStore = require('analytics/src/localStore.js');
+  var localStore = require('analytics/lib/localStore.js');
 
   describe('#get()', function () {
     it('should not not get an empty record', function () {

@@ -1,5 +1,8 @@
 describe('Improvely', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   /**
    * Initialize.
@@ -13,9 +16,12 @@ describe('Improvely', function () {
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Improvely' : test['Improvely'] });
-      expect(spy.called).to.be(true);
       expect(window._improvely).not.to.be(undefined);
       expect(window.improvely.identify).to.be(undefined);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // When the library loads, there will be a function `window.improvely.identify`.
       var interval = setInterval(function () {
@@ -28,8 +34,8 @@ describe('Improvely', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Improvely' : test['Improvely'] });
-      expect(analytics.providers[0].options.domain).to.equal(test['Improvely'].domain);
-      expect(analytics.providers[0].options.projectId).to.equal(test['Improvely'].projectId);
+      expect(analytics._providers[0].options.domain).to.equal(test['Improvely'].domain);
+      expect(analytics._providers[0].options.projectId).to.equal(test['Improvely'].projectId);
     });
 
   });
@@ -45,7 +51,7 @@ describe('Improvely', function () {
 
     beforeEach(function () {
       stub = sinon.stub(window.improvely, 'label');
-      analytics.user.clear();
+      analytics._user.clear();
     });
 
     afterEach(function () {
@@ -70,7 +76,7 @@ describe('Improvely', function () {
 
     beforeEach(function () {
       stub = sinon.stub(window.improvely, 'goal');
-      analytics.user.clear();
+      analytics._user.clear();
     });
 
     afterEach(function () {

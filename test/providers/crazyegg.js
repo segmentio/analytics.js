@@ -1,5 +1,7 @@
 describe('CrazyEgg', function () {
 
+  var analytics = require('analytics');
+
 
   describe('initialize', function () {
 
@@ -25,7 +27,7 @@ describe('CrazyEgg', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'CrazyEgg' : test['CrazyEgg'] });
-      expect(analytics.providers[0].options.accountNumber).to.equal('00138301');
+      expect(analytics._providers[0].options.accountNumber).to.equal('00138301');
     });
 
   });

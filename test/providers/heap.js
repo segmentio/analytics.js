@@ -1,5 +1,8 @@
 describe('Heap', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
   describe('initialize', function () {
 
     it('should call ready and load library', function () {
@@ -8,13 +11,16 @@ describe('Heap', function () {
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Heap' : test['Heap'] });
-      expect(spy.called).to.be(true);
       expect(window.heap).not.to.be(undefined);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
     });
 
     it('should store options', function () {
       analytics.initialize({ 'Heap' : test['Heap'] });
-      expect(analytics.providers[0].options.apiKey).to.equal(test['Heap']);
+      expect(analytics._providers[0].options.apiKey).to.equal(test['Heap']);
     });
 
   });

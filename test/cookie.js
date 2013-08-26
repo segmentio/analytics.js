@@ -2,7 +2,7 @@
 
 describe('Cookie tests', function () {
 
-  var cookie = require('analytics/src/cookie.js');
+  var cookie = require('analytics/lib/cookie.js');
 
   describe('#get()', function () {
     it('should not not get an empty cookie', function () {

@@ -1,5 +1,8 @@
 describe('Vero', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -16,8 +19,11 @@ describe('Vero', function () {
 
       expect(window._veroq).not.to.be(undefined);
       expect(window._veroq.push).to.equal(push);
-      expect(spy.called).to.be(true);
-      expect(analytics.providers[0].options.apiKey).to.equal('x');
+      expect(analytics._providers[0].options.apiKey).to.equal('x');
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // When the library loads, it will overwrite the push method.
       var interval = setInterval(function () {
@@ -33,7 +39,7 @@ describe('Vero', function () {
   describe('identify', function () {
     var stub;
     beforeEach(function () {
-      analytics.user.clear();
+      analytics._user.clear();
       stub = sinon.stub(window._veroq, 'push');
     });
     afterEach(function () { stub.restore(); });

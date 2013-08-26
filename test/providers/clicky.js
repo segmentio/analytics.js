@@ -1,6 +1,8 @@
 describe('Clicky', function () {
 
 
+  var analytics = require('analytics');
+
   describe('initialize', function () {
 
     this.timeout(10000);
@@ -23,8 +25,7 @@ describe('Clicky', function () {
     });
 
     it('should store options', function () {
-      analytics.initialize({ 'Clicky' : test['Clicky'] });
-      var options = analytics.providers[0].options;
+      var options = analytics._providers[0].options;
       expect(options.siteId).to.equal(test['Clicky']);
     });
 

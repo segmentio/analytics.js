@@ -1,5 +1,8 @@
 describe('Chartbeat', function () {
 
+  var analytics = require('analytics');
+
+  analytics.initialize
 
   describe('initialize', function () {
 
@@ -24,8 +27,7 @@ describe('Chartbeat', function () {
     });
 
     it('should store options', function () {
-      analytics.initialize({ 'Chartbeat' : test['Chartbeat'] });
-      var options = analytics.providers[0].options;
+      var options = analytics._providers[0].options;
       expect(options.uid).to.equal(test['Chartbeat'].uid);
       expect(options.domain).to.equal(test['Chartbeat'].domain);
       // We copy over all of the options directly into Chartbeat. But,

@@ -1,6 +1,9 @@
 
 describe('LeadLander', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
   describe('initialize', function () {
 
     this.timeout(10000);
@@ -10,12 +13,16 @@ describe('LeadLander', function () {
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'LeadLander' : test['LeadLander'] });
-      done();
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+        done();
+      });
     });
 
     it('should store options', function () {
       analytics.initialize({ 'LeadLander' : test['LeadLander'] });
-      expect(analytics.providers[0].options.llactid).to.equal(test['LeadLander']);
+      expect(analytics._providers[0].options.llactid).to.equal(test['LeadLander']);
     });
 
   });

@@ -2,10 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <title>Providers Test</title>
 
-  <title>Providers Tests | Analytics.js</title>
-
-  <link rel="stylesheet" href="libs/mocha/mocha-1.8.1.css">
+  <link rel="stylesheet" href="libs/mocha/mocha-1.12.0.css">
 
   <!-- Synchronous providers -->
   <script src="//cdn.optimizely.com/js/170430035.js"></script>
@@ -23,20 +22,18 @@
     }
   </script>
 
-  <script src="libs/sinon/sinon-1.5.2.js"></script>
+  <script src="libs/sinon/sinon-1.7.3.js"></script>
   <script src="libs/expect/expect-0.1.2.js"></script>
-  <script src="libs/mocha/mocha-1.8.1.js"></script>
+  <script src="libs/mocha/mocha-1.12.0.js"></script>
   <script src="libs/mocha/mocha-cloud-0.0.1.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 
   <script src="runner.js"></script>
   <script src="utils.js"></script>
-  <script src="../analytics.js"></script>
-  <script src="../analytics.component.js"></script>
+  <script src="../build/build.js"></script>
 
   <script src="providers/adroll.js"></script>
   <script src="providers/amplitude.js"></script>
-  <script src="providers/bitdeli.js"></script>
   <script src="providers/bugherd.js"></script>
   <script src="providers/chartbeat.js"></script>
   <script src="providers/clicktale.js"></script>
@@ -59,7 +56,7 @@
   <script src="providers/kissmetrics.js"></script>
   <script src="providers/klaviyo.js"></script>
   <script src="providers/leadlander.js"></script>
-  <script src="providers/livechat.js"></script>
+  <!--<script src="providers/livechat.js"></script>-->
   <script src="providers/lytics.js"></script>
   <script src="providers/mixpanel.js"></script>
   <script src="providers/olark.js"></script>
@@ -79,7 +76,8 @@
   <script src="providers/woopra.js"></script>
 </head>
 <body>
-  <h1>Providers Test</h1>
-  <div id="mocha"></div>
+  <div id="mocha">
+    <h1>Providers Test</h1>
+  </div>
 </body>
 </html>

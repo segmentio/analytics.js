@@ -1,5 +1,8 @@
 describe('Amplitude', function () {
 
+  var analytics = require('analytics')
+    , nextTick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -11,7 +14,11 @@ describe('Amplitude', function () {
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Amplitude' : test['Amplitude'] });
-      expect(spy.called).to.be(true);
+
+      nextTick(function () {
+        expect(spy.called).to.be(true);
+      });
+
       expect(window.amplitude).not.to.be(undefined);
 
       // When the library loads, it will replace the `logEvent` method.
@@ -26,7 +33,7 @@ describe('Amplitude', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Amplitude' : test['Amplitude'] });
-      expect(analytics.providers[0].options.apiKey).to.equal(test['Amplitude']);
+      expect(analytics._providers[0].options.apiKey).to.equal(test['Amplitude']);
     });
 
   });
@@ -34,7 +41,7 @@ describe('Amplitude', function () {
 
   describe('identify', function () {
 
-    beforeEach(analytics.user.clear);
+    beforeEach(analytics._user.clear);
 
     it('should call setUserId', function () {
       var stub = sinon.stub(window.amplitude, 'setUserId');
@@ -86,7 +93,7 @@ describe('Amplitude', function () {
   describe('pageview', function () {
 
     it('shouldnt call track by default', function () {
-      var spy = sinon.spy(analytics.providers[0], 'track');
+      var spy = sinon.spy(analytics._providers[0], 'track');
       analytics.pageview();
       expect(spy.called).to.be(false);
       spy.restore();
@@ -94,7 +101,7 @@ describe('Amplitude', function () {
 
     // Mixpanel adds custom properties, so we need to have a loose match.
     it('should call track with pageview set to true', function () {
-      var provider = analytics.providers[0]
+      var provider = analytics._providers[0]
         , spy      = sinon.spy(provider, 'track');
 
       provider.options.pageview = true;

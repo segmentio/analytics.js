@@ -1,5 +1,8 @@
 describe('FoxMetrics', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -12,8 +15,11 @@ describe('FoxMetrics', function () {
       analytics.ready(spy);
       analytics.initialize({ 'FoxMetrics' : test['FoxMetrics'] });
       expect(window._fxm).not.to.be(undefined);
-      expect(spy.called).to.be(true);
       expect(window._fxm.appId).to.be(undefined);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // TODO: When the library loads, `appId` will be set.
       var interval = setInterval(function () {
@@ -26,7 +32,7 @@ describe('FoxMetrics', function () {
 
     it ('should store options', function () {
       analytics.initialize({ 'FoxMetrics' : test['FoxMetrics'] });
-      expect(analytics.providers[0].options.appId).to.equal(test['FoxMetrics']);
+      expect(analytics._providers[0].options.appId).to.equal(test['FoxMetrics']);
     });
 
   });
@@ -38,7 +44,7 @@ describe('FoxMetrics', function () {
 
     beforeEach(function () {
       stub = sinon.stub(window._fxm, 'push');
-      analytics.user.clear();
+      analytics._user.clear();
     });
 
     afterEach(function () {

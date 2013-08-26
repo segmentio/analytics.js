@@ -1,5 +1,7 @@
 describe('SnapEngage', function () {
 
+  var analytics = require('analytics');
+
 
   describe('initialize', function () {
 
@@ -22,8 +24,7 @@ describe('SnapEngage', function () {
     });
 
     it('should store options', function () {
-      analytics.initialize({ 'SnapEngage' : test['SnapEngage'] });
-      expect(analytics.providers[0].options.apiKey).to.equal(test['SnapEngage']);
+      expect(analytics._providers[0].options.apiKey).to.equal(test['SnapEngage']);
     });
 
   });
@@ -31,8 +32,7 @@ describe('SnapEngage', function () {
 
   describe('identify', function () {
 
-    var user = require('analytics/src/user.js');
-    before(user.clear);
+    beforeEach(analytics._user.clear);
 
     it('should tag the user with their email', function () {
       var spy = sinon.spy(window.SnapABug, 'setUserEmail');

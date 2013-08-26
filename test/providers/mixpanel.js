@@ -1,5 +1,7 @@
 describe('Mixpanel', function () {
 
+  var analytics = require('analytics');
+
   // Mixpanel needs specially aliased traits.
   var aliasedTraits = {
     $name    : test.traits.name,
@@ -20,7 +22,7 @@ describe('Mixpanel', function () {
       analytics.ready(spy);
       analytics.initialize({ 'Mixpanel' : test['Mixpanel'] });
 
-      var options = analytics.providers[0].options;
+      var options = analytics._providers[0].options;
       expect(options.token).to.equal(test['Mixpanel']);
       expect(options.hasOwnProperty('cookieName')).to.be(true);
       expect(window.mixpanel).not.to.be(undefined);
@@ -46,7 +48,7 @@ describe('Mixpanel', function () {
 
       beforeEach(function () {
         spy = sinon.spy(window.mixpanel, 'identify');
-        analytics.user.clear();
+        analytics._user.clear();
       });
 
       afterEach(function () { spy.restore(); });
@@ -71,7 +73,7 @@ describe('Mixpanel', function () {
       var spy;
       beforeEach(function () {
         spy = sinon.spy(window.mixpanel, 'register');
-        analytics.user.clear();
+        analytics._user.clear();
       });
       afterEach(function () { spy.restore(); });
 
@@ -95,7 +97,7 @@ describe('Mixpanel', function () {
       var spy;
       beforeEach(function () {
         spy = sinon.spy(window.mixpanel, 'name_tag');
-        analytics.user.clear();
+        analytics._user.clear();
       });
       afterEach(function () { spy.restore(); });
 
@@ -119,12 +121,12 @@ describe('Mixpanel', function () {
       var spy;
       beforeEach(function () {
         spy = sinon.spy(window.mixpanel.people, 'set');
-        analytics.user.clear();
+        analytics._user.clear();
       });
       afterEach(function () { spy.restore(); });
 
       it('should call people.set with traits', function () {
-        analytics.providers[0].options.people = true;
+        analytics._providers[0].options.people = true;
         analytics.identify(test.traits);
         expect(spy.calledWith(aliasedTraits)).to.be(true);
       });
@@ -135,7 +137,7 @@ describe('Mixpanel', function () {
       });
 
       it('shouldnt call people.set without the option', function () {
-        analytics.providers[0].options.people = false;
+        analytics._providers[0].options.people = false;
 
         analytics.identify(test.userId, test.traits);
         expect(spy.called).to.be(false);
@@ -156,7 +158,7 @@ describe('Mixpanel', function () {
     // The revenue feature requires `people` to be turned on.
     it('should call track_charge with revenue', function () {
       var spy      = sinon.spy(window.mixpanel.people, 'track_charge')
-        , provider = analytics.providers[0];
+        , provider = analytics._providers[0];
 
       provider.options.people = true;
 
@@ -192,7 +194,7 @@ describe('Mixpanel', function () {
     });
 
     it('shouldnt call track by default', function () {
-      var spy = sinon.spy(analytics.providers[0], 'track');
+      var spy = sinon.spy(analytics._providers[0], 'track');
       analytics.pageview();
       expect(spy.called).to.be(false);
       spy.restore();
@@ -200,7 +202,7 @@ describe('Mixpanel', function () {
 
     // Mixpanel adds custom properties, so we need to have a loose match.
     it('should call track with pageview set to true', function () {
-      var provider = analytics.providers[0]
+      var provider = analytics._providers[0]
         , spy      = sinon.spy(provider, 'track');
 
       provider.options.pageview = true;

@@ -1,5 +1,8 @@
 describe('Visual Website Optimizer', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 // Set up fake VWO data to simulate the replay.
 window._vwo_exp_ids = [1];
 window._vwo_exp = {
@@ -14,11 +17,15 @@ window._vwo_exp = {
 describe('initialize', function () {
   this.timeout(10000);
 
-  it('should call ready', function () {
-    var callback = sinon.spy();
-    analytics.ready(callback);
+  it('should call ready', function (done) {
+    var spy = sinon.spy();
+    analytics.ready(spy);
     analytics.initialize({ 'Visual Website Optimizer' : true });
-    expect(callback.called).to.be(true);
+
+    tick(function () {
+      expect(spy.called).to.be(true);
+      done();
+    });
   });
 
   it('should replay when the library loads', function (done) {

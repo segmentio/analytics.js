@@ -1,6 +1,8 @@
 describe('comScore', function () {
 
 
+  var analytics = require('analytics');
+
   describe('initialize', function () {
 
     this.timeout(10000);
@@ -27,8 +29,8 @@ describe('comScore', function () {
       analytics.initialize({ 'comScore' : test['comScore'] });
       expect(window._comscore[0].c1).to.equal('2');
       expect(window._comscore[0].c2).to.equal(test['comScore'].c2);
-      expect(analytics.providers[0].options.c1).to.equal('2');
-      expect(analytics.providers[0].options.c2).to.equal(test['comScore'].c2);
+      expect(analytics._providers[0].options.c1).to.equal('2');
+      expect(analytics._providers[0].options.c2).to.equal(test['comScore'].c2);
     });
 
   });

@@ -1,5 +1,6 @@
 describe('Woopra', function () {
 
+  var analytics = require('analytics');
 
   describe('initialize', function () {
 
@@ -27,8 +28,7 @@ describe('Woopra', function () {
     });
 
     it('should store options', function () {
-      analytics.initialize({ 'Woopra' : test['Woopra'] });
-      expect(analytics.providers[0].options.domain).to.equal(test['Woopra']);
+      expect(analytics._providers[0].options.domain).to.equal(test['Woopra']);
     });
 
   });

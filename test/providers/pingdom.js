@@ -1,5 +1,7 @@
 describe('Pingdom', function () {
 
+  var analytics = require('analytics');
+
 
   describe('initialize', function () {
 
@@ -26,7 +28,7 @@ describe('Pingdom', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Pingdom' : test['Pingdom'] });
-      expect(analytics.providers[0].options.id).to.equal(test['Pingdom']);
+      expect(analytics._providers[0].options.id).to.equal(test['Pingdom']);
     });
 
   });

@@ -1,5 +1,8 @@
 describe('Gauges', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -17,7 +20,10 @@ describe('Gauges', function () {
       // Gauges creates a queue, so it's ready immediately.
       expect(window._gauges).not.to.be(undefined);
       expect(window._gauges.push).to.eql(push);
-      expect(spy.called).to.be(true);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // Once the library loads, push will be overwritten.
       var interval = setInterval(function () {
@@ -30,7 +36,7 @@ describe('Gauges', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Gauges' : test['Gauges'] });
-      expect(analytics.providers[0].options.siteId).to.equal(test['Gauges']);
+      expect(analytics._providers[0].options.siteId).to.equal(test['Gauges']);
     });
 
   });

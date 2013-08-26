@@ -1,5 +1,8 @@
 describe('USERcycle', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -16,7 +19,10 @@ describe('USERcycle', function () {
 
       expect(window._uc).not.to.be(undefined);
       expect(window._uc.push).to.equal(push);
-      expect(spy.called).to.be(true);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // When the library loads, it will overwrite the push method.
       var interval = setInterval(function () {
@@ -28,8 +34,7 @@ describe('USERcycle', function () {
     });
 
     it('should store options', function () {
-      analytics.initialize({ 'USERcycle' : test['USERcycle'] });
-      expect(analytics.providers[0].options.key).to.equal('x');
+      expect(analytics._providers[0].options.key).to.equal('x');
     });
 
   });

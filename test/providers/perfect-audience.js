@@ -1,5 +1,7 @@
 describe('Perfect Audience', function () {
 
+  var analytics = require('analytics');
+
 
   describe('initialize', function () {
 
@@ -24,8 +26,7 @@ describe('Perfect Audience', function () {
     });
 
     it('should call store options', function () {
-      analytics.initialize({ 'Perfect Audience' : test['Perfect Audience'] });
-      expect(analytics.providers[0].options.siteId).to.equal(test['Perfect Audience']);
+      expect(analytics._providers[0].options.siteId).to.equal(test['Perfect Audience']);
     });
 
   });

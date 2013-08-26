@@ -1,5 +1,7 @@
 describe('Sentry', function () {
 
+  var analytics = require('analytics');
+
 
   describe('initialize', function () {
 
@@ -28,7 +30,7 @@ describe('Sentry', function () {
 
     it('should store options', function (done) {
       analytics.initialize({ 'Sentry' : test['Sentry'] });
-      var options = analytics.providers[0].options;
+      var options = analytics._providers[0].options;
       expect(options.config).to.equal(test['Sentry']);
 
       // Add the ready handler here so that future tests don't get screwed by
@@ -52,25 +54,6 @@ describe('Sentry', function () {
         expect(spy.calledWithMatch(traits)).to.be(true);
         done();
       });
-    });
-
-  });
-
-
-  describe('log', function () {
-
-    it('should call captureException with an exception', function () {
-      var spy = sinon.spy(window.Raven, 'captureException');
-      analytics.log(test.logError, test.logProperties);
-      expect(spy.calledWith(test.logError, test.logProperties)).to.be(true);
-      spy.restore();
-    });
-
-    it('should call captureMessage with a string', function () {
-      var spy = sinon.spy(window.Raven, 'captureMessage');
-      analytics.log(test.logMessage, test.logProperties);
-      expect(spy.calledWith(test.logMessage, test.logProperties)).to.be(true);
-      spy.restore();
     });
 
   });

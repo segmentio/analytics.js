@@ -1,5 +1,7 @@
 describe('LiveChat', function () {
 
+  var analytics = require('analytics');
+
 
   describe('initialize', function () {
 
@@ -25,8 +27,7 @@ describe('LiveChat', function () {
     });
 
     it('should store options', function () {
-      analytics.initialize({ 'LiveChat' : test['LiveChat'] });
-      expect(analytics.providers[0].options.license).to.equal(test['LiveChat']);
+      expect(analytics._providers[0].options.license).to.equal(test['LiveChat']);
     });
 
   });
@@ -36,7 +37,7 @@ describe('LiveChat', function () {
     var stub;
     beforeEach(function () {
       stub = sinon.stub(window.LC_API, 'set_custom_variables');
-      analytics.user.clear();
+      analytics._user.clear();
     });
     afterEach(function () { stub.restore(); });
 

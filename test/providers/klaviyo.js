@@ -1,5 +1,8 @@
 describe('Klaviyo', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -14,7 +17,10 @@ describe('Klaviyo', function () {
 
       // Creates a queue, so it's ready immediately.
       expect(window._learnq).not.to.be(undefined);
-      expect(spy.called).to.be(true);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // Once the library loads, push will be overwritten.
       var interval = setInterval(function () {
@@ -27,7 +33,7 @@ describe('Klaviyo', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Klaviyo' : test['Klaviyo'] });
-      expect(analytics.providers[0].options.apiKey).to.equal(test['Klaviyo']);
+      expect(analytics._providers[0].options.apiKey).to.equal(test['Klaviyo']);
     });
 
   });
@@ -39,7 +45,7 @@ describe('Klaviyo', function () {
     var spy;
 
     beforeEach(function () {
-      analytics.user.clear();
+      analytics._user.clear();
       spy = sinon.spy(window._learnq, 'push');
     });
 

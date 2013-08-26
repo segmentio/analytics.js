@@ -1,5 +1,8 @@
 describe('Errorception', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -17,7 +20,10 @@ describe('Errorception', function () {
       // Errorception sets up a queue, so it's ready immediately.
       expect(window._errs).not.to.be(undefined);
       expect(window._errs.push).to.equal(push);
-      expect(spy.called).to.be(true);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // When the library loads, it will overwrite the push method.
       var interval = setInterval(function () {
@@ -30,12 +36,12 @@ describe('Errorception', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Errorception' : test['Errorception'] });
-      var options = analytics.providers[0].options;
+      var options = analytics._providers[0].options;
       expect(options.projectId).to.equal(test['Errorception']);
     });
 
     it('should call the old onerror when an error happens', function () {
-      var spy = sinon.spy()
+      var spy = sinon.spy();
       window.onerror = spy;
 
       analytics.initialize({ 'Errorception' : test['Errorception'] });
@@ -55,7 +61,7 @@ describe('Errorception', function () {
 
       expect(window._errs.meta).to.be(undefined);
 
-      analytics.providers[0].options.meta = true;
+      analytics._providers[0].options.meta = true;
       analytics.identify(test.userId, test.traits);
 
       expect(window._errs.meta).to.eql(extend({}, test.traits, { id : test.userId }));
@@ -64,7 +70,7 @@ describe('Errorception', function () {
     it('shouldnt add metadata', function () {
       window._errs.meta = undefined;
 
-      analytics.providers[0].options.meta = false;
+      analytics._providers[0].options.meta = false;
       analytics.identify(test.userId, test.traits);
 
       expect(window._errs.meta).to.be(undefined);

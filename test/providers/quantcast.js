@@ -1,5 +1,7 @@
 describe('Quantcast', function () {
 
+  var analytics = require('analytics');
+
 
   describe('initialize', function () {
 
@@ -30,7 +32,7 @@ describe('Quantcast', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Quantcast' : test['Quantcast'] });
-      expect(analytics.providers[0].options.pCode).to.equal(test['Quantcast']);
+      expect(analytics._providers[0].options.pCode).to.equal(test['Quantcast']);
     });
 
   });

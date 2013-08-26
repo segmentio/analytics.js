@@ -1,5 +1,7 @@
 describe('HitTail', function () {
 
+  var analytics = require('analytics');
+
 
   describe('initialize', function () {
 
@@ -24,7 +26,7 @@ describe('HitTail', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'HitTail' : test['HitTail'] });
-      expect(analytics.providers[0].options.siteId).to.equal(test['HitTail']);
+      expect(analytics._providers[0].options.siteId).to.equal(test['HitTail']);
     });
 
   });

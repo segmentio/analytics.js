@@ -1,5 +1,7 @@
 describe('BugHerd', function () {
 
+  var analytics = require('analytics');
+
 
   describe('initialize', function () {
 
@@ -24,7 +26,7 @@ describe('BugHerd', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'BugHerd' : test['BugHerd'] });
-      expect(analytics.providers[0].options.apiKey).to.equal(test['BugHerd']);
+      expect(analytics._providers[0].options.apiKey).to.equal(test['BugHerd']);
     });
 
     it('should not show tab if set', function () {

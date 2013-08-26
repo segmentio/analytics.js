@@ -1,5 +1,8 @@
 describe('GoSquared', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -13,7 +16,10 @@ describe('GoSquared', function () {
       analytics.initialize({ 'GoSquared' : test['GoSquared'] });
       expect(window.GoSquared).not.to.be(undefined);
       expect(window.GoSquared.DefaultTracker).to.be(undefined);
-      expect(spy.called).to.be(true);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // When the library loads, the tracker will be available.
       var interval = setInterval(function () {
@@ -26,7 +32,7 @@ describe('GoSquared', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'GoSquared' : test['GoSquared'] });
-      expect(analytics.providers[0].options.siteToken).to.equal('x');
+      expect(analytics._providers[0].options.siteToken).to.equal('x');
     });
 
   });
@@ -34,7 +40,7 @@ describe('GoSquared', function () {
 
   describe('identify', function () {
 
-    beforeEach(analytics.user.clear);
+    beforeEach(analytics._user.clear);
 
     it('should set user id', function () {
       window.GoSquared.UserName = undefined;

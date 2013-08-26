@@ -1,5 +1,8 @@
 describe('Qualaroo', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
@@ -11,9 +14,12 @@ describe('Qualaroo', function () {
       var spy = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Qualaroo' : test['Qualaroo'] });
-      expect(spy.called).to.be(true);
       expect(window._kiq).not.to.be(undefined);
       expect(window.KI).to.be(undefined);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // When the library loads, it will create a `KI` global.
       var interval = setInterval(function () {
@@ -26,8 +32,8 @@ describe('Qualaroo', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Qualaroo' : test['Qualaroo'] });
-      expect(analytics.providers[0].options.customerId).to.equal(test['Qualaroo'].customerId);
-      expect(analytics.providers[0].options.siteToken).to.equal(test['Qualaroo'].siteToken);
+      expect(analytics._providers[0].options.customerId).to.equal(test['Qualaroo'].customerId);
+      expect(analytics._providers[0].options.siteToken).to.equal(test['Qualaroo'].siteToken);
     });
 
   });
@@ -37,7 +43,7 @@ describe('Qualaroo', function () {
     var stub;
     beforeEach(function () {
       stub = sinon.stub(window._kiq, 'push');
-      analytics.user.clear();
+      analytics._user.clear();
     });
     afterEach(function () { stub.restore(); });
 
@@ -84,13 +90,13 @@ describe('Qualaroo', function () {
       traits['Triggered: ' + test.event] = true;
 
       // Enable the track option.
-      analytics.providers[0].options.track = true;
+      analytics._providers[0].options.track = true;
 
       analytics.track(test.event, test.properties);
       expect(stub.calledWith(['set', traits])).to.be(true);
 
       stub.restore();
-      analytics.providers[0].options.track = false;
+      analytics._providers[0].options.track = false;
     });
 
   });

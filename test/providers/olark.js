@@ -1,5 +1,11 @@
 describe('Olark', function () {
 
+  // HACK: phantomjs breaks without an `Event` constructor.
+  if (!window.Event) window.Event = window.CustomEvent;
+
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   /**
    * Initialize.
@@ -16,7 +22,10 @@ describe('Olark', function () {
       analytics.ready(spy);
       analytics.initialize({ 'Olark' : test['Olark'] });
       expect(window.olark).not.to.be(undefined);
-      expect(spy.called).to.be(true);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+      });
 
       // When the library loads, it creats a `__get_olark_key` method.
       var interval = setInterval(function () {
@@ -29,7 +38,7 @@ describe('Olark', function () {
 
     it('should store options', function () {
       analytics.initialize({ 'Olark' : test['Olark'] });
-      expect(analytics.providers[0].options.siteId).to.equal(test['Olark']);
+      expect(analytics._providers[0].options.siteId).to.equal(test['Olark']);
     });
 
   });
@@ -44,7 +53,7 @@ describe('Olark', function () {
     var spy;
 
     beforeEach(function () {
-      analytics.user.clear();
+      analytics._user.clear();
       spy = sinon.spy(window, 'olark');
     });
 
@@ -192,20 +201,22 @@ describe('Olark', function () {
     });
 
     it('shouldnt log event to operator when track disabled', function () {
-      analytics.providers[0].options.track = false;
+      analytics._providers[0].options.track = false;
       analytics.track(test.event, test.properties);
       expect(spy.called).to.be(false);
     });
 
     it('shouldnt log event to operator when track enabled but box shrunk', function () {
-      analytics.providers[0].options.track = true;
+      analytics._providers[0].options.track = true;
       analytics.track(test.event, test.properties);
       expect(spy.called).to.be(false);
     });
 
     it('should log event to operator when track enabled and box expanded', function (done) {
-      analytics.providers[0].options.track = true;
+      analytics._providers[0].options.track = true;
       window.olark('api.box.expand');
+
+      // long timeout for phantomjs tests, where it's slow
       setTimeout(function () {
         analytics.track(test.event, test.properties);
         expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
@@ -213,7 +224,7 @@ describe('Olark', function () {
         })).to.be(true);
         window.olark('api.box.shrink');
         done();
-      }, 900);
+      }, 800);
     });
 
   });
@@ -237,27 +248,29 @@ describe('Olark', function () {
     });
 
     it('shouldnt log pageview to operator when pageview disabled', function () {
-      analytics.providers[0].options.pageview = false;
+      analytics._providers[0].options.pageview = false;
       analytics.pageview();
       expect(spy.called).to.be(false);
     });
 
     it('shouldnt log event to operator when pageview enabled but box shrunk', function () {
-      analytics.providers[0].options.pageview = true;
+      analytics._providers[0].options.pageview = true;
       analytics.pageview();
       expect(spy.called).to.be(false);
     });
 
     it('should log event to operator when pageview enabled and box expanded', function (done) {
-      analytics.providers[0].options.pageview = true;
+      analytics._providers[0].options.pageview = true;
       window.olark('api.box.expand');
+
+      // long timeout for phantomjs tests, where it's slow
       setTimeout(function () {
         analytics.pageview();
         expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
           body : 'looking at ' + window.location.href
         })).to.be(true);
         done();
-      }, 900);
+      }, 800);
     });
   });
 

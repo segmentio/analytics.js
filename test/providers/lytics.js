@@ -2,6 +2,9 @@
 
 describe('Lytics', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
   describe('initialize', function () {
 
     this.timeout(10000);
@@ -14,14 +17,16 @@ describe('Lytics', function () {
       analytics.initialize({ 'Lytics' : test['Lytics'] });
 
       expect(window.jstag).not.to.be(undefined);
-      expect(spy.called).to.be(true);
-      done();
 
+      tick(function () {
+        expect(spy.called).to.be(true);
+        done();
+      });
     });
 
     it('should store options', function () {
       analytics.initialize({ 'Lytics' : test['Lytics'] });
-      expect(analytics.providers[0].options.cid).to.equal(test['Lytics']);
+      expect(analytics._providers[0].options.cid).to.equal(test['Lytics']);
     });
 
   });
@@ -70,7 +75,7 @@ describe('Lytics', function () {
 
   describe('identify', function () {
 
-    beforeEach(analytics.user.clear);
+    beforeEach(analytics._user.clear);
 
     it('should accept user traits', function () {
       var spy = sinon.spy(window.jstag, 'send');

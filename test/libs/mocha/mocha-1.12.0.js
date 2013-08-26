@@ -1,6 +1,5 @@
 ;(function(){
 
-
 // CommonJS require()
 
 function require(p){
@@ -52,9 +51,9 @@ require.register("browser/debug.js", function(module, exports, require){
 
 module.exports = function(type){
   return function(){
-
   }
 };
+
 }); // module: browser/debug.js
 
 require.register("browser/diff.js", function(module, exports, require){
@@ -673,8 +672,14 @@ exports.isatty = function(){
 };
 
 exports.getWindowSize = function(){
-  return [window.innerHeight, window.innerWidth];
+  if ('innerHeight' in global) {
+    return [global.innerHeight, global.innerWidth];
+  } else {
+    // In a Web Worker, the DOM Window is not available.
+    return [640, 480];
+  }
 };
+
 }); // module: browser/tty.js
 
 require.register("context.js", function(module, exports, require){
@@ -804,7 +809,6 @@ Hook.prototype.error = function(err){
 
   this._error = err;
 };
-
 
 }); // module: hook.js
 
@@ -1006,6 +1010,7 @@ module.exports = function(suite){
     }
   }
 };
+
 }); // module: interfaces/exports.js
 
 require.register("interfaces/index.js", function(module, exports, require){
@@ -1054,7 +1059,7 @@ var Suite = require('../suite')
 module.exports = function(suite){
   var suites = [suite];
 
-  suite.on('pre-require', function(context){
+  suite.on('pre-require', function(context, file, mocha){
 
     /**
      * Execute before running tests.
@@ -1096,6 +1101,16 @@ module.exports = function(suite){
       if (suites.length > 1) suites.shift();
       var suite = Suite.create(suites[0], title);
       suites.unshift(suite);
+      return suite;
+    };
+
+    /**
+     * Exclusive test-case.
+     */
+
+    context.suite.only = function(title, fn){
+      var suite = context.suite(title, fn);
+      mocha.grep(suite.fullTitle());
     };
 
     /**
@@ -1105,7 +1120,26 @@ module.exports = function(suite){
      */
 
     context.test = function(title, fn){
-      suites[0].addTest(new Test(title, fn));
+      var test = new Test(title, fn);
+      suites[0].addTest(test);
+      return test;
+    };
+
+    /**
+     * Exclusive test-case.
+     */
+
+    context.test.only = function(title, fn){
+      var test = context.test(title, fn);
+      mocha.grep(test.fullTitle());
+    };
+
+    /**
+     * Pending test case.
+     */
+
+    context.test.skip = function(title){
+      context.test(title);
     };
   });
 };
@@ -1198,6 +1232,17 @@ module.exports = function(suite){
     };
 
     /**
+     * Pending suite.
+     */
+    context.suite.skip = function(title, fn) {
+      var suite = Suite.create(suites[0], title);
+      suite.pending = true;
+      suites.unshift(suite);
+      fn.call(suite);
+      suites.shift();
+    };
+
+    /**
      * Exclusive test-case.
      */
 
@@ -1213,8 +1258,10 @@ module.exports = function(suite){
      */
 
     context.test = function(title, fn){
+      var suite = suites[0];
+      if (suite.pending) var fn = null;
       var test = new Test(title, fn);
-      suites[0].addTest(test);
+      suite.addTest(test);
       return test;
     };
 
@@ -1451,12 +1498,13 @@ Mocha.prototype.invert = function(){
 /**
  * Ignore global leaks.
  *
+ * @param {Boolean} ignore
  * @return {Mocha}
  * @api public
  */
 
-Mocha.prototype.ignoreLeaks = function(){
-  this.options.ignoreLeaks = true;
+Mocha.prototype.ignoreLeaks = function(ignore){
+  this.options.ignoreLeaks = !!ignore;
   return this;
 };
 
@@ -1549,7 +1597,7 @@ Mocha.prototype.run = function(fn){
   var options = this.options;
   var runner = new exports.Runner(suite);
   var reporter = new this._reporter(runner);
-  runner.ignoreLeaks = options.ignoreLeaks;
+  runner.ignoreLeaks = false !== options.ignoreLeaks;
   runner.asyncOnly = options.asyncOnly;
   if (options.grep) runner.grep(options.grep, options.invert);
   if (options.globals) runner.globals(options.globals);
@@ -1807,19 +1855,21 @@ exports.list = function(failures){
       , expected = err.expected
       , escape = true;
 
+    // uncaught
+    if (err.uncaught) {
+      msg = 'Uncaught ' + msg;
+    }
+
     // explicitly show diff
-    if (err.showDiff) {
+    if (err.showDiff && sameType(actual, expected)) {
       escape = false;
-      err.actual = actual = JSON.stringify(actual, null, 2);
-      err.expected = expected = JSON.stringify(expected, null, 2);
+      err.actual = actual = stringify(actual);
+      err.expected = expected = stringify(expected);
     }
 
     // actual / expected diff
     if ('string' == typeof actual && 'string' == typeof expected) {
-      var len = Math.max(actual.length, expected.length);
-
-      if (len < 20) msg = errorDiff(err, 'Chars', escape);
-      else msg = errorDiff(err, 'Words', escape);
+      msg = errorDiff(err, 'Words', escape);
 
       // linenos
       var lines = msg.split('\n');
@@ -1928,48 +1978,38 @@ function Base(runner) {
  */
 
 Base.prototype.epilogue = function(){
-  var stats = this.stats
-    , fmt
-    , tests;
+  var stats = this.stats;
+  var tests;
+  var fmt;
 
   console.log();
 
-  function pluralize(n) {
-    return 1 == n ? 'test' : 'tests';
-  }
-
-  // failure
-  if (stats.failures) {
-    fmt = color('bright fail', '  ' + exports.symbols.err)
-      + color('fail', ' %d of %d %s failed')
-      + color('light', ':')
-
-    console.error(fmt,
-      stats.failures,
-      this.runner.total,
-      pluralize(this.runner.total));
-
-    Base.list(this.failures);
-    console.error();
-    return;
-  }
-
-  // pass
+  // passes
   fmt = color('bright pass', ' ')
-    + color('green', ' %d %s complete')
+    + color('green', ' %d passing')
     + color('light', ' (%s)');
 
   console.log(fmt,
-    stats.tests || 0,
-    pluralize(stats.tests),
+    stats.passes || 0,
     ms(stats.duration));
 
   // pending
   if (stats.pending) {
     fmt = color('pending', ' ')
-      + color('pending', ' %d %s pending');
+      + color('pending', ' %d pending');
 
-    console.log(fmt, stats.pending, pluralize(stats.pending));
+    console.log(fmt, stats.pending);
+  }
+
+  // failures
+  if (stats.failures) {
+    fmt = color('fail', '  %d failing');
+
+    console.error(fmt,
+      stats.failures);
+
+    Base.list(this.failures);
+    console.error();
   }
 
   console.log();
@@ -2024,6 +2064,34 @@ function colorLines(name, str) {
   return str.split('\n').map(function(str){
     return color(name, str);
   }).join('\n');
+}
+
+/**
+ * Stringify `obj`.
+ *
+ * @param {Mixed} obj
+ * @return {String}
+ * @api private
+ */
+
+function stringify(obj) {
+  if (obj instanceof RegExp) return obj.toString();
+  return JSON.stringify(obj, null, 2);
+}
+
+/**
+ * Check that a / b have the same type.
+ *
+ * @param {Object} a
+ * @param {Object} b
+ * @return {Boolean}
+ * @api private
+ */
+
+function sameType(a, b) {
+  a = Object.prototype.toString.call(a);
+  b = Object.prototype.toString.call(b);
+  return a == b;
 }
 
 }); // module: reporters/base.js
@@ -2238,6 +2306,7 @@ var Date = global.Date
 
 exports = module.exports = HTML;
 
+
 /**
  * Stats template.
  */
@@ -2245,6 +2314,7 @@ exports = module.exports = HTML;
 var statsTemplate = '<ul id="mocha-stats">'
   + '<li class="progress"><canvas width="40" height="40"></canvas></li>'
   + '<li class="passes"><a href="#">passes:</a> <em>0</em></li>'
+  + '<li class="pending"><a href="#">pending:</a> <em>0</em></li>'
   + '<li class="failures"><a href="#">failures:</a> <em>0</em></li>'
   + '<li class="duration">duration: <em>0</em>s</li>'
   + '</ul>';
@@ -2266,9 +2336,11 @@ function HTML(runner, root) {
     , items = stat.getElementsByTagName('li')
     , passes = items[1].getElementsByTagName('em')[0]
     , passesLink = items[1].getElementsByTagName('a')[0]
-    , failures = items[2].getElementsByTagName('em')[0]
-    , failuresLink = items[2].getElementsByTagName('a')[0]
-    , duration = items[3].getElementsByTagName('em')[0]
+    , pending = items[2].getElementsByTagName('em')[0]
+    , pendingLink = items[2].getElementsByTagName('a')[0]
+    , failures = items[3].getElementsByTagName('em')[0]
+    , failuresLink = items[3].getElementsByTagName('a')[0]
+    , duration = items[4].getElementsByTagName('em')[0]
     , canvas = stat.getElementsByTagName('canvas')[0]
     , report = fragment('<ul id="mocha-report"></ul>')
     , stack = [report]
@@ -2294,15 +2366,23 @@ function HTML(runner, root) {
   on(passesLink, 'click', function(){
     unhide();
     var name = /pass/.test(report.className) ? '' : ' pass';
-    report.className = report.className.replace(/fail|pass/g, '') + name;
+    report.className = report.className.replace(/fail|pass|pending/g, '') + name;
     if (report.className.trim()) hideSuitesWithout('test pass');
+  });
+
+  // pending toggle
+  on(pendingLink, 'click', function(){
+    unhide();
+    var name = /pending/.test(report.className) ? '' : ' pending';
+    report.className = report.className.replace(/fail|pass|pending/g, '') + name;
+    if (report.className.trim()) hideSuitesWithout('test pending');
   });
 
   // failure toggle
   on(failuresLink, 'click', function(){
     unhide();
     var name = /fail/.test(report.className) ? '' : ' fail';
-    report.className = report.className.replace(/fail|pass/g, '') + name;
+    report.className = report.className.replace(/fail|pass|pending/g, '') + name;
     if (report.className.trim()) hideSuitesWithout('test fail');
   });
 
@@ -2334,8 +2414,6 @@ function HTML(runner, root) {
   });
 
   runner.on('test end', function(test){
-    window.scrollTo(0, document.body.scrollHeight);
-
     // TODO: add to stats
     var percent = stats.tests / this.total * 100 | 0;
     if (progress) progress.update(percent).draw(ctx);
@@ -2344,6 +2422,7 @@ function HTML(runner, root) {
     var ms = new Date - stats.start;
     text(passes, stats.passes);
     text(failures, stats.failures);
+    text(pending, stats.pending);
     text(duration, (ms / 1000).toFixed(2));
 
     // test
@@ -2429,7 +2508,7 @@ function hideSuitesWithout(classname) {
   var suites = document.getElementsByClassName('suite');
   for (var i = 0; i < suites.length; i++) {
     var els = suites[i].getElementsByClassName(classname);
-    if (0 == els.length) suites[i].className += ' hidden';
+    if (0 == els.length && !/hidden/.test(suites[i].className)) suites[i].className += ' hidden';
   }
 }
 
@@ -2438,7 +2517,7 @@ function hideSuitesWithout(classname) {
  */
 
 function unhide() {
-  var els = document.getElementsByClassName('suite hidden');
+  var els = document.getElementsByClassName('suite');
   for (var i = 0; i < els.length; ++i) {
     els[i].className = els[i].className.replace('suite hidden', 'suite');
   }
@@ -3100,10 +3179,10 @@ F.prototype = Base.prototype;
 Min.prototype = new F;
 Min.prototype.constructor = Min;
 
+
 }); // module: reporters/min.js
 
 require.register("reporters/nyan.js", function(module, exports, require){
-
 /**
  * Module dependencies.
  */
@@ -3249,44 +3328,39 @@ NyanCat.prototype.drawRainbow = function(){
 NyanCat.prototype.drawNyanCat = function(status) {
   var self = this;
   var startWidth = this.scoreboardWidth + this.trajectories[0].length;
+  var color = '\u001b[' + startWidth + 'C';
+  var padding = '';
 
-  [0, 1, 2, 3].forEach(function(index) {
-    write('\u001b[' + startWidth + 'C');
+  write(color);
+  write('_,------,');
+  write('\n');
 
-    switch (index) {
-      case 0:
-        write('_,------,');
-        write('\n');
-        break;
-      case 1:
-        var padding = self.tick ? '  ' : '   ';
-        write('_|' + padding + '/\\_/\\ ');
-        write('\n');
-        break;
-      case 2:
-        var padding = self.tick ? '_' : '__';
-        var tail = self.tick ? '~' : '^';
-        var face;
-        switch (status) {
-          case 'pass':
-            face = '( ^ .^)';
-            break;
-          case 'fail':
-            face = '( o .o)';
-            break;
-          default:
-            face = '( - .-)';
-        }
-        write(tail + '|' + padding + face + ' ');
-        write('\n');
-        break;
-      case 3:
-        var padding = self.tick ? ' ' : '  ';
-        write(padding + '""  "" ');
-        write('\n');
-        break;
-    }
-  });
+  write(color);
+  padding = self.tick ? '  ' : '   ';
+  write('_|' + padding + '/\\_/\\ ');
+  write('\n');
+
+  write(color);
+  padding = self.tick ? '_' : '__';
+  var tail = self.tick ? '~' : '^';
+  var face;
+  switch (status) {
+    case 'pass':
+      face = '( ^ .^)';
+      break;
+    case 'fail':
+      face = '( o .o)';
+      break;
+    default:
+      face = '( - .-)';
+  }
+  write(tail + '|' + padding + face + ' ');
+  write('\n');
+
+  write(color);
+  padding = self.tick ? ' ' : '  ';
+  write(padding + '""  "" ');
+  write('\n');
 
   this.cursorUp(this.numberOfLines);
 };
@@ -3757,9 +3831,9 @@ function XUnit(runner) {
       , tests: stats.tests
       , failures: stats.failures
       , errors: stats.failures
-      , skip: stats.tests - stats.failures - stats.passes
+      , skipped: stats.tests - stats.failures - stats.passes
       , timestamp: (new Date).toUTCString()
-      , time: stats.duration / 1000
+      , time: (stats.duration / 1000) || 0
     }, false));
 
     tests.forEach(test);
@@ -3965,16 +4039,14 @@ Runnable.prototype.inspect = function(){
  */
 
 Runnable.prototype.resetTimeout = function(){
-  var self = this
-    , ms = this.timeout();
+  var self = this;
+  var ms = this.timeout() || 1e9;
 
   this.clearTimeout();
-  if (ms) {
-    this.timer = setTimeout(function(){
-      self.callback(new Error('timeout of ' + ms + 'ms exceeded'));
-      self.timedOut = true;
-    }, ms);
-  }
+  this.timer = setTimeout(function(){
+    self.callback(new Error('timeout of ' + ms + 'ms exceeded'));
+    self.timedOut = true;
+  }, ms);
 };
 
 /**
@@ -4055,7 +4127,6 @@ Runnable.prototype.run = function(fn){
 }); // module: runnable.js
 
 require.register("runner.js", function(module, exports, require){
-
 /**
  * Module dependencies.
  */
@@ -4065,8 +4136,7 @@ var EventEmitter = require('browser/events').EventEmitter
   , Test = require('./test')
   , utils = require('./utils')
   , filter = utils.filter
-  , keys = utils.keys
-  , noop = function(){};
+  , keys = utils.keys;
 
 /**
  * Non-enumerable globals.
@@ -4102,6 +4172,7 @@ module.exports = Runner;
  *   - `hook end`  (hook) hook complete
  *   - `pass`  (test) test passed
  *   - `fail`  (test, err) test failed
+ *   - `pending`  (test) test pending
  *
  * @api public
  */
@@ -4117,6 +4188,15 @@ function Runner(suite) {
   this.grep(/.*/);
   this.globals(this.globalProps().concat(['errno']));
 }
+
+/**
+ * Wrapper for setImmediate, process.nextTick, or browser polyfill.
+ *
+ * @param {Function} fn
+ * @api private
+ */
+
+Runner.immediately = global.setImmediate || process.nextTick;
 
 /**
  * Inherit from `EventEmitter.prototype`.
@@ -4285,7 +4365,10 @@ Runner.prototype.hook = function(name, fn){
   function next(i) {
     var hook = hooks[i];
     if (!hook) return fn();
+    if (self.failures && suite.bail()) return fn();
     self.currentRunnable = hook;
+
+    hook.ctx.currentTest = self.test;
 
     self.emit('hook', hook);
 
@@ -4299,11 +4382,12 @@ Runner.prototype.hook = function(name, fn){
       if (testError) self.fail(self.test, testError);
       if (err) return self.failHook(hook, err);
       self.emit('hook end', hook);
+      delete hook.ctx.currentTest;
       next(++i);
     });
   }
 
-  process.nextTick(function(){
+  Runner.immediately(function(){
     next(0);
   });
 };
@@ -4546,14 +4630,16 @@ Runner.prototype.run = function(fn){
   var self = this
     , fn = fn || function(){};
 
+  function uncaught(err){
+    self.uncaught(err);
+  }
+
   debug('start');
 
   // callback
   this.on('end', function(){
     debug('end');
-    process.removeListener('uncaughtException', function(err){
-      self.uncaught(err);
-    });
+    process.removeListener('uncaughtException', uncaught);
     fn(self.failures);
   });
 
@@ -4565,9 +4651,7 @@ Runner.prototype.run = function(fn){
   });
 
   // uncaught exception
-  process.on('uncaughtException', function(err){
-    self.uncaught(err);
-  });
+  process.on('uncaughtException', uncaught);
 
   return this;
 };
@@ -4583,6 +4667,8 @@ Runner.prototype.run = function(fn){
 
 function filterLeaks(ok, globals) {
   return filter(globals, function(key){
+    // Firefox and Chrome exposes iframes as index inside the window object
+    if (/^d+/.test(key)) return false;
     var matched = filter(ok, function(ok){
       if (~ok.indexOf('*')) return 0 == key.indexOf(ok.split('*')[0]);
       // Opera and IE expose global variables for HTML element IDs (issue #243)
@@ -5138,8 +5224,8 @@ exports.clean = function(str) {
     .replace(/^function *\(.*\) *{/, '')
     .replace(/\s+\}$/, '');
 
-  var spaces = str.match(/^\n?( *)/)[1].length
-    , re = new RegExp('^ {' + spaces + '}', 'gm');
+  var whitespace = str.match(/^\n?(\s*)/)[1]
+    , re = new RegExp('^' + whitespace, 'gm');
 
   str = str.replace(re, '');
 
@@ -5224,6 +5310,19 @@ exports.highlightTags = function(name) {
 };
 
 }); // module: utils.js
+// The global object is "self" in Web Workers.
+global = (function() { return this; })();
+
+/**
+ * Save timer references to avoid Sinon interfering (see GH-237).
+ */
+
+var Date = global.Date;
+var setTimeout = global.setTimeout;
+var setInterval = global.setInterval;
+var clearTimeout = global.clearTimeout;
+var clearInterval = global.clearInterval;
+
 /**
  * Node shims.
  *
@@ -5233,38 +5332,9 @@ exports.highlightTags = function(name) {
  * the browser.
  */
 
-process = {};
+var process = {};
 process.exit = function(status){};
 process.stdout = {};
-global = window;
-
-/**
- * next tick implementation.
- */
-
-process.nextTick = (function(){
-  // postMessage behaves badly on IE8
-  if (window.ActiveXObject || !window.postMessage) {
-    return function(fn){ fn() };
-  }
-
-  // based on setZeroTimeout by David Baron
-  // - http://dbaron.org/log/20100309-faster-timeouts
-  var timeouts = []
-    , name = 'mocha-zero-timeout'
-
-  window.addEventListener('message', function(e){
-    if (e.source == window && e.data == name) {
-      if (e.stopPropagation) e.stopPropagation();
-      if (timeouts.length) timeouts.shift()();
-    }
-  }, true);
-
-  return function(fn){
-    timeouts.push(fn);
-    window.postMessage(name, '*');
-  }
-})();
 
 /**
  * Remove uncaughtException listener.
@@ -5272,7 +5342,7 @@ process.nextTick = (function(){
 
 process.removeListener = function(e){
   if ('uncaughtException' == e) {
-    window.onerror = null;
+    global.onerror = function() {};
   }
 };
 
@@ -5282,59 +5352,90 @@ process.removeListener = function(e){
 
 process.on = function(e, fn){
   if ('uncaughtException' == e) {
-    window.onerror = function(err, url, line){
+    global.onerror = function(err, url, line){
       fn(new Error(err + ' (' + url + ':' + line + ')'));
     };
   }
 };
 
-// boot
-;(function(){
+/**
+ * Expose mocha.
+ */
 
-  /**
-   * Expose mocha.
-   */
+var Mocha = global.Mocha = require('mocha'),
+    mocha = global.mocha = new Mocha({ reporter: 'html' });
 
-  var Mocha = window.Mocha = require('mocha'),
-      mocha = window.mocha = new Mocha({ reporter: 'html' });
+var immediateQueue = []
+  , immediateTimeout;
 
-  /**
-   * Override ui to ensure that the ui functions are initialized.
-   * Normally this would happen in Mocha.prototype.loadFiles.
-   */
+function timeslice() {
+  var immediateStart = new Date().getTime();
+  while (immediateQueue.length && (new Date().getTime() - immediateStart) < 100) {
+    immediateQueue.shift()();
+  }
+  if (immediateQueue.length) {
+    immediateTimeout = setTimeout(timeslice, 0);
+  } else {
+    immediateTimeout = null;
+  }
+}
 
-  mocha.ui = function(ui){
-    Mocha.prototype.ui.call(this, ui);
-    this.suite.emit('pre-require', window, null, this);
-    return this;
-  };
+/**
+ * High-performance override of Runner.immediately.
+ */
 
-  /**
-   * Setup mocha with the given setting options.
-   */
+Mocha.Runner.immediately = function(callback) {
+  immediateQueue.push(callback);
+  if (!immediateTimeout) {
+    immediateTimeout = setTimeout(timeslice, 0);
+  }
+};
 
-  mocha.setup = function(opts){
-    if ('string' == typeof opts) opts = { ui: opts };
-    for (var opt in opts) this[opt](opts[opt]);
-    return this;
-  };
+/**
+ * Override ui to ensure that the ui functions are initialized.
+ * Normally this would happen in Mocha.prototype.loadFiles.
+ */
 
-  /**
-   * Run mocha, returning the Runner.
-   */
+mocha.ui = function(ui){
+  Mocha.prototype.ui.call(this, ui);
+  this.suite.emit('pre-require', global, null, this);
+  return this;
+};
 
-  mocha.run = function(fn){
-    var options = mocha.options;
-    mocha.globals('location');
+/**
+ * Setup mocha with the given setting options.
+ */
 
-    var query = Mocha.utils.parseQuery(window.location.search || '');
-    if (query.grep) mocha.grep(query.grep);
-    if (query.invert) mocha.invert();
+mocha.setup = function(opts){
+  if ('string' == typeof opts) opts = { ui: opts };
+  for (var opt in opts) this[opt](opts[opt]);
+  return this;
+};
 
-    return Mocha.prototype.run.call(mocha, function(){
+/**
+ * Run mocha, returning the Runner.
+ */
+
+mocha.run = function(fn){
+  var options = mocha.options;
+  mocha.globals('location');
+
+  var query = Mocha.utils.parseQuery(global.location.search || '');
+  if (query.grep) mocha.grep(query.grep);
+  if (query.invert) mocha.invert();
+
+  return Mocha.prototype.run.call(mocha, function(){
+    // The DOM Document is not available in Web Workers.
+    if (global.document) {
       Mocha.utils.highlightTags('code');
-      if (fn) fn();
-    });
-  };
-})();
+    }
+    if (fn) fn();
+  });
+};
+
+/**
+ * Expose the process shim.
+ */
+
+Mocha.process = process;
 })();

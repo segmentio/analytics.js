@@ -1,13 +1,20 @@
 describe('Optimizely', function () {
 
+  var analytics = require('analytics')
+    , tick = require('next-tick');
+
 
   describe('initialize', function () {
 
-    it('should call ready', function () {
+    it('should call ready', function (done) {
       var spy  = sinon.spy();
       analytics.ready(spy);
       analytics.initialize({ 'Optimizely' : test['Optimizely'] });
-      expect(spy.called).to.be(true);
+
+      tick(function () {
+        expect(spy.called).to.be(true);
+        done();
+      });
     });
 
     it('should replay variation traits', function (done) {
@@ -21,10 +28,10 @@ describe('Optimizely', function () {
       analytics.initialize({ 'Optimizely' : test['Optimizely'] });
 
       // The replay runs on next tick.
-      setTimeout(function () {
+      tick(function () {
         expect(spy.calledWith({'Experiment: Test' : 'Variation'})).to.be(true);
         done();
-      }, 5);
+      });
     });
 
   });

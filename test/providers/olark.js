@@ -224,7 +224,7 @@ describe('Olark', function () {
         })).to.be(true);
         window.olark('api.box.shrink');
         done();
-      }, 800);
+      }, 1000);
     });
 
   });
@@ -270,7 +270,7 @@ describe('Olark', function () {
           body : 'looking at ' + window.location.href
         })).to.be(true);
         done();
-      }, 800);
+      }, 1000);
     });
   });
 

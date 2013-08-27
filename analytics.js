@@ -889,7 +889,6 @@ exports.isCrossDomain = function(url){
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
-
 var next = require('next-tick');
 
 
@@ -921,7 +920,7 @@ function callback (fn) {
 
 callback.async = function (fn, wait) {
   if ('function' !== typeof fn) return;
-  if (!wait) next(fn);
+  if (!wait) return next(fn);
   setTimeout(fn, wait);
 };
 
@@ -931,6 +930,55 @@ callback.async = function (fn, wait) {
  */
 
 callback.sync = callback;
+
+});
+require.register("ianstormtaylor-is/index.js", function(exports, require, module){
+
+var typeOf = require('type');
+
+
+/**
+ * Types.
+ */
+
+var types = [
+  'arguments',
+  'array',
+  'boolean',
+  'date',
+  'element',
+  'function',
+  'null',
+  'number',
+  'object',
+  'regexp',
+  'string',
+  'undefined'
+];
+
+
+/**
+ * Expose type checkers.
+ *
+ * @param {Mixed} value
+ * @return {Boolean}
+ */
+
+for (var i = 0, type; type = types[i]; i++) exports[type] = generate(type);
+
+
+/**
+ * Generate a type checker.
+ *
+ * @param {String} type
+ * @return {Function}
+ */
+
+function generate (type) {
+  return function (value) {
+    return type === typeOf(value);
+  };
+}
 });
 require.register("ianstormtaylor-map/index.js", function(exports, require, module){
 
@@ -2019,7 +2067,7 @@ require.register("analytics/lib/index.js", function(exports, require, module){
  * (C) 2013 Segment.io Inc.
  */
 
-var Analytics = require('analytics');
+var Analytics = require('./analytics');
 
 
 /**
@@ -2032,10 +2080,9 @@ require.register("analytics/lib/analytics.js", function(exports, require, module
 
 var after = require('after')
   , bind = require('event').bind
-  , bindAll = require('bind-all')
   , callback = require('callback')
   , clone = require('clone')
-  , cookie = require('../cookie')
+  , cookie = require('./cookie')
   , each = require('each')
   , is = require('is')
   , isEmail = require('is-email')
@@ -2080,14 +2127,14 @@ exports.Provider = Provider;
 
 
 /**
- * Define a new `Provider` by `name`.
+ * Define a new `Provider`.
  *
- * @param {String} name
  * @param {Function} Provider
  * @return {Analytics}
  */
 
-exports.provider = function (name, Provider) {
+exports.provider = function (Provider) {
+  var name = Provider.prototype.name;
   Providers[name] = Provider;
   return this;
 };
@@ -2098,8 +2145,11 @@ exports.provider = function (name, Provider) {
  */
 
 function Analytics () {
-  bindAll(this);
-  this._reset();
+  this._callbacks = [];
+  this._providers = [];
+  this._readied = false;
+  this._timeout = 300;
+  this._user = user;
 }
 
 
@@ -2115,8 +2165,13 @@ function Analytics () {
 Analytics.prototype.init =
 Analytics.prototype.initialize = function (settings, options) {
   this._options(options);
-  this._reset();
+  this._readied = false;
+  this._providers = [];
 
+  // load user now that options are set
+  this._user.load();
+
+  // make ready callback
   var self = this;
   var ready = after(size(settings), function () {
     self._readied = true;
@@ -2124,13 +2179,15 @@ Analytics.prototype.initialize = function (settings, options) {
     while (callback = self._callbacks.shift()) callback();
   });
 
-  each(settings, function () {
+  // initialize providers, passing ready
+  each(settings, function (name, options) {
     var Provider = self.Providers[name];
     if (!Provider) return self;
     var provider = new Provider(options, ready, self);
     self._providers.push(provider);
   });
 
+  // call any querystring methods if present
   this._parseQuery();
   return this;
 };
@@ -2178,7 +2235,7 @@ Analytics.prototype.user = function () {
  * Identify a group by optional `id` and `properties`. Or, if no arguments are
  * supplied, return the current group.
  *
- * @param {String} id (optional)
+ * @param {String} id
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  * @param {Function} fn (optional)
@@ -2186,10 +2243,11 @@ Analytics.prototype.user = function () {
  */
 
 Analytics.prototype.group = function (id, properties, options, fn) {
-  if (0 === arguments.length) return this._group;
-
   if (is.function(options)) fn = options, options = undefined;
   if (is.function(properties)) fn = properties, properties = undefined;
+
+  properties = clone(properties) || {};
+  if (properties.created) properties.created = newDate(properties.created);
 
   this._invoke('group', id, properties, options);
   this._callback(fn);
@@ -2243,7 +2301,7 @@ Analytics.prototype.trackLink = function (links, event, properties) {
       var props = is.function(properties) ? properties(el) : properties;
       self.track(ev, props);
 
-      if (el.href && el.target !== '_black' && !isMeta(e)) {
+      if (el.href && el.target !== '_blank' && !isMeta(e)) {
         prevent(e);
         self._callback(function () {
           window.location.href = el.href;
@@ -2333,36 +2391,17 @@ Analytics.prototype.alias = function (newId, oldId, options) {
 
 
 /**
- * Register a callback to be fired when all the analytics services are ready.
+ * Register a `fn` to be fired when all the analytics services are ready.
  *
- * @param {Function} callback
+ * @param {Function} fn
  * @return {Analytics}
  */
 
-Analytics.prototype.ready = function (callback) {
-  if (!is.function(callback)) return this;
+Analytics.prototype.ready = function (fn) {
+  if (!is.function(fn)) return this;
   this._readied
-    ? callback()
-    : this._callback.push(callback);
-  return this;
-};
-
-
-/**
- * Reset state to defaults.
- *
- * TODO: make sure removing initialized check is okay
- *
- * @return {Analytics}
- * @api private
- */
-
-Analytics.prototype._reset = function () {
-  this._readied = false;
-  this._callbacks = [];
-  this._timeout = 300;
-  this._providers = [];
-  this._user = user.load();
+    ? callback.async(fn)
+    : this._callbacks.push(fn);
   return this;
 };
 
@@ -4067,52 +4106,52 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/lib/providers/index.js", function(exports, require, module){
-module.exports = [
-  require('./adroll'),
-  require('./amplitude'),
-  require('./bitdeli'),
-  require('./bugherd'),
-  require('./chartbeat'),
-  require('./clicktale'),
-  require('./clicky'),
-  require('./comscore'),
-  require('./crazyegg'),
-  require('./customerio'),
-  require('./errorception'),
-  require('./foxmetrics'),
-  require('./gauges'),
-  require('./get-satisfaction'),
-  require('./google-analytics'),
-  require('./gosquared'),
-  require('./heap'),
-  require('./hittail'),
-  require('./hubspot'),
-  require('./improvely'),
-  require('./intercom'),
-  require('./keen-io'),
-  require('./kissmetrics'),
-  require('./klaviyo'),
-  require('./leadlander'),
-  require('./livechat'),
-  require('./lytics'),
-  require('./mixpanel'),
-  require('./olark'),
-  require('./optimizely'),
-  require('./perfect-audience'),
-  require('./pingdom'),
-  require('./preact'),
-  require('./qualaroo'),
-  require('./quantcast'),
-  require('./sentry'),
-  require('./snapengage'),
-  require('./usercycle'),
-  require('./userfox'),
-  require('./uservoice'),
-  require('./vero'),
-  require('./visual-website-optimizer'),
-  require('./woopra')
-];
 
+module.exports = {
+  'AdRoll'                   : require('./adroll'),
+  'Amplitude'                : require('./amplitude'),
+  'Bitdeli'                  : require('./bitdeli'),
+  'BugHerd'                  : require('./bugherd'),
+  'Chartbeat'                : require('./chartbeat'),
+  'ClickTale'                : require('./clicktale'),
+  'Clicky'                   : require('./clicky'),
+  'comScore'                 : require('./comscore'),
+  'CrazyEgg'                 : require('./crazyegg'),
+  'Customer.io'              : require('./customerio'),
+  'Errorception'             : require('./errorception'),
+  'FoxMetrics'               : require('./foxmetrics'),
+  'Gauges'                   : require('./gauges'),
+  'Get Satisfaction'         : require('./get-satisfaction'),
+  'Google Analytics'         : require('./google-analytics'),
+  'GoSquared'                : require('./gosquared'),
+  'Heap'                     : require('./heap'),
+  'HitTail'                  : require('./hittail'),
+  'HubSpot'                  : require('./hubspot'),
+  'Improvely'                : require('./improvely'),
+  'Intercom'                 : require('./intercom'),
+  'Keen IO'                  : require('./keen-io'),
+  'KISSmetrics'              : require('./kissmetrics'),
+  'Klaviyo'                  : require('./klaviyo'),
+  'LeadLander'               : require('./leadlander'),
+  'LiveChat'                 : require('./livechat'),
+  'Lytics'                   : require('./lytics'),
+  'Mixpanel'                 : require('./mixpanel'),
+  'Olark'                    : require('./olark'),
+  'Optimizely'               : require('./optimizely'),
+  'Perfect Audience'         : require('./perfect-audience'),
+  'Pingdom'                  : require('./pingdom'),
+  'Preact'                   : require('./preact'),
+  'Qualaroo'                 : require('./qualaroo'),
+  'Quantcast'                : require('./quantcast'),
+  'Sentry'                   : require('./sentry'),
+  'SnapEngage'               : require('./snapengage'),
+  'USERcycle'                : require('./usercycle'),
+  'userfox'                  : require('./userfox'),
+  'UserVoice'                : require('./uservoice'),
+  'Vero'                     : require('./vero'),
+  'Visual Website Optimizer' : require('./visual-website-optimizer'),
+  'Woopra'                   : require('./woopra')
+};
 });
 require.register("analytics/lib/providers/improvely.js", function(exports, require, module){
 // http://www.improvely.com/docs/landing-page-code
@@ -5190,7 +5229,6 @@ module.exports = Provider.extend({
 
 });
 require.register("analytics/lib/providers/uservoice.js", function(exports, require, module){
-// http://feedback.uservoice.com/knowledgebase/articles/225-how-do-i-pass-custom-data-through-the-widget-and-i
 
 var Provider = require('../provider')
   , load     = require('load-script')
@@ -5202,49 +5240,18 @@ module.exports = Provider.extend({
 
   name : 'UserVoice',
 
+  key: 'widgetId',
+
   defaults : {
-    // These first two options are required.
-    widgetId          : null,
-    forumId           : null,
-    // Should we show the tab automatically?
-    showTab           : true,
-    // There's tons of options for the tab.
-    mode              : 'full',
-    primaryColor      : '#cc6d00',
-    linkColor         : '#007dbf',
-    defaultMode       : 'support',
-    tabLabel          : 'Feedback & Support',
-    tabColor          : '#cc6d00',
-    tabPosition       : 'middle-right',
-    tabInverted       : false
+    widgetId : null
   },
 
   initialize : function (options, ready) {
     window.UserVoice = window.UserVoice || [];
     load('//widget.uservoice.com/' + options.widgetId + '.js', ready);
 
-    var optionsClone = clone(options);
-    alias(optionsClone, {
-      'forumId'         : 'forum_id',
-      'primaryColor'    : 'primary_color',
-      'linkColor'       : 'link_color',
-      'defaultMode'     : 'default_mode',
-      'tabLabel'        : 'tab_label',
-      'tabColor'        : 'tab_color',
-      'tabPosition'     : 'tab_position',
-      'tabInverted'     : 'tab_inverted'
-    });
-
-    // If we don't automatically show the tab, let them show it via
-    // javascript. This is the default name for the function in their snippet.
-    window.showClassicWidget = function (showWhat) {
-      window.UserVoice.push([showWhat || 'showLightbox', 'classic_widget', optionsClone]);
-    };
-
-    // If we *do* automatically show the tab, get on with it!
-    if (options.showTab) {
-      window.showClassicWidget('showTab');
-    }
+    // BACKWARDS COMPATIBILITY: noop this old method, so we don't break sites
+    window.showClassicWidget = function(){};
   },
 
   identify : function (userId, traits) {
@@ -5303,7 +5310,8 @@ require.register("analytics/lib/providers/visual-website-optimizer.js", function
 // http://v2.visualwebsiteoptimizer.com/tools/get_tracking_code.php
 // http://visualwebsiteoptimizer.com/knowledge/integration-of-vwo-with-kissmetrics/
 
-var each = require('each')
+var callback = require('callback')
+  , each = require('each')
   , inherit = require('inherit')
   , nextTick = require('next-tick')
   , Provider = require('../provider');
@@ -5350,7 +5358,7 @@ VWO.prototype.defaults = {
 
 VWO.prototype.initialize = function (options, ready) {
   if (options.replay) this.replay();
-  ready();
+  callback.async(ready);
 };
 
 
@@ -5528,6 +5536,7 @@ function addTraits (userId, traits, tracker) {
 
 
 
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -5566,6 +5575,10 @@ require.alias("component-url/index.js", "url/index.js");
 require.alias("ianstormtaylor-callback/index.js", "analytics/deps/callback/index.js");
 require.alias("ianstormtaylor-callback/index.js", "callback/index.js");
 require.alias("timoxley-next-tick/index.js", "ianstormtaylor-callback/deps/next-tick/index.js");
+
+require.alias("ianstormtaylor-is/index.js", "analytics/deps/is/index.js");
+require.alias("ianstormtaylor-is/index.js", "is/index.js");
+require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-map/index.js", "analytics/deps/map/index.js");
 require.alias("ianstormtaylor-map/index.js", "map/index.js");

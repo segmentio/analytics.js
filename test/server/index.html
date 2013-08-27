@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+  <title>{{type}} test</title>
+  <link rel="stylesheet" href="test/libs/mocha/mocha-1.12.0.css">
+  <script src="test/libs/mocha/mocha-1.12.0.js"></script>
+  <script src="test/libs/sinon/sinon-1.7.3.js"></script>
+  <script src="test/libs/expect/expect-0.1.2.js"></script>
+  <script src="test/libs/mocha/mocha-cloud-0.0.1.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+
+  <!-- Synchronous Integrations -->
+  <script src="//cdn.optimizely.com/js/170430035.js"></script>
+  <script type='text/javascript'>
+    var _vis_opt_account_id = 44207;
+    var _vis_opt_protocol = (('https:' == document.location.protocol) ? 'https://' : 'http://');
+    document.write('<s' + 'cript src="' + _vis_opt_protocol +
+    'dev.visualwebsiteoptimizer.com/deploy/js_visitor_settings.php?v=1&a='+_vis_opt_account_id+'&url='
+    +encodeURIComponent(document.URL)+'&random='+Math.random()+'" type="text/javascript">' + '<\/s' + 'cript>');
+    if(typeof(_vis_opt_settings_loaded) == "boolean") { document.write('<s' + 'cript src="' + _vis_opt_protocol +
+    'd5phz18u4wuww.cloudfront.net/vis_opt.js" type="text/javascript">' + '<\/s' + 'cript>'); }
+    // if your site already has jQuery 1.4.2, replace vis_opt.js with vis_opt_no_jquery.js above
+    if(typeof(_vis_opt_settings_loaded) == "boolean" && typeof(_vis_opt_top_initialize) == "function") {
+            _vis_opt_top_initialize(); vwo_$(document).ready(function() { _vis_opt_bottom_initialize(); });
+    }
+  </script>
+
+  <script src="test/server/utils.js"></script>
+  <script src="test/server/runner.js"></script>
+
+  {{#if min}}
+    <script src="analytics.min.js"></script>
+  {{/if}}
+
+  <script src="build/build.js"></script>
+  <script>window.analytics = window.analytics || require('analytics');</script>
+
+  {{#if core}}
+    <script src="test/core/analytics.js"></script>
+    <script src="test/core/user.js"></script>
+    <script src="test/core/cookie.js"></script>
+    <script src="test/core/localStore.js"></script>
+  {{/if}}
+
+  {{#if providers}}
+    <script src="test/providers/adroll.js"></script>
+    <script src="test/providers/amplitude.js"></script>
+    <script src="test/providers/bugherd.js"></script>
+    <script src="test/providers/chartbeat.js"></script>
+    <script src="test/providers/clicktale.js"></script>
+    <script src="test/providers/clicky.js"></script>
+    <script src="test/providers/comscore.js"></script>
+    <script src="test/providers/crazyegg.js"></script>
+    <script src="test/providers/customerio.js"></script>
+    <script src="test/providers/errorception.js"></script>
+    <script src="test/providers/foxmetrics.js"></script>
+    <script src="test/providers/gauges.js"></script>
+    <script src="test/providers/get-satisfaction.js"></script>
+    <script src="test/providers/google-analytics.js"></script>
+    <script src="test/providers/gosquared.js"></script>
+    <script src="test/providers/heap.js"></script>
+    <script src="test/providers/hittail.js"></script>
+    <script src="test/providers/hubspot.js"></script>
+    <script src="test/providers/improvely.js"></script>
+    <script src="test/providers/intercom.js"></script>
+    <script src="test/providers/keen-io.js"></script>
+    <script src="test/providers/kissmetrics.js"></script>
+    <script src="test/providers/klaviyo.js"></script>
+    <script src="test/providers/leadlander.js"></script>
+    <!--<script src="test/providers/livechat.js"></script>-->
+    <script src="test/providers/lytics.js"></script>
+    <script src="test/providers/mixpanel.js"></script>
+    <script src="test/providers/olark.js"></script>
+    <script src="test/providers/optimizely.js"></script>
+    <script src="test/providers/perfect-audience.js"></script>
+    <script src="test/providers/pingdom.js"></script>
+    <script src="test/providers/preact.js"></script>
+    <script src="test/providers/qualaroo.js"></script>
+    <script src="test/providers/quantcast.js"></script>
+    <script src="test/providers/sentry.js"></script>
+    <script src="test/providers/snapengage.js"></script>
+    <script src="test/providers/usercycle.js"></script>
+    <script src="test/providers/userfox.js"></script>
+    <script src="test/providers/uservoice.js"></script>
+    <script src="test/providers/vero.js"></script>
+    <script src="test/providers/visual-website-optimizer.js"></script>
+    <script src="test/providers/woopra.js"></script>
+  {{/if}}
+</head>
+<body>
+  <div id="mocha"></div>
+</body>
+</html>

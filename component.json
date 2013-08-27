@@ -85,7 +85,9 @@
     "yields/prevent": "*"
   },
   "development": {
-    "component/assert": "*"
+    "component/assert": "*",
+    "timoxley/next-tick": "*",
+    "segmentio/when": "*"
   },
   "scripts": [
     "lib/index.js",

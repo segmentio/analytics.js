@@ -45,6 +45,7 @@
     "quantcast",
     "sentry",
     "snapengage",
+    "trak.io",
     "usercycle",
     "userfox",
     "uservoice",
@@ -85,6 +86,7 @@
   },
   "development": {
     "component/assert": "*",
+    "ianstormtaylor/sinon": "*",
     "ianstormtaylor/trigger-event": "*",
     "segmentio/when": "*",
     "timoxley/next-tick": "*"
@@ -94,6 +96,7 @@
     "lib/analytics.js",
     "lib/cookie.js",
     "lib/localStore.js",
+    "lib/integration.js",
     "lib/provider.js",
     "lib/user.js",
     "lib/utils.js",
@@ -134,6 +137,7 @@
     "lib/providers/quantcast.js",
     "lib/providers/sentry.js",
     "lib/providers/snapengage.js",
+    "lib/providers/trakio.js",
     "lib/providers/usercycle.js",
     "lib/providers/userfox.js",
     "lib/providers/uservoice.js",

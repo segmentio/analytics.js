@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+
+  <title>Providers Tests | Analytics.js</title>
+
+  <link rel="stylesheet" href="libs/mocha/mocha-1.8.1.css">
+
+  <!-- Synchronous providers -->
+  <script src="//cdn.optimizely.com/js/170430035.js"></script>
+  <script type='text/javascript'>
+    var _vis_opt_account_id = 44207;
+    var _vis_opt_protocol = (('https:' == document.location.protocol) ? 'https://' : 'http://');
+    document.write('<s' + 'cript src="' + _vis_opt_protocol +
+    'dev.visualwebsiteoptimizer.com/deploy/js_visitor_settings.php?v=1&a='+_vis_opt_account_id+'&url='
+    +encodeURIComponent(document.URL)+'&random='+Math.random()+'" type="text/javascript">' + '<\/s' + 'cript>');
+    if(typeof(_vis_opt_settings_loaded) == "boolean") { document.write('<s' + 'cript src="' + _vis_opt_protocol +
+    'd5phz18u4wuww.cloudfront.net/vis_opt.js" type="text/javascript">' + '<\/s' + 'cript>'); }
+    // if your site already has jQuery 1.4.2, replace vis_opt.js with vis_opt_no_jquery.js above
+    if(typeof(_vis_opt_settings_loaded) == "boolean" && typeof(_vis_opt_top_initialize) == "function") {
+            _vis_opt_top_initialize(); vwo_$(document).ready(function() { _vis_opt_bottom_initialize(); });
+    }
+  </script>
+
+  <script src="libs/sinon/sinon-1.5.2.js"></script>
+  <script src="libs/expect/expect-0.1.2.js"></script>
+  <script src="libs/mocha/mocha-1.8.1.js"></script>
+  <script src="libs/mocha/mocha-cloud-0.0.1.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+
+  <script src="runner.js"></script>
+  <script src="utils.js"></script>
+  <script src="../analytics.js"></script>
+  <script src="../analytics.component.js"></script>
+
+  <script src="providers/adroll.js"></script>
+  <script src="providers/amplitude.js"></script>
+  <script src="providers/bitdeli.js"></script>
+  <script src="providers/bugherd.js"></script>
+  <script src="providers/chartbeat.js"></script>
+  <script src="providers/clicktale.js"></script>
+  <script src="providers/clicky.js"></script>
+  <script src="providers/comscore.js"></script>
+  <script src="providers/crazyegg.js"></script>
+  <script src="providers/customerio.js"></script>
+  <script src="providers/errorception.js"></script>
+  <script src="providers/foxmetrics.js"></script>
+  <script src="providers/gauges.js"></script>
+  <script src="providers/get-satisfaction.js"></script>
+  <script src="providers/google-analytics.js"></script>
+  <script src="providers/gosquared.js"></script>
+  <script src="providers/heap.js"></script>
+  <script src="providers/hittail.js"></script>
+  <script src="providers/hubspot.js"></script>
+  <script src="providers/improvely.js"></script>
+  <script src="providers/intercom.js"></script>
+  <script src="providers/keen-io.js"></script>
+  <script src="providers/kissmetrics.js"></script>
+  <script src="providers/klaviyo.js"></script>
+  <script src="providers/livechat.js"></script>
+  <script src="providers/lytics.js"></script>
+  <script src="providers/mixpanel.js"></script>
+  <script src="providers/olark.js"></script>
+  <script src="providers/optimizely.js"></script>
+  <script src="providers/perfect-audience.js"></script>
+  <script src="providers/pingdom.js"></script>
+  <script src="providers/preact.js"></script>
+  <script src="providers/qualaroo.js"></script>
+  <script src="providers/quantcast.js"></script>
+  <script src="providers/sentry.js"></script>
+  <script src="providers/snapengage.js"></script>
+  <script src="providers/trak.io.js"></script>
+  <script src="providers/usercycle.js"></script>
+  <script src="providers/userfox.js"></script>
+  <script src="providers/uservoice.js"></script>
+  <script src="providers/vero.js"></script>
+  <script src="providers/visual-website-optimizer.js"></script>
+  <script src="providers/woopra.js"></script>
+</head>
+<body>
+  <h1>Providers Test</h1>
+  <div id="mocha"></div>
+</body>
+</html>

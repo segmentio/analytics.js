@@ -4,6 +4,8 @@
 * fixed breaking tests
 * removed Bitdeli, by @jtuulos
 * updated Woopra to use new tracker, by @billyvg
+* added trak.io, by @msaspence
+* added `createIntegration` interim method
 
 0.11.11 / 2013-8-9
 -------------------

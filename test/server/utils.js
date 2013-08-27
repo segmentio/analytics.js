@@ -31,10 +31,6 @@
         date : new Date()
       },
       'Amplitude' : '07808866adb2510adf19ee69e8fc2201',
-      'Bitdeli' : {
-        inputId   : 'x',
-        authToken : 'y'
-      },
       'BugHerd' : '7917d741-16cc-4c2b-bb1a-bdd903d53d72',
       'Chartbeat' : {
         uid    : 'x',

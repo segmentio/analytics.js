@@ -7,6 +7,7 @@ describe('Klaviyo', function () {
   describe('initialize', function () {
 
     it('should call ready and load library', function (done) {
+      this.timeout(10000);
       var spy  = sinon.spy()
         , push = Array.prototype.push;
 

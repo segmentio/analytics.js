@@ -1,6 +1,6 @@
 describe('Analytics.js', function () {
 
-  var analytics = require('analytics');
+  var trigger = require('trigger-event');
 
   // lower timeout for tests
   var timeout = analytics._timeout = 3;
@@ -296,39 +296,6 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
-    /*
-    it('calls alias when identifying from anonymous users', function () {
-      var spy = sinon.spy(Provider.prototype, 'alias');
-
-      analytics.user.clear();
-
-      var userId = 'id'
-        , traits = {
-            age  : 23,
-            name : 'Achilles'
-          };
-
-      analytics.identify(userId, traits);
-      expect(spy.called).to.be(true);
-
-      spy.restore();
-    });
-
-    it('does not call alias when identifying another user', function () {
-      var spy = sinon.spy(Provider.prototype, 'alias');
-
-      var userId = 'newId'
-        , traits = {
-            age  : 23,
-            name : 'Achilles'
-          };
-
-      analytics.identify(userId, traits);
-      expect(spy.called).to.be(false);
-
-      spy.restore();
-    });*/
-
     it('calls with all stored traits', function () {
       analytics._user.clear();
       var spy    = sinon.spy(Provider.prototype, 'identify')
@@ -576,23 +543,23 @@ describe('Analytics.js', function () {
     });
 
     it('triggers a track on a link click', function () {
-      var link = $('<a>')[0];
-      analytics.trackLink(link, 'party');
-      triggerClick(link);
+      var a = document.createElement('a');
+      analytics.trackLink(a, 'party');
+      trigger(a, 'click');
       expect(spy.calledWith('party')).to.be(true);
     });
 
     it('triggers a track on a $link click', function () {
       var $link = $('<a>');
       analytics.trackLink($link, 'party');
-      triggerClick($link[0]);
+      trigger($link[0], 'click');
       expect(spy.calledWith('party')).to.be(true);
     });
 
     it('allows for event to be a function', function () {
       var link = $('<a>')[0];
       analytics.trackLink(link, function () { return 'party'; });
-      triggerClick(link);
+      trigger(link, 'click');
       expect(spy.calledWith('party')).to.be(true);
     });
 
@@ -600,10 +567,10 @@ describe('Analytics.js', function () {
       var links = $('<a data-type="crazy"><a data-type="normal">');
       var handler = function (link) { return $(link).attr('data-type'); };
       analytics.trackLink(links, handler);
-      triggerClick(links[0]);
+      trigger(links[0], 'click');
       expect(spy.calledWith('crazy')).to.be(true);
       spy.reset();
-      triggerClick(links[1]);
+      trigger(links[1], 'click');
       expect(spy.calledWith('normal')).to.be(true);
     });
 
@@ -611,7 +578,7 @@ describe('Analytics.js', function () {
       var spy  = sinon.spy()
         , link = $('<a>')[0];
       analytics.trackLink(link, spy);
-      triggerClick(link);
+      trigger(link, 'click');
       expect(spy.calledWith(link)).to.be(true);
     });
 
@@ -620,7 +587,7 @@ describe('Analytics.js', function () {
       analytics.trackLink(link, 'party', function () {
         return { type : 'crazy' };
       });
-      triggerClick(link);
+      trigger(link, 'click');
       expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
     });
 
@@ -630,10 +597,10 @@ describe('Analytics.js', function () {
         return { type : $(link).attr('data-type') };
       };
       analytics.trackLink(links, 'party', handler);
-      triggerClick(links[0]);
+      trigger(links[0], 'click');
       expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
       spy.reset();
-      triggerClick(links[1]);
+      trigger(links[1], 'click');
       expect(spy.calledWith('party', { type : 'normal' })).to.be(true);
     });
 
@@ -641,14 +608,14 @@ describe('Analytics.js', function () {
       var spy  = sinon.spy()
         , link = $('<a>')[0];
       analytics.trackLink(link, 'party', spy);
-      triggerClick(link);
+      trigger(link, 'click');
       expect(spy.calledWith(link)).to.be(true);
     });
 
     it('triggers a track and loads an href on a link click with an href', function (done) {
       var link = $('<a href="#test">')[0];
       analytics.trackLink(link, 'party');
-      triggerClick(link);
+      trigger(link, 'click');
       // Expect the track call to have happened, but for the href not to have
       // been applied yet.
       expect(spy.calledWith('party')).to.be(true);
@@ -666,7 +633,7 @@ describe('Analytics.js', function () {
         , link2 = $('<a href="#test2">')[0]
         , link3 = $('<a href="#test3">')[0];
       analytics.trackLink([link1, link2, link3], 'party');
-      triggerClick(link2);
+      trigger(link2, 'click');
       // Expect the track call to have happened, but for the href not to have
       // been applied yet.
       expect(spy.calledWith('party')).to.be(true);
@@ -682,7 +649,7 @@ describe('Analytics.js', function () {
     it('triggers a track but doesnt load an href on an href with blank target', function () {
       var link = $('<a href="http://google.com" target="_blank">')[0];
       analytics.trackLink(link, 'party');
-      triggerClick(link);
+      trigger(link, 'click');
       expect(spy.calledWith('party')).to.be(true);
       expect(window.location.hash).not.to.equal('#test');
     });
@@ -690,7 +657,7 @@ describe('Analytics.js', function () {
     it('triggers a track but doesnt load an href on a meta link click with an href', function () {
       var link = $('<a href="http://google.com">')[0];
       analytics.trackLink(link, 'party');
-      triggerClick(link, true);
+      trigger(link, 'click', { meta: true });
       expect(spy.calledWith('party')).to.be(true);
       expect(window.location.hash).not.to.equal('#test');
     });
@@ -720,7 +687,7 @@ describe('Analytics.js', function () {
     it('triggers track', function () {
       var form = $(template)[0];
       analytics.trackForm(form, 'party');
-      triggerClick($(form).find('input')[0]);
+      trigger($(form).find('input')[0], 'click');
       expect(spy.calledWith('party')).to.be(true);
     });
 
@@ -729,7 +696,7 @@ describe('Analytics.js', function () {
         , spy  = sinon.spy();
       analytics.trackForm(form, 'party');
       bind(form, 'submit', spy);
-      triggerClick($(form).find('input')[0]);
+      trigger($(form).find('input')[0], 'click');
       expect(spy.called).to.be(true);
       expect(spy.thisValues[0]).to.be(form);
     });
@@ -738,7 +705,7 @@ describe('Analytics.js', function () {
       var form = $(template)[0]
         , spy  = sinon.spy(form, 'submit');
       analytics.trackForm(form, 'party');
-      triggerClick($(form).find('input')[0]);
+      trigger($(form).find('input')[0], 'click');
       setTimeout(function () {
         expect(spy.called).to.be(true);
         done();
@@ -748,7 +715,7 @@ describe('Analytics.js', function () {
     it('allows for event to be a function', function () {
       var form = $(template)[0];
       analytics.trackForm(form, function () { return 'crazy'; });
-      triggerClick($(form).find('input')[0]);
+      trigger($(form).find('input')[0], 'click');
       expect(spy.calledWith('crazy')).to.be(true);
     });
 
@@ -756,7 +723,7 @@ describe('Analytics.js', function () {
       var spy  = sinon.spy()
         , form = $(template)[0];
       analytics.trackForm(form, spy);
-      triggerClick($(form).find('input')[0]);
+      trigger($(form).find('input')[0], 'click');
       expect(spy.calledWith(form)).to.be(true);
     });
 
@@ -765,7 +732,7 @@ describe('Analytics.js', function () {
       analytics.trackForm(form, 'party', function () {
         return { type : 'crazy' };
       });
-      triggerClick($(form).find('input')[0]);
+      trigger($(form).find('input')[0], 'click');
       expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
     });
 
@@ -773,7 +740,7 @@ describe('Analytics.js', function () {
       var spy  = sinon.spy()
         , form = $(template)[0];
       analytics.trackForm(form, 'party', spy);
-      triggerClick($(form).find('input')[0]);
+      trigger($(form).find('input')[0], 'click');
       expect(spy.calledWith(form)).to.be(true);
     });
 
@@ -789,7 +756,7 @@ describe('Analytics.js', function () {
     it('triggers track on a $form', function () {
       var $form = $(template);
       analytics.trackForm($form, 'party');
-      triggerClick($form.find('input')[0]);
+      trigger($form.find('input')[0], 'click');
       expect(spy.calledWith('party')).to.be(true);
     });
 
@@ -798,7 +765,7 @@ describe('Analytics.js', function () {
         , spy   = sinon.spy();
       analytics.trackForm($form, 'party');
       $form.submit(spy);
-      triggerClick($form.find('input')[0]);
+      trigger($form.find('input')[0], 'click');
       expect(spy.called).to.be(true);
       expect(spy.thisValues[0]).to.be($form[0]);
     });
@@ -862,34 +829,3 @@ describe('Analytics.js', function () {
   });
 
 });
-
-
-// Helper to trigger true DOM click events in all browser ... and IE. Believe it
-// or not `initMouseEvent` isn't even an IE thing:
-// https://developer.mozilla.org/en-US/docs/DOM/event.initMouseEvent
-function triggerClick (element, isMeta) {
-  var e;
-  if (document.createEvent) {
-    e = document.createEvent('MouseEvent');
-    if (isMeta)
-      e.initMouseEvent('click', true, true, window,
-                       1, 0, 0, 0, 0,
-                       true, true, true, true,
-                       0, null);
-    else
-      e.initMouseEvent('click', true, true, window,
-                       1, 0, 0, 0, 0,
-                       false, false, false, false,
-                       0, null);
-    element.dispatchEvent(e);
-  } else {
-    if (isMeta) {
-      e = document.createEventObject({
-        altKey   : true,
-        ctrlKey  : true,
-        shiftKey : true
-      });
-    }
-    element.fireEvent('onClick', e);
-  }
-}

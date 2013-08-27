@@ -86,8 +86,9 @@
   },
   "development": {
     "component/assert": "*",
-    "timoxley/next-tick": "*",
-    "segmentio/when": "*"
+    "ianstormtaylor/trigger-event": "*",
+    "segmentio/when": "*",
+    "timoxley/next-tick": "*"
   },
   "scripts": [
     "lib/index.js",

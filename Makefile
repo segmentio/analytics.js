@@ -26,7 +26,7 @@ test-browser: build server
 	open http://localhost:8000/core
 	open http://localhost:8000/providers
 
-release: clean analytics.js
+release: clean build analytics.js server
 	sleep 1
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/min
 	make kill

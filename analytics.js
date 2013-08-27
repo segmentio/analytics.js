@@ -4501,54 +4501,118 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/lib/providers/lytics.js", function(exports, require, module){
-// Lytics
-// --------
-// [Documentation](http://developer.lytics.io/doc#jstag),
 
-var Provider = require('../provider')
-  , load     = require('load-script');
+var alias = require('alias')
+  , clone = require('clone')
+  , integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose a `Lytics` integration.
+ *
+ * http://admin.lytics.io/doc#jstag
+ */
 
-  name : 'Lytics',
+var Lytics = module.exports = integration('Lytics');
 
-  key : 'cid',
 
-  defaults : {
-    cid: null
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    window.jstag = (function () {
-      var t={_q:[],_c:{cid:options.cid,url:'//c.lytics.io'},ts:(new Date()).getTime()};
-      t.send=function(){
-      this._q.push(["ready","send",Array.prototype.slice.call(arguments)]);
+Lytics.prototype.key = 'cid';
+
+
+/**
+ * Default options.
+ */
+
+Lytics.prototype.defaults = {
+  // accound identified (required)
+  cid: '',
+  // what to name the lytics cookie
+  cookie: 'seerid',
+  // how long to wait for collector requests
+  delay: 200,
+  // whether to track an initial page view on load
+  initialPageview: true,
+  // duration in milliseconds after a session should be considered inactive
+  sessionTimeout: 1800,
+  // collector url
+  url: '//c.lytics.io'
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Lytics.prototype.initialize = function (options, ready) {
+  var cloned = clone(options);
+  alias(cloned, {
+    sessionTimeout: 'sessecs'
+  });
+
+  window.jstag = (function () {
+    var t = {
+      _q: [],
+      _c: cloned,
+      ts: (new Date()).getTime()
+    };
+    t.send = function() {
+      this._q.push([ 'ready', 'send', Array.prototype.slice.call(arguments) ]);
       return this;
-      };
-      return t;
-    })();
+    };
+    return t;
+  })();
 
-    load('//c.lytics.io/static/io.min.js');
+  load('//c.lytics.io/static/io.min.js');
+  if (options.initialPageview)  this.pageview();
+  ready();
+};
 
-    ready();
-  },
 
-  identify: function (userId, traits) {
-    traits._uid = userId;
-    window.jstag.send(traits);
-  },
+/**
+ * Idenfity.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
 
-  track: function (event, properties) {
-    properties._e = event;
-    window.jstag.send(properties);
-  },
+Lytics.prototype.identify = function (id, traits, options) {
+  if (id) traits._uid = id;
+  window.jstag.send(traits);
+};
 
-  pageview: function (url) {
-    window.jstag.send();
-  }
 
-});
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Lytics.prototype.track = function (event, properties) {
+  properties._e = event;
+  window.jstag.send(properties);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+Lytics.prototype.pageview = function (url) {
+  window.jstag.send();
+};
 });
 require.register("analytics/lib/providers/mixpanel.js", function(exports, require, module){
 // https://mixpanel.com/docs/integration-libraries/javascript

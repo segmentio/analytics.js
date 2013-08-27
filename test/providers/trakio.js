@@ -1,3 +1,4 @@
+
 describe('trak-io', function () {
 
 var assert = require('assert')
@@ -8,13 +9,13 @@ var settings = {
   token : 'x'
 };
 
-describe('initialize', function () {
-  before(function () {
-    var spy = this.spy = sinon.spy();
-    analytics.ready(this.spy);
-    analytics.initialize({ 'trak.io': settings });
-  });
+before(function () {
+  var spy = this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ 'trak.io': settings });
+});
 
+describe('initialize', function () {
   it('should load library and call ready', function (done) {
     this.timeout(10000);
     var spy = this.spy;
@@ -31,7 +32,6 @@ describe('initialize', function () {
     assert(options.token === settings.token);
   });
 });
-
 
 describe('identify', function () {
   beforeEach(function () {

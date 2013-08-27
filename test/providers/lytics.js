@@ -1,94 +1,110 @@
-//var sinon = require('sinon');
 
 describe('Lytics', function () {
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , tick = require('next-tick')
+  , when = require('when');
 
-  describe('initialize', function () {
+var settings = {
+  cid: 'x',
+  cookie: 'lytics_cookie'
+};
 
+before(function () {
+  var spy = this.spy = sinon.spy();
+  analytics.ready(spy);
+  analytics.initialize({ Lytics: settings });
+});
+
+describe('initialize', function () {
+  it('should load library and call ready', function (done) {
     this.timeout(10000);
-
-    it('should call ready and load library', function (done) {
-      expect(window.jstag).to.be(undefined);
-
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'Lytics' : test['Lytics'] });
-
-      expect(window.jstag).not.to.be(undefined);
-
-      tick(function () {
-        expect(spy.called).to.be(true);
-        done();
-      });
+    var spy = this.spy;
+    when(function () { return window.jstag.bind; }, function () {
+      assert(spy.called);
+      done();
     });
-
-    it('should store options', function () {
-      analytics.initialize({ 'Lytics' : test['Lytics'] });
-      expect(analytics._providers[0].options.cid).to.equal(test['Lytics']);
-    });
-
   });
 
-  describe('pageview', function () {
-
-    it('calls jstag.send on pageview', function () {
-      var spy = sinon.spy(window.jstag, 'send');
-      analytics.pageview();
-      expect(spy.called).to.be(true);
-      spy.restore();
-    });
-
+  it('should store options with defaults', function () {
+    var options = analytics._providers[0].options;
+    assert(options.cid == settings.cid);
+    assert(options.cookie == settings.cookie);
+    assert(options.delay == 200);
+    assert(options.initialPageview);
+    assert(options.sessionTimeout == 1800);
+    assert(options.url == '//c.lytics.io');
   });
 
-  describe('track', function () {
+  it('should pass options to lytics', function () {
+    var options = window.jstag._c;
+    assert(options.cid == settings.cid);
+    assert(options.cookie == settings.cookie);
+  });
+});
 
-    it('should track an event send', function (done) {
-      analytics.initialize({ 'Lytics' : test['Lytics'] });
-      expect(window.jstag).not.to.be(undefined);
-
-      var interval = setInterval(function () {
-        // wait for full load, bind will exist once js has loaded from cdn
-        // if cdn hasn't loaded, then this test will fail for timeout
-        if (!window.jstag.bind ) return;
-
-        var spy = sinon.spy(window.jstag, 'send');
-
-        analytics.track(test.event, test.properties);
-
-        expect(spy.called).to.be(true);
-
-        clearInterval(interval);
-        done();
-
-        expect(spy.calledWith(
-          sinon.match({ type : test.properties.type })
-        )).to.be(true);
-        spy.restore();
-
-      }, 20);
-
-    });
-
+describe('identify', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window.jstag, 'send');
+    analytics._user.clear();
   });
 
-  describe('identify', function () {
-
-    beforeEach(analytics._user.clear);
-
-    it('should accept user traits', function () {
-      var spy = sinon.spy(window.jstag, 'send');
-
-      analytics.identify(test.userId, test.traits);
-      expect(spy.called).to.be(true);
-      expect(spy.calledWith(
-        sinon.match({ email : 'zeus@segment.io'})
-      )).to.be(true);
-
-      spy.restore();
-    });
-
+  afterEach(function () {
+    this.stub.restore();
   });
+
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.stub.calledWith({ _uid: 'id' }));
+  });
+
+  it('should send traits', function () {
+    analytics.identify({ trait: true });
+    assert(this.stub.calledWith({ trait: true }));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(this.stub.calledWith({ _uid: 'id', trait: true }));
+  });
+});
+
+describe('track', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window.jstag, 'send');
+    analytics._user.clear();
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send an event', function () {
+    analytics.track('event');
+    assert(this.stub.calledWith({ _e: 'event' }));
+  });
+
+  it('should send an event and properties', function () {
+    analytics.track('event', { property: true });
+    assert(this.stub.calledWith({ _e: 'event', property: true }));
+  });
+});
+
+describe('pageview', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window.jstag, 'send');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should call send', function () {
+    analytics.pageview();
+    assert(this.spy.called);
+  });
+});
 
 });

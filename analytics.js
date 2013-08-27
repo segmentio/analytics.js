@@ -5391,66 +5391,63 @@ module.exports = Provider.extend({
   key : 'domain',
 
   defaults : {
-    domain : null
+    domain : null,
+    // whether to track a page view on initial page load
+    initialPageview : true
   },
 
   initialize : function (options, ready) {
-    // Woopra gives us a nice ready callback.
-    var self = this;
+    // the Woopra snippet, minus the async script loading
+    (function () {
+      var i, s, z, w = window, d = document, a = arguments, q = 'script',
+        f = ['config', 'track', 'identify', 'visit', 'push', 'call'],
+        c = function () {
+          var i, self = this;
+          self._e = [];
+          for (i = 0; i < f.length; i++) {
+            (function (f) {
+              self[f] = function () {
+                // need to do this so params get called properly
+                self._e.push([f].concat(Array.prototype.slice.call(arguments, 0)));
+                return self;
+              };
+            })(f[i]);
+          }
+        };
+      w._w = w._w || {};
+      // check if instance of tracker exists
+      for (i = 0; i < a.length; i++) {
+        w._w[a[i]] = w[a[i]] = w[a[i]] || new c();
+      }
+    })('woopra');
 
-    window.woopraReady = function (tracker) {
-      tracker.setDomain(self.options.domain);
-      tracker.setIdleTimeout(300000);
+    load('//static.woopra.com/js/w.js', ready);
 
-      var userId = user.id()
-        , traits = user.traits();
+    window.woopra.config({
+      domain: options.domain
+    });
 
-      addTraits(userId, traits, tracker);
-      tracker.track();
-
-      ready();
-      return false;
-    };
-
-    load('//static.woopra.com/js/woopra.js');
+    if (options.initialPageview) this.pageview();
   },
 
-  identify : function (userId, traits) {
-    // We aren't guaranteed a tracker.
-    if (!window.woopraTracker) return;
-    addTraits(userId, traits, window.woopraTracker);
+  identify : function (id, traits) {
+    if (id) traits.id = id;
+    // `push` calls identify without sending an event
+    window.woopra.identify(traits).push();
   },
 
   track : function (event, properties) {
-    // We aren't guaranteed a tracker.
-    if (!window.woopraTracker) return;
+    window.woopra.track(event, properties);
+  },
 
-    // Woopra takes its `event` as the `name` key.
-    properties || (properties = {});
-    properties.name = event;
-
-    window.woopraTracker.pushEvent(properties);
+  pageview : function (url, options) {
+    window.woopra.track('pv', {
+      url: url
+    });
   }
 
 });
 
-
-/**
- * Convenience function for updating the userId and traits.
- *
- * @param {String} userId    The user's ID.
- * @param {Object} traits    The user's traits.
- * @param {Tracker} tracker  The Woopra tracker object.
- */
-
-function addTraits (userId, traits, tracker) {
-  // Move a `userId` into `traits`.
-  if (userId) traits.id = userId;
-  each(traits, function (key, value) {
-    // Woopra seems to only support strings as trait values.
-    if ('string' === type(value)) tracker.addVisitorProperty(key, value);
-  });
-}
 });
 
 

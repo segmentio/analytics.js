@@ -2060,6 +2060,35 @@ module.exports = function(e){
 };
 
 });
+require.register("yields-slug/index.js", function(exports, require, module){
+
+/**
+ * Generate a slug from the given `str`.
+ *
+ * example:
+ *
+ *        generate('foo bar');
+ *        // > foo-bar
+ *
+ * options:
+ *
+ *    - `.replace` characters to replace, defaulted to `/[^a-z0-9]/g`
+ *    - `.separator` separator to insert, defaulted to `-`
+ *
+ * @param {String} str
+ * @param {Object} opts
+ * @return {String}
+ */
+
+module.exports = function(str, opts){
+  opts = opts || {};
+  return str.toLowerCase()
+    .replace(opts.replace || /[^a-z0-9]/g, ' ')
+    .replace(/^ +| +$/g, '')
+    .replace(/ +/g, opts.separator || '-')
+};
+
+});
 require.register("analytics/lib/index.js", function(exports, require, module){
 /**
  * Analytics.js
@@ -4121,6 +4150,7 @@ module.exports = {
   'Sentry'                   : require('./sentry'),
   'SnapEngage'               : require('./snapengage'),
   'Spinnakr'                 : require('./spinnakr'),
+  'Tapstream'                : require('./tapstream'),
   'trak.io'                  : require('./trakio'),
   'USERcycle'                : require('./usercycle'),
   'userfox'                  : require('./userfox'),
@@ -5268,6 +5298,80 @@ Spinnakr.prototype.initialize = function (options, ready) {
   load({ http: 'http://d3ojzyhbolvoi5.cloudfront.net/js/so.js' }, ready);
 };
 });
+require.register("analytics/lib/providers/tapstream.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script')
+  , slug = require('slug');
+
+
+/**
+ * Expose `Tapstream` integration.
+ */
+
+var Tapstream = module.exports = integration('Tapstream');
+
+
+/**
+ * Required key.
+ */
+
+Tapstream.prototype.key = 'accountName';
+
+
+/**
+ * Default options.
+ */
+
+Tapstream.prototype.defaults = {
+  // your tapstream account name (required)
+  accountName: '',
+  // whether to track an initial pageview
+  initialPageview: true
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Tapstream.prototype.initialize = function (options, ready) {
+  window._tsq = window._tsq || [];
+  window._tsq.push(['setAccountName', options.accountName]);
+  if (options.initialPageview) this.pageview();
+  load('//cdn.tapstream.com/static/js/tapstream.js');
+  ready();
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Tapstream.prototype.track = function (event, properties, options) {
+  event = slug(event); // tapstream needs events as slugs
+  window._tsq.push(['fireHit', event, []]);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url
+ */
+
+Tapstream.prototype.pageview = function (url) {
+  var event = slug('Loaded a Page');
+  window._tsq.push(['fireHit', event, [url]]);
+};
+});
 require.register("analytics/lib/providers/trakio.js", function(exports, require, module){
 
 var integration = require('../integration')
@@ -5813,6 +5917,7 @@ module.exports = Provider.extend({
 
 
 
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -5929,6 +6034,9 @@ require.alias("timoxley-next-tick/index.js", "next-tick/index.js");
 
 require.alias("yields-prevent/index.js", "analytics/deps/prevent/index.js");
 require.alias("yields-prevent/index.js", "prevent/index.js");
+
+require.alias("yields-slug/index.js", "analytics/deps/slug/index.js");
+require.alias("yields-slug/index.js", "slug/index.js");
 
 require.alias("analytics/lib/index.js", "analytics/index.js");if (typeof exports == "object") {
   module.exports = require("analytics");

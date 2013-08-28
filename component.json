@@ -46,6 +46,7 @@
     "quantcast",
     "sentry",
     "snapengage",
+    "tapstream",
     "trak.io",
     "usercycle",
     "userfox",
@@ -83,7 +84,8 @@
     "segmentio/store.js": "*",
     "segmentio/top-domain": "*",
     "timoxley/next-tick": "*",
-    "yields/prevent": "*"
+    "yields/prevent": "*",
+    "yields/slug": "*"
   },
   "development": {
     "component/assert": "*",
@@ -140,6 +142,7 @@
     "lib/providers/sentry.js",
     "lib/providers/snapengage.js",
     "lib/providers/spinnakr.js",
+    "lib/providers/tapstream.js",
     "lib/providers/trakio.js",
     "lib/providers/usercycle.js",
     "lib/providers/userfox.js",

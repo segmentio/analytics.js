@@ -115,6 +115,11 @@ describe('Mixpanel', function () {
         analytics.identify(test.userId, test.traits);
         expect(spy.calledWith(test.traits.email)).to.be(true);
       });
+
+      it('should name_tag with the username', function () {
+        analytics.identify('id', { username: 'username' });
+        expect(spy.calledWith('username')).to.be(true);
+      });
     });
 
     describe('people.set', function () {

@@ -4730,7 +4730,8 @@ module.exports = Provider.extend({
     // against options to make sure they're enabled.
     if (userId) {
       window.mixpanel.identify(userId);
-      if (this.options.nameTag) window.mixpanel.name_tag(traits && traits.$email || userId);
+      var name = traits.$email || traits.$username || userId;
+      if (name && this.options.nameTag) window.mixpanel.name_tag(name);
     }
     if (traits) {
       window.mixpanel.register(traits);

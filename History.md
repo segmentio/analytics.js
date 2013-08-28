@@ -7,6 +7,7 @@
 * added trak.io, by @msaspence
 * added `createIntegration` interim method
 * added more Lytics options, by @slindberg and @araddon
+* added trait alias to trak.io
 
 0.11.11 / 2013-8-9
 -------------------

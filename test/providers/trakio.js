@@ -57,6 +57,20 @@ describe('identify', function () {
     analytics.identify('id', { trait: true });
     assert(this.spy.calledWith('id', { trait: true }));
   });
+
+  it('should alias traits', function () {
+    analytics.identify({
+      avatar: 'avatar',
+      firstName: 'first',
+      lastName: 'last'
+    });
+    assert(this.spy.calledWith({
+      avatar_url: 'avatar',
+      first_name: 'first',
+      last_name: 'last',
+      name: 'first last' // gets added automatically
+    }));
+  });
 });
 
 describe('track', function () {

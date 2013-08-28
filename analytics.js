@@ -343,7 +343,7 @@ function set(name, value, options) {
 
   if (options.path) str += '; path=' + options.path;
   if (options.domain) str += '; domain=' + options.domain;
-  if (options.expires) str += '; expires=' + options.expires.toUTCString();
+  if (options.expires) str += '; expires=' + options.expires.toGMTString();
   if (options.secure) str += '; secure';
 
   document.cookie = str;
@@ -393,121 +393,13 @@ function parse(str) {
 }
 
 });
-require.register("component-to-function/index.js", function(exports, require, module){
-
-/**
- * Expose `toFunction()`.
- */
-
-module.exports = toFunction;
-
-/**
- * Convert `obj` to a `Function`.
- *
- * @param {Mixed} obj
- * @return {Function}
- * @api private
- */
-
-function toFunction(obj) {
-  switch ({}.toString.call(obj)) {
-    case '[object Object]':
-      return objectToFunction(obj);
-    case '[object Function]':
-      return obj;
-    case '[object String]':
-      return stringToFunction(obj);
-    case '[object RegExp]':
-      return regexpToFunction(obj);
-    default:
-      return defaultToFunction(obj);
-  }
-}
-
-/**
- * Default to strict equality.
- *
- * @param {Mixed} val
- * @return {Function}
- * @api private
- */
-
-function defaultToFunction(val) {
-  return function(obj){
-    return val === obj;
-  }
-}
-
-/**
- * Convert `re` to a function.
- *
- * @param {RegExp} re
- * @return {Function}
- * @api private
- */
-
-function regexpToFunction(re) {
-  return function(obj){
-    return re.test(obj);
-  }
-}
-
-/**
- * Convert property `str` to a function.
- *
- * @param {String} str
- * @return {Function}
- * @api private
- */
-
-function stringToFunction(str) {
-  // immediate such as "> 20"
-  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
-
-  // properties such as "name.first" or "age > 18"
-  return new Function('_', 'return _.' + str);
-}
-
-/**
- * Convert `object` to a function.
- *
- * @param {Object} object
- * @return {Function}
- * @api private
- */
-
-function objectToFunction(obj) {
-  var match = {}
-  for (var key in obj) {
-    match[key] = typeof obj[key] === 'string'
-      ? defaultToFunction(obj[key])
-      : toFunction(obj[key])
-  }
-  return function(val){
-    if (typeof val !== 'object') return false;
-    for (var key in match) {
-      if (!(key in val)) return false;
-      if (!match[key](val[key])) return false;
-    }
-    return true;
-  }
-}
-
-});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var toFunction = require('to-function');
-var type;
-
-try {
-  type = require('type-component');
-} catch (e) {
-  type = require('type');
-}
+var type = require('type');
 
 /**
  * HOP reference.
@@ -524,7 +416,6 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
-  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -579,7 +470,6 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
-
 });
 require.register("component-event/index.js", function(exports, require, module){
 
@@ -1834,157 +1724,159 @@ function call (callback) {
 }
 });
 require.register("segmentio-store.js/store.js", function(exports, require, module){
-var json             = require('json')
-  , store            = {}
-  , win              = window
-	,	doc              = win.document
-	,	localStorageName = 'localStorage'
-	,	namespace        = '__storejs__'
-	,	storage;
+;(function(win){
+	var store = {},
+		doc = win.document,
+		localStorageName = 'localStorage',
+		namespace = '__storejs__',
+		storage
 
-store.disabled = false
-store.set = function(key, value) {}
-store.get = function(key) {}
-store.remove = function(key) {}
-store.clear = function() {}
-store.transact = function(key, defaultVal, transactionFn) {
-	var val = store.get(key)
-	if (transactionFn == null) {
-		transactionFn = defaultVal
-		defaultVal = null
-	}
-	if (typeof val == 'undefined') { val = defaultVal || {} }
-	transactionFn(val)
-	store.set(key, val)
-}
-store.getAll = function() {}
-
-store.serialize = function(value) {
-	return json.stringify(value)
-}
-store.deserialize = function(value) {
-	if (typeof value != 'string') { return undefined }
-	try { return json.parse(value) }
-	catch(e) { return value || undefined }
-}
-
-// Functions to encapsulate questionable FireFox 3.6.13 behavior
-// when about.config::dom.storage.enabled === false
-// See https://github.com/marcuswestin/store.js/issues#issue/13
-function isLocalStorageNameSupported() {
-	try { return (localStorageName in win && win[localStorageName]) }
-	catch(err) { return false }
-}
-
-if (isLocalStorageNameSupported()) {
-	storage = win[localStorageName]
-	store.set = function(key, val) {
-		if (val === undefined) { return store.remove(key) }
-		storage.setItem(key, store.serialize(val))
-		return val
-	}
-	store.get = function(key) { return store.deserialize(storage.getItem(key)) }
-	store.remove = function(key) { storage.removeItem(key) }
-	store.clear = function() { storage.clear() }
-	store.getAll = function() {
-		var ret = {}
-		for (var i=0; i<storage.length; ++i) {
-			var key = storage.key(i)
-			ret[key] = store.get(key)
+	store.disabled = false
+	store.set = function(key, value) {}
+	store.get = function(key) {}
+	store.remove = function(key) {}
+	store.clear = function() {}
+	store.transact = function(key, defaultVal, transactionFn) {
+		var val = store.get(key)
+		if (transactionFn == null) {
+			transactionFn = defaultVal
+			defaultVal = null
 		}
-		return ret
+		if (typeof val == 'undefined') { val = defaultVal || {} }
+		transactionFn(val)
+		store.set(key, val)
 	}
-} else if (doc.documentElement.addBehavior) {
-	var storageOwner,
-		storageContainer
-	// Since #userData storage applies only to specific paths, we need to
-	// somehow link our data to a specific path.  We choose /favicon.ico
-	// as a pretty safe option, since all browsers already make a request to
-	// this URL anyway and being a 404 will not hurt us here.  We wrap an
-	// iframe pointing to the favicon in an ActiveXObject(htmlfile) object
-	// (see: http://msdn.microsoft.com/en-us/library/aa752574(v=VS.85).aspx)
-	// since the iframe access rules appear to allow direct access and
-	// manipulation of the document element, even for a 404 page.  This
-	// document can be used instead of the current document (which would
-	// have been limited to the current path) to perform #userData storage.
-	try {
-		storageContainer = new ActiveXObject('htmlfile')
-		storageContainer.open()
-		storageContainer.write('<s' + 'cript>document.w=window</s' + 'cript><iframe src="/favicon.ico"></iframe>')
-		storageContainer.close()
-		storageOwner = storageContainer.w.frames[0].document
-		storage = storageOwner.createElement('div')
-	} catch(e) {
-		// somehow ActiveXObject instantiation failed (perhaps some special
-		// security settings or otherwse), fall back to per-path storage
-		storage = doc.createElement('div')
-		storageOwner = doc.body
+	store.getAll = function() {}
+
+	store.serialize = function(value) {
+		return JSON.stringify(value)
 	}
-	function withIEStorage(storeFunction) {
-		return function() {
-			var args = Array.prototype.slice.call(arguments, 0)
-			args.unshift(storage)
-			// See http://msdn.microsoft.com/en-us/library/ms531081(v=VS.85).aspx
-			// and http://msdn.microsoft.com/en-us/library/ms531424(v=VS.85).aspx
-			storageOwner.appendChild(storage)
-			storage.addBehavior('#default#userData')
+	store.deserialize = function(value) {
+		if (typeof value != 'string') { return undefined }
+		try { return JSON.parse(value) }
+		catch(e) { return value || undefined }
+	}
+
+	// Functions to encapsulate questionable FireFox 3.6.13 behavior
+	// when about.config::dom.storage.enabled === false
+	// See https://github.com/marcuswestin/store.js/issues#issue/13
+	function isLocalStorageNameSupported() {
+		try { return (localStorageName in win && win[localStorageName]) }
+		catch(err) { return false }
+	}
+
+	if (isLocalStorageNameSupported()) {
+		storage = win[localStorageName]
+		store.set = function(key, val) {
+			if (val === undefined) { return store.remove(key) }
+			storage.setItem(key, store.serialize(val))
+			return val
+		}
+		store.get = function(key) { return store.deserialize(storage.getItem(key)) }
+		store.remove = function(key) { storage.removeItem(key) }
+		store.clear = function() { storage.clear() }
+		store.getAll = function() {
+			var ret = {}
+			for (var i=0; i<storage.length; ++i) {
+				var key = storage.key(i)
+				ret[key] = store.get(key)
+			}
+			return ret
+		}
+	} else if (doc.documentElement.addBehavior) {
+		var storageOwner,
+			storageContainer
+		// Since #userData storage applies only to specific paths, we need to
+		// somehow link our data to a specific path.  We choose /favicon.ico
+		// as a pretty safe option, since all browsers already make a request to
+		// this URL anyway and being a 404 will not hurt us here.  We wrap an
+		// iframe pointing to the favicon in an ActiveXObject(htmlfile) object
+		// (see: http://msdn.microsoft.com/en-us/library/aa752574(v=VS.85).aspx)
+		// since the iframe access rules appear to allow direct access and
+		// manipulation of the document element, even for a 404 page.  This
+		// document can be used instead of the current document (which would
+		// have been limited to the current path) to perform #userData storage.
+		try {
+			storageContainer = new ActiveXObject('htmlfile')
+			storageContainer.open()
+			storageContainer.write('<s' + 'cript>document.w=window</s' + 'cript><iframe src="/favicon.ico"></iframe>')
+			storageContainer.close()
+			storageOwner = storageContainer.w.frames[0].document
+			storage = storageOwner.createElement('div')
+		} catch(e) {
+			// somehow ActiveXObject instantiation failed (perhaps some special
+			// security settings or otherwse), fall back to per-path storage
+			storage = doc.createElement('div')
+			storageOwner = doc.body
+		}
+		function withIEStorage(storeFunction) {
+			return function() {
+				var args = Array.prototype.slice.call(arguments, 0)
+				args.unshift(storage)
+				// See http://msdn.microsoft.com/en-us/library/ms531081(v=VS.85).aspx
+				// and http://msdn.microsoft.com/en-us/library/ms531424(v=VS.85).aspx
+				storageOwner.appendChild(storage)
+				storage.addBehavior('#default#userData')
+				storage.load(localStorageName)
+				var result = storeFunction.apply(store, args)
+				storageOwner.removeChild(storage)
+				return result
+			}
+		}
+
+		// In IE7, keys may not contain special chars. See all of https://github.com/marcuswestin/store.js/issues/40
+		var forbiddenCharsRegex = new RegExp("[!\"#$%&'()*+,/\\\\:;<=>?@[\\]^`{|}~]", "g")
+		function ieKeyFix(key) {
+			return key.replace(forbiddenCharsRegex, '___')
+		}
+		store.set = withIEStorage(function(storage, key, val) {
+			key = ieKeyFix(key)
+			if (val === undefined) { return store.remove(key) }
+			storage.setAttribute(key, store.serialize(val))
+			storage.save(localStorageName)
+			return val
+		})
+		store.get = withIEStorage(function(storage, key) {
+			key = ieKeyFix(key)
+			return store.deserialize(storage.getAttribute(key))
+		})
+		store.remove = withIEStorage(function(storage, key) {
+			key = ieKeyFix(key)
+			storage.removeAttribute(key)
+			storage.save(localStorageName)
+		})
+		store.clear = withIEStorage(function(storage) {
+			var attributes = storage.XMLDocument.documentElement.attributes
 			storage.load(localStorageName)
-			var result = storeFunction.apply(store, args)
-			storageOwner.removeChild(storage)
-			return result
-		}
+			for (var i=0, attr; attr=attributes[i]; i++) {
+				storage.removeAttribute(attr.name)
+			}
+			storage.save(localStorageName)
+		})
+		store.getAll = withIEStorage(function(storage) {
+			var attributes = storage.XMLDocument.documentElement.attributes
+			var ret = {}
+			for (var i=0, attr; attr=attributes[i]; ++i) {
+				var key = ieKeyFix(attr.name)
+				ret[attr.name] = store.deserialize(storage.getAttribute(key))
+			}
+			return ret
+		})
 	}
 
-	// In IE7, keys may not contain special chars. See all of https://github.com/marcuswestin/store.js/issues/40
-	var forbiddenCharsRegex = new RegExp("[!\"#$%&'()*+,/\\\\:;<=>?@[\\]^`{|}~]", "g")
-	function ieKeyFix(key) {
-		return key.replace(forbiddenCharsRegex, '___')
+	try {
+		store.set(namespace, namespace)
+		if (store.get(namespace) != namespace) { store.disabled = true }
+		store.remove(namespace)
+	} catch(e) {
+		store.disabled = true
 	}
-	store.set = withIEStorage(function(storage, key, val) {
-		key = ieKeyFix(key)
-		if (val === undefined) { return store.remove(key) }
-		storage.setAttribute(key, store.serialize(val))
-		storage.save(localStorageName)
-		return val
-	})
-	store.get = withIEStorage(function(storage, key) {
-		key = ieKeyFix(key)
-		return store.deserialize(storage.getAttribute(key))
-	})
-	store.remove = withIEStorage(function(storage, key) {
-		key = ieKeyFix(key)
-		storage.removeAttribute(key)
-		storage.save(localStorageName)
-	})
-	store.clear = withIEStorage(function(storage) {
-		var attributes = storage.XMLDocument.documentElement.attributes
-		storage.load(localStorageName)
-		for (var i=0, attr; attr=attributes[i]; i++) {
-			storage.removeAttribute(attr.name)
-		}
-		storage.save(localStorageName)
-	})
-	store.getAll = withIEStorage(function(storage) {
-		var attributes = storage.XMLDocument.documentElement.attributes
-		var ret = {}
-		for (var i=0, attr; attr=attributes[i]; ++i) {
-			var key = ieKeyFix(attr.name)
-			ret[attr.name] = store.deserialize(storage.getAttribute(key))
-		}
-		return ret
-	})
-}
+	store.enabled = !store.disabled
+	if (typeof module != 'undefined' && module.exports) { module.exports = store }
+	else if (typeof define === 'function' && define.amd) { define(store) }
+	else { win.store = store }
+})(this.window || global);
 
-try {
-	store.set(namespace, namespace)
-	if (store.get(namespace) != namespace) { store.disabled = true }
-	store.remove(namespace)
-} catch(e) {
-	store.disabled = true
-}
-store.enabled = !store.disabled
-
-module.exports = store;
 });
 require.register("segmentio-top-domain/index.js", function(exports, require, module){
 
@@ -2070,22 +1962,19 @@ require.register("yields-slug/index.js", function(exports, require, module){
  *        generate('foo bar');
  *        // > foo-bar
  *
- * options:
- *
- *    - `.replace` characters to replace, defaulted to `/[^a-z0-9]/g`
- *    - `.separator` separator to insert, defaulted to `-`
- *
  * @param {String} str
- * @param {Object} opts
+ * @param {Object} options
+ * @config {String|RegExp} [replace] characters to replace, defaulted to `/[^a-z0-9]/g`
+ * @config {String} [separator] separator to insert, defaulted to `-`
  * @return {String}
  */
 
-module.exports = function(str, opts){
-  opts = opts || {};
+module.exports = function (str, options) {
+  options || (options = {});
   return str.toLowerCase()
-    .replace(opts.replace || /[^a-z0-9]/g, ' ')
+    .replace(options.replace || /[^a-z0-9]/g, ' ')
     .replace(/^ +| +$/g, '')
-    .replace(/ +/g, opts.separator || '-')
+    .replace(/ +/g, options.separator || '-')
 };
 
 });
@@ -5931,8 +5820,6 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
@@ -5965,8 +5852,6 @@ require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js")
 require.alias("ianstormtaylor-map/index.js", "analytics/deps/map/index.js");
 require.alias("ianstormtaylor-map/index.js", "map/index.js");
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
@@ -6013,16 +5898,11 @@ require.alias("segmentio-type/index.js", "segmentio-new-date/deps/type/index.js"
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/index.js");
 require.alias("segmentio-store.js/store.js", "store/index.js");
-require.alias("segmentio-json/index.js", "segmentio-store.js/deps/json/index.js");
-require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
-
 require.alias("segmentio-store.js/store.js", "segmentio-store.js/index.js");
 require.alias("segmentio-top-domain/index.js", "analytics/deps/top-domain/index.js");
 require.alias("segmentio-top-domain/index.js", "analytics/deps/top-domain/index.js");

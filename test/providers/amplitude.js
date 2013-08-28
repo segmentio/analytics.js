@@ -24,7 +24,6 @@ describe('Amplitude', function () {
       // When the library loads, it will replace the `logEvent` method.
       var stub = window.amplitude.logEvent;
       var interval = setInterval(function () {
-        console.log('asdasd');
         if (window.amplitude.logEvent === stub) return;
         expect(window.amplitude.logEvent).not.to.be(stub);
         clearInterval(interval);

@@ -10,6 +10,7 @@
 * added trait alias to trak.io
 * added MouseStats, by @Koushan
 * added Tapstream, by @adambard
+* allow Mixpanel `name_tag` to take a `username` trait
 
 0.11.11 / 2013-8-9
 ------------------

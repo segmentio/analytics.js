@@ -10,16 +10,16 @@ var settings = {
   siteId: 'x'
 };
 
-before(function () {
-  var spy = this.spy = sinon.spy();
-  analytics.ready(spy);
+before(function (done) {
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
   analytics.initialize({ Spinnakr: settings });
+  when(function () { return window.Spinnakr; }, done);
 });
 
 describe('initialize', function () {
-  it('should load library and call ready', function (done) {
-    this.timeout(10000);
-    when(function () { return window.Spinnakr; }, done);
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
   it('should store options with defaults', function () {

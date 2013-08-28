@@ -1,28 +1,26 @@
 
 describe('trak-io', function () {
 
-var assert = require('assert')
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
   , sinon = require('sinon')
   , when = require('when');
 
 var settings = {
-  token : '740d36a79fb593bbc034a3ac934bc04f5a591c0c'
+  token: '740d36a79fb593bbc034a3ac934bc04f5a591c0c'
 };
 
-before(function () {
-  var spy = this.spy = sinon.spy();
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
   analytics.ready(this.spy);
   analytics.initialize({ 'trak.io': settings });
+  when(function () { return window.trak.io.loaded; }, done);
 });
 
 describe('initialize', function () {
-  it('should load library and call ready', function (done) {
-    this.timeout(10000);
-    var spy = this.spy;
-    when(function () { return window.trak.io.loaded; }, function () {
-      assert(spy.called);
-      done();
-    });
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
   it('should store options with defaults', function () {

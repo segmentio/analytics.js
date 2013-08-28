@@ -6,6 +6,7 @@
 * updated Woopra to use new tracker, by @billyvg
 * added trak.io, by @msaspence
 * added `createIntegration` interim method
+* added more Lytics options, by @slindberg and @araddon
 
 0.11.11 / 2013-8-9
 -------------------

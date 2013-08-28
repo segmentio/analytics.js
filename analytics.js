@@ -4080,6 +4080,7 @@ module.exports = Provider.extend({
 
 });
 });
+<<<<<<< HEAD
 require.register("analytics/lib/providers/index.js", function(exports, require, module){
 
 module.exports = {
@@ -4127,6 +4128,55 @@ module.exports = {
   'Visual Website Optimizer' : require('./visual-website-optimizer'),
   'Woopra'                   : require('./woopra')
 };
+=======
+require.register("analytics/src/providers/index.js", function(exports, require, module){
+module.exports = [
+  require('./adroll'),
+  require('./amplitude'),
+  require('./bitdeli'),
+  require('./bugherd'),
+  require('./chartbeat'),
+  require('./clicktale'),
+  require('./clicky'),
+  require('./comscore'),
+  require('./crazyegg'),
+  require('./customerio'),
+  require('./errorception'),
+  require('./foxmetrics'),
+  require('./gauges'),
+  require('./get-satisfaction'),
+  require('./google-analytics'),
+  require('./gosquared'),
+  require('./heap'),
+  require('./hittail'),
+  require('./hubspot'),
+  require('./improvely'),
+  require('./intercom'),
+  require('./keen-io'),
+  require('./kissmetrics'),
+  require('./klaviyo'),
+  require('./livechat'),
+  require('./lytics'),
+  require('./mixpanel'),
+  require('./olark'),
+  require('./optimizely'),
+  require('./perfect-audience'),
+  require('./pingdom'),
+  require('./preact'),
+  require('./qualaroo'),
+  require('./quantcast'),
+  require('./sentry'),
+  require('./snapengage'),
+  require('./spinnakr'),
+  require('./usercycle'),
+  require('./userfox'),
+  require('./uservoice'),
+  require('./vero'),
+  require('./visual-website-optimizer'),
+  require('./woopra')
+];
+
+>>>>>>> 8c071b08d644c505143271d681a41168b1ca3fea
 });
 require.register("analytics/lib/providers/improvely.js", function(exports, require, module){
 // http://www.improvely.com/docs/landing-page-code

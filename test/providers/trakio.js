@@ -6,7 +6,7 @@ var assert = require('assert')
   , when = require('when');
 
 var settings = {
-  token : 'x'
+  token : '740d36a79fb593bbc034a3ac934bc04f5a591c0c'
 };
 
 before(function () {

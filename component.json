@@ -137,6 +137,7 @@
     "lib/providers/quantcast.js",
     "lib/providers/sentry.js",
     "lib/providers/snapengage.js",
+    "lib/providers/spinnakr.js",
     "lib/providers/trakio.js",
     "lib/providers/usercycle.js",
     "lib/providers/userfox.js",

@@ -1,4 +1,5 @@
 
+PORT = 4200
 PHANTOM = node_modules/.bin/mocha-phantomjs
 PHANTOM_OPTS = --setting web-security=false --setting local-to-remote-url-access=true
 
@@ -17,18 +18,18 @@ clean:
 
 test: build server
 	sleep 1
-	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/core
-	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/providers
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:$(PORT)/core
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:$(PORT)/providers
 	make kill
 
 test-browser: build server
 	sleep 1
-	open http://localhost:8000/core
-	open http://localhost:8000/providers
+	open http://localhost:$(PORT)/core
+	open http://localhost:$(PORT)/providers
 
 release: clean build analytics.js server
 	sleep 1
-	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:8000/min
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:$(PORT)/min
 	make kill
 
 server:

@@ -33,7 +33,7 @@ app.get('/:type?', function (req, res, next) {
  * Start.
  */
 
-var port = 8000;
+var port = 4200;
 var pid = path.resolve(__dirname, '.pid.txt');
 
 app.listen(port, function () {

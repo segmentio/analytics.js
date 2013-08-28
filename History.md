@@ -10,7 +10,8 @@
 * added trait alias to trak.io
 * added MouseStats, by @Koushan
 * added Tapstream, by @adambard
-* allow Mixpanel `name_tag` to take a `username` trait
+* allow Mixpanel to name users by `username`
+* allow GoSquared to name users by `email` or `username`
 
 0.11.11 - August 9, 2013
 ------------------------

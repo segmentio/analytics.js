@@ -44,25 +44,31 @@ describe('GoSquared', function () {
 
     it('should set user id', function () {
       window.GoSquared.UserName = undefined;
+      window.GoSquared.VisitorName = undefined;
       window.GoSquared.Visitor = undefined;
       analytics.identify(test.userId);
       expect(window.GoSquared.UserName).to.equal(test.userId);
+      expect(window.GoSquared.VisitorName).to.equal(test.userId);
       expect(window.GoSquared.Visitor).to.eql({});
     });
 
     it('should set traits', function () {
       window.GoSquared.UserName = undefined;
+      window.GoSquared.VisitorName = undefined;
       window.GoSquared.Visitor = undefined;
       analytics.identify(test.traits);
-      expect(window.GoSquared.UserName).to.be(undefined);
+      expect(window.GoSquared.UserName).to.equal(null);
+      expect(window.GoSquared.VisitorName).to.be(test.traits.email);
       expect(window.GoSquared.Visitor).to.eql(test.traits);
     });
 
     it('should set user id and traits', function () {
       window.GoSquared.UserName = undefined;
+      window.GoSquared.VisitorName = undefined;
       window.GoSquared.Visitor = undefined;
       analytics.identify(test.userId, test.traits);
       expect(window.GoSquared.UserName).to.equal(test.userId);
+      expect(window.GoSquared.VisitorName).to.equal(test.traits.email);
       expect(window.GoSquared.Visitor).to.eql(test.traits);
     });
 

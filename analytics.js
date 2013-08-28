@@ -393,13 +393,121 @@ function parse(str) {
 }
 
 });
+require.register("component-to-function/index.js", function(exports, require, module){
+
+/**
+ * Expose `toFunction()`.
+ */
+
+module.exports = toFunction;
+
+/**
+ * Convert `obj` to a `Function`.
+ *
+ * @param {Mixed} obj
+ * @return {Function}
+ * @api private
+ */
+
+function toFunction(obj) {
+  switch ({}.toString.call(obj)) {
+    case '[object Object]':
+      return objectToFunction(obj);
+    case '[object Function]':
+      return obj;
+    case '[object String]':
+      return stringToFunction(obj);
+    case '[object RegExp]':
+      return regexpToFunction(obj);
+    default:
+      return defaultToFunction(obj);
+  }
+}
+
+/**
+ * Default to strict equality.
+ *
+ * @param {Mixed} val
+ * @return {Function}
+ * @api private
+ */
+
+function defaultToFunction(val) {
+  return function(obj){
+    return val === obj;
+  }
+}
+
+/**
+ * Convert `re` to a function.
+ *
+ * @param {RegExp} re
+ * @return {Function}
+ * @api private
+ */
+
+function regexpToFunction(re) {
+  return function(obj){
+    return re.test(obj);
+  }
+}
+
+/**
+ * Convert property `str` to a function.
+ *
+ * @param {String} str
+ * @return {Function}
+ * @api private
+ */
+
+function stringToFunction(str) {
+  // immediate such as "> 20"
+  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
+
+  // properties such as "name.first" or "age > 18"
+  return new Function('_', 'return _.' + str);
+}
+
+/**
+ * Convert `object` to a function.
+ *
+ * @param {Object} object
+ * @return {Function}
+ * @api private
+ */
+
+function objectToFunction(obj) {
+  var match = {}
+  for (var key in obj) {
+    match[key] = typeof obj[key] === 'string'
+      ? defaultToFunction(obj[key])
+      : toFunction(obj[key])
+  }
+  return function(val){
+    if (typeof val !== 'object') return false;
+    for (var key in match) {
+      if (!(key in val)) return false;
+      if (!match[key](val[key])) return false;
+    }
+    return true;
+  }
+}
+
+});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var type = require('type');
+var toFunction = require('to-function');
+var type;
+
+try {
+  type = require('type-component');
+} catch (e) {
+  type = require('type');
+}
 
 /**
  * HOP reference.
@@ -416,6 +524,7 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
+  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -470,6 +579,7 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
+
 });
 require.register("component-event/index.js", function(exports, require, module){
 
@@ -728,15 +838,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -748,7 +858,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -760,7 +872,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -773,9 +885,9 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
@@ -3836,10 +3948,10 @@ require.register("analytics/lib/providers/gosquared.js", function(exports, requi
 // http://www.gosquared.com/support
 // https://www.gosquared.com/customer/portal/articles/612063-tracker-functions
 
-var Provider = require('../provider')
-  , user     = require('../user')
-  , load     = require('load-script')
-  , onBody   = require('on-body');
+var Provider = require('../provider');
+var user = require('../user');
+var load = require('load-script');
+var onBody = require('on-body');
 
 
 module.exports = Provider.extend({
@@ -3853,28 +3965,26 @@ module.exports = Provider.extend({
   },
 
   initialize : function (options, ready) {
-    // GoSquared assumes a body in their script, so we need this wrapper.
+    // GoSquared assumes a body in their script, so we need this wrapper
+    var self = this;
     onBody(function () {
-      var GoSquared = window.GoSquared = {};
-      GoSquared.acct = options.siteToken;
-      GoSquared.q = [];
+      window.GoSquared = {};
+      window.GoSquared.acct = options.siteToken;
+      window.GoSquared.q = [];
       window._gstc_lt =+ (new Date());
 
-      GoSquared.VisitorName = user.id();
-      GoSquared.Visitor = user.traits();
+      // identify since GoSquared doesn't have an async identify API
+      self.identify(user.id(), user.traits());
 
       load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
-
-      // GoSquared makes a queue, so it's ready immediately.
       ready();
     });
   },
 
-  identify : function (userId, traits) {
-    // TODO figure out if this will actually work. Seems like GoSquared will
-    // never know these values are updated.
-    if (userId) window.GoSquared.UserName = userId;
-    if (traits) window.GoSquared.Visitor = traits;
+  identify : function (id, traits) {
+    window.GoSquared.UserName = id;
+    window.GoSquared.VisitorName = traits.email || traits.username || id;
+    window.GoSquared.Visitor = traits;
   },
 
   track : function (event, properties) {
@@ -5820,6 +5930,8 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
@@ -5852,6 +5964,8 @@ require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js")
 require.alias("ianstormtaylor-map/index.js", "analytics/deps/map/index.js");
 require.alias("ianstormtaylor-map/index.js", "map/index.js");
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
@@ -5898,6 +6012,8 @@ require.alias("segmentio-type/index.js", "segmentio-new-date/deps/type/index.js"
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");

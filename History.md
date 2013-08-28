@@ -8,9 +8,10 @@
 * added `createIntegration` interim method
 * added more Lytics options, by @slindberg and @araddon
 * added trait alias to trak.io
+* added MouseStats, by @Koushan
 
 0.11.11 / 2013-8-9
--------------------
+------------------
 * Added LeadLander
 
 0.11.10 / 2013-7-12

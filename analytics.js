@@ -4080,7 +4080,6 @@ module.exports = Provider.extend({
 
 });
 });
-<<<<<<< HEAD
 require.register("analytics/lib/providers/index.js", function(exports, require, module){
 
 module.exports = {
@@ -4111,6 +4110,7 @@ module.exports = {
   'LiveChat'                 : require('./livechat'),
   'Lytics'                   : require('./lytics'),
   'Mixpanel'                 : require('./mixpanel'),
+  'MouseStats'               : require('./mousestats'),
   'Olark'                    : require('./olark'),
   'Optimizely'               : require('./optimizely'),
   'Perfect Audience'         : require('./perfect-audience'),
@@ -4120,6 +4120,7 @@ module.exports = {
   'Quantcast'                : require('./quantcast'),
   'Sentry'                   : require('./sentry'),
   'SnapEngage'               : require('./snapengage'),
+  'Spinnakr'                 : require('./spinnakr'),
   'trak.io'                  : require('./trakio'),
   'USERcycle'                : require('./usercycle'),
   'userfox'                  : require('./userfox'),
@@ -4128,55 +4129,6 @@ module.exports = {
   'Visual Website Optimizer' : require('./visual-website-optimizer'),
   'Woopra'                   : require('./woopra')
 };
-=======
-require.register("analytics/src/providers/index.js", function(exports, require, module){
-module.exports = [
-  require('./adroll'),
-  require('./amplitude'),
-  require('./bitdeli'),
-  require('./bugherd'),
-  require('./chartbeat'),
-  require('./clicktale'),
-  require('./clicky'),
-  require('./comscore'),
-  require('./crazyegg'),
-  require('./customerio'),
-  require('./errorception'),
-  require('./foxmetrics'),
-  require('./gauges'),
-  require('./get-satisfaction'),
-  require('./google-analytics'),
-  require('./gosquared'),
-  require('./heap'),
-  require('./hittail'),
-  require('./hubspot'),
-  require('./improvely'),
-  require('./intercom'),
-  require('./keen-io'),
-  require('./kissmetrics'),
-  require('./klaviyo'),
-  require('./livechat'),
-  require('./lytics'),
-  require('./mixpanel'),
-  require('./olark'),
-  require('./optimizely'),
-  require('./perfect-audience'),
-  require('./pingdom'),
-  require('./preact'),
-  require('./qualaroo'),
-  require('./quantcast'),
-  require('./sentry'),
-  require('./snapengage'),
-  require('./spinnakr'),
-  require('./usercycle'),
-  require('./userfox'),
-  require('./uservoice'),
-  require('./vero'),
-  require('./visual-website-optimizer'),
-  require('./woopra')
-];
-
->>>>>>> 8c071b08d644c505143271d681a41168b1ca3fea
 });
 require.register("analytics/lib/providers/improvely.js", function(exports, require, module){
 // http://www.improvely.com/docs/landing-page-code
@@ -4798,6 +4750,55 @@ module.exports = Provider.extend({
 
 });
 });
+require.register("analytics/lib/providers/mousestats.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `MouseStats` integration.
+ *
+ * // http://www.mousestats.com
+ * // http://blog.mousestats.com
+ */
+
+var MouseStats = module.exports = integration('MouseStats');
+
+
+/**
+ * Required key.
+ */
+
+MouseStats.prototype.key = 'accountNumber';
+
+
+/**
+ * Default options.
+ */
+
+MouseStats.prototype.defaults = {
+  accountNumber: null
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+MouseStats.prototype.initialize = function (options, ready) {
+  var number = options.accountNumber;
+  var path = number.slice(0,1) + '/' + number.slice(1,2) + '/' + number;
+  var cache = Math.floor(new Date().getTime() / 60000);
+  load({
+    http: 'http://www2.mousestats.com/js/' + path + '.js?' + cache,
+    https: 'https://ssl.mousestats.com/js/' + path + '.js?' + cache
+  }, ready);
+};
+});
 require.register("analytics/lib/providers/olark.js", function(exports, require, module){
 // http://www.olark.com/documentation
 
@@ -5226,6 +5227,47 @@ module.exports = Provider.extend({
 
 });
 });
+require.register("analytics/lib/providers/spinnakr.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Spinnakr` integration.
+ */
+
+var Spinnakr = module.exports = integration('Spinnakr');
+
+
+/**
+ * Required key.
+ */
+
+Spinnakr.prototype.key = 'siteId';
+
+
+/**
+ * Default options.
+ */
+
+Spinnakr.prototype.defaults = {
+  // your spinakkr site id key (required)
+  siteId: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Spinnakr.prototype.initialize = function (options, ready) {
+  load({ http: 'http://d3ojzyhbolvoi5.cloudfront.net/js/so.js' }, ready);
+};
+});
 require.register("analytics/lib/providers/trakio.js", function(exports, require, module){
 
 var integration = require('../integration')
@@ -5305,12 +5347,31 @@ Trakio.prototype.initialize = function (options, ready) {
  */
 
 Trakio.prototype.identify = function (id, traits, options) {
+  // trak.io names keys differently: http://docs.trak.io/properties.html#special
+  alias(traits, {
+    avatar: 'avatar_url',
+    firstName: 'first_name',
+    lastName: 'last_name'
+  });
+
   if (id) {
     window.trak.io.identify(id, traits);
   } else {
     window.trak.io.identify(traits);
   }
 };
+
+
+/**
+ * Group.
+ *
+ * @param {String} id (optional)
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ *
+ * TODO: add group
+ * TODO: add `trait.company/organization` from trak.io docs http://docs.trak.io/properties.html#special
+ */
 
 
 /**

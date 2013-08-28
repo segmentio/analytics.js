@@ -393,121 +393,13 @@ function parse(str) {
 }
 
 });
-require.register("component-to-function/index.js", function(exports, require, module){
-
-/**
- * Expose `toFunction()`.
- */
-
-module.exports = toFunction;
-
-/**
- * Convert `obj` to a `Function`.
- *
- * @param {Mixed} obj
- * @return {Function}
- * @api private
- */
-
-function toFunction(obj) {
-  switch ({}.toString.call(obj)) {
-    case '[object Object]':
-      return objectToFunction(obj);
-    case '[object Function]':
-      return obj;
-    case '[object String]':
-      return stringToFunction(obj);
-    case '[object RegExp]':
-      return regexpToFunction(obj);
-    default:
-      return defaultToFunction(obj);
-  }
-}
-
-/**
- * Default to strict equality.
- *
- * @param {Mixed} val
- * @return {Function}
- * @api private
- */
-
-function defaultToFunction(val) {
-  return function(obj){
-    return val === obj;
-  }
-}
-
-/**
- * Convert `re` to a function.
- *
- * @param {RegExp} re
- * @return {Function}
- * @api private
- */
-
-function regexpToFunction(re) {
-  return function(obj){
-    return re.test(obj);
-  }
-}
-
-/**
- * Convert property `str` to a function.
- *
- * @param {String} str
- * @return {Function}
- * @api private
- */
-
-function stringToFunction(str) {
-  // immediate such as "> 20"
-  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
-
-  // properties such as "name.first" or "age > 18"
-  return new Function('_', 'return _.' + str);
-}
-
-/**
- * Convert `object` to a function.
- *
- * @param {Object} object
- * @return {Function}
- * @api private
- */
-
-function objectToFunction(obj) {
-  var match = {}
-  for (var key in obj) {
-    match[key] = typeof obj[key] === 'string'
-      ? defaultToFunction(obj[key])
-      : toFunction(obj[key])
-  }
-  return function(val){
-    if (typeof val !== 'object') return false;
-    for (var key in match) {
-      if (!(key in val)) return false;
-      if (!match[key](val[key])) return false;
-    }
-    return true;
-  }
-}
-
-});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var toFunction = require('to-function');
-var type;
-
-try {
-  type = require('type-component');
-} catch (e) {
-  type = require('type');
-}
+var type = require('type');
 
 /**
  * HOP reference.
@@ -524,7 +416,6 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
-  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -579,7 +470,6 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
-
 });
 require.register("component-event/index.js", function(exports, require, module){
 
@@ -838,15 +728,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -858,9 +748,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -872,7 +760,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -885,12 +773,13 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
+
 var next = require('next-tick');
 
 
@@ -1835,6 +1724,48 @@ function call (callback) {
   callback(document.body);
 }
 });
+require.register("segmentio-on-error/index.js", function(exports, require, module){
+
+/**
+ * Expose `onError`.
+ */
+
+module.exports = onError;
+
+
+/**
+ * Callbacks.
+ */
+
+var callbacks = [];
+
+
+/**
+ * Preserve existing handler.
+ */
+
+if ('function' == typeof window.onerror) callbacks.push(window.onerror);
+
+
+/**
+ * Bind to `window.onerror`.
+ */
+
+window.onerror = function () {
+  for (var i = 0, fn; fn = callbacks[i]; i++) fn.apply(this, arguments);
+};
+
+
+/**
+ * Call a `fn` on `window.onerror`.
+ *
+ * @param {Function} fn
+ */
+
+function onError (fn) {
+  callbacks.push(fn);
+}
+});
 require.register("segmentio-store.js/store.js", function(exports, require, module){
 ;(function(win){
 	var store = {},
@@ -2139,7 +2070,7 @@ module.exports = exports = Analytics;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '0.12.0';
+exports.VERSION = '0.11.11';
 
 
 /**
@@ -3572,10 +3503,11 @@ module.exports = Provider.extend({
 require.register("analytics/lib/providers/errorception.js", function(exports, require, module){
 // http://errorception.com/
 
-var Provider = require('../provider')
-  , extend   = require('extend')
-  , load     = require('load-script')
-  , type     = require('type');
+var Provider = require('../provider');
+var extend = require('extend');
+var load = require('load-script');
+var onError = require('on-error');
+var type = require('type');
 
 
 module.exports = Provider.extend({
@@ -3592,20 +3524,11 @@ module.exports = Provider.extend({
   },
 
   initialize : function (options, ready) {
-    window._errs = window._errs || [options.projectId];
-    load('//d15qhc0lu1ghnk.cloudfront.net/beacon.js');
-
-    // Attach the window `onerror` event.
-    var oldOnError = window.onerror;
-    window.onerror = function () {
+    window._errs = [options.projectId];
+    onError(function() {
       window._errs.push(arguments);
-      // Chain the old onerror handler after we finish our work.
-      if ('function' === type(oldOnError)) {
-        oldOnError.apply(this, arguments);
-      }
-    };
-
-    // Errorception makes a queue, so it's ready immediately.
+    });
+    load('//beacon.errorception.com/' + options.projectId + '.js');
     ready();
   },
 
@@ -3775,11 +3698,13 @@ module.exports = Provider.extend({
 require.register("analytics/lib/providers/google-analytics.js", function(exports, require, module){
 // https://developers.google.com/analytics/devguides/collection/gajs/
 
-var Provider  = require('../provider')
-  , load      = require('load-script')
-  , type      = require('type')
-  , url       = require('url')
-  , canonical = require('canonical');
+var Provider  = require('../provider');
+var each = require('each');
+var is = require('is');
+var load = require('load-script');
+var type = require('type');
+var url = require('url');
+var canonical = require('canonical');
 
 
 module.exports = Provider.extend({
@@ -3835,8 +3760,12 @@ module.exports = Provider.extend({
     if (options.anonymizeIp) {
       window._gaq.push(['_gat._anonymizeIp']);
     }
-    if (options.ignoreReferrer) {
-      window._gaq.push(['_addIgnoredRef', options.ignoreReferrer]);
+    var ignored = options.ignoreReferrer;
+    if (ignored) {
+      if (!is.array(ignored)) ignored = [ignored];
+      each(ignored, function (domain) {
+        window._gaq.push(['_addIgnoredRef', domain]);
+      });
     }
     if (options.initialPageview) {
       var path, canon = canonical();
@@ -5918,6 +5847,7 @@ module.exports = Provider.extend({
 
 
 
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -5930,8 +5860,6 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
@@ -5964,8 +5892,6 @@ require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js")
 require.alias("ianstormtaylor-map/index.js", "analytics/deps/map/index.js");
 require.alias("ianstormtaylor-map/index.js", "map/index.js");
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
@@ -6012,9 +5938,10 @@ require.alias("segmentio-type/index.js", "segmentio-new-date/deps/type/index.js"
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("segmentio-on-error/index.js", "analytics/deps/on-error/index.js");
+require.alias("segmentio-on-error/index.js", "on-error/index.js");
 
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/index.js");

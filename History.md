@@ -1,5 +1,5 @@
-0.12.0 - August 27, 2013
-------------------------
+0.11.12 - August 27, 2013
+-------------------------
 * cleaned up core
 * fixed breaking tests
 * removed Bitdeli, by @jtuulos
@@ -13,6 +13,7 @@
 * allow Mixpanel to name users by `username`
 * allow GoSquared to name users by `email` or `username`
 * make Google Analytics ignored referrers an array
+* update Errorception cdn
 
 0.11.11 - August 9, 2013
 ------------------------

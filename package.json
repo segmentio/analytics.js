@@ -10,18 +10,18 @@
     "url": "git://github.com/segmentio/analytics.js.git"
   },
   "main": "analytics.js",
-  "scripts": {
-    "test": "make test"
-  },
-  "dependencies": {
-    "underscore": "~1.4.3"
-  },
+  "dependencies": {},
   "devDependencies": {
     "express": "~3.1.0",
     "hbs": "~2.3.0",
     "mocha-cloud": "0.1.0",
     "mocha-phantomjs": "3.1.2",
-    "uglify-js": ">= 1.3.4"
+    "uglify-js": ">= 1.3.4",
+    "underscore": "~1.4.3",
+    "component": "~0.17.0"
+  },
+  "scripts": {
+    "test": "make test"
   },
   "keywords": [
     "analytics",

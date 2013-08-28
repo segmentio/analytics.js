@@ -4,13 +4,13 @@ PHANTOM = node_modules/.bin/mocha-phantomjs
 PHANTOM_OPTS = --setting web-security=false --setting local-to-remote-url-access=true
 
 install: component.json
-	component install --dev
+	./node_modules/component/bin/component install --dev
 
 build: install
-	component build --dev
+	./node_modules/component/bin/component build --dev
 
 analytics.js: install
-	component build --standalone analytics --out . --name analytics
+	./node_modules/component/bin/component build --standalone analytics --out . --name analytics
 	uglifyjs -o analytics.min.js analytics.js
 
 clean:

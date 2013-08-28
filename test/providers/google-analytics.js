@@ -189,6 +189,24 @@ describe('Google Analytics', function () {
         analytics.initialize({ 'Google Analytics' : options });
       });
 
+      it('should add an ignored referrers', function (done) {
+        // Define `_gaq` so we can spy on it.
+        window._gaq = [];
+
+        var extend  = require('segmentio-extend')
+          , spy     = sinon.spy(window._gaq, 'push')
+          , options = extend({}, test['Google Analytics'].classic, { ignoreReferrer : ['segment.io', 'example.com'] });
+
+        analytics.ready(function () {
+          expect(spy.calledWith(['_addIgnoredRef', 'segment.io'])).to.be(true);
+          expect(spy.calledWith(['_addIgnoredRef', 'example.com'])).to.be(true);
+          spy.restore();
+          done();
+        });
+
+        analytics.initialize({ 'Google Analytics' : options });
+      });
+
     });
 
 

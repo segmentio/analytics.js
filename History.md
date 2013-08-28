@@ -12,6 +12,7 @@
 * added Tapstream, by @adambard
 * allow Mixpanel to name users by `username`
 * allow GoSquared to name users by `email` or `username`
+* make Google Analytics ignored referrers an array
 
 0.11.11 - August 9, 2013
 ------------------------

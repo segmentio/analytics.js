@@ -41,5 +41,6 @@ module.exports = [
   require('./uservoice'),
   require('./vero'),
   require('./visual-website-optimizer'),
-  require('./woopra')
+  require('./woopra'),
+  require('./yandex-metrica')
 ];

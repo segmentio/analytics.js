@@ -51,7 +51,8 @@
     "uservoice",
     "vero",
     "visual website optimizer",
-    "woopra"
+    "woopra",
+    "yandex metrica"
   ],
   "dependencies": {
     "avetisk/defaults": "*",
@@ -132,7 +133,8 @@
     "src/providers/uservoice.js",
     "src/providers/vero.js",
     "src/providers/visual-website-optimizer.js",
-    "src/providers/woopra.js"
+    "src/providers/woopra.js",
+    "src/providers/yandex-metrica.js"    
   ],
   "main": "src/index.js"
 }

@@ -174,6 +174,10 @@ window.test = {
 
   'Visual Website Optimizer' : 44207,
 
-  'Woopra' : 'x'
+  'Woopra' : 'x',
+
+  'Yandex Metrica' : {
+    counterId    : 'x'
+  }
 
 };

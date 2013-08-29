@@ -2,7 +2,7 @@
   "name": "analytics",
   "repo": "segmentio/analytics.js",
   "description": "The hassle-free way to integrate analytics into any web application.",
-  "version": "0.11.12",
+  "version": "0.11.13",
   "keywords": [
     "analytics",
     "analytics.js",
@@ -67,7 +67,7 @@
     "component/type": "1.0.0",
     "component/url": "0.1.0",
     "ianstormtaylor/callback": "0.0.1",
-    "ianstormtaylor/is": "0.0.1",
+    "ianstormtaylor/is": "0.0.4",
     "ianstormtaylor/map": "0.0.1",
     "segmentio/after": "0.0.1",
     "segmentio/alias": "0.0.1",

@@ -58,6 +58,18 @@ describe('Customer.io', function () {
       spy.restore();
     });
 
+    it('should convert dates to millis', function () {
+      var spy = sinon.spy(window._cio, 'identify');
+      var date = new Date();
+      analytics.identify('id', {
+        date: date
+      });
+      expect(spy.calledWith({
+        id: 'id',
+        date: date.getTime()/1000
+      })).to.be(true);
+    });
+
   });
 
 

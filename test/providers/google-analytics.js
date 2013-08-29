@@ -201,7 +201,7 @@ describe('Google Analytics', function () {
           expect(spy.calledWith(['_addIgnoredRef', 'segment.io'])).to.be(true);
           expect(spy.calledWith(['_addIgnoredRef', 'example.com'])).to.be(true);
           spy.restore();
-          done();
+          setTimeout(done, 100);
         });
 
         analytics.initialize({ 'Google Analytics' : options });
@@ -212,22 +212,22 @@ describe('Google Analytics', function () {
 
     describe('track', function () {
 
-      var spy;
+      var stub;
 
       beforeEach(function () {
-        spy = sinon.spy(window._gaq, 'push');
+        stub = sinon.stub(window._gaq, 'push');
       });
 
       afterEach(function () {
-        spy.restore();
+        stub.restore();
       });
 
       it('should push "_trackEvent"', function () {
         analytics.track(test.event);
-        expect(spy.calledWith([
+        expect(stub.calledWith([
           '_trackEvent',
           'All',
-          test.event,
+          'event',
           undefined,
           undefined,
           undefined
@@ -238,7 +238,7 @@ describe('Google Analytics', function () {
         analytics.track(test.event, {
           category : 'Category'
         });
-        expect(spy.calledWith([
+        expect(stub.calledWith([
           '_trackEvent',
           'Category',
           test.event,
@@ -252,7 +252,7 @@ describe('Google Analytics', function () {
         analytics.track(test.event, {
           label : 'Label'
         });
-        expect(spy.calledWith([
+        expect(stub.calledWith([
           '_trackEvent',
           'All',
           test.event,
@@ -264,7 +264,7 @@ describe('Google Analytics', function () {
 
       it('should push value', function () {
         analytics.track(test.event, { value : 30 });
-        expect(spy.calledWith([
+        expect(stub.calledWith([
           '_trackEvent',
           'All',
           test.event,
@@ -276,7 +276,7 @@ describe('Google Analytics', function () {
 
       it('should push revenue', function () {
         analytics.track(test.event, { revenue : 9.99 });
-        expect(spy.calledWith([
+        expect(stub.calledWith([
           '_trackEvent',
           'All',
           test.event,
@@ -288,7 +288,7 @@ describe('Google Analytics', function () {
 
       it('should push noninteraction', function () {
         analytics.track(test.event, { noninteraction : true });
-        expect(spy.calledWith([
+        expect(stub.calledWith([
           '_trackEvent',
           'All',
           test.event,
@@ -304,17 +304,17 @@ describe('Google Analytics', function () {
     describe('pageview', function () {
 
       it('should push "_trackPageview"', function () {
-        var spy = sinon.spy(window._gaq, 'push');
+        var stub = sinon.stub(window._gaq, 'push');
         analytics.pageview();
-        expect(spy.calledWith(['_trackPageview', undefined])).to.be(true);
-        spy.restore();
+        expect(stub.calledWith(['_trackPageview', undefined])).to.be(true);
+        stub.restore();
       });
 
       it('should push a url', function () {
-        var spy = sinon.spy(window._gaq, 'push');
+        var stub = sinon.stub(window._gaq, 'push');
         analytics.pageview(test.url);
-        expect(spy.calledWith(['_trackPageview', test.url])).to.be(true);
-        spy.restore();
+        expect(stub.calledWith(['_trackPageview', test.url])).to.be(true);
+        stub.restore();
       });
 
     });

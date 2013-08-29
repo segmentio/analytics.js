@@ -393,13 +393,121 @@ function parse(str) {
 }
 
 });
+require.register("component-to-function/index.js", function(exports, require, module){
+
+/**
+ * Expose `toFunction()`.
+ */
+
+module.exports = toFunction;
+
+/**
+ * Convert `obj` to a `Function`.
+ *
+ * @param {Mixed} obj
+ * @return {Function}
+ * @api private
+ */
+
+function toFunction(obj) {
+  switch ({}.toString.call(obj)) {
+    case '[object Object]':
+      return objectToFunction(obj);
+    case '[object Function]':
+      return obj;
+    case '[object String]':
+      return stringToFunction(obj);
+    case '[object RegExp]':
+      return regexpToFunction(obj);
+    default:
+      return defaultToFunction(obj);
+  }
+}
+
+/**
+ * Default to strict equality.
+ *
+ * @param {Mixed} val
+ * @return {Function}
+ * @api private
+ */
+
+function defaultToFunction(val) {
+  return function(obj){
+    return val === obj;
+  }
+}
+
+/**
+ * Convert `re` to a function.
+ *
+ * @param {RegExp} re
+ * @return {Function}
+ * @api private
+ */
+
+function regexpToFunction(re) {
+  return function(obj){
+    return re.test(obj);
+  }
+}
+
+/**
+ * Convert property `str` to a function.
+ *
+ * @param {String} str
+ * @return {Function}
+ * @api private
+ */
+
+function stringToFunction(str) {
+  // immediate such as "> 20"
+  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
+
+  // properties such as "name.first" or "age > 18"
+  return new Function('_', 'return _.' + str);
+}
+
+/**
+ * Convert `object` to a function.
+ *
+ * @param {Object} object
+ * @return {Function}
+ * @api private
+ */
+
+function objectToFunction(obj) {
+  var match = {}
+  for (var key in obj) {
+    match[key] = typeof obj[key] === 'string'
+      ? defaultToFunction(obj[key])
+      : toFunction(obj[key])
+  }
+  return function(val){
+    if (typeof val !== 'object') return false;
+    for (var key in match) {
+      if (!(key in val)) return false;
+      if (!match[key](val[key])) return false;
+    }
+    return true;
+  }
+}
+
+});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var type = require('type');
+var toFunction = require('to-function');
+var type;
+
+try {
+  type = require('type-component');
+} catch (e) {
+  type = require('type');
+}
 
 /**
  * HOP reference.
@@ -416,6 +524,7 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
+  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -470,6 +579,7 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
+
 });
 require.register("component-event/index.js", function(exports, require, module){
 
@@ -823,9 +933,41 @@ callback.async = function (fn, wait) {
 callback.sync = callback;
 
 });
+require.register("ianstormtaylor-is-empty/index.js", function(exports, require, module){
+
+/**
+ * Expose `isEmpty`.
+ */
+
+module.exports = isEmpty;
+
+
+/**
+ * Has.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+
+/**
+ * Test whether a value is "empty".
+ *
+ * @param {Mixed} val
+ * @return {Boolean}
+ */
+
+function isEmpty (val) {
+  if (null == val) return true;
+  if ('number' == typeof val) return 0 === val;
+  if (undefined !== val.length) return 0 === val.length;
+  for (var key in val) if (has.call(val, key)) return false;
+  return true;
+}
+});
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var typeOf = require('type');
+var isEmpty = require('is-empty')
+  , typeOf = require('type');
 
 
 /**
@@ -856,6 +998,29 @@ var types = [
  */
 
 for (var i = 0, type; type = types[i]; i++) exports[type] = generate(type);
+
+
+/**
+ * Add alias for `function` for old browsers.
+ */
+
+exports.fn = exports.function;
+
+
+/**
+ * Expose `empty` check.
+ */
+
+exports.empty = isEmpty;
+
+
+/**
+ * Expose `nan` check.
+ */
+
+exports.nan = function (val) {
+  return exports.number(val) && val != val;
+};
 
 
 /**
@@ -1593,64 +1758,29 @@ module.exports = function loadScript (options, callback) {
 };
 
 });
-require.register("segmentio-type/index.js", function(exports, require, module){
-
-/**
- * toString ref.
- */
-
-var toString = Object.prototype.toString;
-
-/**
- * Return the type of `val`.
- *
- * @param {Mixed} val
- * @return {String}
- * @api public
- */
-
-module.exports = function(val){
-  switch (toString.call(val)) {
-    case '[object Function]': return 'function';
-    case '[object Date]': return 'date';
-    case '[object RegExp]': return 'regexp';
-    case '[object Arguments]': return 'arguments';
-    case '[object Array]': return 'array';
-    case '[object String]': return 'string';
-  }
-
-  if (val === null) return 'null';
-  if (val === undefined) return 'undefined';
-  if (val && val.nodeType === 1) return 'element';
-  if (val === Object(val)) return 'object';
-
-  return typeof val;
-};
-
-});
 require.register("segmentio-new-date/index.js", function(exports, require, module){
-var type = require('type');
+
+var is = require('is');
 
 
 /**
  * Returns a new Javascript Date object, allowing a variety of extra input types
- * over the native one.
+ * over the native Date constructor.
  *
- * @param {Date|String|Number} input
+ * @param {Date|String|Number} val
  */
 
-module.exports = function newDate (input) {
+module.exports = function newDate (val) {
+  if (is.number(val)) return new Date(toMs(val));
+  if (is.date(val)) return new Date(val.getTime()); // construtor woulda floored
 
-  // Convert input from seconds to milliseconds.
-  input = toMilliseconds(input);
+  // default to letting the Date constructor parse it
+  var date = new Date(val);
 
-  // By default, delegate to Date, which will return `Invalid Date`s if wrong.
-  var date = new Date(input);
-
-  // If we have a string that the Date constructor couldn't parse, convert it.
-  if (isNaN(date.getTime()) && 'string' === type(input)) {
-    var milliseconds = toMilliseconds(parseInt(input, 10));
-    date = new Date(milliseconds);
+  // couldn't parse, but we have a string, assume it was a second/milli string
+  if (is.nan(date.getTime()) && is.string(val)) {
+    var millis = toMs(parseInt(val, 10));
+    date = new Date(millis);
   }
 
   return date;
@@ -1658,15 +1788,15 @@ module.exports = function newDate (input) {
 
 
 /**
- * If the number passed in is seconds from the epoch, turn it into milliseconds.
+ * If the number passed val is seconds from the epoch, turn it into milliseconds.
  * Milliseconds would be greater than 31557600000 (December 31, 1970).
  *
- * @param seconds
+ * @param {Number} num
  */
 
-function toMilliseconds (seconds) {
-  if ('number' === type(seconds) && seconds < 31557600000) return seconds * 1000;
-  return seconds;
+function toMs (num) {
+  if (num < 31557600000) return num * 1000;
+  return num;
 }
 });
 require.register("segmentio-on-body/index.js", function(exports, require, module){
@@ -2070,7 +2200,7 @@ module.exports = exports = Analytics;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '0.11.11';
+exports.VERSION = '0.11.12';
 
 
 /**
@@ -2150,6 +2280,11 @@ Analytics.prototype.initialize = function (settings, options) {
 
   // call any querystring methods if present
   this._parseQuery();
+
+  // backwards compat with angular plugin.
+  // TODO: remove
+  this.initialized = true;
+
   return this;
 };
 
@@ -2165,8 +2300,8 @@ Analytics.prototype.initialize = function (settings, options) {
  */
 
 Analytics.prototype.identify = function (id, traits, options, fn) {
-  if (is.function(options)) fn = options, options = undefined;
-  if (is.function(traits)) fn = traits, traits = undefined;
+  if (is.fn(options)) fn = options, options = undefined;
+  if (is.fn(traits)) fn = traits, traits = undefined;
   if (is.object(id)) traits = id, id = user.id();
 
   this._user.update(id, traits);
@@ -2204,8 +2339,8 @@ Analytics.prototype.user = function () {
  */
 
 Analytics.prototype.group = function (id, properties, options, fn) {
-  if (is.function(options)) fn = options, options = undefined;
-  if (is.function(properties)) fn = properties, properties = undefined;
+  if (is.fn(options)) fn = options, options = undefined;
+  if (is.fn(properties)) fn = properties, properties = undefined;
 
   properties = clone(properties) || {};
   if (properties.created) properties.created = newDate(properties.created);
@@ -2227,8 +2362,8 @@ Analytics.prototype.group = function (id, properties, options, fn) {
  */
 
 Analytics.prototype.track = function (event, properties, options, fn) {
-  if (is.function(options)) fn = options, options = undefined;
-  if (is.function(properties)) fn = properties, properties = undefined;
+  if (is.fn(options)) fn = options, options = undefined;
+  if (is.fn(properties)) fn = properties, properties = undefined;
 
   properties = clone(properties) || {};
 
@@ -2258,8 +2393,8 @@ Analytics.prototype.trackLink = function (links, event, properties) {
   var self = this;
   each(links, function (el) {
     bind(el, 'click', function (e) {
-      var ev = is.function(event) ? event(el) : event;
-      var props = is.function(properties) ? properties(el) : properties;
+      var ev = is.fn(event) ? event(el) : event;
+      var props = is.fn(properties) ? properties(el) : properties;
       self.track(ev, props);
 
       if (el.href && el.target !== '_blank' && !isMeta(e)) {
@@ -2297,8 +2432,8 @@ Analytics.prototype.trackForm = function (forms, event, properties) {
     function handler (e) {
       prevent(e);
 
-      var ev = is.function(event) ? event(el) : event;
-      var props = is.function(properties) ? properties(el) : properties;
+      var ev = is.fn(event) ? event(el) : event;
+      var props = is.fn(properties) ? properties(el) : properties;
       self.track(ev, props);
 
       self._callback(function () {
@@ -2359,7 +2494,7 @@ Analytics.prototype.alias = function (newId, oldId, options) {
  */
 
 Analytics.prototype.ready = function (fn) {
-  if (!is.function(fn)) return this;
+  if (!is.fn(fn)) return this;
   this._readied
     ? callback.async(fn)
     : this._callbacks.push(fn);
@@ -3437,8 +3572,10 @@ require.register("analytics/lib/providers/customerio.js", function(exports, requ
 // http://customer.io/docs/api/javascript.html
 
 var Provider = require('../provider')
-  , isEmail  = require('is-email')
-  , load     = require('load-script');
+  , each = require('each')
+  , is = require('is')
+  , isEmail = require('is-email')
+  , load = require('load-script');
 
 
 module.exports = Provider.extend({
@@ -3490,6 +3627,11 @@ module.exports = Provider.extend({
       traits.created_at = Math.floor(traits.created/1000);
       delete traits.created;
     }
+
+    // customer.io doesn't handle dates, so convert to seconds
+    each(traits, function (key, val) {
+      if (is.date(val)) traits[key] = val.getTime()/1000;
+    });
 
     window._cio.identify(traits);
   },
@@ -4408,7 +4550,7 @@ module.exports = Provider.extend({
 
   initialize : function (options, ready) {
     window.llactid = options.llactid;
-    load('//trackalyzer.com/trackalyze.js', ready);
+    load('//t6.trackalyzer.com/trackalyze-nodoc.js', ready);
   }
 
 });
@@ -5224,6 +5366,7 @@ Spinnakr.prototype.defaults = {
  */
 
 Spinnakr.prototype.initialize = function (options, ready) {
+  window._spinnakr_site_id = options.siteId;
   load({ http: 'http://d3ojzyhbolvoi5.cloudfront.net/js/so.js' }, ready);
 };
 });
@@ -5860,6 +6003,8 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
@@ -5889,9 +6034,13 @@ require.alias("ianstormtaylor-is/index.js", "analytics/deps/is/index.js");
 require.alias("ianstormtaylor-is/index.js", "is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
+require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
+
 require.alias("ianstormtaylor-map/index.js", "analytics/deps/map/index.js");
 require.alias("ianstormtaylor-map/index.js", "map/index.js");
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
@@ -5933,11 +6082,16 @@ require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.
 
 require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
 require.alias("segmentio-new-date/index.js", "new-date/index.js");
-require.alias("segmentio-type/index.js", "segmentio-new-date/deps/type/index.js");
+require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
+require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
+
+require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-on-error/index.js", "analytics/deps/on-error/index.js");

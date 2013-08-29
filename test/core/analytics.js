@@ -235,7 +235,7 @@ describe('Analytics.js', function () {
     it('parses valid strings into dates', function () {
       var type = require('component-type')
         , spy  = sinon.spy(Provider.prototype, 'identify')
-        , date = 'Dec 07 12';
+        , date = 'Dec 07 2012';
 
       analytics.identify({
         created : date,
@@ -420,7 +420,7 @@ describe('Analytics.js', function () {
     it('parses valid strings into dates', function () {
       var type = require('component-type')
         , spy  = sinon.spy(Provider.prototype, 'group')
-        , date = 'Dec 07 12';
+        , date = 'Dec 07 2012';
 
       analytics.group(test.groupId, { created : date });
 

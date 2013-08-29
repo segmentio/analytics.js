@@ -1,3 +1,10 @@
+0.11.13 - August 29, 2013
+-------------------------
+* Spinnakr: added global variable for site id
+* LeadLander: switched to non `document.write` version
+* Customer.io: convert date objects to seconds
+* fixed `is.function` bug in old browsers
+
 0.11.12 - August 27, 2013
 -------------------------
 * cleaned up core

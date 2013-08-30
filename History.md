@@ -1,3 +1,7 @@
+0.11.14 - August 30, 2013
+-------------------------
+* bump version of [`ianstormtaylor/is`](https://github.com/ianstormtaylor/is) for bugfix
+
 0.11.13 - August 29, 2013
 -------------------------
 * Spinnakr: added global variable for site id

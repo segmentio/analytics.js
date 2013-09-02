@@ -1,6 +1,7 @@
 0.11.15 - September 2, 2013
 ---------------------------
 * pin all dependencies
+* added [Inspectlet](https://www.inspectlet.com)
 
 0.11.14 - August 30, 2013
 -------------------------

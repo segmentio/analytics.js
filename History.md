@@ -1,3 +1,7 @@
+0.11.15 - September 2, 2013
+---------------------------
+* pin all dependencies
+
 0.11.14 - August 30, 2013
 -------------------------
 * bump version of [`ianstormtaylor/is`](https://github.com/ianstormtaylor/is) for bugfix

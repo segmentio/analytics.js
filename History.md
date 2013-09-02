@@ -1,11 +1,13 @@
 0.11.15 - September 2, 2013
 ---------------------------
-* pin all dependencies
+* pinned all dependencies
 * added [Inspectlet](https://www.inspectlet.com)
+* fixed storage options tests
+* AdRoll: added custom data tracking
 
 0.11.14 - August 30, 2013
 -------------------------
-* bump version of [`ianstormtaylor/is`](https://github.com/ianstormtaylor/is) for bugfix
+* bumped version of [`ianstormtaylor/is`](https://github.com/ianstormtaylor/is) for bugfix
 
 0.11.13 - August 29, 2013
 -------------------------
@@ -426,12 +428,12 @@
 * Removed phantom install to get travis working
 * Added window._gaq fix in initialize
 
-0.2.2 - December 19, 2013
+0.2.2 - December 19, 2012
 -------------------------
 * Added link query tag support for `ajs_uid` and `ajs_event`
 * Added docco, uglify, and phantom to `devDependencies` by [@peleteiro](https://github.com/peleteiro)
 
-0.2.1 - December 18, 2013
+0.2.1 - December 18, 2012
 -------------------------
 * Added the `pageview` method for tracking virtual pageviews
 * Added Travis-CI
@@ -439,7 +441,7 @@
 * Added for Intercom's "secure" mode by [@buger](https://github.com/buger)
 * Removed root references
 
-0.2.0 - December 16, 2013
+0.2.0 - December 16, 2012
 -------------------------
 * Separated providers into separate files for easier maintenance
 * Changed special `createdAt` trait to `created` for cleanliness
@@ -447,7 +449,7 @@
 * Added `extend` and `alias` utils
 * Added `settings` defaults for all providers
 
-0.1.2 - December 14, 2013
+0.1.2 - December 14, 2012
 -------------------------
 * Fixed bug with HubSpot calls pre-script load
 * Upgraded sinon-chai to use [callWithMatch version](https://github.com/obmarg/sinon-chai/blob/f7aa7eccd6c0c18a3e1fc524a246a50c1a29c916/lib/sinon-chai.js)
@@ -455,12 +457,12 @@
 * Added [HubSpot](http://www.hubspot.com/) by [@jessbrandi](https://github.com/jessbrandi)
 * Added [GoSquared](https://www.gosquared.com/) by [@simontabor](https://github.com/simontabor)
 
-0.1.1 - November 25, 2013
+0.1.1 - November 25, 2012
 -------------------------
 * Added "Enhanced Link Attribution" for Google Analytics by [@nscott](https://github.com/nscott)
 * Added "Site Speed Sample Rate" for Google Analytics by [@nscott](https://github.com/nscott)
 
-0.1.0 - November 11, 2013
+0.1.0 - November 11, 2012
 -------------------------
 * Added [Olark](http://www.olark.com/)
 * Added terse `initialize` syntax

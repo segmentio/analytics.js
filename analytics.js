@@ -838,15 +838,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -858,7 +858,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -870,7 +872,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -883,12 +885,13 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
+
 var next = require('next-tick');
 
 
@@ -1055,6 +1058,193 @@ module.exports = function map (obj, iterator) {
   });
   return arr;
 };
+});
+require.register("jkroso-type/index.js", function(exports, require, module){
+
+/**
+ * refs
+ */
+
+var toString = Object.prototype.toString;
+
+/**
+ * Return the type of `val`.
+ *
+ * @param {Mixed} val
+ * @return {String}
+ * @api public
+ */
+
+module.exports = function(v){
+  // .toString() is slow so try avoid it
+  return typeof v === 'object'
+    ? types[toString.call(v)]
+    : typeof v
+};
+
+var types = {
+  '[object Function]': 'function',
+  '[object Date]': 'date',
+  '[object RegExp]': 'regexp',
+  '[object Arguments]': 'arguments',
+  '[object Array]': 'array',
+  '[object String]': 'string',
+  '[object Null]': 'null',
+  '[object Undefined]': 'undefined',
+  '[object Number]': 'number',
+  '[object Boolean]': 'boolean',
+  '[object Object]': 'object',
+  '[object Text]': 'textnode',
+  '[object Uint8Array]': '8bit-array',
+  '[object Uint16Array]': '16bit-array',
+  '[object Uint32Array]': '32bit-array',
+  '[object Uint8ClampedArray]': '8bit-array',
+  '[object Error]': 'error'
+}
+
+if (typeof window != 'undefined') {
+  for (var el in window) if (/^HTML\w+Element$/.test(el)) {
+    types['[object '+el+']'] = 'element'
+  }
+}
+
+module.exports.types = types
+
+});
+require.register("jkroso-equals/index.js", function(exports, require, module){
+
+var type = require('type')
+
+/**
+ * assert all values are equal
+ *
+ * @param {Any} [...]
+ * @return {Boolean}
+ */
+
+module.exports = function(){
+	var i = arguments.length - 1
+	while (i > 0) {
+		if (!compare(arguments[i], arguments[--i])) return false
+	}
+	return true
+}
+
+// (any, any, [array]) -> boolean
+function compare(a, b, memos){
+	// All identical values are equivalent
+	if (a === b) return true
+	var fnA = types[type(a)]
+	if (fnA !== types[type(b)]) return false
+	return fnA ? fnA(a, b, memos) : false
+}
+
+var types = {}
+
+// (Number) -> boolean
+types.number = function(a){
+	// NaN check
+	return a !== a
+}
+
+// (function, function, array) -> boolean
+types['function'] = function(a, b, memos){
+	return a.toString() === b.toString()
+		// Functions can act as objects
+	  && types.object(a, b, memos) 
+		&& compare(a.prototype, b.prototype)
+}
+
+// (date, date) -> boolean
+types.date = function(a, b){
+	return +a === +b
+}
+
+// (regexp, regexp) -> boolean
+types.regexp = function(a, b){
+	return a.toString() === b.toString()
+}
+
+// (DOMElement, DOMElement) -> boolean
+types.element = function(a, b){
+	return a.outerHTML === b.outerHTML
+}
+
+// (textnode, textnode) -> boolean
+types.textnode = function(a, b){
+	return a.textContent === b.textContent
+}
+
+// decorate `fn` to prevent it re-checking objects
+// (function) -> function
+function memoGaurd(fn){
+	return function(a, b, memos){
+		if (!memos) return fn(a, b, [])
+		var i = memos.length, memo
+		while (memo = memos[--i]) {
+			if (memo[0] === a && memo[1] === b) return true
+		}
+		return fn(a, b, memos)
+	}
+}
+
+types['arguments'] =
+types.array = memoGaurd(compareArrays)
+
+// (array, array, array) -> boolean
+function compareArrays(a, b, memos){
+	var i = a.length
+	if (i !== b.length) return false
+	memos.push([a, b])
+	while (i--) {
+		if (!compare(a[i], b[i], memos)) return false
+	}
+	return true
+}
+
+types.object = memoGaurd(compareObjects)
+
+// (object, object, array) -> boolean
+function compareObjects(a, b, memos) {
+	var ka = getEnumerableProperties(a)
+	var kb = getEnumerableProperties(b)
+	var i = ka.length
+
+	// same number of properties
+	if (i !== kb.length) return false
+
+	// although not necessarily the same order
+	ka.sort()
+	kb.sort()
+
+	// cheap key test
+	while (i--) if (ka[i] !== kb[i]) return false
+
+	// remember
+	memos.push([a, b])
+
+	// iterate again this time doing a thorough check
+	i = ka.length
+	while (i--) {
+		var key = ka[i]
+		if (!compare(a[key], b[key], memos)) return false
+	}
+
+	return true
+}
+
+// (object) -> array
+function getEnumerableProperties (object) {
+	var result = []
+	for (var k in object) if (k !== 'constructor') {
+		result.push(k)
+	}
+	return result
+}
+
+// expose compare
+module.exports.compare = compare
+
 });
 require.register("segmentio-after/index.js", function(exports, require, module){
 
@@ -3211,34 +3401,50 @@ exports.getUrlParameter = function (urlSearchParameter, paramKey) {
 };
 });
 require.register("analytics/lib/providers/adroll.js", function(exports, require, module){
-// https://www.adroll.com/dashboard
 
-var Provider = require('../provider')
-  , load     = require('load-script');
+var integration = require('../integration')
+  , load = require('load-script')
+  , user = require('../user');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `AdRoll` integration.
+ */
 
-  name : 'AdRoll',
+var AdRoll = module.exports = integration('AdRoll');
 
-  defaults : {
-    // Adroll requires two options: `advId` and `pixId`.
-    advId : null,
-    pixId : null
-  },
 
-  initialize : function (options, ready) {
-    window.adroll_adv_id = options.advId;
-    window.adroll_pix_id = options.pixId;
-    window.__adroll_loaded = true;
+/**
+ * Default options.
+ */
 
-    load({
-      http  : 'http://a.adroll.com/j/roundtrip.js',
-      https : 'https://s.adroll.com/j/roundtrip.js'
-    }, ready);
-  }
+AdRoll.prototype.defaults = {
+  // your adroll advertiser id (required)
+  advId: '',
+  // your adroll pixel id (required)
+  pixId: ''
+};
 
-});
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+AdRoll.prototype.initialize = function (options, ready) {
+  window.adroll_adv_id = options.advId;
+  window.adroll_pix_id = options.pixId;
+  window.adroll_custom_data = user.traits();
+  if (user.id()) window.adroll_custom_data.id = user.id();
+  window.__adroll_loaded = true;
+
+  load({
+    http: 'http://a.adroll.com/j/roundtrip.js',
+    https: 'https://s.adroll.com/j/roundtrip.js'
+  }, ready);
+};
 });
 require.register("analytics/lib/providers/amplitude.js", function(exports, require, module){
 // https://github.com/amplitude/Amplitude-Javascript
@@ -6038,6 +6244,7 @@ module.exports = Provider.extend({
 
 
 
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -6089,6 +6296,10 @@ require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js"
 require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
 
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("jkroso-equals/index.js", "analytics/deps/equals/index.js");
+require.alias("jkroso-equals/index.js", "equals/index.js");
+require.alias("jkroso-type/index.js", "jkroso-equals/deps/type/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
 require.alias("segmentio-after/index.js", "after/index.js");

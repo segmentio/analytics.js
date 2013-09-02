@@ -90,6 +90,7 @@
   },
   "development": {
     "component/assert": "*",
+    "jkroso/equals": "*",
     "ianstormtaylor/sinon": "*",
     "ianstormtaylor/trigger-event": "*",
     "segmentio/when": "*",
@@ -106,6 +107,7 @@
     "lib/utils.js",
     "lib/providers/adroll.js",
     "lib/providers/amplitude.js",
+    "lib/providers/awesm.js",
     "lib/providers/bugherd.js",
     "lib/providers/chartbeat.js",
     "lib/providers/clicktale.js",

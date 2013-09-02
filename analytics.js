@@ -2091,7 +2091,7 @@ module.exports = exports = Analytics;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '0.11.14';
+exports.VERSION = '0.11.15';
 
 
 /**

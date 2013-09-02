@@ -647,7 +647,7 @@ describe('Analytics.js', function () {
     });
 
     it('triggers a track but doesnt load an href on an href with blank target', function () {
-      var link = $('<a href="http://google.com" target="_blank">')[0];
+      var link = $('<a href="/test/server/mock.html" target="_blank">')[0];
       analytics.trackLink(link, 'party');
       trigger(link, 'click');
       expect(spy.calledWith('party')).to.be(true);
@@ -657,7 +657,7 @@ describe('Analytics.js', function () {
     // breaks phantom....
 
     // it('triggers a track but doesnt load an href on a meta link click with an href', function () {
-    //   var link = $('<a href="http://google.com">')[0];
+    //   var link = $('<a href="/test/server/mock.html">')[0];
     //   analytics.trackLink(link, 'party');
     //   trigger(link, 'click', { meta: true });
     //   expect(spy.calledWith('party')).to.be(true);
@@ -675,7 +675,7 @@ describe('Analytics.js', function () {
 
     var spy
       , bind     = require('component-event').bind
-      , template = '<form action="http://google.com" target="_blank"><input type="submit" /></form>';
+      , template = '<form action="/test/server/mock.html" target="_blank"><input type="submit" /></form>';
 
     beforeEach(function () {
       spy = sinon.spy(Provider.prototype, 'track');

@@ -728,15 +728,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -748,7 +748,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -760,7 +762,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -773,12 +775,13 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
+
 var next = require('next-tick');
 
 
@@ -893,7 +896,7 @@ for (var i = 0, type; type = types[i]; i++) exports[type] = generate(type);
  * Add alias for `function` for old browsers.
  */
 
-exports.fn = exports.function;
+exports.fn = exports['function'];
 
 
 /**
@@ -1208,6 +1211,34 @@ module.exports = function canonical () {
     if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
   }
 };
+});
+require.register("segmentio-convert-dates/index.js", function(exports, require, module){
+
+var is = require('is');
+
+
+/**
+ * Expose `convertDates`.
+ */
+
+module.exports = convertDates;
+
+
+/**
+ * Recursively convert an `obj`'s dates to new values.
+ *
+ * @param {Object} obj
+ * @param {Function} convert
+ * @return {Object}
+ */
+
+function convertDates (obj, convert) {
+  for (var key in obj) {
+    var val = obj[key];
+    if (is.date(val)) obj[key] = convert(val);
+    if (is.object(val)) convertDates(val, convert);
+  }
+}
 });
 require.register("segmentio-extend/index.js", function(exports, require, module){
 
@@ -4422,94 +4453,126 @@ Inspectlet.prototype.initialize = function (options, ready) {
 };
 });
 require.register("analytics/lib/providers/intercom.js", function(exports, require, module){
-// http://docs.intercom.io/
-// http://docs.intercom.io/#IntercomJS
 
-var Provider = require('../provider')
-  , extend   = require('extend')
-  , load     = require('load-script')
-  , isEmail  = require('is-email');
+var alias = require('alias')
+  , convertDates = require('convert-dates')
+  , integration = require('../integration')
+  , each = require('each')
+  , is = require('is')
+  , isEmail = require('is-email')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `Intercom` integration.
+ *
+ * http://docs.intercom.io/
+ * http://docs.intercom.io/#IntercomJS
+ */
 
-  name : 'Intercom',
+var Intercom = module.exports = integration('Intercom');
 
-  // Whether Intercom has already been booted or not. Intercom becomes booted
-  // after Intercom('boot', ...) has been called on the first identify.
-  booted : false,
 
-  key : 'appId',
+/**
+ * Required key.
+ */
 
-  defaults : {
-    // Intercom's required key.
-    appId : null,
-    // An optional setting to display the Intercom inbox widget.
-    activator : null,
-    // Whether to show the count of messages for the inbox widget.
-    counter : true
-  },
+Intercom.prototype.key = 'appId';
 
-  initialize : function (options, ready) {
-    load('https://static.intercomcdn.com/intercom.v1.js', ready);
-  },
 
-  identify : function (userId, traits, options) {
-    // Don't do anything if we just have traits the first time.
-    if (!this.booted && !userId) return;
+/**
+ * Default options.
+ */
 
-    // Intercom specific settings. BACKWARDS COMPATIBILITY: we need to check for
-    // the lowercase variant as well.
-    options || (options = {});
-    var Intercom = options.Intercom || options.intercom || {};
-    traits.increments = Intercom.increments;
-    traits.user_hash = Intercom.userHash || Intercom.user_hash;
+Intercom.prototype.defaults = {
+  // an optional css selector to use for the intercom inbox widget button
+  activator: '',
+  // your intercom app id (required)
+  appId: '',
+  // whether to show the count of messages on the intercom inbox widget
+  counter: true,
+  // whether or not to show the intercom inbox widget
+  inbox: false
+};
 
-    // They need `created_at` as a Unix timestamp (seconds).
-    if (traits.created) {
-      traits.created_at = Math.floor(traits.created/1000);
-      delete traits.created;
-    }
 
-    // Convert a `company`'s `created` date.
-    if (traits.company && traits.company.created) {
-      traits.company.created_at = Math.floor(traits.company.created/1000);
-      delete traits.company.created;
-    }
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
 
-    // Optionally add the inbox widget.
-    if (this.options.activator) {
-      traits.widget = {
-        activator   : this.options.activator,
-        use_counter : this.options.counter
-      };
-    }
+Intercom.prototype.initialize = function (options, ready) {
+  load('https://static.intercomcdn.com/intercom.v1.js', ready);
+};
 
-    // If this is the first time we've identified, `boot` instead of `update`
-    // and add our one-time boot settings.
-    if (this.booted) {
-      window.Intercom('update', traits);
-    } else {
-      extend(traits, {
-        app_id  : this.options.appId,
-        user_id : userId
-      });
-      window.Intercom('boot', traits);
-    }
 
-    // Set the booted state, so that we know to call 'update' next time.
-    this.booted = true;
-  },
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
 
-  // Intercom doesn't have a separate `group` method, but they take a
-  // `companies` trait for the user.
-  group : function (groupId, properties, options) {
-    properties.id = groupId;
-    window.Intercom('update', { company : properties });
+Intercom.prototype.identify = function (id, traits, options) {
+  var method = this._id !== id ? 'boot': 'update';
+  this._id = id; // cache for next time
+
+  // required options
+  traits.app_id = this.options.appId;
+  if (id) traits.user_id = id;
+  if (isEmail(id) && !traits.email) traits.email = id;
+  if (!traits.user_id && !traits.email) return;
+
+  // handle dates
+  convertDates(traits, convertDate);
+  alias(traits, { created: 'created_at'});
+  if (traits.company) alias(traits.company, { created: 'created_at' });
+
+  // handle options
+  options || (options = {});
+  var Intercom = options.Intercom || options.intercom || {};
+  if (Intercom.increments) traits.increments = Intercom.increments;
+  if (Intercom.userHash) traits.user_hash = Intercom.userHash;
+  if (Intercom.user_hash) traits.user_hash = Intercom.user_hash;
+    // TODO: make this activator's default and run a migration
+  if (this.options.inbox || this.options.activator) {
+    traits.widget = {
+      activator: this.options.activator || '#Intercom',
+      use_counter: this.options.counter
+    };
   }
 
-});
+  window.Intercom(method, traits);
+};
 
+
+/**
+ * Group.
+ *
+ * @param {String} id
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Intercom.prototype.group = function (id, properties, options) {
+  properties.id = id;
+  window.Intercom('update', { company: properties });
+};
+
+
+/**
+ * Convert a date to Intercom's format.
+ *
+ * @param {Date} date
+ * @return {Number}
+ */
+
+function convertDate (date) {
+  return Math.floor(date/1000);
+}
 });
 require.register("analytics/lib/providers/keen-io.js", function(exports, require, module){
 
@@ -6164,6 +6227,7 @@ module.exports = Provider.extend({
 
 
 
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -6232,6 +6296,13 @@ require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js"
 require.alias("segmentio-bind-all/index.js", "segmentio-bind-all/index.js");
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 require.alias("segmentio-canonical/index.js", "canonical/index.js");
+
+require.alias("segmentio-convert-dates/index.js", "analytics/deps/convert-dates/index.js");
+require.alias("segmentio-convert-dates/index.js", "convert-dates/index.js");
+require.alias("ianstormtaylor-is/index.js", "segmentio-convert-dates/deps/is/index.js");
+require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
+
+require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
 require.alias("segmentio-extend/index.js", "extend/index.js");

@@ -7,7 +7,7 @@ var analytics = window.analytics || require('analytics')
   , when = require('when');
 
 var settings = {
-  appId: '5914a4049a0b4ff8078fde2af2e968e2b29c4d5c'
+  appId: '76e6ba271646e2e7a237532c9f1ef7a549f7e997'
 };
 
 before(function (done) {
@@ -15,6 +15,8 @@ before(function (done) {
   this.spy = sinon.spy();
   analytics.ready(this.spy);
   analytics.initialize({ Intercom: settings });
+  this.integration = analytics._providers[0];
+  this.options = this.integration.options;
   when(function () { return window.Intercom; }, done);
 });
 
@@ -24,8 +26,7 @@ describe('#initialize', function () {
   });
 
   it('should store options with defaults', function () {
-    var options = analytics._providers[0].options;
-    assert(options.appId == settings.appId);
+    assert(this.options.appId == settings.appId);
   });
 });
 
@@ -42,11 +43,7 @@ describe('#identify', function () {
 
   afterEach(function () {
     this.stub.restore();
-  });
-
-  it('should do nothing without an email', function () {
-    analytics.identify(this.id);
-    assert(!this.stub.called);
+    this.options.inbox = false;
   });
 
   it('should call boot the first time and update the second', function () {
@@ -110,6 +107,19 @@ describe('#identify', function () {
       app_id: settings.appId,
       user_id: this.id,
       increments: { number: 42 }
+    }));
+  });
+
+  it('should send inbox settings', function () {
+    this.options.inbox = true;
+    analytics.identify(this.id);
+    assert(this.stub.calledWith('boot', {
+      app_id: settings.appId,
+      user_id: this.id,
+      widget: {
+        activator: '#Intercom',
+        use_counter: true
+      }
     }));
   });
 });

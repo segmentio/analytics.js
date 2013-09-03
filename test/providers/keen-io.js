@@ -1,152 +1,113 @@
+
 describe('Keen IO', function () {
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , equal = require('equals')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  projectId: '510c82172975160344000002',
+  writeKey: '1ab6cabb3be05b956d1044c67e02ae6eb2952e6801cedd8303608327c45a1308ecf5ae294e4c45c566678e6f3eefea3e685b8a789e032050b6fb228c72e22b210115f2dbd50caed0454285f37ecec4cda52832e8792d766817e0d11e7f935b92aee73c0c62770f528b8b65d5b7de24a4'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ 'Keen IO': settings });
+  when(function () { return window.Keen.Base64; }, done);
+});
 
-    this.timeout(10000);
-
-    it('should call ready and load library', function (done) {
-      expect(window.Keen).not.to.exist;
-
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'Keen IO' : test['Keen IO'] });
-      expect(window.Keen).not.to.be(undefined);
-      expect(window.Keen.setGlobalProperties).not.to.be(undefined);
-      expect(window.Keen.addEvent).not.to.be(undefined);
-
-      tick(function () {
-        expect(spy.called).to.be(true);
-      });
-
-      // When the Keen IO library loads, it creates some keys we can test.
-      expect(window.Keen.Base64).to.be(undefined);
-      var interval = setInterval(function () {
-        if (!window.Keen.Base64) return;
-        expect(window.Keen.Base64).not.to.be(undefined);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      analytics.initialize({ 'Keen IO' : test['Keen IO'] });
-      expect(analytics._providers[0].options.projectId).to.equal(test['Keen IO'].projectId);
-      expect(analytics._providers[0].options.writeKey).to.equal(test['Keen IO'].writeKey);
-    });
-
-    it('shouldnt track an initial pageview by default', function () {
-      var provider = analytics._providers[0]
-        , spy      = sinon.spy(provider, 'pageview');
-
-      analytics.initialize({ 'Keen IO' : test['Keen IO'] });
-      expect(spy.called).to.be(false);
-
-      spy.restore();
-    });
-
-    it('should track an initial pageview with initialPageview set', function () {
-      var extend  = require('segmentio-extend')
-        , spy     = sinon.spy(window.Keen, 'addEvent')
-        , options = extend({}, test['Keen IO'], {
-            pageview        : true,
-            initialPageview : true
-          });
-
-      analytics.initialize({ 'Keen IO' : options });
-      expect(spy.called).to.be(true);
-
-      spy.restore();
-      analytics._providers[0].options.pageview = false;
-      analytics._providers[0].options.initialPageview = false;
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-
-  describe('identify', function () {
-
-    before(analytics._user.clear);
-
-    it('should call setGlobalProperties', function () {
-      // Reset internal `userId` state from any previous identifies.
-      analytics.userId = null;
-
-      // a custom checker for code re-use. just makes sure that the function
-      // passed as the globalProperties, when invoked, returns sane values.
-      var customChecker = function (expectedUserId, expectedTraits) {
-        expect(spy.calledWithMatch(function (value) {
-          if (typeof value === "function") {
-            var result = value("some event name");
-            expect(result.user.userId).to.be(expectedUserId);
-            expect(result.user.traits).to.eql(expectedTraits);
-            return true;
-          }
-          return false;
-        })).to.be(true);
-      };
-
-      var spy = sinon.spy(window.Keen, 'setGlobalProperties');
-      analytics.identify();
-      customChecker(undefined, {});
-
-      spy.reset();
-      analytics.identify(test.userId);
-      customChecker(test.userId, {});
-
-      spy.reset();
-      analytics.identify(test.userId, test.traits);
-      customChecker(test.userId, test.traits);
-
-      spy.restore();
-    });
-
+  it('should store options with defaults', function () {
+    var options = analytics._providers[0].options;
+    assert(options.projectId == settings.projectId);
+    assert(options.writeKey == settings.writeKey);
+    assert(options.readKey === '');
+    assert(options.pageview === true);
+    assert(options.initialPageview === true);
   });
 
+  it('should pass options to keen', function () {
+    assert(settings.projectId == window.Keen.client.projectId);
+    assert(settings.writeKey == window.Keen.client.writeKey);
+  });
+});
 
-  describe('track', function () {
-
-    // Keen IO adds custom properties, so we need to have a loose match.
-    it('calls addEvent on track', function () {
-      var spy = sinon.spy(window.Keen, 'addEvent');
-      analytics.track(test.event, test.properties);
-      expect(spy.calledWithMatch(test.event, test.properties)).to.be(true);
-      spy.restore();
-    });
-
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
   });
 
-
-  describe('pageview', function () {
-
-    it('shouldnt track pageviews by default', function () {
-      var provider = analytics._providers[0]
-        , spy      = sinon.spy(provider, 'track');
-
-      analytics.pageview();
-      expect(spy.called).to.be(false);
-
-      spy.restore();
-    });
-
-    it('should track pageviews with the pageview option set', function () {
-      var provider = analytics._providers[0]
-        , spy      = sinon.spy(provider, 'track');
-
-      provider.options.pageview = true;
-      analytics.pageview(test.url);
-      expect(spy.calledWith('Loaded a Page', {
-        url  : test.url,
-        name : document.title
-      })).to.be(true);
-
-      spy.restore();
-      provider.options.pageview = false;
-    });
-
+  it('should pass an id', function () {
+    analytics.identify('id');
+    var props = window.Keen.client.globalProperties();
+    assert(equal(props, { user: { userId: 'id', traits: {} }}));
   });
+
+  it('should pass a traits', function () {
+    analytics.identify({ trait: true });
+    var props = window.Keen.client.globalProperties();
+    assert(equal(props, { user: { traits: { trait: true }}}));
+  });
+
+  it('should pass an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    var props = window.Keen.client.globalProperties();
+    assert(equal(props, { user: { userId: 'id', traits: { trait: true }}}));
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(window.Keen, 'addEvent');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should pass an event', function () {
+    analytics.track('event');
+    assert(this.spy.calledWith('event'));
+  });
+
+  it('should pass an event and properties', function () {
+    analytics.track('event', { property: true });
+    assert(this.spy.calledWith('event', { property: true }));
+  });
+});
+
+describe('#pageview', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(window.Keen, 'addEvent');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should trigger a "Loaded a Page" event with a default url', function () {
+    analytics.pageview();
+    assert(this.spy.calledWith('Loaded a Page', {
+      url: document.location.href,
+      name: document.title
+    }));
+  });
+
+  it('should pass a url', function () {
+    analytics.pageview('/path');
+    assert(this.spy.calledWith('Loaded a Page', {
+      url: '/path',
+      name: document.title
+    }));
+  });
+});
 
 });

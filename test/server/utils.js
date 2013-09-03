@@ -73,10 +73,6 @@
         activator : '#someElement',
         counter   : true
       },
-      'Keen IO' : {
-        projectId : '510c82172975160344000002',
-        writeKey  : '1ab6cabb3be05b956d1044c67e02ae6eb2952e6801cedd8303608327c45a1308ecf5ae294e4c45c566678e6f3eefea3e685b8a789e032050b6fb228c72e22b210115f2dbd50caed0454285f37ecec4cda52832e8792d766817e0d11e7f935b92aee73c0c62770f528b8b65d5b7de24a4'
-      },
       'KISSmetrics' : '67f57ae9d61a6981fa07d141bec8c6c37e8b88c7',
       'Klaviyo' : 'x',
       'LeadLander' : 'x',

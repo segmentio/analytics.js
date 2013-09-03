@@ -75,6 +75,7 @@
     "segmentio/alias": "0.0.1",
     "segmentio/bind-all": "0.0.1",
     "segmentio/canonical": "0.0.1",
+    "segmentio/convert-dates": "0.0.1",
     "segmentio/extend": "0.0.1",
     "segmentio/is-email": "0.1.1",
     "segmentio/is-meta": "0.0.1",
@@ -91,7 +92,7 @@
     "yields/slug": "1.1.0"
   },
   "development": {
-    "component/assert": "*",
+    "ianstormtaylor/assert": "*",
     "ianstormtaylor/sinon": "*",
     "ianstormtaylor/trigger-event": "*",
     "segmentio/when": "*",

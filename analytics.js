@@ -393,13 +393,121 @@ function parse(str) {
 }
 
 });
+require.register("component-to-function/index.js", function(exports, require, module){
+
+/**
+ * Expose `toFunction()`.
+ */
+
+module.exports = toFunction;
+
+/**
+ * Convert `obj` to a `Function`.
+ *
+ * @param {Mixed} obj
+ * @return {Function}
+ * @api private
+ */
+
+function toFunction(obj) {
+  switch ({}.toString.call(obj)) {
+    case '[object Object]':
+      return objectToFunction(obj);
+    case '[object Function]':
+      return obj;
+    case '[object String]':
+      return stringToFunction(obj);
+    case '[object RegExp]':
+      return regexpToFunction(obj);
+    default:
+      return defaultToFunction(obj);
+  }
+}
+
+/**
+ * Default to strict equality.
+ *
+ * @param {Mixed} val
+ * @return {Function}
+ * @api private
+ */
+
+function defaultToFunction(val) {
+  return function(obj){
+    return val === obj;
+  }
+}
+
+/**
+ * Convert `re` to a function.
+ *
+ * @param {RegExp} re
+ * @return {Function}
+ * @api private
+ */
+
+function regexpToFunction(re) {
+  return function(obj){
+    return re.test(obj);
+  }
+}
+
+/**
+ * Convert property `str` to a function.
+ *
+ * @param {String} str
+ * @return {Function}
+ * @api private
+ */
+
+function stringToFunction(str) {
+  // immediate such as "> 20"
+  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
+
+  // properties such as "name.first" or "age > 18"
+  return new Function('_', 'return _.' + str);
+}
+
+/**
+ * Convert `object` to a function.
+ *
+ * @param {Object} object
+ * @return {Function}
+ * @api private
+ */
+
+function objectToFunction(obj) {
+  var match = {}
+  for (var key in obj) {
+    match[key] = typeof obj[key] === 'string'
+      ? defaultToFunction(obj[key])
+      : toFunction(obj[key])
+  }
+  return function(val){
+    if (typeof val !== 'object') return false;
+    for (var key in match) {
+      if (!(key in val)) return false;
+      if (!match[key](val[key])) return false;
+    }
+    return true;
+  }
+}
+
+});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var type = require('type');
+var toFunction = require('to-function');
+var type;
+
+try {
+  type = require('type-component');
+} catch (e) {
+  type = require('type');
+}
 
 /**
  * HOP reference.
@@ -416,6 +524,7 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
+  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -470,6 +579,7 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
+
 });
 require.register("component-event/index.js", function(exports, require, module){
 
@@ -728,15 +838,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -748,9 +858,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -762,7 +870,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -775,13 +883,12 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
-
 var next = require('next-tick');
 
 
@@ -2279,7 +2386,7 @@ module.exports = exports = Analytics;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '0.11.15';
+exports.VERSION = '0.11.16';
 
 
 /**
@@ -4515,74 +4622,104 @@ module.exports = Provider.extend({
 
 });
 require.register("analytics/lib/providers/keen-io.js", function(exports, require, module){
-// https://keen.io/docs/
 
-var Provider = require('../provider')
-  , load     = require('load-script');
+var integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `Keen IO` integration.
+ */
 
-  name : 'Keen IO',
+var Keen = module.exports = integration('Keen IO');
 
-  defaults : {
-    // The Project ID is **required**.
-    projectId : null,
-    // The Write Key is **required** to send events.
-    writeKey : null,
-    // The Read Key is optional, only if you want to "do analysis".
-    readKey : null,
-    // Whether or not to pass pageviews on to Keen IO.
-    pageview : true,
-    // Whether or not to track an initial pageview on `initialize`.
-    initialPageview : true
-  },
 
-  initialize : function (options, ready) {
-    window.Keen = window.Keen||{configure:function(e){this._cf=e},addEvent:function(e,t,n,i){this._eq=this._eq||[],this._eq.push([e,t,n,i])},setGlobalProperties:function(e){this._gp=e},onChartsReady:function(e){this._ocrq=this._ocrq||[],this._ocrq.push(e)}};
-    window.Keen.configure({
-      projectId : options.projectId,
-      writeKey  : options.writeKey,
-      readKey   : options.readKey
-    });
+/**
+ * Default options.
+ */
 
-    load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.1.0-min.js');
+Keen.prototype.defaults = {
+  // your keen io project id (required)
+  projectId: '',
+  // your keen io write key (required)
+  writeKey: '',
+  // your keen io read key
+  readKey: '',
+  // whether or not to send `pageview` calls on to keen io
+  pageview: true,
+  // whether or not to track an initial pageview on `initialize`
+  initialPageview: true
+};
 
-    if (options.initialPageview) this.pageview();
 
-    // Keen IO defines all their functions in the snippet, so they're ready.
-    ready();
-  },
+/**
+ * Initialize.
+ *
+ * https://keen.io/docs/
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
 
-  identify : function (userId, traits) {
-    // Use Keen IO global properties to include `userId` and `traits` on
-    // every event sent to Keen IO.
-    var globalUserProps = {};
-    if (userId) globalUserProps.userId = userId;
-    if (traits) globalUserProps.traits = traits;
-    if (userId || traits) {
-      window.Keen.setGlobalProperties(function(eventCollection) {
-        return { user: globalUserProps };
-      });
-    }
-  },
+Keen.prototype.initialize = function (options, ready) {
+  window.Keen = window.Keen||{configure:function(e){this._cf=e},addEvent:function(e,t,n,i){this._eq=this._eq||[],this._eq.push([e,t,n,i])},setGlobalProperties:function(e){this._gp=e},onChartsReady:function(e){this._ocrq=this._ocrq||[],this._ocrq.push(e)}};
+  window.Keen.configure({
+    projectId: options.projectId,
+    writeKey: options.writeKey,
+    readKey: options.readKey
+  });
+  ready();
 
-  track : function (event, properties) {
-    window.Keen.addEvent(event, properties);
-  },
+  if (options.initialPageview) this.pageview();
+  load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.1.0-min.js');
+};
 
-  pageview : function (url) {
-    if (!this.options.pageview) return;
 
-    var properties = {
-      url  : url || document.location.href,
-      name : document.title
-    };
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
 
-    this.track('Loaded a Page', properties);
-  }
+Keen.prototype.identify = function (id, traits, options) {
+  var globals = {};
+  if (id) globals.userId = id;
+  if (traits) globals.traits = traits;
+  window.Keen.setGlobalProperties(function() {
+    return { user: globals };
+  });
+};
 
-});
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Keen.prototype.track = function (event, properties, options) {
+  window.Keen.addEvent(event, properties);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+Keen.prototype.pageview = function (url) {
+  if (!this.options.pageview) return;
+  var properties = {
+    url: url || document.location.href,
+    name: document.title
+  };
+  this.track('Loaded a Page', properties);
+};
 });
 require.register("analytics/lib/providers/kissmetrics.js", function(exports, require, module){
 // http://support.kissmetrics.com/apis/javascript
@@ -6096,7 +6233,8 @@ module.exports = Provider.extend({
 
   pageview : function (url, options) {
     window.woopra.track('pv', {
-      url: url
+      url: url || window.location.pathname,
+      title: document.title
     });
   }
 
@@ -6147,6 +6285,8 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
@@ -6181,6 +6321,8 @@ require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-emp
 require.alias("ianstormtaylor-map/index.js", "analytics/deps/map/index.js");
 require.alias("ianstormtaylor-map/index.js", "map/index.js");
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("jkroso-equals/index.js", "analytics/deps/equals/index.js");
@@ -6234,6 +6376,8 @@ require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-emp
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-on-error/index.js", "analytics/deps/on-error/index.js");

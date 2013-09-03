@@ -1,3 +1,7 @@
+0.11.16 - September 3, 2013
+---------------------------
+* Woopra: fixed default pageview properties
+
 0.11.15 - September 2, 2013
 ---------------------------
 * pinned all dependencies

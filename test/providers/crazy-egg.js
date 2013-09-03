@@ -1,4 +1,4 @@
-describe('CrazyEgg', function () {
+describe('Crazy Egg', function () {
 
   var analytics = require('analytics');
 
@@ -12,7 +12,7 @@ describe('CrazyEgg', function () {
 
       var spy = sinon.spy();
       analytics.ready(spy);
-      analytics.initialize({ 'CrazyEgg' : test['CrazyEgg'] });
+      analytics.initialize({ 'Crazy Egg' : test['CrazyEgg'] });
 
       // When the library loads, `CE2` is created.
       // var interval = setInterval(function () {
@@ -26,7 +26,7 @@ describe('CrazyEgg', function () {
     });
 
     it('should store options', function () {
-      analytics.initialize({ 'CrazyEgg' : test['CrazyEgg'] });
+      analytics.initialize({ 'Crazy Egg' : test['CrazyEgg'] });
       expect(analytics._providers[0].options.accountNumber).to.equal('00138301');
     });
 

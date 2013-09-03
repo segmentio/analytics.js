@@ -12,7 +12,7 @@ it('should be a list of all our providers', function () {
   assert(Providers['Chartbeat']);
   assert(Providers['ClickTale']);
   assert(Providers['comScore']);
-  assert(Providers['CrazyEgg']);
+  assert(Providers['Crazy Egg']);
   assert(Providers['Customer.io']);
   assert(Providers['Errorception']);
   assert(Providers['FoxMetrics']);

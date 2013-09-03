@@ -1,119 +1,142 @@
+
 describe('Intercom', function () {
 
-  var analytics = require('analytics');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
-  describe('initialize', function () {
-    this.timeout(10000);
+var settings = {
+  appId: '5914a4049a0b4ff8078fde2af2e968e2b29c4d5c'
+};
 
-    it('should load library and call ready', function (done) {
-      var spy = sinon.spy();
-      analytics.ready(spy);
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ Intercom: settings });
+  when(function () { return window.Intercom; }, done);
+});
 
-      expect(window.intercomSettings).to.be(undefined);
-      expect(window.Intercom).to.be(undefined);
-
-      analytics.initialize({ 'Intercom' : test['Intercom'] });
-
-      // Once the Intercom library comes back, `Intercom` will exist.
-      var interval = setInterval(function () {
-        if (!window.Intercom) return;
-        expect(window.Intercom).not.to.be(undefined);
-        expect(spy.called).to.be(true);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      expect(analytics._providers[0].options.appId).to.equal(test['Intercom'].appId);
-      expect(analytics._providers[0].options.activator).to.equal(test['Intercom'].activator);
-      expect(analytics._providers[0].options.counter).to.equal(test['Intercom'].counter);
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
+  it('should store options with defaults', function () {
+    var options = analytics._providers[0].options;
+    assert(options.appId == settings.appId);
+  });
+});
 
-  describe('identify', function () {
+describe('#identify', function () {
+  before(function () {
+    this.id = 0;
+  });
 
-    var stub;
-    beforeEach(function () { stub = sinon.stub(window, 'Intercom'); });
-    afterEach(function () { stub.restore(); });
+  beforeEach(function () {
+    analytics._user.clear();
+    this.id++;
+    this.stub = sinon.stub(window, 'Intercom');
+  });
 
-    var extend = require('extend');
+  afterEach(function () {
+    this.stub.restore();
+  });
 
-    // Augment `traits` to test for Intercom's special `company` property.
-    var traits = extend({}, test.traits, {
-      company : {
-        created : new Date(),
-        name : 'Segment.io',
-        id : '123'
+  it('should do nothing without an email', function () {
+    analytics.identify(this.id);
+    assert(!this.stub.called);
+  });
+
+  it('should call boot the first time and update the second', function () {
+    analytics.identify(this.id, { email: 'email@example.com' });
+    assert(this.stub.calledWith('boot', {
+      app_id: settings.appId,
+      email: 'email@example.com',
+      user_id: this.id
+    }));
+    analytics.identify(this.id);
+    assert(this.stub.calledWith('update', {
+      app_id: settings.appId,
+      email: 'email@example.com',
+      user_id: this.id
+    }));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify(this.id, { email: 'email@example.com' });
+    assert(this.stub.calledWith('boot', {
+      app_id: settings.appId,
+      email: 'email@example.com',
+      user_id: this.id
+    }));
+  });
+
+  it('should convert dates', function () {
+    var date = new Date();
+    analytics.identify(this.id, {
+      created: date,
+      company: { created: date }
+    });
+    assert(this.stub.calledWith('boot', {
+      app_id: settings.appId,
+      user_id: this.id,
+      created_at: Math.floor(date/1000),
+      company: { created_at: Math.floor(date/1000) }
+    }));
+  });
+
+  it('should allow passing a user hash', function () {
+    analytics.identify(this.id, {}, {
+      Intercom: {
+        userHash: 'x'
       }
     });
+    assert(this.stub.calledWith('boot', {
+      app_id: settings.appId,
+      user_id: this.id,
+      user_hash: 'x'
+    }));
+  });
 
-    // These are the settings that we expect to be sent to Intercom.
-    var settings = {
-      company : {
-        created_at : Math.floor(traits.company.created/1000),
-        name : 'Segment.io',
-        id : '123'
-      },
-      created_at : Math.floor(traits.created/1000),
-      email : traits.email,
-      name : traits.name,
-      increments : undefined,
-      user_hash : undefined,
-      widget : {
-        activator : test['Intercom'].activator,
-        use_counter : test['Intercom'].counter
+  it('should allow passing increments', function () {
+    analytics.identify(this.id, {}, {
+      Intercom: {
+        increments: { number: 42 }
       }
-    };
-
-    // When booted, we also expect these settings to be sent to Intercom.
-    var bootSettings = {
-      app_id : test['Intercom'].appId,
-      user_id : test.userId
-    };
-
-    it('should do nothing with no userId', function () {
-      analytics._user.clear();
-      analytics.identify(traits);
-      expect(stub.called).to.be(false);
     });
+    assert(this.stub.calledWith('boot', {
+      app_id: settings.appId,
+      user_id: this.id,
+      increments: { number: 42 }
+    }));
+  });
+});
 
-    it('should call boot the first time and update the second', function () {
-      analytics.identify(test.userId, traits);
-      expect(stub.calledWith('boot', extend({}, settings, bootSettings))).to.be(true);
-      stub.reset();
-      analytics.identify(test.userId, traits);
-      expect(stub.calledWith('update', settings)).to.be(true);
-    });
-
-    it('should allow adding context variables to settings', function () {
-      var userHash = 'sdfj38fj382r9j29dj29dj29dj29dj2d';
-      analytics.identify(test.userId, traits, {
-        Intercom: { userHash: userHash }
-      });
-      expect(stub.calledWith('update', extend(settings, { user_hash: userHash }))).to.be(true);
-    });
-
+describe('group', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window, 'Intercom');
   });
 
-
-  describe('group', function () {
-    var stub;
-    beforeEach(function () { stub = sinon.stub(window, 'Intercom'); });
-    afterEach(function () { stub.restore(); });
-
-    it('should push call "update" with the "company"', function () {
-      analytics.group('group', { name : 'Group' });
-      expect(stub.calledWith('update', {
-        company : {
-          id : 'group',
-          name : 'Group'
-        }
-      })).to.be(true);
-    });
-
+  afterEach(function () {
+    this.stub.restore();
   });
+
+  it('should send an id', function () {
+    analytics.group('id');
+    assert(this.stub.calledWith('update', { company: { id: 'id' }}));
+  });
+
+  it('should send an id and properties', function () {
+    analytics.group('id', { name: 'Name' });
+    assert(this.stub.calledWith('update', {
+      company: {
+        id: 'id',
+        name: 'Name'
+      }
+    }));
+  });
+});
 
 });

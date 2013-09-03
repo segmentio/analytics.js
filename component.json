@@ -91,7 +91,7 @@
     "yields/slug": "1.1.0"
   },
   "development": {
-    "component/assert": "*",
+    "ianstormtaylor/assert": "*",
     "ianstormtaylor/sinon": "*",
     "ianstormtaylor/trigger-event": "*",
     "segmentio/when": "*",

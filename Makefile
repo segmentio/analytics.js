@@ -32,7 +32,7 @@ release: clean build analytics.js server
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:$(PORT)/min
 	make kill
 
-server:
+server: kill
 	node test/server/index.js &
 
 kill:

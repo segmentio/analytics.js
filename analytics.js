@@ -728,15 +728,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -748,9 +748,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -762,7 +760,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -775,13 +773,12 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
-
 var next = require('next-tick');
 
 
@@ -896,7 +893,7 @@ for (var i = 0, type; type = types[i]; i++) exports[type] = generate(type);
  * Add alias for `function` for old browsers.
  */
 
-exports.fn = exports['function'];
+exports.fn = exports.function;
 
 
 /**
@@ -4515,74 +4512,106 @@ module.exports = Provider.extend({
 
 });
 require.register("analytics/lib/providers/keen-io.js", function(exports, require, module){
-// https://keen.io/docs/
 
-var Provider = require('../provider')
-  , load     = require('load-script');
+var integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `Keen IO` integration.
+ */
 
-  name : 'Keen IO',
+var Keen = module.exports = integration('Keen IO');
 
-  defaults : {
-    // The Project ID is **required**.
-    projectId : null,
-    // The Write Key is **required** to send events.
-    writeKey : null,
-    // The Read Key is optional, only if you want to "do analysis".
-    readKey : null,
-    // Whether or not to pass pageviews on to Keen IO.
-    pageview : true,
-    // Whether or not to track an initial pageview on `initialize`.
-    initialPageview : true
-  },
 
-  initialize : function (options, ready) {
-    window.Keen = window.Keen||{configure:function(e){this._cf=e},addEvent:function(e,t,n,i){this._eq=this._eq||[],this._eq.push([e,t,n,i])},setGlobalProperties:function(e){this._gp=e},onChartsReady:function(e){this._ocrq=this._ocrq||[],this._ocrq.push(e)}};
-    window.Keen.configure({
-      projectId : options.projectId,
-      writeKey  : options.writeKey,
-      readKey   : options.readKey
-    });
+/**
+ * Default options.
+ */
 
-    load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.1.0-min.js');
+Keen.prototype.defaults = {
+  // your keen io project id (required)
+  projectId: '',
+  // your keen io write key (required)
+  writeKey: '',
+  // your keen io read key
+  readKey: '',
+  // whether or not to send `pageview` calls on to keen io
+  pageview: true,
+  // whether or not to track an initial pageview on `initialize`
+  initialPageview: true
+};
 
-    if (options.initialPageview) this.pageview();
 
-    // Keen IO defines all their functions in the snippet, so they're ready.
-    ready();
-  },
+/**
+ * Initialize.
+ *
+ * https://keen.io/docs/
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
 
-  identify : function (userId, traits) {
-    // Use Keen IO global properties to include `userId` and `traits` on
-    // every event sent to Keen IO.
-    var globalUserProps = {};
-    if (userId) globalUserProps.userId = userId;
-    if (traits) globalUserProps.traits = traits;
-    if (userId || traits) {
-      window.Keen.setGlobalProperties(function(eventCollection) {
-        return { user: globalUserProps };
-      });
-    }
-  },
+Keen.prototype.initialize = function (options, ready) {
+  window.Keen = window.Keen||{configure:function(e){this._cf=e},addEvent:function(e,t,n,i){this._eq=this._eq||[],this._eq.push([e,t,n,i])},setGlobalProperties:function(e){this._gp=e},onChartsReady:function(e){this._ocrq=this._ocrq||[],this._ocrq.push(e)}};
+  window.Keen.configure({
+    projectId: options.projectId,
+    writeKey: options.writeKey,
+    readKey: options.readKey
+  });
+  ready();
 
-  track : function (event, properties) {
-    window.Keen.addEvent(event, properties);
-  },
+  if (options.initialPageview) this.pageview();
+  load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.1.0-min.js');
+};
 
-  pageview : function (url) {
-    if (!this.options.pageview) return;
 
-    var properties = {
-      url  : url || document.location.href,
-      name : document.title
-    };
+/**
+ * Identify.
+ *
+ * TODO: migrate from old `userId` to simpler `id`
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
 
-    this.track('Loaded a Page', properties);
-  }
+Keen.prototype.identify = function (id, traits, options) {
+  var user = {};
+  if (id) user.userId = id;
+  if (traits) user.traits = traits;
+  window.Keen.setGlobalProperties(function() {
+    return { user: user };
+  });
+};
 
-});
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Keen.prototype.track = function (event, properties, options) {
+  window.Keen.addEvent(event, properties);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+Keen.prototype.pageview = function (url) {
+  if (!this.options.pageview) return;
+  var properties = {
+    url: url || document.location.href,
+    name: document.title
+  };
+  this.track('Loaded a Page', properties);
+};
 });
 require.register("analytics/lib/providers/kissmetrics.js", function(exports, require, module){
 // http://support.kissmetrics.com/apis/javascript

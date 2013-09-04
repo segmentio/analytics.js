@@ -30,11 +30,6 @@
       logProperties : {
         date : new Date()
       },
-      'BugHerd' : '7917d741-16cc-4c2b-bb1a-bdd903d53d72',
-      'Chartbeat' : {
-        uid    : 'x',
-        domain : 'example.com'
-      },
       'Clicky' : 'x',
       'ClickTale' : {
         projectId      : '19370',

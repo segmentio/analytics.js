@@ -31,7 +31,7 @@ describe('Analytics.js', function () {
     it('stores enabled providers', function () {
       analytics._providers = [];
       analytics.initialize(options);
-      expect(analytics._providers[0] instanceof Provider).to.be(true);
+      expect(analytics._providers.Test instanceof Provider).to.be(true);
     });
 
     it('doesnt error on unknown provider', function () {
@@ -45,13 +45,6 @@ describe('Analytics.js', function () {
       analytics.initialize(options);
       expect(spy.calledWith(sinon.match({ key : 'x' }))).to.be(true);
       spy.restore();
-    });
-
-    it('resets enabled providers', function () {
-      analytics.initialize(options);
-      expect(analytics._providers.length).to.equal(1);
-      analytics.initialize(options);
-      expect(analytics._providers.length).to.equal(1);
     });
   });
 

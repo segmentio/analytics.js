@@ -15,6 +15,7 @@ it('should be a list of all our providers', function () {
   assert(Providers['CrazyEgg']);
   assert(Providers['Customer.io']);
   assert(Providers['Errorception']);
+  assert(Providers['Evergage']);
   assert(Providers['FoxMetrics']);
   assert(Providers['Gauges']);
   assert(Providers['Get Satisfaction']);

@@ -48,6 +48,22 @@
       'CrazyEgg' : '00138301',
       'Customer.io' : 'x',
       'Errorception' : '506b76b52f52c3f662000140',
+      'Evergage' : {
+        accounts : {
+          anonymousEnabled  : 'segio_b2b_anon',
+          anonymousDisabled : 'segio_b2b_named'
+        },
+        noAccounts : {
+          anonymousEnabled  : 'segio_b2c_anon',
+          anonymousDisabled : 'segio_b2c_named'
+        },
+        global : {
+          account           : 'segmentiotest',
+          minified          : false,
+          loggingLevel      : 'DEBUG',
+          localTestServer   : false
+        }
+      },
       'FoxMetrics' : '5135085424023236bca9c08c',
       'Gauges' : 'x',
       'Get Satisfaction' : 5005,

@@ -1,5 +1,6 @@
 0.11.16 - September 3, 2013
 ---------------------------
+* updated `segmentio/new-date` for old browser support
 * Woopra: fixed default pageview properties
 * Intercom: cleaned up identify logic and tests
 

@@ -1,121 +1,118 @@
+
 describe('Amplitude', function () {
 
-  var analytics = require('analytics')
-    , nextTick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  apiKey: '07808866adb2510adf19ee69e8fc2201'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ Amplitude: settings });
+  this.integration = analytics._integrations.Amplitude;
+  this.options = this.integration.options;
+  var stub = window.amplitude.logEvent;
+  when(function () { return window.amplitude.logEvent != stub; }, done);
+});
 
-    this.timeout(10000);
-
-    it('should call ready and load library', function (done) {
-      expect(window.amplitude).to.be(undefined);
-
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'Amplitude' : test['Amplitude'] });
-
-      nextTick(function () {
-        expect(spy.called).to.be(true);
-      });
-
-      expect(window.amplitude).not.to.be(undefined);
-
-      // When the library loads, it will replace the `logEvent` method.
-      var stub = window.amplitude.logEvent;
-      var interval = setInterval(function () {
-        if (window.amplitude.logEvent === stub) return;
-        expect(window.amplitude.logEvent).not.to.be(stub);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      analytics.initialize({ 'Amplitude' : test['Amplitude'] });
-      expect(analytics._providers[0].options.apiKey).to.equal(test['Amplitude']);
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
+  it('should store options with defaults', function () {
+    assert(this.options.apiKey == settings.apiKey);
+    assert(this.options.pageview === false);
+  });
+});
 
-  describe('identify', function () {
-
-    beforeEach(analytics._user.clear);
-
-    it('should call setUserId', function () {
-      var stub = sinon.stub(window.amplitude, 'setUserId');
-      analytics.identify(test.traits);
-      expect(stub.calledWith(test.userId)).to.be(false);
-
-      stub.reset();
-      analytics.identify(test.userId);
-      expect(stub.calledWith(test.userId)).to.be(true);
-
-      stub.reset();
-      analytics.identify(test.userId, test.traits);
-      expect(stub.calledWith(test.userId)).to.be(true);
-
-      stub.restore();
-    });
-
-    it('should call setGlobalUserProperties', function () {
-      var stub = sinon.stub(window.amplitude, 'setGlobalUserProperties');
-      analytics.identify(test.userId);
-      expect(stub.calledWith(test.traits)).to.be(false);
-
-      stub.reset();
-      analytics.identify(test.traits);
-      expect(stub.calledWith(test.traits)).to.be(true);
-
-      stub.reset();
-      analytics.identify(test.userId, test.traits);
-      expect(stub.calledWith(test.traits)).to.be(true);
-
-      stub.restore();
-    });
-
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.idSpy = sinon.spy(window.amplitude, 'setUserId');
+    this.traitSpy = sinon.spy(window.amplitude, 'setGlobalUserProperties');
   });
 
-
-  describe('track', function () {
-
-    it('should call logEvent', function () {
-      var stub = sinon.stub(window.amplitude, 'logEvent');
-      analytics.track(test.event, test.properties);
-      expect(stub.calledWith(test.event, test.properties)).to.be(true);
-      stub.restore();
-    });
-
+  afterEach(function () {
+    this.idSpy.restore();
+    this.traitSpy.restore();
   });
 
-
-  describe('pageview', function () {
-
-    it('shouldnt call track by default', function () {
-      var spy = sinon.spy(analytics._providers[0], 'track');
-      analytics.pageview();
-      expect(spy.called).to.be(false);
-      spy.restore();
-    });
-
-    // Mixpanel adds custom properties, so we need to have a loose match.
-    it('should call track with pageview set to true', function () {
-      var provider = analytics._providers[0]
-        , spy      = sinon.spy(provider, 'track');
-
-      provider.options.pageview = true;
-
-      analytics.pageview(test.url);
-      expect(spy.calledWithMatch('Loaded a Page', {
-        url : test.url,
-        name : document.title
-      })).to.be(true);
-
-      spy.restore();
-      provider.options.pageview = false;
-    });
-
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.idSpy.calledWith('id'));
   });
+
+  it('should send traits', function () {
+    analytics.identify({ trait: true });
+    assert(this.traitSpy.calledWith({ trait: true }));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(this.idSpy.calledWith('id'));
+    assert(this.traitSpy.calledWith({ trait: true }));
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(window.amplitude, 'logEvent');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should send an event', function () {
+    analytics.track('event');
+    assert(this.spy.calledWith('event'));
+  });
+
+  it('should send an event and properties', function () {
+    analytics.track('event', { property: true });
+    assert(this.spy.calledWith('event', { property: true }));
+  });
+});
+
+describe('#pageview', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(window.amplitude, 'logEvent');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+    this.options.pageview = false;
+  });
+
+  it('shouldnt fire by default', function () {
+    analytics.pageview();
+    assert(!this.spy.called);
+  });
+
+  it('should send a "Loaded a Page" event', function () {
+    this.options.pageview = true;
+    analytics.pageview();
+    assert(this.spy.calledWith('Loaded a Page', {
+      url: window.location.href,
+      title: document.title
+    }));
+  });
+
+  it('should send a url', function () {
+    this.options.pageview = true;
+    analytics.pageview('/path');
+    assert(this.spy.calledWith('Loaded a Page', {
+      url: '/path',
+      title: document.title
+    }));
+  });
+});
 
 });

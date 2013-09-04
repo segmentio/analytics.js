@@ -14,14 +14,13 @@ var settings = {
 };
 
 before(function (done) {
-  user.clear();
-  user.id('id');
-  user.traits({ trait: true });
-  user.save();
+  user.update('id', { trait: true });
   this.timeout(10000);
   this.spy = sinon.spy();
   analytics.ready(this.spy);
   analytics.initialize({ AdRoll: settings });
+  this.integration = analytics._integrations.AdRoll;
+  this.options = this.integration.options;
   when(function () { return window.__adroll; }, done);
 });
 
@@ -31,9 +30,8 @@ describe('#initialize', function () {
   });
 
   it('should store options', function () {
-    var options = analytics._providers[0].options;
-    assert(options.advId == settings.advId);
-    assert(options.pixId == settings.pixId);
+    assert(this.options.advId == settings.advId);
+    assert(this.options.pixId == settings.pixId);
   });
 
   it('should set custom data', function () {

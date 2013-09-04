@@ -1,47 +1,81 @@
+
 describe('Clicky', function () {
 
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , user = require('analytics/lib/user')
+  , when = require('when');
 
-  var analytics = require('analytics');
+var settings = {
+  siteId: 100649848
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  user.update('id', { trait: true });
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ Clicky: settings });
+  this.integration = analytics._providers[0];
+  this.options = this.integration.options;
+  when(function () { return window.clicky; }, done);
+});
 
-    this.timeout(10000);
-
-    it('should call ready and load library', function (done) {
-      expect(window.clicky).to.be(undefined);
-
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'Clicky' : test['Clicky'] });
-
-      // Once the library loads, `window.clicky` is defined.
-      var interval = setInterval(function () {
-        if (!window.clicky) return;
-        expect(window.clicky).not.to.be(undefined);
-        expect(spy.called).to.be(true);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      var options = analytics._providers[0].options;
-      expect(options.siteId).to.equal(test['Clicky']);
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-
-  describe('track', function () {
-
-    it('should call log', function () {
-      var spy = sinon.spy(window.clicky, 'log');
-      analytics.track(test.event, test.properties);
-      expect(spy.calledWith(window.location.href, test.event)).to.be(true);
-
-      spy.restore();
-    });
-
+  it('should store options', function () {
+    assert(this.options.siteId == settings.siteId);
   });
+
+  it('should add an id and traits to the session', function () {
+    var session = window.clicky_custom.session;
+    assert('id' == session.id);
+    assert(true === session.trait);
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(window.clicky, 'goal');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should send an event', function () {
+    analytics.track('event');
+    assert(this.spy.calledWith('event'));
+  });
+
+  it('should send revenue', function () {
+    analytics.track('event', { revenue: 42.99 });
+    assert(this.spy.calledWith('event', 42.99));
+  });
+});
+
+describe('#pageview', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(window.clicky, 'log');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should send a default url and title', function () {
+    analytics.pageview();
+    assert(this.spy.calledWith(window.location.pathname, document.title));
+  });
+
+  it('should send a url', function () {
+    analytics.pageview('/path');
+    assert(this.spy.calledWith('/path', document.title));
+  });
+});
 
 });

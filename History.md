@@ -1,3 +1,7 @@
+0.12.0 - September 4, 2013
+--------------------------
+* Clicky: fixed custom tracking, added `pageview`
+
 0.11.16 - September 3, 2013
 ---------------------------
 * updated `segmentio/new-date` for old browser support

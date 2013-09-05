@@ -9,8 +9,8 @@ var analytics = window.analytics || require('analytics')
   , when = require('when');
 
 var settings = {
-  advId : 'LYFRCUIPPZCCTOBGRH7G32',
-  pixId : 'V7TLXL5WWBA5NOU5MOJQW4'
+  advId: 'LYFRCUIPPZCCTOBGRH7G32',
+  pixId: 'V7TLXL5WWBA5NOU5MOJQW4'
 };
 
 before(function (done) {

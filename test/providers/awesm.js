@@ -58,8 +58,13 @@ describe('#track', function () {
     assert(!this.spy.called);
   });
 
-  it('should accept a revenue property', function () {
-    analytics.track('Test', { revenue: 42.99 });
+  it('should accept a value property', function () {
+    analytics.track('Test', { value: 1 });
+    assert(this.spy.calledWith('goal_1', 1));
+  });
+
+  it('should prefer a revenue property', function () {
+    analytics.track('Test', { value: 1, revenue: 42.99 });
     assert(this.spy.calledWith('goal_1', 4299));
   });
 });

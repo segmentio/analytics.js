@@ -1,38 +1,51 @@
+
 describe('Get Satisfaction', function () {
 
-  var analytics = require('analytics');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , equal = require('equals')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  widgetId: 'x'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ 'Get Satisfaction': settings });
+  this.integration = analytics._integrations['Get Satisfaction'];
+  this.options = this.integration.options;
+  when(function () { return window.GSFN; }, done);
+});
 
-    this.timeout(10000);
-
-    it('should call ready, add div and load library', function (done) {
-      expect(window.GSFN).to.be(undefined);
-
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'Get Satisfaction' : test['Get Satisfaction'] });
-
-      // It makes a div that will become the tab.
-      var div = $('#getsat-widget-' + test['Get Satisfaction']);
-      expect(div.length).not.to.be(0);
-
-      // Once the library loads, `GSFN` gets set.
-      var interval = setInterval(function () {
-        if (!window.GSFN) return;
-        expect(window.GSFN).not.to.be(undefined);
-        expect(spy.called).to.be(true);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      analytics.initialize({ 'Get Satisfaction' : test['Get Satisfaction'] });
-      expect(analytics._providers[0].options.widgetId).to.equal(test['Get Satisfaction']);
-    });
-
+describe('#key', function () {
+  it('widgetId', function () {
+    assert(this.integration.key == 'widgetId');
   });
+});
+
+describe('#defaults', function () {
+  it('widgetId', function () {
+    assert(this.integration.defaults.widgetId === '');
+  });
+});
+
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
+  });
+
+  it('should store options', function () {
+    assert(this.options.widgetId == settings.widgetId);
+  });
+
+  it('should append a div to the dom', function () {
+    var div = document.getElementById('getsat-widget-' + settings.widgetId);
+    assert(div);
+  });
+});
 
 });

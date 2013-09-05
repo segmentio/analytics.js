@@ -1,115 +1,139 @@
+
 describe('GoSquared', function () {
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , equal = require('equals')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  siteToken: 'x'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ GoSquared: settings });
+  this.integration = analytics._integrations.GoSquared;
+  this.options = this.integration.options;
+  when(function () { return window.GoSquared.DefaultTracker; }, done);
+});
 
-    this.timeout(10000);
+describe('#key', function () {
+  it('siteToken', function () {
+    assert(this.integration.key == 'siteToken');
+  });
+});
 
-    it('should call ready and load library', function (done) {
-      expect(window.GoSquared).to.be(undefined);
+describe('#defaults', function () {
+  it('siteToken', function () {
+    assert(this.integration.defaults.siteToken === '');
+  });
+});
 
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'GoSquared' : test['GoSquared'] });
-      expect(window.GoSquared).not.to.be(undefined);
-      expect(window.GoSquared.DefaultTracker).to.be(undefined);
-
-      tick(function () {
-        expect(spy.called).to.be(true);
-      });
-
-      // When the library loads, the tracker will be available.
-      var interval = setInterval(function () {
-        if (!window.GoSquared.DefaultTracker) return;
-        expect(window.GoSquared.DefaultTracker).not.to.be(undefined);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      analytics.initialize({ 'GoSquared' : test['GoSquared'] });
-      expect(analytics._providers[0].options.siteToken).to.equal('x');
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-
-  describe('identify', function () {
-
-    beforeEach(analytics._user.clear);
-
-    it('should set user id', function () {
-      window.GoSquared.UserName = undefined;
-      window.GoSquared.VisitorName = undefined;
-      window.GoSquared.Visitor = undefined;
-      analytics.identify(test.userId);
-      expect(window.GoSquared.UserName).to.equal(test.userId);
-      expect(window.GoSquared.VisitorName).to.equal(test.userId);
-      expect(window.GoSquared.Visitor).to.eql({});
-    });
-
-    it('should set traits', function () {
-      window.GoSquared.UserName = undefined;
-      window.GoSquared.VisitorName = undefined;
-      window.GoSquared.Visitor = undefined;
-      analytics.identify(test.traits);
-      expect(window.GoSquared.UserName).to.equal(null);
-      expect(window.GoSquared.VisitorName).to.be(test.traits.email);
-      expect(window.GoSquared.Visitor).to.eql(test.traits);
-    });
-
-    it('should set user id and traits', function () {
-      window.GoSquared.UserName = undefined;
-      window.GoSquared.VisitorName = undefined;
-      window.GoSquared.Visitor = undefined;
-      analytics.identify(test.userId, test.traits);
-      expect(window.GoSquared.UserName).to.equal(test.userId);
-      expect(window.GoSquared.VisitorName).to.equal(test.traits.email);
-      expect(window.GoSquared.Visitor).to.eql(test.traits);
-    });
-
+  it('should store options', function () {
+    assert(this.options.siteToken == settings.siteToken);
   });
 
-
-  describe('traits', function () {
-
-    it('should push "TrackEvent"', function () {
-      var stub = sinon.stub(window.GoSquared.q, 'push');
-
-      analytics.track(test.event);
-      expect(stub.calledWith(["TrackEvent", test.event, {}])).to.be(true);
-
-      stub.reset();
-
-      analytics.track(test.event, test.properties);
-      expect(stub.calledWith(["TrackEvent", test.event, test.properties])).to.be(true);
-
-      stub.restore();
-    });
-
+  it('should pass options to GoSquared', function () {
+    assert(window.GoSquared.acct == settings.siteToken);
   });
 
-
-  describe('pageview', function () {
-
-    it('should call "TrackView"', function () {
-      var stub = sinon.stub(window.GoSquared.q, 'push');
-
-      analytics.pageview();
-      expect(stub.calledWith(['TrackView', undefined])).to.be(true);
-
-      stub.reset();
-
-      analytics.pageview('/url');
-      expect(stub.calledWith(['TrackView', '/url'])).to.be(true);
-
-      stub.restore();
-    });
-
+  it('should add a page load time', function () {
+    assert('number' == typeof window._gstc_lt);
   });
+});
+
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+  });
+
+  afterEach(function () {
+    window.GoSquared.UserName = undefined;
+    window.GoSquared.VisitorName = undefined;
+    window.GoSquared.Visitor = undefined;
+  });
+
+  it('should set an id', function () {
+    analytics.identify('id');
+    assert(window.GoSquared.UserName == 'id');
+    assert(window.GoSquared.VisitorName == 'id');
+  });
+
+  it('should set traits', function () {
+    analytics.identify({ trait: true });
+    assert(equal(window.GoSquared.Visitor, { trait: true }));
+  });
+
+  it('should set an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(window.GoSquared.UserName == 'id');
+    assert(window.GoSquared.VisitorName == 'id');
+    assert(equal(window.GoSquared.Visitor, { userID: 'id', trait: true }));
+  });
+
+  it('should prefer an email for visitor name', function () {
+    analytics.identify('id', {
+      email: 'email@example.com',
+      username: 'username'
+    });
+    assert(window.GoSquared.VisitorName == 'email@example.com');
+  });
+
+  it('should also prefer a username for visitor name', function () {
+    analytics.identify('id', {
+      username: 'username'
+    });
+    assert(window.GoSquared.VisitorName == 'username');
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window.GoSquared.q, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send an event', function () {
+    analytics.track('event');
+    assert(this.stub.calledWith(['TrackEvent', 'event', {}]));
+  });
+
+  it('should send an event and properties', function () {
+    analytics.track('event', { property: true });
+    assert(this.stub.calledWith(['TrackEvent', 'event', { property: true }]));
+  });
+});
+
+describe('#pageview', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window.GoSquared.q, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send a pageview', function () {
+    analytics.pageview();
+    assert(this.stub.calledWith(['TrackView', undefined]));
+  });
+
+  it('should send a url', function () {
+    analytics.pageview('/path');
+    assert(this.stub.calledWith(['TrackView', '/path']));
+  });
+});
 
 });

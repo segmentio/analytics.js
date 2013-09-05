@@ -8,7 +8,7 @@ var analytics = window.analytics || require('analytics')
   , when = require('when');
 
 var settings = {
-  widgetId: 'x'
+  widgetId: 5005
 };
 
 before(function (done) {

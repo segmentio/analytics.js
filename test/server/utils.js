@@ -30,21 +30,6 @@
       logProperties : {
         date : new Date()
       },
-      'Clicky' : 'x',
-      'ClickTale' : {
-        projectId      : '19370',
-        recordingRatio : '0.0089',
-        partitionId    : 'www14'
-      },
-      'comScore' : {
-        c2 : 'x'
-      },
-      'CrazyEgg' : '00138301',
-      'Customer.io' : 'x',
-      'Errorception' : '506b76b52f52c3f662000140',
-      'FoxMetrics' : '5135085424023236bca9c08c',
-      'Gauges' : 'x',
-      'Get Satisfaction' : 5005,
       'Google Analytics' : {
         classic: {
           trackingId : 'x'

@@ -1,104 +1,197 @@
+
 describe('FoxMetrics', function () {
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , equal = require('equals')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  appId: '5135085424023236bca9c08c'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ FoxMetrics: settings });
+  this.integration = analytics._integrations.FoxMetrics;
+  this.options = this.integration.options;
+  when(function () { return window._fxm.appId; }, done);
+});
 
-    this.timeout(10000);
+describe('#key', function () {
+  it('appId', function () {
+    assert(this.integration.key == 'appId');
+  });
+});
 
-    it('should call ready and load library', function (done) {
-      expect(window._fxm).to.be(undefined);
+describe('#defaults', function () {
+  it('appId', function () {
+    assert(this.integration.defaults.appId === '');
+  });
+});
 
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'FoxMetrics' : test['FoxMetrics'] });
-      expect(window._fxm).not.to.be(undefined);
-      expect(window._fxm.appId).to.be(undefined);
-
-      tick(function () {
-        expect(spy.called).to.be(true);
-      });
-
-      // TODO: When the library loads, `appId` will be set.
-      var interval = setInterval(function () {
-        if (!window._fxm.appId) return;
-        expect(window._fxm.appId).not.to.be(undefined);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it ('should store options', function () {
-      analytics.initialize({ 'FoxMetrics' : test['FoxMetrics'] });
-      expect(analytics._providers[0].options.appId).to.equal(test['FoxMetrics']);
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-
-  describe('identify', function () {
-
-    var stub;
-
-    beforeEach(function () {
-      stub = sinon.stub(window._fxm, 'push');
-      analytics._user.clear();
-    });
-
-    afterEach(function () {
-      stub.restore();
-    });
-
-    it('should do nothing without a userId', function () {
-      analytics.identify(test.traits);
-      expect(stub.called).to.be(false);
-    });
-
-    it('should push "visitor.profile" with just a userId', function () {
-      analytics.identify(test.userId);
-      expect(stub.calledWith(['_fxm.visitor.profile', test.userId, undefined, undefined, undefined, undefined, undefined, undefined, {}])).to.be(true);
-    });
-
-    it('should push "visitor.profile" with traits', function () {
-      analytics.identify(test.userId, test.traits);
-      // FoxMetrics slices the name into first and last.
-      var firstName = test.traits.name.split(' ')[0];
-      var lastName = test.traits.name.split(' ')[1];
-      expect(stub.calledWith(['_fxm.visitor.profile', test.userId, firstName, lastName, test.traits.email, undefined, undefined, undefined, test.traits])).to.be(true);
-    });
-
+  it('should store options', function () {
+    assert(this.options.appId == settings.appId);
   });
 
+  it('should send options to FoxMetrics', function () {
+    assert(window._fxm.appId == settings.appId);
+  });
+});
 
-  describe('track', function () {
-
-    it('should push custom event', function () {
-      var stub = sinon.stub(window._fxm, 'push');
-      analytics.track(test.event, test.properties);
-      expect(stub.calledWith([test.event, undefined, test.properties])).to.be(true);
-
-      stub.restore();
-    });
-
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.stub = sinon.stub(window._fxm, 'push');
   });
 
-
-  describe('pageview', function () {
-
-    it('calls [fxm.pages.view] on pageview', function () {
-      var stub = sinon.stub(window._fxm, 'push');
-      analytics.pageview();
-      expect(stub.calledWith(['_fxm.pages.view', undefined, undefined, undefined, undefined, undefined])).to.be(true);
-
-      stub.reset();
-      analytics.pageview(test.url);
-      expect(stub.calledWith(['_fxm.pages.view', undefined, undefined, undefined, test.url, undefined])).to.be(true);
-
-      stub.restore();
-    });
-
+  afterEach(function () {
+    this.stub.restore();
   });
+
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.stub.calledWith([
+      '_fxm.visitor.profile',
+      'id',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {}
+    ]));
+  });
+
+  it('shouldnt send just traits', function () {
+    analytics.identify({ trait: true });
+    assert(!this.stub.called);
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify('id', {
+      firstName: 'first',
+      lastName: 'last',
+      email: 'email@example.com',
+      address: 'address',
+      trait: true
+    });
+    assert(this.stub.calledWith([
+      '_fxm.visitor.profile',
+      'id',
+      'first',
+      'last',
+      'email@example.com',
+      'address',
+      undefined,
+      undefined,
+      {
+        firstName: 'first',
+        lastName: 'last',
+        name: 'first last',
+        email: 'email@example.com',
+        address: 'address',
+        trait: true
+      }
+    ]));
+  });
+
+  it('should split a name trait', function () {
+    analytics.identify('id', { name: 'first last' });
+    assert(this.stub.calledWith([
+      '_fxm.visitor.profile',
+      'id',
+      'first',
+      'last',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        name: 'first last'
+      }
+    ]));
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window._fxm, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send an event', function () {
+    analytics.track('event');
+    assert(this.stub.calledWith([
+      'event',
+      undefined,
+      {}
+    ]));
+  });
+
+  it('should send an event and properties', function () {
+    analytics.track('event', { property: true });
+    assert(this.stub.calledWith([
+      'event',
+      undefined,
+      { property: true }
+    ]));
+  });
+
+  it('should send a category property', function () {
+    analytics.track('event', { category: 'category' });
+    assert(this.stub.calledWith([
+      'event',
+      'category',
+      { category: 'category' }
+    ]));
+  });
+});
+
+describe('#pageview', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window._fxm, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send a pageview', function () {
+    analytics.pageview();
+    assert(this.stub.calledWith([
+      '_fxm.pages.view',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined
+    ]));
+  });
+
+  it('should send a url', function () {
+    analytics.pageview('/path');
+    assert(this.stub.calledWith([
+      '_fxm.pages.view',
+      undefined,
+      undefined,
+      undefined,
+      '/path',
+      undefined
+    ]));
+  });
+});
 
 });

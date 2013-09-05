@@ -3,6 +3,7 @@ describe('Clicky', function () {
 
 var analytics = window.analytics || require('analytics')
   , assert = require('assert')
+  , equal = require('equals')
   , sinon = require('sinon')
   , user = require('analytics/lib/user')
   , when = require('when');
@@ -12,6 +13,7 @@ var settings = {
 };
 
 before(function (done) {
+  window.clicky_custom = { session: { existing: true }};
   user.update('id', { trait: true });
   this.timeout(10000);
   this.spy = sinon.spy();
@@ -31,10 +33,37 @@ describe('#initialize', function () {
     assert(this.options.siteId == settings.siteId);
   });
 
-  it('should add an id and traits to the session', function () {
-    var session = window.clicky_custom.session;
-    assert('id' == session.id);
-    assert(true === session.trait);
+  it('should extend the session with an id and traits', function () {
+    assert(equal(window.clicky_custom.session, {
+      id: 'id',
+      trait: true,
+      existing: true
+    }));
+  });
+});
+
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    delete window.clicky_custom;
+  });
+
+  it('should set an id', function () {
+    analytics.identify('id');
+    assert(equal(window.clicky_custom.session, { id: 'id' }));
+  });
+
+  it('should set traits', function () {
+    analytics.identify({ trait: true });
+    assert(equal(window.clicky_custom.session, { trait: true }));
+  });
+
+  it('should set an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(equal(window.clicky_custom.session, {
+      id: 'id',
+      trait: true
+    }));
   });
 });
 

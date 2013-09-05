@@ -1,58 +1,62 @@
+
 describe('Gauges', function () {
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , equal = require('equals')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  siteId: 'x'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ Gauges: settings });
+  this.integration = analytics._integrations.Gauges;
+  this.options = this.integration.options;
+  var stub = window._gauges.push;
+  when(function () { return window._gauges.push != stub; }, done);
+});
 
-    this.timeout(10000);
+describe('#key', function () {
+  it('siteId', function () {
+    assert(this.integration.key == 'siteId');
+  });
+});
 
-    it('should call ready and load library', function (done) {
-      var spy  = sinon.spy()
-        , push = Array.prototype.push;
+describe('#defaults', function () {
+  it('siteId', function () {
+    assert(this.integration.defaults.siteId === '');
+  });
+});
 
-      expect(window._gauges).to.be(undefined);
-
-      analytics.ready(spy);
-      analytics.initialize({ 'Gauges' : test['Gauges'] });
-
-      // Gauges creates a queue, so it's ready immediately.
-      expect(window._gauges).not.to.be(undefined);
-      expect(window._gauges.push).to.eql(push);
-
-      tick(function () {
-        expect(spy.called).to.be(true);
-      });
-
-      // Once the library loads, push will be overwritten.
-      var interval = setInterval(function () {
-        if (window._gauges.push === push) return;
-        expect(window._gauges.push).not.to.eql(push);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      analytics.initialize({ 'Gauges' : test['Gauges'] });
-      expect(analytics._providers[0].options.siteId).to.equal(test['Gauges']);
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-
-  describe('pageview', function () {
-
-    it('should push "track"', function () {
-      var stub = sinon.stub(window._gauges, 'push');
-
-      analytics.pageview();
-      expect(stub.calledWith(['track'])).to.be(true);
-
-      stub.restore();
-    });
-
+  it('should store options', function () {
+    assert(this.options.siteId == settings.siteId);
   });
+});
+
+describe('#pageview', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window._gauges, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send a pageview', function () {
+    analytics.pageview();
+    assert(this.stub.calledWith(['track']));
+  });
+});
 
 });

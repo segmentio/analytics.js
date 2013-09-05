@@ -7,20 +7,14 @@ var analytics = window.analytics || require('analytics')
   , when = require('when');
 
 var settings = {
-  widgetId: 'qTSuuylq5nZrsjC0L8bmg',
-  forumId: 193715,
+  widgetId: 'qTSuuylq5nZrsjC0L8bmg', // new
+  forumId: 193715,                   // new
+  // widgetId: 'QmFQKZn7ovZ9AJIMz7Q',   // classic
+  // forumId: 191260,                   // classic
   tabLabel: 'test',
   defaultMode: 'feedback',
   tabColor: '#ff0000'
 };
-
-// var settings = {
-//   widgetId: 'QmFQKZn7ovZ9AJIMz7Q',
-//   forumId: 191260,
-//   tabLabel: 'test',
-//   defaultMode: 'feedback',
-//   tabColor: '#ff0000'
-// };
 
 before(function (done) {
   this.timeout(10000);

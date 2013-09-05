@@ -393,121 +393,13 @@ function parse(str) {
 }
 
 });
-require.register("component-to-function/index.js", function(exports, require, module){
-
-/**
- * Expose `toFunction()`.
- */
-
-module.exports = toFunction;
-
-/**
- * Convert `obj` to a `Function`.
- *
- * @param {Mixed} obj
- * @return {Function}
- * @api private
- */
-
-function toFunction(obj) {
-  switch ({}.toString.call(obj)) {
-    case '[object Object]':
-      return objectToFunction(obj);
-    case '[object Function]':
-      return obj;
-    case '[object String]':
-      return stringToFunction(obj);
-    case '[object RegExp]':
-      return regexpToFunction(obj);
-    default:
-      return defaultToFunction(obj);
-  }
-}
-
-/**
- * Default to strict equality.
- *
- * @param {Mixed} val
- * @return {Function}
- * @api private
- */
-
-function defaultToFunction(val) {
-  return function(obj){
-    return val === obj;
-  }
-}
-
-/**
- * Convert `re` to a function.
- *
- * @param {RegExp} re
- * @return {Function}
- * @api private
- */
-
-function regexpToFunction(re) {
-  return function(obj){
-    return re.test(obj);
-  }
-}
-
-/**
- * Convert property `str` to a function.
- *
- * @param {String} str
- * @return {Function}
- * @api private
- */
-
-function stringToFunction(str) {
-  // immediate such as "> 20"
-  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
-
-  // properties such as "name.first" or "age > 18"
-  return new Function('_', 'return _.' + str);
-}
-
-/**
- * Convert `object` to a function.
- *
- * @param {Object} object
- * @return {Function}
- * @api private
- */
-
-function objectToFunction(obj) {
-  var match = {}
-  for (var key in obj) {
-    match[key] = typeof obj[key] === 'string'
-      ? defaultToFunction(obj[key])
-      : toFunction(obj[key])
-  }
-  return function(val){
-    if (typeof val !== 'object') return false;
-    for (var key in match) {
-      if (!(key in val)) return false;
-      if (!match[key](val[key])) return false;
-    }
-    return true;
-  }
-}
-
-});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var toFunction = require('to-function');
-var type;
-
-try {
-  type = require('type-component');
-} catch (e) {
-  type = require('type');
-}
+var type = require('type');
 
 /**
  * HOP reference.
@@ -524,7 +416,6 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
-  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -579,7 +470,6 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
-
 });
 require.register("component-event/index.js", function(exports, require, module){
 
@@ -6267,23 +6157,12 @@ UserVoice.prototype.defaults = {
 
 UserVoice.prototype.initialize = function (options, ready) {
   window.UserVoice || (window.UserVoice = []);
+  ready();
+
+  // actually wait for load, so we can show the tab for classic uservoice
   load('//widget.uservoice.com/' + options.widgetId + '.js', function () {
-    // depending on the version, the show tab method will throw an error
-    try {
-      var cloned = clone(options);
-      alias(cloned, {
-        forumId: 'forum_id',
-        primaryColor: 'primary_color',
-        linkColor: 'link_color',
-        defaultMode: 'default_mode',
-        tabLabel: 'tab_label',
-        tabColor: 'tab_color',
-        tabPosition: 'tab_position',
-        tabInverted: 'tab_inverted'
-      });
-      window.UserVoice.showTab('classic_widget', cloned);
-    } catch (e) {}
-    ready();
+    if (window.UserVoice.newShowTab) return;
+    window.UserVoice.showTab('classic_widget', formatOptions(options));
   });
 
   // needs to be available on window for public api
@@ -6306,7 +6185,31 @@ UserVoice.prototype.identify = function (id, traits, options) {
 
 
 /**
- * Show the classic version of the UserVoice widget.
+ * Format the options for UserVoice.
+ *
+ * @param {Object} options
+ * @return {Object}
+ */
+
+function formatOptions (options) {
+  var cloned = clone(options);
+  alias(cloned, {
+    forumId: 'forum_id',
+    primaryColor: 'primary_color',
+    linkColor: 'link_color',
+    defaultMode: 'default_mode',
+    tabLabel: 'tab_label',
+    tabColor: 'tab_color',
+    tabPosition: 'tab_position',
+    tabInverted: 'tab_inverted'
+  });
+  return cloned;
+}
+
+
+/**
+ * Show the classic version of the UserVoice widget. This method is usually part
+ * of UserVoice classic's public API.
  *
  * @param {String} type ('showTab' or 'showLightbox')
  * @param {Object} options (optional)
@@ -6606,8 +6509,6 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
@@ -6642,8 +6543,6 @@ require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-emp
 require.alias("ianstormtaylor-map/index.js", "analytics/deps/map/index.js");
 require.alias("ianstormtaylor-map/index.js", "map/index.js");
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("jkroso-equals/index.js", "analytics/deps/equals/index.js");
@@ -6710,8 +6609,6 @@ require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-on-error/index.js", "analytics/deps/on-error/index.js");

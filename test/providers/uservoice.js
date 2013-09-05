@@ -7,10 +7,8 @@ var analytics = window.analytics || require('analytics')
   , when = require('when');
 
 var settings = {
-  widgetId: 'qTSuuylq5nZrsjC0L8bmg', // new
-  forumId: 193715,                   // new
-  // widgetId: 'QmFQKZn7ovZ9AJIMz7Q',   // classic
-  // forumId: 191260,                   // classic
+  widgetId: 'mhz5Op4MUft592O8Q82MwA',
+  forumId: 221539,
   tabLabel: 'test',
   defaultMode: 'feedback',
   tabColor: '#ff0000'

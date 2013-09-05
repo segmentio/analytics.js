@@ -728,15 +728,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -748,9 +748,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -762,7 +760,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -775,9 +773,9 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
@@ -6136,6 +6134,8 @@ UserVoice.prototype.defaults = {
   widgetId: '',
   // your uservoice forum id (required)
   forumId: null,
+  // whether to show the tab on page load
+  showTab: true,
   // tab customization options
   mode: 'full',
   primaryColor: '#cc6d00',
@@ -6157,16 +6157,12 @@ UserVoice.prototype.defaults = {
 
 UserVoice.prototype.initialize = function (options, ready) {
   window.UserVoice || (window.UserVoice = []);
+  window.showClassicWidget = showClassicWidget; // part of public api
   ready();
 
-  // actually wait for load, so we can show the tab for classic uservoice
-  load('//widget.uservoice.com/' + options.widgetId + '.js', function () {
-    if (window.UserVoice.newShowTab) return;
-    window.UserVoice.showTab('classic_widget', formatOptions(options));
-  });
+  if (options.showTab) showClassicWidget('showTab', formatOptions(options));
 
-  // needs to be available on window for public api
-  window.showClassicWidget = showClassicWidget;
+  load('//widget.uservoice.com/' + options.widgetId + '.js', ready);
 };
 
 

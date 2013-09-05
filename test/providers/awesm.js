@@ -8,7 +8,7 @@ var analytics = window.analytics || require('analytics')
   , when = require('when');
 
 var settings = {
-  apiKey: 'x',
+  apiKey: '5c8b1a212434c2153c2f2c2f2c765a36140add243bf6eae876345f8fd11045d9',
   events: {
     'Test': 'goal_1'
   }
@@ -19,9 +19,9 @@ before(function (done) {
   this.spy = sinon.spy();
   analytics.ready(this.spy);
   analytics.initialize({ 'awe.sm': settings });
-  setTimeout(function () {
-    debugger;
-  }, 5000);
+  this.integration = analytics._providers[0];
+  this.options = this.integration.options;
+  when(function () { return window.AWESM._exists; }, done);
 });
 
 describe('#intialize', function () {
@@ -30,9 +30,12 @@ describe('#intialize', function () {
   });
 
   it('should store options with defaults', function () {
-    var options = analytics._providers[0].options;
-    assert(options.apiKey == settings.apiKey);
-    assert(equal(options.events, settings.events));
+    assert(this.options.apiKey == settings.apiKey);
+    assert(equal(this.options.events, settings.events));
+  });
+
+  it('should pass options to awe.sm', function () {
+    assert(window.AWESM.api_key == settings.apiKey);
   });
 });
 

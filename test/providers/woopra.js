@@ -77,14 +77,20 @@ describe('pageview', function () {
   afterEach(function () {
     this.spy.restore();
   });
-  it('should send a "pv" event', function () {
+  it('should send a "pv" event with default properties', function () {
     analytics.pageview();
-    assert(this.spy.calledWith('pv'));
+    assert(this.spy.calledWith('pv', {
+      url: window.location.pathname,
+      title: document.title
+    }));
   });
 
-  it('should send a url', function () {
-    analytics.pageview('url');
-    assert(this.spy.calledWith('pv', { url: 'url' }));
+  it('should pass a url', function () {
+    analytics.pageview('/path');
+    assert(this.spy.calledWith('pv', {
+      url: '/path',
+      title: document.title
+    }));
   });
 });
 

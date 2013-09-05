@@ -393,13 +393,121 @@ function parse(str) {
 }
 
 });
+require.register("component-to-function/index.js", function(exports, require, module){
+
+/**
+ * Expose `toFunction()`.
+ */
+
+module.exports = toFunction;
+
+/**
+ * Convert `obj` to a `Function`.
+ *
+ * @param {Mixed} obj
+ * @return {Function}
+ * @api private
+ */
+
+function toFunction(obj) {
+  switch ({}.toString.call(obj)) {
+    case '[object Object]':
+      return objectToFunction(obj);
+    case '[object Function]':
+      return obj;
+    case '[object String]':
+      return stringToFunction(obj);
+    case '[object RegExp]':
+      return regexpToFunction(obj);
+    default:
+      return defaultToFunction(obj);
+  }
+}
+
+/**
+ * Default to strict equality.
+ *
+ * @param {Mixed} val
+ * @return {Function}
+ * @api private
+ */
+
+function defaultToFunction(val) {
+  return function(obj){
+    return val === obj;
+  }
+}
+
+/**
+ * Convert `re` to a function.
+ *
+ * @param {RegExp} re
+ * @return {Function}
+ * @api private
+ */
+
+function regexpToFunction(re) {
+  return function(obj){
+    return re.test(obj);
+  }
+}
+
+/**
+ * Convert property `str` to a function.
+ *
+ * @param {String} str
+ * @return {Function}
+ * @api private
+ */
+
+function stringToFunction(str) {
+  // immediate such as "> 20"
+  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
+
+  // properties such as "name.first" or "age > 18"
+  return new Function('_', 'return _.' + str);
+}
+
+/**
+ * Convert `object` to a function.
+ *
+ * @param {Object} object
+ * @return {Function}
+ * @api private
+ */
+
+function objectToFunction(obj) {
+  var match = {}
+  for (var key in obj) {
+    match[key] = typeof obj[key] === 'string'
+      ? defaultToFunction(obj[key])
+      : toFunction(obj[key])
+  }
+  return function(val){
+    if (typeof val !== 'object') return false;
+    for (var key in match) {
+      if (!(key in val)) return false;
+      if (!match[key](val[key])) return false;
+    }
+    return true;
+  }
+}
+
+});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var type = require('type');
+var toFunction = require('to-function');
+var type;
+
+try {
+  type = require('type-component');
+} catch (e) {
+  type = require('type');
+}
 
 /**
  * HOP reference.
@@ -416,6 +524,7 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
+  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -470,6 +579,7 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
+
 });
 require.register("component-event/index.js", function(exports, require, module){
 
@@ -895,7 +1005,7 @@ for (var i = 0, type; type = types[i]; i++) exports[type] = generate(type);
  * Add alias for `function` for old browsers.
  */
 
-exports.fn = exports.function;
+exports.fn = exports['function'];
 
 
 /**
@@ -947,6 +1057,193 @@ module.exports = function map (obj, iterator) {
   });
   return arr;
 };
+});
+require.register("jkroso-type/index.js", function(exports, require, module){
+
+/**
+ * refs
+ */
+
+var toString = Object.prototype.toString;
+
+/**
+ * Return the type of `val`.
+ *
+ * @param {Mixed} val
+ * @return {String}
+ * @api public
+ */
+
+module.exports = function(v){
+  // .toString() is slow so try avoid it
+  return typeof v === 'object'
+    ? types[toString.call(v)]
+    : typeof v
+};
+
+var types = {
+  '[object Function]': 'function',
+  '[object Date]': 'date',
+  '[object RegExp]': 'regexp',
+  '[object Arguments]': 'arguments',
+  '[object Array]': 'array',
+  '[object String]': 'string',
+  '[object Null]': 'null',
+  '[object Undefined]': 'undefined',
+  '[object Number]': 'number',
+  '[object Boolean]': 'boolean',
+  '[object Object]': 'object',
+  '[object Text]': 'textnode',
+  '[object Uint8Array]': '8bit-array',
+  '[object Uint16Array]': '16bit-array',
+  '[object Uint32Array]': '32bit-array',
+  '[object Uint8ClampedArray]': '8bit-array',
+  '[object Error]': 'error'
+}
+
+if (typeof window != 'undefined') {
+  for (var el in window) if (/^HTML\w+Element$/.test(el)) {
+    types['[object '+el+']'] = 'element'
+  }
+}
+
+module.exports.types = types
+
+});
+require.register("jkroso-equals/index.js", function(exports, require, module){
+
+var type = require('type')
+
+/**
+ * assert all values are equal
+ *
+ * @param {Any} [...]
+ * @return {Boolean}
+ */
+
+module.exports = function(){
+	var i = arguments.length - 1
+	while (i > 0) {
+		if (!compare(arguments[i], arguments[--i])) return false
+	}
+	return true
+}
+
+// (any, any, [array]) -> boolean
+function compare(a, b, memos){
+	// All identical values are equivalent
+	if (a === b) return true
+	var fnA = types[type(a)]
+	if (fnA !== types[type(b)]) return false
+	return fnA ? fnA(a, b, memos) : false
+}
+
+var types = {}
+
+// (Number) -> boolean
+types.number = function(a){
+	// NaN check
+	return a !== a
+}
+
+// (function, function, array) -> boolean
+types['function'] = function(a, b, memos){
+	return a.toString() === b.toString()
+		// Functions can act as objects
+	  && types.object(a, b, memos) 
+		&& compare(a.prototype, b.prototype)
+}
+
+// (date, date) -> boolean
+types.date = function(a, b){
+	return +a === +b
+}
+
+// (regexp, regexp) -> boolean
+types.regexp = function(a, b){
+	return a.toString() === b.toString()
+}
+
+// (DOMElement, DOMElement) -> boolean
+types.element = function(a, b){
+	return a.outerHTML === b.outerHTML
+}
+
+// (textnode, textnode) -> boolean
+types.textnode = function(a, b){
+	return a.textContent === b.textContent
+}
+
+// decorate `fn` to prevent it re-checking objects
+// (function) -> function
+function memoGaurd(fn){
+	return function(a, b, memos){
+		if (!memos) return fn(a, b, [])
+		var i = memos.length, memo
+		while (memo = memos[--i]) {
+			if (memo[0] === a && memo[1] === b) return true
+		}
+		return fn(a, b, memos)
+	}
+}
+
+types['arguments'] =
+types.array = memoGaurd(compareArrays)
+
+// (array, array, array) -> boolean
+function compareArrays(a, b, memos){
+	var i = a.length
+	if (i !== b.length) return false
+	memos.push([a, b])
+	while (i--) {
+		if (!compare(a[i], b[i], memos)) return false
+	}
+	return true
+}
+
+types.object = memoGaurd(compareObjects)
+
+// (object, object, array) -> boolean
+function compareObjects(a, b, memos) {
+	var ka = getEnumerableProperties(a)
+	var kb = getEnumerableProperties(b)
+	var i = ka.length
+
+	// same number of properties
+	if (i !== kb.length) return false
+
+	// although not necessarily the same order
+	ka.sort()
+	kb.sort()
+
+	// cheap key test
+	while (i--) if (ka[i] !== kb[i]) return false
+
+	// remember
+	memos.push([a, b])
+
+	// iterate again this time doing a thorough check
+	i = ka.length
+	while (i--) {
+		var key = ka[i]
+		if (!compare(a[key], b[key], memos)) return false
+	}
+
+	return true
+}
+
+// (object) -> array
+function getEnumerableProperties (object) {
+	var result = []
+	for (var k in object) if (k !== 'constructor') {
+		result.push(k)
+	}
+	return result
+}
+
+// expose compare
+module.exports.compare = compare
+
 });
 require.register("segmentio-after/index.js", function(exports, require, module){
 
@@ -1023,6 +1320,34 @@ module.exports = function canonical () {
     if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
   }
 };
+});
+require.register("segmentio-convert-dates/index.js", function(exports, require, module){
+
+var is = require('is');
+
+
+/**
+ * Expose `convertDates`.
+ */
+
+module.exports = convertDates;
+
+
+/**
+ * Recursively convert an `obj`'s dates to new values.
+ *
+ * @param {Object} obj
+ * @param {Function} convert
+ * @return {Object}
+ */
+
+function convertDates (obj, convert) {
+  for (var key in obj) {
+    var val = obj[key];
+    if (is.date(val)) obj[key] = convert(val);
+    if (is.object(val)) convertDates(val, convert);
+  }
+}
 });
 require.register("segmentio-extend/index.js", function(exports, require, module){
 
@@ -1649,9 +1974,82 @@ module.exports = function loadScript (options, callback) {
 };
 
 });
-require.register("segmentio-new-date/index.js", function(exports, require, module){
+require.register("segmentio-isodate/index.js", function(exports, require, module){
 
-var is = require('is');
+/**
+ * Matcher, slightly modified from:
+ *
+ * https://github.com/csnover/js-iso8601/blob/lax/iso8601.js
+ */
+
+var matcher = /^(\d{4})(?:-?(\d{2})(?:-?(\d{2}))?)?(?:([ T])(\d{2}):?(\d{2})(?::?(\d{2})(?:[,\.](\d{1,}))?)?(?:(Z)|([+\-])(\d{2})(?::?(\d{2}))?)?)?$/;
+
+
+/**
+ * Convert an ISO date string to a date. Fallback to native `Date.parse`.
+ *
+ * https://github.com/csnover/js-iso8601/blob/lax/iso8601.js
+ *
+ * @param {String} iso
+ * @return {Date}
+ */
+
+exports.parse = function (iso) {
+  var numericKeys = [1, 5, 6, 7, 8, 11, 12];
+  var arr = matcher.exec(iso);
+  var offset = 0;
+
+  // fallback to native parsing
+  if (!arr) return new Date(iso);
+
+  // remove undefined values
+  for (var i = 0, val; val = numericKeys[i]; i++) {
+    arr[val] = parseInt(arr[val], 10) || 0;
+  }
+
+  // allow undefined days and months
+  arr[2] = parseInt(arr[2], 10) || 1;
+  arr[3] = parseInt(arr[3], 10) || 1;
+
+  // month is 0-11
+  arr[2]--;
+
+  // allow abitrary sub-second precision
+  if (arr[8]) arr[8] = (arr[8] + '00').substring(0, 3);
+
+  // apply timezone if one exists
+  if (arr[4] == ' ') {
+    offset = new Date().getTimezoneOffset();
+  } else if (arr[9] !== 'Z' && arr[10]) {
+    offset = arr[11] * 60 + arr[12];
+    if ('+' == arr[10]) offset = 0 - offset;
+  }
+
+  var millis = Date.UTC(arr[1], arr[2], arr[3], arr[5], arr[6] + offset, arr[7], arr[8]);
+  return new Date(millis);
+};
+
+
+/**
+ * Checks whether a `string` is an ISO date string. `strict` mode requires that
+ * the date string at least have a year, month and date.
+ *
+ * @param {String} string
+ * @param {Boolean} strict
+ * @return {Boolean}
+ */
+
+exports.is = function (string, strict) {
+  if (strict && false === /^\d{4}-\d{2}-\d{2}/.test(string)) return false;
+  return matcher.test(string);
+};
+});
+require.register("segmentio-new-date/lib/index.js", function(exports, require, module){
+
+var is = require('is')
+  , isodate = require('isodate')
+  , milliseconds = require('./milliseconds')
+  , seconds = require('./seconds');
 
 
 /**
@@ -1663,18 +2061,15 @@ var is = require('is');
 
 module.exports = function newDate (val) {
   if (is.number(val)) return new Date(toMs(val));
-  if (is.date(val)) return new Date(val.getTime()); // construtor woulda floored
+  if (is.date(val)) return new Date(val.getTime()); // firefox woulda floored
 
-  // default to letting the Date constructor parse it
-  var date = new Date(val);
+  // date strings
+  if (isodate.is(val)) return isodate.parse(val);
+  if (milliseconds.is(val)) return milliseconds.parse(val);
+  if (seconds.is(val)) return seconds.parse(val);
 
-  // couldn't parse, but we have a string, assume it was a second/milli string
-  if (is.nan(date.getTime()) && is.string(val)) {
-    var millis = toMs(parseInt(val, 10));
-    date = new Date(millis);
-  }
-
-  return date;
+  // fallback to Date.parse
+  return new Date(val);
 };
 
 
@@ -1689,6 +2084,72 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
+});
+require.register("segmentio-new-date/lib/milliseconds.js", function(exports, require, module){
+
+/**
+ * Matcher.
+ */
+
+var matcher = /\d{13}/;
+
+
+/**
+ * Check whether a string is a millisecond date string.
+ *
+ * @param {String} string
+ * @return {Boolean}
+ */
+
+exports.is = function (string) {
+  return matcher.test(string);
+};
+
+
+/**
+ * Convert a millisecond string to a date.
+ *
+ * @param {String} millis
+ * @return {Date}
+ */
+
+exports.parse = function (millis) {
+  millis = parseInt(millis, 10);
+  return new Date(millis);
+};
+});
+require.register("segmentio-new-date/lib/seconds.js", function(exports, require, module){
+
+/**
+ * Matcher.
+ */
+
+var matcher = /\d{10}/;
+
+
+/**
+ * Check whether a string is a second date string.
+ *
+ * @param {String} string
+ * @return {Boolean}
+ */
+
+exports.is = function (string) {
+  return matcher.test(string);
+};
+
+
+/**
+ * Convert a second string to a date.
+ *
+ * @param {String} seconds
+ * @return {Date}
+ */
+
+exports.parse = function (seconds) {
+  var millis = parseInt(seconds, 10) * 1000;
+  return new Date(millis);
+};
 });
 require.register("segmentio-on-body/index.js", function(exports, require, module){
 var each = require('each');
@@ -2091,7 +2552,7 @@ module.exports = exports = Analytics;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '0.11.14';
+exports.VERSION = '0.12.1';
 
 
 /**
@@ -3103,34 +3564,50 @@ exports.getUrlParameter = function (urlSearchParameter, paramKey) {
 };
 });
 require.register("analytics/lib/providers/adroll.js", function(exports, require, module){
-// https://www.adroll.com/dashboard
 
-var Provider = require('../provider')
-  , load     = require('load-script');
+var integration = require('../integration')
+  , load = require('load-script')
+  , user = require('../user');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `AdRoll` integration.
+ */
 
-  name : 'AdRoll',
+var AdRoll = module.exports = integration('AdRoll');
 
-  defaults : {
-    // Adroll requires two options: `advId` and `pixId`.
-    advId : null,
-    pixId : null
-  },
 
-  initialize : function (options, ready) {
-    window.adroll_adv_id = options.advId;
-    window.adroll_pix_id = options.pixId;
-    window.__adroll_loaded = true;
+/**
+ * Default options.
+ */
 
-    load({
-      http  : 'http://a.adroll.com/j/roundtrip.js',
-      https : 'https://s.adroll.com/j/roundtrip.js'
-    }, ready);
-  }
+AdRoll.prototype.defaults = {
+  // your adroll advertiser id (required)
+  advId: '',
+  // your adroll pixel id (required)
+  pixId: ''
+};
 
-});
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+AdRoll.prototype.initialize = function (options, ready) {
+  window.adroll_adv_id = options.advId;
+  window.adroll_pix_id = options.pixId;
+  window.adroll_custom_data = user.traits();
+  if (user.id()) window.adroll_custom_data.id = user.id();
+  window.__adroll_loaded = true;
+
+  load({
+    http: 'http://a.adroll.com/j/roundtrip.js',
+    https: 'https://s.adroll.com/j/roundtrip.js'
+  }, ready);
+};
 });
 require.register("analytics/lib/providers/amplitude.js", function(exports, require, module){
 // https://github.com/amplitude/Amplitude-Javascript
@@ -3189,6 +3666,69 @@ module.exports = Provider.extend({
   }
 
 });
+});
+require.register("analytics/lib/providers/awesm.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script')
+  , user = require('../user');
+
+
+/**
+ * Expose `Awesm` integration.
+ */
+
+var Awesm = module.exports = integration('awe.sm');
+
+
+/**
+ * Required key.
+ */
+
+Awesm.prototype.key = 'apiKey';
+
+
+/**
+ * Default options.
+ */
+
+Awesm.prototype.defaults = {
+  // your awe.sm api key (required)
+  apiKey: '',
+  // a dictionary of event names to awe.sm events
+  events: {}
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Awesm.prototype.initialize = function (options, ready) {
+  window.AWESM = window.AWESM || {};
+  window.AWESM.api_key = options.apiKey;
+  load('//widgets.awe.sm/v3/widgets.js?key=' + options.apiKey + '&async=true', ready);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Awesm.prototype.track = function (event, properties, options) {
+  var goal = this.options.events[event];
+  var value = 0;
+  if (!goal) return;
+  if (properties.revenue) value = properties.revenue * 100; // prefer revenue
+  window.AWESM.convert(goal, value, null, user.id());
+};
 });
 require.register("analytics/lib/providers/bugherd.js", function(exports, require, module){
 // http://support.bugherd.com/home
@@ -3366,46 +3906,98 @@ module.exports = Provider.extend({
 });
 });
 require.register("analytics/lib/providers/clicky.js", function(exports, require, module){
-// http://clicky.com/help/customization/manual?new-domain
-// http://clicky.com/help/customization/manual?new-domain#/help/customization#session
 
-var Provider = require('../provider')
-  , user     = require('../user')
-  , extend   = require('extend')
-  , load     = require('load-script');
+var extend = require('extend')
+  , integration = require('../integration')
+  , load = require('load-script')
+  , user = require('../user');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `Clicky` integration.
+ *
+ * http://clicky.com/help/customization
+ */
 
-  name : 'Clicky',
+var Clicky = module.exports = integration('Clicky');
 
-  key : 'siteId',
 
-  defaults : {
-    siteId : null
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    window.clicky_site_ids = window.clicky_site_ids || [];
-    window.clicky_site_ids.push(options.siteId);
+Clicky.prototype.key = 'siteId';
 
-    var userId  = user.id()
-      , traits  = user.traits()
-      , session = {};
 
-    if (userId) session.id = userId;
-    extend(session, traits);
+/**
+ * Default options.
+ */
 
-    window.clicky_custom = { session : session };
+Clicky.prototype.defaults = {
+  siteId: null
+};
 
-    load('//static.getclicky.com/js', ready);
-  },
 
-  track : function (event, properties) {
-    window.clicky.log(window.location.href, event);
-  }
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
 
-});
+Clicky.prototype.initialize = function (options, ready) {
+  window.clicky_site_ids || (window.clicky_site_ids = []);
+  window.clicky_site_ids.push(options.siteId);
+  this.identify(user.id(), user.traits());
+  load('//static.getclicky.com/js', ready);
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Clicky.prototype.identify = function (id, traits, options) {
+  window.clicky_custom || (window.clicky_custom = {});
+  window.clicky_custom.session || (window.clicky_custom.session = {});
+  if (id) traits.id = id;
+  extend(window.clicky_custom.session, traits);
+};
+
+
+/**
+ * Track.
+ *
+ * http://clicky.com/help/customization#/help/custom/manual
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Clicky.prototype.track = function (event, properties, options) {
+  properties || (properties = {});
+  window.clicky.goal(event, properties.revenue);
+};
+
+
+/**
+ * Pageview.
+ *
+ * http://clicky.com/help/customization#/help/custom/manual
+ *
+ * @param {String} url (optional)
+ */
+
+Clicky.prototype.pageview = function (url) {
+  url || (url = window.location.pathname);
+  this._path = url;
+  window.clicky.log(url, document.title);
+};
 });
 require.register("analytics/lib/providers/comscore.js", function(exports, require, module){
 // http://direct.comscore.com/clients/help/FAQ.aspx#faqTagging
@@ -4075,6 +4667,7 @@ require.register("analytics/lib/providers/index.js", function(exports, require, 
 module.exports = {
   'AdRoll'                   : require('./adroll'),
   'Amplitude'                : require('./amplitude'),
+  'awe.sm'                   : require('./awesm'),
   'BugHerd'                  : require('./bugherd'),
   'Chartbeat'                : require('./chartbeat'),
   'ClickTale'                : require('./clicktale'),
@@ -4092,6 +4685,7 @@ module.exports = {
   'HitTail'                  : require('./hittail'),
   'HubSpot'                  : require('./hubspot'),
   'Improvely'                : require('./improvely'),
+  'Inspectlet'               : require('./inspectlet'),
   'Intercom'                 : require('./intercom'),
   'Keen IO'                  : require('./keen-io'),
   'KISSmetrics'              : require('./kissmetrics'),
@@ -4172,165 +4766,276 @@ module.exports = Provider.extend({
 });
 
 });
+require.register("analytics/lib/providers/inspectlet.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , alias = require('alias')
+  , clone = require('clone')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Inspectlet` provider.
+ *
+ * https://www.inspectlet.com/dashboard/embedcode/1492461759/initial
+ */
+
+var Inspectlet = module.exports = integration('Inspectlet');
+
+
+/**
+ * Required key.
+ */
+
+Inspectlet.prototype.key = 'wid';
+
+
+/**
+ * Default options.
+ */
+
+Inspectlet.prototype.defaults = {
+  // your inspeclet site's token (required)
+  wid : ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Inspectlet.prototype.initialize = function (options, ready) {
+  window.__insp = window.__insp || [];
+  window.__insp.push(['wid', options.wid]);
+  load('//www.inspectlet.com/inspectlet.js', ready);
+};
+});
 require.register("analytics/lib/providers/intercom.js", function(exports, require, module){
-// http://docs.intercom.io/
-// http://docs.intercom.io/#IntercomJS
 
-var Provider = require('../provider')
-  , extend   = require('extend')
-  , load     = require('load-script')
-  , isEmail  = require('is-email');
+var alias = require('alias')
+  , convertDates = require('convert-dates')
+  , integration = require('../integration')
+  , each = require('each')
+  , is = require('is')
+  , isEmail = require('is-email')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `Intercom` integration.
+ *
+ * http://docs.intercom.io/
+ * http://docs.intercom.io/#IntercomJS
+ */
 
-  name : 'Intercom',
+var Intercom = module.exports = integration('Intercom');
 
-  // Whether Intercom has already been booted or not. Intercom becomes booted
-  // after Intercom('boot', ...) has been called on the first identify.
-  booted : false,
 
-  key : 'appId',
+/**
+ * Required key.
+ */
 
-  defaults : {
-    // Intercom's required key.
-    appId : null,
-    // An optional setting to display the Intercom inbox widget.
-    activator : null,
-    // Whether to show the count of messages for the inbox widget.
-    counter : true
-  },
+Intercom.prototype.key = 'appId';
 
-  initialize : function (options, ready) {
-    load('https://static.intercomcdn.com/intercom.v1.js', ready);
-  },
 
-  identify : function (userId, traits, options) {
-    // Don't do anything if we just have traits the first time.
-    if (!this.booted && !userId) return;
+/**
+ * Default options.
+ */
 
-    // Intercom specific settings. BACKWARDS COMPATIBILITY: we need to check for
-    // the lowercase variant as well.
-    options || (options = {});
-    var Intercom = options.Intercom || options.intercom || {};
-    traits.increments = Intercom.increments;
-    traits.user_hash = Intercom.userHash || Intercom.user_hash;
+Intercom.prototype.defaults = {
+  // an optional css selector to use for the intercom inbox widget button
+  activator: '',
+  // your intercom app id (required)
+  appId: '',
+  // whether to show the count of messages on the intercom inbox widget
+  counter: true,
+  // whether or not to show the intercom inbox widget
+  inbox: false
+};
 
-    // They need `created_at` as a Unix timestamp (seconds).
-    if (traits.created) {
-      traits.created_at = Math.floor(traits.created/1000);
-      delete traits.created;
-    }
 
-    // Convert a `company`'s `created` date.
-    if (traits.company && traits.company.created) {
-      traits.company.created_at = Math.floor(traits.company.created/1000);
-      delete traits.company.created;
-    }
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
 
-    // Optionally add the inbox widget.
-    if (this.options.activator) {
-      traits.widget = {
-        activator   : this.options.activator,
-        use_counter : this.options.counter
-      };
-    }
+Intercom.prototype.initialize = function (options, ready) {
+  load('https://static.intercomcdn.com/intercom.v1.js', ready);
+};
 
-    // If this is the first time we've identified, `boot` instead of `update`
-    // and add our one-time boot settings.
-    if (this.booted) {
-      window.Intercom('update', traits);
-    } else {
-      extend(traits, {
-        app_id  : this.options.appId,
-        user_id : userId
-      });
-      window.Intercom('boot', traits);
-    }
 
-    // Set the booted state, so that we know to call 'update' next time.
-    this.booted = true;
-  },
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
 
-  // Intercom doesn't have a separate `group` method, but they take a
-  // `companies` trait for the user.
-  group : function (groupId, properties, options) {
-    properties.id = groupId;
-    window.Intercom('update', { company : properties });
+Intercom.prototype.identify = function (id, traits, options) {
+  var method = this._id !== id ? 'boot': 'update';
+  this._id = id; // cache for next time
+
+  // required options
+  traits.app_id = this.options.appId;
+  if (id) traits.user_id = id;
+  if (isEmail(id) && !traits.email) traits.email = id;
+  if (!traits.user_id && !traits.email) return;
+
+  // handle dates
+  convertDates(traits, convertDate);
+  alias(traits, { created: 'created_at'});
+  if (traits.company) alias(traits.company, { created: 'created_at' });
+
+  // handle options
+  options || (options = {});
+  var Intercom = options.Intercom || options.intercom || {};
+  if (Intercom.increments) traits.increments = Intercom.increments;
+  if (Intercom.userHash) traits.user_hash = Intercom.userHash;
+  if (Intercom.user_hash) traits.user_hash = Intercom.user_hash;
+    // TODO: make this activator's default and run a migration
+  if (this.options.inbox || this.options.activator) {
+    traits.widget = {
+      activator: this.options.activator || '#Intercom',
+      use_counter: this.options.counter
+    };
   }
 
-});
+  window.Intercom(method, traits);
+};
 
+
+/**
+ * Group.
+ *
+ * @param {String} id
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Intercom.prototype.group = function (id, properties, options) {
+  properties.id = id;
+  window.Intercom('update', { company: properties });
+};
+
+
+/**
+ * Convert a date to Intercom's format.
+ *
+ * @param {Date} date
+ * @return {Number}
+ */
+
+function convertDate (date) {
+  return Math.floor(date/1000);
+}
 });
 require.register("analytics/lib/providers/keen-io.js", function(exports, require, module){
-// https://keen.io/docs/
 
-var Provider = require('../provider')
-  , load     = require('load-script');
+var integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `Keen IO` integration.
+ */
 
-  name : 'Keen IO',
+var Keen = module.exports = integration('Keen IO');
 
-  defaults : {
-    // The Project ID is **required**.
-    projectId : null,
-    // The Write Key is **required** to send events.
-    writeKey : null,
-    // The Read Key is optional, only if you want to "do analysis".
-    readKey : null,
-    // Whether or not to pass pageviews on to Keen IO.
-    pageview : true,
-    // Whether or not to track an initial pageview on `initialize`.
-    initialPageview : true
-  },
 
-  initialize : function (options, ready) {
-    window.Keen = window.Keen||{configure:function(e){this._cf=e},addEvent:function(e,t,n,i){this._eq=this._eq||[],this._eq.push([e,t,n,i])},setGlobalProperties:function(e){this._gp=e},onChartsReady:function(e){this._ocrq=this._ocrq||[],this._ocrq.push(e)}};
-    window.Keen.configure({
-      projectId : options.projectId,
-      writeKey  : options.writeKey,
-      readKey   : options.readKey
-    });
+/**
+ * Default options.
+ */
 
-    load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.1.0-min.js');
+Keen.prototype.defaults = {
+  // your keen io project id (required)
+  projectId: '',
+  // your keen io write key (required)
+  writeKey: '',
+  // your keen io read key
+  readKey: '',
+  // whether or not to send `pageview` calls on to keen io
+  pageview: true,
+  // whether or not to track an initial pageview on `initialize`
+  initialPageview: true
+};
 
-    if (options.initialPageview) this.pageview();
 
-    // Keen IO defines all their functions in the snippet, so they're ready.
-    ready();
-  },
+/**
+ * Initialize.
+ *
+ * https://keen.io/docs/
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
 
-  identify : function (userId, traits) {
-    // Use Keen IO global properties to include `userId` and `traits` on
-    // every event sent to Keen IO.
-    var globalUserProps = {};
-    if (userId) globalUserProps.userId = userId;
-    if (traits) globalUserProps.traits = traits;
-    if (userId || traits) {
-      window.Keen.setGlobalProperties(function(eventCollection) {
-        return { user: globalUserProps };
-      });
-    }
-  },
+Keen.prototype.initialize = function (options, ready) {
+  window.Keen = window.Keen||{configure:function(e){this._cf=e},addEvent:function(e,t,n,i){this._eq=this._eq||[],this._eq.push([e,t,n,i])},setGlobalProperties:function(e){this._gp=e},onChartsReady:function(e){this._ocrq=this._ocrq||[],this._ocrq.push(e)}};
+  window.Keen.configure({
+    projectId: options.projectId,
+    writeKey: options.writeKey,
+    readKey: options.readKey
+  });
+  ready();
 
-  track : function (event, properties) {
-    window.Keen.addEvent(event, properties);
-  },
+  if (options.initialPageview) this.pageview();
+  load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.1.0-min.js');
+};
 
-  pageview : function (url) {
-    if (!this.options.pageview) return;
 
-    var properties = {
-      url  : url || document.location.href,
-      name : document.title
-    };
+/**
+ * Identify.
+ *
+ * TODO: migrate from old `userId` to simpler `id`
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
 
-    this.track('Loaded a Page', properties);
-  }
+Keen.prototype.identify = function (id, traits, options) {
+  var user = {};
+  if (id) user.userId = id;
+  if (traits) user.traits = traits;
+  window.Keen.setGlobalProperties(function() {
+    return { user: user };
+  });
+};
 
-});
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Keen.prototype.track = function (event, properties, options) {
+  window.Keen.addEvent(event, properties);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+Keen.prototype.pageview = function (url) {
+  if (!this.options.pageview) return;
+  var properties = {
+    url: url || document.location.href,
+    name: document.title
+  };
+  this.track('Loaded a Page', properties);
+};
 });
 require.register("analytics/lib/providers/kissmetrics.js", function(exports, require, module){
 // http://support.kissmetrics.com/apis/javascript
@@ -5576,37 +6281,116 @@ module.exports = Provider.extend({
 });
 require.register("analytics/lib/providers/uservoice.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , load     = require('load-script')
-  , alias    = require('alias')
-  , clone    = require('clone');
+var alias = require('alias')
+  , clone = require('clone')
+  , integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `UserVoice` integration.
+ */
 
-  name : 'UserVoice',
+var UserVoice = module.exports = integration('UserVoice');
 
-  key: 'widgetId',
 
-  defaults : {
-    widgetId : null
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    window.UserVoice = window.UserVoice || [];
-    load('//widget.uservoice.com/' + options.widgetId + '.js', ready);
+UserVoice.prototype.key = 'widgetId';
 
-    // BACKWARDS COMPATIBILITY: noop this old method, so we don't break sites
-    window.showClassicWidget = function(){};
-  },
 
-  identify : function (userId, traits) {
-    // Pull the ID into traits.
-    traits.id = userId;
-    window.UserVoice.push(['setCustomFields', traits]);
-  }
+/**
+ * Default options.
+ */
 
-});
+UserVoice.prototype.defaults = {
+  // your uservoice widget id (required)
+  widgetId: '',
+  // your uservoice forum id (required)
+  forumId: null,
+  // whether to show the tab on page load
+  showTab: true,
+  // tab customization options
+  mode: 'full',
+  primaryColor: '#cc6d00',
+  linkColor: '#007dbf',
+  defaultMode: 'support',
+  tabLabel: 'Feedback & Support',
+  tabColor: '#cc6d00',
+  tabPosition: 'middle-right',
+  tabInverted: false
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+UserVoice.prototype.initialize = function (options, ready) {
+  window.UserVoice || (window.UserVoice = []);
+  window.showClassicWidget = showClassicWidget; // part of public api
+  ready();
+
+  if (options.showTab) showClassicWidget('showTab', formatOptions(options));
+
+  load('//widget.uservoice.com/' + options.widgetId + '.js', ready);
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+UserVoice.prototype.identify = function (id, traits, options) {
+  if (id) traits.id = id;
+  window.UserVoice.push(['setCustomFields', traits]);
+};
+
+
+/**
+ * Format the options for UserVoice.
+ *
+ * @param {Object} options
+ * @return {Object}
+ */
+
+function formatOptions (options) {
+  var cloned = clone(options);
+  alias(cloned, {
+    forumId: 'forum_id',
+    primaryColor: 'primary_color',
+    linkColor: 'link_color',
+    defaultMode: 'default_mode',
+    tabLabel: 'tab_label',
+    tabColor: 'tab_color',
+    tabPosition: 'tab_position',
+    tabInverted: 'tab_inverted'
+  });
+  return cloned;
+}
+
+
+/**
+ * Show the classic version of the UserVoice widget. This method is usually part
+ * of UserVoice classic's public API.
+ *
+ * @param {String} type ('showTab' or 'showLightbox')
+ * @param {Object} options (optional)
+ */
+
+function showClassicWidget (type, options) {
+  type || (type = 'showLightbox');
+  window.UserVoice.push([type, 'classic_widget', options]);
+}
 });
 require.register("analytics/lib/providers/vero.js", function(exports, require, module){
 // https://github.com/getvero/vero-api/blob/master/sections/js.md
@@ -5844,13 +6628,16 @@ module.exports = Provider.extend({
 
   pageview : function (url, options) {
     window.woopra.track('pv', {
-      url: url
+      url: url || window.location.pathname,
+      title: document.title
     });
   }
 
 });
 
 });
+
+
 
 
 
@@ -5894,6 +6681,8 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
@@ -5928,7 +6717,13 @@ require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-emp
 require.alias("ianstormtaylor-map/index.js", "analytics/deps/map/index.js");
 require.alias("ianstormtaylor-map/index.js", "map/index.js");
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("jkroso-equals/index.js", "analytics/deps/equals/index.js");
+require.alias("jkroso-equals/index.js", "equals/index.js");
+require.alias("jkroso-type/index.js", "jkroso-equals/deps/type/index.js");
 
 require.alias("segmentio-after/index.js", "analytics/deps/after/index.js");
 require.alias("segmentio-after/index.js", "after/index.js");
@@ -5946,6 +6741,13 @@ require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js"
 require.alias("segmentio-bind-all/index.js", "segmentio-bind-all/index.js");
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 require.alias("segmentio-canonical/index.js", "canonical/index.js");
+
+require.alias("segmentio-convert-dates/index.js", "analytics/deps/convert-dates/index.js");
+require.alias("segmentio-convert-dates/index.js", "convert-dates/index.js");
+require.alias("ianstormtaylor-is/index.js", "segmentio-convert-dates/deps/is/index.js");
+require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
+
+require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
 require.alias("segmentio-extend/index.js", "extend/index.js");
@@ -5967,16 +6769,24 @@ require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/inde
 require.alias("segmentio-load-script/index.js", "load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
 
-require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
-require.alias("segmentio-new-date/index.js", "new-date/index.js");
+require.alias("segmentio-new-date/lib/index.js", "analytics/deps/new-date/lib/index.js");
+require.alias("segmentio-new-date/lib/milliseconds.js", "analytics/deps/new-date/lib/milliseconds.js");
+require.alias("segmentio-new-date/lib/seconds.js", "analytics/deps/new-date/lib/seconds.js");
+require.alias("segmentio-new-date/lib/index.js", "analytics/deps/new-date/index.js");
+require.alias("segmentio-new-date/lib/index.js", "new-date/index.js");
 require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
+require.alias("segmentio-isodate/index.js", "segmentio-new-date/deps/isodate/index.js");
+
+require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-on-error/index.js", "analytics/deps/on-error/index.js");

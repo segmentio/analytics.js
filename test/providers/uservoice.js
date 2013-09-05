@@ -1,39 +1,87 @@
+
 describe('UserVoice', function () {
 
-var analytics = require('analytics')
-  , extend = require('extend');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
-describe('initialize', function () {
+var settings = {
+  widgetId: 'mhz5Op4MUft592O8Q82MwA',
+  forumId: 221539,
+  tabLabel: 'test',
+  defaultMode: 'feedback',
+  tabColor: '#ff0000'
+};
+
+before(function (done) {
   this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ UserVoice: settings });
+  this.integration = analytics._providers[0];
+  this.options = this.integration.options;
+  when(function () { return window.UserVoice.account; }, done);
+});
 
-  it('should call ready and load library', function (done) {
-    expect(window.UserVoice).to.be(undefined);
-
-    var spy = sinon.spy();
-    analytics.ready(spy);
-    analytics.initialize({ 'UserVoice': test['UserVoice'] });
-    expect(window.UserVoice).not.to.be(undefined);
-
-    // once the library loads, `account` gets set
-    var interval = setInterval(function () {
-      if (!window.UserVoice.account) return;
-      expect(window.UserVoice.account).not.to.be(undefined);
-      expect(spy.called).to.be(true);
-      clearInterval(interval);
-      done();
-    }, 500);
-  });
-
-  it('should store options', function () {
-    expect(analytics._providers[0].options.widgetId).to.equal(test['UserVoice'].widgetId);
+describe('#key', function () {
+  it('widgetId', function () {
+    assert(this.integration.key == 'widgetId');
   });
 });
 
-describe('identify', function () {
-  it('should call setCustomFields', function () {
-    var stub = sinon.stub(window.UserVoice, 'push');
-    analytics.identify('id', { name: 'Name' });
-    expect(stub.calledWith(['setCustomFields', { id: 'id', name: 'Name' }])).to.be(true);
+describe('#defaults', function () {
+  it('widgetId', function () {
+    assert(this.integration.defaults.widgetId === '');
+  });
+
+  it('forumId', function () {
+    assert(this.integration.defaults.forumId === null);
+  });
+});
+
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
+  });
+
+  it('should store options', function () {
+    assert(this.options.widgetId == settings.widgetId);
+    assert(this.options.forumId == settings.forumId);
+  });
+
+  it('should show the tab', function (done) {
+    when(function () { return document.getElementById('uvTab'); }, done);
+  });
+
+  it('should expose a showClassicWidget global', function () {
+    assert(window.showClassicWidget);
+  });
+});
+
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.stub = sinon.stub(window.UserVoice, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.stub.calledWith(['setCustomFields', { id: 'id' }]));
+  });
+
+  it('should send traits', function () {
+    analytics.identify({ trait: true });
+    assert(this.stub.calledWith(['setCustomFields', { trait: true }]));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify({ id: 'id', trait: true });
+    assert(this.stub.calledWith(['setCustomFields', { id: 'id', trait: true }]));
   });
 });
 

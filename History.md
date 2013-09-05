@@ -1,3 +1,7 @@
+0.12.1 - September 5, 2013
+--------------------------
+* UserVoice: fix bug where some installations wouldn't show the tab
+
 0.12.0 - September 4, 2013
 --------------------------
 * Clicky: fixed custom tracking, added `pageview`

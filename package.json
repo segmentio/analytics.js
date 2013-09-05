@@ -1,6 +1,6 @@
 {
   "name": "analytics.js",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "author": "Segment.io <friends@segment.io>",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "license": "MIT",
@@ -32,6 +32,7 @@
     "segment.io",
     "adroll",
     "amplitude",
+    "awe.sm",
     "chartbeat",
     "clicktale",
     "clicky",

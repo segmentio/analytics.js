@@ -838,15 +838,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -858,9 +858,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -872,7 +870,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -885,12 +883,13 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
+
 var next = require('next-tick');
 
 

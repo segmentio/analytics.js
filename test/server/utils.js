@@ -39,10 +39,6 @@
           trackingId : 'x'
         }
       },
-      'GoSquared' : 'x',
-      'Heap' : 'x',
-      'HitTail' : 'x',
-      'HubSpot' : 'x',
       'Improvely' : {
         domain    : 'demo',
         projectId : 1

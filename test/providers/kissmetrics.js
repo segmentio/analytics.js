@@ -1,110 +1,121 @@
+
 describe('KISSmetrics', function () {
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  apiKey: '67f57ae9d61a6981fa07d141bec8c6c37e8b88c7'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ KISSmetrics: settings });
+  this.integration = analytics._integrations.KISSmetrics;
+  this.options = this.integration.options;
+  when(function () { return window.KM; }, done);
+});
 
-    this.timeout(10000);
+describe('#key', function () {
+  it('apiKey', function () {
+    assert(this.integration.key == 'apiKey');
+  });
+});
 
-    it('should call ready and load library', function (done) {
-      expect(window._kmq).to.be(undefined);
+describe('#defaults', function () {
+  it('apiKey', function () {
+    assert(this.integration.defaults.apiKey === '');
+  });
+});
 
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'KISSmetrics' : test['KISSmetrics'] });
-      expect(window._kmq).not.to.be(undefined);
-      expect(window.KM).to.be(undefined);
-
-      tick(function () {
-        expect(spy.called).to.be(true);
-      });
-
-      // When the library loads, it will create a `KM` global.
-      var interval = setInterval(function () {
-        if (!window.KM) return;
-        expect(window.KM).not.to.be(undefined);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      analytics.initialize({ 'KISSmetrics' : test['KISSmetrics'] });
-      expect(analytics._providers[0].options.apiKey).to.equal(test['KISSmetrics']);
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-
-  describe('identify', function () {
-
-    beforeEach(analytics._user.clear);
-
-    it('should push "_identify"', function () {
-      var stub = sinon.stub(window._kmq, 'push');
-      analytics.identify(test.traits);
-      expect(stub.calledWith(['identify', test.userId])).to.be(false);
-
-      stub.reset();
-      analytics.identify(test.userId);
-      expect(stub.calledWith(['identify', test.userId])).to.be(true);
-
-      stub.reset();
-      analytics.identify(test.userId, test.traits);
-      expect(stub.calledWith(['identify', test.userId])).to.be(true);
-
-      stub.restore();
-    });
-
-    it('should push "_set"', function () {
-      var stub = sinon.stub(window._kmq, 'push');
-      analytics.identify(test.traits);
-      expect(stub.calledWith(['set', test.traits])).to.be(true);
-      analytics._user.clear();
-
-      stub.reset();
-      analytics.identify(test.userId);
-      expect(stub.calledWith(['set', {}])).to.be(true);
-      analytics._user.clear();
-
-      stub.reset();
-      analytics.identify(test.userId, test.traits);
-      expect(stub.calledWith(['set', test.traits])).to.be(true);
-
-      stub.restore();
-    });
-
+  it('should store options', function () {
+    assert(this.options.apiKey == settings.apiKey);
   });
 
+  it('should created a queue', function () {
+    assert(window._kmq instanceof Array);
+  });
+});
 
-  describe('track', function () {
-
-    it('should push "_record"', function () {
-      var stub = sinon.stub(window._kmq, 'push');
-      analytics.track(test.event, test.properties);
-      expect(stub.calledWith(['record', test.event, {
-        type             : 'uncouth',
-        'Billing Amount' : 29.99
-      }])).to.be(true);
-
-      stub.restore();
-    });
-
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.stub = sinon.stub(window._kmq, 'push');
   });
 
-
-  describe('alias', function () {
-
-    it('should call alias', function () {
-      var stub = sinon.stub(window._kmq, 'push');
-      analytics.alias(test.newUserId, test.oldUserId);
-      expect(stub.calledWith(['alias', test.newUserId, test.oldUserId])).to.be(true);
-
-      stub.restore();
-    });
-
+  afterEach(function () {
+    this.stub.restore();
   });
+
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.stub.calledWith(['identify', 'id']));
+  });
+
+  it('should send traits', function () {
+    analytics.identify({ trait: true });
+    assert(this.stub.calledWith(['set', { trait: true }]));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(this.stub.calledWith(['identify', 'id']));
+    assert(this.stub.calledWith(['set', { trait: true }]));
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window._kmq, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send an event', function () {
+    analytics.track('event');
+    assert(this.stub.calledWith(['record', 'event', {}]));
+  });
+
+  it('should send an event and properties', function () {
+    analytics.track('event', { property: true });
+    assert(this.stub.calledWith(['record', 'event', { property: true }]));
+  });
+
+  it('should alias revenue to "Billing Amount"', function () {
+    analytics.track('event', { revenue: 9.99 });
+    assert(this.stub.calledWith(['record', 'event', { 'Billing Amount': 9.99 }]));
+  });
+});
+
+describe('#alias', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window._kmq, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send a new id', function () {
+    analytics.alias('new');
+    assert(this.stub.calledWith(['alias', 'new', undefined]));
+  });
+
+  it('should send a new and old id', function () {
+    analytics.alias('new', 'old');
+    assert(this.stub.calledWith(['alias', 'new', 'old']));
+  });
+});
 
 });

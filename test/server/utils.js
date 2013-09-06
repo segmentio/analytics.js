@@ -44,7 +44,6 @@
         activator : '#someElement',
         counter   : true
       },
-      'KISSmetrics' : '67f57ae9d61a6981fa07d141bec8c6c37e8b88c7',
       'Klaviyo' : 'x',
       'LeadLander' : 'x',
       'LiveChat' : '1520', //'2328351',

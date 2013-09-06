@@ -7,7 +7,7 @@ var analytics = window.analytics || require('analytics')
   , when = require('when');
 
 var settings = {
-  wid : 'x'
+  wid: 'x'
 };
 
 before(function (done) {

@@ -1,101 +1,92 @@
+
 describe('Improvely', function () {
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  domain: 'demo',
+  projectId: 1
+};
 
-  /**
-   * Initialize.
-   */
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ Improvely: settings });
+  this.integration = analytics._integrations.Improvely;
+  this.options = this.integration.options;
+  when(function () { return window.improvely.identify; }, done);
+});
 
-  describe('initialize', function () {
-
-    it('should call ready and load library', function (done) {
-      expect(window._improvely).to.be(undefined);
-
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'Improvely' : test['Improvely'] });
-      expect(window._improvely).not.to.be(undefined);
-      expect(window.improvely.identify).to.be(undefined);
-
-      tick(function () {
-        expect(spy.called).to.be(true);
-      });
-
-      // When the library loads, there will be a function `window.improvely.identify`.
-      var interval = setInterval(function () {
-        if (!window.improvely.identify) return;
-        expect(window.improvely.identify).not.to.be(undefined);
-        clearInterval(interval);
-        done();
-      }, 100);
-    });
-
-    it('should store options', function () {
-      analytics.initialize({ 'Improvely' : test['Improvely'] });
-      expect(analytics._providers[0].options.domain).to.equal(test['Improvely'].domain);
-      expect(analytics._providers[0].options.projectId).to.equal(test['Improvely'].projectId);
-    });
-
+describe('#defaults', function () {
+  it('domain', function () {
+    assert(this.integration.defaults.domain === '');
   });
 
+  it('projectId', function () {
+    assert(this.integration.defaults.projectId === null);
+  });
+});
 
-  /**
-   * Identify.
-   */
-
-  describe('identify', function () {
-
-    var stub;
-
-    beforeEach(function () {
-      stub = sinon.stub(window.improvely, 'label');
-      analytics._user.clear();
-    });
-
-    afterEach(function () {
-      stub.restore();
-    });
-
-    it('should call window.improvely.label', function () {
-      analytics.identify(test.userId, test.traits);
-      expect(stub.calledWith(test.userId)).to.be(true);
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-
-  /**
-   * Track.
-   */
-
-  describe('track', function () {
-
-    var stub;
-
-    beforeEach(function () {
-      stub = sinon.stub(window.improvely, 'goal');
-      analytics._user.clear();
-    });
-
-    afterEach(function () {
-      stub.restore();
-    });
-
-    it('should call window.improvely.goal with `type` for the event name', function () {
-      analytics.track(test.event);
-      expect(stub.calledWith({ type : test.event })).to.be(true);
-    });
-
-    it('should call window.improvely.goal with `amount` for revenue', function () {
-      analytics.track(test.event, test.properties);
-      expect(stub.calledWith({
-        type   : test.event,
-        amount : test.properties.revenue
-      })).to.be(true);
-    });
-
+  it('should store options', function () {
+    assert(this.options.domain == settings.domain);
+    assert(this.options.projectId == settings.projectId);
   });
+});
+
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.spy = sinon.spy(window.improvely, 'label');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.spy.calledWith('id'));
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(window.improvely, 'goal');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should send an event', function () {
+    analytics.track('event');
+    assert(this.spy.calledWith({ type: 'event' }));
+  });
+
+  it('should send an event and properties', function () {
+    analytics.track('event', { property: true });
+    assert(this.spy.calledWith({
+      type: 'event',
+      property: true
+    }));
+  });
+
+  it('should alias revenue to amount', function () {
+    analytics.track('event', { revenue: 42.99 });
+    assert(this.spy.calledWith({
+      type: 'event',
+      amount: 42.99
+    }));
+  });
+});
 
 });

@@ -39,10 +39,6 @@
           trackingId : 'x'
         }
       },
-      'Improvely' : {
-        domain    : 'demo',
-        projectId : 1
-      },
       'Intercom' : {
         appId     : 'x',
         activator : '#someElement',

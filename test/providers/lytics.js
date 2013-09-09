@@ -12,40 +12,69 @@ var settings = {
   cookie: 'lytics_cookie'
 };
 
-before(function () {
-  var spy = this.spy = sinon.spy();
-  analytics.ready(spy);
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
   analytics.initialize({ Lytics: settings });
+  this.integration = analytics._integrations.Lytics;
+  this.options = this.integration.options;
+  when(function () { return window.jstag.bind; }, done);
 });
 
-describe('initialize', function () {
-  it('should load library and call ready', function (done) {
-    this.timeout(10000);
-    var spy = this.spy;
-    when(function () { return window.jstag.bind; }, function () {
-      assert(spy.called);
-      done();
-    });
+describe('#key', function () {
+  it('cid', function () {
+    assert(this.integration.key == 'cid');
+  });
+});
+
+describe('#defaults', function () {
+  it('cid', function () {
+    assert(this.integration.defaults.cid === '');
+  });
+
+  it('cookie', function () {
+    assert(this.integration.defaults.cookie === 'seerid');
+  });
+
+  it('delay', function () {
+    assert(this.integration.defaults.delay === 200);
+  });
+
+  it('initialPageview', function () {
+    assert(this.integration.defaults.initialPageview === true);
+  });
+
+  it('sessionTimeout', function () {
+    assert(this.integration.defaults.sessionTimeout === 1800);
+  });
+
+  it('url', function () {
+    assert(this.integration.defaults.url === '//c.lytics.io');
+  });
+});
+
+describe('#initialize', function () {
+  it('should load library and call ready', function () {
+    assert(this.spy.called);
   });
 
   it('should store options with defaults', function () {
-    var options = analytics._providers[0].options;
-    assert(options.cid == settings.cid);
-    assert(options.cookie == settings.cookie);
-    assert(options.delay == 200);
-    assert(options.initialPageview);
-    assert(options.sessionTimeout == 1800);
-    assert(options.url == '//c.lytics.io');
+    assert(this.options.cid == settings.cid);
+    assert(this.options.cookie == settings.cookie);
+    assert(this.options.delay == 200);
+    assert(this.options.initialPageview);
+    assert(this.options.sessionTimeout == 1800);
+    assert(this.options.url == '//c.lytics.io');
   });
 
   it('should pass options to lytics', function () {
-    var options = window.jstag._c;
-    assert(options.cid == settings.cid);
-    assert(options.cookie == settings.cookie);
+    assert(this.options.cid == settings.cid);
+    assert(this.options.cookie == settings.cookie);
   });
 });
 
-describe('identify', function () {
+describe('#identify', function () {
   beforeEach(function () {
     this.stub = sinon.stub(window.jstag, 'send');
     analytics._user.clear();
@@ -71,7 +100,7 @@ describe('identify', function () {
   });
 });
 
-describe('track', function () {
+describe('#track', function () {
   beforeEach(function () {
     this.stub = sinon.stub(window.jstag, 'send');
     analytics._user.clear();
@@ -92,7 +121,7 @@ describe('track', function () {
   });
 });
 
-describe('pageview', function () {
+describe('#pageview', function () {
   beforeEach(function () {
     this.stub = sinon.stub(window.jstag, 'send');
   });

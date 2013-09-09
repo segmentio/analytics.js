@@ -1,70 +1,82 @@
+
 describe('LiveChat', function () {
 
-  var analytics = require('analytics');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  license: '1520'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ LiveChat: settings });
+  this.integration = analytics._integrations.LiveChat;
+  this.options = this.integration.options;
+  when(function () { return window.LC_API; }, done);
+});
 
-    this.timeout(10000);
+describe('#key', function () {
+  it('license', function () {
+    assert(this.integration.key == 'license');
+  });
+});
 
-    it('should call ready and load library', function (done) {
-      expect(window.__lc).to.be(undefined);
+describe('#defaults', function () {
+  it('license', function () {
+    assert(this.integration.defaults.license === '');
+  });
+});
 
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'LiveChat' : test['LiveChat'] });
-      expect(window.__lc).not.to.be(undefined);
-      expect(window.LC_API).to.be(undefined);
-
-      // When the library loads, `LC_API` will be defined.
-      var interval = setInterval(function () {
-        if (!window.LC_API) return;
-        expect(window.LC_API).not.to.be(undefined);
-        expect(spy.called).to.be(true);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      expect(analytics._providers[0].options.license).to.equal(test['LiveChat']);
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-
-  describe('identify', function () {
-    var stub;
-    beforeEach(function () {
-      stub = sinon.stub(window.LC_API, 'set_custom_variables');
-      analytics._user.clear();
-    });
-    afterEach(function () { stub.restore(); });
-
-    it('should set user id', function () {
-      analytics.identify(test.userId);
-      expect(stub.args[0][0]).to.eql([
-        { name : 'User ID', value : test.userId }
-      ]);
-    });
-
-    it('should set traits', function () {
-      analytics.identify(test.traits);
-      expect(stub.args[0][0]).to.eql([
-        { name : 'name', value : test.traits.name },
-        { name : 'email', value : test.traits.email },
-        { name : 'created', value : test.traits.created }
-      ]);
-    });
-
-    it('should set user id and traits', function () {
-      analytics.identify(test.userId, test.traits);
-      expect(stub.args[0][0]).to.eql([
-        { name : 'User ID', value : test.userId },
-        { name : 'name', value : test.traits.name },
-        { name : 'email', value : test.traits.email },
-        { name : 'created', value : test.traits.created }
-      ]);
-    });
+  it('should store options', function () {
+    assert(this.options.license == settings.license);
   });
+
+  it('should pass options to LiveChat', function () {
+    assert(window.__lc.license == settings.license);
+  });
+});
+
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.stub = sinon.stub(window.LC_API, 'set_custom_variables');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.stub.calledWith([
+      { name: 'User ID', value: 'id' }
+    ]));
+  });
+
+  it('should send traits', function () {
+    analytics.identify({ trait: true });
+    assert(this.stub.calledWith([
+      { name: 'trait', value: true }
+    ]));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(this.stub.calledWith([
+      { name: 'trait', value: true },
+      { name: 'User ID', value: 'id' }
+    ]));
+  });
+});
+
 });

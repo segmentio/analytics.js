@@ -1,61 +1,74 @@
+
 describe('Sentry', function () {
 
-  var analytics = require('analytics');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  config: 'x'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ Sentry: settings });
+  this.integration = analytics._integrations.Sentry;
+  this.options = this.integration.options;
+  when(function () { return window.Raven; }, done);
+});
 
-    this.timeout(10000);
+describe('#key', function () {
+  it('config', function () {
+    assert(this.integration.key == 'config');
+  });
+});
 
-    // We do this all in one call, so that we don't get confused with multiple
-    // analytics ready calls.
-    it('should call ready and load library', function (done) {
-      var spy  = sinon.spy()
-        , push = Array.prototype.push;
+describe('#defaults', function () {
+  it('config', function () {
+    assert(this.integration.defaults.config === '');
+  });
+});
 
-      expect(window.Raven).to.be(undefined);
-
-      analytics.ready(spy);
-      analytics.initialize({ 'Sentry' : test['Sentry'] });
-
-      // When the library loads, it will overwrite the push method.
-      var interval = setInterval(function () {
-        if (!window.Raven) return;
-        expect(window.Raven).not.to.be(undefined);
-        expect(spy.called).to.be(true);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function (done) {
-      analytics.initialize({ 'Sentry' : test['Sentry'] });
-      var options = analytics._providers[0].options;
-      expect(options.config).to.equal(test['Sentry']);
-
-      // Add the ready handler here so that future tests don't get screwed by
-      // the script loading halfway through their test.
-      analytics.ready(done);
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-
-  describe('identify', function () {
-
-    it('should call `setUser`', function (done) {
-      var extend = require('segmentio-extend')
-        , spy    = sinon.spy(window.Raven, 'setUser')
-        , traits = extend({}, test.traits, { id : test.userId});
-
-      analytics.identify(test.userId, test.traits);
-
-      analytics.ready(function () {
-        expect(spy.calledWithMatch(traits)).to.be(true);
-        done();
-      });
-    });
-
+  it('should store options', function () {
+    assert(this.options.config == settings.config);
   });
+});
+
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.spy = sinon.spy(window.Raven, 'setUser');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.spy.calledWith({ id: 'id' }));
+  });
+
+  it('should send traits', function () {
+    analytics.identify({ trait: true });
+    assert(this.spy.calledWith({ trait: true }));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(this.spy.calledWith({
+      id: 'id',
+      trait: true
+    }));
+  });
+});
 
 });

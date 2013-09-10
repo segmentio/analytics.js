@@ -44,8 +44,6 @@
         activator : '#someElement',
         counter   : true
       },
-      'Olark' : '5798-949-10-1692',
-      'Optimizely' : true,
       'Perfect Audience' : '4ff6ade4361ed500020000a5',
       'Pingdom' : '5168f8c6abe53db732000000',
       'Preact' : {

@@ -1,35 +1,50 @@
+
 describe('Woopra', function () {
 
-var assert = require('assert')
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
   , when = require('when');
 
 var settings = {
   domain: 'x'
 };
 
-describe('initialize', function () {
-  it('should load library and call ready', function (done) {
-    this.timeout(10000);
-    var spy = sinon.spy();
-    assert(!window.woopra);
-    analytics.ready(spy);
-    analytics.initialize({ Woopra: settings });
-    assert(window.woopra);
-    when(function () { return window.woopra.loaded; }, function () {
-      assert(spy.called);
-      done();
-    });
-  });
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ Woopra: settings });
+  this.integration = analytics._integrations.Woopra;
+  this.options = this.integration.options;
+  when(function () { return window.woopra.loaded; }, done);
+});
 
-  it('should store options with defaults', function () {
-    var options = analytics._providers[0].options;
-    assert(settings.domain === options.domain);
-    assert(options.initialPageview);
+describe('#key', function () {
+  it('domain', function () {
+    assert(this.integration.key == 'domain');
   });
 });
 
+describe('#defaults', function () {
+  it('domain', function () {
+    assert(this.integration.defaults.domain === '');
+    assert(this.integration.defaults.initialPageview === true);
+  });
+});
 
-describe('identify', function () {
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
+  });
+
+  it('should store options with defaults', function () {
+    assert(this.options.domain == settings.domain);
+    assert(this.options.initialPageview == this.integration.defaults.initialPageview);
+  });
+});
+
+describe('#identify', function () {
   beforeEach(function () {
     analytics._user.clear();
     this.spy = sinon.spy(window.woopra, 'identify');
@@ -45,12 +60,20 @@ describe('identify', function () {
   });
 
   it('should send traits', function () {
-    analytics.identify({ name: 'Name' });
-    assert(this.spy.calledWith({ name: 'Name' }));
+    analytics.identify({ trait: true });
+    assert(this.spy.calledWith({ trait: true }));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(this.spy.calledWith({
+      id: 'id',
+      trait: true
+    }));
   });
 });
 
-describe('track', function () {
+describe('#track', function () {
   beforeEach(function () {
     this.spy = sinon.spy(window.woopra, 'track');
   });
@@ -69,7 +92,7 @@ describe('track', function () {
   });
 });
 
-describe('pageview', function () {
+describe('#pageview', function () {
   beforeEach(function () {
     this.spy = sinon.spy(window.woopra, 'track');
   });
@@ -77,6 +100,7 @@ describe('pageview', function () {
   afterEach(function () {
     this.spy.restore();
   });
+
   it('should send a "pv" event with default properties', function () {
     analytics.pageview();
     assert(this.spy.calledWith('pv', {

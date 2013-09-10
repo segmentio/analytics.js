@@ -15,6 +15,8 @@ before(function (done) {
   this.spy = sinon.spy();
   analytics.ready(this.spy);
   analytics.initialize({ MouseStats: settings });
+  this.integration = analytics._integrations.MouseStats;
+  this.options = this.integration.options;
   when(function () { return window.msae; }, done);
 });
 
@@ -24,12 +26,11 @@ describe('#initialize', function () {
   });
 
   it('should store options with defaults', function () {
-    var options = analytics._providers[0].options;
-    assert(options.accountNumber == settings.accountNumber);
+    assert(this.options.accountNumber == settings.accountNumber);
   });
 
   it('should pass options to MouseStats', function () {
-    assert(window.window.mousestats_Site == settings.accountNumber);
+    assert(window.mousestats_Site == settings.accountNumber);
   });
 });
 

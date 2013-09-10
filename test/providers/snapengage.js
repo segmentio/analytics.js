@@ -1,45 +1,61 @@
+
 describe('SnapEngage', function () {
 
-  var analytics = require('analytics');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  apiKey: '782b737e-487f-4117-8a2b-2beb32b600e5'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ SnapEngage: settings });
+  this.integration = analytics._integrations.SnapEngage;
+  this.options = this.integration.options;
+  when(function () { return window.SnapABug; }, done);
+});
 
-    this.timeout(15000);
+describe('#key', function () {
+  it('apiKey', function () {
+    assert(this.integration.key == 'apiKey');
+  });
+});
 
-    it('should call ready and load library', function (done) {
-      expect(window.SnapABug).to.be(undefined);
+describe('#defaults', function () {
+  it('apiKey', function () {
+    assert(this.integration.defaults.apiKey === '');
+  });
+});
 
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'SnapEngage' : test['SnapEngage'] });
-
-      var interval = setInterval(function () {
-        if (!window.SnapABug) return;
-        expect(window.SnapABug).not.to.be(undefined);
-        expect(spy.called).to.be(true);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      expect(analytics._providers[0].options.apiKey).to.equal(test['SnapEngage']);
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-
-  describe('identify', function () {
-
-    beforeEach(analytics._user.clear);
-
-    it('should tag the user with their email', function () {
-      var spy = sinon.spy(window.SnapABug, 'setUserEmail');
-      analytics.identify(test.userId, test.traits);
-      expect(spy.calledWith(test.traits.email)).to.be(true);
-    });
-
+  it('should store options', function () {
+    assert(this.options.apiKey == settings.apiKey);
   });
+});
+
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.stub = sinon.stub(window.SnapABug, 'setUserEmail');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send an email', function () {
+    analytics.identify({ email: 'name@example.com' });
+    assert(this.stub.calledWith('name@example.com'));
+  });
+});
 
 });

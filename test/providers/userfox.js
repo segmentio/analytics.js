@@ -1,75 +1,96 @@
+
 describe('userfox', function () {
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
-  describe('initialize', function () {
+var settings = {
+  clientId: '4v2erxr9c5vzqsy35z9gnk6az'
+};
 
-    it('should call ready and load library', function (done) {
-      expect(window._ufq).to.be(undefined);
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ userfox: settings });
+  this.integration = analytics._integrations.userfox;
+  this.options = this.integration.options;
+  when(function () { return window.UserfoxTracker; }, done);
+});
 
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'userfox' : test['userfox'] });
-      expect(window._ufq).not.to.be(undefined);
+describe('#key', function () {
+  it('clientId', function () {
+    assert(this.integration.key == 'clientId');
+  });
+});
 
-      tick(function () {
-        expect(spy.called).to.be(true);
-        done();
-      });
-    });
+describe('#defaults', function () {
+  it('clientId', function () {
+    assert(this.integration.defaults.clientId === '');
+  });
+});
 
-    it('should store options', function () {
-      analytics.initialize({ 'userfox' : test['userfox'] });
-      expect(analytics._providers[0].options.clientId).to.equal(test['userfox']);
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-
-  describe('identify', function () {
-
-    it('should not call _ufq identify if theres no email', function () {
-      analytics._user.clear();
-      var spy = sinon.spy(window._ufq, 'push');
-      analytics.identify(test.userId, { name : 'John' });
-      expect(spy.called).to.be(false);
-      spy.restore();
-    });
-
-    it('should call _ufq identify if theres an email', function () {
-      var spy = sinon.spy(window._ufq, 'push');
-      analytics.identify(test.userId, test.traits);
-      expect(spy.calledWith(['init', {
-        clientId : test['userfox'],
-        email    : test.traits.email
-      }])).to.be(true);
-      spy.restore();
-    });
-
-    it('should not call _ufq track if theres no created date', function () {
-      var spy = sinon.spy(window._ufq, 'push');
-      var created = new Date();
-      analytics.identify(test.userId,  { name : 'John' });
-      expect(spy.calledWith(['track', { signup_date: created.getTime()+'' }])).to.be(false);
-      spy.restore();
-    });
-
-    it('should call _ufq track if theres a created date', function () {
-      var spy = sinon.spy(window._ufq, 'push');
-      analytics._user.clear();
-      var created = 1370542617;
-      analytics.identify(test.userId, {
-        email   : test.traits.email,
-        created : created
-      });
-
-      expect(spy.calledWith(['track', {
-        signup_date : created.toString(),
-        email       : test.traits.email
-      }])).to.be(true);
-      spy.restore();
-    });
+  it('should store options', function () {
+    assert(this.options.clientId == settings.clientId);
   });
+});
+
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.stub = sinon.stub(window._ufq, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should initialize the library with an email', function () {
+    analytics.identify('id', { email: 'name@example.com' });
+    assert(this.stub.calledWith(['init', {
+      clientId: settings.clientId,
+      email: 'name@example.com'
+    }]));
+  });
+
+  it('should send traits', function () {
+    analytics.identify('id', { email: 'name@example.com', trait: true });
+    assert(this.stub.calledWith(['track', {
+      email: 'name@example.com',
+      trait: true
+    }]));
+  });
+
+  it('should convert dates to a format userfox supports', function () {
+    var date = new Date();
+    analytics.identify('id', {
+      email: 'name@example.com',
+      date: date
+    });
+    assert(this.stub.calledWith(['track', {
+      email: 'name@example.com',
+      date: (date.getTime() / 1000).toString()
+    }]));
+  });
+
+  it('should alias a created trait to signup_date', function () {
+    var date = new Date();
+    analytics.identify('id', {
+      email: 'name@example.com',
+      created: date
+    });
+    assert(this.stub.calledWith(['track', {
+      email: 'name@example.com',
+      signup_date: (date.getTime() / 1000).toString()
+    }]));
+  });
+});
 
 });

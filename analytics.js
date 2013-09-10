@@ -2443,7 +2443,7 @@ module.exports = exports = Analytics;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '0.12.0';
+exports.VERSION = '0.12.1';
 
 
 /**
@@ -3546,6 +3546,69 @@ module.exports = Provider.extend({
 
 });
 });
+require.register("analytics/lib/providers/awesm.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script')
+  , user = require('../user');
+
+
+/**
+ * Expose `Awesm` integration.
+ */
+
+var Awesm = module.exports = integration('awe.sm');
+
+
+/**
+ * Required key.
+ */
+
+Awesm.prototype.key = 'apiKey';
+
+
+/**
+ * Default options.
+ */
+
+Awesm.prototype.defaults = {
+  // your awe.sm api key (required)
+  apiKey: '',
+  // a dictionary of event names to awe.sm events
+  events: {}
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Awesm.prototype.initialize = function (options, ready) {
+  window.AWESM = window.AWESM || {};
+  window.AWESM.api_key = options.apiKey;
+  load('//widgets.awe.sm/v3/widgets.js?key=' + options.apiKey + '&async=true', ready);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Awesm.prototype.track = function (event, properties, options) {
+  var goal = this.options.events[event];
+  if (!goal) return;
+  var value = properties.value || 0;
+  if (properties.revenue) value = properties.revenue * 100; // prefer revenue
+  window.AWESM.convert(goal, value, null, user.id());
+};
+});
 require.register("analytics/lib/providers/bugherd.js", function(exports, require, module){
 // http://support.bugherd.com/home
 
@@ -3762,16 +3825,26 @@ Clicky.prototype.defaults = {
  */
 
 Clicky.prototype.initialize = function (options, ready) {
-  window.clicky_site_ids = window.clicky_site_ids || [];
+  window.clicky_site_ids || (window.clicky_site_ids = []);
   window.clicky_site_ids.push(options.siteId);
-  window.clicky_custom = {};
-
-  var session = {};
-  extend(session, user.traits());
-  if (user.id()) session.id = user.id();
-  window.clicky_custom.session = session;
-
+  this.identify(user.id(), user.traits());
   load('//static.getclicky.com/js', ready);
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Clicky.prototype.identify = function (id, traits, options) {
+  window.clicky_custom || (window.clicky_custom = {});
+  window.clicky_custom.session || (window.clicky_custom.session = {});
+  if (id) traits.id = id;
+  extend(window.clicky_custom.session, traits);
 };
 
 
@@ -4473,6 +4546,7 @@ require.register("analytics/lib/providers/index.js", function(exports, require, 
 module.exports = {
   'AdRoll'                   : require('./adroll'),
   'Amplitude'                : require('./amplitude'),
+  'awe.sm'                   : require('./awesm'),
   'BugHerd'                  : require('./bugherd'),
   'Chartbeat'                : require('./chartbeat'),
   'ClickTale'                : require('./clicktale'),
@@ -6086,37 +6160,116 @@ module.exports = Provider.extend({
 });
 require.register("analytics/lib/providers/uservoice.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , load     = require('load-script')
-  , alias    = require('alias')
-  , clone    = require('clone');
+var alias = require('alias')
+  , clone = require('clone')
+  , integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `UserVoice` integration.
+ */
 
-  name : 'UserVoice',
+var UserVoice = module.exports = integration('UserVoice');
 
-  key: 'widgetId',
 
-  defaults : {
-    widgetId : null
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    window.UserVoice = window.UserVoice || [];
-    load('//widget.uservoice.com/' + options.widgetId + '.js', ready);
+UserVoice.prototype.key = 'widgetId';
 
-    // BACKWARDS COMPATIBILITY: noop this old method, so we don't break sites
-    window.showClassicWidget = function(){};
-  },
 
-  identify : function (userId, traits) {
-    // Pull the ID into traits.
-    traits.id = userId;
-    window.UserVoice.push(['setCustomFields', traits]);
-  }
+/**
+ * Default options.
+ */
 
-});
+UserVoice.prototype.defaults = {
+  // your uservoice widget id (required)
+  widgetId: '',
+  // your uservoice forum id (required)
+  forumId: null,
+  // whether to show the tab on page load
+  showTab: true,
+  // tab customization options
+  mode: 'full',
+  primaryColor: '#cc6d00',
+  linkColor: '#007dbf',
+  defaultMode: 'support',
+  tabLabel: 'Feedback & Support',
+  tabColor: '#cc6d00',
+  tabPosition: 'middle-right',
+  tabInverted: false
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+UserVoice.prototype.initialize = function (options, ready) {
+  window.UserVoice || (window.UserVoice = []);
+  window.showClassicWidget = showClassicWidget; // part of public api
+  ready();
+
+  if (options.showTab) showClassicWidget('showTab', formatOptions(options));
+
+  load('//widget.uservoice.com/' + options.widgetId + '.js', ready);
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+UserVoice.prototype.identify = function (id, traits, options) {
+  if (id) traits.id = id;
+  window.UserVoice.push(['setCustomFields', traits]);
+};
+
+
+/**
+ * Format the options for UserVoice.
+ *
+ * @param {Object} options
+ * @return {Object}
+ */
+
+function formatOptions (options) {
+  var cloned = clone(options);
+  alias(cloned, {
+    forumId: 'forum_id',
+    primaryColor: 'primary_color',
+    linkColor: 'link_color',
+    defaultMode: 'default_mode',
+    tabLabel: 'tab_label',
+    tabColor: 'tab_color',
+    tabPosition: 'tab_position',
+    tabInverted: 'tab_inverted'
+  });
+  return cloned;
+}
+
+
+/**
+ * Show the classic version of the UserVoice widget. This method is usually part
+ * of UserVoice classic's public API.
+ *
+ * @param {String} type ('showTab' or 'showLightbox')
+ * @param {Object} options (optional)
+ */
+
+function showClassicWidget (type, options) {
+  type || (type = 'showLightbox');
+  window.UserVoice.push([type, 'classic_widget', options]);
+}
 });
 require.register("analytics/lib/providers/vero.js", function(exports, require, module){
 // https://github.com/getvero/vero-api/blob/master/sections/js.md

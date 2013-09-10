@@ -1,36 +1,51 @@
+
 describe('Pingdom', function () {
 
-  var analytics = require('analytics');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , date = require('load-date')
+  , equal = require('equals')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  id: '5168f8c6abe53db732000000'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ Pingdom: settings });
+  this.integration = analytics._integrations.Pingdom;
+  this.options = this.integration.options;
+  when(function () { return window.PRUM_EPISODES; }, done);
+});
 
-    this.timeout(10000);
-
-    it('should call ready and load library', function (done) {
-      expect(window._prum).to.be(undefined);
-      expect(window.PRUM_EPISODES).to.be(undefined);
-
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'Pingdom' : test['Pingdom'] });
-      expect(window._prum).not.to.be(undefined);
-
-      // When the library loads, `_prum` is created.
-      var interval = setInterval(function () {
-        if (!window.PRUM_EPISODES) return;
-        expect(window.PRUM_EPISODES).not.to.be(undefined);
-        expect(spy.called).to.be(true);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      analytics.initialize({ 'Pingdom' : test['Pingdom'] });
-      expect(analytics._providers[0].options.id).to.equal(test['Pingdom']);
-    });
-
+describe('#key', function () {
+  it('id', function () {
+    assert(this.integration.key == 'id');
   });
+});
+
+describe('#defaults', function () {
+  it('id', function () {
+    assert(this.integration.defaults.id === '');
+  });
+});
+
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
+  });
+
+  it('should store options', function () {
+    assert(this.options.id == settings.id);
+  });
+
+  it('should send first byte time to Pingdom', function () {
+    assert(date.getTime() == window.PRUM_EPISODES.marks.firstbyte);
+  });
+});
 
 });

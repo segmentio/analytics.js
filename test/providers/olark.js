@@ -1,277 +1,254 @@
+
 describe('Olark', function () {
 
-  // HACK: phantomjs breaks without an `Event` constructor.
-  if (!window.Event) window.Event = window.CustomEvent;
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var settings = {
+  siteId: '5798-949-10-1692'
+};
 
+function expandThen (fn) {
+  window.olark('api.box.onExpand', fn);
+  window.olark('api.box.expand');
+}
 
-  /**
-   * Initialize.
-   */
+before(function (done) {
+  // phantom.js doesn't have a global `Event` constructor
+  if (!window.Event) this.Event = window.Event = window.CustomEvent;
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ Olark: settings });
+  this.integration = analytics._integrations.Olark;
+  this.options = this.integration.options;
+  when(function () { return window.__get_olark_key; }, done);
+});
 
-  describe('initialize', function () {
+after(function () {
+  if (this.Event) delete window.Event; // remove phantom.js patch
+});
 
-    this.timeout(10000);
+describe('#key', function () {
+  it('siteId', function () {
+    assert(this.integration.key == 'siteId');
+  });
+});
 
-    it('should call ready and load library', function (done) {
-      expect(window.olark).to.be(undefined);
-
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'Olark' : test['Olark'] });
-      expect(window.olark).not.to.be(undefined);
-
-      tick(function () {
-        expect(spy.called).to.be(true);
-      });
-
-      // When the library loads, it creats a `__get_olark_key` method.
-      var interval = setInterval(function () {
-        if (!window.__get_olark_key) return;
-        expect(window.__get_olark_key).not.to.be(undefined);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      analytics.initialize({ 'Olark' : test['Olark'] });
-      expect(analytics._providers[0].options.siteId).to.equal(test['Olark']);
-    });
-
+describe('#defaults', function () {
+  it('identify', function () {
+    assert(this.integration.defaults.identify === true);
   });
 
-
-  /**
-   * Identify.
-   */
-
-  describe('identify', function () {
-
-    var spy;
-
-    beforeEach(function () {
-      analytics._user.clear();
-      spy = sinon.spy(window, 'olark');
-    });
-
-    afterEach(function () {
-      spy.restore();
-    });
-
-    it('should update the visitor custom fields', function () {
-      analytics.identify(test.userId, test.traits);
-      expect(spy.calledWith('api.visitor.updateCustomFields', test.traits)).to.be(true);
-    });
-
-    describe('email', function () {
-
-      var method = 'api.visitor.updateEmailAddress';
-
-      it('should use the email trait', function () {
-        analytics.identify(test.userId, test.traits);
-        expect(spy.calledWith(method, { emailAddress : test.traits.email })).to.be(true);
-      });
-
-      it('should use the userId if its an email', function () {
-        analytics.identify(test.traits.email);
-        expect(spy.calledWith(method, { emailAddress : test.traits.email })).to.be(true);
-      });
-
-      it('shouldnt use the userId if its not an email', function () {
-        analytics.identify(test.userId);
-        expect(spy.calledWith(method)).to.be(false);
-      });
-
-    });
-
-    describe('name', function () {
-
-      var method = 'api.visitor.updateFullName';
-
-      it('should use the name trait', function () {
-        analytics.identify({
-          name      : 'name',
-          firstName : 'first',
-          lastName  : 'last'
-        });
-        expect(spy.calledWith(method, { fullName : 'name' })).to.be(true);
-      });
-
-      it('should use the first name if possible', function () {
-        analytics.identify({ firstName : 'first' });
-        expect(spy.calledWith(method, { fullName : 'first' })).to.be(true);
-      });
-
-      it('should use the first and last name if possible', function () {
-        analytics.identify({
-          firstName : 'first',
-          lastName  : 'last'
-        });
-        expect(spy.calledWith(method, { fullName : 'first last' })).to.be(true);
-      });
-
-    });
-
-    describe('phone', function () {
-
-      var method = 'api.visitor.updatePhoneNumber';
-
-      it('should use the phone trait', function () {
-        analytics.identify({ phone : '1' });
-        expect(spy.calledWith(method, { phoneNumber : '1' })).to.be(true);
-      });
-
-    });
-
-    describe('nickname', function () {
-
-      var method = 'api.chat.updateVisitorNickname';
-
-      it('should use the name and email', function () {
-        analytics.identify('id', {
-          name      : 'name',
-          firstName : 'first',
-          lastName  : 'last',
-          email     : 'email@example.com'
-        });
-        expect(spy.calledWith(method, { snippet : 'name (email@example.com)' })).to.be(true);
-      });
-
-      it('should falback to name', function () {
-        analytics.identify('id', {
-          name      : 'name',
-          firstName : 'first',
-          lastName  : 'last'
-        });
-        expect(spy.calledWith(method, { snippet : 'name' })).to.be(true);
-      });
-
-      it('should fallback to first and last names', function () {
-        analytics.identify('id', {
-          firstName : 'first',
-          lastName  : 'last',
-          email     : 'email@example.com'
-        });
-        expect(spy.calledWith(method, { snippet : 'first last (email@example.com)' })).to.be(true);
-      });
-
-      it('should fallback to first', function () {
-        analytics.identify('id', {
-          firstName : 'first',
-          email     : 'email@example.com'
-        });
-        expect(spy.calledWith(method, { snippet : 'first (email@example.com)' })).to.be(true);
-      });
-
-      it('should fallback to email', function () {
-        analytics.identify('id', {
-          email : 'email@example.com'
-        });
-        expect(spy.calledWith(method, { snippet : 'email@example.com' })).to.be(true);
-      });
-
-      it('should fallback to userId', function () {
-        analytics.identify('id');
-        expect(spy.calledWith(method, { snippet : 'id' })).to.be(true);
-      });
-
-    });
-
+  it('track', function () {
+    assert(this.integration.defaults.track === false);
   });
 
-
-  /**
-   * Track.
-   */
-
-  describe('track', function () {
-
-    var spy;
-
-    beforeEach(function () {
-      spy = sinon.spy(window, 'olark');
-    });
-
-    afterEach(function () {
-      spy.restore();
-      window.olark('api.box.shrink');
-    });
-
-    it('shouldnt log event to operator when track disabled', function () {
-      analytics._providers[0].options.track = false;
-      analytics.track(test.event, test.properties);
-      expect(spy.called).to.be(false);
-    });
-
-    it('shouldnt log event to operator when track enabled but box shrunk', function () {
-      analytics._providers[0].options.track = true;
-      analytics.track(test.event, test.properties);
-      expect(spy.called).to.be(false);
-    });
-
-    it('should log event to operator when track enabled and box expanded', function (done) {
-      analytics._providers[0].options.track = true;
-      window.olark('api.box.expand');
-
-      // long timeout for phantomjs tests, where it's slow
-      setTimeout(function () {
-        analytics.track(test.event, test.properties);
-        expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
-          body : 'visitor triggered "' + test.event + '"'
-        })).to.be(true);
-        window.olark('api.box.shrink');
-        done();
-      }, 1000);
-    });
-
+  it('pageview', function () {
+    assert(this.integration.defaults.pageview === true);
   });
 
+  it('siteId', function () {
+    assert(this.integration.defaults.siteId === '');
+  });
+});
 
-  /**
-   * Pageview.
-   */
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
+  });
 
-  describe('pageview', function () {
+  it('should store options', function () {
+    assert(this.options.siteId == settings.siteId);
+  });
+});
 
-    var spy;
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.spy = sinon.spy(window, 'olark');
+  });
 
-    beforeEach(function () {
-      spy = sinon.spy(window, 'olark');
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.spy.calledWith('api.visitor.updateCustomFields', { id: 'id' }));
+  });
+
+  it('should send traits', function () {
+    analytics.identify({ trait: true });
+    assert(this.spy.calledWith('api.visitor.updateCustomFields', {
+      trait: true
+    }));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(this.spy.calledWith('api.visitor.updateCustomFields', {
+      id: 'id',
+      trait: true
+    }));
+  });
+
+  it('should send an email', function () {
+    analytics.identify({ email: 'name@example.com' });
+    assert(this.spy.calledWith('api.visitor.updateEmailAddress', {
+      emailAddress: 'name@example.com'
+    }));
+  });
+
+  it('should send a name', function () {
+    analytics.identify({ name: 'first last' });
+    assert(this.spy.calledWith('api.visitor.updateFullName', {
+      fullName: 'first last'
+    }));
+  });
+
+  it('should fallback to sending first and last name', function () {
+    analytics.identify({
+      firstName: 'first',
+      lastName: 'last'
     });
+    assert(this.spy.calledWith('api.visitor.updateFullName', {
+      fullName: 'first last'
+    }));
+  });
 
-    afterEach(function () {
-      spy.restore();
-      window.olark('api.box.shrink');
+  it('should fallback to sending only a first name', function () {
+    analytics.identify({ firstName: 'first' });
+    assert(this.spy.calledWith('api.visitor.updateFullName', {
+      fullName: 'first'
+    }));
+  });
+
+  it('should send a phone number', function () {
+    analytics.identify({ phone: 'phone' });
+    assert(this.spy.calledWith('api.visitor.updatePhoneNumber', {
+      phoneNumber: 'phone'
+    }));
+  });
+
+  it('should us an id as a nickname', function () {
+    analytics.identify('id');
+    assert(this.spy.calledWith('api.chat.updateVisitorNickname', {
+      snippet: 'id'
+    }));
+  });
+
+  it('should prefer a username as a nickname', function () {
+    analytics.identify('id', { username: 'username' });
+    assert(this.spy.calledWith('api.chat.updateVisitorNickname', {
+      snippet: 'username'
+    }));
+  });
+
+  it('should prefer an email as a nickname', function () {
+    analytics.identify('id', {
+      username: 'username',
+      email: 'name@example.com'
     });
+    assert(this.spy.calledWith('api.chat.updateVisitorNickname', {
+      snippet: 'name@example.com'
+    }));
+  });
 
-    it('shouldnt log pageview to operator when pageview disabled', function () {
-      analytics._providers[0].options.pageview = false;
+  it('should prefer a name as a nickname', function () {
+    analytics.identify('id', {
+      username: 'username',
+      name: 'name'
+    });
+    assert(this.spy.calledWith('api.chat.updateVisitorNickname', {
+      snippet: 'name'
+    }));
+  });
+
+  it('should prefer a name and email as a nickname', function () {
+    analytics.identify('id', {
+      username: 'username',
+      name: 'name',
+      email: 'name@example.com'
+    });
+    assert(this.spy.calledWith('api.chat.updateVisitorNickname', {
+      snippet: 'name (name@example.com)'
+    }));
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(window, 'olark');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+    window.olark('api.box.shrink');
+    this.options.track = false;
+  });
+
+  it('shouldnt send an event by default', function () {
+    analytics.track('event');
+    assert(!this.spy.called);
+  });
+
+  it('shouldnt send an event when the chat isnt open', function () {
+    this.options.track = true;
+    analytics.track('event');
+    assert(!this.spy.called);
+  });
+
+  it('should send an event', function (done) {
+    this.options.track = true;
+    var spy = this.spy;
+    expandThen(function () {
+      analytics.track('event');
+      assert(spy.calledWith('api.chat.sendNotificationToOperator', {
+        body: 'visitor triggered "event"'
+      }));
+      done();
+    });
+  });
+});
+
+describe('#pageview', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(window, 'olark');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+    window.olark('api.box.shrink');
+    this.options.pageview = true;
+  });
+
+  it('shouldnt send an event when the chat isnt open', function () {
+    analytics.pageview();
+    assert(!this.spy.called);
+  });
+
+  it('should send a pageview', function (done) {
+    var spy = this.spy;
+    expandThen(function () {
       analytics.pageview();
-      expect(spy.called).to.be(false);
-    });
-
-    it('shouldnt log event to operator when pageview enabled but box shrunk', function () {
-      analytics._providers[0].options.pageview = true;
-      analytics.pageview();
-      expect(spy.called).to.be(false);
-    });
-
-    it('should log event to operator when pageview enabled and box expanded', function (done) {
-      analytics._providers[0].options.pageview = true;
-      window.olark('api.box.expand');
-
-      // long timeout for phantomjs tests, where it's slow
-      setTimeout(function () {
-        analytics.pageview();
-        expect(spy.calledWithMatch('api.chat.sendNotificationToOperator', {
-          body : 'looking at ' + window.location.href
-        })).to.be(true);
-        done();
-      }, 1000);
+      assert(spy.calledWith('api.chat.sendNotificationToOperator', {
+        body: 'looking at ' + window.location.href
+      }));
+      done();
     });
   });
+
+  it('shouldnt send an event when pageview is disabled', function () {
+    this.options.pageview = false;
+    var spy = this.spy;
+    expandThen(function () {
+      analytics.pageview();
+      assert(!this.spy.called);
+    });
+  });
+});
 
 });

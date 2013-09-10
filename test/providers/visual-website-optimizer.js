@@ -1,42 +1,60 @@
+
 describe('Visual Website Optimizer', function () {
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , tick = require('next-tick')
+  , when = require('when');
 
-// Set up fake VWO data to simulate the replay.
-window._vwo_exp_ids = [1];
-window._vwo_exp = {
-  1 : {
-    comb_n : {
-      1 : 'Variation'
-    },
-    combination_chosen : 1
-  }
-};
+var settings = {};
 
-describe('initialize', function () {
+before(function (done) {
   this.timeout(10000);
+  this.spy = sinon.spy();
+  this.identifySpy = sinon.spy(analytics, 'identify');
+  analytics.ready(this.spy);
+  analytics.initialize({ 'Visual Website Optimizer': settings });
 
-  it('should call ready', function (done) {
-    var spy = sinon.spy();
-    analytics.ready(spy);
-    analytics.initialize({ 'Visual Website Optimizer' : true });
+  // set up fake VWO data to simulate the replay
+  window._vwo_exp_ids = [1];
+  window._vwo_exp = { 1: { comb_n: { 1: 'Variation' }, combination_chosen: 1 } };
 
-    tick(function () {
-      expect(spy.called).to.be(true);
-      done();
-    });
+  this.integration = analytics._integrations['Visual Website Optimizer'];
+  this.options = this.integration.options;
+  tick(done);
+});
+
+after(function () {
+  this.identifySpy.restore();
+});
+
+describe('#defaults', function () {
+  it('replay', function () {
+    assert(this.integration.defaults.replay === true);
+  });
+});
+
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-  it('should replay when the library loads', function (done) {
-    return done();
+  it('should store options with defaults', function () {
+    assert(this.options.replay == this.integration.defaults.replay);
+  });
 
-    var identify = sinon.spy(analytics, 'identify');
-    analytics.initialize({ 'Visual Website Optimizer' : true });
-    setTimeout(function () {
-      expect(identify.calledWith({'Experiment: 1' : 'Variation'})).to.be(true);
+  it('should replay variation data', function (done) {
+    done(); // TODO
+
+    this.timeout(10000);
+    var spy = this.identifySpy;
+    when(function () { return spy.called; }, function () {
+      assert(spy.calledWith({
+        'Experiment 1': 'Variation'
+      }));
       done();
-    }, 9999);
+    });
   });
 });
 

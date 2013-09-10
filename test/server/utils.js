@@ -44,10 +44,6 @@
         activator : '#someElement',
         counter   : true
       },
-      'Klaviyo' : 'x',
-      'LeadLander' : 'x',
-      'LiveChat' : '1520', //'2328351',
-      'Mixpanel' : 'x',
       'Olark' : '5798-949-10-1692',
       'Optimizely' : true,
       'Perfect Audience' : '4ff6ade4361ed500020000a5',

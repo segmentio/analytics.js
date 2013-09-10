@@ -1,241 +1,275 @@
+
 describe('Mixpanel', function () {
 
-  var analytics = require('analytics');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
-  // Mixpanel needs specially aliased traits.
-  var aliasedTraits = {
-    $name    : test.traits.name,
-    $email   : test.traits.email,
-    $created : test.traits.created
-  };
+var settings = {
+  token: 'x'
+};
 
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ Mixpanel: settings });
+  this.integration = analytics._integrations.Mixpanel;
+  this.options = this.integration.options;
+  when(function () { return window.mixpanel.config; }, done);
+});
 
-  describe('initialize', function () {
+describe('#key', function () {
+  it('token', function () {
+    assert(this.integration.key == 'token');
+  });
+});
 
-    this.timeout(10000);
-
-    // Initializing Mixpanel twice breaks it, so we do it all in one.
-    it('should call ready and load library', function (done) {
-      expect(window.mixpanel).to.be(undefined);
-
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'Mixpanel' : test['Mixpanel'] });
-
-      var options = analytics._providers[0].options;
-      expect(options.token).to.equal(test['Mixpanel']);
-      expect(options.hasOwnProperty('cookieName')).to.be(true);
-      expect(window.mixpanel).not.to.be(undefined);
-      expect(window.mixpanel.config).to.be(undefined);
-
-      // When the library loads, it sets `config`.
-      var interval = setInterval(function () {
-        if (!window.mixpanel.config) return;
-        expect(window.mixpanel.config).not.to.be(undefined);
-        expect(spy.called).to.be(true);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
+describe('#defaults', function () {
+  it('cookieName', function () {
+    assert(this.integration.defaults.cookieName === '');
   });
 
-
-  describe('identify', function () {
-
-    describe('identify', function () {
-      var spy;
-
-      beforeEach(function () {
-        spy = sinon.spy(window.mixpanel, 'identify');
-        analytics._user.clear();
-      });
-
-      afterEach(function () { spy.restore(); });
-
-      it('should not call identify without a user id', function () {
-        analytics.identify(test.traits);
-        expect(spy.called).to.be(false);
-      });
-
-      it('should call identify with a user id', function () {
-        analytics.identify(test.userId);
-        expect(spy.calledWith(test.userId)).to.be(true);
-      });
-
-      it('should call identify with both user id and traits', function () {
-        analytics.identify(test.userId, test.traits);
-        expect(spy.calledWith(test.userId)).to.be(true);
-      });
-    });
-
-    describe('register', function () {
-      var spy;
-      beforeEach(function () {
-        spy = sinon.spy(window.mixpanel, 'register');
-        analytics._user.clear();
-      });
-      afterEach(function () { spy.restore(); });
-
-      it('should call register with traits', function () {
-        analytics.identify(test.traits);
-        expect(spy.calledWith(aliasedTraits)).to.be(true);
-      });
-
-      it('should register with empty traits', function () {
-        analytics.identify(test.userId);
-        expect(spy.calledWith({})).to.be(true);
-      });
-
-      it('should call register with traits and userId', function () {
-        analytics.identify(test.userId, test.traits);
-        expect(spy.calledWith(aliasedTraits)).to.be(true);
-      });
-    });
-
-    describe('name_tag', function () {
-      var spy;
-      beforeEach(function () {
-        spy = sinon.spy(window.mixpanel, 'name_tag');
-        analytics._user.clear();
-      });
-      afterEach(function () { spy.restore(); });
-
-      it('should not call name_tag for unidentified users', function () {
-        analytics.identify(test.traits);
-        expect(spy.calledWith(test.traits.email)).to.be(false);
-      });
-
-      it('should name_tag with the user id', function () {
-        analytics.identify(test.userId);
-        expect(spy.calledWith(test.userId)).to.be(true);
-      });
-
-      it('should name_tag with the optimal id', function () {
-        analytics.identify(test.userId, test.traits);
-        expect(spy.calledWith(test.traits.email)).to.be(true);
-      });
-
-      it('should name_tag with the username', function () {
-        analytics.identify('id', { username: 'username' });
-        expect(spy.calledWith('username')).to.be(true);
-      });
-    });
-
-    describe('people.set', function () {
-      var spy;
-      beforeEach(function () {
-        spy = sinon.spy(window.mixpanel.people, 'set');
-        analytics._user.clear();
-      });
-      afterEach(function () { spy.restore(); });
-
-      it('should call people.set with traits', function () {
-        analytics._providers[0].options.people = true;
-        analytics.identify(test.traits);
-        expect(spy.calledWith(aliasedTraits)).to.be(true);
-      });
-
-      it('should call people.set with the userId and traits', function () {
-        analytics.identify(test.userId, test.traits);
-        expect(spy.calledWith(aliasedTraits)).to.be(true);
-      });
-
-      it('shouldnt call people.set without the option', function () {
-        analytics._providers[0].options.people = false;
-
-        analytics.identify(test.userId, test.traits);
-        expect(spy.called).to.be(false);
-      });
-    });
+  it('initialPageview', function () {
+    assert(this.integration.defaults.initialPageview === false);
   });
 
-  describe('track', function () {
-
-    // Mixpanel adds custom properties, so we need to have a loose match.
-    it('should call track', function () {
-      var spy = sinon.spy(window.mixpanel, 'track');
-      analytics.track(test.event, test.properties);
-      expect(spy.calledWithMatch(test.event, test.properties)).to.be(true);
-      spy.restore();
-    });
-
-    // The revenue feature requires `people` to be turned on.
-    it('should call track_charge with revenue', function () {
-      var spy      = sinon.spy(window.mixpanel.people, 'track_charge')
-        , provider = analytics._providers[0];
-
-      provider.options.people = true;
-
-      analytics.track(test.event, test.properties);
-      expect(spy.calledWith(test.properties.revenue)).to.be(true);
-
-      spy.restore();
-      provider.options.people = false;
-    });
-
-    it('shouldnt call track_charge with revenue', function () {
-      var spy = sinon.spy(window.mixpanel.people, 'track_charge');
-      analytics.track(test.event, test.properties);
-      expect(spy.called).to.be(false);
-      spy.restore();
-    });
-
+  it('nameTag', function () {
+    assert(this.integration.defaults.nameTag === true);
   });
 
-
-  describe('pageview', function () {
-
-    it('should call track_pageview', function () {
-      var spy = sinon.spy(window.mixpanel, 'track_pageview');
-
-      analytics.pageview();
-      expect(spy.called).to.be(true);
-      spy.reset();
-
-      analytics.pageview(test.url);
-      expect(spy.calledWith(test.url)).to.be(true);
-      spy.restore();
-    });
-
-    it('shouldnt call track by default', function () {
-      var spy = sinon.spy(analytics._providers[0], 'track');
-      analytics.pageview();
-      expect(spy.called).to.be(false);
-      spy.restore();
-    });
-
-    // Mixpanel adds custom properties, so we need to have a loose match.
-    it('should call track with pageview set to true', function () {
-      var provider = analytics._providers[0]
-        , spy      = sinon.spy(provider, 'track');
-
-      provider.options.pageview = true;
-
-      analytics.pageview(test.url);
-      expect(spy.calledWithMatch('Loaded a Page', {
-        url : test.url,
-        name : document.title
-      })).to.be(true);
-
-      spy.restore();
-      provider.options.pageview = false;
-    });
-
+  it('pageview', function () {
+    assert(this.integration.defaults.pageview === false);
   });
 
-
-  describe('alias', function () {
-
-    // NOTE: this will fail when testing in the browser!! But won't in Phantom.
-    it('should call alias (doesnt work in test-browser)', function () {
-      var spy = sinon.spy(window.mixpanel, 'alias');
-      analytics.alias(test.newUserId, test.oldUserId);
-      expect(spy.calledWith(test.newUserId, test.oldUserId)).to.be(true);
-
-      spy.restore();
-    });
-
+  it('people', function () {
+    assert(this.integration.defaults.people === false);
   });
+
+  it('token', function () {
+    assert(this.integration.defaults.token === '');
+  });
+});
+
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
+  });
+
+  it('should store options', function () {
+    var defaults = this.integration.defaults;
+    assert(this.options.token == settings.token);
+    assert(this.options.cookieName == defaults.cookieName);
+    assert(this.options.initialPageview == defaults.initialPageview);
+    assert(this.options.nameTag == defaults.nameTag);
+    assert(this.options.pageview == defaults.pageview);
+    assert(this.options.people == defaults.people);
+  });
+
+  it('should pass options to Mixpanel', function () {
+    var defaults = this.integration.defaults;
+    assert(window.mixpanel.config.token == settings.token);
+    assert(window.mixpanel.config.cookie_name == defaults.cookieName);
+  });
+});
+
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.identifySpy = sinon.spy(window.mixpanel, 'identify');
+    this.registerSpy = sinon.spy(window.mixpanel, 'register');
+    this.nameTagSpy = sinon.spy(window.mixpanel, 'name_tag');
+    this.peopleSpy = sinon.spy(window.mixpanel.people, 'set');
+  });
+
+  afterEach(function () {
+    this.identifySpy.restore();
+    this.registerSpy.restore();
+    this.nameTagSpy.restore();
+    this.peopleSpy.restore();
+    this.options.people = false;
+  });
+
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.identifySpy.calledWith('id'));
+  });
+
+  it('should send traits', function () {
+    analytics.identify({ trait: true });
+    assert(this.registerSpy.calledWith({ trait: true }));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(this.identifySpy.calledWith('id'));
+    assert(this.registerSpy.calledWith({ trait: true }));
+  });
+
+  it('should use an id as a name tag', function () {
+    analytics.identify('id');
+    assert(this.nameTagSpy.calledWith('id'));
+  });
+
+  it('should prefer a username as a name tag', function () {
+    analytics.identify('id', { username: 'username' });
+    assert(this.nameTagSpy.calledWith('username'));
+  });
+
+  it('should prefer an email as a name tag', function () {
+    analytics.identify('id', {
+      username: 'username',
+      email: 'name@example.com'
+    });
+    assert(this.nameTagSpy.calledWith('name@example.com'));
+  });
+
+  it('should send traits to Mixpanel People', function () {
+    this.options.people = true;
+    analytics.identify({ trait: true });
+    assert(this.peopleSpy.calledWith({ trait: true }));
+  });
+
+  it('should alias traits', function () {
+    var date = new Date();
+    analytics.identify({
+      created: date,
+      email: 'name@example.com',
+      firstName: 'first',
+      lastName: 'last',
+      lastSeen: date,
+      name: 'name',
+      username: 'username',
+      phone: 'phone'
+    });
+    assert(this.registerSpy.calledWith({
+      $created: date,
+      $email: 'name@example.com',
+      $first_name: 'first',
+      $last_name: 'last',
+      $last_seen: date,
+      $name: 'name',
+      $username: 'username',
+      $phone: 'phone'
+    }));
+  });
+
+  it('should alias traits to Mixpanel People', function () {
+    this.options.people = true;
+    var date = new Date();
+    analytics.identify({
+      created: date,
+      email: 'name@example.com',
+      firstName: 'first',
+      lastName: 'last',
+      lastSeen: date,
+      name: 'name',
+      username: 'username',
+      phone: 'phone'
+    });
+    assert(this.peopleSpy.calledWith({
+      $created: date,
+      $email: 'name@example.com',
+      $first_name: 'first',
+      $last_name: 'last',
+      $last_seen: date,
+      $name: 'name',
+      $username: 'username',
+      $phone: 'phone'
+    }));
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.trackStub = sinon.stub(window.mixpanel, 'track');
+    this.revenueSpy = sinon.spy(window.mixpanel.people, 'track_charge');
+  });
+
+  afterEach(function () {
+    this.trackStub.restore();
+    this.revenueSpy.restore();
+    this.options.people = false;
+  });
+
+  it('should send an event', function () {
+    analytics.track('event');
+    assert(this.trackStub.calledWith('event'));
+  });
+
+  it('should send an event and properties', function () {
+    analytics.track('event', { property: true });
+    assert(this.trackStub.calledWith('event', { property: true }));
+  });
+
+  it('should send a revenue property to Mixpanel People', function () {
+    this.options.people = true;
+    analytics.track('event', { revenue: 9.99 });
+    assert(this.revenueSpy.calledWith(9.99));
+  });
+});
+
+describe('#pageview', function () {
+  beforeEach(function () {
+    this.pageviewSpy = sinon.spy(window.mixpanel, 'track_pageview');
+    this.trackStub = sinon.stub(window.mixpanel, 'track');
+  });
+
+  afterEach(function () {
+    this.pageviewSpy.restore();
+    this.trackStub.restore();
+    this.options.pageview = false;
+  });
+
+  it('should send a pageview', function () {
+    this.options.pageview = true;
+    analytics.pageview();
+    assert(this.pageviewSpy.called);
+  });
+
+  it('shouldnt send an event by default', function () {
+    analytics.pageview();
+    assert(!this.trackStub.called);
+  });
+
+  it('should send a "Loaded a Page" event with default properties', function () {
+    this.options.pageview = true;
+    analytics.pageview();
+    assert(this.trackStub.calledWith('Loaded a Page', {
+      url: window.location.href,
+      name: document.title
+    }));
+  });
+
+  it('should send a url', function () {
+    this.options.pageview = true;
+    analytics.pageview('/path');
+    assert(this.trackStub.calledWith('Loaded a Page', {
+      url: '/path',
+      name: document.title
+    }));
+  });
+});
+
+describe('#alias', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(window.mixpanel, 'alias');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should send a new id', function () {
+    analytics.alias('new');
+    assert(this.spy.calledWith('new'));
+  });
+
+  it('should send a new and old id', function () {
+    analytics.alias('new', 'old');
+    assert(this.spy.calledWith('new', 'old'));
+  });
+});
 
 });

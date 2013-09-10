@@ -1,122 +1,160 @@
+
 describe('Preact', function () {
 
-  var analytics = require('analytics');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  projectCode: 'x'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ Preact: settings });
+  this.integration = analytics._integrations.Preact;
+  this.options = this.integration.options;
+  when(function () { return window._lnq; }, done);
+});
 
-    this.timeout(10000);
+describe('#key', function () {
+  it('projectCode', function () {
+    assert(this.integration.key == 'projectCode');
+  });
+});
 
-    it('should call ready and load libarary', function (done) {
-      expect(window._lnq).to.be(undefined);
+describe('#defaults', function () {
+  it('projectCode', function () {
+    assert(this.integration.defaults.projectCode === '');
+  });
+});
 
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'Preact' : test['Preact'] });
-      expect(analytics._providers[0].options.projectCode).to.equal('x');
-
-      // When the library loads, it will create a `_lnq` global.
-      var interval = setInterval(function () {
-        if (!window._lnq) return;
-        expect(window._lnq).not.to.be(undefined);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
+  it('should store options', function () {
+    assert(this.options.projectCode == settings.projectCode);
+  });
+});
 
-  describe('identify', function () {
-    var stub;
-
-    beforeEach(function () {
-      analytics._user.clear();
-      stub = sinon.stub(window._lnq, 'push');
-    });
-
-    afterEach(function () {
-      stub.restore();
-    });
-
-    it('should push _setPersonData', function () {
-      analytics.identify();
-      expect(stub.called).to.be(false);
-
-      stub.reset();
-      analytics.identify(test.traits);
-      expect(stub.called).to.be(false);
-
-      stub.reset();
-      analytics.identify(test.userId, test.traits);
-
-      // Swap the `created` trait to the `created_at` that Preact needs
-      // and convert it from milliseconds to seconds.
-      if (test.traits.created) {
-        test.traits.created_at = Math.floor(test.traits.created/1000);
-        delete test.traits.created;
-      }
-
-      expect(stub.calledWith(['_setPersonData', {
-        name       : test.traits.name,
-        email      : test.traits.email,
-        uid        : test.userId,
-        properties : test.traits
-      }])).to.be(true);
-
-    });
-
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.stub = sinon.stub(window._lnq, 'push');
   });
 
-
-  describe('group', function () {
-    var stub;
-    beforeEach(function () { stub = sinon.stub(window._lnq, 'push'); });
-    afterEach(function () { stub.restore(); });
-
-    it('should push _setAccount', function () {
-      analytics.group('group', {
-        name      : 'Group',
-        employees : 42
-      });
-      expect(stub.calledWith(['_setAccount', {
-        id        : 'group',
-        name      : 'Group',
-        employees : 42
-      }])).to.be(true);
-    });
-
+  afterEach(function () {
+    this.stub.restore();
   });
 
-
-  describe('track', function () {
-    var stub;
-
-    beforeEach(function () {
-      stub = sinon.stub(window._lnq, 'push');
-    });
-
-    afterEach(function () {
-      stub.restore();
-    });
-
-    it('should call track', function () {
-      var properties = {
-        note    : 'A Note',
-        revenue : 49.99
-      };
-      analytics.track(test.event, properties);
-      expect(stub.calledWith(['_logEvent',
-        sinon.match({
-          name    : test.event,
-          note    : 'A Note',
-          revenue : 4999
-        }),
-        sinon.match({})
-      ])).to.be(true);
-    });
-
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.stub.calledWith(['_setPersonData', {
+      uid: 'id',
+      email: undefined,
+      name: undefined,
+      properties: {}
+    }]));
   });
 
+  it('shouldnt send just traits', function () {
+    analytics.identify({ trait: true });
+    assert(!this.stub.called);
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(this.stub.calledWith(['_setPersonData', {
+      uid: 'id',
+      email: undefined,
+      name: undefined,
+      properties: { trait: true }
+    }]));
+  });
+
+  it('should send an email', function () {
+    analytics.identify('id', { email: 'name@example.com' });
+    assert(this.stub.calledWith(['_setPersonData', {
+      uid: 'id',
+      email: 'name@example.com',
+      name: undefined,
+      properties: { email: 'name@example.com' }
+    }]));
+  });
+
+  it('should send a name', function () {
+    analytics.identify('id', { name: 'name' });
+    assert(this.stub.calledWith(['_setPersonData', {
+      uid: 'id',
+      email: undefined,
+      name: 'name',
+      properties: { name: 'name' }
+    }]));
+  });
+});
+
+describe('#group', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window._lnq, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send an id', function () {
+    analytics.group('id');
+    assert(this.stub.calledWith(['_setAccount', { id: 'id' }]));
+  });
+
+  it('should send an id and properties', function () {
+    analytics.group('id', { property: true });
+    assert(this.stub.calledWith(['_setAccount', {
+      id: 'id',
+      property: true
+    }]));
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window._lnq, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send an event', function () {
+    analytics.track('event');
+    assert(this.stub.calledWith(['_logEvent', { name: 'event' }, {}]));
+  });
+
+  it('should send an event and properties', function () {
+    analytics.track('event', { property: true });
+    assert(this.stub.calledWith(['_logEvent', { name: 'event' }, { property: true }]));
+  });
+
+  it('should special case a revenue property', function () {
+    analytics.track('event', { revenue: 9.99 });
+    assert(this.stub.calledWith(['_logEvent', {
+      name: 'event',
+      revenue: 999
+    }, {}]));
+  });
+
+  it('should special case a note property', function () {
+    analytics.track('event', { note: 'note' });
+    assert(this.stub.calledWith(['_logEvent', {
+      name: 'event',
+      note: 'note'
+    }, {}]));
+  });
+});
 
 });

@@ -1,69 +1,94 @@
+
 describe('USERcycle', function () {
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  key: 'x'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ USERcycle: settings });
+  this.integration = analytics._integrations.USERcycle;
+  this.options = this.integration.options;
+  var stub = window._uc.push;
+  when(function () { return window._uc.push != stub; }, done);
+});
 
-    this.timeout(10000);
+describe('#key', function () {
+  it('key', function () {
+    assert(this.integration.key == 'key');
+  });
+});
 
-    it('should call ready and load library', function (done) {
-      var spy  = sinon.spy()
-        , push = Array.prototype.push;
+describe('#defaults', function () {
+  it('key', function () {
+    assert(this.integration.defaults.key === '');
+  });
+});
 
-      expect(window._uc).to.be(undefined);
-
-      analytics.ready(spy);
-      analytics.initialize({ 'USERcycle' : test['USERcycle'] });
-
-      expect(window._uc).not.to.be(undefined);
-      expect(window._uc.push).to.equal(push);
-
-      tick(function () {
-        expect(spy.called).to.be(true);
-      });
-
-      // When the library loads, it will overwrite the push method.
-      var interval = setInterval(function () {
-        if (window._uc.push === push) return;
-        expect(window._uc.push).not.to.equal(push);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      expect(analytics._providers[0].options.key).to.equal('x');
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
+  it('should store options', function () {
+    assert(this.options.key == settings.key);
+  });
+});
 
-  describe('identify', function () {
-
-    it('calls identify on identify', function () {
-      var spy = sinon.spy(window._uc, 'push');
-      analytics.identify(test.userId, test.traits);
-      expect(spy.calledWith(['uid', test.userId])).to.be(true);
-      expect(spy.calledWith(['action', 'came_back', sinon.match(test.traits)])).to.be(true);
-
-      spy.restore();
-    });
-
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.stub = sinon.stub(window._uc, 'push');
   });
 
-
-  describe('track', function () {
-
-    it('calls track on track', function () {
-      var spy = sinon.spy(window._uc, 'push');
-      analytics.track(test.event, test.properties);
-      expect(spy.calledWith(['action', test.event, sinon.match(test.properties)])).to.be(true);
-
-      spy.restore();
-    });
-
+  afterEach(function () {
+    this.stub.restore();
   });
+
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.stub.calledWith(['uid', 'id']));
+    assert(this.stub.calledWith(['action', 'came_back', {}]));
+  });
+
+  it('should send traits', function () {
+    analytics.identify({ trait: true });
+    assert(this.stub.calledWith(['action', 'came_back', { trait: true }]));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(this.stub.calledWith(['uid', 'id']));
+    assert(this.stub.calledWith(['action', 'came_back', { trait: true }]));
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window._uc, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send an event', function () {
+    analytics.track('event');
+    assert(this.stub.calledWith(['action', 'event', {}]));
+  });
+
+  it('should send an event and properties', function () {
+    analytics.track('event', { property: true });
+    assert(this.stub.calledWith(['action', 'event', { property: true }]));
+  });
+});
 
 });

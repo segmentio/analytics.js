@@ -1,104 +1,104 @@
+
 describe('Qualaroo', function () {
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , when = require('when');
 
+var settings = {
+  customerId: '47517',
+  siteToken: '9Fd'
+};
 
-  describe('initialize', function () {
+before(function (done) {
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  analytics.ready(this.spy);
+  analytics.initialize({ Qualaroo: settings });
+  this.integration = analytics._integrations.Qualaroo;
+  this.options = this.integration.options;
+  when(function () { return window.KI; }, done);
+});
 
-    this.timeout(10000);
-
-    it('should call ready and load library', function (done) {
-      expect(window._kiq).to.be(undefined);
-
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'Qualaroo' : test['Qualaroo'] });
-      expect(window._kiq).not.to.be(undefined);
-      expect(window.KI).to.be(undefined);
-
-      tick(function () {
-        expect(spy.called).to.be(true);
-      });
-
-      // When the library loads, it will create a `KI` global.
-      var interval = setInterval(function () {
-        if (!window.KI) return;
-        expect(window.KI).not.to.be(undefined);
-        clearInterval(interval);
-        done();
-      }, 20);
-    });
-
-    it('should store options', function () {
-      analytics.initialize({ 'Qualaroo' : test['Qualaroo'] });
-      expect(analytics._providers[0].options.customerId).to.equal(test['Qualaroo'].customerId);
-      expect(analytics._providers[0].options.siteToken).to.equal(test['Qualaroo'].siteToken);
-    });
-
+describe('#defaults', function () {
+  it('customerId', function () {
+    assert(this.integration.defaults.customerId === '');
   });
 
-
-  describe('identify', function () {
-    var stub;
-    beforeEach(function () {
-      stub = sinon.stub(window._kiq, 'push');
-      analytics._user.clear();
-    });
-    afterEach(function () { stub.restore(); });
-
-    it('should push "_identify" with email traits', function () {
-      analytics.identify(test.traits);
-      expect(stub.calledWith(['identify', test.traits.email])).to.be(true);
-    });
-
-    it('should push "_identify" with userId', function () {
-      analytics.identify(test.userId);
-      expect(stub.calledWith(['identify', test.userId])).to.be(true);
-    });
-
-    it('should prefer email to userId', function () {
-      analytics.identify(test.userId, test.traits);
-      expect(stub.calledWith(['identify', test.traits.email])).to.be(true);
-    });
-
-    it('should push "_set" with all traits', function () {
-      analytics.identify(test.traits);
-      expect(stub.calledWith(['set', test.traits])).to.be(true);
-    });
-
-    it('should not call set without traits', function () {
-      analytics.identify(test.userId);
-      expect(stub.calledWith(['set', test.traits])).to.be(false);
-    });
-
-    it('should call identify with traits and userId', function () {
-      analytics.identify(test.userId, test.traits);
-      expect(stub.calledWith(['set', test.traits])).to.be(true);
-    });
-
+  it('siteToken', function () {
+    assert(this.integration.defaults.siteToken === '');
   });
 
-
-  describe('track', function () {
-
-    it('should push "_set" with the event trait', function () {
-      var stub   = sinon.stub(window._kiq, 'push')
-        , traits = {};
-
-      // Setup the augmented event name that our Qualaroo provider uses.
-      traits['Triggered: ' + test.event] = true;
-
-      // Enable the track option.
-      analytics._providers[0].options.track = true;
-
-      analytics.track(test.event, test.properties);
-      expect(stub.calledWith(['set', traits])).to.be(true);
-
-      stub.restore();
-      analytics._providers[0].options.track = false;
-    });
-
+  it('track', function () {
+    assert(this.integration.defaults.track === false);
   });
+});
+
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
+  });
+
+  it('should store options with defaults', function () {
+    assert(this.options.customerId == settings.customerId);
+    assert(this.options.siteToken == settings.siteToken);
+    assert(this.options.track == this.integration.defaults.track);
+  });
+});
+
+describe('#identify', function () {
+  beforeEach(function () {
+    analytics._user.clear();
+    this.stub = sinon.stub(window._kiq, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send an id', function () {
+    analytics.identify('id');
+    assert(this.stub.calledWith(['identify', 'id']));
+  });
+
+  it('should send traits', function () {
+    analytics.identify({ trait: true });
+    assert(this.stub.calledWith(['set', { trait: true }]));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.identify('id', { trait: true });
+    assert(this.stub.calledWith(['identify', 'id']));
+    assert(this.stub.calledWith(['set', { trait: true }]));
+  });
+
+  it('should prefer an email', function () {
+    analytics.identify('id', { email: 'name@example.com' });
+    assert(this.stub.calledWith(['identify', 'name@example.com']));
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window._kiq, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+    this.options.track = false;
+  });
+
+  it('shouldnt send anything by default', function () {
+    analytics.track('event');
+    assert(!this.stub.called);
+  });
+
+  it('should set an event trait', function () {
+    this.options.track = true;
+    analytics.track('event');
+    assert(this.stub.calledWith(['set', { 'Triggered: event': true }]));
+  });
+});
 
 });

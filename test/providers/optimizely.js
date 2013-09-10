@@ -1,58 +1,79 @@
+
 describe('Optimizely', function () {
 
-  var analytics = require('analytics')
-    , tick = require('next-tick');
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , sinon = require('sinon')
+  , tick = require('next-tick');
 
+var settings = {};
 
-  describe('initialize', function () {
+before(function (done) {
+  // setup fake experiment data for replay
+  window.optimizely.data = {
+    experiments : { 0 : { name : 'Test' } },
+    state : { variationNamesMap : { 0 : 'Variation' } }
+  };
 
-    it('should call ready', function (done) {
-      var spy  = sinon.spy();
-      analytics.ready(spy);
-      analytics.initialize({ 'Optimizely' : test['Optimizely'] });
+  this.timeout(10000);
+  this.spy = sinon.spy();
+  this.identifySpy = sinon.spy(analytics, 'identify');
+  analytics.ready(this.spy);
+  analytics.initialize({ Optimizely: settings });
+  this.integration = analytics._integrations.Optimizely;
+  this.options = this.integration.options;
+  tick(done);
+});
 
-      tick(function () {
-        expect(spy.called).to.be(true);
-        done();
-      });
-    });
+after(function () {
+  this.identifySpy.restore();
+});
 
-    it('should replay variation traits', function (done) {
-      // Set up the fake Optimizely data.
-      window.optimizely.data = {
-        experiments : { 0 : { name : 'Test' } },
-        state : { variationNamesMap : { 0 : 'Variation' } }
-      };
+describe('#defaults', function () {
+  it('variations', function () {
+    assert(this.integration.defaults.variations === true);
+  });
+});
 
-      var spy = sinon.spy(analytics, 'identify');
-      analytics.initialize({ 'Optimizely' : test['Optimizely'] });
-
-      // The replay runs on next tick.
-      tick(function () {
-        expect(spy.calledWith({'Experiment: Test' : 'Variation'})).to.be(true);
-        done();
-      });
-    });
-
+describe('#initialize', function () {
+  it('should call ready', function () {
+    assert(this.spy.called);
   });
 
-
-  describe('track', function () {
-
-    var clone = require('component-clone');
-
-    it('should push "trackEvent"', function () {
-      var stub = sinon.stub(window.optimizely, 'push');
-      analytics.track(test.event, test.properties);
-
-      // Adjust properties for what Optimizely needs.
-      var properties = clone(test.properties);
-      properties.revenue = properties.revenue * 100;
-
-      expect(stub.calledWith(['trackEvent', test.event, properties])).to.be(true);
-      stub.restore();
-    });
-
+  it('should store options', function () {
+    assert(this.options.variations == this.integration.defaults.variations);
   });
+
+  it('should replay variation traits', function () {
+    assert(this.identifySpy.calledWith({
+      'Experiment: Test': 'Variation'
+    }));
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.stub = sinon.stub(window.optimizely, 'push');
+  });
+
+  afterEach(function () {
+    this.stub.restore();
+  });
+
+  it('should send an event', function () {
+    analytics.track('event');
+    assert(this.stub.calledWith(['trackEvent', 'event', {}]));
+  });
+
+  it('should send an event and properties', function () {
+    analytics.track('event', { property: true });
+    assert(this.stub.calledWith(['trackEvent', 'event', { property: true }]));
+  });
+
+  it('should change revenue to cents', function () {
+    analytics.track('event', { revenue: 9.99 });
+    assert(this.stub.calledWith(['trackEvent', 'event', { revenue: 999 }]));
+  });
+});
 
 });

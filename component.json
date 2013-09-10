@@ -58,6 +58,7 @@
   ],
   "dependencies": {
     "avetisk/defaults": "0.0.4",
+    "component/bind": "0.0.1",
     "component/clone": "0.1.0",
     "component/cookie": "1.0.1",
     "component/each": "0.0.1",

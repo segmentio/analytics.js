@@ -20,11 +20,11 @@ var app = express()
  */
 
 app.get('/:type?', function (req, res, next) {
-  var type = req.params.type || 'min';
+  var type = req.params.type || 'all';
   res.render('index.html', {
-    integrations: type == 'integrations' || type == 'min',
-    core: type == 'core' || type == 'min',
-    min: type == 'min'
+    integrations: type == 'integrations' || type == 'all',
+    core: type == 'core' || type == 'all',
+    all: type == 'all'
   });
 });
 

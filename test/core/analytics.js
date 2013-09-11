@@ -1,6 +1,7 @@
 describe('Analytics.js', function () {
 
-  var trigger = require('trigger-event')
+  var analytics = window.analytics || require('analytics')
+    , trigger = require('trigger-event')
     , integration = require('analytics/lib/integration');
 
   // lower timeout for tests

@@ -1,3 +1,10 @@
+0.13.0 - September 10, 2013
+---------------------------
+* converted all integrations and their tests to a cleaner format
+* renamed all instances of "provider" to "integration"
+* built integration list from their own `name` to avoid bugs
+* changed `_providers` array to an `_integrations` map
+
 0.12.2 - September 5, 2013
 --------------------------
 * added [awe.sm](http://awe.sm)

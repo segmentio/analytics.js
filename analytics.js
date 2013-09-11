@@ -225,6 +225,33 @@ var defaults = function (dest, src, recursive) {
 module.exports = defaults;
 
 });
+require.register("component-bind/index.js", function(exports, require, module){
+
+/**
+ * Slice reference.
+ */
+
+var slice = [].slice;
+
+/**
+ * Bind `obj` to `fn`.
+ *
+ * @param {Object} obj
+ * @param {Function|String} fn or string
+ * @return {Function}
+ * @api public
+ */
+
+module.exports = function(obj, fn){
+  if ('string' == typeof fn) fn = obj[fn];
+  if ('function' != typeof fn) throw new Error('bind() requires a function');
+  var args = [].slice.call(arguments, 2);
+  return function(){
+    return fn.apply(obj, args.concat(slice.call(arguments)));
+  }
+};
+
+});
 require.register("component-clone/index.js", function(exports, require, module){
 
 /**
@@ -728,15 +755,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -748,9 +775,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -762,7 +787,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -775,13 +800,12 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
-
 var next = require('next-tick');
 
 
@@ -1162,33 +1186,6 @@ module.exports = function alias (object, aliases) {
         }
     }
 };
-});
-require.register("component-bind/index.js", function(exports, require, module){
-
-/**
- * Slice reference.
- */
-
-var slice = [].slice;
-
-/**
- * Bind `obj` to `fn`.
- *
- * @param {Object} obj
- * @param {Function|String} fn or string
- * @return {Function}
- * @api public
- */
-
-module.exports = function(obj, fn){
-  if ('string' == typeof fn) fn = obj[fn];
-  if ('function' != typeof fn) throw new Error('bind() requires a function');
-  var args = [].slice.call(arguments, 2);
-  return function(){
-    return fn.apply(obj, args.concat(slice.call(arguments)));
-  }
-};
-
 });
 require.register("segmentio-bind-all/index.js", function(exports, require, module){
 
@@ -2124,9 +2121,16 @@ if ('function' == typeof window.onerror) callbacks.push(window.onerror);
  * Bind to `window.onerror`.
  */
 
-window.onerror = function () {
+window.onerror = handler;
+
+
+/**
+ * Error handler.
+ */
+
+function handler () {
   for (var i = 0, fn; fn = callbacks[i]; i++) fn.apply(this, arguments);
-};
+}
 
 
 /**
@@ -2137,6 +2141,10 @@ window.onerror = function () {
 
 function onError (fn) {
   callbacks.push(fn);
+  if (window.onerror != handler) {
+    callbacks.push(window.onerror);
+    window.onerror = handler;
+  }
 }
 });
 require.register("segmentio-store.js/store.js", function(exports, require, module){
@@ -2426,8 +2434,8 @@ var after = require('after')
   , newDate = require('new-date')
   , size = require('object').length
   , prevent = require('prevent')
-  , Provider = require('./provider')
-  , Providers = require('./providers')
+  , Integration = require('./provider')
+  , Integrations = require('./integrations')
   , querystring = require('querystring')
   , user = require('./user');
 
@@ -2447,29 +2455,29 @@ exports.VERSION = '0.12.1';
 
 
 /**
- * Expose `Providers`.
+ * Expose `Integrations`.
  */
 
-exports.Providers = Providers;
+exports.Integrations = Integrations;
 
 
 /**
- * Expose the default `Provider`.
+ * Expose the default `Integration`.
  */
 
-exports.Provider = Provider;
+exports.Integration = Integration;
 
 
 /**
- * Define a new `Provider`.
+ * Define a new `Integration`.
  *
- * @param {Function} Provider
+ * @param {Function} Integration
  * @return {Analytics}
  */
 
-exports.provider = function (Provider) {
-  var name = Provider.prototype.name;
-  Providers[name] = Provider;
+exports.integration = function (Integration) {
+  var name = Integration.prototype.name;
+  Integrations[name] = Integration;
   return this;
 };
 
@@ -2480,7 +2488,7 @@ exports.provider = function (Provider) {
 
 function Analytics () {
   this._callbacks = [];
-  this._providers = [];
+  this._integrations = {};
   this._readied = false;
   this._timeout = 300;
   this._user = user;
@@ -2488,7 +2496,7 @@ function Analytics () {
 
 
 /**
- * Initialize with the given provider `settings` and `options`. Aliased to
+ * Initialize with the given integration `settings` and `options`. Aliased to
  * `init` for convenience.
  *
  * @param {Object} settings
@@ -2500,7 +2508,7 @@ Analytics.prototype.init =
 Analytics.prototype.initialize = function (settings, options) {
   this._options(options);
   this._readied = false;
-  this._providers = [];
+  this._integrations = {};
 
   // load user now that options are set
   this._user.load();
@@ -2513,12 +2521,12 @@ Analytics.prototype.initialize = function (settings, options) {
     while (callback = self._callbacks.shift()) callback();
   });
 
-  // initialize providers, passing ready
+  // initialize integrations, passing ready
   each(settings, function (name, options) {
-    var Provider = self.Providers[name];
-    if (!Provider) return self;
-    var provider = new Provider(options, ready, self);
-    self._providers.push(provider);
+    var Integration = self.Integrations[name];
+    if (!Integration) return self;
+    var integration = new Integration(options, ready, self);
+    self._integrations[name] = integration;
   });
 
   // call any querystring methods if present
@@ -2777,10 +2785,10 @@ Analytics.prototype._callback = function (fn) {
 
 
 /**
- * Call a `method` on all of initialized providers, passing clones of arguments
- * along to keep each provider isolated.
+ * Call a `method` on all of initialized integrations, passing clones of arguments
+ * along to keep each integration isolated.
  *
- * TODO: check provider enabled
+ * TODO: check integration enabled
  *
  * @param {String} method
  * @param {Mixed} args...
@@ -2791,12 +2799,12 @@ Analytics.prototype._callback = function (fn) {
 Analytics.prototype._invoke = function (method, args) {
   args = [].slice.call(arguments, 1);
   var options = args[args.length-1];
-  each(this._providers, function (provider) {
-    if (!provider[method] || !isEnabled(provider, options)) return;
+  each(this._integrations, function (name, integration) {
+    if (!integration[method] || !isEnabled(integration, options)) return;
     var cloned = map(args, clone);
-    provider.ready
-      ? provider[method].apply(provider, cloned)
-      : provider.enqueue(method, cloned);
+    integration.ready
+      ? integration[method].apply(integration, cloned)
+      : integration.enqueue(method, cloned);
   });
   return this;
 };
@@ -2823,20 +2831,20 @@ Analytics.prototype._parseQuery = function () {
  */
 
 Analytics.prototype.VERSION = exports.VERSION;
-Analytics.prototype.Providers = exports.Providers;
-Analytics.prototype.Provider = exports.Provider;
-Analytics.prototype.provider = exports.provider;
+Analytics.prototype.Integrations = exports.Integrations;
+Analytics.prototype.Integration = exports.Integration;
+Analytics.prototype.integration = exports.integration;
 
 
 /**
- * Determine whether a `provider` is enabled or not based on `options`.
+ * Determine whether a `integration` is enabled or not based on `options`.
  *
- * @param {Object} provider
+ * @param {Object} integration
  * @param {Object} options
- * @return {Boolean} - wether the provider is enabled.
+ * @return {Boolean}
  */
 
-function isEnabled (provider, options) {
+function isEnabled (integration, options) {
   var enabled = true;
   if (!options || !options.providers) return enabled;
 
@@ -2845,8 +2853,8 @@ function isEnabled (provider, options) {
   if (map.all !== undefined) enabled = map.all;
   if (map.All !== undefined) enabled = map.All;
 
-  // Look for this provider's specific setting.
-  var name = provider.name;
+  // Look for this integration's specific setting.
+  var name = integration.name;
   if (map[name] !== undefined) enabled = map[name];
 
   return enabled;
@@ -2855,7 +2863,7 @@ function isEnabled (provider, options) {
 
 /**
  * Clean up traits, default some useful things both so the user doesn't have to
- * and so we don't have to do it on a provider-basis.
+ * and so we don't have to do it on a integration-basis.
  *
  * @param {Object} traits
  * @return {Object}
@@ -3090,6 +3098,75 @@ function createIntegration (name) {
   Integration.prototype.name = name;
   return Integration;
 }
+});
+require.register("analytics/lib/integrations.js", function(exports, require, module){
+
+var each = require('each');
+
+
+/**
+ * A list all of our integration slugs.
+ */
+
+var integrations = [
+  'adroll',
+  'amplitude',
+  'awesm',
+  'bugherd',
+  'chartbeat',
+  'clicktale',
+  'clicky',
+  'comscore',
+  'crazyegg',
+  'customerio',
+  'errorception',
+  'foxmetrics',
+  'gauges',
+  'get-satisfaction',
+  'google-analytics',
+  'gosquared',
+  'heap',
+  'hittail',
+  'hubspot',
+  'improvely',
+  'inspectlet',
+  'intercom',
+  'keen-io',
+  'kissmetrics',
+  'klaviyo',
+  'leadlander',
+  'livechat',
+  'lytics',
+  'mixpanel',
+  'mousestats',
+  'olark',
+  'optimizely',
+  'perfect-audience',
+  'pingdom',
+  'preact',
+  'qualaroo',
+  'quantcast',
+  'sentry',
+  'snapengage',
+  'tapstream',
+  'trakio',
+  'usercycle',
+  'userfox',
+  'uservoice',
+  'vero',
+  'visual-website-optimizer',
+  'woopra'
+];
+
+
+/**
+ * Expose the integrations, using their own `name` from their `prototype`.
+ */
+
+each(integrations, function (slug) {
+  var Integration = require('./integrations/' + slug);
+  exports[Integration.prototype.name] = Integration;
+});
 });
 require.register("analytics/lib/provider.js", function(exports, require, module){
 var each   = require('each')
@@ -3442,7 +3519,7 @@ User.prototype.toJSON = function () {
 module.exports = bindAll(new User());
 
 });
-require.register("analytics/lib/providers/adroll.js", function(exports, require, module){
+require.register("analytics/lib/integrations/adroll.js", function(exports, require, module){
 
 var integration = require('../integration')
   , load = require('load-script')
@@ -3488,65 +3565,101 @@ AdRoll.prototype.initialize = function (options, ready) {
   }, ready);
 };
 });
-require.register("analytics/lib/providers/amplitude.js", function(exports, require, module){
-// https://github.com/amplitude/Amplitude-Javascript
+require.register("analytics/lib/integrations/amplitude.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , alias    = require('alias')
-  , load     = require('load-script');
+var integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `Amplitude` integration.
+ *
+ * https://github.com/amplitude/Amplitude-Javascript
+ */
 
-  name : 'Amplitude',
+var Amplitude = module.exports = integration('Amplitude');
 
-  key : 'apiKey',
 
-  defaults : {
-    // Amplitude's required API key.
-    apiKey : null,
-    // Whether to track pageviews to Amplitude.
-    pageview : false
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    // Create the Amplitude global and queuer methods.
-    (function(e,t){var r=e.amplitude||{};
-    r._q=[];function i(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)))}}
-    var s=["init","logEvent","setUserId","setGlobalUserProperties","setVersionName"];
-    for(var c=0;c<s.length;c++){i(s[c])}e.amplitude=r})(window,document);
+Amplitude.prototype.key = 'apiKey';
 
-    // Load the Amplitude script and initialize with the API key.
-    load('https://d24n15hnbwhuhn.cloudfront.net/libs/amplitude-1.0-min.js');
-    window.amplitude.init(options.apiKey);
 
-    // Amplitude creates a queue, so it's ready immediately.
-    ready();
-  },
+/**
+ * Default options.
+ */
 
-  identify : function (userId, traits) {
-    if (userId) window.amplitude.setUserId(userId);
-    if (traits) window.amplitude.setGlobalUserProperties(traits);
-  },
+Amplitude.prototype.defaults = {
+  // your amplitude api key (required)
+  apiKey: '',
+  // whether to track `pageview` calls to amplitude
+  pageview: false
+};
 
-  track : function (event, properties) {
-    window.amplitude.logEvent(event, properties);
-  },
 
-  pageview : function (url) {
-    if (!this.options.pageview) return;
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
 
-    var properties = {
-      url  : url || document.location.href,
-      name : document.title
-    };
+Amplitude.prototype.initialize = function (options, ready) {
+  (function(e,t){var r=e.amplitude||{};
+  r._q=[];function i(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)));};}
+  var s=["init","logEvent","setUserId","setGlobalUserProperties","setVersionName"];
+  for(var c=0;c<s.length;c++){i(s[c]);}e.amplitude=r;})(window,document);
+  window.amplitude.init(options.apiKey);
+  ready();
 
-    this.track('Loaded a Page', properties);
-  }
+  load('https://d24n15hnbwhuhn.cloudfront.net/libs/amplitude-1.0-min.js');
+};
 
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Amplitude.prototype.identify = function (id, traits, options) {
+  if (id) window.amplitude.setUserId(id);
+  if (traits) window.amplitude.setGlobalUserProperties(traits);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Amplitude.prototype.track = function (event, properties, options) {
+  window.amplitude.logEvent(event, properties);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+Amplitude.prototype.pageview = function (url) {
+  if (!this.options.pageview) return;
+  this.track('Loaded a Page', {
+    url: url || window.location.href,
+    title: document.title
+  });
+};
 });
-});
-require.register("analytics/lib/providers/awesm.js", function(exports, require, module){
+require.register("analytics/lib/integrations/awesm.js", function(exports, require, module){
 
 var integration = require('../integration')
   , load = require('load-script')
@@ -3609,182 +3722,215 @@ Awesm.prototype.track = function (event, properties, options) {
   window.AWESM.convert(goal, value, null, user.id());
 };
 });
-require.register("analytics/lib/providers/bugherd.js", function(exports, require, module){
-// http://support.bugherd.com/home
+require.register("analytics/lib/integrations/bugherd.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , load     = require('load-script');
+var integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `BugHerd` integration.
+ *
+ * http://support.bugherd.com/home
+ */
 
-  name : 'BugHerd',
+var BugHerd = module.exports = integration('BugHerd');
 
-  key : 'apiKey',
 
-  defaults : {
-    apiKey : null,
-    // Optionally hide the feedback tab if you want to build your own.
-    // http://support.bugherd.com/entries/21497629-Create-your-own-Send-Feedback-tab
-    showFeedbackTab : true
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    if (!options.showFeedbackTab) {
-        window.BugHerdConfig = { "feedback" : { "hide" : true } };
-    }
-    load('//www.bugherd.com/sidebarv2.js?apikey=' + options.apiKey, ready);
-  }
+BugHerd.prototype.key = 'apiKey';
 
+
+/**
+ * Default options.
+ */
+
+BugHerd.prototype.defaults = {
+  // your amplitude api key (required)
+  apiKey: '',
+  // whether to show or hide the feedback tab to start
+  // http://support.bugherd.com/entries/21497629-Create-your-own-Send-Feedback-tab
+  showFeedbackTab: true
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+BugHerd.prototype.initialize = function (options, ready) {
+  window.BugHerdConfig = {};
+  if (!options.showFeedbackTab) window.BugHerdConfig.feedback = { hide: true };
+  load('//www.bugherd.com/sidebarv2.js?apikey=' + options.apiKey, ready);
+};
 });
-});
-require.register("analytics/lib/providers/chartbeat.js", function(exports, require, module){
-// http://chartbeat.com/docs/adding_the_code/
-// http://chartbeat.com/docs/configuration_variables/
-// http://chartbeat.com/docs/handling_virtual_page_changes/
+require.register("analytics/lib/integrations/chartbeat.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , load     = require('load-script');
+var integration = require('../integration')
+  , onBody = require('on-body')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `Chartbeat` integration.
+ */
 
-  name : 'Chartbeat',
-
-  defaults : {
-    // Chartbeat requires two options: `domain` and `uid`. All other
-    // configuration options are passed straight in!
-    domain : null,
-    uid    : null
-  },
+var Chartbeat = module.exports = integration('Chartbeat');
 
 
-  initialize : function (options, ready) {
-    // Since all the custom options just get passed through, update the
-    // Chartbeat `_sf_async_config` variable with options.
-    window._sf_async_config = options;
+/**
+ * Default options.
+ */
 
-    // Chartbeat's javascript should only load after the body
-    // is available, see https://github.com/segmentio/analytics.js/issues/107
-    var loadChartbeat = function () {
-      // We loop until the body is available.
-      if (!document.body) return setTimeout(loadChartbeat, 5);
-
-      // Use the stored date from when chartbeat was loaded.
-      window._sf_endpt = (new Date()).getTime();
-
-      // Load the Chartbeat javascript.
-      load({
-        https : 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',
-        http  : 'http://static.chartbeat.com/js/chartbeat.js'
-      }, ready);
-    };
-    loadChartbeat();
-  },
+Chartbeat.prototype.defaults = {
+  // the domain of the site your installing chartbeat on (required)
+  domain: '',
+  // your chartbeat uid (required)
+  uid: null
+};
 
 
-  pageview : function (url) {
-    // In case the Chartbeat library hasn't loaded yet.
-    if (!window.pSUPERFLY) return;
+/**
+ * Initialize.
+ *
+ * http://chartbeat.com/docs/adding_the_code/
+ * http://chartbeat.com/docs/configuration_variables/
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
 
-    // Requires a path, so default to the current one.
-    window.pSUPERFLY.virtualPage(url || window.location.pathname);
-  }
-
-});
-});
-require.register("analytics/lib/providers/clicktale.js", function(exports, require, module){
-// http://wiki.clicktale.com/Article/JavaScript_API
-
-var date     = require('load-date')
-  , Provider = require('../provider')
-  , load     = require('load-script')
-  , onBody   = require('on-body');
-
-module.exports = Provider.extend({
-
-  name : 'ClickTale',
-
-  key : 'projectId',
-
-  defaults : {
-
-    // If you sign up for a free account, this is the default http (non-ssl) CDN URL
-    // that you get. If you sign up for a premium account, you get a different
-    // custom CDN URL, so we have to leave it as an option.
-    httpCdnUrl     : 'http://s.clicktale.net/WRe0.js',
-
-    // SSL support is only for premium accounts. Each premium account seems to have
-    // a different custom secure CDN URL, so we have to leave it as an option.
-    httpsCdnUrl    : null,
-
-    // The Project ID is loaded in after the ClickTale CDN javascript has loaded.
-    projectId      : null,
-
-    // The recording ratio specifies what fraction of people to screen-record.
-    // ClickTale has a special calculator in their setup flow that tells you
-    // what number to set for this.
-    recordingRatio : 0.01,
-
-    // The Partition ID determines where ClickTale stores the data according to
-    // http://wiki.clicktale.com/Article/JavaScript_API
-    partitionId    : null
-  },
-
-
-  initialize : function (options, ready) {
-    // If we're on https:// but don't have a secure library, return early.
-    if (document.location.protocol === 'https:' && !options.httpsCdnUrl) return;
-
-    // ClickTale wants this at the "top" of the page. The analytics.js snippet
-    // sets this date synchronously now, and makes it available via load-date.
-    window.WRInitTime = date.getTime();
-
-    // Add the required ClickTale div to the body.
-    onBody(function (body) {
-      var div = document.createElement('div');
-      div.setAttribute('id', 'ClickTaleDiv');
-      div.setAttribute('style', 'display: none;');
-      body.appendChild(div);
-    });
-
-    var onloaded = function () {
-      window.ClickTale(
-        options.projectId,
-        options.recordingRatio,
-        options.partitionId
-      );
-      ready();
-    };
-
-    // If no SSL library is provided and we're on SSL then we can't load
-    // anything (always true for non-premium accounts).
+Chartbeat.prototype.initialize = function (options, ready) {
+  window._sf_async_config = options;
+  onBody(function () {
+    window._sf_endpt = new Date().getTime();
     load({
-      http  : options.httpCdnUrl,
-      https : options.httpsCdnUrl
-    }, onloaded);
-  },
+      https: 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',
+      http: 'http://static.chartbeat.com/js/chartbeat.js'
+    }, ready);
+  });
+};
 
-  identify : function (userId, traits) {
-    // We set the userId as the ClickTale UID.
-    if (window.ClickTaleSetUID) window.ClickTaleSetUID(userId);
 
-    // We iterate over all the traits and set them as key-value field pairs.
-    if (window.ClickTaleField) {
-      for (var traitKey in traits) {
-        window.ClickTaleField(traitKey, traits[traitKey]);
-      }
-    }
-  },
+/**
+ * Pageview.
+ *
+ * http://chartbeat.com/docs/handling_virtual_page_changes/
+ *
+ * @param {String} url (optional)
+ */
 
-  track : function (event, properties) {
-    // ClickTaleEvent is an alias for ClickTaleTag
-    if (window.ClickTaleEvent) window.ClickTaleEvent(event);
-  }
-
+Chartbeat.prototype.pageview = function (url) {
+  window.pSUPERFLY.virtualPage(url || window.location.pathname);
+};
 });
+require.register("analytics/lib/integrations/clicktale.js", function(exports, require, module){
+
+var date = require('load-date')
+  , each = require('each')
+  , integration = require('../integration')
+  , load = require('load-script')
+  , onBody = require('on-body');
+
+
+/**
+ * Expose `ClickTale` integration.
+ *
+ * http://wiki.clicktale.com/Article/JavaScript_API
+ */
+
+var ClickTale = module.exports = integration('ClickTale');
+
+
+/**
+ * Required key.
+ */
+
+ClickTale.prototype.key = 'projectId';
+
+
+/**
+ * Default options.
+ */
+
+ClickTale.prototype.defaults = {
+  // the HTTP version of your clicktale CDN url
+  httpCdnUrl: 'http://s.clicktale.net/WRe0.js',
+  // the HTTPS version of your clicktale CDN url (premium accounts only)
+  httpsCdnUrl: '',
+  // your clicktale project id (required)
+  projectId: '',
+  // the ratio of users to record
+  recordingRatio: 0.01,
+  // your clicktale partition id
+  // http://wiki.clicktale.com/Article/JavaScript_API
+  partitionId: ''
+};
+
+ClickTale.prototype.initialize = function (options, ready) {
+  // if we're on HTTPS but don't have a secure library, return early
+  if (document.location.protocol === 'https:' && !options.httpsCdnUrl) return;
+
+  window.WRInitTime = date.getTime();
+
+  // add the required clicktale div to the body
+  onBody(function (body) {
+    var div = document.createElement('div');
+    div.setAttribute('id', 'ClickTaleDiv');
+    div.setAttribute('style', 'display: none;');
+    body.appendChild(div);
+  });
+
+  load({
+    http: options.httpCdnUrl,
+    https: options.httpsCdnUrl
+  }, function () {
+    window.ClickTale(options.projectId, options.recordingRatio, options.partitionId);
+    ready();
+  });
+};
+
+
+/**
+ * Identify.
+ *
+ * http://wiki.clicktale.com/Article/ClickTaleTag#ClickTaleSetUID
+ * http://wiki.clicktale.com/Article/ClickTaleTag#ClickTaleField
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+ClickTale.prototype.identify = function (id, traits, options) {
+  window.ClickTaleSetUID(id);
+  each(traits, function (key, value) {
+    window.ClickTaleField(key, value);
+  });
+};
+
+
+/**
+ * Track.
+ *
+ * http://wiki.clicktale.com/Article/ClickTaleTag#ClickTaleEvent
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+ClickTale.prototype.track = function (event, properties, options) {
+  window.ClickTaleEvent(event);
+};
 });
-require.register("analytics/lib/providers/clicky.js", function(exports, require, module){
+require.register("analytics/lib/integrations/clicky.js", function(exports, require, module){
 
 var extend = require('extend')
   , integration = require('../integration')
@@ -3878,774 +4024,1129 @@ Clicky.prototype.pageview = function (url) {
   window.clicky.log(url, document.title);
 };
 });
-require.register("analytics/lib/providers/comscore.js", function(exports, require, module){
-// http://direct.comscore.com/clients/help/FAQ.aspx#faqTagging
+require.register("analytics/lib/integrations/comscore.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'comScore',
-
-  key : 'c2',
-
-  defaults : {
-    c1 : '2',
-    c2 : null
-  },
-
-  // Pass the entire options object directly into comScore.
-  initialize : function (options, ready) {
-    window._comscore = window._comscore || [];
-    window._comscore.push(options);
-    load({
-      http  : 'http://b.scorecardresearch.com/beacon.js',
-      https : 'https://sb.scorecardresearch.com/beacon.js'
-    }, ready);
-  }
-
-});
-});
-require.register("analytics/lib/providers/crazyegg.js", function(exports, require, module){
-var Provider = require('../provider')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'CrazyEgg',
-
-  key : 'accountNumber',
-
-  defaults : {
-    accountNumber : null
-  },
-
-  initialize : function (options, ready) {
-    var accountPath = options.accountNumber.slice(0,4) + '/' + options.accountNumber.slice(4);
-    load('//dnn506yrbagrg.cloudfront.net/pages/scripts/'+accountPath+'.js?'+Math.floor(new Date().getTime()/3600000), ready);
-  }
-
-});
-});
-require.register("analytics/lib/providers/customerio.js", function(exports, require, module){
-// http://customer.io/docs/api/javascript.html
-
-var Provider = require('../provider')
-  , each = require('each')
-  , is = require('is')
-  , isEmail = require('is-email')
+var integration = require('../integration')
   , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `comScore` integration.
+ */
 
-  name : 'Customer.io',
+var comScore = module.exports = integration('comScore');
 
-  key : 'siteId',
 
-  defaults : {
-    siteId : null
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    var _cio = window._cio = window._cio || [];
-    (function() {
-      var a,b,c;
-      a = function (f) {
-        return function () {
-          _cio.push([f].concat(Array.prototype.slice.call(arguments,0)));
-        };
-      };
-      b = ['identify', 'track'];
-      for (c = 0; c < b.length; c++) {
-        _cio[b[c]] = a(b[c]);
-      }
-    })();
+comScore.prototype.key = 'c2';
 
-    // Load the Customer.io script and add the required `id` and `data-site-id`.
-    var script = load('https://assets.customer.io/assets/track.js');
-    script.id = 'cio-tracker';
-    script.setAttribute('data-site-id', options.siteId);
 
-    // Since Customer.io creates their required methods in their snippet, we
-    // don't need to wait to be ready.
-    ready();
-  },
+/**
+ * Default options.
+ */
 
-  identify : function (userId, traits) {
-    // Don't do anything if we just have traits, because Customer.io
-    // requires a `userId`.
-    if (!userId) return;
+comScore.prototype.defaults = {
+  // your comscore `c1` id (you shouldn't need to change this)
+  c1: '2',
+  // your comscore `c2` id (required)
+  c2: ''
+};
 
-    // Customer.io takes the `userId` as part of the traits object.
-    traits.id = userId;
 
-    // Swap the `created` trait to the `created_at` that Customer.io needs
-    // and convert it from milliseconds to seconds.
-    if (traits.created) {
-      traits.created_at = Math.floor(traits.created/1000);
-      delete traits.created;
-    }
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
 
-    // customer.io doesn't handle dates, so convert to seconds
-    each(traits, function (key, val) {
-      if (is.date(val)) traits[key] = val.getTime()/1000;
-    });
-
-    window._cio.identify(traits);
-  },
-
-  track : function (event, properties) {
-    window._cio.track(event, properties);
-  }
-
-});
-});
-require.register("analytics/lib/providers/errorception.js", function(exports, require, module){
-// http://errorception.com/
-
-var Provider = require('../provider');
-var extend = require('extend');
-var load = require('load-script');
-var onError = require('on-error');
-var type = require('type');
-
-
-module.exports = Provider.extend({
-
-  name : 'Errorception',
-
-  key : 'projectId',
-
-  defaults : {
-    projectId : null,
-    // Whether to store metadata about the user on `identify` calls, using
-    // the [Errorception `meta` API](http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html).
-    meta : true
-  },
-
-  initialize : function (options, ready) {
-    window._errs = [options.projectId];
-    onError(function() {
-      window._errs.push(arguments);
-    });
-    load('//beacon.errorception.com/' + options.projectId + '.js');
-    ready();
-  },
-
-  // Add the traits to the Errorception meta object.
-  identify : function (userId, traits) {
-    if (!this.options.meta) return;
-
-    // If the custom metadata object hasn't ever been made, make it.
-    window._errs.meta || (window._errs.meta = {});
-
-    // Add `userId` to traits.
-    traits.id = userId;
-
-    // Add all of the traits as metadata.
-    extend(window._errs.meta, traits);
-  }
-
-});
-});
-require.register("analytics/lib/providers/foxmetrics.js", function(exports, require, module){
-// http://foxmetrics.com/documentation/apijavascript
-
-var Provider = require('../provider')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'FoxMetrics',
-
-  key : 'appId',
-
-  defaults : {
-    appId : null
-  },
-
-  initialize : function (options, ready) {
-    var _fxm = window._fxm || {};
-    window._fxm = _fxm.events || [];
-    load('//d35tca7vmefkrc.cloudfront.net/scripts/' + options.appId + '.js');
-
-    // FoxMetrics makes a queue, so it's ready immediately.
-    ready();
-  },
-
-  identify : function (userId, traits) {
-    // A `userId` is required for profile updates.
-    if (!userId) return;
-
-    // FoxMetrics needs the first and last name seperately. Fallback to
-    // splitting the `name` trait if we don't have what we need.
-    var firstName = traits.firstName
-      , lastName  = traits.lastName;
-
-    if (!firstName && traits.name) firstName = traits.name.split(' ')[0];
-    if (!lastName && traits.name)  lastName  = traits.name.split(' ')[1];
-
-    window._fxm.push([
-      '_fxm.visitor.profile',
-      userId,         // user id
-      firstName,      // first name
-      lastName,       // last name
-      traits.email,   // email
-      traits.address, // address
-      undefined,      // social
-      undefined,      // partners
-      traits          // attributes
-    ]);
-  },
-
-  track : function (event, properties) {
-    window._fxm.push([
-      event,               // event name
-      properties.category, // category
-      properties           // properties
-    ]);
-  },
-
-  pageview : function (url) {
-    window._fxm.push([
-      '_fxm.pages.view',
-      undefined, // title
-      undefined, // name
-      undefined, // category
-      url,       // url
-      undefined  // referrer
-    ]);
-  }
-
-});
-});
-require.register("analytics/lib/providers/gauges.js", function(exports, require, module){
-// http://get.gaug.es/documentation/tracking/
-
-var Provider = require('../provider')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'Gauges',
-
-  key : 'siteId',
-
-  defaults : {
-    siteId : null
-  },
-
-  initialize : function (options, ready) {
-    window._gauges = window._gauges || [];
-    var script = load('//secure.gaug.es/track.js');
-    // Gauges needs a few attributes on its script element.
-    script.id = 'gauges-tracker';
-    script.setAttribute('data-site-id', options.siteId);
-
-    // Gauges make a queue so it's ready immediately.
-    ready();
-  },
-
-  pageview : function (url) {
-    window._gauges.push(['track']);
-  }
-
-});
-});
-require.register("analytics/lib/providers/get-satisfaction.js", function(exports, require, module){
-// You have to be signed in to access the snippet code:
-// https://console.getsatisfaction.com/start/101022?signup=true#engage
-
-var Provider = require('../provider')
-  , load     = require('load-script')
-  , onBody   = require('on-body');
-
-
-module.exports = Provider.extend({
-
-  name : 'Get Satisfaction',
-
-  key : 'widgetId',
-
-  defaults : {
-    widgetId : null
-  },
-
-  initialize : function (options, ready) {
-    // Get Satisfaction requires a div that will become their widget tab. Append
-    // it once `document.body` exists.
-    var div = document.createElement('div');
-    var id = div.id = 'getsat-widget-' + options.widgetId;
-    onBody(function (body) {
-      body.appendChild(div);
-    });
-
-    // Usually they load their snippet synchronously, so we need to wait for it
-    // to come back before initializing the tab.
-    load('https://loader.engage.gsfn.us/loader.js', function () {
-      if (window.GSFN !== undefined) {
-        window.GSFN.loadWidget(options.widgetId, { containerId : id });
-      }
-      ready();
-    });
-
-  }
-
-});
-});
-require.register("analytics/lib/providers/google-analytics.js", function(exports, require, module){
-// https://developers.google.com/analytics/devguides/collection/gajs/
-
-var Provider  = require('../provider');
-var each = require('each');
-var is = require('is');
-var load = require('load-script');
-var type = require('type');
-var url = require('url');
-var canonical = require('canonical');
-
-
-module.exports = Provider.extend({
-
-  name : 'Google Analytics',
-
-  key : 'trackingId',
-
-  defaults : {
-    // Whether to anonymize the IP address collected for the user.
-    anonymizeIp : false,
-    // An optional domain setting, to restrict where events can originate from.
-    domain : null,
-    // Whether to enable GOogle's DoubleClick remarketing feature.
-    doubleClick : false,
-    // Whether to use Google Analytics's Enhanced Link Attribution feature:
-    // http://support.google.com/analytics/bin/answer.py?hl=en&answer=2558867
-    enhancedLinkAttribution : false,
-    // A domain to ignore for referrers. Maps to _addIgnoredRef
-    ignoreReferrer : null,
-    // Whether or not to track and initial pageview when initialized.
-    initialPageview : true,
-    // The setting to use for Google Analytics's Site Speed Sample Rate feature:
-    // https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setSiteSpeedSampleRate
-    siteSpeedSampleRate : null,
-    // Your Google Analytics Tracking ID.
-    trackingId : null,
-    // Whether you're using the new Universal Analytics or not.
-    universalClient: false
-  },
-
-  initialize : function (options, ready) {
-    if (options.universalClient) this.initializeUniversal(options, ready);
-    else this.initializeClassic(options, ready);
-  },
-
-  initializeClassic: function (options, ready) {
-    window._gaq = window._gaq || [];
-    window._gaq.push(['_setAccount', options.trackingId]);
-
-    // Apply a bunch of optional settings.
-    if (options.domain) {
-      window._gaq.push(['_setDomainName', options.domain]);
-    }
-    if (options.enhancedLinkAttribution) {
-      var protocol = 'https:' === document.location.protocol ? 'https:' : 'http:';
-      var pluginUrl = protocol + '//www.google-analytics.com/plugins/ga/inpage_linkid.js';
-      window._gaq.push(['_require', 'inpage_linkid', pluginUrl]);
-    }
-    if (type(options.siteSpeedSampleRate) === 'number') {
-      window._gaq.push(['_setSiteSpeedSampleRate', options.siteSpeedSampleRate]);
-    }
-    if (options.anonymizeIp) {
-      window._gaq.push(['_gat._anonymizeIp']);
-    }
-    var ignored = options.ignoreReferrer;
-    if (ignored) {
-      if (!is.array(ignored)) ignored = [ignored];
-      each(ignored, function (domain) {
-        window._gaq.push(['_addIgnoredRef', domain]);
-      });
-    }
-    if (options.initialPageview) {
-      var path, canon = canonical();
-      if (canon) path = url.parse(canon).pathname;
-      this.pageview(path);
-    }
-
-    // URLs change if DoubleClick is on. Even though Google Analytics makes a
-    // queue, the `_gat` object isn't available until the library loads.
-    if (options.doubleClick) {
-      load('//stats.g.doubleclick.net/dc.js', ready);
-    } else {
-      load({
-        http  : 'http://www.google-analytics.com/ga.js',
-        https : 'https://ssl.google-analytics.com/ga.js'
-      }, ready);
-    }
-  },
-
-  initializeUniversal: function (options, ready) {
-
-    // GA-universal lets you set your own queue name
-    var global = this.global = 'ga';
-
-    // and needs to know about this queue name in this special object
-    // so that future plugins can also operate on the object
-    window['GoogleAnalyticsObject'] = global;
-
-    // setup the global variable
-    window[global] = window[global] || function () {
-      (window[global].q = window[global].q || []).push(arguments);
-    };
-
-    // GA also needs to know the current time (all from their snippet)
-    window[global].l = 1 * new Date();
-
-    var createOpts = {};
-
-    // Apply a bunch of optional settings.
-    if (options.domain)
-      createOpts.cookieDomain = options.domain || 'none';
-    if (type(options.siteSpeedSampleRate) === 'number')
-      createOpts.siteSpeedSampleRate = options.siteSpeedSampleRate;
-    if (options.anonymizeIp)
-      ga('set', 'anonymizeIp', true);
-
-    ga('create', options.trackingId, createOpts);
-
-    if (options.initialPageview) {
-      var path, canon = canonical();
-      if (canon) path = url.parse(canon).pathname;
-      this.pageview(path);
-    }
-
-    load('//www.google-analytics.com/analytics.js');
-
-    // Google makes a queue so it's ready immediately.
-    ready();
-  },
-
-  track : function (event, properties) {
-    properties || (properties = {});
-
-    var value;
-
-    // Since value is a common property name, ensure it is a number and Google
-    // requires that it be an integer.
-    if (type(properties.value) === 'number') value = Math.round(properties.value);
-
-    // Try to check for a `category` and `label`. A `category` is required,
-    // so if it's not there we use `'All'` as a default. We can safely push
-    // undefined if the special properties don't exist. Try using revenue
-    // first, but fall back to a generic `value` as well.
-    if (this.options.universalClient) {
-      var opts = {};
-      if (properties.noninteraction) opts.nonInteraction = properties.noninteraction;
-      window[this.global](
-        'send',
-        'event',
-        properties.category || 'All',
-        event,
-        properties.label,
-        Math.round(properties.revenue) || value,
-        opts
-      );
-    } else {
-      window._gaq.push([
-        '_trackEvent',
-        properties.category || 'All',
-        event,
-        properties.label,
-        Math.round(properties.revenue) || value,
-        properties.noninteraction
-      ]);
-    }
-  },
-
-  pageview : function (url) {
-    if (this.options.universalClient) {
-      window[this.global]('send', 'pageview', url);
-    } else {
-      window._gaq.push(['_trackPageview', url]);
-    }
-  }
-
-});
-});
-require.register("analytics/lib/providers/gosquared.js", function(exports, require, module){
-// http://www.gosquared.com/support
-// https://www.gosquared.com/customer/portal/articles/612063-tracker-functions
-
-var Provider = require('../provider');
-var user = require('../user');
-var load = require('load-script');
-var onBody = require('on-body');
-
-
-module.exports = Provider.extend({
-
-  name : 'GoSquared',
-
-  key : 'siteToken',
-
-  defaults : {
-    siteToken : null
-  },
-
-  initialize : function (options, ready) {
-    // GoSquared assumes a body in their script, so we need this wrapper
-    var self = this;
-    onBody(function () {
-      window.GoSquared = {};
-      window.GoSquared.acct = options.siteToken;
-      window.GoSquared.q = [];
-      window._gstc_lt =+ (new Date());
-
-      // identify since GoSquared doesn't have an async identify API
-      self.identify(user.id(), user.traits());
-
-      load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
-      ready();
-    });
-  },
-
-  identify : function (id, traits) {
-    window.GoSquared.UserName = id;
-    window.GoSquared.VisitorName = traits.email || traits.username || id;
-    window.GoSquared.Visitor = traits;
-  },
-
-  track : function (event, properties) {
-    // GoSquared sets a `gs_evt_name` property with a value of the event
-    // name, so it relies on properties being an object.
-    window.GoSquared.q.push(['TrackEvent', event, properties || {}]);
-  },
-
-  pageview : function (url) {
-    window.GoSquared.q.push(['TrackView', url]);
-  }
-
-});
-});
-require.register("analytics/lib/providers/heap.js", function(exports, require, module){
-// https://heapanalytics.com/docs
-
-var Provider = require('../provider')
-  , load     = require('load-script');
-
-module.exports = Provider.extend({
-
-  name : 'Heap',
-
-  key : 'apiKey',
-
-  defaults : {
-    apiKey : null
-  },
-
-  initialize : function (options, ready) {
-    window.heap=window.heap||[];window.heap.load=function(a){window._heapid=a;var b=document.createElement("script");b.type="text/javascript",b.async=!0,b.src=("https:"===document.location.protocol?"https:":"http:")+"//d36lvucg9kzous.cloudfront.net";var c=document.getElementsByTagName("script")[0];c.parentNode.insertBefore(b,c);var d=function(a){return function(){heap.push([a].concat(Array.prototype.slice.call(arguments,0)))}},e=["identify","track"];for(var f=0;f<e.length;f++)heap[e[f]]=d(e[f])};
-    window.heap.load(options.apiKey);
-
-    // heap creates its own queue, so we're ready right away
-    ready();
-  },
-
-  identify : function (userId, traits) {
-    window.heap.identify(traits);
-  },
-
-  track : function (event, properties) {
-    window.heap.track(event, properties);
-  }
-
-});
-});
-require.register("analytics/lib/providers/hittail.js", function(exports, require, module){
-// http://www.hittail.com
-
-var Provider = require('../provider')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'HitTail',
-
-  key : 'siteId',
-
-  defaults : {
-    siteId : null
-  },
-
-  initialize : function (options, ready) {
-    load('//' + options.siteId + '.hittail.com/mlt.js', ready);
-  }
-
-});
-});
-require.register("analytics/lib/providers/hubspot.js", function(exports, require, module){
-// http://hubspot.clarify-it.com/d/4m62hl
-
-var Provider = require('../provider')
-  , isEmail  = require('is-email')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'HubSpot',
-
-  key : 'portalId',
-
-  defaults : {
-    portalId : null
-  },
-
-  initialize : function (options, ready) {
-    // HubSpot checks in their snippet to make sure another script with
-    // `hs-analytics` isn't already in the DOM. Seems excessive, but who knows
-    // if there's weird deprecation going on :p
-    if (!document.getElementById('hs-analytics')) {
-      window._hsq = window._hsq || [];
-      var script = load('https://js.hubspot.com/analytics/' + (Math.ceil(new Date()/300000)*300000) + '/' + options.portalId + '.js');
-      script.id = 'hs-analytics';
-    }
-
-    // HubSpot makes a queue, so it's ready immediately.
-    ready();
-  },
-
-  // HubSpot does not use a userId, but the email address is required on
-  // the traits object.
-  identify : function (userId, traits) {
-    window._hsq.push(["identify", traits]);
-  },
-
-  // Event Tracking is available to HubSpot Enterprise customers only. In
-  // addition to adding any unique event name, you can also use the id of an
-  // existing custom event as the event variable.
-  track : function (event, properties) {
-    window._hsq.push(["trackEvent", event, properties]);
-  },
-
-  // HubSpot doesn't support passing in a custom URL.
-  pageview : function (url) {
-    window._hsq.push(['_trackPageview']);
-  }
-
-});
-});
-require.register("analytics/lib/providers/index.js", function(exports, require, module){
-
-module.exports = {
-  'AdRoll'                   : require('./adroll'),
-  'Amplitude'                : require('./amplitude'),
-  'awe.sm'                   : require('./awesm'),
-  'BugHerd'                  : require('./bugherd'),
-  'Chartbeat'                : require('./chartbeat'),
-  'ClickTale'                : require('./clicktale'),
-  'Clicky'                   : require('./clicky'),
-  'comScore'                 : require('./comscore'),
-  'CrazyEgg'                 : require('./crazyegg'),
-  'Customer.io'              : require('./customerio'),
-  'Errorception'             : require('./errorception'),
-  'FoxMetrics'               : require('./foxmetrics'),
-  'Gauges'                   : require('./gauges'),
-  'Get Satisfaction'         : require('./get-satisfaction'),
-  'Google Analytics'         : require('./google-analytics'),
-  'GoSquared'                : require('./gosquared'),
-  'Heap'                     : require('./heap'),
-  'HitTail'                  : require('./hittail'),
-  'HubSpot'                  : require('./hubspot'),
-  'Improvely'                : require('./improvely'),
-  'Inspectlet'               : require('./inspectlet'),
-  'Intercom'                 : require('./intercom'),
-  'Keen IO'                  : require('./keen-io'),
-  'KISSmetrics'              : require('./kissmetrics'),
-  'Klaviyo'                  : require('./klaviyo'),
-  'LeadLander'               : require('./leadlander'),
-  'LiveChat'                 : require('./livechat'),
-  'Lytics'                   : require('./lytics'),
-  'Mixpanel'                 : require('./mixpanel'),
-  'MouseStats'               : require('./mousestats'),
-  'Olark'                    : require('./olark'),
-  'Optimizely'               : require('./optimizely'),
-  'Perfect Audience'         : require('./perfect-audience'),
-  'Pingdom'                  : require('./pingdom'),
-  'Preact'                   : require('./preact'),
-  'Qualaroo'                 : require('./qualaroo'),
-  'Quantcast'                : require('./quantcast'),
-  'Sentry'                   : require('./sentry'),
-  'SnapEngage'               : require('./snapengage'),
-  'Spinnakr'                 : require('./spinnakr'),
-  'Tapstream'                : require('./tapstream'),
-  'trak.io'                  : require('./trakio'),
-  'USERcycle'                : require('./usercycle'),
-  'userfox'                  : require('./userfox'),
-  'UserVoice'                : require('./uservoice'),
-  'Vero'                     : require('./vero'),
-  'Visual Website Optimizer' : require('./visual-website-optimizer'),
-  'Woopra'                   : require('./woopra')
+comScore.prototype.initialize = function (options, ready) {
+  window._comscore = window._comscore || [];
+  window._comscore.push(options);
+  load({
+    http  : 'http://b.scorecardresearch.com/beacon.js',
+    https : 'https://sb.scorecardresearch.com/beacon.js'
+  }, ready);
 };
 });
-require.register("analytics/lib/providers/improvely.js", function(exports, require, module){
-// http://www.improvely.com/docs/landing-page-code
-// http://www.improvely.com/docs/conversion-code
-// http://www.improvely.com/docs/labeling-visitors
+require.register("analytics/lib/integrations/crazyegg.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , alias    = require('alias')
-  , load     = require('load-script');
+var integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `CrazyEgg` integration.
+ */
 
-  name : 'Improvely',
+var CrazyEgg = module.exports = integration('CrazyEgg');
 
-  defaults : {
-    // Improvely requires two options: `domain` and `projectId`.
-    domain : null,
-    projectId : null
-  },
 
-  initialize : function (options, ready) {
-    window._improvely = window._improvely || [];
-    window.improvely = window.improvely || {
-      init  : function (e, t) { window._improvely.push(["init", e, t]); },
-      goal  : function (e) { window._improvely.push(["goal", e]); },
-      label : function (e) { window._improvely.push(["label", e]); }
-    };
+/**
+ * Required key.
+ */
 
-    load('//' + options.domain + '.iljmp.com/improvely.js');
-    window.improvely.init(options.domain, options.projectId);
+CrazyEgg.prototype.key = 'accountNumber';
 
-    // Improvely creates a queue, so it's ready immediately.
+
+/**
+ * Default options.
+ */
+
+CrazyEgg.prototype.defaults = {
+  // your crazy egg account number (required)
+  accountNumber: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+CrazyEgg.prototype.initialize = function (options, ready) {
+  var account = options.accountNumber;
+  var accountPath = account.slice(0,4) + '/' + account.slice(4);
+  var cacheBust = Math.floor(new Date().getTime()/3600000);
+  load('//dnn506yrbagrg.cloudfront.net/pages/scripts/' + accountPath + '.js?' + cacheBust, ready);
+};
+});
+require.register("analytics/lib/integrations/customerio.js", function(exports, require, module){
+
+var alias = require('alias')
+  , convertDates = require('convert-dates')
+  , integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Customerio` integration.
+ */
+
+var Customerio = module.exports = integration('Customer.io');
+
+
+/**
+ * Required key.
+ */
+
+Customerio.prototype.key = 'siteId';
+
+
+/**
+ * Default options.
+ */
+
+Customerio.prototype.defaults = {
+  // your customer.io site id (required)
+  siteId: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Customerio.prototype.initialize = function (options, ready) {
+  var _cio = window._cio = window._cio || [];
+  (function() {var a,b,c; a = function (f) {return function () {_cio.push([f].concat(Array.prototype.slice.call(arguments,0))); }; }; b = ['identify', 'track']; for (c = 0; c < b.length; c++) {_cio[b[c]] = a(b[c]); } })();
+  ready();
+
+  // add the required `id` and `data-site-id` to the script element
+  var script = load('https://assets.customer.io/assets/track.js');
+  script.id = 'cio-tracker';
+  script.setAttribute('data-site-id', options.siteId);
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Customerio.prototype.identify = function (id, traits, options) {
+  if (!id) return; // customer.io requires an id
+  traits.id = id;
+  convertDates(traits, convertDate);
+  alias(traits, { created: 'created_at' });
+  window._cio.identify(traits);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Customerio.prototype.track = function (event, properties, options) {
+  convertDates(properties, convertDate);
+  window._cio.track(event, properties);
+};
+
+
+/**
+ * Convert a date to the format Customer.io supports.
+ *
+ * @param {Date} date
+ * @return {Number}
+ */
+
+function convertDate (date) {
+  return Math.floor(date.getTime() / 1000);
+}
+});
+require.register("analytics/lib/integrations/errorception.js", function(exports, require, module){
+
+var extend = require('extend')
+  , integration = require('../integration')
+  , load = require('load-script')
+  , onError = require('on-error');
+
+
+/**
+ * Expose `Errorception` integration.
+ *
+ * https://github.com/amplitude/Errorception-Javascript
+ */
+
+var Errorception = module.exports = integration('Errorception');
+
+
+/**
+ * Required key.
+ */
+
+Errorception.prototype.key = 'projectId';
+
+
+/**
+ * Default options.
+ */
+
+Errorception.prototype.defaults = {
+  // your errorception project id (required)
+  projectId: '',
+  // whether to store metadata about the user on `identify` calls
+  // http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html
+  meta: true
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Errorception.prototype.initialize = function (options, ready) {
+  window._errs = [options.projectId];
+  onError(function() {
+    window._errs.push(arguments);
+  });
+  load('//beacon.errorception.com/' + options.projectId + '.js');
+  ready();
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Errorception.prototype.identify = function (id, traits, options) {
+  if (!this.options.meta) return;
+  window._errs.meta || (window._errs.meta = {});
+  if (id) traits.id = id;
+  extend(window._errs.meta, traits);
+};
+});
+require.register("analytics/lib/integrations/foxmetrics.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `FoxMetrics` integration.
+ *
+ * http://foxmetrics.com/documentation/apijavascript
+ */
+
+var FoxMetrics = module.exports = integration('FoxMetrics');
+
+
+/**
+ * Required key.
+ */
+
+FoxMetrics.prototype.key = 'appId';
+
+
+/**
+ * Default options.
+ */
+
+FoxMetrics.prototype.defaults = {
+  // your foxmetrics app id (required)
+  appId: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+FoxMetrics.prototype.initialize = function (options, ready) {
+  var _fxm = window._fxm || {};
+  window._fxm = _fxm.events || [];
+  ready();
+  load('//d35tca7vmefkrc.cloudfront.net/scripts/' + options.appId + '.js');
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+FoxMetrics.prototype.identify = function (id, traits, options) {
+  if (!id) return; // foxmetrics requires an `id`
+
+  // foxmetrics needs the first and last name separately
+  var firstName = traits.firstName;
+  var lastName = traits.lastName;
+  if (!firstName && traits.name) firstName = traits.name.split(' ')[0];
+  if (!lastName && traits.name) lastName = traits.name.split(' ')[1];
+
+  window._fxm.push([
+    '_fxm.visitor.profile',
+    id,             // user id
+    firstName,      // first name
+    lastName,       // last name
+    traits.email,   // email
+    traits.address, // address
+    undefined,      // social
+    undefined,      // partners
+    traits          // attributes
+  ]);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+FoxMetrics.prototype.track = function (event, properties, options) {
+  window._fxm.push([
+    event,               // event name
+    properties.category, // category
+    properties           // properties
+  ]);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+FoxMetrics.prototype.pageview = function (url) {
+  window._fxm.push([
+    '_fxm.pages.view',
+    undefined, // title
+    undefined, // name
+    undefined, // category
+    url,       // url
+    undefined  // referrer
+  ]);
+};
+});
+require.register("analytics/lib/integrations/gauges.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Gauges` integration.
+ */
+
+var Gauges = module.exports = integration('Gauges');
+
+
+/**
+ * Required key.
+ */
+
+Gauges.prototype.key = 'siteId';
+
+
+/**
+ * Default options.
+ */
+
+Gauges.prototype.defaults = {
+  // your gauges site id (required)
+  siteId: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Gauges.prototype.initialize = function (options, ready) {
+  window._gauges = window._gauges || [];
+  ready();
+
+  // add required `id` and `data-site-id` to the script element
+  var script = load('//secure.gaug.es/track.js');
+  script.id = 'gauges-tracker';
+  script.setAttribute('data-site-id', options.siteId);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+Gauges.prototype.pageview = function (url) {
+  window._gauges.push(['track']);
+};
+});
+require.register("analytics/lib/integrations/get-satisfaction.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script')
+  , onBody = require('on-body');
+
+
+/**
+ * Expose `GetSatisfaction` integration.
+ */
+
+var GetSatisfaction = module.exports = integration('Get Satisfaction');
+
+
+/**
+ * Required key.
+ */
+
+GetSatisfaction.prototype.key = 'widgetId';
+
+
+/**
+ * Default options.
+ */
+
+GetSatisfaction.prototype.defaults = {
+  // your get satisfaction widget id (required)
+  widgetId: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * https://console.getsatisfaction.com/start/101022?signup=true#engage
+ * (must be signed in to view)
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+GetSatisfaction.prototype.initialize = function (options, ready) {
+  // append the div that will become the get satisfaction tab
+  var div = document.createElement('div');
+  var id = div.id = 'getsat-widget-' + options.widgetId;
+  onBody(function (body) {
+    body.appendChild(div);
+  });
+
+  // usually the snippet is sync, so wait for it before initializing the tab
+  load('https://loader.engage.gsfn.us/loader.js', function () {
+    window.GSFN.loadWidget(options.widgetId, { containerId : id });
     ready();
-  },
+  });
+};
+});
+require.register("analytics/lib/integrations/google-analytics.js", function(exports, require, module){
 
-  identify : function (userId, traits) {
-    if (userId) window.improvely.label(userId);
-  },
+var canonical = require('canonical')
+  , each = require('each')
+  , integration = require('../integration')
+  , is = require('is')
+  , load = require('load-script')
+  , type = require('type')
+  , url = require('url');
 
-  track : function (event, properties) {
-    // Improvely calls `revenue` `amount`, and puts the `event` in properties as
-    // the `type`.
-    properties || (properties = {});
-    properties.type = event;
-    alias(properties, { 'revenue' : 'amount' });
-    window.improvely.goal(properties);
+
+/**
+ * Expose `GA` integration.
+ *
+ * https://developers.google.com/analytics/devguides/collection/gajs/
+ */
+
+var GA = module.exports = integration('Google Analytics');
+
+
+/**
+ * Required key.
+ */
+
+GA.prototype.key = 'trackingId';
+
+
+/**
+ * Default options.
+ */
+
+GA.prototype.defaults = {
+  // whether to anonymize the IP address collected for the user
+  anonymizeIp : false,
+  // restrict analytics to only come from the a single `domain`
+  domain : 'none',
+  // whether to enable google's doubleclick remarketing feature
+  doubleClick : false,
+  // whether to enabled enhanced link attribution
+  // http://support.google.com/analytics/bin/answer.py?hl=en&answer=2558867
+  enhancedLinkAttribution : false,
+  // a list of domains to ignore referrals from
+  ignoreReferrer : null,
+  // whether or not to track and initial pageview on load
+  initialPageview : true,
+  // the ratio to show in site speed samples
+  // https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setSiteSpeedSampleRate
+  siteSpeedSampleRate : null,
+  // your google analytics tracking id (required)
+  trackingId: '',
+  // whether you're using the new universal analytics or not
+  universalClient: false
+};
+
+
+/**
+ * Initialize.
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/advanced
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+GA.prototype.initialize = function (options, ready) {
+  if (!options.universalClient) {
+    this.track = this.trackClassic;
+    this.pageview = this.pageviewClassic;
+    return this.initializeClassic(options, ready);
   }
 
-});
+  // setup the tracker globals
+  window.GoogleAnalyticsObject = 'ga';
+  window.ga || (window.ga = function () {
+    window.ga.q || (window.ga.q = []);
+    window.ga.q.push(arguments);
+  });
+  window.ga.l = new Date().getTime();
 
+  // anonymize before initializing
+  if (options.anonymizeIp) window.ga('set', 'anonymizeIp', true);
+
+  // initialize
+  window.ga('create', options.trackingId, {
+    cookieDomain: options.domain,
+    siteSpeedSampleRate: options.siteSpeedSampleRate
+  });
+
+  // track a pageview with the canonical url
+  if (options.initialPageview) {
+    var path, canon = canonical();
+    if (canon) path = url.parse(canon).pathname;
+    this.pageview(path);
+  }
+
+  ready();
+  load('//www.google-analytics.com/analytics.js');
+};
+
+
+/**
+ * Track.
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/events
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+GA.prototype.track = function (event, properties, options) {
+  options || (options = {});
+  window.ga('send', 'event', {
+    eventAction: event,
+    eventCategory: properties.category || 'All',
+    eventLabel: properties.label,
+    eventValue: formatValue(properties.value || properties.revenue),
+    nonInteraction: properties.noninteraction || options.noninteraction
+  });
+};
+
+
+/**
+ * Pageview.
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/pages
+ *
+ * @param {String} url (optional)
+ */
+
+GA.prototype.pageview = function (url) {
+  window.ga('send', 'pageview', {
+    page: url
+  });
+};
+
+
+/**
+ * Initialize (classic).
+ *
+ * https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+GA.prototype.initializeClassic = function (options, ready) {
+  window._gaq || (window._gaq = []);
+  push('_setAccount', options.trackingId);
+
+  var anonymize = options.anonymizeIp;
+  var db = options.doubleClick;
+  var domain = options.domain;
+  var enhanced = options.enhancedLinkAttribution;
+  var ignore = options.ignoreReferrer;
+  var initial = options.initialPageview;
+  var sample = options.siteSpeedSampleRate;
+
+  if (anonymize) push('_gat._anonymizeIp');
+  if (domain) push('_setDomainName', domain);
+  if (sample) push('_setSiteSpeedSampleRate', sample);
+
+  if (enhanced) {
+    var protocol = 'https:' === document.location.protocol ? 'https:' : 'http:';
+    var pluginUrl = protocol + '//www.google-analytics.com/plugins/ga/inpage_linkid.js';
+    push('_require', 'inpage_linkid', pluginUrl);
+  }
+
+  if (ignore) {
+    if (!is.array(ignore)) ignore = [ignore];
+    each(ignore, function (domain) {
+      push('_addIgnoredRef', domain);
+    });
+  }
+
+  if (initial) {
+    var path, canon = canonical();
+    if (canon) path = url.parse(canon).pathname;
+    this.pageview(path);
+  }
+
+  if (db) {
+    load('//stats.g.doubleclick.net/dc.js', ready);
+  } else {
+    load({
+      http: 'http://www.google-analytics.com/ga.js',
+      https: 'https://ssl.google-analytics.com/ga.js'
+    }, ready);
+  }
+};
+
+
+/**
+ * Track (classic).
+ *
+ * https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiEventTracking
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+GA.prototype.trackClassic = function (event, properties, options) {
+  options || (options = {});
+  var category = properties.category || 'All';
+  var label = properties.label;
+  var value = formatValue(properties.revenue || properties.value);
+  var noninteraction = properties.noninteraction || options.noninteraction;
+
+  push('_trackEvent', category, event, label, value, noninteraction);
+};
+
+
+/**
+ * Pageview (classic).
+ *
+ * https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration
+ *
+ * @param {String} url (optional)
+ */
+
+GA.prototype.pageviewClassic = function (url) {
+  push('_trackPageview', url);
+};
+
+
+/**
+ * Helper to push onto the classic Google Analytics queue.
+ *
+ * @param {Mixed} args...
+ */
+
+function push (args) {
+  args = [].slice.call(arguments);
+  window._gaq.push.call(window._gaq, args);
+}
+
+
+/**
+ * Format the value property to Google's liking.
+ *
+ * @param {Number} value
+ * @return {Number}
+ */
+
+function formatValue (value) {
+  if (!value || value < 0) return 0;
+  return Math.round(value);
+}
 });
-require.register("analytics/lib/providers/inspectlet.js", function(exports, require, module){
+require.register("analytics/lib/integrations/gosquared.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script')
+  , onBody = require('on-body')
+  , user = require('../user');
+
+
+/**
+ * Expose `GoSquared` integration.
+ *
+ * http://www.gosquared.com/support
+ */
+
+var GoSquared = module.exports = integration('GoSquared');
+
+
+/**
+ * Required key.
+ */
+
+GoSquared.prototype.key = 'siteToken';
+
+
+/**
+ * Default options.
+ */
+
+GoSquared.prototype.defaults = {
+  // your gosquared site token (required)
+  siteToken: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+GoSquared.prototype.initialize = function (options, ready) {
+  // gosquared assumes a body in their script, so we need this wrapper
+  var self = this;
+  onBody(function () {
+    window.GoSquared = {};
+    window.GoSquared.acct = options.siteToken;
+    window.GoSquared.q = [];
+    window._gstc_lt = new Date().getTime(); // time from `load`
+
+    // identify since gosquared doesn't have an async identify api
+    self.identify(user.id(), user.traits());
+
+    load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
+    ready();
+  });
+};
+
+
+/**
+ * Identify.
+ *
+ * https://www.gosquared.com/customer/portal/articles/612063-tracker-functions
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+GoSquared.prototype.identify = function (id, traits, options) {
+  window.GoSquared.UserName = id;
+  window.GoSquared.VisitorName = traits.email || traits.username || id;
+  if (id) traits.userID = id; // gosquared recognizes this in `Visitor`
+  window.GoSquared.Visitor = traits;
+};
+
+
+/**
+ * Track.
+ *
+ * https://www.gosquared.com/customer/portal/articles/609683-event-tracking
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+GoSquared.prototype.track = function (event, properties, options) {
+  window.GoSquared.q.push(['TrackEvent', event, properties]);
+};
+
+
+/**
+ * Pageview.
+ *
+ * https://www.gosquared.com/customer/portal/articles/612063-tracker-functions
+ *
+ * @param {String} url (optional)
+ */
+
+GoSquared.prototype.pageview = function (url) {
+  window.GoSquared.q.push(['TrackView', url]);
+};
+});
+require.register("analytics/lib/integrations/heap.js", function(exports, require, module){
+
+var alias = require('alias')
+  , integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Heap` integration.
+ *
+ * https://heapanalytics.com/docs
+ */
+
+var Heap = module.exports = integration('Heap');
+
+
+/**
+ * Required key.
+ */
+
+Heap.prototype.key = 'apiKey';
+
+
+/**
+ * Default options.
+ */
+
+Heap.prototype.defaults = {
+  // your heap api key (required)
+  apiKey: '',
+};
+
+
+/**
+ * Initialize.
+ *
+ * https://heapanalytics.com/docs#installWeb
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Heap.prototype.initialize = function (options, ready) {
+  window.heap=window.heap||[];window.heap.load=function(a){window._heapid=a;var b=document.createElement("script");b.type="text/javascript",b.async=!0,b.src=("https:"===document.location.protocol?"https:":"http:")+"//d36lvucg9kzous.cloudfront.net";var c=document.getElementsByTagName("script")[0];c.parentNode.insertBefore(b,c);var d=function(a){return function(){heap.push([a].concat(Array.prototype.slice.call(arguments,0)))}},e=["identify","track"];for(var f=0;f<e.length;f++)heap[e[f]]=d(e[f])};
+  window.heap.load(options.apiKey);
+  ready();
+};
+
+
+/**
+ * Identify.
+ *
+ * https://heapanalytics.com/docs#identify
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Heap.prototype.identify = function (id, traits, options) {
+  alias(traits, { username: 'handle' });
+  window.heap.identify(traits);
+};
+
+
+/**
+ * Track.
+ *
+ * https://heapanalytics.com/docs#track
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Heap.prototype.track = function (event, properties, options) {
+  window.heap.track(event, properties);
+};
+});
+require.register("analytics/lib/integrations/hittail.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `HitTail` integration.
+ */
+
+var HitTail = module.exports = integration('HitTail');
+
+
+/**
+ * Required key.
+ */
+
+HitTail.prototype.key = 'siteId';
+
+
+/**
+ * Default options.
+ */
+
+HitTail.prototype.defaults = {
+  // your hittail site id (required)
+  siteId: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+HitTail.prototype.initialize = function (options, ready) {
+  load('//' + options.siteId + '.hittail.com/mlt.js', ready);
+};
+});
+require.register("analytics/lib/integrations/hubspot.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `HubSpot` integration.
+ */
+
+var HubSpot = module.exports = integration('HubSpot');
+
+
+/**
+ * Required key.
+ */
+
+HubSpot.prototype.key = 'portalId';
+
+
+/**
+ * Default options.
+ */
+
+HubSpot.prototype.defaults = {
+  // your hubspot portal id (required)
+  portalId: null
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+HubSpot.prototype.initialize = function (options, ready) {
+  // hubspot doesn't let multiple scripts get appended
+  if (!document.getElementById('hs-analytics')) {
+    window._hsq = window._hsq || [];
+    var cache = Math.ceil(new Date() / 300000) * 300000;
+    var script = load('https://js.hubspot.com/analytics/' + cache + '/' + options.portalId + '.js');
+    script.id = 'hs-analytics';
+  }
+  ready();
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+HubSpot.prototype.identify = function (id, traits, options) {
+  if (!traits.email) return;
+  if (id) traits.id = id;
+  window._hsq.push(["identify", traits]);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+HubSpot.prototype.track = function (event, properties, options) {
+  window._hsq.push(["trackEvent", event, properties]);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+HubSpot.prototype.pageview = function (url) {
+  window._hsq.push(['_trackPageview']);
+};
+});
+require.register("analytics/lib/integrations/improvely.js", function(exports, require, module){
+
+var alias = require('alias')
+  , integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Improvely` integration.
+ */
+
+var Improvely = module.exports = integration('Improvely');
+
+
+/**
+ * Default options.
+ */
+
+Improvely.prototype.defaults = {
+  // your improvely domain (required)
+  domain: '',
+  // your improvely project id (required)
+  projectId: null
+};
+
+
+/**
+ * Initialize.
+ *
+ * http://www.improvely.com/docs/landing-page-code
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Improvely.prototype.initialize = function (options, ready) {
+  window._improvely = window._improvely || [];
+  window.improvely = window.improvely || {
+    init: function (e, t) { window._improvely.push(["init", e, t]); },
+    goal: function (e) { window._improvely.push(["goal", e]); },
+    label: function (e) { window._improvely.push(["label", e]); }
+  };
+  window.improvely.init(options.domain, options.projectId);
+  ready();
+
+  load('//' + options.domain + '.iljmp.com/improvely.js');
+};
+
+
+/**
+ * Identify.
+ *
+ * http://www.improvely.com/docs/labeling-visitors
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Improvely.prototype.identify = function (id, traits, options) {
+  if (id) window.improvely.label(id);
+};
+
+
+/**
+ * Track.
+ *
+ * http://www.improvely.com/docs/conversion-code
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Improvely.prototype.track = function (event, properties, options) {
+  properties.type = event;
+  alias(properties, { 'revenue' : 'amount' }); // improvely calls it `amount`
+  window.improvely.goal(properties);
+};
+});
+require.register("analytics/lib/integrations/inspectlet.js", function(exports, require, module){
 
 var integration = require('../integration')
   , alias = require('alias')
@@ -4692,7 +5193,7 @@ Inspectlet.prototype.initialize = function (options, ready) {
   load('//www.inspectlet.com/inspectlet.js', ready);
 };
 });
-require.register("analytics/lib/providers/intercom.js", function(exports, require, module){
+require.register("analytics/lib/integrations/intercom.js", function(exports, require, module){
 
 var alias = require('alias')
   , convertDates = require('convert-dates')
@@ -4757,17 +5258,13 @@ Intercom.prototype.initialize = function (options, ready) {
  */
 
 Intercom.prototype.identify = function (id, traits, options) {
-  var method = this._id !== id ? 'boot': 'update';
-  this._id = id; // cache for next time
+  if (!id && !traits.email) return; // one is required
 
-  // required options
   traits.app_id = this.options.appId;
   if (id) traits.user_id = id;
-  if (isEmail(id) && !traits.email) traits.email = id;
-  if (!traits.user_id && !traits.email) return;
 
   // handle dates
-  convertDates(traits, convertDate);
+  convertDates(traits, formatDate);
   alias(traits, { created: 'created_at'});
   if (traits.company) alias(traits.company, { created: 'created_at' });
 
@@ -4780,10 +5277,13 @@ Intercom.prototype.identify = function (id, traits, options) {
     // TODO: make this activator's default and run a migration
   if (this.options.inbox || this.options.activator) {
     traits.widget = {
-      activator: this.options.activator || '#Intercom',
+      activator: this.options.activator || '#IntercomDefaultWidget',
       use_counter: this.options.counter
     };
   }
+
+  var method = this._id !== id ? 'boot': 'update';
+  this._id = id; // cache for next time
 
   window.Intercom(method, traits);
 };
@@ -4804,17 +5304,17 @@ Intercom.prototype.group = function (id, properties, options) {
 
 
 /**
- * Convert a date to Intercom's format.
+ * Format a date to Intercom's liking.
  *
  * @param {Date} date
  * @return {Number}
  */
 
-function convertDate (date) {
-  return Math.floor(date/1000);
+function formatDate (date) {
+  return Math.floor(date / 1000);
 }
 });
-require.register("analytics/lib/providers/keen-io.js", function(exports, require, module){
+require.register("analytics/lib/integrations/keen-io.js", function(exports, require, module){
 
 var integration = require('../integration')
   , load = require('load-script');
@@ -4832,16 +5332,16 @@ var Keen = module.exports = integration('Keen IO');
  */
 
 Keen.prototype.defaults = {
-  // your keen io project id (required)
-  projectId: '',
-  // your keen io write key (required)
-  writeKey: '',
-  // your keen io read key
-  readKey: '',
+  // whether or not to track an initial pageview on `initialize`
+  initialPageview: true,
   // whether or not to send `pageview` calls on to keen io
   pageview: true,
-  // whether or not to track an initial pageview on `initialize`
-  initialPageview: true
+  // your keen io project id (required)
+  projectId: '',
+  // your keen io read key
+  readKey: '',
+  // your keen io write key (required)
+  writeKey: ''
 };
 
 
@@ -4916,168 +5416,309 @@ Keen.prototype.pageview = function (url) {
   this.track('Loaded a Page', properties);
 };
 });
-require.register("analytics/lib/providers/kissmetrics.js", function(exports, require, module){
-// http://support.kissmetrics.com/apis/javascript
+require.register("analytics/lib/integrations/kissmetrics.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , alias    = require('alias')
-  , load     = require('load-script');
+var alias = require('alias')
+  , integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `KISSmetrics` integration.
+ *
+ * http://support.kissmetrics.com/apis/javascript
+ */
 
-  name : 'KISSmetrics',
+var KISSmetrics = module.exports = integration('KISSmetrics');
 
-  key : 'apiKey',
 
-  defaults : {
-    apiKey : null
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    window._kmq = window._kmq || [];
-    load('//i.kissmetrics.com/i.js');
-    load('//doug1izaerwt3.cloudfront.net/' + options.apiKey + '.1.js');
+KISSmetrics.prototype.key = 'apiKey';
 
-    // KISSmetrics creates a queue, so it's ready immediately.
-    ready();
-  },
 
-  // KISSmetrics uses two separate methods: `identify` for storing the
-  // `userId`, and `set` for storing `traits`.
-  identify : function (userId, traits) {
-    if (userId) window._kmq.push(['identify', userId]);
-    if (traits) window._kmq.push(['set', traits]);
-  },
+/**
+ * Default options.
+ */
 
-  track : function (event, properties) {
-    // KISSmetrics handles revenue with the `'Billing Amount'` property by
-    // default, although it's changeable in the interface.
-    if (properties) {
-      alias(properties, {
-        'revenue' : 'Billing Amount'
-      });
-    }
+KISSmetrics.prototype.defaults = {
+  // your kissmetrics api key (required)
+  apiKey: ''
+};
 
-    window._kmq.push(['record', event, properties]);
-  },
 
-  // Although undocumented, KISSmetrics actually supports not passing a second
-  // ID, in which case it uses the currenty identified user's ID.
-  alias : function (newId, originalId) {
-    window._kmq.push(['alias', newId, originalId]);
-  }
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
 
+KISSmetrics.prototype.initialize = function (options, ready) {
+  window._kmq || (window._kmq = []);
+  ready();
+  load('//i.kissmetrics.com/i.js');
+  load('//doug1izaerwt3.cloudfront.net/' + options.apiKey + '.1.js');
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+KISSmetrics.prototype.identify = function (id, traits, options) {
+  if (id) window._kmq.push(['identify', id]);
+  if (traits) window._kmq.push(['set', traits]);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+KISSmetrics.prototype.track = function (event, properties, options) {
+  alias(properties, { revenue: 'Billing Amount' });
+  window._kmq.push(['record', event, properties]);
+};
+
+
+/**
+ * Alias.
+ *
+ * @param {String} newId
+ * @param {String} originalId (optional)
+ */
+
+KISSmetrics.prototype.alias = function (newId, originalId) {
+  window._kmq.push(['alias', newId, originalId]);
+};
 });
+require.register("analytics/lib/integrations/klaviyo.js", function(exports, require, module){
+
+var alias = require('alias')
+  , integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Klaviyo` integration.
+ *
+ * https://www.klaviyo.com/docs/getting-started
+ */
+
+var Klaviyo = module.exports = integration('Klaviyo');
+
+
+/**
+ * Required key.
+ */
+
+Klaviyo.prototype.key = 'apiKey';
+
+
+/**
+ * Default options.
+ */
+
+Klaviyo.prototype.defaults = {
+  // your klaviyo api key (required)
+  apiKey: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Klaviyo.prototype.initialize = function (options, ready) {
+  window._learnq || (window._learnq = []);
+  window._learnq.push(['account', options.apiKey]);
+  ready();
+  load('//a.klaviyo.com/media/js/learnmarklet.js');
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Klaviyo.prototype.identify = function (id, traits, options) {
+  if (!id && !traits.email) return; // requires an id or email
+
+  traits.id = id;
+  alias(traits, {
+    id: '$id',
+    email: '$email',
+    firstName: '$first_name',
+    lastName: '$last_name',
+    phone: '$phone_number',
+    title: '$title'
+  });
+
+  window._learnq.push(['identify', traits]);
+};
+
+
+/**
+ * Group.
+ *
+ * @param {String} id
+ * @param {Object} properties (optional)
+ */
+
+Klaviyo.prototype.group = function (id, properties) {
+  if (!properties.name) return;
+  window._learnq.push(['identify', { $organization: properties.name }]);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Klaviyo.prototype.track = function (event, properties, options) {
+  window._learnq.push(['track', event, properties]);
+};
 });
-require.register("analytics/lib/providers/klaviyo.js", function(exports, require, module){
-// https://www.klaviyo.com/docs
+require.register("analytics/lib/integrations/leadlander.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , load     = require('load-script');
+var integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `LeadLander` integration.
+ */
 
-  name : 'Klaviyo',
+var LeadLander = module.exports = integration('LeadLander');
 
-  key : 'apiKey',
 
-  defaults : {
-    apiKey : null
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    window._learnq = window._learnq || [];
-    window._learnq.push(['account', options.apiKey]);
-    load('//a.klaviyo.com/media/js/learnmarklet.js');
+LeadLander.prototype.key = 'llactid';
 
-    // Klaviyo creats a queue, so it's ready immediately.
-    ready();
-  },
 
-  identify : function (userId, traits) {
-    // Klaviyo requires a `userId` and takes the it on the traits object itself.
-    if (!userId) return;
-    traits.$id = userId;
-    window._learnq.push(['identify', traits]);
-  },
+/**
+ * Default options.
+ */
 
-  track : function (event, properties) {
-    window._learnq.push(['track', event, properties]);
-  }
+LeadLander.prototype.defaults = {
+  // your leadlander account id (required)
+  llactid: null
+};
 
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+LeadLander.prototype.initialize = function (options, ready) {
+  window.llactid = options.llactid;
+  load('http://t6.trackalyzer.com/trackalyze-nodoc.js', ready);
+};
 });
+require.register("analytics/lib/integrations/livechat.js", function(exports, require, module){
+
+var each = require('each')
+  , integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `LiveChat` integration.
+ *
+ * http://www.livechatinc.com/api/javascript-api
+ */
+
+var LiveChat = module.exports = integration('LiveChat');
+
+
+/**
+ * Required key.
+ */
+
+LiveChat.prototype.key = 'license';
+
+
+/**
+ * Default options.
+ */
+
+LiveChat.prototype.defaults = {
+  // your livechat license (required)
+  license: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+LiveChat.prototype.initialize = function (options, ready) {
+  window.__lc = { license : options.license };
+  load('//cdn.livechatinc.com/tracking.js', ready);
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+LiveChat.prototype.identify = function (id, traits, options) {
+  if (id) traits['User ID'] = id; // the way livechat key's their id
+  window.LC_API.set_custom_variables(convert(traits));
+};
+
+
+/**
+ * Convert a traits object into the format LiveChat requires.
+ *
+ * @param {Object} traits
+ * @return {Array}
+ */
+
+function convert (traits) {
+  var arr = [];
+  each(traits, function (key, value) {
+    arr.push({ name: key, value: value });
+  });
+  return arr;
+}
 });
-require.register("analytics/lib/providers/leadlander.js", function(exports, require, module){
-var Provider = require('../provider')
-  , load     = require('load-script');
-
-module.exports = Provider.extend({
-
-  name : 'LeadLander',
-
-  key : 'llactid',
-
-  defaults : {
-    llactid : null
-  },
-
-  initialize : function (options, ready) {
-    window.llactid = options.llactid;
-    load('//t6.trackalyzer.com/trackalyze-nodoc.js', ready);
-  }
-
-});
-});
-require.register("analytics/lib/providers/livechat.js", function(exports, require, module){
-// http://www.livechatinc.com/api/javascript-api
-
-var Provider = require('../provider')
-  , each     = require('each')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'LiveChat',
-
-  key : 'license',
-
-  defaults : {
-    license : null
-  },
-
-  initialize : function (options, ready) {
-    window.__lc = { license : options.license };
-    load('//cdn.livechatinc.com/tracking.js', ready);
-  },
-
-  // LiveChat isn't an analytics service, but we can use the `userId` and
-  // `traits` to tag the user with their real name in the chat console.
-  identify : function (userId, traits) {
-    // In case the LiveChat library hasn't loaded yet.
-    if (!window.LC_API) return;
-
-    // LiveChat takes them in an array format.
-    var variables = [];
-
-    if (userId) variables.push({ name: 'User ID', value: userId });
-    if (traits) {
-      each(traits, function (key, value) {
-        variables.push({
-          name  : key,
-          value : value
-        });
-      });
-    }
-
-    window.LC_API.set_custom_variables(variables);
-  }
-
-});
-});
-require.register("analytics/lib/providers/lytics.js", function(exports, require, module){
+require.register("analytics/lib/integrations/lytics.js", function(exports, require, module){
 
 var alias = require('alias')
   , clone = require('clone')
@@ -5191,142 +5832,189 @@ Lytics.prototype.pageview = function (url) {
   window.jstag.send();
 };
 });
-require.register("analytics/lib/providers/mixpanel.js", function(exports, require, module){
-// https://mixpanel.com/docs/integration-libraries/javascript
-// https://mixpanel.com/docs/people-analytics/javascript
-// https://mixpanel.com/docs/integration-libraries/javascript-full-api
+require.register("analytics/lib/integrations/mixpanel.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , alias    = require('alias')
-  , isEmail  = require('is-email')
-  , load     = require('load-script');
+var alias = require('alias')
+  , clone = require('clone')
+  , integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `Mixpanel` integration.
+ */
 
-  name : 'Mixpanel',
+var Mixpanel = module.exports = integration('Mixpanel');
 
-  key : 'token',
 
-  defaults : {
-    // Whether to call `mixpanel.nameTag` on `identify`.
-    nameTag : true,
-    // Whether to use Mixpanel's People API.
-    people : false,
-    // The Mixpanel API token for your account.
-    token : null,
-    // Whether to track pageviews to Mixpanel.
-    pageview : false,
-    // Whether to track an initial pageview on initialize.
-    initialPageview : false,
-    // A custom cookie name to use
-    cookieName : null
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    (function (c, a) {
-        window.mixpanel = a;
-        var b, d, h, e;
-        a._i = [];
-        a.init = function (b, c, f) {
-          function d(a, b) {
-            var c = b.split('.');
-            2 == c.length && (a = a[c[0]], b = c[1]);
-            a[b] = function () {
-                a.push([b].concat(Array.prototype.slice.call(arguments, 0)));
-            };
-          }
-          var g = a;
-          'undefined' !== typeof f ? g = a[f] = [] : f = 'mixpanel';
-          g.people = g.people || [];
-          h = ['disable', 'track', 'track_pageview', 'track_links', 'track_forms', 'register', 'register_once', 'unregister', 'identify', 'alias', 'name_tag', 'set_config', 'people.set', 'people.increment', 'people.track_charge', 'people.append'];
-          for (e = 0; e < h.length; e++) d(g, h[e]);
-          a._i.push([b, c, f]);
+Mixpanel.prototype.key = 'token';
+
+
+/**
+ * Default options.
+ */
+
+Mixpanel.prototype.defaults = {
+  // a custom cookie name to use
+  cookieName: '',
+  // whether to track an initial pageview on initialize
+  initialPageview: false,
+  // whether to call `mixpanel.name_tag` on `identify` calls
+  nameTag: true,
+  // your mixpanel token (required)
+  token: '',
+  // whether to track `pageview` calls to mixpanel as "Loaded a Page" events
+  pageview: false,
+  // whether to use mixpanel's "people" api
+  people: false
+};
+
+
+/**
+ * Initialize.
+ *
+ * https://mixpanel.com/help/reference/javascript#installing
+ * https://mixpanel.com/help/reference/javascript-full-api-reference#mixpanel.init
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Mixpanel.prototype.initialize = function (options, ready) {
+  (function (c, a) {
+    window.mixpanel = a;
+    var b, d, h, e;
+    a._i = [];
+    a.init = function (b, c, f) {
+      function d(a, b) {
+        var c = b.split('.');
+        2 == c.length && (a = a[c[0]], b = c[1]);
+        a[b] = function () {
+          a.push([b].concat(Array.prototype.slice.call(arguments, 0)));
         };
-        a.__SV = 1.2;
-        // Modification to the snippet: call ready whenever the library has
-        // fully loaded.
-        load('//cdn.mxpnl.com/libs/mixpanel-2.2.min.js', ready);
-    })(document, window.mixpanel || []);
-
-    // Mixpanel only accepts snake_case options
-    options.cookie_name = options.cookieName;
-
-    // Pass options directly to `init` as the second argument.
-    window.mixpanel.init(options.token, options);
-
-    if (options.initialPageview) this.pageview();
-  },
-
-  identify : function (userId, traits) {
-    // Alias the traits' keys with dollar signs for Mixpanel's API.
-    alias(traits, {
-      'created'   : '$created',
-      'email'     : '$email',
-      'firstName' : '$first_name',
-      'lastName'  : '$last_name',
-      'lastSeen'  : '$last_seen',
-      'name'      : '$name',
-      'username'  : '$username',
-      'phone'     : '$phone'
-    });
-
-    // Finally, call all of the identify equivalents. Verify certain calls
-    // against options to make sure they're enabled.
-    if (userId) {
-      window.mixpanel.identify(userId);
-      var name = traits.$email || traits.$username || userId;
-      if (name && this.options.nameTag) window.mixpanel.name_tag(name);
-    }
-    if (traits) {
-      window.mixpanel.register(traits);
-      if (this.options.people) window.mixpanel.people.set(traits);
-    }
-  },
-
-  track : function (event, properties) {
-    window.mixpanel.track(event, properties);
-
-    // Mixpanel handles revenue with a `transaction` call in their People
-    // feature. So if we're using people, record a transcation.
-    if (properties && properties.revenue && this.options.people) {
-      window.mixpanel.people.track_charge(properties.revenue);
-    }
-  },
-
-  // Mixpanel doesn't actually track the pageviews, but they do show up in the
-  // Mixpanel stream.
-  pageview : function (url) {
-    window.mixpanel.track_pageview(url);
-
-    // If they don't want pageviews tracked, leave now.
-    if (!this.options.pageview) return;
-
-    var properties = {
-      url  : url || document.location.href,
-      name : document.title
+      }
+      var g = a;
+      'undefined' !== typeof f ? g = a[f] = [] : f = 'mixpanel';
+      g.people = g.people || [];
+      h = ['disable', 'track', 'track_pageview', 'track_links', 'track_forms', 'register', 'register_once', 'unregister', 'identify', 'alias', 'name_tag', 'set_config', 'people.set', 'people.increment', 'people.track_charge', 'people.append'];
+      for (e = 0; e < h.length; e++) d(g, h[e]);
+      a._i.push([b, c, f]);
     };
+    a.__SV = 1.2;
+    load('//cdn.mxpnl.com/libs/mixpanel-2.2.min.js', ready);
+  })(document, window.mixpanel || []);
 
-    this.track('Loaded a Page', properties);
-  },
+  var cloned = clone(options);
+  alias(cloned, { cookieName: 'cookie_name' });
+  window.mixpanel.init(options.token, cloned);
 
-  // Although undocumented, Mixpanel actually supports the `originalId`. It
-  // just usually defaults to the current user's `distinct_id`.
-  alias : function (newId, originalId) {
+  if (options.initialPageview) this.pageview();
+};
 
-    if(window.mixpanel.get_distinct_id &&
-       window.mixpanel.get_distinct_id() === newId) return;
 
-    // HACK: internal mixpanel API to ensure we don't overwrite.
-    if(window.mixpanel.get_property &&
-       window.mixpanel.get_property('$people_distinct_id') === newId) return;
+/**
+ * Identify.
+ *
+ * https://mixpanel.com/help/reference/javascript#super-properties
+ * https://mixpanel.com/help/reference/javascript#user-identity
+ * https://mixpanel.com/help/reference/javascript#storing-user-profiles
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
 
-    window.mixpanel.alias(newId, originalId);
+Mixpanel.prototype.identify = function (id, traits, options) {
+  var mp = window.mixpanel;
+
+  // id
+  if (id) mp.identify(id);
+
+  // name tag
+  var nametag = traits.email || traits.username || id;
+  if (nametag) mp.name_tag(nametag);
+
+  // traits
+  alias(traits, {
+    created: '$created',
+    email: '$email',
+    firstName: '$first_name',
+    lastName: '$last_name',
+    lastSeen: '$last_seen',
+    name: '$name',
+    username: '$username',
+    phone: '$phone'
+  });
+  mp.register(traits);
+  if (this.options.people) mp.people.set(traits);
+};
+
+
+/**
+ * Track.
+ *
+ * https://mixpanel.com/help/reference/javascript#sending-events
+ * https://mixpanel.com/help/reference/javascript#tracking-revenue
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Mixpanel.prototype.track = function (event, properties, options) {
+  var mp = window.mixpanel;
+  mp.track(event, properties);
+  if (properties.revenue && this.options.people) {
+    mp.people.track_charge(properties.revenue);
   }
+};
 
+
+/**
+ * Pageview.
+ *
+ * https://mixpanel.com/help/reference/javascript-full-api-reference#mixpanel.track_pageview
+ *
+ * @param {String} url (optional)
+ */
+
+Mixpanel.prototype.pageview = function (url) {
+  window.mixpanel.track_pageview(url); // shows up in streams regardless
+  if (!this.options.pageview) return;
+
+  this.track('Loaded a Page', {
+    url: url || document.location.href,
+    name: document.title
+  });
+};
+
+
+/**
+ * Alias.
+ *
+ * https://mixpanel.com/help/reference/javascript#user-identity
+ * https://mixpanel.com/help/reference/javascript-full-api-reference#mixpanel.alias
+ *
+ * @param {String} newId
+ * @param {String} oldId (optional)
+ */
+
+Mixpanel.prototype.alias = function (newId, oldId) {
+  var mp = window.mixpanel;
+  if (mp.get_distinct_id && mp.get_distinct_id() === newId) return;
+
+  // HACK: internal mixpanel API to ensure we don't overwrite
+  if (mp.get_property && mp.get_property('$people_distinct_id') === newId) return;
+
+  // although undocumented, mixpanel takes an optional original id
+  mp.alias(newId, oldId);
+};
 });
-});
-require.register("analytics/lib/providers/mousestats.js", function(exports, require, module){
+require.register("analytics/lib/integrations/mousestats.js", function(exports, require, module){
 
 var integration = require('../integration')
   , load = require('load-script');
@@ -5354,7 +6042,7 @@ MouseStats.prototype.key = 'accountNumber';
  */
 
 MouseStats.prototype.defaults = {
-  accountNumber: null
+  accountNumber: ''
 };
 
 
@@ -5375,460 +6063,268 @@ MouseStats.prototype.initialize = function (options, ready) {
   }, ready);
 };
 });
-require.register("analytics/lib/providers/olark.js", function(exports, require, module){
-// http://www.olark.com/documentation
+require.register("analytics/lib/integrations/olark.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , isEmail  = require('is-email');
-
-
-module.exports = Provider.extend({
-
-  name : 'Olark',
-
-  key : 'siteId',
-
-  chatting : false,
-
-  defaults : {
-    siteId : null,
-    // Whether to use the user's name or email in the Olark chat console.
-    identify : true,
-    // Whether to log pageviews to the Olark chat console.
-    track : false,
-    // Whether to log pageviews to the Olark chat console.
-    pageview : true
-  },
-
-  initialize : function (options, ready) {
-    window.olark||(function(c){var f=window,d=document,l=f.location.protocol=="https:"?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while(q--){(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={0:+new Date};a.P=function(u){a.p[u]=new Date-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if(!m){return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if(/MSIE[ ]+6/.test(navigator.userAgent)){b.src="javascript:false"}b.allowTransparency="true";v[j](b);try{b.contentWindow[g].open()}catch(w){c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try{var t=b.contentWindow[g];t.write(p());t.close()}catch(x){b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({loader: "static.olark.com/jsclient/loader0.js",name:"olark",methods:["configure","extend","declare","identify"]});
-    window.olark.identify(options.siteId);
-
-    // Set up event handlers for chat box open and close so that
-    // we know whether a conversation is active. If it is active,
-    // then we'll send track and pageview information.
-    var self = this;
-    window.olark('api.box.onExpand', function () { self.chatting = true; });
-    window.olark('api.box.onShrink', function () { self.chatting = false; });
-
-    // Olark creates it's method in the snippet, so it's ready immediately.
-    ready();
-  },
-
-  // Update traits about the user in Olark to make the operator's life easier.
-  identify : function (userId, traits) {
-    if (!this.options.identify) return;
-
-    var email    = traits.email
-      , name     = traits.name || traits.firstName
-      , phone    = traits.phone
-      , nickname = name || email || userId;
-
-    // If we have a name and an email, add the email too to be more helpful.
-    if (name && email) nickname += ' ('+email+')';
-
-    // Call all of Olark's settings APIs.
-    window.olark('api.visitor.updateCustomFields', traits);
-    if (email)    window.olark('api.visitor.updateEmailAddress', { emailAddress : email });
-    if (name)     window.olark('api.visitor.updateFullName', { fullName : name });
-    if (phone)    window.olark('api.visitor.updatePhoneNumber', { phoneNumber : phone });
-    if (nickname) window.olark('api.chat.updateVisitorNickname', { snippet : nickname });
-  },
-
-  // Log events the user triggers to the chat console, if you so desire it.
-  track : function (event, properties) {
-    if (!this.options.track || !this.chatting) return;
-
-    // To stay consistent with olark's default messages, it's all lowercase.
-    window.olark('api.chat.sendNotificationToOperator', {
-      body : 'visitor triggered "'+event+'"'
-    });
-  },
-
-  // Mimic the functionality Olark has for normal pageviews with pseudo-
-  // pageviews, telling the operator when a visitor changes pages.
-  pageview : function (url) {
-    if (!this.options.pageview || !this.chatting) return;
-
-    // To stay consistent with olark's default messages, it's all lowercase.
-    window.olark('api.chat.sendNotificationToOperator', {
-      body : 'looking at ' + window.location.href
-    });
-  }
-
-});
-});
-require.register("analytics/lib/providers/optimizely.js", function(exports, require, module){
-// https://www.optimizely.com/docs/api
-
-var each      = require('each')
-  , nextTick  = require('next-tick')
-  , Provider  = require('../provider');
-
-
-module.exports = Provider.extend({
-
-  name : 'Optimizely',
-
-  defaults : {
-    // Whether to replay variations into other enabled integrations as traits.
-    variations : true
-  },
-
-  initialize : function (options, ready, analytics) {
-    // Create the `optimizely` object in case it doesn't exist already.
-    // https://www.optimizely.com/docs/api#function-calls
-    window.optimizely = window.optimizely || [];
-
-    // If the `variations` option is true, replay our variations on the next
-    // tick to wait for the entire library to be ready for replays.
-    if (options.variations) {
-      var self = this;
-      nextTick(function () { self.replay(); });
-    }
-
-    // Optimizely should be on the page already, so it's always ready.
-    ready();
-  },
-
-  track : function (event, properties) {
-    // Optimizely takes revenue as cents, not dollars.
-    if (properties && properties.revenue) properties.revenue = properties.revenue * 100;
-
-    window.optimizely.push(['trackEvent', event, properties]);
-  },
-
-  replay : function () {
-    // Make sure we have access to Optimizely's `data` dictionary.
-    var data = window.optimizely.data;
-    if (!data) return;
-
-    // Grab a few pieces of data we'll need for replaying.
-    var experiments       = data.experiments
-      , variationNamesMap = data.state.variationNamesMap;
-
-    // Create our traits object to add variations to.
-    var traits = {};
-
-    // Loop through all the experiement the user has been assigned a variation
-    // for and add them to our traits.
-    each(variationNamesMap, function (experimentId, variation) {
-      traits['Experiment: ' + experiments[experimentId].name] = variation;
-    });
-
-    this.analytics.identify(traits);
-  }
-
-});
-});
-require.register("analytics/lib/providers/perfect-audience.js", function(exports, require, module){
-// https://www.perfectaudience.com/docs#javascript_api_autoopen
-
-var Provider = require('../provider')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'Perfect Audience',
-
-  key : 'siteId',
-
-  defaults : {
-    siteId : null
-  },
-
-  initialize : function (options, ready) {
-    window._pa || (window._pa = {});
-    load('//tag.perfectaudience.com/serve/' + options.siteId + '.js', ready);
-  },
-
-  track : function (event, properties) {
-    window._pa.track(event, properties);
-  }
-
-});
-});
-require.register("analytics/lib/providers/pingdom.js", function(exports, require, module){
-var date     = require('load-date')
-  , Provider = require('../provider')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'Pingdom',
-
-  key : 'id',
-
-  defaults : {
-    id : null
-  },
-
-  initialize : function (options, ready) {
-
-    window._prum = [
-      ['id', options.id],
-      ['mark', 'firstbyte', date.getTime()]
-    ];
-
-    // We've replaced the original snippet loader with our own load method.
-    load('//rum-static.pingdom.net/prum.min.js', ready);
-  }
-
-});
-});
-require.register("analytics/lib/providers/preact.js", function(exports, require, module){
-// http://www.preact.io/api/javascript
-
-var Provider = require('../provider')
-  , isEmail  = require('is-email')
-  , load     = require('load-script');
-
-module.exports = Provider.extend({
-
-  name : 'Preact',
-
-  key : 'projectCode',
-
-  defaults : {
-    projectCode    : null
-  },
-
-  initialize : function (options, ready) {
-    var _lnq = window._lnq = window._lnq || [];
-    _lnq.push(["_setCode", options.projectCode]);
-
-    load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.4.min.js');
-    ready();
-  },
-
-  identify : function (userId, traits) {
-    // Don't do anything if we just have traits. Preact requires a `userId`.
-    if (!userId) return;
-
-    // Swap the `created` trait to the `created_at` that Preact needs
-    // and convert it from milliseconds to seconds.
-    if (traits.created) {
-      traits.created_at = Math.floor(traits.created/1000);
-      delete traits.created;
-    }
-
-    window._lnq.push(['_setPersonData', {
-      name       : traits.name,
-      email      : traits.email,
-      uid        : userId,
-      properties : traits
-    }]);
-  },
-
-  group : function (groupId, properties) {
-    if (!groupId) return;
-    properties.id = groupId;
-    window._lnq.push(['_setAccount', properties]);
-  },
-
-  track : function (event, properties) {
-    properties || (properties = {});
-
-    // Preact takes a few special properties, and the rest in `extras`. So first
-    // convert and remove the special ones from `properties`.
-    var special = { name : event };
-
-    // They take `revenue` in cents.
-    if (properties.revenue) {
-      special.revenue = properties.revenue * 100;
-      delete properties.revenue;
-    }
-
-    if (properties.note) {
-      special.note = properties.note;
-      delete properties.note;
-    }
-
-    window._lnq.push(['_logEvent', special, properties]);
-  }
-
-});
-});
-require.register("analytics/lib/providers/qualaroo.js", function(exports, require, module){
-// http://help.qualaroo.com/customer/portal/articles/731085-identify-survey-nudge-takers
-// http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties
-
-var Provider = require('../provider')
-  , isEmail  = require('is-email')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'Qualaroo',
-
-  defaults : {
-    // Qualaroo has two required options.
-    customerId : null,
-    siteToken : null,
-    // Whether to record traits when a user triggers an event. This can be
-    // useful for sending targetted questionnaries.
-    track : false
-  },
-
-  // Qualaroo's script has two options in its URL.
-  initialize : function (options, ready) {
-    window._kiq = window._kiq || [];
-    load('//s3.amazonaws.com/ki.js/' + options.customerId + '/' + options.siteToken + '.js');
-
-    // Qualaroo creates a queue, so it's ready immediately.
-    ready();
-  },
-
-  // Qualaroo uses two separate methods: `identify` for storing the `userId`,
-  // and `set` for storing `traits`.
-  identify : function (userId, traits) {
-    var identity = traits.email || userId;
-    if (identity) window._kiq.push(['identify', identity]);
-    if (traits) window._kiq.push(['set', traits]);
-  },
-
-  // Qualaroo doesn't have `track` method yet, but to allow the users to do
-  // targetted questionnaires we can set name-value pairs on the user properties
-  // that apply to the current visit.
-  track : function (event, properties) {
-    if (!this.options.track) return;
-
-    // Create a name-value pair that will be pretty unique. For an event like
-    // 'Loaded a Page' this will make it 'Triggered: Loaded a Page'.
-    var traits = {};
-    traits['Triggered: ' + event] = true;
-
-    // Fire a normal identify, with traits only.
-    this.identify(null, traits);
-  }
-
-});
-});
-require.register("analytics/lib/providers/quantcast.js", function(exports, require, module){
-// https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/
-
-var Provider = require('../provider')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'Quantcast',
-
-  key : 'pCode',
-
-  defaults : {
-    pCode : null
-  },
-
-  initialize : function (options, ready) {
-    window._qevents = window._qevents || [];
-    window._qevents.push({ qacct: options.pCode });
-    load({
-      http  : 'http://edge.quantserve.com/quant.js',
-      https : 'https://secure.quantserve.com/quant.js'
-    }, ready);
-  }
-
-});
-});
-require.register("analytics/lib/providers/sentry.js", function(exports, require, module){
-// http://raven-js.readthedocs.org/en/latest/config/index.html
-
-var Provider = require('../provider')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'Sentry',
-
-  key : 'config',
-
-  defaults : {
-    config : null
-  },
-
-  initialize : function (options, ready) {
-    load('//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js', function () {
-      // For now, Raven basically requires `install` to be called.
-      // https://github.com/getsentry/raven-js/blob/master/src/raven.js#L87
-      window.Raven.config(options.config).install();
-      ready();
-    });
-  },
-
-  identify : function (userId, traits) {
-    traits.id = userId;
-    window.Raven.setUser(traits);
-  },
-
-  // Raven will automatically use `captureMessage` if the error is a string.
-  log : function (error, properties) {
-    window.Raven.captureException(error, properties);
-  }
-
-});
-});
-require.register("analytics/lib/providers/snapengage.js", function(exports, require, module){
-// http://help.snapengage.com/installation-guide-getting-started-in-a-snap/
-
-var Provider = require('../provider')
-  , isEmail  = require('is-email')
-  , load     = require('load-script');
-
-
-module.exports = Provider.extend({
-
-  name : 'SnapEngage',
-
-  key : 'apiKey',
-
-  defaults : {
-    apiKey : null
-  },
-
-  initialize : function (options, ready) {
-    load('//commondatastorage.googleapis.com/code.snapengage.com/js/' + options.apiKey + '.js', ready);
-  },
-
-  // Set the email in the chat window if we have it.
-  identify : function (userId, traits, options) {
-    if (!traits.email) return;
-    window.SnapABug.setUserEmail(traits.email);
-  }
-
-});
-});
-require.register("analytics/lib/providers/spinnakr.js", function(exports, require, module){
-
-var integration = require('../integration')
-  , load = require('load-script');
+var integration = require('../integration');
 
 
 /**
- * Expose `Spinnakr` integration.
+ * Expose `Olark` integration.
+ *
+ * http://www.olark.com/documentation
  */
 
-var Spinnakr = module.exports = integration('Spinnakr');
+var Olark = module.exports = integration('Olark');
 
 
 /**
  * Required key.
  */
 
-Spinnakr.prototype.key = 'siteId';
+Olark.prototype.key = 'siteId';
 
 
 /**
  * Default options.
  */
 
-Spinnakr.prototype.defaults = {
-  // your spinakkr site id key (required)
+Olark.prototype.defaults = {
+  // whether to set the user's name or email in the chat
+  identify : true,
+  // whether to log pageviews in the chat
+  pageview: true,
+  // your olark site id (required)
+  siteId: '',
+  // whether to log events the user triggers in the chat
+  track : false,
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Olark.prototype.initialize = function (options, ready) {
+  window.olark||(function(c){var f=window,d=document,l=f.location.protocol=="https:"?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while(q--){(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={0:+new Date};a.P=function(u){a.p[u]=new Date-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if(!m){return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if(/MSIE[ ]+6/.test(navigator.userAgent)){b.src="javascript:false"}b.allowTransparency="true";v[j](b);try{b.contentWindow[g].open()}catch(w){c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try{var t=b.contentWindow[g];t.write(p());t.close()}catch(x){b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({loader: "static.olark.com/jsclient/loader0.js",name:"olark",methods:["configure","extend","declare","identify"]});
+  window.olark.identify(options.siteId);
+  ready();
+
+  // keep track of the widget's open state
+  var self = this;
+  box('onExpand', function () { self._open = true; });
+  box('onShrink', function () { self._open = false; });
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Olark.prototype.identify = function (id, traits, options) {
+  if (!this.options.identify) return;
+  if (id) traits.id = id;
+
+  visitor('updateCustomFields', traits);
+  visitor('updateEmailAddress', { emailAddress: traits.email });
+  visitor('updatePhoneNumber', { phoneNumber: traits.phone });
+
+  // figure out best name
+  var name = traits.firstName;
+  if (traits.lastName) name += ' ' + traits.lastName;
+  if (traits.name) name = traits.name;
+  visitor('updateFullName', { fullName: name });
+
+  // figure out best nickname
+  var nickname = name || traits.email || traits.username || id;
+  if (name && traits.email) nickname += ' (' + traits.email + ')';
+  chat('updateVisitorNickname', { snippet: nickname });
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Olark.prototype.track = function (event, properties, options) {
+  if (!this.options.track || !this._open) return;
+  chat('sendNotificationToOperator', {
+    body: 'visitor triggered "' + event + '"' // lowercase since olark does
+  });
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+Olark.prototype.pageview = function (url) {
+  if (!this.options.pageview || !this._open) return;
+  url || (url = window.location.href);
+  chat('sendNotificationToOperator', {
+    body: 'looking at ' + url // lowercase since olark does
+  });
+};
+
+
+/**
+ * Helper method for Olark box API calls.
+ *
+ * @param {String} action
+ * @param {Object} value
+ */
+
+function box (action, value) {
+  window.olark('api.box.' + action, value);
+}
+
+
+/**
+ * Helper method for Olark visitor API calls.
+ *
+ * @param {String} action
+ * @param {Object} value
+ */
+
+function visitor (action, value) {
+  window.olark('api.visitor.' + action, value);
+}
+
+
+/**
+ * Helper method for Olark chat API calls.
+ *
+ * @param {String} action
+ * @param {Object} value
+ */
+
+function chat (action, value) {
+  window.olark('api.chat.' + action, value);
+}
+});
+require.register("analytics/lib/integrations/optimizely.js", function(exports, require, module){
+
+var bind = require('bind')
+  , each = require('each')
+  , integration = require('../integration')
+  , load = require('load-script')
+  , tick = require('next-tick');
+
+
+/**
+ * Expose `Optimizely` integration.
+ *
+ * https://www.optimizely.com/docs/api
+ */
+
+var Optimizely = module.exports = integration('Optimizely');
+
+
+/**
+ * Default options.
+ */
+
+Optimizely.prototype.defaults = {
+  // whether to replay variations into other enabled integrations as traits
+  variations: true
+};
+
+
+/**
+ * Initialize.
+ *
+ * https://www.optimizely.com/docs/api#function-calls
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Optimizely.prototype.initialize = function (options, ready) {
+  window.optimizely = window.optimizely || [];
+  ready();
+  if (options.variations) tick(bind(this, this.replay));
+};
+
+
+/**
+ * Track.
+ *
+ * https://www.optimizely.com/docs/api#track-event
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Optimizely.prototype.track = function (event, properties, options) {
+  // optimizely takes revenue as cents, not dollars
+  if (properties.revenue) properties.revenue = properties.revenue * 100;
+  window.optimizely.push(['trackEvent', event, properties]);
+};
+
+
+/**
+ * Replay experiment data as traits to other enabled providers.
+ *
+ * https://www.optimizely.com/docs/api#data-object
+ */
+
+Optimizely.prototype.replay = function () {
+  var data = window.optimizely.data;
+  if (!data) return;
+
+  var experiments = data.experiments;
+  var map = data.state.variationNamesMap;
+  var traits = {};
+
+  each(map, function (experimentId, variation) {
+    var experiment = experiments[experimentId].name;
+    traits['Experiment: ' + experiment] = variation;
+  });
+
+  this.analytics.identify(traits);
+};
+});
+require.register("analytics/lib/integrations/perfect-audience.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `PerfectAudience` integration.
+ *
+ * https://www.perfectaudience.com/docs#javascript_api_autoopen
+ */
+
+var PerfectAudience = module.exports = integration('Perfect Audience');
+
+
+/**
+ * Required key.
+ */
+
+PerfectAudience.prototype.key = 'siteId';
+
+
+/**
+ * Default options.
+ */
+
+PerfectAudience.prototype.defaults = {
+  // your perfect audience site id (required)
   siteId: ''
 };
 
@@ -5840,12 +6336,434 @@ Spinnakr.prototype.defaults = {
  * @param {Function} ready
  */
 
-Spinnakr.prototype.initialize = function (options, ready) {
-  window._spinnakr_site_id = options.siteId;
-  load({ http: 'http://d3ojzyhbolvoi5.cloudfront.net/js/so.js' }, ready);
+PerfectAudience.prototype.initialize = function (options, ready) {
+  window._pa || (window._pa = {});
+  load('//tag.perfectaudience.com/serve/' + options.siteId + '.js', ready);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+PerfectAudience.prototype.track = function (event, properties, options) {
+  window._pa.track(event, properties);
 };
 });
-require.register("analytics/lib/providers/tapstream.js", function(exports, require, module){
+require.register("analytics/lib/integrations/pingdom.js", function(exports, require, module){
+
+var date = require('load-date')
+  , integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Pingdom` integration.
+ */
+
+var Pingdom = module.exports = integration('Pingdom');
+
+
+/**
+ * Required key.
+ */
+
+Pingdom.prototype.key = 'id';
+
+
+/**
+ * Default options.
+ */
+
+Pingdom.prototype.defaults = {
+  // your pingdom id (required)
+  id: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Pingdom.prototype.initialize = function (options, ready) {
+  window._prum = [
+    ['id', options.id],
+    ['mark', 'firstbyte', date.getTime()]
+  ];
+  load('//rum-static.pingdom.net/prum.min.js', ready);
+};
+});
+require.register("analytics/lib/integrations/preact.js", function(exports, require, module){
+
+var alias = require('alias')
+  , convertDates = require('convert-dates')
+  , integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Preact` integration.
+ *
+ * http://www.preact.io/api/javascript
+ */
+
+var Preact = module.exports = integration('Preact');
+
+
+/**
+ * Required key.
+ */
+
+Preact.prototype.key = 'projectCode';
+
+
+/**
+ * Default options.
+ */
+
+Preact.prototype.defaults = {
+  // your preact project code (required)
+  projectCode: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Preact.prototype.initialize = function (options, ready) {
+  window._lnq || (window._lnq = []);
+  window._lnq.push(["_setCode", options.projectCode]);
+  ready();
+  load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.4.min.js');
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Preact.prototype.identify = function (id, traits, options) {
+  if (!id) return;
+  convertDates(traits, convertDate);
+  alias(traits, { created: 'created_at' });
+
+  window._lnq.push(['_setPersonData', {
+    name: traits.name,
+    email: traits.email,
+    uid: id,
+    properties: traits
+  }]);
+};
+
+
+/**
+ * Group.
+ *
+ * @param {String} id
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Preact.prototype.group = function (id, properties, options) {
+  if (!id) return;
+  properties.id = id;
+  window._lnq.push(['_setAccount', properties]);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Preact.prototype.track = function (event, properties, options) {
+  var special = {};
+  special.name = event;
+  if (properties.revenue) {
+    special.revenue = properties.revenue * 100;
+    delete properties.revenue;
+  }
+  if (properties.note) {
+    special.note = properties.note;
+    delete properties.note;
+  }
+
+  window._lnq.push(['_logEvent', special, properties]);
+};
+
+
+/**
+ * Convert a `date` to a format Preact supports.
+ *
+ * @param {Date} date
+ * @return {Number}
+ */
+
+function convertDate (date) {
+  return Math.floor(date / 1000);
+}
+});
+require.register("analytics/lib/integrations/qualaroo.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Qualaroo` integration.
+ */
+
+var Qualaroo = module.exports = integration('Qualaroo');
+
+
+/**
+ * Default options.
+ */
+
+Qualaroo.prototype.defaults = {
+  // your qualaroo customer id (required)
+  customerId: '',
+  // your qualaroo site token (required)
+  siteToken: '',
+  // whether to track events as traits on the user
+  track: false
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Qualaroo.prototype.initialize = function (options, ready) {
+  window._kiq || (window._kiq = []);
+  ready();
+  var path = options.customerId + '/' + options.siteToken;
+  load('//s3.amazonaws.com/ki.js/' + path + '.js');
+};
+
+
+/**
+ * Identify.
+ *
+ * http://help.qualaroo.com/customer/portal/articles/731085-identify-survey-nudge-takers
+ * http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Qualaroo.prototype.identify = function (id, traits, options) {
+  if (traits.email) id = traits.email;
+  if (id) window._kiq.push(['identify', id]);
+  if (traits) window._kiq.push(['set', traits]);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Qualaroo.prototype.track = function (event, properties, options) {
+  if (!this.options.track) return;
+  var traits = {};
+  traits['Triggered: ' + event] = true;
+  this.identify(null, traits);
+};
+});
+require.register("analytics/lib/integrations/quantcast.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Quantcast` integration.
+ */
+
+var Quantcast = module.exports = integration('Quantcast');
+
+
+/**
+ * Required key.
+ */
+
+Quantcast.prototype.key = 'pCode';
+
+
+/**
+ * Default options.
+ */
+
+Quantcast.prototype.defaults = {
+  // your quantcast p code (required)
+  pCode: null
+};
+
+
+/**
+ * Initialize.
+ *
+ * https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Quantcast.prototype.initialize = function (options, ready) {
+  window._qevents || (window._qevents = []);
+  window._qevents.push({ qacct: options.pCode });
+  load({
+    http: 'http://edge.quantserve.com/quant.js',
+    https: 'https://secure.quantserve.com/quant.js'
+  }, ready);
+};
+});
+require.register("analytics/lib/integrations/sentry.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Sentry` integration.
+ *
+ * http://raven-js.readthedocs.org/en/latest/config/index.html
+ */
+
+var Sentry = module.exports = integration('Sentry');
+
+
+/**
+ * Required key.
+ */
+
+Sentry.prototype.key = 'config';
+
+
+/**
+ * Default options.
+ */
+
+Sentry.prototype.defaults = {
+  // your sentry config url (required)
+  config: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Sentry.prototype.initialize = function (options, ready) {
+  load('//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js', function () {
+    // for now, raven basically requires `install` to be called
+    // https://github.com/getsentry/raven-js/blob/master/src/raven.js#L113
+    window.Raven.config(options.config).install();
+    ready();
+  });
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Sentry.prototype.identify = function (id, traits, options) {
+  if (id) traits.id = id;
+  window.Raven.setUser(traits);
+};
+});
+require.register("analytics/lib/integrations/snapengage.js", function(exports, require, module){
+
+var integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `SnapEngage` integration.
+ *
+ * http://help.snapengage.com/installation-guide-getting-started-in-a-snap/
+ */
+
+var SnapEngage = module.exports = integration('SnapEngage');
+
+
+/**
+ * Required key.
+ */
+
+SnapEngage.prototype.key = 'apiKey';
+
+
+/**
+ * Default options.
+ */
+
+SnapEngage.prototype.defaults = {
+  // your snapengage api key (required)
+  apiKey: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+SnapEngage.prototype.initialize = function (options, ready) {
+  load('//commondatastorage.googleapis.com/code.snapengage.com/js/' + options.apiKey + '.js', ready);
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+SnapEngage.prototype.identify = function (id, traits, options) {
+  if (!traits.email) return;
+  window.SnapABug.setUserEmail(traits.email);
+};
+});
+require.register("analytics/lib/integrations/tapstream.js", function(exports, require, module){
 
 var integration = require('../integration')
   , load = require('load-script')
@@ -5919,7 +6837,7 @@ Tapstream.prototype.pageview = function (url) {
   window._tsq.push(['fireHit', event, [url]]);
 };
 });
-require.register("analytics/lib/providers/trakio.js", function(exports, require, module){
+require.register("analytics/lib/integrations/trakio.js", function(exports, require, module){
 
 var integration = require('../integration')
   , alias = require('alias')
@@ -6067,98 +6985,165 @@ Trakio.prototype.alias = function (newId, originalId) {
   }
 };
 });
-require.register("analytics/lib/providers/usercycle.js", function(exports, require, module){
-// http://docs.usercycle.com/javascript_api
+require.register("analytics/lib/integrations/usercycle.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , load     = require('load-script')
-  , user     = require('../user');
+var integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `USERcycle` integration.
+ *
+ * http://docs.usercycle.com/javascript_api
+ */
 
-  name : 'USERcycle',
+var USERcycle = module.exports = integration('USERcycle');
 
-  key : 'key',
 
-  defaults : {
-    key : null
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    window._uc = window._uc || [];
-    window._uc.push(['_key', options.key]);
-    load('//api.usercycle.com/javascripts/track.js');
+USERcycle.prototype.key = 'key';
 
-    // USERcycle makes a queue, so it's ready immediately.
-    ready();
-  },
 
-  identify : function (userId, traits) {
-    if (userId) window._uc.push(['uid', userId]);
+/**
+ * Default options.
+ */
 
-    // USERcycle has a special "hidden" event that is used just for retention measurement.
-    // Lukas suggested on 6/4/2013 that we send traits on that event, since they use the
-    // the latest value of every event property as a "trait"
-    window._uc.push(['action', 'came_back', traits]);
-  },
+USERcycle.prototype.defaults = {
+  // your usercycle key (required)
+  key: ''
+};
 
-  track : function (event, properties) {
-    window._uc.push(['action', event, properties]);
-  }
 
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+USERcycle.prototype.initialize = function (options, ready) {
+  window._uc || (window._uc = []);
+  window._uc.push(['_key', options.key]);
+  ready();
+  load('//api.usercycle.com/javascripts/track.js');
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+USERcycle.prototype.identify = function (id, traits, options) {
+  if (id) window._uc.push(['uid', id]);
+  // there's a special `came_back` event used for retention and traits
+  window._uc.push(['action', 'came_back', traits]);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+USERcycle.prototype.track = function (event, properties, options) {
+  window._uc.push(['action', event, properties]);
+};
 });
+require.register("analytics/lib/integrations/userfox.js", function(exports, require, module){
+
+var alias = require('alias')
+  , convertDates = require('convert-dates')
+  , integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `Userfox` integration.
+ *
+ * https://www.userfox.com/docs/
+ */
+
+var Userfox = module.exports = integration('userfox');
+
+
+/**
+ * Required key.
+ */
+
+Userfox.prototype.key = 'clientId';
+
+
+/**
+ * Default options.
+ */
+
+Userfox.prototype.defaults = {
+  // your userfox client id (required)
+  clientId: ''
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Userfox.prototype.initialize = function (options, ready) {
+  window._ufq || (window._ufq = []);
+  ready();
+  load('//d2y71mjhnajxcg.cloudfront.net/js/userfox-stable.js');
+};
+
+
+/**
+ * Identify.
+ *
+ * https://www.userfox.com/docs/#custom-data
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Userfox.prototype.identify = function (id, traits, options) {
+  if (!traits.email) return;
+
+  // initialize the library with the email now that we have it
+  window._ufq.push(['init', {
+    clientId: this.options.clientId,
+    email: traits.email
+  }]);
+
+  convertDates(traits, formatDate);
+  alias(traits, { created: 'signup_date' });
+  window._ufq.push(['track', traits]);
+};
+
+
+/**
+ * Convert a `date` to a format userfox supports.
+ *
+ * @param {Date} date
+ * @return {String}
+ */
+
+function formatDate (date) {
+  return (date.getTime() / 1000).toString();
+}
 });
-require.register("analytics/lib/providers/userfox.js", function(exports, require, module){
-// https://www.userfox.com/docs/
-
-var Provider = require('../provider')
-  , extend   = require('extend')
-  , load     = require('load-script')
-  , isEmail  = require('is-email');
-
-
-module.exports = Provider.extend({
-
-  name : 'userfox',
-
-  key : 'clientId',
-
-  defaults : {
-    // userfox's required key.
-    clientId : null
-  },
-
-  initialize : function (options, ready) {
-    window._ufq = window._ufq || [];
-    load('//d2y71mjhnajxcg.cloudfront.net/js/userfox-stable.js');
-
-    // userfox creates its own queue, so we're ready right away.
-    ready();
-  },
-
-  identify : function (userId, traits) {
-    if (!traits.email) return;
-
-    // Initialize the library with the email now that we have it.
-    window._ufq.push(['init', {
-      clientId : this.options.clientId,
-      email    : traits.email
-    }]);
-
-    // Record traits to "track" if we have the required signup date `created`.
-    // userfox takes `signup_date` as a string of seconds since the epoch.
-    if (traits.created) {
-      traits.signup_date = (traits.created.getTime() / 1000).toString();
-      delete traits.created;
-      window._ufq.push(['track', traits]);
-    }
-  }
-
-});
-
-});
-require.register("analytics/lib/providers/uservoice.js", function(exports, require, module){
+require.register("analytics/lib/integrations/uservoice.js", function(exports, require, module){
 
 var alias = require('alias')
   , clone = require('clone')
@@ -6271,84 +7256,100 @@ function showClassicWidget (type, options) {
   window.UserVoice.push([type, 'classic_widget', options]);
 }
 });
-require.register("analytics/lib/providers/vero.js", function(exports, require, module){
-// https://github.com/getvero/vero-api/blob/master/sections/js.md
+require.register("analytics/lib/integrations/vero.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , isEmail  = require('is-email')
-  , load     = require('load-script');
+var integration = require('../integration')
+  , load = require('load-script');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `Vero` integration.
+ *
+ * https://github.com/getvero/vero-api/blob/master/sections/js.md
+ */
 
-  name : 'Vero',
+var Vero = module.exports = integration('Vero');
 
-  key : 'apiKey',
 
-  defaults : {
-    apiKey : null
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    window._veroq = window._veroq || [];
-    window._veroq.push(['init', { api_key: options.apiKey }]);
-    load('//d3qxef4rp70elm.cloudfront.net/m.js');
+Vero.prototype.key = 'apiKey';
 
-    // Vero creates a queue, so it's ready immediately.
-    ready();
-  },
 
-  identify : function (userId, traits) {
-    // Don't do anything if we just have traits, because Vero
-    // requires a `userId`.
-    if (!userId || !traits.email) return;
+/**
+ * Default options.
+ */
 
-    // Vero takes the `userId` as part of the traits object.
-    traits.id = userId;
+Vero.prototype.defaults = {
+  // your vero api key (required)
+  apiKey: ''
+};
 
-    window._veroq.push(['user', traits]);
-  },
 
-  track : function (event, properties) {
-    window._veroq.push(['track', event, properties]);
-  }
+/**
+ * Initialize.
+ *
+ * https://github.com/getvero/vero-api/blob/master/sections/js.md#setup
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
 
+Vero.prototype.initialize = function (options, ready) {
+  window._veroq || (window._veroq = []);
+  window._veroq.push(['init', { api_key: options.apiKey }]);
+  ready();
+  load('//d3qxef4rp70elm.cloudfront.net/m.js');
+};
+
+
+/**
+ * Identify.
+ *
+ * https://github.com/getvero/vero-api/blob/master/sections/js.md#user-identification
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Vero.prototype.identify = function (id, traits, options) {
+  if (!id || !traits.email) return; // both required
+  if (id) traits.id = id;
+  window._veroq.push(['user', traits]);
+};
+
+
+/**
+ * Track.
+ *
+ * https://github.com/getvero/vero-api/blob/master/sections/js.md#tracking-events
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Vero.prototype.track = function (event, properties, options) {
+  window._veroq.push(['track', event, properties]);
+};
 });
-});
-require.register("analytics/lib/providers/visual-website-optimizer.js", function(exports, require, module){
-// http://v2.visualwebsiteoptimizer.com/tools/get_tracking_code.php
-// http://visualwebsiteoptimizer.com/knowledge/integration-of-vwo-with-kissmetrics/
+require.register("analytics/lib/integrations/visual-website-optimizer.js", function(exports, require, module){
 
 var callback = require('callback')
   , each = require('each')
   , inherit = require('inherit')
-  , nextTick = require('next-tick')
-  , Provider = require('../provider');
+  , integration = require('../integration')
+  , tick = require('next-tick');
 
 
 /**
- * Expose `VWO`.
+ * Expose `VWO` integration.
  */
 
-module.exports = VWO;
-
-
-/**
- * `VWO` inherits from the generic `Provider`.
- */
-
-function VWO () {
-  Provider.apply(this, arguments);
-}
-
-inherit(VWO, Provider);
-
-
-/**
- * Name.
- */
-
-VWO.prototype.name = 'Visual Website Optimizer';
+var VWO = module.exports = integration('Visual Website Optimizer');
 
 
 /**
@@ -6363,6 +7364,11 @@ VWO.prototype.defaults = {
 
 /**
  * Initialize.
+ *
+ * http://v2.visualwebsiteoptimizer.com/tools/get_tracking_code.php
+ *
+ * @param {Object} options
+ * @param {Function} ready
  */
 
 VWO.prototype.initialize = function (options, ready) {
@@ -6379,7 +7385,7 @@ VWO.prototype.initialize = function (options, ready) {
 
 VWO.prototype.replay = function () {
   var analytics = this.analytics;
-  nextTick(function () {
+  tick(function () {
     experiments(function (err, traits) {
       if (traits) analytics.identify(traits);
     });
@@ -6389,10 +7395,11 @@ VWO.prototype.replay = function () {
 
 /**
  * Get dictionary of experiment keys and variations.
+ *
  * http://visualwebsiteoptimizer.com/knowledge/integration-of-vwo-with-kissmetrics/
  *
- * @param  {Function} callback  Called with `err, experiments`.
- * @return {Object}             Dictionary of experiments and variations.
+ * @param {Function} callback
+ * @return {Object}
  */
 
 function experiments (callback) {
@@ -6410,9 +7417,9 @@ function experiments (callback) {
 
 
 /**
- * Add a function to the VWO queue, creating one if it doesn't exist.
+ * Add a `fn` to the VWO queue, creating one if it doesn't exist.
  *
- * @param {Function} fn  Function to enqueue.
+ * @param {Function} fn
  */
 
 function enqueue (fn) {
@@ -6423,10 +7430,11 @@ function enqueue (fn) {
 
 /**
  * Get the chosen variation's name from an experiment `id`.
+ *
  * http://visualwebsiteoptimizer.com/knowledge/integration-of-vwo-with-kissmetrics/
  *
- * @param  {String} id  ID of the experiment to read.
- * @return {String}     Variation name.
+ * @param {String} id
+ * @return {String}
  */
 
 function variation (id) {
@@ -6437,84 +7445,124 @@ function variation (id) {
   return variationId ? experiment.comb_n[variationId] : null;
 }
 });
-require.register("analytics/lib/providers/woopra.js", function(exports, require, module){
-// http://www.woopra.com/docs/setup/javascript-tracking/
+require.register("analytics/lib/integrations/woopra.js", function(exports, require, module){
 
-var Provider = require('../provider')
-  , each     = require('each')
+var each     = require('each')
   , extend   = require('extend')
+  , integration = require('../integration')
   , isEmail  = require('is-email')
   , load     = require('load-script')
   , type     = require('type')
   , user     = require('../user');
 
 
-module.exports = Provider.extend({
+/**
+ * Expose `Woopra` integration.
+ *
+ * http://www.woopra.com/docs/setup/javascript-tracking/
+ */
 
-  name : 'Woopra',
+var Woopra = module.exports = integration('Woopra');
 
-  key : 'domain',
 
-  defaults : {
-    domain : null,
-    // whether to track a page view on initial page load
-    initialPageview : true
-  },
+/**
+ * Required key.
+ */
 
-  initialize : function (options, ready) {
-    // the Woopra snippet, minus the async script loading
-    (function () {
-      var i, s, z, w = window, d = document, a = arguments, q = 'script',
-        f = ['config', 'track', 'identify', 'visit', 'push', 'call'],
-        c = function () {
-          var i, self = this;
-          self._e = [];
-          for (i = 0; i < f.length; i++) {
-            (function (f) {
-              self[f] = function () {
-                // need to do this so params get called properly
-                self._e.push([f].concat(Array.prototype.slice.call(arguments, 0)));
-                return self;
-              };
-            })(f[i]);
-          }
-        };
-      w._w = w._w || {};
-      // check if instance of tracker exists
-      for (i = 0; i < a.length; i++) {
-        w._w[a[i]] = w[a[i]] = w[a[i]] || new c();
-      }
-    })('woopra');
+Woopra.prototype.key = 'domain';
 
-    load('//static.woopra.com/js/w.js', ready);
 
-    window.woopra.config({
-      domain: options.domain
-    });
+/**
+ * Default options.
+ */
 
-    if (options.initialPageview) this.pageview();
-  },
+Woopra.prototype.defaults = {
+  // your woopra domain (required)
+  domain: '',
+  // whether to track a pageview on load
+  initialPageview: true
+};
 
-  identify : function (id, traits) {
-    if (id) traits.id = id;
-    // `push` calls identify without sending an event
-    window.woopra.identify(traits).push();
-  },
 
-  track : function (event, properties) {
-    window.woopra.track(event, properties);
-  },
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
 
-  pageview : function (url, options) {
-    window.woopra.track('pv', {
-      url: url || window.location.pathname,
-      title: document.title
-    });
-  }
+Woopra.prototype.initialize = function (options, ready) {
+  // the Woopra snippet, minus the async script loading
+  (function () {
+    var i, s, z, w = window, d = document, a = arguments, q = 'script',
+      f = ['config', 'track', 'identify', 'visit', 'push', 'call'],
+      c = function () {
+        var i, self = this;
+        self._e = [];
+        for (i = 0; i < f.length; i++) {
+          (function (f) {
+            self[f] = function () {
+              // need to do this so params get called properly
+              self._e.push([f].concat(Array.prototype.slice.call(arguments, 0)));
+              return self;
+            };
+          })(f[i]);
+        }
+      };
+    w._w = w._w || {};
+    // check if instance of tracker exists
+    for (i = 0; i < a.length; i++) {
+      w._w[a[i]] = w[a[i]] = w[a[i]] || new c();
+    }
+  })('woopra');
 
+  load('//static.woopra.com/js/w.js', ready);
+  window.woopra.config({ domain: options.domain });
+  if (options.initialPageview) this.pageview();
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Woopra.prototype.identify = function (id, traits, options) {
+  if (id) traits.id = id;
+  window.woopra.identify(traits).push(); // `push` sends it off async
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Woopra.prototype.track = function (event, properties, options) {
+  window.woopra.track(event, properties);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+Woopra.prototype.pageview = function (url) {
+  window.woopra.track('pv', {
+    url: url || window.location.pathname,
+    title: document.title
+  });
+};
 });
 
-});
 
 
 
@@ -6550,6 +7598,9 @@ module.exports = Provider.extend({
 
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
+
+require.alias("component-bind/index.js", "analytics/deps/bind/index.js");
+require.alias("component-bind/index.js", "bind/index.js");
 
 require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
 require.alias("component-clone/index.js", "clone/index.js");

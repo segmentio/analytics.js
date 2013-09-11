@@ -1,35 +1,36 @@
 
-PORT = 4200
-PHANTOM = node_modules/.bin/mocha-phantomjs
-PHANTOM_OPTS = --setting web-security=false --setting local-to-remote-url-access=true
+TEST = http://localhost:4200
+COMPONENT = node_modules/component/bin/component
+UGLIFY = node_modules/uglify-js/bin/uglifyjs
+PHANTOM = node_modules/.bin/mocha-phantomjs --setting web-security=false --setting local-to-remote-url-access=true
 
 install: component.json
-	./node_modules/component/bin/component install --dev
+	$(COMPONENT) install --dev
 
 build: install
-	./node_modules/component/bin/component build --dev
+	$(COMPONENT) build --dev
 
 analytics.js: install
-	./node_modules/component/bin/component build --standalone analytics --out . --name analytics
-	uglifyjs -o analytics.min.js analytics.js
+	$(COMPONENT) build --standalone analytics --out . --name analytics
+	$(UGLIFY) analytics.js --output analytics.min.js
 
 clean:
-	rm -rf components build
+	rm -rf components build analytics.js analytics.min.js
 
 test: build server
 	sleep 1
-	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:$(PORT)/core
-	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:$(PORT)/integrations
+	$(PHANTOM) $(TEST)/core
+	$(PHANTOM) $(TEST)/integrations
 	make kill
 
 test-browser: build server
 	sleep 1
-	open http://localhost:$(PORT)/core
-	open http://localhost:$(PORT)/integrations
+	open $(TEST)/core
+	open $(TEST)/integrations
 
 release: clean build analytics.js server
 	sleep 1
-	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:$(PORT)/min
+	$(PHANTOM) $(TEST)/all
 	make kill
 
 server:
@@ -39,4 +40,4 @@ kill:
 	kill -9 `cat test/server/.pid.txt`
 	rm test/server/.pid.txt
 
-.PHONY: analytics.js clean test
+.PHONY: analytics.js build test

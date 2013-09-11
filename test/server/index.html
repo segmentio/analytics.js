@@ -28,17 +28,7 @@
   <script src="test/server/utils.js"></script>
   <script src="test/server/runner.js"></script>
 
-  {{#if min}}
-    <script src="analytics.min.js"></script>
-  {{/if}}
-
   <script src="build/build.js"></script>
-  <script>window.analytics = window.analytics || require('analytics');</script>
-
-  <script>
-    // phantom.js doesn't have a global `Event` constructor
-    if (!window.Event) window.Event = window.CustomEvent;
-  </script>
 
   {{#if core}}
     <script src="test/core/analytics.js"></script>

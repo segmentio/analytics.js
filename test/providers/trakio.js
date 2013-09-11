@@ -15,7 +15,35 @@ before(function (done) {
   this.spy = sinon.spy();
   analytics.ready(this.spy);
   analytics.initialize({ 'trak.io': settings });
+  this.integration = analytics._integrations['trak.io'];
+  this.options = this.integration.options;
   when(function () { return window.trak.io.loaded; }, done);
+});
+
+describe('#name', function () {
+  it('trak.io', function () {
+    assert(this.integration.name == 'trak.io');
+  });
+});
+
+describe('#key', function () {
+  it('token', function () {
+    assert(this.integration.key == 'token');
+  });
+});
+
+describe('#defaults', function () {
+  it('initialPageview', function () {
+    assert(this.integration.defaults.initialPageview === true);
+  });
+
+  it('pageview', function () {
+    assert(this.integration.defaults.pageview === true);
+  });
+
+  it('token', function () {
+    assert(this.integration.defaults.token === '');
+  });
 });
 
 describe('initialize', function () {
@@ -24,14 +52,13 @@ describe('initialize', function () {
   });
 
   it('should store options with defaults', function () {
-    var options = analytics._providers[0].options;
-    assert(options.initialPageview);
-    assert(options.pageview);
-    assert(options.token === settings.token);
+    assert(this.options.initialPageview == this.integration.defaults.initialPageview);
+    assert(this.options.pageview == this.integration.defaults.pageview);
+    assert(this.options.token == settings.token);
   });
 });
 
-describe('identify', function () {
+describe('#identify', function () {
   beforeEach(function () {
     analytics._user.clear();
     this.spy = sinon.spy(window.trak.io, 'identify');
@@ -71,7 +98,7 @@ describe('identify', function () {
   });
 });
 
-describe('track', function () {
+describe('#track', function () {
   beforeEach(function () {
     this.spy = sinon.spy(window.trak.io, 'track');
   });
@@ -91,7 +118,7 @@ describe('track', function () {
   });
 });
 
-describe('pageview', function () {
+describe('#pageview', function () {
   beforeEach(function () {
     this.spy = sinon.spy(window.trak.io, 'page_view');
   });
@@ -111,7 +138,7 @@ describe('pageview', function () {
   });
 });
 
-describe('alias', function () {
+describe('#alias', function () {
   beforeEach(function () {
     this.spy = sinon.spy(window.trak.io, 'alias');
   });

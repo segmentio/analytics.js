@@ -22,6 +22,12 @@ before(function (done) {
   when(function () { return window.jstag.bind; }, done);
 });
 
+describe('#name', function () {
+  it('Lytics', function () {
+    assert(this.integration.name == 'Lytics');
+  });
+});
+
 describe('#key', function () {
   it('cid', function () {
     assert(this.integration.key == 'cid');

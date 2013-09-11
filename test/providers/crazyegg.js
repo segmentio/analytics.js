@@ -21,6 +21,12 @@ before(function (done) {
   when(function () { return window.CE2; }, done);
 });
 
+describe('#name', function () {
+  it('CrazyEgg', function () {
+    assert(this.integration.name == 'CrazyEgg');
+  });
+});
+
 describe('#key', function () {
   it('accountNumber', function () {
     assert(this.integration.key == 'accountNumber');

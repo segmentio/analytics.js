@@ -21,6 +21,12 @@ before(function (done) {
   when(function () { return window.GoSquared.DefaultTracker; }, done);
 });
 
+describe('#name', function () {
+  it('GoSquared', function () {
+    assert(this.integration.name == 'GoSquared');
+  });
+});
+
 describe('#key', function () {
   it('siteToken', function () {
     assert(this.integration.key == 'siteToken');

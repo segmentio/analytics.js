@@ -17,7 +17,37 @@ before(function (done) {
   this.spy = sinon.spy();
   analytics.ready(this.spy);
   analytics.initialize({ 'Keen IO': settings });
+  this.integration = analytics._integrations['Keen IO'];
+  this.options = this.integration.options;
   when(function () { return window.Keen.Base64; }, done);
+});
+
+describe('#name', function () {
+  it('Keen IO', function () {
+    assert(this.integration.name == 'Keen IO');
+  });
+});
+
+describe('#defaults', function () {
+  it('initialPageview', function () {
+    assert(this.integration.defaults.initialPageview === true);
+  });
+
+  it('pageview', function () {
+    assert(this.integration.defaults.pageview === true);
+  });
+
+  it('projectId', function () {
+    assert(this.integration.defaults.projectId === '');
+  });
+
+  it('readKey', function () {
+    assert(this.integration.defaults.readKey === '');
+  });
+
+  it('writeKey', function () {
+    assert(this.integration.defaults.writeKey === '');
+  });
 });
 
 describe('#initialize', function () {
@@ -26,12 +56,11 @@ describe('#initialize', function () {
   });
 
   it('should store options with defaults', function () {
-    var options = analytics._providers[0].options;
-    assert(options.projectId == settings.projectId);
-    assert(options.writeKey == settings.writeKey);
-    assert(options.readKey === '');
-    assert(options.pageview === true);
-    assert(options.initialPageview === true);
+    assert(this.options.projectId == settings.projectId);
+    assert(this.options.writeKey == settings.writeKey);
+    assert(this.options.readKey === '');
+    assert(this.options.pageview === true);
+    assert(this.options.initialPageview === true);
   });
 
   it('should pass options to keen', function () {

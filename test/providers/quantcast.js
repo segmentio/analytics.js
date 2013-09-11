@@ -20,6 +20,12 @@ before(function (done) {
   when(function () { return window.__qc; }, done);
 });
 
+describe('#name', function () {
+  it('Quantcast', function () {
+    assert(this.integration.name == 'Quantcast');
+  });
+});
+
 describe('#key', function () {
   it('pCode', function () {
     assert(this.integration.key == 'pCode');

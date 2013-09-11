@@ -3,6 +3,7 @@ describe('Olark', function () {
 
 var analytics = window.analytics || require('analytics')
   , assert = require('assert')
+  , once = require('once')
   , sinon = require('sinon')
   , when = require('when');
 
@@ -11,8 +12,13 @@ var settings = {
 };
 
 function expandThen (fn) {
-  window.olark('api.box.onExpand', fn);
+  window.olark('api.box.onExpand', once(fn));
   window.olark('api.box.expand');
+}
+
+function shrinkThen (fn) {
+  window.olark('api.box.onShrink', once(fn));
+  window.olark('api.box.shrink');
 }
 
 before(function (done) {
@@ -29,6 +35,12 @@ before(function (done) {
 
 after(function () {
   if (this.Event) delete window.Event; // remove phantom.js patch
+});
+
+describe('#name', function () {
+  it('Olark', function () {
+    assert(this.integration.name == 'Olark');
+  });
 });
 
 describe('#key', function () {
@@ -184,10 +196,12 @@ describe('#track', function () {
     this.spy = sinon.spy(window, 'olark');
   });
 
-  afterEach(function () {
+  afterEach(function (done) {
     this.spy.restore();
-    window.olark('api.box.shrink');
     this.options.track = false;
+    shrinkThen(function () {
+      done();
+    });
   });
 
   it('shouldnt send an event by default', function () {
@@ -219,10 +233,12 @@ describe('#pageview', function () {
     this.spy = sinon.spy(window, 'olark');
   });
 
-  afterEach(function () {
+  afterEach(function (done) {
     this.spy.restore();
-    window.olark('api.box.shrink');
     this.options.pageview = true;
+    shrinkThen(function () {
+      done();
+    });
   });
 
   it('shouldnt send an event when the chat isnt open', function () {

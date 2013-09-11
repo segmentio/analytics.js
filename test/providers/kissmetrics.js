@@ -20,6 +20,12 @@ before(function (done) {
   when(function () { return window.KM; }, done);
 });
 
+describe('#name', function () {
+  it('KISSmetrics', function () {
+    assert(this.integration.name == 'KISSmetrics');
+  });
+});
+
 describe('#key', function () {
   it('apiKey', function () {
     assert(this.integration.key == 'apiKey');
@@ -42,7 +48,7 @@ describe('#initialize', function () {
   });
 
   it('should created a queue', function () {
-    assert(window._kmq instanceof Array);
+    assert(window._kmq);
   });
 });
 

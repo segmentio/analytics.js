@@ -21,6 +21,12 @@ before(function (done) {
   when(function () { return window.htk; }, done);
 });
 
+describe('#name', function () {
+  it('HitTail', function () {
+    assert(this.integration.name == 'HitTail');
+  });
+});
+
 describe('#key', function () {
   it('siteId', function () {
     assert(this.integration.key == 'siteId');

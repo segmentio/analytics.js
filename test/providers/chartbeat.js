@@ -22,6 +22,12 @@ before(function (done) {
   when(function () { return window.pSUPERFLY; }, done);
 });
 
+describe('#name', function () {
+  it('Chartbeat', function () {
+    assert(this.integration.name == 'Chartbeat');
+  });
+});
+
 describe('#defaults', function () {
   it('domain', function () {
     assert(this.integration.defaults.domain === '');

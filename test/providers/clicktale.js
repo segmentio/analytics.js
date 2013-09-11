@@ -23,6 +23,12 @@ before(function (done) {
   when(function () { return window.ClickTale; }, done);
 });
 
+describe('#name', function () {
+  it('ClickTale', function () {
+    assert(this.integration.name == 'ClickTale');
+  });
+});
+
 describe('#key', function () {
   it('projectId', function () {
     assert(this.integration.key == 'projectId');

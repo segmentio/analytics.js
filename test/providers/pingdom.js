@@ -22,6 +22,12 @@ before(function (done) {
   when(function () { return window.PRUM_EPISODES; }, done);
 });
 
+describe('#name', function () {
+  it('Pingdom', function () {
+    assert(this.integration.name == 'Pingdom');
+  });
+});
+
 describe('#key', function () {
   it('id', function () {
     assert(this.integration.key == 'id');

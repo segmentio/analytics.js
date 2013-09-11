@@ -21,6 +21,28 @@ before(function (done) {
   when(function () { return window.amplitude.logEvent != stub; }, done);
 });
 
+describe('#name', function () {
+  it('Amplitude', function () {
+    assert(this.integration.name == 'Amplitude');
+  });
+});
+
+describe('#key', function () {
+  it('apiKey', function () {
+    assert(this.integration.key == 'apiKey');
+  });
+});
+
+describe('#defaults', function () {
+  it('apiKey', function () {
+    assert(this.integration.defaults.apiKey === '');
+  });
+
+  it('pageview', function () {
+    assert(this.integration.defaults.pageview === false);
+  });
+});
+
 describe('#initialize', function () {
   it('should call ready', function () {
     assert(this.spy.called);

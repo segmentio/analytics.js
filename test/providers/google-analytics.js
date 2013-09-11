@@ -34,6 +34,12 @@ before(function (done) {
   when(function () { return window.ga != stub; }, done);
 });
 
+describe('#name', function () {
+  it('Google Analytics', function () {
+    assert(this.integration.name == 'Google Analytics');
+  });
+});
+
 describe('#key', function () {
   it('trackingId', function () {
     assert(this.integration.key == 'trackingId');

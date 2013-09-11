@@ -20,6 +20,12 @@ before(function (done) {
   when(function () { return window.LC_API; }, done);
 });
 
+describe('#name', function () {
+  it('LiveChat', function () {
+    assert(this.integration.name == 'LiveChat');
+  });
+});
+
 describe('#key', function () {
   it('license', function () {
     assert(this.integration.key == 'license');

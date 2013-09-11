@@ -20,6 +20,36 @@ before(function (done) {
   when(function () { return window.Intercom; }, done);
 });
 
+describe('#name', function () {
+  it('Intercom', function () {
+    assert(this.integration.name == 'Intercom');
+  });
+});
+
+describe('#key', function () {
+  it('appId', function () {
+    assert(this.integration.key == 'appId');
+  });
+});
+
+describe('#defaults', function () {
+  it('activator', function () {
+    assert(this.integration.defaults.activator === '');
+  });
+
+  it('appId', function () {
+    assert(this.integration.defaults.appId === '');
+  });
+
+  it('counter', function () {
+    assert(this.integration.defaults.counter === true);
+  });
+
+  it('inbox', function () {
+    assert(this.integration.defaults.inbox === false);
+  });
+});
+
 describe('#initialize', function () {
   it('should call ready', function () {
     assert(this.spy.called);

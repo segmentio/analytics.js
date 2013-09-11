@@ -22,6 +22,12 @@ before(function (done) {
   when(function () { return window._errs.push != stub; }, done);
 });
 
+describe('#name', function () {
+  it('Errorception', function () {
+    assert(this.integration.name == 'Errorception');
+  });
+});
+
 describe('#key', function () {
   it('projectId', function () {
     assert(this.integration.key == 'projectId');

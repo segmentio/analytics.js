@@ -5,7 +5,7 @@ describe('Analytics.js', function () {
   // lower timeout for tests
   var timeout = analytics._timeout = 3;
 
-  var Provider = analytics.Provider.extend({
+  var Integration = analytics.Provider.extend({
     name       : 'Test',
     key        : 'key',
     defaults   : {},
@@ -18,7 +18,7 @@ describe('Analytics.js', function () {
     pageview   : function () {},
     alias      : function (newId, originalId) {}
   });
-  analytics.provider(Provider);
+  analytics.provider(Integration);
 
   var options = { 'Test' : 'x' };
 
@@ -28,20 +28,20 @@ describe('Analytics.js', function () {
 
 
   describe('initialize', function () {
-    it('stores enabled providers', function () {
-      analytics._providers = [];
+    it('stores enabled integrations', function () {
+      analytics._integrations = [];
       analytics.initialize(options);
-      expect(analytics._providers.Test instanceof Provider).to.be(true);
+      expect(analytics._integrations.Test instanceof Integration).to.be(true);
     });
 
-    it('doesnt error on unknown provider', function () {
+    it('doesnt error on unknown integration', function () {
       expect(function () {
         analytics.initialize({ 'Unknown' : '' });
       }).not.to.throwException();
     });
 
-    it('sends options to provider.initialize', function () {
-      var spy = sinon.spy(Provider.prototype, 'initialize');
+    it('sends options to integration.initialize', function () {
+      var spy = sinon.spy(Integration.prototype, 'initialize');
       analytics.initialize(options);
       expect(spy.calledWith(sinon.match({ key : 'x' }))).to.be(true);
       spy.restore();
@@ -111,13 +111,13 @@ describe('Analytics.js', function () {
         analytics.initialize(options);
 
         // Once initialized, the call should queue.
-        var enqueueSpy = sinon.spy(Provider.prototype, 'enqueue');
+        var enqueueSpy = sinon.spy(Integration.prototype, 'enqueue');
         analytics[method].apply(analytics, args);
         expect(enqueueSpy.firstCall.args).to.eql([method, args]);
         enqueueSpy.restore();
 
         // After a timeout, expect the queue to drain.
-        var methodSpy = sinon.spy(Provider.prototype, method);
+        var methodSpy = sinon.spy(Integration.prototype, method);
         setTimeout(function () {
           expect(methodSpy.firstCall.args).to.eql(args);
           methodSpy.restore();
@@ -148,21 +148,21 @@ describe('Analytics.js', function () {
   describe('identify', function () {
 
     it('is called on providers', function () {
-      var spy = sinon.spy(Provider.prototype, 'identify');
+      var spy = sinon.spy(Integration.prototype, 'identify');
       analytics.identify();
       expect(spy.called).to.be(true);
       spy.restore();
     });
 
     it('sends userId along', function () {
-      var spy = sinon.spy(Provider.prototype, 'identify');
+      var spy = sinon.spy(Integration.prototype, 'identify');
       analytics.identify(test.userId);
       expect(spy.calledWith(test.userId));
       spy.restore();
     });
 
     it('sends a clone of traits along', function  () {
-      var spy = sinon.spy(Provider.prototype, 'identify');
+      var spy = sinon.spy(Integration.prototype, 'identify');
       analytics.identify(test.userId, test.traits);
       expect(spy.args[0][1]).not.to.equal(test.traits);
       expect(spy.args[0][1]).to.eql(test.traits);
@@ -170,7 +170,7 @@ describe('Analytics.js', function () {
     });
 
     it('sends a clone of context along', function  () {
-      var spy = sinon.spy(Provider.prototype, 'identify');
+      var spy = sinon.spy(Integration.prototype, 'identify');
       analytics.identify(test.userId, test.traits, test.context);
       expect(spy.args[0][2]).not.to.equal(test.context);
       expect(spy.args[0][2]).to.eql(test.context);
@@ -204,7 +204,7 @@ describe('Analytics.js', function () {
     });
 
     it('is turned off by the all providers flag', function  () {
-      var spy     = sinon.spy(Provider.prototype, 'identify')
+      var spy     = sinon.spy(Integration.prototype, 'identify')
         , context = {
             providers: { all: false }
           };
@@ -214,8 +214,8 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
-    it('is turned off by the single provider flag', function  () {
-      var spy     = sinon.spy(Provider.prototype, 'identify')
+    it('is turned off by the single integration flag', function  () {
+      var spy     = sinon.spy(Integration.prototype, 'identify')
         , context = {
             providers: { Test: false }
           };
@@ -227,7 +227,7 @@ describe('Analytics.js', function () {
 
     it('parses valid strings into dates', function () {
       var type = require('component-type')
-        , spy  = sinon.spy(Provider.prototype, 'identify')
+        , spy  = sinon.spy(Integration.prototype, 'identify')
         , date = 'Dec 07 2012';
 
       analytics.identify({
@@ -243,7 +243,7 @@ describe('Analytics.js', function () {
     });
 
     it('keeps normal dates the same', function () {
-      var spy  = sinon.spy(Provider.prototype, 'identify')
+      var spy  = sinon.spy(Integration.prototype, 'identify')
         , date = new Date();
 
       analytics.identify({
@@ -258,7 +258,7 @@ describe('Analytics.js', function () {
     });
 
     it('parses seconds into dates', function () {
-      var spy     = sinon.spy(Provider.prototype, 'identify')
+      var spy     = sinon.spy(Integration.prototype, 'identify')
         , date    = new Date()
         , seconds = date.getTime()/1000;
 
@@ -274,7 +274,7 @@ describe('Analytics.js', function () {
     });
 
     it('parses milliseconds into dates', function () {
-      var spy          = sinon.spy(Provider.prototype, 'identify')
+      var spy          = sinon.spy(Integration.prototype, 'identify')
         , date         = new Date()
         , milliseconds = date.getTime();
 
@@ -291,7 +291,7 @@ describe('Analytics.js', function () {
 
     it('calls with all stored traits', function () {
       analytics._user.clear();
-      var spy    = sinon.spy(Provider.prototype, 'identify')
+      var spy    = sinon.spy(Integration.prototype, 'identify')
         , traits = test.traits;
 
       analytics.identify({ name : traits.name });
@@ -316,7 +316,7 @@ describe('Analytics.js', function () {
 
     it('overwrites stored traits', function () {
       analytics._user.clear();
-      var spy    = sinon.spy(Provider.prototype, 'identify')
+      var spy    = sinon.spy(Integration.prototype, 'identify')
         , traits = {
             name : 'Zeus',
             email : 'zeus@email.com'
@@ -338,21 +338,21 @@ describe('Analytics.js', function () {
   describe('group', function () {
 
     it('is called on providers', function () {
-      var spy = sinon.spy(Provider.prototype, 'group');
+      var spy = sinon.spy(Integration.prototype, 'group');
       analytics.group();
       expect(spy.called).to.be(true);
       spy.restore();
     });
 
     it('sends groupId along', function () {
-      var spy = sinon.spy(Provider.prototype, 'group');
+      var spy = sinon.spy(Integration.prototype, 'group');
       analytics.group(test.groupId);
       expect(spy.calledWith(test.groupId));
       spy.restore();
     });
 
     it('sends a clone of properties along', function  () {
-      var spy = sinon.spy(Provider.prototype, 'group');
+      var spy = sinon.spy(Integration.prototype, 'group');
       analytics.group(test.groupId, test.groupProperties);
       expect(spy.args[0][1]).not.to.equal(test.groupProperties);
       expect(spy.args[0][1]).to.eql(test.groupProperties);
@@ -360,7 +360,7 @@ describe('Analytics.js', function () {
     });
 
     it('sends a clone of context along', function  () {
-      var spy = sinon.spy(Provider.prototype, 'group');
+      var spy = sinon.spy(Integration.prototype, 'group');
       analytics.group(test.groupId, test.groupProperties, test.context);
       expect(spy.args[0][2]).not.to.equal(test.context);
       expect(spy.args[0][2]).to.eql(test.context);
@@ -393,7 +393,7 @@ describe('Analytics.js', function () {
     });
 
     it('is turned off by the all providers flag', function  () {
-      var spy     = sinon.spy(Provider.prototype, 'group')
+      var spy     = sinon.spy(Integration.prototype, 'group')
         , context = { providers: { all: false } };
 
       analytics.group(test.groupId, test.group, context);
@@ -401,8 +401,8 @@ describe('Analytics.js', function () {
       spy.restore();
     });
 
-    it('is turned off by the single provider flag', function  () {
-      var spy     = sinon.spy(Provider.prototype, 'group')
+    it('is turned off by the single integration flag', function  () {
+      var spy     = sinon.spy(Integration.prototype, 'group')
         , context = { providers: { Test: false } };
 
       analytics.group(test.groupId, test.group, context);
@@ -412,7 +412,7 @@ describe('Analytics.js', function () {
 
     it('parses valid strings into dates', function () {
       var type = require('component-type')
-        , spy  = sinon.spy(Provider.prototype, 'group')
+        , spy  = sinon.spy(Integration.prototype, 'group')
         , date = 'Dec 07 2012';
 
       analytics.group(test.groupId, { created : date });
@@ -424,7 +424,7 @@ describe('Analytics.js', function () {
     });
 
     it('keeps normal dates the same', function () {
-      var spy  = sinon.spy(Provider.prototype, 'group')
+      var spy  = sinon.spy(Integration.prototype, 'group')
         , date = new Date();
 
       analytics.group(test.groupId, { created : date });
@@ -435,7 +435,7 @@ describe('Analytics.js', function () {
     });
 
     it('parses seconds into dates', function () {
-      var spy     = sinon.spy(Provider.prototype, 'group')
+      var spy     = sinon.spy(Integration.prototype, 'group')
         , date    = new Date()
         , seconds = date.getTime()/1000;
 
@@ -447,7 +447,7 @@ describe('Analytics.js', function () {
     });
 
     it('parses milliseconds into dates', function () {
-      var spy          = sinon.spy(Provider.prototype, 'group')
+      var spy          = sinon.spy(Integration.prototype, 'group')
         , date         = new Date()
         , milliseconds = date.getTime();
 
@@ -464,21 +464,21 @@ describe('Analytics.js', function () {
   describe('track', function () {
 
     it('is called on providers', function () {
-      var spy = sinon.spy(Provider.prototype, 'track');
+      var spy = sinon.spy(Integration.prototype, 'track');
       analytics.track();
       expect(spy.called).to.be(true);
       spy.restore();
     });
 
     it('sends event name along', function () {
-      var spy = sinon.spy(Provider.prototype, 'track');
+      var spy = sinon.spy(Integration.prototype, 'track');
       analytics.track('party');
       expect(spy.calledWith('party')).to.be(true);
       spy.restore();
     });
 
     it('sends a clone of properties along', function  () {
-      var spy = sinon.spy(Provider.prototype, 'track');
+      var spy = sinon.spy(Integration.prototype, 'track');
       analytics.track('party', test.properties);
       expect(spy.args[0][1]).not.to.equal(test.properties);
       expect(spy.args[0][1]).to.eql(test.properties);
@@ -486,7 +486,7 @@ describe('Analytics.js', function () {
     });
 
     it('sends a clone of context along', function  () {
-      var spy = sinon.spy(Provider.prototype, 'track');
+      var spy = sinon.spy(Integration.prototype, 'track');
       analytics.track(test.eventName, test.properties, test.context);
       expect(spy.args[0][2]).not.to.equal(test.context);
       expect(spy.args[0][2]).to.eql(test.context);
@@ -527,7 +527,7 @@ describe('Analytics.js', function () {
     var spy;
 
     beforeEach(function () {
-      spy = sinon.spy(Provider.prototype, 'track');
+      spy = sinon.spy(Integration.prototype, 'track');
       window.location.hash = '';
     });
 
@@ -671,7 +671,7 @@ describe('Analytics.js', function () {
       , template = '<form action="/test/server/mock.html" target="_blank"><input type="submit" /></form>';
 
     beforeEach(function () {
-      spy = sinon.spy(Provider.prototype, 'track');
+      spy = sinon.spy(Integration.prototype, 'track');
       window.location.hash = '';
     });
 
@@ -788,21 +788,21 @@ describe('Analytics.js', function () {
   describe('pageview', function () {
 
     it('gets called on providers', function () {
-      var spy = sinon.spy(Provider.prototype, 'pageview');
+      var spy = sinon.spy(Integration.prototype, 'pageview');
       analytics.pageview();
       expect(spy.called).to.be(true);
       spy.restore();
     });
 
     it('sends a url along', function  () {
-      var spy = sinon.spy(Provider.prototype, 'track');
+      var spy = sinon.spy(Integration.prototype, 'track');
       analytics.track(test.url);
       expect(spy.calledWith(test.url)).to.be(true);
       spy.restore();
     });
 
     it('sends a clone of context along', function  () {
-      var spy = sinon.spy(Provider.prototype, 'track');
+      var spy = sinon.spy(Integration.prototype, 'track');
       analytics.track(test.url,test.context);
       expect(spy.args[0][1]).not.to.equal(test.context);
       expect(spy.args[0][1]).to.eql(test.context);
@@ -816,7 +816,7 @@ describe('Analytics.js', function () {
   describe('alias', function () {
 
     it('gets called on providers', function () {
-      var spy = sinon.spy(Provider.prototype, 'alias');
+      var spy = sinon.spy(Integration.prototype, 'alias');
       analytics.alias();
       expect(spy.called).to.be(true);
       spy.restore();

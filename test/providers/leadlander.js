@@ -20,6 +20,12 @@ before(function (done) {
   when(function () { return window.trackalyzer; }, done);
 });
 
+describe('#name', function () {
+  it('LeadLander', function () {
+    assert(this.integration.name == 'LeadLander');
+  });
+});
+
 describe('#key', function () {
   it('llactid', function () {
     assert(this.integration.key == 'llactid');

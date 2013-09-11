@@ -20,6 +20,12 @@ before(function (done) {
   when(function () { return window._lnq; }, done);
 });
 
+describe('#name', function () {
+  it('Preact', function () {
+    assert(this.integration.name == 'Preact');
+  });
+});
+
 describe('#key', function () {
   it('projectCode', function () {
     assert(this.integration.key == 'projectCode');

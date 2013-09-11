@@ -20,6 +20,12 @@ before(function (done) {
   when(function () { return window.UserfoxTracker; }, done);
 });
 
+describe('#name', function () {
+  it('userfox', function () {
+    assert(this.integration.name == 'userfox');
+  });
+});
+
 describe('#key', function () {
   it('clientId', function () {
     assert(this.integration.key == 'clientId');

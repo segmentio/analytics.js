@@ -19,9 +19,31 @@ before(function (done) {
   this.spy = sinon.spy();
   analytics.ready(this.spy);
   analytics.initialize({ 'awe.sm': settings });
-  this.integration = analytics._providers[0];
+  this.integration = analytics._integrations['awe.sm'];
   this.options = this.integration.options;
   when(function () { return window.AWESM._exists; }, done);
+});
+
+describe('#name', function () {
+  it('awe.sm', function () {
+    assert(this.integration.name == 'awe.sm');
+  });
+});
+
+describe('#key', function () {
+  it('apiKey', function () {
+    assert(this.integration.key == 'apiKey');
+  });
+});
+
+describe('#defaults', function () {
+  it('apiKey', function () {
+    assert(this.integration.defaults.apiKey === '');
+  });
+
+  it('events', function () {
+    assert(equal(this.integration.defaults.events, {}));
+  });
 });
 
 describe('#intialize', function () {

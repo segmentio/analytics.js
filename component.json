@@ -94,6 +94,7 @@
     "yields/slug": "1.1.0"
   },
   "development": {
+    "component/once": "*",
     "ianstormtaylor/assert": "*",
     "ianstormtaylor/sinon": "*",
     "ianstormtaylor/trigger-event": "*",

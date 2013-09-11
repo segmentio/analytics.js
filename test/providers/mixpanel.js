@@ -20,6 +20,12 @@ before(function (done) {
   when(function () { return window.mixpanel.config; }, done);
 });
 
+describe('#name', function () {
+  it('Mixpanel', function () {
+    assert(this.integration.name == 'Mixpanel');
+  });
+});
+
 describe('#key', function () {
   it('token', function () {
     assert(this.integration.key == 'token');

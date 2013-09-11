@@ -21,6 +21,12 @@ before(function (done) {
   when(function () { return window._veroq.push != stub; }, done);
 });
 
+describe('#name', function () {
+  it('Vero', function () {
+    assert(this.integration.name == 'Vero');
+  });
+});
+
 describe('#key', function () {
   it('apiKey', function () {
     assert(this.integration.key == 'apiKey');

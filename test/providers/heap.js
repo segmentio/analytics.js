@@ -22,6 +22,12 @@ before(function (done) {
   when(function () { return window.heap != stub; }, done);
 });
 
+describe('#name', function () {
+  it('Heap', function () {
+    assert(this.integration.name == 'Heap');
+  });
+});
+
 describe('#key', function () {
   it('apiKey', function () {
     assert(this.integration.key == 'apiKey');

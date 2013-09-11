@@ -15,7 +15,31 @@ before(function (done) {
   this.spy = sinon.spy();
   analytics.ready(this.spy);
   analytics.initialize({ Tapstream: settings });
+  this.integration = analytics._integrations.Tapstream;
+  this.options = this.integration.options;
   when(function () { return window._tsq._api; }, done);
+});
+
+describe('#name', function () {
+  it('Tapstream', function () {
+    assert(this.integration.name == 'Tapstream');
+  });
+});
+
+describe('#key', function () {
+  it('accountName', function () {
+    assert(this.integration.key == 'accountName');
+  });
+});
+
+describe('#defaults', function () {
+  it('accountName', function () {
+    assert(this.integration.defaults.accountName === '');
+  });
+
+  it('initialPageview', function () {
+    assert(this.integration.defaults.initialPageview === true);
+  });
 });
 
 describe('#initialize', function () {
@@ -24,9 +48,8 @@ describe('#initialize', function () {
   });
 
   it('should store options with defaults', function () {
-    var options = analytics._providers[0].options;
-    assert(options.accountName == settings.accountName);
-    assert(options.initialPageview);
+    assert(this.options.accountName == settings.accountName);
+    assert(this.options.initialPageview == this.integration.defaults.initialPageview);
   });
 
   it('should pass options to Tapstream', function () {

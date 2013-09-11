@@ -22,6 +22,12 @@ before(function (done) {
   when(function () { return window._gauges.push != stub; }, done);
 });
 
+describe('#name', function () {
+  it('Gauges', function () {
+    assert(this.integration.name == 'Gauges');
+  });
+});
+
 describe('#key', function () {
   it('siteId', function () {
     assert(this.integration.key == 'siteId');

@@ -22,6 +22,12 @@ before(function (done) {
   when(function () { return window._hsq.push != stub; }, done);
 });
 
+describe('#name', function () {
+  it('HubSpot', function () {
+    assert(this.integration.name == 'HubSpot');
+  });
+});
+
 describe('#key', function () {
   it('portalId', function () {
     assert(this.integration.key == 'portalId');

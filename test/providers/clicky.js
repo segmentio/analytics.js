@@ -19,9 +19,27 @@ before(function (done) {
   this.spy = sinon.spy();
   analytics.ready(this.spy);
   analytics.initialize({ Clicky: settings });
-  this.integration = analytics._providers[0];
+  this.integration = analytics._integrations.Clicky;
   this.options = this.integration.options;
   when(function () { return window.clicky; }, done);
+});
+
+describe('#name', function () {
+  it('Clicky', function () {
+    assert(this.integration.name == 'Clicky');
+  });
+});
+
+describe('#key', function () {
+  it('siteId', function () {
+    assert(this.integration.key == 'siteId');
+  });
+});
+
+describe('#defaults', function () {
+  it('siteId', function () {
+    assert(this.integration.defaults.siteId === null);
+  });
 });
 
 describe('#initialize', function () {

@@ -22,6 +22,12 @@ before(function (done) {
   when(function () { return window._bugHerd; }, done);
 });
 
+describe('#name', function () {
+  it('BugHerd', function () {
+    assert(this.integration.name == 'BugHerd');
+  });
+});
+
 describe('#key', function () {
   it('apiKey', function () {
     assert(this.integration.key == 'apiKey');

@@ -20,6 +20,12 @@ before(function (done) {
   when(function () { return window._pa.track; }, done);
 });
 
+describe('#name', function () {
+  it('Perfect Audience', function () {
+    assert(this.integration.name == 'Perfect Audience');
+  });
+});
+
 describe('#key', function () {
   it('siteId', function () {
     assert(this.integration.key == 'siteId');

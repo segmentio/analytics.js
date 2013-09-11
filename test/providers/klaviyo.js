@@ -21,6 +21,12 @@ before(function (done) {
   when(function () { return window._learnq.push != stub; }, done);
 });
 
+describe('#name', function () {
+  it('Klaviyo', function () {
+    assert(this.integration.name == 'Klaviyo');
+  });
+});
+
 describe('#key', function () {
   it('apiKey', function () {
     assert(this.integration.key == 'apiKey');

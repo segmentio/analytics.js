@@ -20,6 +20,12 @@ before(function (done) {
   when(function () { return window.SnapABug; }, done);
 });
 
+describe('#name', function () {
+  it('SnapEngage', function () {
+    assert(this.integration.name == 'SnapEngage');
+  });
+});
+
 describe('#key', function () {
   it('apiKey', function () {
     assert(this.integration.key == 'apiKey');

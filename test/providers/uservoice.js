@@ -24,6 +24,12 @@ before(function (done) {
   when(function () { return window.UserVoice.account; }, done);
 });
 
+describe('#name', function () {
+  it('UserVoice', function () {
+    assert(this.integration.name == 'UserVoice');
+  });
+});
+
 describe('#key', function () {
   it('widgetId', function () {
     assert(this.integration.key == 'widgetId');

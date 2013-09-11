@@ -20,6 +20,12 @@ before(function (done) {
   when(function () { return window.woopra.loaded; }, done);
 });
 
+describe('#name', function () {
+  it('Woopra', function () {
+    assert(this.integration.name == 'Woopra');
+  });
+});
+
 describe('#key', function () {
   it('domain', function () {
     assert(this.integration.key == 'domain');

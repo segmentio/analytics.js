@@ -25,6 +25,12 @@ before(function (done) {
   tick(done);
 });
 
+describe('#name', function () {
+  it('Visual Website Optimizer', function () {
+    assert(this.integration.name == 'Visual Website Optimizer');
+  });
+});
+
 after(function () {
   this.identifySpy.restore();
 });

@@ -29,6 +29,12 @@ after(function () {
   this.identifySpy.restore();
 });
 
+describe('#name', function () {
+  it('Optimizely', function () {
+    assert(this.integration.name == 'Optimizely');
+  });
+});
+
 describe('#defaults', function () {
   it('variations', function () {
     assert(this.integration.defaults.variations === true);

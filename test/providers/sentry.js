@@ -20,6 +20,12 @@ before(function (done) {
   when(function () { return window.Raven; }, done);
 });
 
+describe('#name', function () {
+  it('Sentry', function () {
+    assert(this.integration.name == 'Sentry');
+  });
+});
+
 describe('#key', function () {
   it('config', function () {
     assert(this.integration.key == 'config');

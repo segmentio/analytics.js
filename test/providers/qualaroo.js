@@ -21,6 +21,12 @@ before(function (done) {
   when(function () { return window.KI; }, done);
 });
 
+describe('#name', function () {
+  it('Qualaroo', function () {
+    assert(this.integration.name == 'Qualaroo');
+  });
+});
+
 describe('#defaults', function () {
   it('customerId', function () {
     assert(this.integration.defaults.customerId === '');

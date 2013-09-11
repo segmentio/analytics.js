@@ -21,6 +21,12 @@ before(function (done) {
   when(function () { return window._cio.pageHasLoaded; }, done);
 });
 
+describe('#name', function () {
+  it('Customer.io', function () {
+    assert(this.integration.name == 'Customer.io');
+  });
+});
+
 describe('#key', function () {
   it('siteId', function () {
     assert(this.integration.key == 'siteId');

@@ -21,6 +21,12 @@ before(function (done) {
   when(function () { return window.COMSCORE; }, done);
 });
 
+describe('#name', function () {
+  it('comScore', function () {
+    assert(this.integration.name == 'comScore');
+  });
+});
+
 describe('#key', function () {
   it('c2', function () {
     assert(this.integration.key == 'c2');

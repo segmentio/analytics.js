@@ -21,6 +21,12 @@ before(function (done) {
   when(function () { return window.GSFN; }, done);
 });
 
+describe('#name', function () {
+  it('Get Satisfaction', function () {
+    assert(this.integration.name == 'Get Satisfaction');
+  });
+});
+
 describe('#key', function () {
   it('widgetId', function () {
     assert(this.integration.key == 'widgetId');

@@ -21,6 +21,12 @@ before(function (done) {
   when(function () { return window.improvely.identify; }, done);
 });
 
+describe('#name', function () {
+  it('Improvely', function () {
+    assert(this.integration.name == 'Improvely');
+  });
+});
+
 describe('#defaults', function () {
   it('domain', function () {
     assert(this.integration.defaults.domain === '');

@@ -24,6 +24,22 @@ before(function (done) {
   when(function () { return window.__adroll; }, done);
 });
 
+describe('#name', function () {
+  it('AdRoll', function () {
+    assert(this.integration.name == 'AdRoll');
+  });
+});
+
+describe('#defaults', function () {
+  it('advId', function () {
+    assert(this.integration.defaults.advId === '');
+  });
+
+  it('pixId', function () {
+    assert(this.integration.defaults.pixId === '');
+  });
+});
+
 describe('#initialize', function () {
   it('should call ready', function () {
     assert(this.spy.called);

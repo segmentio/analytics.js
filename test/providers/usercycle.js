@@ -21,6 +21,12 @@ before(function (done) {
   when(function () { return window._uc.push != stub; }, done);
 });
 
+describe('#name', function () {
+  it('USERcycle', function () {
+    assert(this.integration.name == 'USERcycle');
+  });
+});
+
 describe('#key', function () {
   it('key', function () {
     assert(this.integration.key == 'key');

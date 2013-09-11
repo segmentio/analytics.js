@@ -21,6 +21,12 @@ before(function (done) {
   when(function () { return window._fxm.appId; }, done);
 });
 
+describe('#name', function () {
+  it('FoxMetrics', function () {
+    assert(this.integration.name == 'FoxMetrics');
+  });
+});
+
 describe('#key', function () {
   it('appId', function () {
     assert(this.integration.key == 'appId');

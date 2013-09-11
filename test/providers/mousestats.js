@@ -20,6 +20,24 @@ before(function (done) {
   when(function () { return window.msae; }, done);
 });
 
+describe('#name', function () {
+  it('MouseStats', function () {
+    assert(this.integration.name == 'MouseStats');
+  });
+});
+
+describe('#key', function () {
+  it('accountNumber', function () {
+    assert(this.integration.key == 'accountNumber');
+  });
+});
+
+describe('#defaults', function () {
+  it('accountNumber', function () {
+    assert(this.integration.defaults.accountNumber === '');
+  });
+});
+
 describe('#initialize', function () {
   it('should call ready', function () {
     assert(this.spy.called);

@@ -1,4 +1,4 @@
-0.13.0 - September 10, 2013
+0.13.0 - September 11, 2013
 ---------------------------
 * converted all integrations and their tests to a cleaner format
 * renamed all instances of "provider" to "integration"

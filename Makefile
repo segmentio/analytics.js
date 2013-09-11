@@ -19,13 +19,13 @@ clean:
 test: build server
 	sleep 1
 	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:$(PORT)/core
-	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:$(PORT)/providers
+	$(PHANTOM) $(PHANTOM_OPTS) http://localhost:$(PORT)/integrations
 	make kill
 
 test-browser: build server
 	sleep 1
 	open http://localhost:$(PORT)/core
-	open http://localhost:$(PORT)/providers
+	open http://localhost:$(PORT)/integrations
 
 release: clean build analytics.js server
 	sleep 1

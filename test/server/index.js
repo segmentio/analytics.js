@@ -22,7 +22,7 @@ var app = express()
 app.get('/:type?', function (req, res, next) {
   var type = req.params.type || 'min';
   res.render('index.html', {
-    providers: type == 'providers' || type == 'min',
+    integrations: type == 'integrations' || type == 'min',
     core: type == 'core' || type == 'min',
     min: type == 'min'
   });

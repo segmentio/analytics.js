@@ -5,7 +5,7 @@ describe('Analytics.js', function () {
   // lower timeout for tests
   var timeout = analytics._timeout = 3;
 
-  var Integration = analytics.Provider.extend({
+  var Integration = analytics.Integration.extend({
     name       : 'Test',
     key        : 'key',
     defaults   : {},
@@ -18,7 +18,7 @@ describe('Analytics.js', function () {
     pageview   : function () {},
     alias      : function (newId, originalId) {}
   });
-  analytics.provider(Integration);
+  analytics.integration(Integration);
 
   var options = { 'Test' : 'x' };
 

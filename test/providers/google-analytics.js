@@ -6,6 +6,24 @@ var analytics = window.analytics || require('analytics')
   , sinon = require('sinon')
   , when = require('when');
 
+describe('#name', function () {
+  it('Google Analytics', function () {
+    assert(this.integration.name == 'Google Analytics');
+  });
+});
+
+describe('#key', function () {
+  it('trackingId', function () {
+    assert(this.integration.key == 'trackingId');
+  });
+});
+
+describe('#defaults', function () {
+  it('trackingId', function () {
+    assert(this.integration.defaults.trackingId === '');
+  });
+});
+
 describe('Universal', function () {
 
 var settings = {
@@ -32,24 +50,6 @@ before(function (done) {
   this.options = this.integration.options;
   var stub = window.ga;
   when(function () { return window.ga != stub; }, done);
-});
-
-describe('#name', function () {
-  it('Google Analytics', function () {
-    assert(this.integration.name == 'Google Analytics');
-  });
-});
-
-describe('#key', function () {
-  it('trackingId', function () {
-    assert(this.integration.key == 'trackingId');
-  });
-});
-
-describe('#defaults', function () {
-  it('trackingId', function () {
-    assert(this.integration.defaults.trackingId === '');
-  });
 });
 
 describe('#initialize', function () {
@@ -209,7 +209,6 @@ describe('#pageview', function () {
 
 describe('Classic', function () {
 
-
 var settings = {
   trackingId: 'UA-27033709-5',
   enhancedLinkAttribution: true,
@@ -232,18 +231,6 @@ before(function (done) {
   this.options = this.integration.options;
   var stub = window._gaq.push;
   when(function () { return window._gaq.push != stub; }, done);
-});
-
-describe('#key', function () {
-  it('trackingId', function () {
-    assert(this.integration.key == 'trackingId');
-  });
-});
-
-describe('#defaults', function () {
-  it('trackingId', function () {
-    assert(this.integration.defaults.trackingId === '');
-  });
 });
 
 describe('#initialize', function () {

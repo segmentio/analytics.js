@@ -42,7 +42,6 @@ it('should be a list of all our providers', function () {
   assert(Providers['Quantcast']);
   assert(Providers['Sentry']);
   assert(Providers['SnapEngage']);
-  assert(Providers['Spinnakr']);
   assert(Providers['Tapstream']);
   assert(Providers['trak.io']);
   assert(Providers['USERcycle']);

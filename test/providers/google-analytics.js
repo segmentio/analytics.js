@@ -6,24 +6,6 @@ var analytics = window.analytics || require('analytics')
   , sinon = require('sinon')
   , when = require('when');
 
-describe('#name', function () {
-  it('Google Analytics', function () {
-    assert(this.integration.name == 'Google Analytics');
-  });
-});
-
-describe('#key', function () {
-  it('trackingId', function () {
-    assert(this.integration.key == 'trackingId');
-  });
-});
-
-describe('#defaults', function () {
-  it('trackingId', function () {
-    assert(this.integration.defaults.trackingId === '');
-  });
-});
-
 describe('Universal', function () {
 
 var settings = {
@@ -50,6 +32,56 @@ before(function (done) {
   this.options = this.integration.options;
   var stub = window.ga;
   when(function () { return window.ga != stub; }, done);
+});
+
+describe('#name', function () {
+  it('Google Analytics', function () {
+    assert(this.integration.name == 'Google Analytics');
+  });
+});
+
+describe('#key', function () {
+  it('trackingId', function () {
+    assert(this.integration.key == 'trackingId');
+  });
+});
+
+describe('#defaults', function () {
+  it('anonymizeIp', function () {
+    assert(this.integration.defaults.anonymizeIp === false);
+  });
+
+  it('domain', function () {
+    assert(this.integration.defaults.domain === 'none');
+  });
+
+  it('doubleClick', function () {
+    assert(this.integration.defaults.doubleClick === false);
+  });
+
+  it('enhancedLinkAttribution', function () {
+    assert(this.integration.defaults.enhancedLinkAttribution === false);
+  });
+
+  it('ignoreReferrer', function () {
+    assert(this.integration.defaults.ignoreReferrer === null);
+  });
+
+  it('initialPageview', function () {
+    assert(this.integration.defaults.initialPageview === true);
+  });
+
+  it('siteSpeedSampleRate', function () {
+    assert(this.integration.defaults.siteSpeedSampleRate === null);
+  });
+
+  it('trackingId', function () {
+    assert(this.integration.defaults.trackingId === '');
+  });
+
+  it('universalClient', function () {
+    assert(this.integration.defaults.universalClient === false);
+  });
 });
 
 describe('#initialize', function () {

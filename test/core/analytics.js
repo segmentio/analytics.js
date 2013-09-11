@@ -1,23 +1,23 @@
 describe('Analytics.js', function () {
 
-  var trigger = require('trigger-event');
+  var trigger = require('trigger-event')
+    , integration = require('analytics/lib/integration');
 
   // lower timeout for tests
   var timeout = analytics._timeout = 3;
 
-  var Integration = analytics.Integration.extend({
-    name       : 'Test',
-    key        : 'key',
-    defaults   : {},
-    initialize : function (options, ready) {
-      setTimeout(ready, timeout);
-    },
-    identify   : function (userId, traits) {},
-    group      : function (groupId, properties) {},
-    track      : function (event, properties) {},
-    pageview   : function () {},
-    alias      : function (newId, originalId) {}
-  });
+  var Integration = integration('Test');
+  Integration.prototype.key = 'key';
+  Integration.prototype.defaults = {};
+  Integration.prototype.initialize = function (options, ready) {
+    setTimeout(ready, timeout);
+  };
+  Integration.prototype.identify = function (userId, traits) {};
+  Integration.prototype.group = function (groupId, properties) {};
+  Integration.prototype.track = function (event, properties) {};
+  Integration.prototype.pageview = function () {};
+  Integration.prototype.alias = function (newId, originalId) {};
+
   analytics.integration(Integration);
 
   var options = { 'Test' : 'x' };

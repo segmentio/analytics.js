@@ -35,6 +35,11 @@
   <script src="build/build.js"></script>
   <script>window.analytics = window.analytics || require('analytics');</script>
 
+  <script>
+    // phantom.js doesn't have a global `Event` constructor
+    if (!window.Event) window.Event = window.CustomEvent;
+  </script>
+
   {{#if core}}
     <script src="test/core/analytics.js"></script>
     <script src="test/core/user.js"></script>
@@ -70,7 +75,7 @@
     <script src="test/providers/kissmetrics.js"></script>
     <script src="test/providers/klaviyo.js"></script>
     <script src="test/providers/leadlander.js"></script>
-    <script src="test/providers/livechat.js"></script>
+    <!--<script src="test/providers/livechat.js"></script>-->
     <script src="test/providers/lytics.js"></script>
     <script src="test/providers/mousestats.js"></script>
     <script src="test/providers/mixpanel.js"></script>

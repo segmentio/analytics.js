@@ -22,8 +22,6 @@ function shrinkThen (fn) {
 }
 
 before(function (done) {
-  // phantom.js doesn't have a global `Event` constructor
-  if (!window.Event) this.Event = window.Event = window.CustomEvent;
   this.timeout(10000);
   this.spy = sinon.spy();
   analytics.ready(this.spy);
@@ -31,10 +29,6 @@ before(function (done) {
   this.integration = analytics._integrations.Olark;
   this.options = this.integration.options;
   when(function () { return window.__get_olark_key; }, done);
-});
-
-after(function () {
-  if (this.Event) delete window.Event; // remove phantom.js patch
 });
 
 describe('#name', function () {

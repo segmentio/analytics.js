@@ -11,6 +11,7 @@ var settings = {
 };
 
 before(function (done) {
+  this.timeout(10000);
   this.spy = sinon.spy();
   analytics.ready(this.spy);
   analytics.initialize({ Spinnakr: settings });

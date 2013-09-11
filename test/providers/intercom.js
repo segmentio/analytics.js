@@ -123,7 +123,7 @@ describe('#identify', function () {
       app_id: settings.appId,
       user_id: this.id,
       widget: {
-        activator: '#Intercom',
+        activator: '#IntercomDefaultWidget',
         use_counter: true
       }
     }));

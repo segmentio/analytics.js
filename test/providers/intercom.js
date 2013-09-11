@@ -7,7 +7,7 @@ var analytics = window.analytics || require('analytics')
   , when = require('when');
 
 var settings = {
-  appId: '76e6ba271646e2e7a237532c9f1ef7a549f7e997'
+  appId: 'e2a1655e0444b4cb3f5e593bd35b0602aa1039ae'
 };
 
 before(function (done) {
@@ -15,7 +15,7 @@ before(function (done) {
   this.spy = sinon.spy();
   analytics.ready(this.spy);
   analytics.initialize({ Intercom: settings });
-  this.integration = analytics._providers[0];
+  this.integration = analytics._integrations.Intercom;
   this.options = this.integration.options;
   when(function () { return window.Intercom; }, done);
 });
@@ -47,17 +47,23 @@ describe('#identify', function () {
   });
 
   it('should call boot the first time and update the second', function () {
-    analytics.identify(this.id, { email: 'email@example.com' });
+    var date = new Date();
+    analytics.identify(this.id, {
+      email: 'email@example.com',
+      created: date
+    });
     assert(this.stub.calledWith('boot', {
       app_id: settings.appId,
       email: 'email@example.com',
-      user_id: this.id
+      user_id: this.id,
+      created_at: Math.floor(date / 1000)
     }));
     analytics.identify(this.id);
     assert(this.stub.calledWith('update', {
       app_id: settings.appId,
       email: 'email@example.com',
-      user_id: this.id
+      user_id: this.id,
+      created_at: Math.floor(date / 1000)
     }));
   });
 
@@ -79,8 +85,8 @@ describe('#identify', function () {
     assert(this.stub.calledWith('boot', {
       app_id: settings.appId,
       user_id: this.id,
-      created_at: Math.floor(date/1000),
-      company: { created_at: Math.floor(date/1000) }
+      created_at: Math.floor(date / 1000),
+      company: { created_at: Math.floor(date / 1000) }
     }));
   });
 

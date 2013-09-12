@@ -110,6 +110,7 @@
     "lib/integrations.js",
     "lib/provider.js",
     "lib/user.js",
+    "lib/group.js",
     "lib/integrations/adroll.js",
     "lib/integrations/amplitude.js",
     "lib/integrations/awesm.js",

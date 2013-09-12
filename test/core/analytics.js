@@ -2,7 +2,8 @@ describe('Analytics.js', function () {
 
   var analytics = window.analytics || require('analytics')
     , trigger = require('trigger-event')
-    , integration = require('analytics/lib/integration');
+    , integration = require('analytics/lib/integration')
+    , group = require('analytics/lib/group');
 
   // lower timeout for tests
   var timeout = analytics._timeout = 3;
@@ -338,9 +339,13 @@ describe('Analytics.js', function () {
 
   describe('group', function () {
 
+    it('should return the group singleton', function () {
+      expect(analytics.group()).to.equal(group);
+    });
+
     it('is called on providers', function () {
       var spy = sinon.spy(Integration.prototype, 'group');
-      analytics.group();
+      analytics.group('id');
       expect(spy.called).to.be(true);
       spy.restore();
     });

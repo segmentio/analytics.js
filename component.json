@@ -105,7 +105,7 @@
     "lib/index.js",
     "lib/analytics.js",
     "lib/cookie.js",
-    "lib/localStore.js",
+    "lib/store.js",
     "lib/integration.js",
     "lib/integrations.js",
     "lib/provider.js",

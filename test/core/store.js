@@ -1,7 +1,7 @@
 
-describe('Local Store', function () {
+describe('Store', function () {
 
-var store = require('analytics/lib/localStore.js');
+var store = require('analytics/lib/store');
 
 after(function () {
   store.options({}); // reset to defaults

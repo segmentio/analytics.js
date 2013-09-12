@@ -108,11 +108,21 @@ describe('#identify', function () {
     }));
   });
 
+  it('shouldnt send an empty email', function () {
+    analytics.identify('id');
+    assert(!this.spy.calledWith('api.visitor.updateEmailAddress'));
+  });
+
   it('should send a name', function () {
     analytics.identify({ name: 'first last' });
     assert(this.spy.calledWith('api.visitor.updateFullName', {
       fullName: 'first last'
     }));
+  });
+
+  it('shouldnt send an empty name', function () {
+    analytics.identify('id');
+    assert(!this.spy.calledWith('api.visitor.updateFullName'));
   });
 
   it('should fallback to sending first and last name', function () {
@@ -137,6 +147,11 @@ describe('#identify', function () {
     assert(this.spy.calledWith('api.visitor.updatePhoneNumber', {
       phoneNumber: 'phone'
     }));
+  });
+
+  it('shouldnt send an empty phone number', function () {
+    analytics.identify('id');
+    assert(!this.spy.calledWith('api.visitor.updatePhoneNumber'));
   });
 
   it('should us an id as a nickname', function () {

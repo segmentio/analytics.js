@@ -1,3 +1,7 @@
+0.13.1 - September 12, 2013
+---------------------------
+* Olark: added tests for empty emails, names and phone numbers
+
 0.13.0 - September 11, 2013
 ---------------------------
 * converted all integrations and their tests to a cleaner format

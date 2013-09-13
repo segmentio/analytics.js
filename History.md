@@ -4,6 +4,7 @@
 * Google Analytics: changed `universalClient` option to `classic`
 * Google Analytics: changed `classic` default to `false`
 * Keen IO: changed pageview options defaults to `false`
+* LeadLander: changed `llactid` option to human-readable `accountId`
 
 0.13.1 - September 12, 2013
 ---------------------------

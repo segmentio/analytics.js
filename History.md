@@ -1,6 +1,9 @@
 0.14.0 - September 13, 2013
 ---------------------------
 * Crazy Egg: renamed from `CrazyEgg`
+* Google Analytics: changed `universalClient` option to `classic`
+* Google Analytics: changed `classic` default to `false`
+* Keen IO: changed pageview options defaults to `false`
 
 0.13.1 - September 12, 2013
 ---------------------------

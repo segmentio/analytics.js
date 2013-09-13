@@ -30,11 +30,11 @@ describe('#name', function () {
 
 describe('#defaults', function () {
   it('initialPageview', function () {
-    assert(this.integration.defaults.initialPageview === true);
+    assert(this.integration.defaults.initialPageview === false);
   });
 
   it('pageview', function () {
-    assert(this.integration.defaults.pageview === true);
+    assert(this.integration.defaults.pageview === false);
   });
 
   it('projectId', function () {
@@ -58,9 +58,9 @@ describe('#initialize', function () {
   it('should store options with defaults', function () {
     assert(this.options.projectId == settings.projectId);
     assert(this.options.writeKey == settings.writeKey);
-    assert(this.options.readKey === '');
-    assert(this.options.pageview === true);
-    assert(this.options.initialPageview === true);
+    assert(this.options.readKey === this.integration.defaults.readKey);
+    assert(this.options.pageview === this.integration.defaults.pageview);
+    assert(this.options.initialPageview === this.integration.defaults.initialPageview);
   });
 
   it('should pass options to keen', function () {
@@ -120,9 +120,16 @@ describe('#pageview', function () {
 
   afterEach(function () {
     this.spy.restore();
+    this.options.pageview = false;
+  });
+
+  it('shouldnt do anything by default', function () {
+    analytics.pageview();
+    assert(!this.spy.called);
   });
 
   it('should trigger a "Loaded a Page" event with a default url', function () {
+    this.options.pageview = true;
     analytics.pageview();
     assert(this.spy.calledWith('Loaded a Page', {
       url: document.location.href,
@@ -131,6 +138,7 @@ describe('#pageview', function () {
   });
 
   it('should pass a url', function () {
+    this.options.pageview = true;
     analytics.pageview('/path');
     assert(this.spy.calledWith('Loaded a Page', {
       url: '/path',

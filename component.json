@@ -81,6 +81,7 @@
     "segmentio/extend": "0.0.1",
     "segmentio/is-email": "0.1.1",
     "segmentio/is-meta": "0.0.1",
+    "segmentio/isodate-traverse": "0.0.1",
     "segmentio/json": "0.0.1",
     "segmentio/load-date": "0.0.1",
     "segmentio/load-script": "0.0.2",

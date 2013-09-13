@@ -9,11 +9,10 @@ var analytics = window.analytics || require('analytics')
 describe('Universal', function () {
 
 var settings = {
-  universalClient: true,
-  trackingId: 'UA-27033709-12',
+  anonymizeIp: true,
   domain: 'none',
   siteSpeedSampleRate: 42,
-  anonymizeIp: true
+  trackingId: 'UA-27033709-12'
 };
 
 before(function (done) {
@@ -51,6 +50,10 @@ describe('#defaults', function () {
     assert(this.integration.defaults.anonymizeIp === false);
   });
 
+  it('classic', function () {
+    assert(this.integration.defaults.classic === false);
+  });
+
   it('domain', function () {
     assert(this.integration.defaults.domain === 'none');
   });
@@ -77,10 +80,6 @@ describe('#defaults', function () {
 
   it('trackingId', function () {
     assert(this.integration.defaults.trackingId === '');
-  });
-
-  it('universalClient', function () {
-    assert(this.integration.defaults.universalClient === false);
   });
 });
 
@@ -242,12 +241,13 @@ describe('#pageview', function () {
 describe('Classic', function () {
 
 var settings = {
-  trackingId: 'UA-27033709-5',
-  enhancedLinkAttribution: true,
-  domain: 'none',
-  siteSpeedSampleRate: 42,
   anonymizeIp: true,
-  ignoreReferrer: ['domain.com', 'www.domain.com']
+  classic: true,
+  domain: 'none',
+  enhancedLinkAttribution: true,
+  ignoreReferrer: ['domain.com', 'www.domain.com'],
+  siteSpeedSampleRate: 42,
+  trackingId: 'UA-27033709-5'
 };
 
 before(function (done) {

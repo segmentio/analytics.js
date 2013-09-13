@@ -1,3 +1,7 @@
+0.14.0 - September 13, 2013
+---------------------------
+* Crazy Egg: renamed from `CrazyEgg`
+
 0.13.1 - September 12, 2013
 ---------------------------
 * Olark: added tests for empty emails, names and phone numbers

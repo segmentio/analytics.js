@@ -83,7 +83,7 @@ describe('#initialize', function () {
 describe('#identify', function () {
   beforeEach(function () {
     this.stub = sinon.stub(window.jstag, 'send');
-    analytics._user.clear();
+    analytics.user().reset();
   });
 
   afterEach(function () {
@@ -109,7 +109,7 @@ describe('#identify', function () {
 describe('#track', function () {
   beforeEach(function () {
     this.stub = sinon.stub(window.jstag, 'send');
-    analytics._user.clear();
+    analytics.user().reset();
   });
 
   afterEach(function () {

@@ -14,7 +14,7 @@ var settings = {
 
 before(function (done) {
   window.clicky_custom = { session: { existing: true }};
-  user.update('id', { trait: true });
+  user.identify('id', { trait: true });
   this.timeout(10000);
   this.spy = sinon.spy();
   analytics.ready(this.spy);
@@ -62,7 +62,7 @@ describe('#initialize', function () {
 
 describe('#identify', function () {
   beforeEach(function () {
-    analytics._user.clear();
+    analytics.user().reset();
     delete window.clicky_custom;
   });
 

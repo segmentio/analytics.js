@@ -82,7 +82,7 @@ describe('#initialize', function () {
 
 describe('#identify', function () {
   beforeEach(function () {
-    analytics._user.clear();
+    analytics.user().reset();
     this.identifySpy = sinon.spy(window.mixpanel, 'identify');
     this.registerSpy = sinon.spy(window.mixpanel, 'register');
     this.nameTagSpy = sinon.spy(window.mixpanel, 'name_tag');

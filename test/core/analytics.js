@@ -109,7 +109,7 @@ describe('Analytics.js', function () {
 
     function queueTest (method, args) {
       return function (done) {
-        analytics._user.clear();
+        analytics.user().reset();
         analytics.initialize(options);
 
         // Once initialized, the call should queue.
@@ -292,7 +292,7 @@ describe('Analytics.js', function () {
     });
 
     it('calls with all stored traits', function () {
-      analytics._user.clear();
+      analytics.user().reset();
       var spy    = sinon.spy(Integration.prototype, 'identify')
         , traits = test.traits;
 
@@ -317,7 +317,7 @@ describe('Analytics.js', function () {
 
 
     it('overwrites stored traits', function () {
-      analytics._user.clear();
+      analytics.user().reset();
       var spy    = sinon.spy(Integration.prototype, 'identify')
         , traits = {
             name : 'Zeus',

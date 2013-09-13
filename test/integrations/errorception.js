@@ -57,7 +57,7 @@ describe('#initialize', function () {
 
 describe('#identify', function () {
   beforeEach(function () {
-    analytics._user.clear();
+    analytics.user().reset();
   });
 
   afterEach(function () {

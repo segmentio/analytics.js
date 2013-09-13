@@ -66,7 +66,7 @@ describe('#identify', function () {
   });
 
   beforeEach(function () {
-    analytics._user.clear();
+    analytics.user().reset();
     this.id++;
     this.stub = sinon.stub(window, 'Intercom');
   });

@@ -14,7 +14,7 @@ var settings = {
 };
 
 before(function (done) {
-  user.update('id', { trait: true });
+  user.identify('id', { trait: true });
   this.timeout(10000);
   this.spy = sinon.spy();
   analytics.ready(this.spy);

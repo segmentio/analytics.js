@@ -1,3 +1,32 @@
+0.13.1 - September 12, 2013
+---------------------------
+* Olark: added tests for empty emails, names and phone numbers
+
+0.13.0 - September 11, 2013
+---------------------------
+* converted all integrations and their tests to a cleaner format
+* renamed all instances of "provider" to "integration"
+* built integration list from their own `name` to avoid bugs
+* changed `_providers` array to an `_integrations` map
+
+0.12.2 - September 5, 2013
+--------------------------
+* added [awe.sm](http://awe.sm)
+
+0.12.1 - September 5, 2013
+--------------------------
+* UserVoice: fix bug where some installations wouldn't show the tab
+
+0.12.0 - September 4, 2013
+--------------------------
+* Clicky: fixed custom tracking, added `pageview`
+
+0.11.16 - September 3, 2013
+---------------------------
+* updated `segmentio/new-date` for old browser support
+* Woopra: fixed default pageview properties
+* Intercom: cleaned up identify logic and tests
+
 0.11.15 - September 2, 2013
 ---------------------------
 * pinned all dependencies

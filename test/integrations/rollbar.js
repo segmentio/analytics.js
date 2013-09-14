@@ -50,7 +50,7 @@ describe('#initialize', function () {
     assert(this.spy.called);
   });
 
-  it('should store options', function () {
+  it('should store options with defaults', function () {
     assert(this.options.accessToken == settings.accessToken);
     assert(this.options.identify == this.integration.defaults.identify);
   });

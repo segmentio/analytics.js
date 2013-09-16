@@ -1,5 +1,5 @@
 
-describe('Store', function () {
+describe('store', function () {
 
 var assert = require('assert')
   , equal = require('equals')

@@ -1,5 +1,5 @@
 
-describe('User', function () {
+describe('user', function () {
 
 var assert = require('assert')
   , cookie = require('analytics/lib/cookie')

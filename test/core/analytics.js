@@ -1,54 +1,55 @@
-describe('Analytics.js', function () {
 
-  var analytics = window.analytics || require('analytics')
-    , trigger = require('trigger-event')
-    , integration = require('analytics/lib/integration')
-    , group = require('analytics/lib/group');
+describe('analytics', function () {
 
-  // lower timeout for tests
-  var timeout = analytics._timeout = 3;
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , trigger = require('trigger-event')
+  , integration = require('analytics/lib/integration')
+  , group = require('analytics/lib/group');
 
-  var Integration = integration('Test');
-  Integration.prototype.key = 'key';
-  Integration.prototype.defaults = {};
-  Integration.prototype.initialize = function (options, ready) {
-    setTimeout(ready, timeout);
-  };
-  Integration.prototype.identify = function (userId, traits) {};
-  Integration.prototype.group = function (groupId, properties) {};
-  Integration.prototype.track = function (event, properties) {};
-  Integration.prototype.pageview = function () {};
-  Integration.prototype.alias = function (newId, originalId) {};
+var options = { Test: 'x' };
+var timeout = 1;
+var Integration = integration('Test');
+Integration.prototype.key = 'key';
+Integration.prototype.defaults = {};
+Integration.prototype.initialize = function (options, ready) { setTimeout(ready, timeout); };
+Integration.prototype.identify = function (userId, traits) {};
+Integration.prototype.group = function (groupId, properties) {};
+Integration.prototype.track = function (event, properties) {};
+Integration.prototype.pageview = function () {};
+Integration.prototype.alias = function (newId, originalId) {};
 
+before(function () {
+  this.timeout = analytics._timeout;
+  analytics._timeout = timeout;
   analytics.integration(Integration);
-
-  var options = { 'Test' : 'x' };
-
-  // Make sure initialize runs, so that any test can be looked at individually.
   analytics.initialize(options);
+});
 
+after(function () {
+  analytics._timeout = this.timeout;
+});
 
-
-  describe('initialize', function () {
-    it('stores enabled integrations', function () {
-      analytics._integrations = [];
-      analytics.initialize(options);
-      expect(analytics._integrations.Test instanceof Integration).to.be(true);
-    });
-
-    it('doesnt error on unknown integration', function () {
-      expect(function () {
-        analytics.initialize({ 'Unknown' : '' });
-      }).not.to.throwException();
-    });
-
-    it('sends options to integration.initialize', function () {
-      var spy = sinon.spy(Integration.prototype, 'initialize');
-      analytics.initialize(options);
-      expect(spy.calledWith(sinon.match({ key : 'x' }))).to.be(true);
-      spy.restore();
-    });
+describe('#initialize', function () {
+  it('stores enabled integrations', function () {
+    analytics._integrations = [];
+    analytics.initialize(options);
+    expect(analytics._integrations.Test instanceof Integration).to.be(true);
   });
+
+  it('doesnt error on unknown integration', function () {
+    expect(function () {
+      analytics.initialize({ 'Unknown' : '' });
+    }).not.to.throwException();
+  });
+
+  it('sends options to integration.initialize', function () {
+    var spy = sinon.spy(Integration.prototype, 'initialize');
+    analytics.initialize(options);
+    expect(spy.calledWith(sinon.match({ key : 'x' }))).to.be(true);
+    spy.restore();
+  });
+});
 
 
 

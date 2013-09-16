@@ -107,6 +107,7 @@ describe('#identify', function () {
 describe('#group', function () {
   beforeEach(function () {
     this.stub = sinon.stub(window._lnq, 'push');
+    analytics.group().reset();
   });
 
   afterEach(function () {

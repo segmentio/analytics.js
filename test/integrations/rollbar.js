@@ -37,7 +37,7 @@ describe('#key', function () {
 
 describe('#defaults', function () {
   it('accessToken', function () {
-    assert(this.integration.defaults.accessToken === null);
+    assert(this.integration.defaults.accessToken === '');
   });
 
   it('identify', function () {

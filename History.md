@@ -1,3 +1,7 @@
+0.13.2 - September 16, 2013
+---------------------------
+* added [Rollbar](https://rollbar.com/), by [@coryvirok](https://github.com/coryvirok)
+
 0.13.1 - September 12, 2013
 ---------------------------
 * Olark: added tests for empty emails, names and phone numbers

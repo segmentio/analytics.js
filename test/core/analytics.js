@@ -662,10 +662,6 @@ describe('Analytics.js', function () {
     //   expect(spy.calledWith('party')).to.be(true);
     //   expect(window.location.hash).not.to.equal('#test');
     // });
-
-    it('trackClick is aliased to trackLink for backwards compatibility', function () {
-      expect(analytics.trackClick).to.equal(analytics.trackLink);
-    });
   });
 
 
@@ -744,11 +740,6 @@ describe('Analytics.js', function () {
       trigger($(form).find('input')[0], 'click');
       expect(spy.calledWith(form)).to.be(true);
     });
-
-    it('trackSubmit is aliased to trackForm for backwards compatibility', function () {
-      expect(analytics.trackSubmit).to.equal(analytics.trackForm);
-    });
-
 
     /**
      * A jQuery Form.

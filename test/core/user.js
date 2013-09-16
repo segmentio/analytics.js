@@ -55,10 +55,21 @@ describe('#traits', function () {
     assert(equal({ trait: true }, user.traits()));
   });
 
+  it('should get a copy of traits', function () {
+    store.set(localStorageKey, { trait: true });
+    assert(user._traits != user.traits());
+  });
+
   it('should get traits when not persisting', function () {
     user.options({ persist: false });
     user._traits = { trait: true };
     assert(equal({ trait: true }, user.traits()));
+  });
+
+  it('should get a copy of traits when not persisting', function () {
+    user.options({ persist: false });
+    user._traits = { trait: true };
+    assert(user._traits != user.traits());
   });
 
   it('should set traits', function () {

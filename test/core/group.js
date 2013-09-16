@@ -8,115 +8,115 @@ var assert = require('assert')
   , store = require('analytics/lib/store')
   , group = require('analytics/lib/group');
 
+var cookieKey = group._options.cookie.key;
+var localStorageKey = group._options.localStorage.key;
+
 before(function () {
-  group.clear();
-  group.options({});
+  group.reset();
 });
 
 afterEach(function () {
-  group.clear();
-  group.options({});
-});
-
-it('should start with defaults', function () {
-  assert(null === group._id);
-  assert(equal({}, group._properties));
+  group.reset();
+  cookie.remove(cookieKey);
+  store.remove(localStorageKey);
 });
 
 describe('#id', function () {
-  it('should get an id', function () {
-    group._id = 'id';
-    assert('id' === group.id());
+  it('should get an id from the cookie', function () {
+    cookie.set(cookieKey, 'id');
+    assert('id' == group.id());
   });
 
-  it('should set the id', function () {
-    group.id('new');
-    assert('new' == group._id);
+  it('should get an id when not persisting', function () {
+    group.options({ persist: false });
+    group._id = 'id';
+    assert('id' == group.id());
+  });
+
+  it('should set an id to the cookie', function () {
+    group.id('id');
+    assert('id' === cookie.get(cookieKey));
+  });
+
+  it('should set the id when not persisting', function () {
+    group.options({ persist: false });
+    group.id('id');
+    assert('id' == group._id);
+  });
+
+  it('should be null by default', function () {
+    assert(null === group.id());
   });
 });
 
 describe('#properties', function () {
   it('should get properties', function () {
+    store.set(localStorageKey, { property: true });
+    assert(equal({ property: true }, group.properties()));
+  });
+
+  it('should get a copy of properties', function () {
+    store.set(localStorageKey, { property: true });
+    assert(group._properties != group.properties());
+  });
+
+  it('should get properties when not persisting', function () {
+    group.options({ persist: false });
     group._properties = { property: true };
-    assert(equal({ property: true }, group._properties));
+    assert(equal({ property: true }, group.properties()));
+  });
+
+  it('should get a copy of properties when not persisting', function () {
+    group.options({ persist: false });
+    group._properties = { property: true };
+    assert(group._properties != group.properties());
   });
 
   it('should set properties', function () {
+    group.properties({ property: true });
+    assert(equal({ property: true }, store.get(localStorageKey)));
+  });
+
+  it('should set the id when not persisting', function () {
+    group.options({ persist: false });
     group.properties({ property: true });
     assert(equal({ property: true }, group._properties));
   });
 
   it('should default properties to an empty object', function () {
     group.properties(null);
+    assert(equal({}, store.get(localStorageKey)));
+  });
+
+  it('should default properties to an empty object when not persisting', function () {
+    group.options({ persist: false });
+    group.properties(null);
     assert(equal({}, group._properties));
   });
-});
 
-describe('#cookie', function () {
-  it('should get cookie options', function () {
-    var options = group.cookie();
-    assert(equal(options, {
-      key: 'ajs_group_id'
-    }));
-  });
-
-  it('should set cookie options with defaults', function () {
-    group.cookie({ option: true });
-    var options = group.cookieOptions;
-    assert(equal(options, {
-      option: true,
-      key: 'ajs_group_id'
-    }));
-  });
-});
-
-describe('#localStorage', function () {
-  it('should get localStorage options', function () {
-    var options = group.localStorage();
-    assert(equal(options, {
-      key: 'ajs_group_properties'
-    }));
-  });
-
-  it('should set localStorage options with defaults', function () {
-    group.localStorage({ option: true });
-    var options = group.localStorageOptions;
-    assert(equal(options, {
-      option: true,
-      key: 'ajs_group_properties'
-    }));
+  it('should be an empty object by default', function () {
+    assert(equal({}, group.properties()));
   });
 });
 
 describe('#options', function () {
-  beforeEach(function () {
-    this.cookieStub = sinon.stub(group, 'cookie');
-    this.localStorageStub = sinon.stub(group, 'localStorage');
+  it('should get options', function () {
+    var options = group.options();
+    assert(options ==  group._options);
   });
 
-  afterEach(function () {
-    this.cookieStub.restore();
-    this.localStorageStub.restore();
-  });
-
-  it('should pass cookie options', function () {
-    group.options({ cookie: { option: true }});
-    assert(this.cookieStub.calledWith({ option: true }));
-  });
-
-  it('should pass local storage options', function () {
-    group.options({ localStorage: { option: true }});
-    assert(this.localStorageStub.calledWith({ option: true }));
-  });
-
-  it('should set persist option', function () {
-    group.options({ persist: false });
-    assert(!group.persist);
-  });
-
-  it('should default persist option to true', function () {
-    group.options({});
-    assert(group.persist);
+  it('should set options with defaults', function () {
+    group.options({ option: true });
+    assert(equal(group._options, {
+      option: true,
+      persist: true,
+      cookie: {
+        key: 'ajs_group_id'
+      },
+      localStorage: {
+        key: 'ajs_group_properties'
+      }
+    }));
   });
 });
 
@@ -124,28 +124,28 @@ describe('#save', function () {
   it('should save an id to a cookie', function () {
     group.id('id');
     group.save();
-    assert('id' == cookie.get(group.cookie().key));
+    assert('id' == cookie.get(cookieKey));
   });
 
   it('should save properties to local storage', function () {
     group.properties({ property: true });
     group.save();
-    assert(equal({ property: true }, store.get(group.localStorage().key)));
+    assert(equal({ property: true }, store.get(localStorageKey)));
   });
 
   it('shouldnt save if persist is false', function () {
     group.options({ persist: false });
     group.id('id');
     group.save();
-    assert(null === cookie.get(group.cookie().key));
+    assert(null === cookie.get(cookieKey));
   });
 });
 
-describe('#clear', function () {
+describe('#logout', function () {
   it('should reset an id and properties', function () {
     group.id('id');
     group.properties({ property: true });
-    group.clear();
+    group.logout();
     assert(null === group.id());
     assert(equal({}, group.properties()));
   });
@@ -153,80 +153,80 @@ describe('#clear', function () {
   it('should clear a cookie', function () {
     group.id('id');
     group.save();
-    group.clear();
-    assert(null === cookie.get(group.cookie().key));
+    group.logout();
+    assert(null === cookie.get(cookieKey));
   });
 
   it('should clear local storage', function () {
     group.properties({ property: true });
     group.save();
-    group.clear();
-    assert(undefined === store.get(group.localStorage().key));
+    group.logout();
+    assert(undefined === store.get(localStorageKey));
   });
 });
 
-describe('#update', function () {
+describe('#identify', function () {
   it('should save an id', function () {
-    group.update('id');
+    group.identify('id');
     assert('id' == group.id());
-    assert('id' == cookie.get(group.cookie().key));
+    assert('id' == cookie.get(cookieKey));
   });
 
   it('should save properties', function () {
-    group.update(null, { property: true });
+    group.identify(null, { property: true });
     assert(equal({ property: true }, group.properties()));
-    assert(equal({ property: true }, store.get(group.localStorage().key)));
+    assert(equal({ property: true }, store.get(localStorageKey)));
   });
 
   it('should save an id and properties', function () {
-    group.update('id', { property: true });
+    group.identify('id', { property: true });
     assert('id' == group.id());
     assert(equal({ property: true }, group.properties()));
-    assert('id' == cookie.get(group.cookie().key));
-    assert(equal({ property: true }, store.get(group.localStorage().key)));
+    assert('id' == cookie.get(cookieKey));
+    assert(equal({ property: true }, store.get(localStorageKey)));
   });
 
   it('should extend existing properties', function () {
     group.properties({ one: 1 });
-    group.update('id', { two: 2 });
+    group.identify('id', { two: 2 });
     assert(equal({ one: 1, two: 2 }, group.properties()));
-    assert(equal({ one: 1, two: 2 }, store.get(group.localStorage().key)));
+    assert(equal({ one: 1, two: 2 }, store.get(localStorageKey)));
   });
 
   it('shouldnt extend existing properties for a new id', function () {
     group.id('id');
     group.properties({ one: 1 });
-    group.update('new', { two: 2 });
+    group.identify('new', { two: 2 });
     assert(equal({ two: 2 }, group.properties()));
-    assert(equal({ two: 2 }, store.get(group.localStorage().key)));
+    assert(equal({ two: 2 }, store.get(localStorageKey)));
   });
 
   it('should reset properties for a new id', function () {
     group.id('id');
     group.properties({ one: 1 });
-    group.update('new');
+    group.identify('new');
     assert(equal({}, group.properties()));
-    assert(equal({}, store.get(group.localStorage().key)));
+    assert(equal({}, store.get(localStorageKey)));
   });
 });
 
 describe('#load', function () {
   it('should load an empty group', function () {
-    var loaded = group.load();
-    assert(null === loaded.id);
-    assert(equal({}, loaded.properties));
+    group.load();
+    assert(null === group.id());
+    assert(equal({}, group.properties()));
   });
 
   it('should load an id from a cookie', function () {
-    cookie.set(group.cookie().key, 'id');
-    var loaded = group.load();
-    assert('id' == loaded.id);
+    cookie.set(cookieKey, 'id');
+    group.load();
+    assert('id' == group.id());
   });
 
   it('should load properties from local storage', function () {
-    store.set(group.localStorage().key, { property: true });
-    var loaded = group.load();
-    assert(equal({ property: true }, loaded.properties));
+    store.set(localStorageKey, { property: true });
+    group.load();
+    assert(equal({ property: true }, group.properties()));
   });
 });
 

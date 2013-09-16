@@ -1,47 +1,47 @@
 
 describe('Store', function () {
 
-var store = require('analytics/lib/store');
+var assert = require('assert')
+  , equal = require('equals')
+  , store = require('analytics/lib/store');
 
-after(function () {
+afterEach(function () {
   store.options({}); // reset to defaults
+  store.remove('x');
 });
 
-describe('#get()', function () {
+describe('#get', function () {
   it('should not not get an empty record', function () {
-    expect(store.get('abc')).to.be(undefined);
+    assert(store.get('abc') === undefined);
   });
 
   it('should get an existing record', function () {
     store.set('x', { a : 'b' });
-    expect(store.get('x')).to.eql({ a : 'b' });
+    assert(equal(store.get('x'), { a : 'b' }));
   });
 });
 
-describe('#set()', function () {
+describe('#set', function () {
   it('should be able to set a record', function () {
     store.set('x', { a : 'b' });
-    expect(store.get('x')).to.eql({ a : 'b' });
-    store.remove('x');
+    assert(equal(store.get('x'), { a : 'b' }));
   });
 });
 
-describe('#remove()', function () {
+describe('#remove', function () {
   it('should be able to remove a record', function () {
     store.set('x', { a : 'b' });
-    expect(store.get('x')).to.eql({ a : 'b' });
+    assert(equal(store.get('x'), { a : 'b' }));
     store.remove('x');
-    expect(store.get('x')).to.be(undefined);
+    assert(store.get('x') === undefined);
   });
 });
 
-describe('#options()', function () {
+describe('#options', function () {
   it('should be able to save options', function () {
-    store.options({
-      enabled: false
-    });
-    expect(store.options().enabled).to.eql(false);
-    expect(store.enabled).to.eql(false);
+    store.options({ enabled: false  });
+    assert(equal(store.options().enabled, false));
+    assert(equal(store.enabled, false));
   });
 });
 

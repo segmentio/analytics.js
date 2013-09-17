@@ -1,3 +1,7 @@
+0.14.1 - September 17, 2013
+---------------------------
+* removed old `Provider` for an `integration` factory
+
 0.14.0 - September 16, 2013
 ---------------------------
 * exposed `group` via the `#group` method

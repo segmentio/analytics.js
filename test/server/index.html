@@ -28,70 +28,66 @@
   <script src="test/server/utils.js"></script>
   <script src="test/server/runner.js"></script>
 
-  {{#if min}}
-    <script src="analytics.min.js"></script>
-  {{/if}}
-
   <script src="build/build.js"></script>
-  <script>window.analytics = window.analytics || require('analytics');</script>
 
   {{#if core}}
     <script src="test/core/analytics.js"></script>
-    <script src="test/core/user.js"></script>
     <script src="test/core/cookie.js"></script>
-    <script src="test/core/localStore.js"></script>
+    <script src="test/core/store.js"></script>
+    <script src="test/core/user.js"></script>
+    <script src="test/core/group.js"></script>
   {{/if}}
 
-  {{#if providers}}
-    <script src="test/providers/index.js"></script>
-    <script src="test/providers/adroll.js"></script>
-    <script src="test/providers/amplitude.js"></script>
-    <script src="test/providers/bugherd.js"></script>
-    <script src="test/providers/chartbeat.js"></script>
-    <script src="test/providers/clicktale.js"></script>
-    <script src="test/providers/clicky.js"></script>
-    <script src="test/providers/comscore.js"></script>
-    <script src="test/providers/crazyegg.js"></script>
-    <script src="test/providers/customerio.js"></script>
-    <script src="test/providers/errorception.js"></script>
-    <script src="test/providers/evergage.js"></script>
-    <script src="test/providers/foxmetrics.js"></script>
-    <script src="test/providers/gauges.js"></script>
-    <script src="test/providers/get-satisfaction.js"></script>
-    <script src="test/providers/google-analytics.js"></script>
-    <script src="test/providers/gosquared.js"></script>
-    <script src="test/providers/heap.js"></script>
-    <script src="test/providers/hittail.js"></script>
-    <script src="test/providers/hubspot.js"></script>
-    <script src="test/providers/improvely.js"></script>
-    <script src="test/providers/inspectlet.js"></script>
-    <script src="test/providers/intercom.js"></script>
-    <script src="test/providers/keen-io.js"></script>
-    <script src="test/providers/kissmetrics.js"></script>
-    <script src="test/providers/klaviyo.js"></script>
-    <script src="test/providers/leadlander.js"></script>
-    <!--<script src="test/providers/livechat.js"></script>-->
-    <script src="test/providers/lytics.js"></script>
-    <script src="test/providers/mousestats.js"></script>
-    <script src="test/providers/mixpanel.js"></script>
-    <script src="test/providers/olark.js"></script>
-    <script src="test/providers/optimizely.js"></script>
-    <script src="test/providers/perfect-audience.js"></script>
-    <script src="test/providers/pingdom.js"></script>
-    <script src="test/providers/preact.js"></script>
-    <script src="test/providers/qualaroo.js"></script>
-    <script src="test/providers/quantcast.js"></script>
-    <script src="test/providers/sentry.js"></script>
-    <script src="test/providers/snapengage.js"></script>
-    <!--<script src="test/providers/spinnakr.js"></script>-->
-    <script src="test/providers/tapstream.js"></script>
-    <script src="test/providers/trakio.js"></script>
-    <script src="test/providers/usercycle.js"></script>
-    <script src="test/providers/userfox.js"></script>
-    <script src="test/providers/uservoice.js"></script>
-    <script src="test/providers/vero.js"></script>
-    <script src="test/providers/visual-website-optimizer.js"></script>
-    <script src="test/providers/woopra.js"></script>
+  {{#if integrations}}
+    <script src="test/integrations/adroll.js"></script>
+    <script src="test/integrations/amplitude.js"></script>
+    <script src="test/integrations/awesm.js"></script>
+    <script src="test/integrations/bugherd.js"></script>
+    <script src="test/integrations/chartbeat.js"></script>
+    <script src="test/integrations/clicktale.js"></script>
+    <script src="test/integrations/clicky.js"></script>
+    <script src="test/integrations/comscore.js"></script>
+    <script src="test/integrations/crazyegg.js"></script>
+    <script src="test/integrations/customerio.js"></script>
+    <script src="test/integrations/evergage.js"></script>
+    <script src="test/integrations/errorception.js"></script>
+    <script src="test/integrations/foxmetrics.js"></script>
+    <script src="test/integrations/gauges.js"></script>
+    <script src="test/integrations/get-satisfaction.js"></script>
+    <script src="test/integrations/google-analytics.js"></script>
+    <script src="test/integrations/gosquared.js"></script>
+    <script src="test/integrations/heap.js"></script>
+    <script src="test/integrations/hittail.js"></script>
+    <script src="test/integrations/hubspot.js"></script>
+    <script src="test/integrations/improvely.js"></script>
+    <script src="test/integrations/inspectlet.js"></script>
+    <script src="test/integrations/intercom.js"></script>
+    <script src="test/integrations/keen-io.js"></script>
+    <script src="test/integrations/kissmetrics.js"></script>
+    <script src="test/integrations/klaviyo.js"></script>
+    <script src="test/integrations/leadlander.js"></script>
+    <!--<script src="test/integrations/livechat.js"></script>-->
+    <script src="test/integrations/lytics.js"></script>
+    <script src="test/integrations/mousestats.js"></script>
+    <script src="test/integrations/mixpanel.js"></script>
+    <script src="test/integrations/olark.js"></script>
+    <script src="test/integrations/optimizely.js"></script>
+    <script src="test/integrations/perfect-audience.js"></script>
+    <script src="test/integrations/pingdom.js"></script>
+    <script src="test/integrations/preact.js"></script>
+    <script src="test/integrations/qualaroo.js"></script>
+    <script src="test/integrations/quantcast.js"></script>
+    <script src="test/integrations/rollbar.js"></script>
+    <script src="test/integrations/sentry.js"></script>
+    <script src="test/integrations/snapengage.js"></script>
+    <script src="test/integrations/tapstream.js"></script>
+    <script src="test/integrations/trakio.js"></script>
+    <script src="test/integrations/usercycle.js"></script>
+    <script src="test/integrations/userfox.js"></script>
+    <script src="test/integrations/uservoice.js"></script>
+    <script src="test/integrations/vero.js"></script>
+    <script src="test/integrations/visual-website-optimizer.js"></script>
+    <script src="test/integrations/woopra.js"></script>
   {{/if}}
 </head>
 <body>

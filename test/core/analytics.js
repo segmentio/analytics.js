@@ -162,35 +162,26 @@ describe('#ready', function () {
 
 describe('#_invoke', function () {
   beforeEach(function () {
-    this.identifySpy = sinon.spy(Test.prototype, 'identify');
-    this.enqueueSpy = sinon.spy(Test.prototype, 'enqueue');
+    this.invokeSpy = sinon.spy(Test.prototype, 'invoke');
   });
 
   afterEach(function () {
-    this.identifySpy.restore();
-    this.enqueueSpy.restore();
+    this.invokeSpy.restore();
   });
 
-  it('should call a method on an integration', function () {
+  it('should invoke a method on an integration', function () {
     analytics._invoke('identify', 'id', { trait: true });
-    assert(this.identifySpy.calledWith('id', { trait: true }));
+    assert(this.invokeSpy.calledWith('identify', 'id', { trait: true }));
   });
 
   it('shouldnt call a method when the `all` option is false', function () {
     analytics._invoke('identify', { providers: { all: false }});
-    assert(!this.identifySpy.called);
+    assert(!this.invokeSpy.called);
   });
 
   it('shouldnt call a method when the integration option is false', function () {
     analytics._invoke('identify', { providers: { Test: false }});
-    assert(!this.identifySpy.called);
-  });
-
-  it('should queue calls until the integration is ready', function (done) {
-    analytics.ready(done);
-    analytics.initialize(settings);
-    analytics._invoke('identify', 'id');
-    assert(this.enqueueSpy.calledWith('identify', ['id']));
+    assert(!this.invokeSpy.called);
   });
 });
 

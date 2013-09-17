@@ -2518,7 +2518,7 @@ var after = require('after')
   , newDate = require('new-date')
   , size = require('object').length
   , prevent = require('prevent')
-  , Integration = require('./provider')
+  , createIntegration = require('./integration')
   , Integrations = require('./integrations')
   , querystring = require('querystring')
   , user = require('./user');
@@ -2543,13 +2543,6 @@ exports.VERSION = '0.14.0';
  */
 
 exports.Integrations = Integrations;
-
-
-/**
- * Expose the default `Integration`.
- */
-
-exports.Integration = Integration;
 
 
 /**
@@ -2907,13 +2900,11 @@ Analytics.prototype._callback = function (fn) {
 
 Analytics.prototype._invoke = function (method, args) {
   args = [].slice.call(arguments, 1);
-  var options = args[args.length-1];
+  args.unshift(method);
+  var options = args[args.length-1]; // always the last one
   each(this._integrations, function (name, integration) {
-    if (!integration[method] || !isEnabled(integration, options)) return;
-    var cloned = clone(args);
-    integration.ready
-      ? integration[method].apply(integration, cloned)
-      : integration.enqueue(method, cloned);
+    if (!isEnabled(integration, options)) return;
+    integration.invoke.apply(integration, args);
   });
   return this;
 };
@@ -3188,36 +3179,6 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 });
-require.register("analytics/lib/integration.js", function(exports, require, module){
-
-var inherit = require('inherit')
-  , Provider = require('./provider');
-
-
-/**
- * Expose `createIntegration`.
- */
-
-module.exports = createIntegration;
-
-
-/**
- * Create a new Integration constructor.
- *
- * TODO: make this not inherit but actually create
- */
-
-function createIntegration (name) {
-
-  function Integration () {
-    Provider.apply(this, arguments);
-  }
-
-  inherit(Integration, Provider);
-  Integration.prototype.name = name;
-  return Integration;
-}
-});
 require.register("analytics/lib/integrations.js", function(exports, require, module){
 
 var each = require('each');
@@ -3288,144 +3249,6 @@ each(integrations, function (slug) {
   exports[Integration.prototype.name] = Integration;
 });
 
-});
-require.register("analytics/lib/provider.js", function(exports, require, module){
-var each   = require('each')
-  , extend = require('extend')
-  , type   = require('type');
-
-
-module.exports = Provider;
-
-
-/**
- * Provider
- *
- * @param {Object} options - settings to initialize the Provider with. This will
- * be merged with the Provider's own defaults.
- *
- * @param {Function} ready - a ready callback, to be called when the provider is
- * ready to handle analytics calls.
- */
-
-function Provider (options, ready, analytics) {
-  var self = this;
-
-  // Store the reference to the global `analytics` object.
-  this.analytics = analytics;
-
-  // Make a queue of `{ method : 'identify', args : [] }` to unload once ready.
-  this.queue = [];
-  this.ready = false;
-
-  // Allow for `options` to only be a string if the provider has specified
-  // a default `key`, in which case convert `options` into a dictionary. Also
-  // allow for it to be `true`, like in Optimizely's case where there is no need
-  // for any default key.
-  if (type(options) !== 'object') {
-    if (options === true) {
-      options = {};
-    } else if (this.key) {
-      var key = options;
-      options = {};
-      options[this.key] = key;
-    } else {
-      throw new Error('Couldnt resolve options.');
-    }
-  }
-
-  // Extend the passed-in options with our defaults.
-  this.options = extend({}, this.defaults, options);
-
-  // Wrap our ready function, so that it ready from our internal queue first
-  // and then marks us as ready.
-  var dequeue = function () {
-    each(self.queue, function (call) {
-      var method = call.method
-        , args   = call.args;
-      self[method].apply(self, args);
-    });
-    self.ready = true;
-    self.queue = [];
-    ready();
-  };
-
-  // Call our initialize method.
-  this.initialize.call(this, this.options, dequeue);
-}
-
-
-/**
- * Inheritance helper.
- *
- * Modeled after Backbone's `extend` method:
- * https://github.com/documentcloud/backbone/blob/master/backbone.js#L1464
- */
-
-Provider.extend = function (properties) {
-  var parent = this;
-  var child = function () { return parent.apply(this, arguments); };
-  var Surrogate = function () { this.constructor = child; };
-  Surrogate.prototype = parent.prototype;
-  child.prototype = new Surrogate();
-  extend(child.prototype, properties);
-  return child;
-};
-
-
-/**
- * Augment Provider's prototype.
- */
-
-extend(Provider.prototype, {
-
-  /**
-   * Default settings for the provider.
-   */
-
-  options : {},
-
-
-  /**
-   * The single required API key for the provider. This lets us support a terse
-   * initialization syntax:
-   *
-   *     analytics.initialize({
-   *       'Provider' : 'XXXXXXX'
-   *     });
-   *
-   * Only add this if the provider has a _single_ required key.
-   */
-
-  key : undefined,
-
-
-  /**
-   * Initialize our provider.
-   *
-   * @param {Object} options - the settings for the provider.
-   * @param {Function} ready - a ready callback to call when we're ready to
-   * start accept analytics method calls.
-   */
-  initialize : function (options, ready) {
-    ready();
-  },
-
-
-  /**
-   * Adds an item to the our internal pre-ready queue.
-   *
-   * @param {String} method - the analytics method to call (eg. 'track').
-   * @param {Object} args - the arguments to pass to the method.
-   */
-  enqueue : function (method, args) {
-    this.queue.push({
-      method : method,
-      args : args
-    });
-  }
-
-});
 });
 require.register("analytics/lib/user.js", function(exports, require, module){
 
@@ -3878,6 +3701,145 @@ module.exports = bind.all(new Group());
  */
 
 module.exports.Group = Group;
+});
+require.register("analytics/lib/integration/index.js", function(exports, require, module){
+
+var each = require('each')
+  , extend = require('extend')
+  , is = require('is')
+  , protos = require('./protos')
+  , statics = require('./statics');
+
+
+/**
+ * Expose `createIntegration`.
+ */
+
+module.exports = createIntegration;
+
+
+/**
+ * Create a new Integration constructor.
+ *
+ * @param {String} name
+ */
+
+function createIntegration (name) {
+
+  /**
+   * Initialize a new `Integration`.
+   *
+   * @param {Object} options
+   * @param {Function} ready
+   * @param {Object} analytics
+   */
+
+  function Integration (options, ready, analytics) {
+    options = resolveOptions(options, this.key);
+    this.options = extend({}, this.defaults, options);
+    this.analytics = analytics;
+    this.queue = [];
+    this.ready = false;
+
+    // augment ready to replay the queue and then set ready state
+    var self = this;
+    function dequeue () {
+      each(self.queue, function (call) {
+        self[call.method].apply(self, call.args);
+      });
+      self.ready = true;
+      self.queue = [];
+      ready();
+    }
+
+    this.initialize(this.options, dequeue);
+  }
+
+  // statics
+  for (var key in statics) Integration[key] = statics[key];
+
+  // protos
+  Integration.prototype.name = name;
+  for (var key in protos) Integration.prototype[key] = protos[key];
+
+  return Integration;
+}
+
+
+/**
+ * Resolve `options` with an optional `key`.
+ *
+ * @param {Object} options
+ * @param {String} key (optional)
+ */
+
+function resolveOptions (options, key) {
+  if (is.object(options)) return options;
+  if (options === true) return {}; // BACKWARDS COMPATIBILITY
+  if (key && is.string(options)) {
+    var value = options;
+    options[key] = value;
+    return options;
+  }
+}
+});
+require.register("analytics/lib/integration/protos.js", function(exports, require, module){
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+exports.initialize = function (options, ready) {
+  ready();
+};
+
+
+/**
+ * Invoke a method, queueing or not depending on our ready state.
+ *
+ * @param {String} method
+ * @param {Mixed} args...
+ */
+
+exports.invoke = function (method, args) {
+  if (!this[method]) return;
+  args = [].slice.call(arguments, 1);
+  if (this.ready) {
+    this[method].apply(this, args);
+  } else {
+    this.queue.push({
+      method: method,
+      args: args
+    });
+  }
+};
+});
+require.register("analytics/lib/integration/statics.js", function(exports, require, module){
+
+var extend = require('extend');
+
+
+/**
+ * BACKWARDS COMPATIBILITY: inheritance helper.
+ *
+ * Modeled after Backbone's `extend` method:
+ * https://github.com/documentcloud/backbone/blob/master/backbone.js#L1464
+ *
+ * @param {Object} protos
+ */
+
+exports.extend = function (protos) {
+  var parent = this;
+  var child = function () { return parent.apply(this, arguments); };
+  var Surrogate = function () { this.constructor = child; };
+  Surrogate.prototype = parent.prototype;
+  child.prototype = new Surrogate();
+  extend(child.prototype, protos);
+  return child;
+};
 });
 require.register("analytics/lib/integrations/adroll.js", function(exports, require, module){
 

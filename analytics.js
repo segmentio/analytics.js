@@ -225,33 +225,6 @@ var defaults = function (dest, src, recursive) {
 module.exports = defaults;
 
 });
-require.register("component-bind/index.js", function(exports, require, module){
-
-/**
- * Slice reference.
- */
-
-var slice = [].slice;
-
-/**
- * Bind `obj` to `fn`.
- *
- * @param {Object} obj
- * @param {Function|String} fn or string
- * @return {Function}
- * @api public
- */
-
-module.exports = function(obj, fn){
-  if ('string' == typeof fn) fn = obj[fn];
-  if ('function' != typeof fn) throw new Error('bind() requires a function');
-  var args = [].slice.call(arguments, 2);
-  return function(){
-    return fn.apply(obj, args.concat(slice.call(arguments)));
-  }
-};
-
-});
 require.register("component-clone/index.js", function(exports, require, module){
 
 /**
@@ -420,121 +393,13 @@ function parse(str) {
 }
 
 });
-require.register("component-to-function/index.js", function(exports, require, module){
-
-/**
- * Expose `toFunction()`.
- */
-
-module.exports = toFunction;
-
-/**
- * Convert `obj` to a `Function`.
- *
- * @param {Mixed} obj
- * @return {Function}
- * @api private
- */
-
-function toFunction(obj) {
-  switch ({}.toString.call(obj)) {
-    case '[object Object]':
-      return objectToFunction(obj);
-    case '[object Function]':
-      return obj;
-    case '[object String]':
-      return stringToFunction(obj);
-    case '[object RegExp]':
-      return regexpToFunction(obj);
-    default:
-      return defaultToFunction(obj);
-  }
-}
-
-/**
- * Default to strict equality.
- *
- * @param {Mixed} val
- * @return {Function}
- * @api private
- */
-
-function defaultToFunction(val) {
-  return function(obj){
-    return val === obj;
-  }
-}
-
-/**
- * Convert `re` to a function.
- *
- * @param {RegExp} re
- * @return {Function}
- * @api private
- */
-
-function regexpToFunction(re) {
-  return function(obj){
-    return re.test(obj);
-  }
-}
-
-/**
- * Convert property `str` to a function.
- *
- * @param {String} str
- * @return {Function}
- * @api private
- */
-
-function stringToFunction(str) {
-  // immediate such as "> 20"
-  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
-
-  // properties such as "name.first" or "age > 18"
-  return new Function('_', 'return _.' + str);
-}
-
-/**
- * Convert `object` to a function.
- *
- * @param {Object} object
- * @return {Function}
- * @api private
- */
-
-function objectToFunction(obj) {
-  var match = {}
-  for (var key in obj) {
-    match[key] = typeof obj[key] === 'string'
-      ? defaultToFunction(obj[key])
-      : toFunction(obj[key])
-  }
-  return function(val){
-    if (typeof val !== 'object') return false;
-    for (var key in match) {
-      if (!(key in val)) return false;
-      if (!match[key](val[key])) return false;
-    }
-    return true;
-  }
-}
-
-});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var toFunction = require('to-function');
-var type;
-
-try {
-  type = require('type-component');
-} catch (e) {
-  type = require('type');
-}
+var type = require('type');
 
 /**
  * HOP reference.
@@ -551,7 +416,6 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
-  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -606,7 +470,6 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
-
 });
 require.register("component-event/index.js", function(exports, require, module){
 
@@ -865,15 +728,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -885,7 +748,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -897,7 +762,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -910,13 +775,12 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
-
 var next = require('next-tick');
 
 
@@ -959,6 +823,89 @@ callback.async = function (fn, wait) {
 
 callback.sync = callback;
 
+});
+require.register("component-bind/index.js", function(exports, require, module){
+
+/**
+ * Slice reference.
+ */
+
+var slice = [].slice;
+
+/**
+ * Bind `obj` to `fn`.
+ *
+ * @param {Object} obj
+ * @param {Function|String} fn or string
+ * @return {Function}
+ * @api public
+ */
+
+module.exports = function(obj, fn){
+  if ('string' == typeof fn) fn = obj[fn];
+  if ('function' != typeof fn) throw new Error('bind() requires a function');
+  var args = [].slice.call(arguments, 2);
+  return function(){
+    return fn.apply(obj, args.concat(slice.call(arguments)));
+  }
+};
+
+});
+require.register("segmentio-bind-all/index.js", function(exports, require, module){
+
+var bind   = require('bind')
+  , type   = require('type');
+
+
+module.exports = function (obj) {
+  for (var key in obj) {
+    var val = obj[key];
+    if (type(val) === 'function') obj[key] = bind(obj, obj[key]);
+  }
+  return obj;
+};
+});
+require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
+
+var bind = require('bind')
+  , bindAll = require('bind-all');
+
+
+/**
+ * Expose `bind`.
+ */
+
+module.exports = exports = bind;
+
+
+/**
+ * Expose `bindAll`.
+ */
+
+exports.all = bindAll;
+
+
+/**
+ * Expose `bindMethods`.
+ */
+
+exports.methods = bindMethods;
+
+
+/**
+ * Bind `methods` on `obj` to always be called with the `obj` as context.
+ *
+ * @param {Object} obj
+ * @param {String} methods...
+ */
+
+function bindMethods (obj, methods) {
+  methods = [].slice.call(arguments, 1);
+  for (var i = 0, method; method = methods[i]; i++) {
+    obj[method] = bind(obj, obj[method]);
+  }
+  return obj;
+}
 });
 require.register("ianstormtaylor-is-empty/index.js", function(exports, require, module){
 
@@ -1298,20 +1245,6 @@ module.exports = function alias (object, aliases) {
     }
 };
 });
-require.register("segmentio-bind-all/index.js", function(exports, require, module){
-
-var bind   = require('bind')
-  , type   = require('type');
-
-
-module.exports = function (obj) {
-  for (var key in obj) {
-    var val = obj[key];
-    if (type(val) === 'function') obj[key] = bind(obj, obj[key]);
-  }
-  return obj;
-};
-});
 require.register("segmentio-canonical/index.js", function(exports, require, module){
 module.exports = function canonical () {
   var tags = document.getElementsByTagName('link');
@@ -1407,6 +1340,110 @@ module.exports = function isMeta (e) {
 
     return false;
 };
+});
+require.register("segmentio-isodate/index.js", function(exports, require, module){
+
+/**
+ * Matcher, slightly modified from:
+ *
+ * https://github.com/csnover/js-iso8601/blob/lax/iso8601.js
+ */
+
+var matcher = /^(\d{4})(?:-?(\d{2})(?:-?(\d{2}))?)?(?:([ T])(\d{2}):?(\d{2})(?::?(\d{2})(?:[,\.](\d{1,}))?)?(?:(Z)|([+\-])(\d{2})(?::?(\d{2}))?)?)?$/;
+
+
+/**
+ * Convert an ISO date string to a date. Fallback to native `Date.parse`.
+ *
+ * https://github.com/csnover/js-iso8601/blob/lax/iso8601.js
+ *
+ * @param {String} iso
+ * @return {Date}
+ */
+
+exports.parse = function (iso) {
+  var numericKeys = [1, 5, 6, 7, 8, 11, 12];
+  var arr = matcher.exec(iso);
+  var offset = 0;
+
+  // fallback to native parsing
+  if (!arr) return new Date(iso);
+
+  // remove undefined values
+  for (var i = 0, val; val = numericKeys[i]; i++) {
+    arr[val] = parseInt(arr[val], 10) || 0;
+  }
+
+  // allow undefined days and months
+  arr[2] = parseInt(arr[2], 10) || 1;
+  arr[3] = parseInt(arr[3], 10) || 1;
+
+  // month is 0-11
+  arr[2]--;
+
+  // allow abitrary sub-second precision
+  if (arr[8]) arr[8] = (arr[8] + '00').substring(0, 3);
+
+  // apply timezone if one exists
+  if (arr[4] == ' ') {
+    offset = new Date().getTimezoneOffset();
+  } else if (arr[9] !== 'Z' && arr[10]) {
+    offset = arr[11] * 60 + arr[12];
+    if ('+' == arr[10]) offset = 0 - offset;
+  }
+
+  var millis = Date.UTC(arr[1], arr[2], arr[3], arr[5], arr[6] + offset, arr[7], arr[8]);
+  return new Date(millis);
+};
+
+
+/**
+ * Checks whether a `string` is an ISO date string. `strict` mode requires that
+ * the date string at least have a year, month and date.
+ *
+ * @param {String} string
+ * @param {Boolean} strict
+ * @return {Boolean}
+ */
+
+exports.is = function (string, strict) {
+  if (strict && false === /^\d{4}-\d{2}-\d{2}/.test(string)) return false;
+  return matcher.test(string);
+};
+});
+require.register("segmentio-isodate-traverse/index.js", function(exports, require, module){
+
+var clone = require('clone')
+  , each = require('each')
+  , is = require('is')
+  , isodate = require('isodate');
+
+
+/**
+ * Expose `traverse`.
+ */
+
+module.exports = traverse;
+
+
+/**
+ * Traverse an object, parsing all ISO strings into dates and returning a clone.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ */
+
+function traverse (obj) {
+  obj = clone(obj);
+  each(obj, function (key, val) {
+    if (isodate.is(val)) {
+      obj[key] = isodate.parse(val);
+    } else if (is.object(val)) {
+      obj[key] = traverse(val);
+    }
+  });
+  return obj;
+}
 });
 require.register("component-json-fallback/index.js", function(exports, require, module){
 /*
@@ -1973,76 +2010,6 @@ module.exports = function loadScript (options, callback) {
 };
 
 });
-require.register("segmentio-isodate/index.js", function(exports, require, module){
-
-/**
- * Matcher, slightly modified from:
- *
- * https://github.com/csnover/js-iso8601/blob/lax/iso8601.js
- */
-
-var matcher = /^(\d{4})(?:-?(\d{2})(?:-?(\d{2}))?)?(?:([ T])(\d{2}):?(\d{2})(?::?(\d{2})(?:[,\.](\d{1,}))?)?(?:(Z)|([+\-])(\d{2})(?::?(\d{2}))?)?)?$/;
-
-
-/**
- * Convert an ISO date string to a date. Fallback to native `Date.parse`.
- *
- * https://github.com/csnover/js-iso8601/blob/lax/iso8601.js
- *
- * @param {String} iso
- * @return {Date}
- */
-
-exports.parse = function (iso) {
-  var numericKeys = [1, 5, 6, 7, 8, 11, 12];
-  var arr = matcher.exec(iso);
-  var offset = 0;
-
-  // fallback to native parsing
-  if (!arr) return new Date(iso);
-
-  // remove undefined values
-  for (var i = 0, val; val = numericKeys[i]; i++) {
-    arr[val] = parseInt(arr[val], 10) || 0;
-  }
-
-  // allow undefined days and months
-  arr[2] = parseInt(arr[2], 10) || 1;
-  arr[3] = parseInt(arr[3], 10) || 1;
-
-  // month is 0-11
-  arr[2]--;
-
-  // allow abitrary sub-second precision
-  if (arr[8]) arr[8] = (arr[8] + '00').substring(0, 3);
-
-  // apply timezone if one exists
-  if (arr[4] == ' ') {
-    offset = new Date().getTimezoneOffset();
-  } else if (arr[9] !== 'Z' && arr[10]) {
-    offset = arr[11] * 60 + arr[12];
-    if ('+' == arr[10]) offset = 0 - offset;
-  }
-
-  var millis = Date.UTC(arr[1], arr[2], arr[3], arr[5], arr[6] + offset, arr[7], arr[8]);
-  return new Date(millis);
-};
-
-
-/**
- * Checks whether a `string` is an ISO date string. `strict` mode requires that
- * the date string at least have a year, month and date.
- *
- * @param {String} string
- * @param {Boolean} strict
- * @return {Boolean}
- */
-
-exports.is = function (string, strict) {
-  if (strict && false === /^\d{4}-\d{2}-\d{2}/.test(string)) return false;
-  return matcher.test(string);
-};
-});
 require.register("segmentio-new-date/lib/index.js", function(exports, require, module){
 
 var is = require('is')
@@ -2520,7 +2487,8 @@ require.register("analytics/lib/index.js", function(exports, require, module){
  * (C) 2013 Segment.io Inc.
  */
 
-var Analytics = require('./analytics');
+var Analytics = require('./analytics')
+  , bind = require('bind');
 
 
 /**
@@ -2528,6 +2496,32 @@ var Analytics = require('./analytics');
  */
 
 module.exports = new Analytics();
+
+
+/**
+ * Bind methods on `analytics` to itself.
+ */
+
+bind.methods(
+  module.exports,
+  'init',
+  'initialize',
+  'identify',
+  'user',
+  'group',
+  'track',
+  'trackClick',
+  'trackLink',
+  'trackSubmit',
+  'trackForm',
+  'pageview',
+  'alias',
+  'ready',
+  '_options',
+  '_callback',
+  '_invoke',
+  '_parseQuery'
+);
 });
 require.register("analytics/lib/analytics.js", function(exports, require, module){
 
@@ -2540,7 +2534,8 @@ var after = require('after')
   , is = require('is')
   , isEmail = require('is-email')
   , isMeta = require('is-meta')
-  , localStore = require('./localStore')
+  , group = require('./group')
+  , store = require('./store')
   , map = require('map')
   , newDate = require('new-date')
   , size = require('object').length
@@ -2562,7 +2557,7 @@ module.exports = exports = Analytics;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '0.13.2';
+exports.VERSION = '0.14.0';
 
 
 /**
@@ -2602,7 +2597,7 @@ function Analytics () {
   this._integrations = {};
   this._readied = false;
   this._timeout = 300;
-  this._user = user;
+  this._user = user; // BACKWARDS COMPATIBILITY
 }
 
 
@@ -2611,18 +2606,22 @@ function Analytics () {
  * `init` for convenience.
  *
  * @param {Object} settings
- * @param {Object} options
+ * @param {Object} options (optional)
  * @return {Analytics}
  */
 
 Analytics.prototype.init =
 Analytics.prototype.initialize = function (settings, options) {
+  settings || (settings = {});
+  options || (options = {});
+
   this._options(options);
   this._readied = false;
   this._integrations = {};
 
   // load user now that options are set
-  this._user.load();
+  user.load();
+  group.load();
 
   // make ready callback
   var self = this;
@@ -2664,13 +2663,14 @@ Analytics.prototype.initialize = function (settings, options) {
 Analytics.prototype.identify = function (id, traits, options, fn) {
   if (is.fn(options)) fn = options, options = undefined;
   if (is.fn(traits)) fn = traits, traits = undefined;
-  if (is.object(id)) traits = id, id = user.id();
+  if (is.object(id)) options = traits, traits = id, id = user.id();
 
-  this._user.update(id, traits);
+  user.identify(id, traits);
 
   // clone traits before we manipulate so we don't do anything uncouth, and take
   // from `user` so that we carryover anonymous traits
-  traits = cleanTraits(id, clone(user.traits()));
+  id = user.id();
+  traits = cleanTraits(id, user.traits());
 
   this._invoke('identify', id, traits, options);
   this._callback(fn);
@@ -2685,7 +2685,7 @@ Analytics.prototype.identify = function (id, traits, options, fn) {
  */
 
 Analytics.prototype.user = function () {
-  return this._user;
+  return user;
 };
 
 
@@ -2693,7 +2693,7 @@ Analytics.prototype.user = function () {
  * Identify a group by optional `id` and `properties`. Or, if no arguments are
  * supplied, return the current group.
  *
- * @param {String} id
+ * @param {String} id (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  * @param {Function} fn (optional)
@@ -2701,10 +2701,18 @@ Analytics.prototype.user = function () {
  */
 
 Analytics.prototype.group = function (id, properties, options, fn) {
+  if (0 === arguments.length) return group;
   if (is.fn(options)) fn = options, options = undefined;
   if (is.fn(properties)) fn = properties, properties = undefined;
+  if (is.object(id)) options = properties, properties = id, id = user.id();
 
-  properties = clone(properties) || {};
+  group.identify(id, properties);
+
+  // grab from group again to make sure we're taking from the source
+  id = group.id();
+  properties = group.properties();
+
+  // convert a create date to a date
   if (properties.created) properties.created = newDate(properties.created);
 
   this._invoke('group', id, properties, options);
@@ -2875,8 +2883,9 @@ Analytics.prototype.ready = function (fn) {
 Analytics.prototype._options = function (options) {
   options || (options = {});
   cookie.options(options.cookie);
-  localStore.options(options.localStorage);
+  store.options(options.localStorage);
   user.options(options.user);
+  group.options(options.group);
   return this;
 };
 
@@ -3001,11 +3010,11 @@ function cleanTraits (userId, traits) {
 });
 require.register("analytics/lib/cookie.js", function(exports, require, module){
 
-var bindAll   = require('bind-all')
-  , cookie    = require('cookie')
-  , clone     = require('clone')
-  , defaults  = require('defaults')
-  , json      = require('json')
+var bind = require('bind')
+  , cookie = require('cookie')
+  , clone = require('clone')
+  , defaults = require('defaults')
+  , json = require('json')
   , topDomain = require('top-domain');
 
 
@@ -3097,20 +3106,23 @@ Cookie.prototype.remove = function (key) {
 
 
 /**
- * Export singleton cookie
+ * Expose singleton cookie.
  */
 
-module.exports = bindAll(new Cookie());
+module.exports = bind.all(new Cookie());
 
+
+/**
+ * Expose `Cookie` constructor.
+ */
 
 module.exports.Cookie = Cookie;
-
 });
-require.register("analytics/lib/localStore.js", function(exports, require, module){
+require.register("analytics/lib/store.js", function(exports, require, module){
 
-var bindAll  = require('bind-all')
+var bind = require('bind')
   , defaults = require('defaults')
-  , store    = require('store');
+  , store = require('store');
 
 
 function Store (options) {
@@ -3175,10 +3187,17 @@ Store.prototype.remove = function (key) {
 
 
 /**
- * Singleton exports
+ * Expose a store singleton.
  */
 
-module.exports = bindAll(new Store());
+module.exports = bind.all(new Store());
+
+
+/**
+ * Expose the `Store` constructor.
+ */
+
+module.exports.Store = Store;
 });
 require.register("analytics/lib/integration.js", function(exports, require, module){
 
@@ -3420,217 +3439,456 @@ extend(Provider.prototype, {
 });
 });
 require.register("analytics/lib/user.js", function(exports, require, module){
-var bindAll    = require('bind-all')
-  , clone      = require('clone')
-  , cookie     = require('./cookie')
-  , defaults   = require('defaults')
-  , extend     = require('extend')
-  , localStore = require('./localStore');
 
+var bind = require('bind')
+  , clone = require('clone')
+  , cookie = require('./cookie')
+  , defaults = require('defaults')
+  , extend = require('extend')
+  , store = require('./store')
+  , traverse = require('isodate-traverse');
+
+
+/**
+ * Initialize a new `User`.
+ *
+ * @param {Object} options
+ */
 
 function User (options) {
-  this._id     = null;
-  this._traits = {};
   this.options(options);
+  this.id(null);
+  this.traits({});
 }
 
 
 /**
- * Sets the options for the user
+ * Get or set storage `options`.
  *
- * @param  {Object} options
- *   @field {Object}  cookie
- *   @field {Object}  localStorage
- *   @field {Boolean} persist (true)
+ * @param {Object} options
+ *   @property {Object} cookie
+ *   @property {Object} localStorage
+ *   @property {Boolean} persist (default: `true`)
  */
 
 User.prototype.options = function (options) {
+  if (arguments.length === 0) return this._options;
   options || (options = {});
 
   defaults(options, {
-    persist : true
+    persist: true,
+    cookie: {
+      key: 'ajs_user_id',
+      oldKey: 'ajs_user'
+    },
+    localStorage: {
+      key: 'ajs_user_traits'
+    }
   });
 
-  this.cookie(options.cookie);
-  this.localStorage(options.localStorage);
-  this.persist = options.persist;
+  this._options = options;
 };
 
 
 /**
- * Get or set cookie options
+ * Get or set the user's `id`.
  *
- * @param  {Object} options
- */
-
-User.prototype.cookie = function (options) {
-  if (arguments.length === 0) return this.cookieOptions;
-
-  options || (options = {});
-  defaults(options, {
-    key    : 'ajs_user_id',
-    oldKey : 'ajs_user'
-  });
-  this.cookieOptions = options;
-};
-
-
-/**
- * Get or set local storage options
- *
- * @param  {Object} options
- */
-
-User.prototype.localStorage = function (options) {
-  if (arguments.length === 0) return this.localStorageOptions;
-
-  options || (options = {});
-  defaults(options, {
-    key    : 'ajs_user_traits'
-  });
-  this.localStorageOptions = options;
-};
-
-
-/**
- * Get or set the user id
- *
- * @param  {String} id
+ * @param {String} id
  */
 
 User.prototype.id = function (id) {
-  if (arguments.length === 0) return this._id;
-  this._id = id;
+  switch (arguments.length) {
+    case 0: return this._getId();
+    case 1: return this._setId(id);
+  }
 };
 
 
 /**
- * Get or set the user traits
+ * Get the user's id.
  *
- * @param  {Object} traits
+ * @return {String}
+ */
+
+User.prototype._getId = function () {
+  var ret = this._options.persist
+    ? cookie.get(this._options.cookie.key)
+    : this._id;
+  return ret === undefined ? null : ret;
+};
+
+
+/**
+ * Set the user's `id`.
+ *
+ * @param {String} id
+ */
+
+User.prototype._setId = function (id) {
+  if (this._options.persist) {
+    cookie.set(this._options.cookie.key, id);
+  } else {
+    this._id = id;
+  }
+};
+
+
+/**
+ * Get or set the user's `traits`.
+ *
+ * @param {String} traits
  */
 
 User.prototype.traits = function (traits) {
-  if (arguments.length === 0) return clone(this._traits);
-  traits || (traits = {});
-
-  this._traits = traits;
+  switch (arguments.length) {
+    case 0: return this._getTraits();
+    case 1: return this._setTraits(traits);
+  }
 };
 
 
 /**
- * Updates the current stored user with id and traits.
- *
- * @param {String} userId - the new user ID.
- * @param {Object} traits - any new traits.
- * @return {Boolean} whether alias should be called.
- */
-
-User.prototype.update = function (userId, traits) {
-
-  // Make an alias call if there was no previous userId, there is one
-  // now, and we are using a cookie between page loads.
-  var alias = !this.id() && userId && this.persist;
-
-  traits || (traits = {});
-
-  // If there is a current user and the new user isn't the same,
-  // we want to just replace their traits. Otherwise extend.
-  if (this.id() && userId && this.id() !== userId) this.traits(traits);
-  else this.traits(extend(this.traits(), traits));
-
-  if (userId) this.id(userId);
-
-  this.save();
-
-  return alias;
-};
-
-
-/**
- * Save the user to localstorage and cookie
- *
- * @return {Boolean} saved
- */
-
-User.prototype.save = function () {
-  if (!this.persist) return false;
-
-  cookie.set(this.cookie().key, this.id());
-  localStore.set(this.localStorage().key, this.traits());
-  return true;
-};
-
-
-/**
- * Loads a saved user, and set its information
- *
- * @return {Object} user
- */
-
-User.prototype.load = function () {
-  if (this.loadOldCookie()) return this.toJSON();
-
-  var id     = cookie.get(this.cookie().key)
-    , traits = localStore.get(this.localStorage().key);
-
-  this.id(id);
-  this.traits(traits);
-  return this.toJSON();
-};
-
-
-/**
- * Clears the user, and removes the stored version
- *
- */
-
-User.prototype.clear = function () {
-  cookie.remove(this.cookie().key);
-  localStore.remove(this.localStorage().key);
-  this.id(null);
-  this.traits({});
-};
-
-
-/**
- * Load the old user from the cookie. Should be phased
- * out at some point
- *
- * @return {Boolean} loaded
- */
-
-User.prototype.loadOldCookie = function () {
-  var user = cookie.get(this.cookie().oldKey);
-  if (!user) return false;
-
-  this.id(user.id);
-  this.traits(user.traits);
-  cookie.remove(this.cookie().oldKey);
-  return true;
-};
-
-
-/**
- * Get the user info
+ * Get the user's traits. Always convert ISO date strings into real dates, since
+ * they aren't parsed back from local storage.
  *
  * @return {Object}
  */
 
-User.prototype.toJSON = function () {
-  return {
-    id     : this.id(),
-    traits : this.traits()
-  };
+User.prototype._getTraits = function () {
+  var ret = this._options.persist
+    ? store.get(this._options.localStorage.key)
+    : this._traits;
+  return ret ? traverse(clone(ret)) : {};
 };
 
 
 /**
- * Export the new user as a singleton.
+ * Set the user's `traits`.
+ *
+ * @param {Object} traits
  */
 
-module.exports = bindAll(new User());
+User.prototype._setTraits = function (traits) {
+  traits || (traits = {});
+  if (this._options.persist) {
+    store.set(this._options.localStorage.key, traits);
+  } else {
+    this._traits = traits;
+  }
+};
 
+
+/**
+ * Idenfity the user with an `id` and `traits`. If we it's the same user, extend
+ * the existing `traits` instead of overwriting.
+ *
+ * @param {String} id
+ * @param {Object} traits
+ */
+
+User.prototype.identify = function (id, traits) {
+  traits || (traits = {});
+  var current = this.id();
+  if (current === null || current === id) traits = extend(this.traits(), traits);
+  if (id) this.id(id);
+  this.traits(traits);
+  this.save();
+};
+
+
+/**
+ * Save the user to local storage and the cookie.
+ *
+ * @return {Boolean}
+ */
+
+User.prototype.save = function () {
+  if (!this._options.persist) return false;
+  cookie.set(this._options.cookie.key, this.id());
+  store.set(this._options.localStorage.key, this.traits());
+  return true;
+};
+
+
+/**
+ * Log the user out, reseting `id` and `traits` to defaults.
+ */
+
+User.prototype.logout = function () {
+  this.id(null);
+  this.traits({});
+  cookie.remove(this._options.cookie.key);
+  store.remove(this._options.localStorage.key);
+};
+
+
+/**
+ * Reset all user state, logging out and returning options to defaults.
+ */
+
+User.prototype.reset = function () {
+  this.logout();
+  this.options({});
+};
+
+
+/**
+ * Load saved user `id` or `traits` from storage.
+ */
+
+User.prototype.load = function () {
+  if (this._loadOldCookie()) return;
+  this.id(cookie.get(this._options.cookie.key));
+  this.traits(store.get(this._options.localStorage.key));
+};
+
+
+/**
+ * BACKWARDS COMPATIBILITY: Load the old user from the cookie.
+ *
+ * @return {Boolean}
+ * @api private
+ */
+
+User.prototype._loadOldCookie = function () {
+  var user = cookie.get(this._options.cookie.oldKey);
+  if (!user) return false;
+
+  this.id(user.id);
+  this.traits(user.traits);
+  cookie.remove(this._options.cookie.oldKey);
+  return true;
+};
+
+
+/**
+ * Expose the user singleton.
+ */
+
+module.exports = bind.all(new User());
+
+
+/**
+ * Expose the `User` constructor.
+ */
+
+module.exports.User = User;
+});
+require.register("analytics/lib/group.js", function(exports, require, module){
+
+var bind = require('bind')
+  , clone = require('clone')
+  , cookie = require('./cookie')
+  , defaults = require('defaults')
+  , extend = require('extend')
+  , store = require('./store')
+  , traverse = require('isodate-traverse');
+
+
+/**
+ * Initialize a new `Group`.
+ *
+ * @param {Object} options
+ */
+
+function Group (options) {
+  this.options(options);
+  this.id(null);
+  this.properties({});
+}
+
+
+/**
+ * Get or set storage `options`.
+ *
+ * @param {Object} options
+ *   @property {Object} cookie
+ *   @property {Object} localStorage
+ *   @property {Boolean} persist (default: `true`)
+ */
+
+Group.prototype.options = function (options) {
+  if (arguments.length === 0) return this._options;
+  options || (options = {});
+
+  defaults(options, {
+    persist: true,
+    cookie: {
+      key: 'ajs_group_id'
+    },
+    localStorage: {
+      key: 'ajs_group_properties'
+    }
+  });
+
+  this._options = options;
+};
+
+
+/**
+ * Get or set the group's `id`.
+ *
+ * @param {String} id
+ */
+
+Group.prototype.id = function (id) {
+  switch (arguments.length) {
+    case 0: return this._getId();
+    case 1: return this._setId(id);
+  }
+};
+
+
+/**
+ * Get the group's id.
+ *
+ * @return {String}
+ */
+
+Group.prototype._getId = function () {
+  var ret = this._options.persist
+    ? cookie.get(this._options.cookie.key)
+    : this._id;
+  return ret === undefined ? null : ret;
+};
+
+
+/**
+ * Set the group's `id`.
+ *
+ * @param {String} id
+ */
+
+Group.prototype._setId = function (id) {
+  if (this._options.persist) {
+    cookie.set(this._options.cookie.key, id);
+  } else {
+    this._id = id;
+  }
+};
+
+
+/**
+ * Get or set the group's `properties`.
+ *
+ * @param {String} properties
+ */
+
+Group.prototype.properties = function (properties) {
+  switch (arguments.length) {
+    case 0: return this._getProperties();
+    case 1: return this._setProperties(properties);
+  }
+};
+
+
+/**
+ * Get the group's properties. Always convert ISO date strings into real dates,
+ * since they aren't parsed back from local storage.
+ *
+ * @return {Object}
+ */
+
+Group.prototype._getProperties = function () {
+  var ret = this._options.persist
+    ? store.get(this._options.localStorage.key)
+    : this._properties;
+  return ret ? traverse(clone(ret)) : {};
+};
+
+
+/**
+ * Set the group's `properties`.
+ *
+ * @param {Object} properties
+ */
+
+Group.prototype._setProperties = function (properties) {
+  properties || (properties = {});
+  if (this._options.persist) {
+    store.set(this._options.localStorage.key, properties);
+  } else {
+    this._properties = properties;
+  }
+};
+
+
+/**
+ * Idenfity the group with an `id` and `properties`. If we it's the same group,
+ * extend the existing `properties` instead of overwriting.
+ *
+ * @param {String} id
+ * @param {Object} properties
+ */
+
+Group.prototype.identify = function (id, properties) {
+  properties || (properties = {});
+  var current = this.id();
+  if (current === null || current === id) properties = extend(this.properties(), properties);
+  if (id) this.id(id);
+  this.properties(properties);
+  this.save();
+};
+
+
+/**
+ * Save the group to local storage and the cookie.
+ *
+ * @return {Boolean}
+ */
+
+Group.prototype.save = function () {
+  if (!this._options.persist) return false;
+  cookie.set(this._options.cookie.key, this.id());
+  store.set(this._options.localStorage.key, this.properties());
+  return true;
+};
+
+
+/**
+ * Log the group out, reseting `id` and `properties` to defaults.
+ */
+
+Group.prototype.logout = function () {
+  this.id(null);
+  this.properties({});
+  cookie.remove(this._options.cookie.key);
+  store.remove(this._options.localStorage.key);
+};
+
+
+/**
+ * Reset all group state, logging out and returning options to defaults.
+ */
+
+Group.prototype.reset = function () {
+  this.logout();
+  this.options({});
+};
+
+
+/**
+ * Load saved group `id` or `properties` from storage.
+ */
+
+Group.prototype.load = function () {
+  this.id(cookie.get(this._options.cookie.key));
+  this.properties(store.get(this._options.localStorage.key));
+};
+
+
+/**
+ * Expose the new group as a singleton.
+ */
+
+module.exports = bind.all(new Group());
+
+
+/**
+ * Expose the `Group` constructor.
+ */
+
+module.exports.Group = Group;
 });
 require.register("analytics/lib/integrations/adroll.js", function(exports, require, module){
 
@@ -7784,11 +8042,9 @@ Woopra.prototype.pageview = function (url) {
 
 
 
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
-
-require.alias("component-bind/index.js", "analytics/deps/bind/index.js");
-require.alias("component-bind/index.js", "bind/index.js");
 
 require.alias("component-clone/index.js", "analytics/deps/clone/index.js");
 require.alias("component-clone/index.js", "clone/index.js");
@@ -7799,8 +8055,6 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
@@ -7826,6 +8080,17 @@ require.alias("ianstormtaylor-callback/index.js", "analytics/deps/callback/index
 require.alias("ianstormtaylor-callback/index.js", "callback/index.js");
 require.alias("timoxley-next-tick/index.js", "ianstormtaylor-callback/deps/next-tick/index.js");
 
+require.alias("ianstormtaylor-bind/index.js", "analytics/deps/bind/index.js");
+require.alias("ianstormtaylor-bind/index.js", "bind/index.js");
+require.alias("component-bind/index.js", "ianstormtaylor-bind/deps/bind/index.js");
+
+require.alias("segmentio-bind-all/index.js", "ianstormtaylor-bind/deps/bind-all/index.js");
+require.alias("segmentio-bind-all/index.js", "ianstormtaylor-bind/deps/bind-all/index.js");
+require.alias("component-bind/index.js", "segmentio-bind-all/deps/bind/index.js");
+
+require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js");
+
+require.alias("segmentio-bind-all/index.js", "segmentio-bind-all/index.js");
 require.alias("ianstormtaylor-is/index.js", "analytics/deps/is/index.js");
 require.alias("ianstormtaylor-is/index.js", "is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
@@ -7835,8 +8100,6 @@ require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-emp
 require.alias("ianstormtaylor-map/index.js", "analytics/deps/map/index.js");
 require.alias("ianstormtaylor-map/index.js", "map/index.js");
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("jkroso-equals/index.js", "analytics/deps/equals/index.js");
@@ -7849,14 +8112,6 @@ require.alias("segmentio-after/index.js", "after/index.js");
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
 require.alias("segmentio-alias/index.js", "alias/index.js");
 
-require.alias("segmentio-bind-all/index.js", "analytics/deps/bind-all/index.js");
-require.alias("segmentio-bind-all/index.js", "analytics/deps/bind-all/index.js");
-require.alias("segmentio-bind-all/index.js", "bind-all/index.js");
-require.alias("component-bind/index.js", "segmentio-bind-all/deps/bind/index.js");
-
-require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js");
-
-require.alias("segmentio-bind-all/index.js", "segmentio-bind-all/index.js");
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
@@ -7875,6 +8130,21 @@ require.alias("segmentio-is-email/index.js", "is-email/index.js");
 
 require.alias("segmentio-is-meta/index.js", "analytics/deps/is-meta/index.js");
 require.alias("segmentio-is-meta/index.js", "is-meta/index.js");
+
+require.alias("segmentio-isodate-traverse/index.js", "analytics/deps/isodate-traverse/index.js");
+require.alias("segmentio-isodate-traverse/index.js", "isodate-traverse/index.js");
+require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone/index.js");
+require.alias("component-type/index.js", "component-clone/deps/type/index.js");
+
+require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
+require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
+require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
+
+require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
+
+require.alias("segmentio-isodate/index.js", "segmentio-isodate-traverse/deps/isodate/index.js");
 
 require.alias("segmentio-json/index.js", "analytics/deps/json/index.js");
 require.alias("segmentio-json/index.js", "json/index.js");
@@ -7903,8 +8173,6 @@ require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-on-error/index.js", "analytics/deps/on-error/index.js");

@@ -54,7 +54,7 @@ describe('#initialize', function () {
 
 describe('#identify', function () {
   beforeEach(function () {
-    analytics._user.clear();
+    analytics.user().reset();
     this.stub = sinon.stub(window._kmq, 'push');
   });
 

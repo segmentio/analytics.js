@@ -77,7 +77,7 @@ describe('#initialize', function () {
 
 describe('#identify', function () {
   beforeEach(function () {
-    analytics._user.clear();
+    analytics.user().reset();
     this.idSpy = sinon.spy(window, 'ClickTaleSetUID');
     this.traitSpy = sinon.spy(window, 'ClickTaleField');
   });

@@ -1,3 +1,12 @@
+0.14.0 - September 16, 2013
+---------------------------
+* exposed `group` via the `#group` method
+* exposed `user` via the `#user` method
+* started caching `group` in cookie and local storage like `user`
+* changed `user` and `group` info to always be queried from storage
+* bound all `analytics` methods as a singleton
+* added `identify(traits, options)` override
+
 0.13.2 - September 16, 2013
 ---------------------------
 * added [Rollbar](https://rollbar.com/), by [@coryvirok](https://github.com/coryvirok)

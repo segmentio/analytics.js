@@ -52,7 +52,7 @@ describe('#initialize', function () {
 
 describe('#identify', function () {
   beforeEach(function () {
-    analytics._user.clear();
+    analytics.user().reset();
     this.stub = sinon.stub(window._hsq, 'push');
   });
 
@@ -89,7 +89,7 @@ describe('#identify', function () {
 
 describe('#track', function () {
   beforeEach(function () {
-    analytics._user.clear();
+    analytics.user().reset();
     this.stub = sinon.stub(window._hsq, 'push');
   });
 
@@ -110,7 +110,7 @@ describe('#track', function () {
 
 describe('#pageview', function () {
   beforeEach(function () {
-    analytics._user.clear();
+    analytics.user().reset();
     this.stub = sinon.stub(window._hsq, 'push');
   });
 

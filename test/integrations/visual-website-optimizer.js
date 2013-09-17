@@ -25,14 +25,14 @@ before(function (done) {
   tick(done);
 });
 
+after(function () {
+  this.identifySpy.restore();
+});
+
 describe('#name', function () {
   it('Visual Website Optimizer', function () {
     assert(this.integration.name == 'Visual Website Optimizer');
   });
-});
-
-after(function () {
-  this.identifySpy.restore();
 });
 
 describe('#defaults', function () {

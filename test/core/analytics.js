@@ -1,827 +1,699 @@
-describe('Analytics.js', function () {
 
-  var analytics = window.analytics || require('analytics')
-    , trigger = require('trigger-event')
-    , integration = require('analytics/lib/integration');
+describe('analytics', function () {
 
-  // lower timeout for tests
-  var timeout = analytics._timeout = 3;
+var analytics = window.analytics || require('analytics')
+  , assert = require('assert')
+  , bind = require('event').bind
+  , cookie = require('analytics/lib/cookie')
+  , equal = require('equals')
+  , group = require('analytics/lib/group')
+  , integration = require('analytics/lib/integration')
+  , is = require('is')
+  , jQuery = require('jquery')
+  , store = require('analytics/lib/store')
+  , tick = require('next-tick')
+  , trigger = require('trigger-event')
+  , user = require('analytics/lib/user');
 
-  var Integration = integration('Test');
-  Integration.prototype.key = 'key';
-  Integration.prototype.defaults = {};
-  Integration.prototype.initialize = function (options, ready) {
-    setTimeout(ready, timeout);
-  };
-  Integration.prototype.identify = function (userId, traits) {};
-  Integration.prototype.group = function (groupId, properties) {};
-  Integration.prototype.track = function (event, properties) {};
-  Integration.prototype.pageview = function () {};
-  Integration.prototype.alias = function (newId, originalId) {};
+var settings = { Test: { key: 'x' }};
+var timeout = 1;
+var Test = integration('Test');
+Test.prototype.key = 'key';
+Test.prototype.defaults = {};
+Test.prototype.initialize = function (options, ready) { setTimeout(ready, timeout); };
+Test.prototype.identify = function (userId, traits) {};
+Test.prototype.group = function (groupId, properties) {};
+Test.prototype.track = function (event, properties) {};
+Test.prototype.pageview = function () {};
+Test.prototype.alias = function (newId, originalId) {};
 
-  analytics.integration(Integration);
+before(function () {
+  this._timeout = analytics._timeout;
+  analytics._timeout = timeout;
+  analytics.integration(Test);
+});
 
-  var options = { 'Test' : 'x' };
+after(function () {
+  analytics._timeout = this._timeout;
+});
 
-  // Make sure initialize runs, so that any test can be looked at individually.
-  analytics.initialize(options);
+beforeEach(function (done) {
+  analytics.ready(done);
+  analytics.initialize(settings);
+});
 
+afterEach(function () {
+  analytics._callbacks = [];
+  analytics._integrations = {};
+  analytics._readied = false;
+  analytics.user().reset();
+  analytics.group().reset();
+});
 
+describe('#initialize', function () {
+  beforeEach(function () {
+    this.optionsSpy = sinon.spy(analytics, '_options');
+    this.querySpy = sinon.spy(analytics, '_parseQuery');
+    this.userSpy = sinon.spy(user, 'load');
+    this.groupSpy = sinon.spy(group, 'load');
+    this.initializeSpy = sinon.spy(Test.prototype, 'initialize');
+  });
 
-  describe('initialize', function () {
-    it('stores enabled integrations', function () {
-      analytics._integrations = [];
-      analytics.initialize(options);
-      expect(analytics._integrations.Test instanceof Integration).to.be(true);
-    });
+  afterEach(function () {
+    this.optionsSpy.restore();
+    this.querySpy.restore();
+    this.userSpy.restore();
+    this.groupSpy.restore();
+    this.initializeSpy.restore();
+  });
 
-    it('doesnt error on unknown integration', function () {
-      expect(function () {
-        analytics.initialize({ 'Unknown' : '' });
-      }).not.to.throwException();
-    });
+  it('shouldnt error without settings', function (done) {
+    analytics.ready(done);
+    analytics.initialize();
+  });
 
-    it('sends options to integration.initialize', function () {
-      var spy = sinon.spy(Integration.prototype, 'initialize');
-      analytics.initialize(options);
-      expect(spy.calledWith(sinon.match({ key : 'x' }))).to.be(true);
-      spy.restore();
+  it('should set options', function (done) {
+    analytics.ready(done);
+    analytics.initialize({}, { option: true });
+    assert(this.optionsSpy.calledWith({ option: true }));
+  });
+
+  it('should reset readied state', function (done) {
+    analytics.ready(done);
+    analytics._readied = true;
+    analytics.initialize();
+    analytics._readied = false;
+  });
+
+  it('should call ready handlers', function (done) {
+    analytics.ready(done);
+    analytics.initialize();
+  });
+
+  it('should set readied state', function (done) {
+    analytics.ready(function () {
+      assert(analytics._readied);
+      done();
     });
   });
 
+  it('should reset enabled integrations', function (done) {
+    analytics.ready(done);
+    analytics.initialize();
+    assert(equal(analytics._integrations, {}));
+  });
 
+  it('should load the user', function (done) {
+    analytics.ready(done);
+    analytics.initialize();
+    assert(this.userSpy.called);
+  });
 
-  describe('ready', function () {
+  it('should load the group', function (done) {
+    analytics.ready(done);
+    analytics.initialize();
+    assert(this.groupSpy.called);
+  });
 
-    before(function () {
-      // Turn off our current ready state.
-      analytics._readied = false;
-    });
+  it('should store enabled integrations', function () {
+    assert(analytics._integrations.Test instanceof Test);
+  });
 
-    it('calls callbacks on initialize after a timeout', function (done) {
-      var spy1 = sinon.spy();
-      var spy2 = sinon.spy();
+  it('shouldnt error with an unknown integration', function (done) {
+    analytics.ready(done);
+    analytics.initialize({ Unknown: 'x' });
+  });
 
-      analytics.ready(spy1);
-      analytics.ready(spy2);
-      expect(spy1.called).to.be(false);
-      expect(spy2.called).to.be(false);
+  it('should send settings to an integration', function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
+    expect(this.initializeSpy.calledWith(settings));
+  });
 
-      analytics.initialize(options);
-      expect(spy1.called).to.be(false);
-      expect(spy2.called).to.be(false);
+  it('should parse the query string', function (done) {
+    analytics.ready(done);
+    analytics.initialize();
+    assert(this.querySpy.called);
+  });
 
-      setTimeout(function () {
-        expect(spy1.called).to.be(true);
-        expect(spy2.called).to.be(true);
-        done();
-      }, timeout);
-    });
+  it('should set initialized state', function (done) {
+    analytics.ready(done);
+    analytics.initialize();
+    assert(analytics.initialized);
+  });
+});
 
-    it('sets ready state', function (done) {
-      analytics.initialize(options);
-      analytics.ready(function () {
-        expect(analytics._readied).to.be(true);
-        done();
-      });
-    });
+describe('#ready', function () {
+  it('should push a handler on to the queue', function () {
+    var handler = function(){};
+    analytics.initialize(settings);
+    analytics.ready(handler);
+    assert(analytics._callbacks[0] == handler);
+  });
 
-    it('calls backs on next tick when already ready', function (done) {
-      var spy = sinon.spy();
-      analytics.ready(spy);
-      setTimeout(function () {
-        expect(spy.called).to.be(true);
-        done();
-      }, 1);
-    });
-
-    it('doesnt break on being passed a non-function', function () {
-      expect(function () {
-        analytics.ready('callback');
-      }).to.not.throwException();
+  it('should callback on next tick when already ready', function (done) {
+    var spy = sinon.spy();
+    analytics.ready(spy);
+    tick(function () {
+      assert(spy.called);
+      done();
     });
   });
 
+  it('shouldnt error when passed a non-function', function () {
+    analytics.ready('callback');
+  });
+});
 
-
-  describe('queue', function () {
-
-    function queueTest (method, args) {
-      return function (done) {
-        analytics._user.clear();
-        analytics.initialize(options);
-
-        // Once initialized, the call should queue.
-        var enqueueSpy = sinon.spy(Integration.prototype, 'enqueue');
-        analytics[method].apply(analytics, args);
-        expect(enqueueSpy.firstCall.args).to.eql([method, args]);
-        enqueueSpy.restore();
-
-        // After a timeout, expect the queue to drain.
-        var methodSpy = sinon.spy(Integration.prototype, method);
-        setTimeout(function () {
-          expect(methodSpy.firstCall.args).to.eql(args);
-          methodSpy.restore();
-          done();
-        }, timeout);
-      };
-    }
-
-    it('queues track calls before ready is called',
-      queueTest('track', ['tossed a disc', { distance : 40 }, undefined])
-    );
-
-    it('queues identify calls before ready is called',
-      queueTest('identify', ['id', { name : 'achilles' }, undefined])
-    );
-
-    it('queues alias calls before ready is called',
-      queueTest('alias', ['id', 'newId', undefined])
-    );
-
-    it('queues pageview calls before ready is called',
-      queueTest('pageview', ['/some/url', undefined])
-    );
+describe('#_invoke', function () {
+  beforeEach(function () {
+    this.identifySpy = sinon.spy(Test.prototype, 'identify');
+    this.enqueueSpy = sinon.spy(Test.prototype, 'enqueue');
   });
 
-
-
-  describe('identify', function () {
-
-    it('is called on providers', function () {
-      var spy = sinon.spy(Integration.prototype, 'identify');
-      analytics.identify();
-      expect(spy.called).to.be(true);
-      spy.restore();
-    });
-
-    it('sends userId along', function () {
-      var spy = sinon.spy(Integration.prototype, 'identify');
-      analytics.identify(test.userId);
-      expect(spy.calledWith(test.userId));
-      spy.restore();
-    });
-
-    it('sends a clone of traits along', function  () {
-      var spy = sinon.spy(Integration.prototype, 'identify');
-      analytics.identify(test.userId, test.traits);
-      expect(spy.args[0][1]).not.to.equal(test.traits);
-      expect(spy.args[0][1]).to.eql(test.traits);
-      spy.restore();
-    });
-
-    it('sends a clone of context along', function  () {
-      var spy = sinon.spy(Integration.prototype, 'identify');
-      analytics.identify(test.userId, test.traits, test.context);
-      expect(spy.args[0][2]).not.to.equal(test.context);
-      expect(spy.args[0][2]).to.eql(test.context);
-      spy.restore();
-    });
-
-    it('calls back after the timeout duration', function (done) {
-      var callback = sinon.spy();
-
-      analytics.identify(test.userId, test.traits, callback);
-      expect(callback.called).to.be(false);
-
-      setTimeout(function () {
-        expect(callback.called).to.be(true);
-        done();
-      }, timeout);
-    });
-
-    it('takes a callback with optional traits, userId or context', function (done) {
-      var callback = sinon.spy();
-
-      analytics.identify(test.userId, callback);
-      analytics.identify(test.traits, callback);
-      analytics.identify(test.userId, test.traits, callback);
-      analytics.identify(test.userId, test.traits, test.context, callback);
-
-      setTimeout(function () {
-        expect(callback.callCount).to.be(4);
-        done();
-      }, timeout);
-    });
-
-    it('is turned off by the all providers flag', function  () {
-      var spy     = sinon.spy(Integration.prototype, 'identify')
-        , context = {
-            providers: { all: false }
-          };
-
-      analytics.identify(test.userId, test.traits, context);
-      expect(spy.called).to.be(false);
-      spy.restore();
-    });
-
-    it('is turned off by the single integration flag', function  () {
-      var spy     = sinon.spy(Integration.prototype, 'identify')
-        , context = {
-            providers: { Test: false }
-          };
-
-      analytics.identify(test.userId, test.traits, context);
-      expect(spy.called).to.be(false);
-      spy.restore();
-    });
-
-    it('parses valid strings into dates', function () {
-      var type = require('component-type')
-        , spy  = sinon.spy(Integration.prototype, 'identify')
-        , date = 'Dec 07 2012';
-
-      analytics.identify({
-        created : date,
-        company : { created : date }
-      });
-
-      var traits = spy.args[0][1];
-      expect(type(traits.created)).to.equal('date');
-      expect(traits.created.getTime()).to.equal(new Date(date).getTime());
-      expect(traits.company.created.getTime()).to.equal(new Date(date).getTime());
-      spy.restore();
-    });
-
-    it('keeps normal dates the same', function () {
-      var spy  = sinon.spy(Integration.prototype, 'identify')
-        , date = new Date();
-
-      analytics.identify({
-        created : date,
-        company : { created : date }
-      });
-
-      var traits = spy.args[0][1];
-      expect(traits.created.getTime()).to.equal(date.getTime());
-      expect(traits.company.created.getTime()).to.equal(date.getTime());
-      spy.restore();
-    });
-
-    it('parses seconds into dates', function () {
-      var spy     = sinon.spy(Integration.prototype, 'identify')
-        , date    = new Date()
-        , seconds = date.getTime()/1000;
-
-      analytics.identify({
-        created : seconds,
-        company : { created : seconds }
-      });
-
-      var traits = spy.args[0][1];
-      expect(traits.created.getTime()).to.equal(date.getTime());
-      expect(traits.company.created.getTime()).to.equal(date.getTime());
-      spy.restore();
-    });
-
-    it('parses milliseconds into dates', function () {
-      var spy          = sinon.spy(Integration.prototype, 'identify')
-        , date         = new Date()
-        , milliseconds = date.getTime();
-
-      analytics.identify({
-        created : milliseconds,
-        company : { created : milliseconds }
-      });
-
-      var traits = spy.args[0][1];
-      expect(traits.created.getTime()).to.equal(date.getTime());
-      expect(traits.company.created.getTime()).to.equal(date.getTime());
-      spy.restore();
-    });
-
-    it('calls with all stored traits', function () {
-      analytics._user.clear();
-      var spy    = sinon.spy(Integration.prototype, 'identify')
-        , traits = test.traits;
-
-      analytics.identify({ name : traits.name });
-      expect(spy.calledWith(null, { name : traits.name })).to.be(true);
-      spy.reset();
-
-      analytics.identify({ email : traits.email });
-      expect(spy.calledWith(null, {
-        name  : traits.name,
-        email : traits.email
-      })).to.be(true);
-      spy.reset();
-
-      analytics.identify(test.userId);
-      expect(spy.calledWith(test.userId, {
-        name  : traits.name,
-        email : traits.email
-      })).to.be(true);
-      spy.restore();
-    });
-
-
-    it('overwrites stored traits', function () {
-      analytics._user.clear();
-      var spy    = sinon.spy(Integration.prototype, 'identify')
-        , traits = {
-            name : 'Zeus',
-            email : 'zeus@email.com'
-          };
-
-      analytics.identify(test.userId, traits);
-      expect(spy.calledWith(test.userId, traits)).to.be(true);
-      spy.reset();
-
-      analytics.identify({ name : 'Poseidon' });
-      traits.name = 'Poseidon';
-      expect(spy.calledWith(test.userId, traits)).to.be(true);
-      spy.restore();
-    });
+  afterEach(function () {
+    this.identifySpy.restore();
+    this.enqueueSpy.restore();
   });
 
-
-
-  describe('group', function () {
-
-    it('is called on providers', function () {
-      var spy = sinon.spy(Integration.prototype, 'group');
-      analytics.group();
-      expect(spy.called).to.be(true);
-      spy.restore();
-    });
-
-    it('sends groupId along', function () {
-      var spy = sinon.spy(Integration.prototype, 'group');
-      analytics.group(test.groupId);
-      expect(spy.calledWith(test.groupId));
-      spy.restore();
-    });
-
-    it('sends a clone of properties along', function  () {
-      var spy = sinon.spy(Integration.prototype, 'group');
-      analytics.group(test.groupId, test.groupProperties);
-      expect(spy.args[0][1]).not.to.equal(test.groupProperties);
-      expect(spy.args[0][1]).to.eql(test.groupProperties);
-      spy.restore();
-    });
-
-    it('sends a clone of context along', function  () {
-      var spy = sinon.spy(Integration.prototype, 'group');
-      analytics.group(test.groupId, test.groupProperties, test.context);
-      expect(spy.args[0][2]).not.to.equal(test.context);
-      expect(spy.args[0][2]).to.eql(test.context);
-      spy.restore();
-    });
-
-    it('calls the callback after the timeout duration', function (done) {
-      var callback = sinon.spy();
-
-      analytics.group(test.groupId, test.groupProperties, callback);
-      expect(callback.called).to.be(false);
-
-      setTimeout(function () {
-        expect(callback.called).to.be(true);
-        done();
-      }, timeout);
-    });
-
-    it('takes a callback with optional properties or context', function (done) {
-      var callback = sinon.spy();
-
-      analytics.group(test.groupId, callback);
-      analytics.group(test.groupId, test.groupProperties, callback);
-      analytics.group(test.groupId, test.groupProperties, test.context, callback);
-
-      setTimeout(function () {
-        expect(callback.callCount).to.be(3);
-        done();
-      }, timeout);
-    });
-
-    it('is turned off by the all providers flag', function  () {
-      var spy     = sinon.spy(Integration.prototype, 'group')
-        , context = { providers: { all: false } };
-
-      analytics.group(test.groupId, test.group, context);
-      expect(spy.called).to.be(false);
-      spy.restore();
-    });
-
-    it('is turned off by the single integration flag', function  () {
-      var spy     = sinon.spy(Integration.prototype, 'group')
-        , context = { providers: { Test: false } };
-
-      analytics.group(test.groupId, test.group, context);
-      expect(spy.called).to.be(false);
-      spy.restore();
-    });
-
-    it('parses valid strings into dates', function () {
-      var type = require('component-type')
-        , spy  = sinon.spy(Integration.prototype, 'group')
-        , date = 'Dec 07 2012';
-
-      analytics.group(test.groupId, { created : date });
-
-      var properties = spy.args[0][1];
-      expect(type(properties.created)).to.equal('date');
-      expect(properties.created.getTime()).to.equal(new Date(date).getTime());
-      spy.restore();
-    });
-
-    it('keeps normal dates the same', function () {
-      var spy  = sinon.spy(Integration.prototype, 'group')
-        , date = new Date();
-
-      analytics.group(test.groupId, { created : date });
-
-      var properties = spy.args[0][1];
-      expect(properties.created.getTime()).to.equal(date.getTime());
-      spy.restore();
-    });
-
-    it('parses seconds into dates', function () {
-      var spy     = sinon.spy(Integration.prototype, 'group')
-        , date    = new Date()
-        , seconds = date.getTime()/1000;
-
-      analytics.group(test.groupId, { created : seconds });
-
-      var properties = spy.args[0][1];
-      expect(properties.created.getTime()).to.equal(date.getTime());
-      spy.restore();
-    });
-
-    it('parses milliseconds into dates', function () {
-      var spy          = sinon.spy(Integration.prototype, 'group')
-        , date         = new Date()
-        , milliseconds = date.getTime();
-
-      analytics.group(test.groupId, { created : milliseconds });
-
-      var properties = spy.args[0][1];
-      expect(properties.created.getTime()).to.equal(date.getTime());
-      spy.restore();
-    });
+  it('should call a method on an integration', function () {
+    analytics._invoke('identify', 'id', { trait: true });
+    assert(this.identifySpy.calledWith('id', { trait: true }));
   });
 
-
-
-  describe('track', function () {
-
-    it('is called on providers', function () {
-      var spy = sinon.spy(Integration.prototype, 'track');
-      analytics.track();
-      expect(spy.called).to.be(true);
-      spy.restore();
-    });
-
-    it('sends event name along', function () {
-      var spy = sinon.spy(Integration.prototype, 'track');
-      analytics.track('party');
-      expect(spy.calledWith('party')).to.be(true);
-      spy.restore();
-    });
-
-    it('sends a clone of properties along', function  () {
-      var spy = sinon.spy(Integration.prototype, 'track');
-      analytics.track('party', test.properties);
-      expect(spy.args[0][1]).not.to.equal(test.properties);
-      expect(spy.args[0][1]).to.eql(test.properties);
-      spy.restore();
-    });
-
-    it('sends a clone of context along', function  () {
-      var spy = sinon.spy(Integration.prototype, 'track');
-      analytics.track(test.eventName, test.properties, test.context);
-      expect(spy.args[0][2]).not.to.equal(test.context);
-      expect(spy.args[0][2]).to.eql(test.context);
-      spy.restore();
-    });
-
-    it('calls the callback after the timeout duration', function (done) {
-      var callback = sinon.spy();
-
-      analytics.track(test.event, test.properties, callback);
-      expect(callback.called).to.be(false);
-
-      setTimeout(function () {
-        expect(callback.called).to.be(true);
-        done();
-      }, timeout);
-    });
-
-    it('takes a callback with optional eventName, propertes or context', function (done) {
-      var callback = sinon.spy();
-
-      analytics.identify(test.userId, callback);
-      analytics.identify(test.traits, callback);
-      analytics.identify(test.userId, test.traits, callback);
-      analytics.identify(test.userId, test.traits, test.context, callback);
-
-      setTimeout(function () {
-        expect(callback.callCount).to.be(4);
-        done();
-      }, timeout);
-    });
+  it('shouldnt call a method when the `all` option is false', function () {
+    analytics._invoke('identify', { providers: { all: false }});
+    assert(!this.identifySpy.called);
   });
 
+  it('shouldnt call a method when the integration option is false', function () {
+    analytics._invoke('identify', { providers: { Test: false }});
+    assert(!this.identifySpy.called);
+  });
 
+  it('should queue calls until the integration is ready', function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
+    analytics._invoke('identify', 'id');
+    assert(this.enqueueSpy.calledWith('identify', ['id']));
+  });
+});
 
-  describe('trackLink', function () {
+describe('#_options', function () {
+  beforeEach(function () {
+    this.cookieStub = sinon.stub(cookie, 'options');
+    this.storeStub = sinon.stub(store, 'options');
+    this.userStub = sinon.stub(user, 'options');
+    this.groupStub = sinon.stub(group, 'options');
+  });
 
-    var spy;
+  afterEach(function () {
+    this.cookieStub.restore();
+    this.storeStub.restore();
+    this.userStub.restore();
+    this.groupStub.restore();
+  });
 
-    beforeEach(function () {
-      spy = sinon.spy(Integration.prototype, 'track');
-      window.location.hash = '';
-    });
+  it('should set cookie options', function () {
+    analytics._options({ cookie: { option: true }});
+    assert(this.cookieStub.calledWith({ option: true }));
+  });
 
-    afterEach(function () {
-      spy.restore();
-    });
+  it('should set store options', function () {
+    analytics._options({ localStorage: { option: true }});
+    assert(this.storeStub.calledWith({ option: true }));
+  });
 
-    it('triggers a track on a link click', function () {
-      var a = document.createElement('a');
-      analytics.trackLink(a, 'party');
-      trigger(a, 'click');
-      expect(spy.calledWith('party')).to.be(true);
-    });
+  it('should set user options', function () {
+    analytics._options({ user: { option: true }});
+    assert(this.userStub.calledWith({ option: true }));
+  });
 
-    it('triggers a track on a $link click', function () {
-      var $link = $('<a>');
-      analytics.trackLink($link, 'party');
-      trigger($link[0], 'click');
-      expect(spy.calledWith('party')).to.be(true);
-    });
+  it('should set group options', function () {
+    analytics._options({ group: { option: true }});
+    assert(this.groupStub.calledWith({ option: true }));
+  });
+});
 
-    it('allows for event to be a function', function () {
-      var link = $('<a>')[0];
-      analytics.trackLink(link, function () { return 'party'; });
-      trigger(link, 'click');
-      expect(spy.calledWith('party')).to.be(true);
-    });
+describe('#_callback', function () {
+  it('should callback after a timeout', function (done) {
+    var spy = sinon.spy();
+    analytics._callback(spy);
+    assert(!spy.called);
+    setTimeout(function () {
+      assert(spy.called);
+      done();
+    }, timeout);
+  });
+});
 
-    it('allows for event to be a function across multiple links', function () {
-      var links = $('<a data-type="crazy"><a data-type="normal">');
-      var handler = function (link) { return $(link).attr('data-type'); };
-      analytics.trackLink(links, handler);
-      trigger(links[0], 'click');
-      expect(spy.calledWith('crazy')).to.be(true);
-      spy.reset();
-      trigger(links[1], 'click');
-      expect(spy.calledWith('normal')).to.be(true);
-    });
+describe('#identify', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(analytics, '_invoke');
+    this.userSpy = sinon.spy(user, 'identify');
+  });
 
-    it('calls a event function with the link that was clicked', function () {
-      var spy  = sinon.spy()
-        , link = $('<a>')[0];
-      analytics.trackLink(link, spy);
-      trigger(link, 'click');
-      expect(spy.calledWith(link)).to.be(true);
-    });
+  afterEach(function () {
+    this.spy.restore();
+    this.userSpy.restore();
+  });
 
-    it('allows for properties to be a function', function () {
-      var link = $('<a>')[0];
-      analytics.trackLink(link, 'party', function () {
-        return { type : 'crazy' };
-      });
-      trigger(link, 'click');
-      expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
-    });
+  it('should invoke with an id, traits and options', function () {
+    analytics.identify('id', {}, { option: true });
+    assert(this.spy.calledWith('identify', 'id', {}, { option: true }));
+  });
 
-    it('allows for properties to be a function across multiple links', function () {
-      var links = $('<a data-type="crazy"><a data-type="normal">');
-      var handler = function (link) {
-        return { type : $(link).attr('data-type') };
-      };
-      analytics.trackLink(links, 'party', handler);
-      trigger(links[0], 'click');
-      expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
-      spy.reset();
-      trigger(links[1], 'click');
-      expect(spy.calledWith('party', { type : 'normal' })).to.be(true);
-    });
+  it('should identify the user', function () {
+    analytics.identify('id', { trait: true });
+    assert(this.userSpy.calledWith('id', { trait: true }));
+  });
 
-    it('calls a properties function with the link that was clicked', function () {
-      var spy  = sinon.spy()
-        , link = $('<a>')[0];
-      analytics.trackLink(link, 'party', spy);
-      trigger(link, 'click');
-      expect(spy.calledWith(link)).to.be(true);
-    });
+  it('should back traits with stored traits', function () {
+    user.traits({ one: 1 });
+    user.save();
+    analytics.identify('id', { two: 2 });
+    assert(this.spy.calledWith('identify', 'id', {
+      one: 1,
+      two: 2
+    }));
+  });
 
-    it('triggers a track and loads an href on a link click with an href', function (done) {
-      var link = $('<a href="#test">')[0];
-      analytics.trackLink(link, 'party');
-      trigger(link, 'click');
-      // Expect the track call to have happened, but for the href not to have
-      // been applied yet.
-      expect(spy.calledWith('party')).to.be(true);
-      expect(window.location.hash).not.to.equal('#test');
-      // Expect the href to be applied after the timeout that gives events
-      // time to send requests.
-      setTimeout(function () {
-        expect(window.location.hash).to.equal('#test');
-        done();
-      }, timeout);
-    });
+  it('should accept a callback', function (done) {
+    analytics.identify('id', {}, {}, done);
+  });
 
-    it('triggers a track and loads the correct href on a link click with multiple links', function (done) {
-      var link1 = $('<a href="#test1">')[0]
-        , link2 = $('<a href="#test2">')[0]
-        , link3 = $('<a href="#test3">')[0];
-      analytics.trackLink([link1, link2, link3], 'party');
-      trigger(link2, 'click');
-      // Expect the track call to have happened, but for the href not to have
-      // been applied yet.
-      expect(spy.calledWith('party')).to.be(true);
-      expect(window.location.hash).not.to.equal('#test2');
-      // Expect the href to be applied after the timeout that gives events
-      // time to send requests.
-      setTimeout(function () {
-        expect(window.location.hash).to.equal('#test2');
-        done();
-      }, timeout);
-    });
+  it('should have an id overload', function () {
+    analytics.identify({ trait: true }, { option: true });
+    assert(this.spy.calledWith('identify', null, { trait: true }, { option: true }));
+  });
 
-    it('triggers a track but doesnt load an href on an href with blank target', function () {
-      var link = $('<a href="/test/server/mock.html" target="_blank">')[0];
-      analytics.trackLink(link, 'party');
-      trigger(link, 'click');
-      expect(spy.calledWith('party')).to.be(true);
-      expect(window.location.hash).not.to.equal('#test');
-    });
+  it('should have a traits overload', function (done) {
+    analytics.identify('id', done);
+  });
 
-    // breaks phantom....
+  it('should have an options overload', function (done) {
+    analytics.identify('id', {}, done);
+  });
 
-    // it('triggers a track but doesnt load an href on a meta link click with an href', function () {
-    //   var link = $('<a href="/test/server/mock.html">')[0];
-    //   analytics.trackLink(link, 'party');
-    //   trigger(link, 'click', { meta: true });
-    //   expect(spy.calledWith('party')).to.be(true);
-    //   expect(window.location.hash).not.to.equal('#test');
-    // });
+  it('should parse a created string into a date', function () {
+    var date = new Date();
+    var string = date.getTime() + '';
+    analytics.identify({ created: string });
+    var created = this.spy.args[0][2].created;
+    assert(is.date(created));
+    assert(created.getTime() == date.getTime());
+  });
 
-    it('trackClick is aliased to trackLink for backwards compatibility', function () {
-      expect(analytics.trackClick).to.equal(analytics.trackLink);
+  it('should parse created milliseconds into a date', function () {
+    var date = new Date();
+    var milliseconds = date.getTime();
+    analytics.identify({ created: milliseconds });
+    var created = this.spy.args[0][2].created;
+    assert(is.date(created));
+    assert(created.getTime() == milliseconds);
+  });
+
+  it('should parse created seconds into a date', function () {
+    var date = new Date();
+    var seconds = Math.floor(date.getTime() / 1000);
+    analytics.identify({ created: seconds });
+    var created = this.spy.args[0][2].created;
+    assert(is.date(created));
+    assert(created.getTime() == seconds * 1000);
+  });
+
+  it('should parse a company created string into a date', function () {
+    var date = new Date();
+    var string = date.getTime() + '';
+    analytics.identify({ company: { created: string }});
+    var created = this.spy.args[0][2].company.created;
+    assert(is.date(created));
+    assert(created.getTime() == date.getTime());
+  });
+
+  it('should parse company created milliseconds into a date', function () {
+    var date = new Date();
+    var milliseconds = date.getTime();
+    analytics.identify({ company: { created: milliseconds }});
+    var created = this.spy.args[0][2].company.created;
+    assert(is.date(created));
+    assert(created.getTime() == milliseconds);
+  });
+
+  it('should parse company created seconds into a date', function () {
+    var date = new Date();
+    var seconds = Math.floor(date.getTime() / 1000);
+    analytics.identify({ company: { created: seconds }});
+    var created = this.spy.args[0][2].company.created;
+    assert(is.date(created));
+    assert(created.getTime() == seconds * 1000);
+  });
+});
+
+describe('#user', function () {
+  it('should return the user singleton', function () {
+    assert(analytics.user() == user);
+  });
+});
+
+describe('#group', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(analytics, '_invoke');
+    this.groupSpy = sinon.spy(group, 'identify');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+    this.groupSpy.restore();
+  });
+
+  it('should return the group singleton', function () {
+    assert(analytics.group() == group);
+  });
+
+  it('should invoke with an id, properties and options', function () {
+    analytics.group('id', {}, { option: true });
+    assert(this.spy.calledWith('group', 'id', {}, { option: true }));
+  });
+
+  it('should identify the group', function () {
+    analytics.group('id', { property: true });
+    assert(this.groupSpy.calledWith('id', { property: true }));
+  });
+
+  it('should back properties with stored properties', function () {
+    group.properties({ one: 1 });
+    group.save();
+    analytics.group('id', { two: 2 });
+    assert(this.spy.calledWith('group', 'id', {
+      one: 1,
+      two: 2
+    }));
+  });
+
+  it('should accept a callback', function (done) {
+    analytics.group('id', {}, {}, done);
+  });
+
+  it('should have an id overload', function () {
+    analytics.group({ property: true }, { option: true });
+    assert(this.spy.calledWith('group', null, { property: true }, { option: true }));
+  });
+
+  it('should have a properties overload', function (done) {
+    analytics.group('id', done);
+  });
+
+  it('should have an options overload', function (done) {
+    analytics.group('id', {}, done);
+  });
+
+  it('should parse a created string into a date', function () {
+    var date = new Date();
+    var string = date.getTime() + '';
+    analytics.group({ created: string });
+    var created = this.spy.args[0][2].created;
+    assert(is.date(created));
+    assert(created.getTime() == date.getTime());
+  });
+
+  it('should parse created milliseconds into a date', function () {
+    var date = new Date();
+    var milliseconds = date.getTime();
+    analytics.group({ created: milliseconds });
+    var created = this.spy.args[0][2].created;
+    assert(is.date(created));
+    assert(created.getTime() == milliseconds);
+  });
+
+  it('should parse created seconds into a date', function () {
+    var date = new Date();
+    var seconds = Math.floor(date.getTime() / 1000);
+    analytics.group({ created: seconds });
+    var created = this.spy.args[0][2].created;
+    assert(is.date(created));
+    assert(created.getTime() == seconds * 1000);
+  });
+});
+
+describe('#track', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(analytics, '_invoke');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should invoke with an event, properties and options', function () {
+    analytics.track('event', { property: true }, { option: true });
+    assert(this.spy.calledWith('track', 'event', { property: true }, { option: true }));
+  });
+
+  it('should accept a callback', function (done) {
+    analytics.track('event', {}, {}, done);
+  });
+
+  it('should have a properties overload', function (done) {
+    analytics.track('event', done);
+  });
+
+  it('should have an options overload', function (done) {
+    analytics.track('event', {}, done);
+  });
+});
+
+describe('#trackLink', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(analytics, 'track');
+    this.link = document.createElement('a');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+    window.location.hash = '';
+  });
+
+  it('should trigger a track on an element click', function () {
+    analytics.trackLink(this.link);
+    trigger(this.link, 'click');
+    assert(this.spy.called);
+  });
+
+  it('should accept a jquery object for an element', function () {
+    var link = jQuery(this.link);
+    analytics.trackLink(link);
+    trigger(this.link, 'click');
+    assert(this.spy.called);
+  });
+
+  it('should send an event and properties', function () {
+    analytics.trackLink(this.link, 'event', { property: true });
+    trigger(this.link, 'click');
+    assert(this.spy.calledWith('event', { property: true }));
+  });
+
+  it('should accept an event function', function () {
+    var a = document.createElement('a');
+    var button = document.createElement('button');
+    var event = function (el) {
+      return el.nodeName;
+    };
+
+    analytics.trackLink(a, event);
+    trigger(a, 'click');
+    assert(this.spy.calledWith('A'));
+
+    this.spy.reset();
+
+    analytics.trackLink(button, event);
+    trigger(button, 'click');
+    assert(this.spy.calledWith('BUTTON'));
+  });
+
+  it('should accept a properties function', function () {
+    var a = document.createElement('a');
+    var button = document.createElement('button');
+    var properties = function (el) {
+      return { type: el.nodeName };
+    };
+
+    analytics.trackLink(a, 'event', properties);
+    trigger(a, 'click');
+    assert(this.spy.calledWith('event', { type: 'A' }));
+
+    this.spy.reset();
+
+    analytics.trackLink(button, 'event', properties);
+    trigger(button, 'click');
+    assert(this.spy.calledWith('event', { type: 'BUTTON' }));
+  });
+
+  it('should load an href on click', function (done) {
+    this.link.href = '#test';
+    analytics.trackLink(this.link);
+    trigger(this.link, 'click');
+    setTimeout(function () {
+      assert(window.location.hash == '#test');
+      done();
+    }, timeout);
+  });
+
+  it('shouldnt load an href for a link with a blank target', function (done) {
+    this.link.href = '/test/server/mock.html';
+    this.link.target = '_blank';
+    analytics.trackLink(this.link);
+    trigger(this.link, 'click');
+    setTimeout(function () {
+      assert(window.location.hash != '#test');
+      done();
+    }, timeout);
+  });
+
+  // it('shouldnt load an href for a link with a meta click', function (done) {
+  //   this.link.href = '/test/server/mock.html';
+  //   analytics.trackLink(this.link);
+  //   trigger(this.link, 'click', { meta: true });
+  //   setTimeout(function () {
+  //     assert(window.location.hash != '#test');
+  //     done();
+  //   }, timeout);
+  // });
+});
+
+describe('#trackForm', function () {
+  before(function () {
+    window.jQuery = jQuery;
+  });
+
+  after(function () {
+    delete window.jQuery;
+  });
+
+  beforeEach(function () {
+    this.spy = sinon.spy(analytics, 'track');
+    this.form = document.createElement('form');
+    this.form.action = '/test/server/mock.html';
+    this.form.target = '_blank';
+    this.submit = document.createElement('input');
+    this.submit.type = 'submit';
+    this.form.appendChild(this.submit);
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+    window.location.hash = '';
+  });
+
+  it('should trigger a track on a form submit', function () {
+    analytics.trackForm(this.form);
+    trigger(this.submit, 'click');
+    assert(this.spy.called);
+  });
+
+  it('should accept a jquery object for an element', function () {
+    var form = jQuery(this.form);
+    analytics.trackForm(form);
+    trigger(this.submit, 'click');
+    assert(this.spy.called);
+  });
+
+  it('should send an event and properties', function () {
+    analytics.trackForm(this.form, 'event', { property: true });
+    trigger(this.submit, 'click');
+    assert(this.spy.calledWith('event', { property: true }));
+  });
+
+  it('should accept an event function', function () {
+    var event = function (el) {
+      return 'event';
+    };
+    analytics.trackForm(this.form, event);
+    trigger(this.submit, 'click');
+    console.log(this.spy.args);
+    assert(this.spy.calledWith('event'));
+  });
+
+  it('should accept a properties function', function () {
+    var properties = function (el) {
+      return { property: true };
+    };
+    analytics.trackForm(this.form, 'event', properties);
+    trigger(this.submit, 'click');
+    assert(this.spy.calledWith('event', { property: true }));
+  });
+
+  it('should call submit after a timeout', function (done) {
+    var spy = sinon.spy(this.form, 'submit');
+    analytics.trackForm(this.form);
+    trigger(this.submit, 'click');
+    setTimeout(function () {
+      assert(spy.called);
+      done();
     });
   });
 
-
-
-  describe('trackForm', function () {
-
-    var spy
-      , bind     = require('component-event').bind
-      , template = '<form action="/test/server/mock.html" target="_blank"><input type="submit" /></form>';
-
-    beforeEach(function () {
-      spy = sinon.spy(Integration.prototype, 'track');
-      window.location.hash = '';
-    });
-
-    afterEach(function () {
-      spy.restore();
-    });
-
-    it('triggers track', function () {
-      var form = $(template)[0];
-      analytics.trackForm(form, 'party');
-      trigger($(form).find('input')[0], 'click');
-      expect(spy.calledWith('party')).to.be(true);
-    });
-
-    it('triggers an existing submit handler', function () {
-      var form = $(template)[0]
-        , spy  = sinon.spy();
-      analytics.trackForm(form, 'party');
-      bind(form, 'submit', spy);
-      trigger($(form).find('input')[0], 'click');
-      expect(spy.called).to.be(true);
-      expect(spy.thisValues[0]).to.be(form);
-    });
-
-    it('calls the forms submit method after a timeout', function (done) {
-      var form = $(template)[0]
-        , spy  = sinon.spy(form, 'submit');
-      analytics.trackForm(form, 'party');
-      trigger($(form).find('input')[0], 'click');
-      setTimeout(function () {
-        expect(spy.called).to.be(true);
-        done();
-      }, timeout);
-    });
-
-    it('allows for event to be a function', function () {
-      var form = $(template)[0];
-      analytics.trackForm(form, function () { return 'crazy'; });
-      trigger($(form).find('input')[0], 'click');
-      expect(spy.calledWith('crazy')).to.be(true);
-    });
-
-    it('calls a event function with the form that was clicked', function () {
-      var spy  = sinon.spy()
-        , form = $(template)[0];
-      analytics.trackForm(form, spy);
-      trigger($(form).find('input')[0], 'click');
-      expect(spy.calledWith(form)).to.be(true);
-    });
-
-    it('allows for properties to be a function', function () {
-      var form = $(template)[0];
-      analytics.trackForm(form, 'party', function () {
-        return { type : 'crazy' };
-      });
-      trigger($(form).find('input')[0], 'click');
-      expect(spy.calledWith('party', { type : 'crazy' })).to.be(true);
-    });
-
-    it('calls a properties function with the form that was clicked', function () {
-      var spy  = sinon.spy()
-        , form = $(template)[0];
-      analytics.trackForm(form, 'party', spy);
-      trigger($(form).find('input')[0], 'click');
-      expect(spy.calledWith(form)).to.be(true);
-    });
-
-    it('trackSubmit is aliased to trackForm for backwards compatibility', function () {
-      expect(analytics.trackSubmit).to.equal(analytics.trackForm);
-    });
-
-
-    /**
-     * A jQuery Form.
-     */
-
-    it('triggers track on a $form', function () {
-      var $form = $(template);
-      analytics.trackForm($form, 'party');
-      trigger($form.find('input')[0], 'click');
-      expect(spy.calledWith('party')).to.be(true);
-    });
-
-    it('triggers an existing jquery submit handler on a $form', function () {
-      var $form = $(template)
-        , spy   = sinon.spy();
-      analytics.trackForm($form, 'party');
-      $form.submit(spy);
-      trigger($form.find('input')[0], 'click');
-      expect(spy.called).to.be(true);
-      expect(spy.thisValues[0]).to.be($form[0]);
-    });
-
-    it('triggers track on a $form submitted by jQuery', function () {
-      var $form = $(template);
-      analytics.trackForm($form, 'party');
-      $form.submit();
-      expect(spy.calledWith('party')).to.be(true);
-    });
-
-    it('triggers an existing jquery submit handler on a $form submitted by jQuery', function () {
-      var $form = $(template)
-        , spy   = sinon.spy();
-      analytics.trackForm($form, 'party');
-      $form.submit(spy);
-      $form.submit();
-      expect(spy.called).to.be(true);
-      expect(spy.thisValues[0]).to.be($form[0]);
-    });
+  it('should trigger an existing submit handler', function (done) {
+    bind(this.form, 'submit', function () { done(); });
+    analytics.trackForm(this.form);
+    trigger(this.submit, 'click');
   });
 
-
-
-  describe('pageview', function () {
-
-    it('gets called on providers', function () {
-      var spy = sinon.spy(Integration.prototype, 'pageview');
-      analytics.pageview();
-      expect(spy.called).to.be(true);
-      spy.restore();
-    });
-
-    it('sends a url along', function  () {
-      var spy = sinon.spy(Integration.prototype, 'track');
-      analytics.track(test.url);
-      expect(spy.calledWith(test.url)).to.be(true);
-      spy.restore();
-    });
-
-    it('sends a clone of context along', function  () {
-      var spy = sinon.spy(Integration.prototype, 'track');
-      analytics.track(test.url,test.context);
-      expect(spy.args[0][1]).not.to.equal(test.context);
-      expect(spy.args[0][1]).to.eql(test.context);
-      spy.restore();
-    });
-
+  it('should trigger an existing jquery submit handler', function (done) {
+    var form = jQuery(this.form);
+    form.submit(function () { done(); });
+    analytics.trackForm(form);
+    trigger(this.submit, 'click');
   });
 
-
-
-  describe('alias', function () {
-
-    it('gets called on providers', function () {
-      var spy = sinon.spy(Integration.prototype, 'alias');
-      analytics.alias();
-      expect(spy.called).to.be(true);
-      spy.restore();
-    });
+  it('should track on a form submitted via jquery', function () {
+    var form = jQuery(this.form);
+    analytics.trackForm(form);
+    form.submit();
+    assert(this.spy.called);
   });
+
+  it('should trigger an existing jquery submit handler on a form submitted via jquery', function (done) {
+    var form = jQuery(this.form);
+    form.submit(function () { done(); });
+    analytics.trackForm(form);
+    form.submit();
+  });
+});
+
+describe('#pageview', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(analytics, '_invoke');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should invoke with a url and options', function () {
+    analytics.pageview('/path', { option: true });
+    assert(this.spy.calledWith('pageview', '/path', { option: true }));
+  });
+});
+
+describe('#alias', function () {
+  beforeEach(function () {
+    this.spy = sinon.spy(analytics, '_invoke');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+  });
+
+  it('should invoke with a new id, old id and options', function () {
+    analytics.alias('new', 'old', { option: true });
+    assert(this.spy.calledWith('alias', 'new', 'old', { option: true }));
+  });
+
+  it('should have an old id override', function () {
+    analytics.alias('new', { option: true });
+    assert(this.spy.calledWith('alias', 'new', undefined, { option: true }));
+  });
+});
 
 });

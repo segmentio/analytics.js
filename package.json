@@ -1,6 +1,6 @@
 {
   "name": "analytics.js",
-  "version": "0.13.2",
+  "version": "0.14.0",
   "author": "Segment.io <friends@segment.io>",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "license": "MIT",

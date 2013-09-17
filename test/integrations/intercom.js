@@ -66,7 +66,7 @@ describe('#identify', function () {
   });
 
   beforeEach(function () {
-    analytics._user.clear();
+    analytics.user().reset();
     this.id++;
     this.stub = sinon.stub(window, 'Intercom');
   });
@@ -163,6 +163,7 @@ describe('#identify', function () {
 describe('group', function () {
   beforeEach(function () {
     this.stub = sinon.stub(window, 'Intercom');
+    analytics.group().reset();
   });
 
   afterEach(function () {

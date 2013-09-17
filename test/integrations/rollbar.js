@@ -58,7 +58,7 @@ describe('#initialize', function () {
 
 describe('#identify', function () {
   beforeEach(function () {
-    analytics._user.clear();
+    analytics.user().reset();
     window._rollbar.extraParams = {};
   });
 

@@ -28,13 +28,8 @@ Test.prototype.pageview = function () {};
 Test.prototype.alias = function (newId, originalId) {};
 
 before(function () {
-  this._timeout = analytics._timeout;
-  analytics._timeout = timeout;
+  analytics.timeout(timeout);
   analytics.integration(Test);
-});
-
-after(function () {
-  analytics._timeout = this._timeout;
 });
 
 beforeEach(function (done) {
@@ -244,6 +239,21 @@ describe('#_callback', function () {
       assert(spy.called);
       done();
     }, timeout);
+  });
+});
+
+describe('#_timeout', function () {
+  before(function () {
+    this._timeout = analytics._timeout;
+  });
+
+  after(function () {
+    analytics._timeout = this._timeout;
+  });
+
+  it('should set the timeout for callbacks', function () {
+    analytics.timeout(500);
+    assert(500 == analytics._timeout);
   });
 });
 

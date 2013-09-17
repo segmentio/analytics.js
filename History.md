@@ -6,6 +6,7 @@
 * changed `user` and `group` info to always be queried from storage
 * bound all `analytics` methods as a singleton
 * added `identify(traits, options)` override
+* added `timeout` setter method
 
 0.13.2 - September 16, 2013
 ---------------------------

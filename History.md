@@ -1,3 +1,36 @@
+0.14.2 - September 17, 2013
+---------------------------
+* added [Spinnakr](http://spinnakr.com)
+
+0.14.1 - September 17, 2013
+---------------------------
+* removed old `Provider` for an `integration` factory
+
+0.14.0 - September 16, 2013
+---------------------------
+* exposed `group` via the `#group` method
+* exposed `user` via the `#user` method
+* started caching `group` in cookie and local storage like `user`
+* changed `user` and `group` info to always be queried from storage
+* bound all `analytics` methods as a singleton
+* added `identify(traits, options)` override
+* added `timeout` setter method
+
+0.13.2 - September 16, 2013
+---------------------------
+* added [Rollbar](https://rollbar.com/), by [@coryvirok](https://github.com/coryvirok)
+
+0.13.1 - September 12, 2013
+---------------------------
+* Olark: added tests for empty emails, names and phone numbers
+
+0.13.0 - September 11, 2013
+---------------------------
+* converted all integrations and their tests to a cleaner format
+* renamed all instances of "provider" to "integration"
+* built integration list from their own `name` to avoid bugs
+* changed `_providers` array to an `_integrations` map
+
 0.12.2 - September 5, 2013
 --------------------------
 * added [awe.sm](http://awe.sm)

@@ -728,15 +728,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -748,9 +748,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -762,7 +760,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -775,9 +773,9 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
@@ -1009,27 +1007,6 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-});
-require.register("ianstormtaylor-map/index.js", function(exports, require, module){
-
-var each = require('each');
-
-
-/**
- * Map an array or object.
- *
- * @param {Array|Object} obj
- * @param {Function} iterator
- * @return {Mixed}
- */
-
-module.exports = function map (obj, iterator) {
-  var arr = [];
-  each(obj, function (o) {
-    arr.push(iterator.apply(null, arguments));
-  });
-  return arr;
-};
 });
 require.register("jkroso-type/index.js", function(exports, require, module){
 
@@ -2536,7 +2513,6 @@ var after = require('after')
   , isMeta = require('is-meta')
   , group = require('./group')
   , store = require('./store')
-  , map = require('map')
   , newDate = require('new-date')
   , size = require('object').length
   , prevent = require('prevent')
@@ -2921,7 +2897,7 @@ Analytics.prototype._invoke = function (method, args) {
   var options = args[args.length-1];
   each(this._integrations, function (name, integration) {
     if (!integration[method] || !isEnabled(integration, options)) return;
-    var cloned = map(args, clone);
+    var cloned = clone(args);
     integration.ready
       ? integration[method].apply(integration, cloned)
       : integration.enqueue(method, cloned);
@@ -8042,7 +8018,6 @@ Woopra.prototype.pageview = function (url) {
 
 
 
-
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -8096,11 +8071,6 @@ require.alias("ianstormtaylor-is/index.js", "is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
-
-require.alias("ianstormtaylor-map/index.js", "analytics/deps/map/index.js");
-require.alias("ianstormtaylor-map/index.js", "map/index.js");
-require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
-require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("jkroso-equals/index.js", "analytics/deps/equals/index.js");
 require.alias("jkroso-equals/index.js", "equals/index.js");

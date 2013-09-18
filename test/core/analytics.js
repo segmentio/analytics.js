@@ -7,7 +7,7 @@ var analytics = window.analytics || require('analytics')
   , cookie = require('analytics/lib/cookie')
   , equal = require('equals')
   , group = require('analytics/lib/group')
-  , integration = require('analytics/lib/integration')
+  , createIntegration = require('analytics/lib/integration')
   , is = require('is')
   , jQuery = require('jquery')
   , store = require('analytics/lib/store')
@@ -17,7 +17,7 @@ var analytics = window.analytics || require('analytics')
 
 var settings = { Test: { key: 'x' }};
 var timeout = 1;
-var Test = integration('Test');
+var Test = createIntegration('Test');
 Test.prototype.key = 'key';
 Test.prototype.defaults = {};
 Test.prototype.initialize = function (options, ready) { setTimeout(ready, timeout); };
@@ -29,7 +29,7 @@ Test.prototype.alias = function (newId, originalId) {};
 
 before(function () {
   analytics.timeout(timeout);
-  analytics.integration(Test);
+  analytics.addIntegration(Test);
 });
 
 beforeEach(function (done) {
@@ -43,6 +43,35 @@ afterEach(function () {
   analytics._readied = false;
   analytics.user().reset();
   analytics.group().reset();
+});
+
+describe('.VERSION', function () {
+  it('should be exposed', function () {
+    assert(analytics.VERSION);
+  });
+});
+
+describe('.Integrations', function () {
+  it('should be exposed', function () {
+    assert(analytics.Integrations);
+  });
+});
+
+describe('.createIntegration', function () {
+  it('should be exposed', function () {
+    assert(analytics.createIntegration = createIntegration);
+  });
+});
+
+describe('.addIntegration', function () {
+  it('should be exposed', function () {
+    assert(analytics.addIntegration);
+  });
+
+  it('should add an integration', function () {
+    analytics.addIntegration(Test);
+    assert(analytics.Integrations.Test == Test);
+  });
 });
 
 describe('#initialize', function () {

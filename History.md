@@ -1,3 +1,7 @@
+0.14.3 - September 18, 2013
+---------------------------
+* exposed `createIntegration` and `addIntegration`
+
 0.14.2 - September 17, 2013
 ---------------------------
 * added [Spinnakr](http://spinnakr.com)

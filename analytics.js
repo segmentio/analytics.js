@@ -891,7 +891,6 @@ exports.isCrossDomain = function(url){
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
-
 var next = require('next-tick');
 
 
@@ -2646,21 +2645,24 @@ module.exports = exports = Analytics;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '0.14.2';
+exports.VERSION =
+Analytics.prototype.VERSION = '0.14.3';
 
 
 /**
  * Expose `Integrations`.
  */
 
-exports.Integrations = Integrations;
+exports.Integrations =
+Analytics.prototype.Integrations = Integrations;
 
 
 /**
  * Expose `createIntegration`.
  */
 
-exports.createIntegration = createIntegration;
+exports.createIntegration =
+Analytics.prototype.createIntegration = createIntegration;
 
 
 /**
@@ -2670,7 +2672,8 @@ exports.createIntegration = createIntegration;
  * @return {Analytics}
  */
 
-exports.integration = function (Integration) {
+exports.addIntegration =
+Analytics.prototype.addIntegration = function (Integration) {
   var name = Integration.prototype.name;
   Integrations[name] = Integration;
   return this;
@@ -3042,16 +3045,6 @@ Analytics.prototype._parseQuery = function () {
   if (q.ajs_event) this.track(q.ajs_event);
   return this;
 };
-
-
-/**
- * Attach exports to prototype, so they are always available to the end user.
- */
-
-Analytics.prototype.VERSION = exports.VERSION;
-Analytics.prototype.Integrations = exports.Integrations;
-Analytics.prototype.Integration = exports.Integration;
-Analytics.prototype.integration = exports.integration;
 
 
 /**

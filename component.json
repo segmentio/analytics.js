@@ -154,6 +154,7 @@
     "lib/integrations/rollbar.js",
     "lib/integrations/sentry.js",
     "lib/integrations/snapengage.js",
+    "lib/integrations/spinnakr.js",
     "lib/integrations/tapstream.js",
     "lib/integrations/trakio.js",
     "lib/integrations/usercycle.js",

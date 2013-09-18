@@ -393,121 +393,13 @@ function parse(str) {
 }
 
 });
-require.register("component-to-function/index.js", function(exports, require, module){
-
-/**
- * Expose `toFunction()`.
- */
-
-module.exports = toFunction;
-
-/**
- * Convert `obj` to a `Function`.
- *
- * @param {Mixed} obj
- * @return {Function}
- * @api private
- */
-
-function toFunction(obj) {
-  switch ({}.toString.call(obj)) {
-    case '[object Object]':
-      return objectToFunction(obj);
-    case '[object Function]':
-      return obj;
-    case '[object String]':
-      return stringToFunction(obj);
-    case '[object RegExp]':
-      return regexpToFunction(obj);
-    default:
-      return defaultToFunction(obj);
-  }
-}
-
-/**
- * Default to strict equality.
- *
- * @param {Mixed} val
- * @return {Function}
- * @api private
- */
-
-function defaultToFunction(val) {
-  return function(obj){
-    return val === obj;
-  }
-}
-
-/**
- * Convert `re` to a function.
- *
- * @param {RegExp} re
- * @return {Function}
- * @api private
- */
-
-function regexpToFunction(re) {
-  return function(obj){
-    return re.test(obj);
-  }
-}
-
-/**
- * Convert property `str` to a function.
- *
- * @param {String} str
- * @return {Function}
- * @api private
- */
-
-function stringToFunction(str) {
-  // immediate such as "> 20"
-  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
-
-  // properties such as "name.first" or "age > 18"
-  return new Function('_', 'return _.' + str);
-}
-
-/**
- * Convert `object` to a function.
- *
- * @param {Object} object
- * @return {Function}
- * @api private
- */
-
-function objectToFunction(obj) {
-  var match = {}
-  for (var key in obj) {
-    match[key] = typeof obj[key] === 'string'
-      ? defaultToFunction(obj[key])
-      : toFunction(obj[key])
-  }
-  return function(val){
-    if (typeof val !== 'object') return false;
-    for (var key in match) {
-      if (!(key in val)) return false;
-      if (!match[key](val[key])) return false;
-    }
-    return true;
-  }
-}
-
-});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var toFunction = require('to-function');
-var type;
-
-try {
-  type = require('type-component');
-} catch (e) {
-  type = require('type');
-}
+var type = require('type');
 
 /**
  * HOP reference.
@@ -524,7 +416,6 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
-  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -579,7 +470,6 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
-
 });
 require.register("component-event/index.js", function(exports, require, module){
 
@@ -2646,7 +2536,7 @@ module.exports = exports = Analytics;
  */
 
 exports.VERSION =
-Analytics.prototype.VERSION = '0.14.3';
+Analytics.prototype.VERSION = '0.15.0';
 
 
 /**
@@ -3308,7 +3198,7 @@ var integrations = [
   'clicktale',
   'clicky',
   'comscore',
-  'crazyegg',
+  'crazy-egg',
   'customerio',
   'errorception',
   'foxmetrics',
@@ -4506,7 +4396,7 @@ comScore.prototype.initialize = function (options, ready) {
   }, ready);
 };
 });
-require.register("analytics/lib/integrations/crazyegg.js", function(exports, require, module){
+require.register("analytics/lib/integrations/crazy-egg.js", function(exports, require, module){
 
 var integration = require('../integration')
   , load = require('load-script');
@@ -4516,7 +4406,7 @@ var integration = require('../integration')
  * Expose `CrazyEgg` integration.
  */
 
-var CrazyEgg = module.exports = integration('CrazyEgg');
+var CrazyEgg = module.exports = integration('Crazy Egg');
 
 
 /**
@@ -4972,6 +4862,8 @@ GA.prototype.key = 'trackingId';
 GA.prototype.defaults = {
   // whether to anonymize the IP address collected for the user
   anonymizeIp : false,
+  // whether you're using the old classic analytics or not
+  classic: false,
   // restrict analytics to only come from the a single `domain`
   domain : 'none',
   // whether to enable google's doubleclick remarketing feature
@@ -4987,9 +4879,7 @@ GA.prototype.defaults = {
   // https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setSiteSpeedSampleRate
   siteSpeedSampleRate : null,
   // your google analytics tracking id (required)
-  trackingId: '',
-  // whether you're using the new universal analytics or not
-  universalClient: false
+  trackingId: ''
 };
 
 
@@ -5003,7 +4893,7 @@ GA.prototype.defaults = {
  */
 
 GA.prototype.initialize = function (options, ready) {
-  if (!options.universalClient) {
+  if (options.classic) {
     this.track = this.trackClassic;
     this.pageview = this.pageviewClassic;
     return this.initializeClassic(options, ready);
@@ -5661,7 +5551,7 @@ Intercom.prototype.key = 'appId';
 
 Intercom.prototype.defaults = {
   // an optional css selector to use for the intercom inbox widget button
-  activator: '',
+  activator: '#IntercomDefaultWidget',
   // your intercom app id (required)
   appId: '',
   // whether to show the count of messages on the intercom inbox widget
@@ -5708,10 +5598,9 @@ Intercom.prototype.identify = function (id, traits, options) {
   if (Intercom.increments) traits.increments = Intercom.increments;
   if (Intercom.userHash) traits.user_hash = Intercom.userHash;
   if (Intercom.user_hash) traits.user_hash = Intercom.user_hash;
-    // TODO: make this activator's default and run a migration
-  if (this.options.inbox || this.options.activator) {
+  if (this.options.inbox) {
     traits.widget = {
-      activator: this.options.activator || '#IntercomDefaultWidget',
+      activator: this.options.activator,
       use_counter: this.options.counter
     };
   }
@@ -5767,9 +5656,9 @@ var Keen = module.exports = integration('Keen IO');
 
 Keen.prototype.defaults = {
   // whether or not to track an initial pageview on `initialize`
-  initialPageview: true,
+  initialPageview: false,
   // whether or not to send `pageview` calls on to keen io
-  pageview: true,
+  pageview: false,
   // your keen io project id (required)
   projectId: '',
   // your keen io read key
@@ -6052,7 +5941,7 @@ var LeadLander = module.exports = integration('LeadLander');
  * Required key.
  */
 
-LeadLander.prototype.key = 'llactid';
+LeadLander.prototype.key = 'accountId';
 
 
 /**
@@ -6061,7 +5950,7 @@ LeadLander.prototype.key = 'llactid';
 
 LeadLander.prototype.defaults = {
   // your leadlander account id (required)
-  llactid: null
+  accountId: null
 };
 
 
@@ -6073,7 +5962,7 @@ LeadLander.prototype.defaults = {
  */
 
 LeadLander.prototype.initialize = function (options, ready) {
-  window.llactid = options.llactid;
+  window.llactid = options.accountId;
   load('http://t6.trackalyzer.com/trackalyze-nodoc.js', ready);
 };
 });
@@ -8159,8 +8048,6 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
@@ -8238,8 +8125,6 @@ require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
@@ -8276,8 +8161,6 @@ require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-on-error/index.js", "analytics/deps/on-error/index.js");

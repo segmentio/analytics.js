@@ -1,5 +1,5 @@
 
-describe('CrazyEgg', function () {
+describe('Crazy Egg', function () {
 
 var analytics = window.analytics || require('analytics')
   , assert = require('assert')
@@ -15,15 +15,15 @@ before(function (done) {
   this.timeout(10000);
   this.spy = sinon.spy();
   analytics.ready(this.spy);
-  analytics.initialize({ CrazyEgg: settings });
-  this.integration = analytics._integrations.CrazyEgg;
+  analytics.initialize({ 'Crazy Egg': settings });
+  this.integration = analytics._integrations['Crazy Egg'];
   this.options = this.integration.options;
   when(function () { return window.CE2; }, done);
 });
 
 describe('#name', function () {
-  it('CrazyEgg', function () {
-    assert(this.integration.name == 'CrazyEgg');
+  it('Crazy Egg', function () {
+    assert(this.integration.name == 'Crazy Egg');
   });
 });
 

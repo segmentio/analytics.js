@@ -1,3 +1,11 @@
+0.15.0 - September 18, 2013
+---------------------------
+* Crazy Egg: renamed from `CrazyEgg`
+* Google Analytics: changed `universalClient` option to `classic`
+* Google Analytics: changed `classic` default to `false`
+* Keen IO: changed pageview options defaults to `false`
+* LeadLander: changed `llactid` option to human-readable `accountId`* Intercom: make `#IntercomDefaultWidget` the default activator
+
 0.14.3 - September 18, 2013
 ---------------------------
 * exposed `createIntegration` and `addIntegration`

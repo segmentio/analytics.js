@@ -1,6 +1,6 @@
 {
   "name": "analytics.js",
-  "version": "0.14.3",
+  "version": "0.15.0",
   "author": "Segment.io <friends@segment.io>",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "license": "MIT",
@@ -38,7 +38,7 @@
     "clicktale",
     "clicky",
     "comscore",
-    "crazyegg",
+    "crazy egg",
     "customer.io",
     "errorception",
     "foxmetrics",

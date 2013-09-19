@@ -7,7 +7,7 @@ var analytics = window.analytics || require('analytics')
   , when = require('when');
 
 var settings = {
-  siteId: 'x'
+  siteId: '668925604'
 };
 
 before(function (done) {

@@ -393,13 +393,121 @@ function parse(str) {
 }
 
 });
+require.register("component-to-function/index.js", function(exports, require, module){
+
+/**
+ * Expose `toFunction()`.
+ */
+
+module.exports = toFunction;
+
+/**
+ * Convert `obj` to a `Function`.
+ *
+ * @param {Mixed} obj
+ * @return {Function}
+ * @api private
+ */
+
+function toFunction(obj) {
+  switch ({}.toString.call(obj)) {
+    case '[object Object]':
+      return objectToFunction(obj);
+    case '[object Function]':
+      return obj;
+    case '[object String]':
+      return stringToFunction(obj);
+    case '[object RegExp]':
+      return regexpToFunction(obj);
+    default:
+      return defaultToFunction(obj);
+  }
+}
+
+/**
+ * Default to strict equality.
+ *
+ * @param {Mixed} val
+ * @return {Function}
+ * @api private
+ */
+
+function defaultToFunction(val) {
+  return function(obj){
+    return val === obj;
+  }
+}
+
+/**
+ * Convert `re` to a function.
+ *
+ * @param {RegExp} re
+ * @return {Function}
+ * @api private
+ */
+
+function regexpToFunction(re) {
+  return function(obj){
+    return re.test(obj);
+  }
+}
+
+/**
+ * Convert property `str` to a function.
+ *
+ * @param {String} str
+ * @return {Function}
+ * @api private
+ */
+
+function stringToFunction(str) {
+  // immediate such as "> 20"
+  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
+
+  // properties such as "name.first" or "age > 18"
+  return new Function('_', 'return _.' + str);
+}
+
+/**
+ * Convert `object` to a function.
+ *
+ * @param {Object} object
+ * @return {Function}
+ * @api private
+ */
+
+function objectToFunction(obj) {
+  var match = {}
+  for (var key in obj) {
+    match[key] = typeof obj[key] === 'string'
+      ? defaultToFunction(obj[key])
+      : toFunction(obj[key])
+  }
+  return function(val){
+    if (typeof val !== 'object') return false;
+    for (var key in match) {
+      if (!(key in val)) return false;
+      if (!match[key](val[key])) return false;
+    }
+    return true;
+  }
+}
+
+});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var type = require('type');
+var toFunction = require('to-function');
+var type;
+
+try {
+  type = require('type-component');
+} catch (e) {
+  type = require('type');
+}
 
 /**
  * HOP reference.
@@ -416,6 +524,7 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
+  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -470,6 +579,7 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
+
 });
 require.register("component-event/index.js", function(exports, require, module){
 
@@ -781,6 +891,7 @@ exports.isCrossDomain = function(url){
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
+
 var next = require('next-tick');
 
 
@@ -1975,10 +2086,17 @@ module.exports = function loadScript (options, callback) {
     // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
     if (callback && type(callback) === 'function') {
         if (script.addEventListener) {
-            script.addEventListener('load', callback, false);
+            script.addEventListener('load', function (event) {
+                callback(null, event);
+            }, false);
+            script.addEventListener('error', function (event) {
+                callback(new Error('Failed to load the script.'), event);
+            }, false);
         } else if (script.attachEvent) {
-            script.attachEvent('onreadystatechange', function () {
-                if (/complete|loaded/.test(script.readyState)) callback();
+            script.attachEvent('onreadystatechange', function (event) {
+                if (/complete|loaded/.test(script.readyState)) {
+                    callback(null, event);
+                }
             });
         }
     }
@@ -2536,7 +2654,7 @@ module.exports = exports = Analytics;
  */
 
 exports.VERSION =
-Analytics.prototype.VERSION = '0.15.0';
+Analytics.prototype.VERSION = '0.15.1';
 
 
 /**
@@ -2605,8 +2723,14 @@ Analytics.prototype.initialize = function (settings, options) {
   user.load();
   group.load();
 
-  // make ready callback
+  // clean unknown integrations from settings
   var self = this;
+  each(settings, function (name) {
+    var Integration = self.Integrations[name];
+    if (!Integration) delete settings[name];
+  });
+
+  // make ready callback
   var ready = after(size(settings), function () {
     self._readied = true;
     var callback;
@@ -2616,7 +2740,6 @@ Analytics.prototype.initialize = function (settings, options) {
   // initialize integrations, passing ready
   each(settings, function (name, options) {
     var Integration = self.Integrations[name];
-    if (!Integration) return self;
     var integration = new Integration(clone(options), ready, self);
     self._integrations[name] = integration;
   });
@@ -3891,7 +4014,8 @@ AdRoll.prototype.initialize = function (options, ready) {
 });
 require.register("analytics/lib/integrations/amplitude.js", function(exports, require, module){
 
-var integration = require('../integration')
+var callback = require('callback')
+  , integration = require('../integration')
   , load = require('load-script');
 
 
@@ -3936,7 +4060,7 @@ Amplitude.prototype.initialize = function (options, ready) {
   var s=["init","logEvent","setUserId","setGlobalUserProperties","setVersionName"];
   for(var c=0;c<s.length;c++){i(s[c]);}e.amplitude=r;})(window,document);
   window.amplitude.init(options.apiKey);
-  ready();
+  callback.async(ready);
 
   load('https://d24n15hnbwhuhn.cloudfront.net/libs/amplitude-1.0-min.js');
 };
@@ -4443,6 +4567,7 @@ CrazyEgg.prototype.initialize = function (options, ready) {
 require.register("analytics/lib/integrations/customerio.js", function(exports, require, module){
 
 var alias = require('alias')
+  , callback = require('callback')
   , convertDates = require('convert-dates')
   , integration = require('../integration')
   , load = require('load-script');
@@ -4482,7 +4607,7 @@ Customerio.prototype.defaults = {
 Customerio.prototype.initialize = function (options, ready) {
   var _cio = window._cio = window._cio || [];
   (function() {var a,b,c; a = function (f) {return function () {_cio.push([f].concat(Array.prototype.slice.call(arguments,0))); }; }; b = ['identify', 'track']; for (c = 0; c < b.length; c++) {_cio[b[c]] = a(b[c]); } })();
-  ready();
+  callback.async(ready);
 
   // add the required `id` and `data-site-id` to the script element
   var script = load('https://assets.customer.io/assets/track.js');
@@ -4535,7 +4660,8 @@ function convertDate (date) {
 });
 require.register("analytics/lib/integrations/errorception.js", function(exports, require, module){
 
-var extend = require('extend')
+var callback = require('callback')
+  , extend = require('extend')
   , integration = require('../integration')
   , load = require('load-script')
   , onError = require('on-error');
@@ -4583,7 +4709,7 @@ Errorception.prototype.initialize = function (options, ready) {
     window._errs.push(arguments);
   });
   load('//beacon.errorception.com/' + options.projectId + '.js');
-  ready();
+  callback.async(ready);
 };
 
 
@@ -4604,7 +4730,8 @@ Errorception.prototype.identify = function (id, traits, options) {
 });
 require.register("analytics/lib/integrations/foxmetrics.js", function(exports, require, module){
 
-var integration = require('../integration')
+var callback = require('callback')
+  , integration = require('../integration')
   , load = require('load-script');
 
 
@@ -4644,7 +4771,7 @@ FoxMetrics.prototype.defaults = {
 FoxMetrics.prototype.initialize = function (options, ready) {
   var _fxm = window._fxm || {};
   window._fxm = _fxm.events || [];
-  ready();
+  callback.async(ready);
   load('//d35tca7vmefkrc.cloudfront.net/scripts/' + options.appId + '.js');
 };
 
@@ -4716,7 +4843,8 @@ FoxMetrics.prototype.pageview = function (url) {
 });
 require.register("analytics/lib/integrations/gauges.js", function(exports, require, module){
 
-var integration = require('../integration')
+var callback = require('callback')
+  , integration = require('../integration')
   , load = require('load-script');
 
 
@@ -4753,7 +4881,7 @@ Gauges.prototype.defaults = {
 
 Gauges.prototype.initialize = function (options, ready) {
   window._gauges = window._gauges || [];
-  ready();
+  callback.async(ready);
 
   // add required `id` and `data-site-id` to the script element
   var script = load('//secure.gaug.es/track.js');
@@ -4830,7 +4958,8 @@ GetSatisfaction.prototype.initialize = function (options, ready) {
 });
 require.register("analytics/lib/integrations/google-analytics.js", function(exports, require, module){
 
-var canonical = require('canonical')
+var callback = require('callback')
+  , canonical = require('canonical')
   , each = require('each')
   , integration = require('../integration')
   , is = require('is')
@@ -4923,7 +5052,7 @@ GA.prototype.initialize = function (options, ready) {
     this.pageview(path);
   }
 
-  ready();
+  callback.async(ready);
   load('//www.google-analytics.com/analytics.js');
 };
 
@@ -5081,7 +5210,8 @@ function formatValue (value) {
 });
 require.register("analytics/lib/integrations/gosquared.js", function(exports, require, module){
 
-var integration = require('../integration')
+var callback = require('callback')
+  , integration = require('../integration')
   , load = require('load-script')
   , onBody = require('on-body')
   , user = require('../user');
@@ -5133,7 +5263,7 @@ GoSquared.prototype.initialize = function (options, ready) {
     self.identify(user.id(), user.traits());
 
     load('//d1l6p2sc9645hc.cloudfront.net/tracker.js');
-    ready();
+    callback.async(ready);
   });
 };
 
@@ -5186,6 +5316,7 @@ GoSquared.prototype.pageview = function (url) {
 require.register("analytics/lib/integrations/heap.js", function(exports, require, module){
 
 var alias = require('alias')
+  , callback = require('callback')
   , integration = require('../integration')
   , load = require('load-script');
 
@@ -5228,7 +5359,7 @@ Heap.prototype.defaults = {
 Heap.prototype.initialize = function (options, ready) {
   window.heap=window.heap||[];window.heap.load=function(a){window._heapid=a;var b=document.createElement("script");b.type="text/javascript",b.async=!0,b.src=("https:"===document.location.protocol?"https:":"http:")+"//d36lvucg9kzous.cloudfront.net";var c=document.getElementsByTagName("script")[0];c.parentNode.insertBefore(b,c);var d=function(a){return function(){heap.push([a].concat(Array.prototype.slice.call(arguments,0)))}},e=["identify","track"];for(var f=0;f<e.length;f++)heap[e[f]]=d(e[f])};
   window.heap.load(options.apiKey);
-  ready();
+  callback.async(ready);
 };
 
 
@@ -5305,7 +5436,8 @@ HitTail.prototype.initialize = function (options, ready) {
 });
 require.register("analytics/lib/integrations/hubspot.js", function(exports, require, module){
 
-var integration = require('../integration')
+var callback = require('callback')
+  , integration = require('../integration')
   , load = require('load-script');
 
 
@@ -5348,7 +5480,7 @@ HubSpot.prototype.initialize = function (options, ready) {
     var script = load('https://js.hubspot.com/analytics/' + cache + '/' + options.portalId + '.js');
     script.id = 'hs-analytics';
   }
-  ready();
+  callback.async(ready);
 };
 
 
@@ -5393,6 +5525,7 @@ HubSpot.prototype.pageview = function (url) {
 require.register("analytics/lib/integrations/improvely.js", function(exports, require, module){
 
 var alias = require('alias')
+  , callback = require('callback')
   , integration = require('../integration')
   , load = require('load-script');
 
@@ -5433,7 +5566,7 @@ Improvely.prototype.initialize = function (options, ready) {
     label: function (e) { window._improvely.push(["label", e]); }
   };
   window.improvely.init(options.domain, options.projectId);
-  ready();
+  callback.async(ready);
 
   load('//' + options.domain + '.iljmp.com/improvely.js');
 };
@@ -5639,7 +5772,8 @@ function formatDate (date) {
 });
 require.register("analytics/lib/integrations/keen-io.js", function(exports, require, module){
 
-var integration = require('../integration')
+var callback = require('callback')
+  , integration = require('../integration')
   , load = require('load-script');
 
 
@@ -5684,7 +5818,7 @@ Keen.prototype.initialize = function (options, ready) {
     writeKey: options.writeKey,
     readKey: options.readKey
   });
-  ready();
+  callback.async(ready);
 
   if (options.initialPageview) this.pageview();
   load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.1.0-min.js');
@@ -5742,6 +5876,7 @@ Keen.prototype.pageview = function (url) {
 require.register("analytics/lib/integrations/kissmetrics.js", function(exports, require, module){
 
 var alias = require('alias')
+  , callback = require('callback')
   , integration = require('../integration')
   , load = require('load-script');
 
@@ -5781,7 +5916,7 @@ KISSmetrics.prototype.defaults = {
 
 KISSmetrics.prototype.initialize = function (options, ready) {
   window._kmq || (window._kmq = []);
-  ready();
+  callback.async(ready);
   load('//i.kissmetrics.com/i.js');
   load('//doug1izaerwt3.cloudfront.net/' + options.apiKey + '.1.js');
 };
@@ -5829,6 +5964,7 @@ KISSmetrics.prototype.alias = function (newId, originalId) {
 require.register("analytics/lib/integrations/klaviyo.js", function(exports, require, module){
 
 var alias = require('alias')
+  , callback = require('callback')
   , integration = require('../integration')
   , load = require('load-script');
 
@@ -5869,7 +6005,7 @@ Klaviyo.prototype.defaults = {
 Klaviyo.prototype.initialize = function (options, ready) {
   window._learnq || (window._learnq = []);
   window._learnq.push(['account', options.apiKey]);
-  ready();
+  callback.async(ready);
   load('//a.klaviyo.com/media/js/learnmarklet.js');
 };
 
@@ -6044,6 +6180,7 @@ function convert (traits) {
 require.register("analytics/lib/integrations/lytics.js", function(exports, require, module){
 
 var alias = require('alias')
+  , callback = require('callback')
   , clone = require('clone')
   , integration = require('../integration')
   , load = require('load-script');
@@ -6111,9 +6248,10 @@ Lytics.prototype.initialize = function (options, ready) {
     return t;
   })();
 
+  if (options.initialPageview) this.pageview();
+
   load('//c.lytics.io/static/io.min.js');
-  if (options.initialPageview)  this.pageview();
-  ready();
+  callback.async(ready);
 };
 
 
@@ -6388,7 +6526,8 @@ MouseStats.prototype.initialize = function (options, ready) {
 });
 require.register("analytics/lib/integrations/olark.js", function(exports, require, module){
 
-var integration = require('../integration');
+var callback = require('callback')
+  , integration = require('../integration');
 
 
 /**
@@ -6433,7 +6572,7 @@ Olark.prototype.defaults = {
 Olark.prototype.initialize = function (options, ready) {
   window.olark||(function(c){var f=window,d=document,l=f.location.protocol=="https:"?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while(q--){(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={0:+new Date};a.P=function(u){a.p[u]=new Date-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if(!m){return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if(/MSIE[ ]+6/.test(navigator.userAgent)){b.src="javascript:false"}b.allowTransparency="true";v[j](b);try{b.contentWindow[g].open()}catch(w){c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try{var t=b.contentWindow[g];t.write(p());t.close()}catch(x){b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({loader: "static.olark.com/jsclient/loader0.js",name:"olark",methods:["configure","extend","declare","identify"]});
   window.olark.identify(options.siteId);
-  ready();
+  callback.async(ready);
 
   // keep track of the widget's open state
   var self = this;
@@ -6540,6 +6679,7 @@ function chat (action, value) {
 require.register("analytics/lib/integrations/optimizely.js", function(exports, require, module){
 
 var bind = require('bind')
+  , callback = require('callback')
   , each = require('each')
   , integration = require('../integration')
   , load = require('load-script')
@@ -6576,7 +6716,7 @@ Optimizely.prototype.defaults = {
 
 Optimizely.prototype.initialize = function (options, ready) {
   window.optimizely = window.optimizely || [];
-  ready();
+  callback.async(ready);
   if (options.variations) tick(bind(this, this.replay));
 };
 
@@ -6726,6 +6866,7 @@ Pingdom.prototype.initialize = function (options, ready) {
 require.register("analytics/lib/integrations/preact.js", function(exports, require, module){
 
 var alias = require('alias')
+  , callback = require('callback')
   , convertDates = require('convert-dates')
   , integration = require('../integration')
   , load = require('load-script');
@@ -6767,7 +6908,7 @@ Preact.prototype.defaults = {
 Preact.prototype.initialize = function (options, ready) {
   window._lnq || (window._lnq = []);
   window._lnq.push(["_setCode", options.projectCode]);
-  ready();
+  callback.async(ready);
   load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.4.min.js');
 };
 
@@ -6846,7 +6987,8 @@ function convertDate (date) {
 });
 require.register("analytics/lib/integrations/qualaroo.js", function(exports, require, module){
 
-var integration = require('../integration')
+var callback = require('callback')
+  , integration = require('../integration')
   , load = require('load-script');
 
 
@@ -6880,7 +7022,7 @@ Qualaroo.prototype.defaults = {
 
 Qualaroo.prototype.initialize = function (options, ready) {
   window._kiq || (window._kiq = []);
-  ready();
+  callback.async(ready);
   var path = options.customerId + '/' + options.siteToken;
   load('//s3.amazonaws.com/ki.js/' + path + '.js');
 };
@@ -6969,7 +7111,8 @@ Quantcast.prototype.initialize = function (options, ready) {
 });
 require.register("analytics/lib/integrations/rollbar.js", function(exports, require, module){
 
-var clone = require('clone')
+var callback = require('callback')
+  , clone = require('clone')
   , extend = require('extend')
   , integration = require('../integration')
   , load = require('load-script')
@@ -7014,7 +7157,7 @@ Rollbar.prototype.initialize = function (options, ready) {
   onError(function() {
     window._rollbar.push(arguments);
   });
-  ready();
+  callback.async(ready);
 
   load('//d37gvrvc0wt4s1.cloudfront.net/js/1/rollbar.min.js');
 };
@@ -7205,7 +7348,8 @@ Spinnakr.prototype.initialize = function (options, ready) {
 });
 require.register("analytics/lib/integrations/tapstream.js", function(exports, require, module){
 
-var integration = require('../integration')
+var callback = require('callback')
+  , integration = require('../integration')
   , load = require('load-script')
   , slug = require('slug');
 
@@ -7248,7 +7392,7 @@ Tapstream.prototype.initialize = function (options, ready) {
   window._tsq.push(['setAccountName', options.accountName]);
   if (options.initialPageview) this.pageview();
   load('//cdn.tapstream.com/static/js/tapstream.js');
-  ready();
+  callback.async(ready);
 };
 
 
@@ -7279,9 +7423,10 @@ Tapstream.prototype.pageview = function (url) {
 });
 require.register("analytics/lib/integrations/trakio.js", function(exports, require, module){
 
-var integration = require('../integration')
-  , alias = require('alias')
+var alias = require('alias')
+  , callback = require('callback')
   , clone = require('clone')
+  , integration = require('../integration')
   , load = require('load-script');
 
 
@@ -7343,7 +7488,7 @@ Trakio.prototype.initialize = function (options, ready) {
   });
 
   window.trak.io.load(options.token, cloned);
-  ready();
+  callback.async(ready);
 };
 
 
@@ -7427,7 +7572,8 @@ Trakio.prototype.alias = function (newId, originalId) {
 });
 require.register("analytics/lib/integrations/usercycle.js", function(exports, require, module){
 
-var integration = require('../integration')
+var callback = require('callback')
+  , integration = require('../integration')
   , load = require('load-script');
 
 
@@ -7467,7 +7613,7 @@ USERcycle.prototype.defaults = {
 USERcycle.prototype.initialize = function (options, ready) {
   window._uc || (window._uc = []);
   window._uc.push(['_key', options.key]);
-  ready();
+  callback.async(ready);
   load('//api.usercycle.com/javascripts/track.js');
 };
 
@@ -7502,6 +7648,7 @@ USERcycle.prototype.track = function (event, properties, options) {
 require.register("analytics/lib/integrations/userfox.js", function(exports, require, module){
 
 var alias = require('alias')
+  , callback = require('callback')
   , convertDates = require('convert-dates')
   , integration = require('../integration')
   , load = require('load-script');
@@ -7542,7 +7689,7 @@ Userfox.prototype.defaults = {
 
 Userfox.prototype.initialize = function (options, ready) {
   window._ufq || (window._ufq = []);
-  ready();
+  callback.async(ready);
   load('//d2y71mjhnajxcg.cloudfront.net/js/userfox-stable.js');
 };
 
@@ -7586,6 +7733,7 @@ function formatDate (date) {
 require.register("analytics/lib/integrations/uservoice.js", function(exports, require, module){
 
 var alias = require('alias')
+  , callback = require('callback')
   , clone = require('clone')
   , integration = require('../integration')
   , load = require('load-script');
@@ -7638,7 +7786,7 @@ UserVoice.prototype.defaults = {
 UserVoice.prototype.initialize = function (options, ready) {
   window.UserVoice || (window.UserVoice = []);
   window.showClassicWidget = showClassicWidget; // part of public api
-  ready();
+  callback.async(ready);
 
   if (options.showTab) showClassicWidget('showTab', formatOptions(options));
 
@@ -7698,7 +7846,8 @@ function showClassicWidget (type, options) {
 });
 require.register("analytics/lib/integrations/vero.js", function(exports, require, module){
 
-var integration = require('../integration')
+var callback = require('callback')
+  , integration = require('../integration')
   , load = require('load-script');
 
 
@@ -7740,7 +7889,7 @@ Vero.prototype.defaults = {
 Vero.prototype.initialize = function (options, ready) {
   window._veroq || (window._veroq = []);
   window._veroq.push(['init', { api_key: options.apiKey }]);
-  ready();
+  callback.async(ready);
   load('//d3qxef4rp70elm.cloudfront.net/m.js');
 };
 
@@ -8048,6 +8197,8 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
@@ -8125,6 +8276,8 @@ require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
@@ -8161,6 +8314,8 @@ require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-on-error/index.js", "analytics/deps/on-error/index.js");

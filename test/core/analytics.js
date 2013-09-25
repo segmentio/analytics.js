@@ -32,11 +32,6 @@ before(function () {
   analytics.addIntegration(Test);
 });
 
-beforeEach(function (done) {
-  analytics.ready(done);
-  analytics.initialize(settings);
-});
-
 afterEach(function () {
   analytics._callbacks = [];
   analytics._integrations = {};
@@ -89,6 +84,7 @@ describe('#initialize', function () {
     this.userSpy.restore();
     this.groupSpy.restore();
     this.initializeSpy.restore();
+    analytics._readied = false;
   });
 
   it('shouldnt error without settings', function (done) {
@@ -114,11 +110,17 @@ describe('#initialize', function () {
     analytics.initialize();
   });
 
+  it('should still call ready with unknown integrations', function (done) {
+    analytics.ready(done);
+    analytics.initialize({ Unknown: { apiKey: 'x' }});
+  });
+
   it('should set readied state', function (done) {
     analytics.ready(function () {
       assert(analytics._readied);
       done();
     });
+    analytics.initialize();
   });
 
   it('should reset enabled integrations', function (done) {
@@ -139,8 +141,12 @@ describe('#initialize', function () {
     assert(this.groupSpy.called);
   });
 
-  it('should store enabled integrations', function () {
-    assert(analytics._integrations.Test instanceof Test);
+  it('should store enabled integrations', function (done) {
+    analytics.ready(function () {
+      assert(analytics._integrations.Test instanceof Test);
+      done();
+    });
+    analytics.initialize(settings);
   });
 
   it('shouldnt error with an unknown integration', function (done) {
@@ -168,20 +174,28 @@ describe('#initialize', function () {
 });
 
 describe('#ready', function () {
+  afterEach(function () {
+    analytics._readied = false;
+    analytics._callbacks = [];
+  });
+
   it('should push a handler on to the queue', function () {
     var handler = function(){};
-    analytics.initialize(settings);
     analytics.ready(handler);
     assert(analytics._callbacks[0] == handler);
   });
 
   it('should callback on next tick when already ready', function (done) {
-    var spy = sinon.spy();
-    analytics.ready(spy);
-    tick(function () {
-      assert(spy.called);
-      done();
+    analytics.ready(function () {
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      assert(!spy.called);
+      tick(function () {
+        assert(spy.called);
+        done();
+      });
     });
+    analytics.initialize();
   });
 
   it('shouldnt error when passed a non-function', function () {
@@ -190,7 +204,9 @@ describe('#ready', function () {
 });
 
 describe('#_invoke', function () {
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.invokeSpy = sinon.spy(Test.prototype, 'invoke');
   });
 
@@ -278,7 +294,10 @@ describe('#_timeout', function () {
 });
 
 describe('#identify', function () {
-  beforeEach(function () {
+
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, '_invoke');
     this.userSpy = sinon.spy(user, 'identify');
   });
@@ -387,7 +406,9 @@ describe('#user', function () {
 });
 
 describe('#group', function () {
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, '_invoke');
     this.groupSpy = sinon.spy(group, 'identify');
   });
@@ -467,7 +488,9 @@ describe('#group', function () {
 });
 
 describe('#track', function () {
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, '_invoke');
   });
 
@@ -494,7 +517,9 @@ describe('#track', function () {
 });
 
 describe('#trackLink', function () {
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, 'track');
     this.link = document.createElement('a');
   });
@@ -600,7 +625,9 @@ describe('#trackForm', function () {
     delete window.jQuery;
   });
 
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, 'track');
     this.form = document.createElement('form');
     this.form.action = '/test/server/mock.html';
@@ -692,7 +719,9 @@ describe('#trackForm', function () {
 });
 
 describe('#pageview', function () {
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, '_invoke');
   });
 
@@ -707,7 +736,9 @@ describe('#pageview', function () {
 });
 
 describe('#alias', function () {
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, '_invoke');
   });
 

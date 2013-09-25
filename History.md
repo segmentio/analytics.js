@@ -1,3 +1,9 @@
+0.15.1 - September 24, 2013
+---------------------------
+* fixed bug in `ready` causing it to never fire with faulty settings
+* fixed all `ready()` calls to always be async
+* cleared ready state after all analytics core `initialize` tests
+
 0.15.0 - September 18, 2013
 ---------------------------
 * Crazy Egg: renamed from `CrazyEgg`

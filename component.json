@@ -2,7 +2,7 @@
   "name": "analytics",
   "repo": "segmentio/analytics.js",
   "description": "The hassle-free way to integrate analytics into any web application.",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "keywords": [
     "analytics",
     "analytics.js",
@@ -84,7 +84,7 @@
     "segmentio/isodate-traverse": "0.0.1",
     "segmentio/json": "0.0.1",
     "segmentio/load-date": "0.0.1",
-    "segmentio/load-script": "0.0.2",
+    "segmentio/load-script": "0.1.0",
     "segmentio/new-date": "0.2.0",
     "segmentio/on-body": "0.0.1",
     "segmentio/on-error": "0.1.0",

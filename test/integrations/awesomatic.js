@@ -7,7 +7,7 @@ var analytics = window.analytics || require('analytics')
   , when = require('when');
 
 var settings = {
-  app_id: 'af392af01603ca383672689241b648b2'
+  appId: 'af392af01603ca383672689241b648b2'
 };
 
 before(function (done) {
@@ -17,7 +17,7 @@ before(function (done) {
   analytics.initialize({ 'Awesomatic': settings });
   this.integration = analytics._integrations.Awesomatic;
   this.options = this.integration.options;
-  when(function () { return window.Awesomatic; }, done);
+  when(function () { return window.AwesomaticSettings; }, done);
 });
 
 describe('#name', function () {
@@ -27,14 +27,14 @@ describe('#name', function () {
 });
 
 describe('#key', function () {
-  it('app_id', function () {
-    assert(this.integration.key == 'app_id');
+  it('appId', function () {
+    assert(this.integration.key == 'appId');
   });
 });
 
 describe('#defaults', function () {
-  it('app_id', function () {
-    assert(this.integration.defaults.app_id === '');
+  it('appId', function () {
+    assert(this.integration.defaults.appId === '');
   });
 });
 
@@ -44,7 +44,7 @@ describe('#initialize', function () {
   });
 
   it('should store options', function () {
-    assert(this.options.app_id == settings.app_id);
+    assert(this.options.appId == settings.appId);
   });
 });
 
@@ -53,22 +53,18 @@ describe('#identify', function () {
   before(function () {
     this.id = 0;
     this.stub = sinon.stub(Awesomatic, 'load');
-      analytics.identify('x', { email: 'email@example.com' });
+    analytics.identify('x', { email: 'email@example.com' });
   });
 
-  it('should call load()', function (done) {
+  it('should call load()', function () {
     var _this = this;
-    analytics.ready(function() {
-      assert(_this.stub.called);
-      done();
-    });
+    assert(_this.stub.called);
   });
 
-  it('should set email', function (done) {
-    analytics.ready(function() {
-      assert(AwesomaticSettings.email=='email@example.com');
-      done();
-    });
+  it('should set email', function () {
+    assert(this.stub.calledWith({
+      email: 'email@example.com'
+    }));
   });
 
 });

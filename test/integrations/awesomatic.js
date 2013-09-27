@@ -52,14 +52,15 @@ describe('#initialize', function () {
 describe('#identify', function () {
   before(function () {
     this.stub = sinon.stub(Awesomatic, 'load');
-    analytics.identify('x', { email: 'email@example.com' });
   });
 
   it('should call load()', function () {
+    analytics.identify('x');
     assert(this.stub.called);
   });
 
   it('should set email', function () {
+    analytics.identify('x', { email: 'email@example.com' });
     assert(this.stub.calledWith({
       email: 'email@example.com'
     }));

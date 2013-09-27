@@ -42,7 +42,6 @@ describe('#initialize', function () {
   it('should call ready', function () {
     assert(this.spy.called);
   });
-
   it('should store options', function () {
     assert(this.options.appId == settings.appId);
   });
@@ -53,12 +52,10 @@ describe('#identify', function () {
   before(function () {
     this.stub = sinon.stub(Awesomatic, 'load');
   });
-
   it('should call load()', function () {
     analytics.identify('x');
     assert(this.stub.called);
   });
-
   it('should set email', function () {
     analytics.identify('x', { email: 'email@example.com' });
     assert(this.stub.calledWith({

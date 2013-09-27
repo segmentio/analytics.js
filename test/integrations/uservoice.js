@@ -37,32 +37,36 @@ describe('#key', function () {
 });
 
 describe('#defaults', function () {
-  it('apiKey', function () {
-    assert(this.integration.defaults.apiKey === '');
-  });
-
   it('classic', function () {
     assert(this.integration.defaults.classic === false);
   });
 
-  it('widget', function () {
-    assert(this.integration.defaults.widget === true);
+  it('apiKey', function () {
+    assert(this.integration.defaults.apiKey === '');
+  });
+
+  it('forumId', function () {
+    assert(this.integration.defaults.forumId === null);
+  });
+
+  it('showWidget', function () {
+    assert(this.integration.defaults.showWidget === true);
   });
 
   it('mode', function () {
     assert(this.integration.defaults.mode === 'contact');
   });
 
-  it('position', function () {
-    assert(this.integration.defaults.position === 'bottom-right');
-  });
-
-  it('color', function () {
-    assert(this.integration.defaults.color === '#448dd6');
+  it('accentColor', function () {
+    assert(this.integration.defaults.accentColor === '#448dd6');
   });
 
   it('trigger', function () {
     assert(this.integration.defaults.trigger === null);
+  });
+
+  it('triggerPosition', function () {
+    assert(this.integration.defaults.triggerPosition === 'bottom-right');
   });
 
   it('triggerColor', function () {
@@ -73,8 +77,8 @@ describe('#defaults', function () {
     assert(this.integration.defaults.triggerBackgroundColor === 'rgba(46, 49, 51, 0.6)');
   });
 
-  it('forumId', function () {
-    assert(this.integration.defaults.forumId === null);
+  it('primaryColor', function () {
+    assert(this.integration.defaults.primaryColor === '#cc6d00');
   });
 
   it('linkColor', function () {
@@ -87,6 +91,14 @@ describe('#defaults', function () {
 
   it('tabLabel', function () {
     assert(this.integration.defaults.tabLabel === 'Feedback & Support');
+  });
+
+  it('tabColor', function () {
+    assert(this.integration.defaults.tabColor === '#cc6d00');
+  });
+
+  it('tabPosition', function () {
+    assert(this.integration.defaults.tabPosition === 'middle-right');
   });
 
   it('tabInverted', function () {

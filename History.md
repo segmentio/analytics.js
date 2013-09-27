@@ -1,3 +1,7 @@
+0.15.2 - September 26, 2013
+---------------------------
+* added `Awesomatic`, by [@robv](https://github.com/robv)
+
 0.15.1 - September 24, 2013
 ---------------------------
 * fixed bug in `ready` causing it to never fire with faulty settings

@@ -31,9 +31,6 @@
         date : new Date()
       },
       'Amplitude' : '07808866adb2510adf19ee69e8fc2201',
-      'Awesomatic' : {
-        app_id     : 'af392af01603ca383672689241b648b2'
-      },
       'BugHerd' : '7917d741-16cc-4c2b-bb1a-bdd903d53d72',
       'Chartbeat' : {
         uid    : 'x',

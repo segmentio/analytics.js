@@ -51,7 +51,6 @@ describe('#initialize', function () {
 
 describe('#identify', function () {
   before(function () {
-    this.id = 0;
     this.stub = sinon.stub(Awesomatic, 'load');
     analytics.identify('x', { email: 'email@example.com' });
   });

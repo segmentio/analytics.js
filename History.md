@@ -1,6 +1,10 @@
+0.16.0 - September 27, 2013
+---------------------------
+* UserVoice: updated integration to handle the new widget
+
 0.15.2 - September 26, 2013
 ---------------------------
-* added `Awesomatic`, by [@robv](https://github.com/robv)
+* added Awesomatic, by [@robv](https://github.com/robv)
 
 0.15.1 - September 24, 2013
 ---------------------------

@@ -17,7 +17,7 @@ before(function (done) {
   analytics.initialize({ MouseStats: settings });
   this.integration = analytics._integrations.MouseStats;
   this.options = this.integration.options;
-  when(function () { return window.msae; }, done);
+  when(function () { return window.msaa; }, done);
 });
 
 describe('#name', function () {

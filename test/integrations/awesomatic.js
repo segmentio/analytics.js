@@ -57,8 +57,7 @@ describe('#identify', function () {
   });
 
   it('should call load()', function () {
-    var _this = this;
-    assert(_this.stub.called);
+    assert(this.stub.called);
   });
 
   it('should set email', function () {

@@ -49,8 +49,12 @@ describe('#initialize', function () {
 
 
 describe('#identify', function () {
-  before(function () {
-    this.stub = sinon.stub(Awesomatic, 'load');
+  beforeEach(function () {
+    analytics.user().reset();
+    this.stub = sinon.stub(window.Awesomatic, 'load');
+  });
+  afterEach(function () {
+    this.stub.restore();
   });
   it('should call load()', function () {
     analytics.identify('x');
@@ -59,6 +63,7 @@ describe('#identify', function () {
   it('should set email', function () {
     analytics.identify('x', { email: 'email@example.com' });
     assert(this.stub.calledWith({
+      userId: 'x',
       email: 'email@example.com'
     }));
   });

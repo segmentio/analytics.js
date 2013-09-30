@@ -1,3 +1,7 @@
+0.17.0 - September 30, 2013
+---------------------------
+* added `debug` method, by [@yields](https://github.com/yields)
+
 0.16.0 - September 27, 2013
 ---------------------------
 * UserVoice: updated integration to handle the new widget

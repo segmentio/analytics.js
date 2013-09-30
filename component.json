@@ -2,7 +2,7 @@
   "name": "analytics",
   "repo": "segmentio/analytics.js",
   "description": "The hassle-free way to integrate analytics into any web application.",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "keywords": [
     "analytics",
     "analytics.js",

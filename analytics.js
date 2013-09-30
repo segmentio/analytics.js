@@ -393,13 +393,121 @@ function parse(str) {
 }
 
 });
+require.register("component-to-function/index.js", function(exports, require, module){
+
+/**
+ * Expose `toFunction()`.
+ */
+
+module.exports = toFunction;
+
+/**
+ * Convert `obj` to a `Function`.
+ *
+ * @param {Mixed} obj
+ * @return {Function}
+ * @api private
+ */
+
+function toFunction(obj) {
+  switch ({}.toString.call(obj)) {
+    case '[object Object]':
+      return objectToFunction(obj);
+    case '[object Function]':
+      return obj;
+    case '[object String]':
+      return stringToFunction(obj);
+    case '[object RegExp]':
+      return regexpToFunction(obj);
+    default:
+      return defaultToFunction(obj);
+  }
+}
+
+/**
+ * Default to strict equality.
+ *
+ * @param {Mixed} val
+ * @return {Function}
+ * @api private
+ */
+
+function defaultToFunction(val) {
+  return function(obj){
+    return val === obj;
+  }
+}
+
+/**
+ * Convert `re` to a function.
+ *
+ * @param {RegExp} re
+ * @return {Function}
+ * @api private
+ */
+
+function regexpToFunction(re) {
+  return function(obj){
+    return re.test(obj);
+  }
+}
+
+/**
+ * Convert property `str` to a function.
+ *
+ * @param {String} str
+ * @return {Function}
+ * @api private
+ */
+
+function stringToFunction(str) {
+  // immediate such as "> 20"
+  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
+
+  // properties such as "name.first" or "age > 18"
+  return new Function('_', 'return _.' + str);
+}
+
+/**
+ * Convert `object` to a function.
+ *
+ * @param {Object} object
+ * @return {Function}
+ * @api private
+ */
+
+function objectToFunction(obj) {
+  var match = {}
+  for (var key in obj) {
+    match[key] = typeof obj[key] === 'string'
+      ? defaultToFunction(obj[key])
+      : toFunction(obj[key])
+  }
+  return function(val){
+    if (typeof val !== 'object') return false;
+    for (var key in match) {
+      if (!(key in val)) return false;
+      if (!match[key](val[key])) return false;
+    }
+    return true;
+  }
+}
+
+});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var type = require('type');
+var toFunction = require('to-function');
+var type;
+
+try {
+  type = require('type-component');
+} catch (e) {
+  type = require('type');
+}
 
 /**
  * HOP reference.
@@ -416,6 +524,7 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
+  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -470,6 +579,7 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
+
 });
 require.register("component-event/index.js", function(exports, require, module){
 
@@ -728,15 +838,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -748,7 +858,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -760,7 +872,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -773,9 +885,9 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
@@ -2484,6 +2596,141 @@ module.exports = function (str, options) {
 };
 
 });
+require.register("visionmedia-debug/index.js", function(exports, require, module){
+if ('undefined' == typeof window) {
+  module.exports = require('./lib/debug');
+} else {
+  module.exports = require('./debug');
+}
+
+});
+require.register("visionmedia-debug/debug.js", function(exports, require, module){
+
+/**
+ * Expose `debug()` as the module.
+ */
+
+module.exports = debug;
+
+/**
+ * Create a debugger with the given `name`.
+ *
+ * @param {String} name
+ * @return {Type}
+ * @api public
+ */
+
+function debug(name) {
+  if (!debug.enabled(name)) return function(){};
+
+  return function(fmt){
+    var curr = new Date;
+    var ms = curr - (debug[name] || curr);
+    debug[name] = curr;
+
+    fmt = name
+      + ' '
+      + fmt
+      + ' +' + debug.humanize(ms);
+
+    // This hackery is required for IE8
+    // where `console.log` doesn't have 'apply'
+    window.console
+      && console.log
+      && Function.prototype.apply.call(console.log, console, arguments);
+  }
+}
+
+/**
+ * The currently active debug mode names.
+ */
+
+debug.names = [];
+debug.skips = [];
+
+/**
+ * Enables a debug mode by name. This can include modes
+ * separated by a colon and wildcards.
+ *
+ * @param {String} name
+ * @api public
+ */
+
+debug.enable = function(name) {
+  try {
+    localStorage.debug = name;
+  } catch(e){}
+
+  var split = (name || '').split(/[\s,]+/)
+    , len = split.length;
+
+  for (var i = 0; i < len; i++) {
+    name = split[i].replace('*', '.*?');
+    if (name[0] === '-') {
+      debug.skips.push(new RegExp('^' + name.substr(1) + '$'));
+    }
+    else {
+      debug.names.push(new RegExp('^' + name + '$'));
+    }
+  }
+};
+
+/**
+ * Disable debug output.
+ *
+ * @api public
+ */
+
+debug.disable = function(){
+  debug.enable('');
+};
+
+/**
+ * Humanize the given `ms`.
+ *
+ * @param {Number} m
+ * @return {String}
+ * @api private
+ */
+
+debug.humanize = function(ms) {
+  var sec = 1000
+    , min = 60 * 1000
+    , hour = 60 * min;
+
+  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
+  if (ms >= min) return (ms / min).toFixed(1) + 'm';
+  if (ms >= sec) return (ms / sec | 0) + 's';
+  return ms + 'ms';
+};
+
+/**
+ * Returns true if the given mode name is enabled, false otherwise.
+ *
+ * @param {String} name
+ * @return {Boolean}
+ * @api public
+ */
+
+debug.enabled = function(name) {
+  for (var i = 0, len = debug.skips.length; i < len; i++) {
+    if (debug.skips[i].test(name)) {
+      return false;
+    }
+  }
+  for (var i = 0, len = debug.names.length; i < len; i++) {
+    if (debug.names[i].test(name)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+// persist
+
+if (window.localStorage) debug.enable(localStorage.debug);
+
+});
 require.register("analytics/lib/index.js", function(exports, require, module){
 /**
  * Analytics.js
@@ -2529,7 +2776,8 @@ bind.methods(
 });
 require.register("analytics/lib/analytics.js", function(exports, require, module){
 
-var after = require('after')
+var debug = require('debug')
+  , after = require('after')
   , bind = require('event').bind
   , callback = require('callback')
   , clone = require('clone')
@@ -2561,7 +2809,7 @@ module.exports = exports = Analytics;
  */
 
 exports.VERSION =
-Analytics.prototype.VERSION = '0.16.0';
+Analytics.prototype.VERSION = '0.17.0';
 
 
 /**
@@ -2894,6 +3142,19 @@ Analytics.prototype.timeout = function (timeout) {
   this._timeout = timeout;
 };
 
+/**
+ * Enable / disable debug.
+ *
+ * @param {String|Boolean} str
+ */
+
+Analytics.prototype.debug = function(str){
+  if (0 == arguments.length || str) {
+    debug.enable('analytics:' + (str || '*'));
+  } else {
+    debug.disable();
+  }
+};
 
 /**
  * Apply options.
@@ -3018,6 +3279,7 @@ function cleanTraits (userId, traits) {
 
   return traits;
 }
+
 });
 require.register("analytics/lib/cookie.js", function(exports, require, module){
 
@@ -3285,7 +3547,8 @@ each(integrations, function (slug) {
 });
 require.register("analytics/lib/user.js", function(exports, require, module){
 
-var bind = require('bind')
+var debug = require('debug')('analytics:user')
+  , bind = require('bind')
   , clone = require('clone')
   , cookie = require('./cookie')
   , defaults = require('defaults')
@@ -3436,6 +3699,7 @@ User.prototype.identify = function (id, traits) {
   var current = this.id();
   if (current === null || current === id) traits = extend(this.traits(), traits);
   if (id) this.id(id);
+  debug('identify %o, %o', id, traits);
   this.traits(traits);
   this.save();
 };
@@ -3518,10 +3782,12 @@ module.exports = bind.all(new User());
  */
 
 module.exports.User = User;
+
 });
 require.register("analytics/lib/group.js", function(exports, require, module){
 
-var bind = require('bind')
+var debug = require('debug')('analytics:group')
+  , bind = require('bind')
   , clone = require('clone')
   , cookie = require('./cookie')
   , defaults = require('defaults')
@@ -3671,6 +3937,7 @@ Group.prototype.identify = function (id, properties) {
   var current = this.id();
   if (current === null || current === id) properties = extend(this.properties(), properties);
   if (id) this.id(id);
+  debug('identify %o, %o', id, properties);
   this.properties(properties);
   this.save();
 };
@@ -3734,10 +4001,12 @@ module.exports = bind.all(new Group());
  */
 
 module.exports.Group = Group;
+
 });
 require.register("analytics/lib/integration/index.js", function(exports, require, module){
 
-var each = require('each')
+var debug = require('debug')('analytics:integration')
+  , each = require('each')
   , extend = require('extend')
   , is = require('is')
   , protos = require('./protos')
@@ -3785,6 +4054,7 @@ function createIntegration (name) {
       ready();
     }
 
+    debug('initialize %s with %o', name, this.options);
     this.initialize(this.options, dequeue);
   }
 
@@ -3815,8 +4085,11 @@ function resolveOptions (options, key) {
     return options;
   }
 }
+
 });
 require.register("analytics/lib/integration/protos.js", function(exports, require, module){
+
+var debug = require('debug')('analytics:integration');
 
 /**
  * Initialize.
@@ -3841,6 +4114,7 @@ exports.invoke = function (method, args) {
   if (!this[method]) return;
   args = [].slice.call(arguments, 1);
   if (this.ready) {
+    debug('%s %s %o', this.name, method, args);
     this[method].apply(this, args);
   } else {
     this.queue.push({
@@ -3849,6 +4123,7 @@ exports.invoke = function (method, args) {
     });
   }
 };
+
 });
 require.register("analytics/lib/integration/statics.js", function(exports, require, module){
 
@@ -4924,7 +5199,6 @@ GetSatisfaction.prototype.initialize = function (options, ready) {
 };
 });
 require.register("analytics/lib/integrations/google-analytics.js", function(exports, require, module){
-
 var callback = require('callback')
   , canonical = require('canonical')
   , each = require('each')
@@ -4975,7 +5249,9 @@ GA.prototype.defaults = {
   // https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration#_gat.GA_Tracker_._setSiteSpeedSampleRate
   siteSpeedSampleRate : null,
   // your google analytics tracking id (required)
-  trackingId: ''
+  trackingId: '',
+  // allow linking between multiple domains via ga query param
+  allowLinker: true
 };
 
 
@@ -5009,7 +5285,8 @@ GA.prototype.initialize = function (options, ready) {
   // initialize
   window.ga('create', options.trackingId, {
     cookieDomain: options.domain,
-    siteSpeedSampleRate: options.siteSpeedSampleRate
+    siteSpeedSampleRate: options.siteSpeedSampleRate,
+    allowLinker: options.allowLinker
   });
 
   // track a pageview with the canonical url
@@ -5174,6 +5451,7 @@ function formatValue (value) {
   if (!value || value < 0) return 0;
   return Math.round(value);
 }
+
 });
 require.register("analytics/lib/integrations/gosquared.js", function(exports, require, module){
 
@@ -8255,6 +8533,7 @@ Woopra.prototype.pageview = function (url) {
 
 
 
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -8267,6 +8546,8 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
@@ -8344,6 +8625,8 @@ require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
@@ -8380,6 +8663,8 @@ require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-on-body/index.js", "analytics/deps/on-body/index.js");
 require.alias("segmentio-on-body/index.js", "on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-on-error/index.js", "analytics/deps/on-error/index.js");
@@ -8406,6 +8691,10 @@ require.alias("yields-prevent/index.js", "prevent/index.js");
 
 require.alias("yields-slug/index.js", "analytics/deps/slug/index.js");
 require.alias("yields-slug/index.js", "slug/index.js");
+
+require.alias("visionmedia-debug/index.js", "analytics/deps/debug/index.js");
+require.alias("visionmedia-debug/debug.js", "analytics/deps/debug/debug.js");
+require.alias("visionmedia-debug/index.js", "debug/index.js");
 
 require.alias("analytics/lib/index.js", "analytics/index.js");if (typeof exports == "object") {
   module.exports = require("analytics");

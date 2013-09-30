@@ -94,7 +94,8 @@
     "segmentio/top-domain": "0.0.1",
     "timoxley/next-tick": "0.0.2",
     "yields/prevent": "0.0.2",
-    "yields/slug": "1.1.0"
+    "yields/slug": "1.1.0",
+    "visionmedia/debug": "0.7.2"
   },
   "development": {
     "component/jquery": "*",
@@ -167,5 +168,6 @@
     "lib/integrations/visual-website-optimizer.js",
     "lib/integrations/woopra.js"
   ],
-  "main": "lib/index.js"
+  "main": "lib/index.js",
+  "remotes": []
 }

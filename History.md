@@ -1,3 +1,7 @@
+0.17.3 - September 30, 2013
+---------------------------
+* fixed bug in key-only initialization
+
 0.17.2 - September 30, 2013
 ---------------------------
 * UserVoice: added `classicMode` option

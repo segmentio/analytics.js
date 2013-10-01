@@ -190,6 +190,7 @@ describe('Classic', function () {
 
 var settings = {
   classic: true,
+  classicMode: 'full',
   apiKey: 'mhz5Op4MUft592O8Q82MwA',
   forumId: 221539,
   tabLabel: 'test',

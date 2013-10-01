@@ -515,6 +515,14 @@ describe('#track', function () {
   it('should have an options overload', function (done) {
     analytics.track('event', {}, done);
   });
+
+  it('should convert ISO dates to date objects', function () {
+    var date = new Date();
+    analytics.track('event', {
+      date: date.toISOString()
+    });
+    assert(this.spy.args[0][2].date.getTime() == date.getTime());
+  });
 });
 
 describe('#trackLink', function () {

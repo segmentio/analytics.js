@@ -1,3 +1,7 @@
+0.17.4 - September 30, 2013
+---------------------------
+* added conversion of ISO strings to dates for `track` calls
+
 0.17.3 - September 30, 2013
 ---------------------------
 * fixed bug in key-only initialization

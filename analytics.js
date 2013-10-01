@@ -728,15 +728,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -748,7 +748,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -760,7 +762,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -773,13 +775,12 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
-
 var next = require('next-tick');
 
 
@@ -2665,24 +2666,25 @@ bind.methods(
 });
 require.register("analytics/lib/analytics.js", function(exports, require, module){
 
-var debug = require('debug')
-  , after = require('after')
+var after = require('after')
   , bind = require('event').bind
   , callback = require('callback')
   , clone = require('clone')
   , cookie = require('./cookie')
+  , createIntegration = require('./integration')
+  , debug = require('debug')
   , each = require('each')
+  , group = require('./group')
+  , Integrations = require('./integrations')
   , is = require('is')
   , isEmail = require('is-email')
   , isMeta = require('is-meta')
-  , group = require('./group')
-  , store = require('./store')
   , newDate = require('new-date')
-  , size = require('object').length
   , prevent = require('prevent')
-  , createIntegration = require('./integration')
-  , Integrations = require('./integrations')
   , querystring = require('querystring')
+  , size = require('object').length
+  , store = require('./store')
+  , traverse = require('isodate-traverse')
   , user = require('./user');
 
 
@@ -2698,7 +2700,7 @@ module.exports = exports = Analytics;
  */
 
 exports.VERSION =
-Analytics.prototype.VERSION = '0.17.3';
+Analytics.prototype.VERSION = '0.17.4';
 
 
 /**
@@ -2884,7 +2886,7 @@ Analytics.prototype.track = function (event, properties, options, fn) {
   if (is.fn(options)) fn = options, options = undefined;
   if (is.fn(properties)) fn = properties, properties = undefined;
 
-  properties = clone(properties) || {};
+  properties = traverse(clone(properties)) || {};
 
   this._invoke('track', event, properties, options);
   this._callback(fn);

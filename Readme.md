@@ -125,17 +125,17 @@ If you run into any questions, check out a few of our [existing](https://github.
 
 To help make contributing easy, here's all the things you need to remember:
 
-- [ ] Add your integration file to `/lib/integrations`.
-- [ ] Create a new Integration constructor with the `integration` factory component.
-- [ ] Add your integration's `defaults` options to the `prototype`.
-- [ ] Add an `initialize` method to your integration's `prototype`.
-- [ ] Add methods you want to support to the `prototype`. (`identify`, `track`, `pageview`, etc.)
-- [ ] Write tests for all of your integration's logic.
-- [ ] Run the tests and get everything passing.
-- [ ] **Don't commit a built version of the code, bump the version number, or edit the history!**
-- [ ] Commit your changes with a nice commit message.
-- [ ] Submit your pull request.
-- [ ] Add a vector logo to the pull request comments if you want it merged into [Segment.io](https://segment.io) too!
+- Add your integration file to `/lib/integrations`.
+- Create a new Integration constructor with the `integration` factory component.
+- Add your integration's `defaults` options to the `prototype`.
+- Add an `initialize` method to your integration's `prototype`.
+- Add methods you want to support to the `prototype`. (`identify`, `track`, `pageview`, etc.)
+- Write tests for all of your integration's logic.
+- Run the tests and get everything passing.
+- **Don't commit a built version of the code, bump the version number, or edit the history!**
+- Commit your changes with a nice commit message.
+- Submit your pull request.
+- Add a vector logo to the pull request comments if you want it merged into [Segment.io](https://segment.io) too!
 
 
 ## License

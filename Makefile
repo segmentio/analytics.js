@@ -39,18 +39,18 @@ server:
 
 release: analytics.js test-release
 
-test: build server
+test: build/build.js server
 	@sleep 1
 	-@$(PHANTOM) $(TEST)/core
 	-@$(PHANTOM) $(TEST)/integrations
 	@make kill
 
-test-browser: build server
+test-browser: build/build.js server
 	@sleep 1
 	@open $(TEST)/core
 	@open $(TEST)/integrations
 
-test-release: build server
+test-release: analytics.js server
 	@sleep 1
 	-@$(PHANTOM) $(TEST)/all
 	@make kill

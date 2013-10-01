@@ -1,3 +1,7 @@
+0.17.1 - September 30, 2013
+---------------------------
+* UserVoice: fix bug loading trigger with new widget
+
 0.17.0 - September 30, 2013
 ---------------------------
 * added `debug` method, by [@yields](https://github.com/yields)

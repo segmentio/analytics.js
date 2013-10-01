@@ -2809,7 +2809,7 @@ module.exports = exports = Analytics;
  */
 
 exports.VERSION =
-Analytics.prototype.VERSION = '0.17.0';
+Analytics.prototype.VERSION = '0.17.1';
 
 
 /**
@@ -8053,8 +8053,12 @@ UserVoice.prototype.initialize = function (options, ready) {
   window.UserVoice || (window.UserVoice = []);
   var opts = formatOptions(options);
   push('set', opts);
-  if (options.showWidget) push('addTrigger', options.trigger, opts);
   push('autoprompt', {});
+  if (options.showWidget) {
+    options.trigger
+      ? push('addTrigger', options.trigger, opts)
+      : push('addTrigger', opts);
+  }
 
   callback.async(ready);
   load('//widget.uservoice.com/' + options.apiKey + '.js');

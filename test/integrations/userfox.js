@@ -82,7 +82,7 @@ describe('#identify', function () {
     });
     assert(this.stub.calledWith(['track', {
       email: 'name@example.com',
-      date: (date.getTime() / 1000).toString()
+      date: Math.round(date.getTime() / 1000).toString()
     }]));
   });
 
@@ -94,7 +94,7 @@ describe('#identify', function () {
     });
     assert(this.stub.calledWith(['track', {
       email: 'name@example.com',
-      signup_date: (date.getTime() / 1000).toString()
+      signup_date: Math.round(date.getTime() / 1000).toString()
     }]));
   });
 });

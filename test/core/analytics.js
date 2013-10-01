@@ -85,6 +85,7 @@ describe('#initialize', function () {
     this.groupSpy.restore();
     this.initializeSpy.restore();
     analytics._readied = false;
+    analytics._integrations = {};
   });
 
   it('shouldnt error without settings', function (done) {

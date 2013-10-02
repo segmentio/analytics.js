@@ -220,6 +220,13 @@ describe('#_invoke', function () {
     assert(this.invokeSpy.calledWith('identify', 'id', { trait: true }));
   });
 
+  it('should clone arguments before invoking each integration', function () {
+    var traits = { foo: 1 };
+    analytics._invoke('identify', 'id', traits);
+    assert(this.invokeSpy.alwaysCalledWith('identify', 'id', traits));
+    assert(this.invokeSpy.neverCalledWith('identify', 'id', sinon.match.same(traits)));
+  });
+
   it('shouldnt call a method when the `all` option is false', function () {
     analytics._invoke('identify', { providers: { all: false }});
     assert(!this.invokeSpy.called);

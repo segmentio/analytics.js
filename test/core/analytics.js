@@ -208,33 +208,34 @@ describe('#_invoke', function () {
   beforeEach(function (done) {
     analytics.ready(done);
     analytics.initialize(settings);
-    this.invokeSpy = sinon.spy(Test.prototype, 'invoke');
+    this.spy = sinon.spy(Test.prototype, 'invoke');
   });
 
   afterEach(function () {
-    this.invokeSpy.restore();
+    this.spy.restore();
   });
 
   it('should invoke a method on an integration', function () {
     analytics._invoke('identify', 'id', { trait: true });
-    assert(this.invokeSpy.calledWith('identify', 'id', { trait: true }));
+    assert(this.spy.calledWith('identify', 'id', { trait: true }));
   });
 
   it('should clone arguments before invoking each integration', function () {
     var traits = { foo: 1 };
     analytics._invoke('identify', 'id', traits);
-    assert(this.invokeSpy.alwaysCalledWith('identify', 'id', traits));
-    assert(this.invokeSpy.neverCalledWith('identify', 'id', sinon.match.same(traits)));
+    assert(this.spy.calledWith('identify', 'id', traits));
+    assert(this.spy.args[0][2].foo == 1);
+    assert(this.spy.args[0][2] != traits);
   });
 
   it('shouldnt call a method when the `all` option is false', function () {
     analytics._invoke('identify', { providers: { all: false }});
-    assert(!this.invokeSpy.called);
+    assert(!this.spy.called);
   });
 
   it('shouldnt call a method when the integration option is false', function () {
     analytics._invoke('identify', { providers: { Test: false }});
-    assert(!this.invokeSpy.called);
+    assert(!this.spy.called);
   });
 });
 

@@ -1,3 +1,7 @@
+0.17.5 - October 2, 2013
+------------------------
+* fixed bug in `_invoke` not cloning arguments
+
 0.17.4 - September 30, 2013
 ---------------------------
 * added conversion of ISO strings to dates for `track` calls

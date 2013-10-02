@@ -34,23 +34,23 @@ kill:
 
 install: components node_modules
 
-server:
+server: node_modules
 	@node test/server/index.js &
 
-release: analytics.js test-release
+release: test-release
 
-test: build/build.js server
+test: node_modules build/build.js server
 	@sleep 1
 	-@$(PHANTOM) $(TEST)/core
 	-@$(PHANTOM) $(TEST)/integrations
 	@make kill
 
-test-browser: build/build.js server
+test-browser: node_modules build/build.js server
 	@sleep 1
 	@open $(TEST)/core
 	@open $(TEST)/integrations
 
-test-release: analytics.js server
+test-release: node_modules analytics.js build/build.js server
 	@sleep 1
 	-@$(PHANTOM) $(TEST)/all
 	@make kill

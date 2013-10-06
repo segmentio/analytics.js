@@ -12,7 +12,7 @@ To start, we'll get you set up with our development environment. All of our deve
 Then after forking **analytics.js** just `cd` into the folder and run `make`:
 
     $ cd analytics.js
-    $ make install
+    $ make
     
 That will install all of our [npm](http://npmjs.org) and [component](http://component.io) dependencies and compile the latest version of the development build to test again. You can now add your changes to the library, and run `make test` to make sure everything is passing still.
 

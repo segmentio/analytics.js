@@ -1,4 +1,3 @@
-
 TEST = http://localhost:4200
 COMPONENT = node_modules/component/bin/component
 UGLIFY = node_modules/uglify-js/bin/uglifyjs
@@ -31,8 +30,6 @@ clean:
 kill:
 	@kill -9 `cat test/server/.pid.txt`
 	@rm test/server/.pid.txt
-
-install: components node_modules
 
 server: node_modules
 	@node test/server/index.js &

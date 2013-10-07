@@ -1,3 +1,7 @@
+0.17.6 - October 7, 2013
+------------------------
+* added [Yandex Metrica](http://metrika.yandex.com), by [@yury-egorenkov](https://github.com/yury-egorenkov)
+
 0.17.5 - October 2, 2013
 ------------------------
 * fixed bug in `_invoke` not cloning arguments

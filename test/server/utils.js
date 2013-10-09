@@ -60,8 +60,7 @@
         global : {
           account           : 'segmentiotest',
           minified          : false,
-          loggingLevel      : 'DEBUG',
-          localTestServer   : false
+          loggingLevel      : 'DEBUG'
         }
       },
       'FoxMetrics' : '5135085424023236bca9c08c',

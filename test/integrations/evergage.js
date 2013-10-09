@@ -9,15 +9,9 @@ var globalAPI = 'Evergage';
 var evergagejQuery = 'ajq';
 
 // Various spies and stubs shared between tests
-var setUserSpy;
-var setUserFieldSpy;
-var setCompanySpy;
-var setAccountFieldSpy;
-var consoleLogStub;
-var ajaxSpy;
-var aaqPushAppliedSpy;
-var evergageInitSpy;
-var trackActionSpy;
+var setUserSpy, setUserFieldSpy, setCompanySpy, setAccountFieldSpy,
+    ajaxSpy, aaqPushAppliedSpy, evergageInitSpy, trackActionSpy,
+    consoleLogStub;
 
 var originalAjax;
 var intervalTimer = 20;
@@ -28,22 +22,20 @@ var EVENT_SENT_TO_SERVER = 'Evergage: Event sent to server: ';
 
 this.timeout(3000);
 
-var twReceiverUrl = (test.Evergage.global.localTestServer ?
-        'http://localtest.evergage.com:8080' : 'http://' + test.Evergage.global.account + '.evergage.com')
-        + '/twreceiver';
+var twReceiverUrl = 'http://' + test.Evergage.global.account + '.evergage.com/twreceiver';
 
 // Sinon doesn't let you spy on callback functions, you can only stub the whole call and provide your own.
 // We want to let the request go through so we custom wrap it here before spying.
 function stubAjax() {
   originalAjax = window[evergagejQuery].ajax;
-  window[evergagejQuery].ajax = function(settings) {
+  window[evergagejQuery].ajax = function (settings) {
     if (settings && settings.url == twReceiverUrl) {
       var originalSuccessCallback = settings.complete;
-      settings.complete = function(xhr, status) {
+      settings.complete = function (xhr, status) {
         console.log(EVENT_SUCCESSFUL, settings.url);
         originalSuccessCallback(xhr, status);
       };
-      settings.error = function() {
+      settings.error = function () {
         console.log(EVENT_REJECTED);
       };
       // Cross-domain JSONP requests fail silently, so we assert failure here
@@ -55,7 +47,7 @@ function stubAjax() {
   ajaxSpy = sinon.spy(window[evergagejQuery], 'ajax');
 }
 
-beforeEach(function() {
+beforeEach(function () {
   consoleLogStub = sinon.stub(window['console'], 'log');
   if (typeof window[evergagejQuery] !== 'undefined') {
     purgeUserAndAccount();
@@ -70,7 +62,7 @@ beforeEach(function() {
   }
 });
 
-afterEach(function() {
+afterEach(function () {
   consoleLogStub.restore();
   if (originalAjax) {
     window[evergagejQuery].ajax = originalAjax;
@@ -109,13 +101,52 @@ function purgeUserAndAccount() {
   window[globalAPI].deleteCustomField('_persistedAccountId', 'visit');
 }
 
+function eventNotSuccessfullySent() {
+  return (!consoleLogStub.calledWith(EVENT_SENT_TO_SERVER) || !consoleLogStub.calledWith(EVENT_SUCCESSFUL));
+}
+
+function eventNotRejected() {
+  return (!trackActionSpy.called || !consoleLogStub.calledWith(EVENT_REJECTED));
+}
+
+function expectEventSentToServer() {
+  expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
+  expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
+}
+
+function markTestAsComplete(interval, done) {
+  clearInterval(interval);
+  done();
+}
+
+function waitForPreconditionAndAssert(precondition, assert, done) {
+  var interval = setInterval(function () {
+    if (!precondition()) {
+      return;
+    }
+    assert();
+    markTestAsComplete(interval, done);
+  }, intervalTimer);
+}
+
+function waitForEventSuccessfullySent(assert, done) {
+  waitForPreconditionAndAssert(function () {
+    return (!eventNotSuccessfullySent());
+  }, function () {
+    if (assert != null && typeof assert === 'function') {
+      assert();
+    }
+    expectEventSentToServer();
+  }, done);
+}
+
+
 describe('With Accounts', function () {
 
 
-describe('Anonymous Enabled', function() {
+describe('Anonymous Enabled', function () {
 
-describe('initialize', function () {
-
+describe('#initialize', function () {
   it('should call ready and load library and send page load action', function (done) {
     removePreviousEvergageBeaconAndSettings();
     analytics._readied = false;
@@ -137,47 +168,39 @@ describe('initialize', function () {
     expect(window[globalPushVariable]).not.to.be(undefined);
     expect(readySpy.called).to.be(true);
 
-    // When the library loads, push will be overriden.
-    var interval = setInterval(function () {
-      if (typeof window[globalAPI] === 'undefined') {
-        return;
-      }
-      expect(window[globalPushVariable]).not.to.eql(initialPushFunction);
-      expect(window[globalAPI]).not.to.be(undefined);
+    waitForPreconditionAndAssert(function () {
+        if (typeof window[globalAPI] === 'undefined') {
+          return false;
+        }
+        expect(window[globalPushVariable]).not.to.eql(initialPushFunction);
+        expect(window[globalAPI]).not.to.be(undefined);
 
-      if (ajaxSpy == null) {
-        stubAjax();
-      }
-      if (!ajaxSpy.calledWithMatch({ url: twReceiverUrl })
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      clearInterval(interval);
-      ajaxSpy.restore();
-      done();
-    }, intervalTimer);
+        if (ajaxSpy == null) {
+          stubAjax();
+        }
+        if (!ajaxSpy.calledWithMatch({ url: twReceiverUrl })
+            || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
+          return false;
+        }
+        return true;
+      }, function () {
+        expectEventSentToServer();
+      }, done);
   });
-
 });
 
-
-describe('identify', function () {
-
+describe('#identify', function () {
   it('should call setUser', function (done) {
     analytics.identify(test.userId);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setUserSpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setUserSpy.called;
+    }, function () {
       expect(setUserSpy.calledWith(test.userId)).to.be(true);
       expect(setUserFieldSpy.called).to.be(false);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
   it('should not call setUser without userId', function () {
@@ -191,44 +214,36 @@ describe('identify', function () {
     analytics.identify(test.userId, test.traits);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setUserSpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setUserSpy.called;
+    }, function () {
       expect(setUserSpy.calledWith(test.userId)).to.be(true);
       expect(setUserFieldSpy.calledWith('created', test.traits.created, 'page')).to.be(true);
       expect(setUserFieldSpy.calledWith('userEmail', test.traits.email, 'page')).to.be(true);
       expect(setUserFieldSpy.calledWith('userName', test.traits.name, 'page')).to.be(true);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
-
 });
 
 
-describe('group', function() {
-
-  it('should call setCompany', function(done) {
+describe('#group', function () {
+  it('should call setCompany', function (done) {
     analytics.identify(test.userId);
     aaqPushAppliedSpy.reset();
     analytics.group(test.groupId);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setCompanySpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setCompanySpy.called;
+    }, function () {
       expect(setCompanySpy.calledWith(test.groupId)).to.be(true);
       expect(setAccountFieldSpy.called).to.be(false);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
-  it('should not call setCompany without groupId', function() {
+  it('should not call setCompany without groupId', function () {
     analytics.identify(test.userId);
     aaqPushAppliedSpy.reset();
     analytics.group();
@@ -239,47 +254,33 @@ describe('group', function() {
     expect(setAccountFieldSpy.called).to.be(false);
   });
 
-  it('should call setAccountField', function(done) {
+  it('should call setAccountField', function (done) {
     analytics.identify(test.userId);
     aaqPushAppliedSpy.reset();
     analytics.group(test.groupId, test.groupProperties);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setCompanySpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setCompanySpy.called;
+    }, function () {
       expect(setCompanySpy.calledWith(test.groupId)).to.be(true);
       expect(setAccountFieldSpy.calledWith('employees', test.groupProperties.employees, 'page')).to.be(true);
       expect(setAccountFieldSpy.calledWith('name', test.groupProperties.name, 'page')).to.be(true);
       expect(setAccountFieldSpy.calledWith('plan', test.groupProperties.plan, 'page')).to.be(true);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
-
 });
 
 
-describe('track', function () {
-
+describe('#track', function () {
   it('should call trackAction and send action without userId', function (done) {
     analytics.track(test.event);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-
+    waitForEventSuccessfullySent(function () {
       expect(trackActionSpy.calledWith(test.event)).to.be(true);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
   it('should call trackAction and send action without account is rejected', function (done) {
@@ -287,20 +288,14 @@ describe('track', function () {
     analytics.track(test.event);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      // TODO: When we fix the server to allow users without accounts in b2b datasets,
-      // change EVENT_REJECTED to EVENT_SUCCESSFUL above to ensure that the event is no longer getting rejected.
-      if (!trackActionSpy.called
-              || !consoleLogStub.calledWith(EVENT_REJECTED)) {
-        return;
-      }
-
+    // TODO: When we fix the server to allow users without accounts in b2b datasets,
+    // change change this whole section to look like the test above, calling waitForEventSuccessfullySent()
+    waitForPreconditionAndAssert(function () {
+      return !eventNotRejected();
+    }, function () {
       expect(trackActionSpy.calledWith(test.event)).to.be(true);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+      expectEventSentToServer();
+    }, done);
   });
 
   it('should call trackAction and send action', function (done) {
@@ -310,18 +305,9 @@ describe('track', function () {
     analytics.track(test.event);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-
+    waitForEventSuccessfullySent(function () {
       expect(trackActionSpy.calledWith(test.event)).to.be(true);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
   it('should call trackAction with properties and send action', function (done) {
@@ -331,36 +317,18 @@ describe('track', function () {
     analytics.track(test.event, test.properties);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-
+    waitForEventSuccessfullySent(function () {
       expect(trackActionSpy.calledWith(test.event, test.properties)).to.be(true);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 });
 
 
-describe('pageview', function () {
-
+describe('#pageview', function () {
   it('should call Evergage.init(true) and send action without userId/account', function (done) {
     analytics.pageview();
     expect(evergageInitSpy.calledWith(true)).to.be(true);
-    var interval = setInterval(function () {
-      if (!consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL, twReceiverUrl)) {
-        return;
-      }
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    waitForEventSuccessfullySent(null, done);
   });
 
   it('should call Evergage.init(true) and send action', function (done) {
@@ -368,15 +336,7 @@ describe('pageview', function () {
     analytics.group(test.groupId);
     analytics.pageview();
     expect(evergageInitSpy.calledWith(true)).to.be(true);
-    var interval = setInterval(function () {
-      if (!consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL, twReceiverUrl)) {
-        return;
-      }
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    waitForEventSuccessfullySent(null, done);
   });
 
   it('should call Evergage.init(true) and send action with url', function (done) {
@@ -384,27 +344,17 @@ describe('pageview', function () {
     analytics.group(test.groupId);
     analytics.pageview('http://www.google.com');
     expect(evergageInitSpy.calledWith(true)).to.be(true);
-    var interval = setInterval(function () {
-      if (!consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL, twReceiverUrl)) {
-        return;
-      }
-
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    waitForEventSuccessfullySent(null, done);
   });
 });
 
 });
 
 
-describe('Anonymous Disabled', function() {
+describe('Anonymous Disabled', function () {
 
 
-describe('initialize', function () {
-
+describe('#initialize', function () {
   it('should call ready and load library', function (done) {
     removePreviousEvergageBeaconAndSettings();
     analytics._readied = false;
@@ -424,41 +374,34 @@ describe('initialize', function () {
     expect(window[globalPushVariable]).not.to.be(undefined);
     expect(readySpy.called).to.be(true);
 
-    // When the library loads, push will be overriden.
-    var interval = setInterval(function () {
-      if (typeof window[globalAPI] === 'undefined') {
-        return;
-      }
-      expect(window[globalPushVariable]).not.to.eql(initialPushFunction);
-      expect(window[globalAPI]).not.to.be(undefined);
+    waitForPreconditionAndAssert(function () {
+        if (typeof window[globalAPI] === 'undefined') {
+          return false;
+        }
+        expect(window[globalPushVariable]).not.to.eql(initialPushFunction);
+        expect(window[globalAPI]).not.to.be(undefined);
 
-      if (!consoleLogStub.calledWith('Evergage: [WARNING] Ignoring attempt to send event with no user ID. ')) {
-        return;
-      }
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+        if (!consoleLogStub.calledWith('Evergage: [WARNING] Ignoring attempt to send event with no user ID. ')) {
+          return;
+        }
+        return true;
+      }, function () {}, done);
   });
-
 });
 
 
-describe('identify', function () {
-
+describe('#identify', function () {
   it('should call setUser', function (done) {
     analytics.identify(test.userId);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setUserSpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setUserSpy.called;
+    }, function () {
       expect(setUserSpy.calledWith(test.userId)).to.be(true);
       expect(setUserFieldSpy.called).to.be(false);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
   it('should not call setUser without userId', function () {
@@ -472,46 +415,36 @@ describe('identify', function () {
     analytics.identify(test.userId, test.traits);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setUserSpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setUserSpy.called;
+    }, function () {
       expect(setUserSpy.calledWith(test.userId)).to.be(true);
       expect(setUserFieldSpy.calledWith('created', test.traits.created, 'page')).to.be(true);
       expect(setUserFieldSpy.calledWith('userEmail', test.traits.email, 'page')).to.be(true);
       expect(setUserFieldSpy.calledWith('userName', test.traits.name, 'page')).to.be(true);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
-
 });
 
 
-describe('group', function() {
-
-  it('should call setCompany and send page load event', function(done) {
+describe('#group', function () {
+  it('should call setCompany and send page load event', function (done) {
     analytics.identify(test.userId);
     aaqPushAppliedSpy.reset();
     analytics.group(test.groupId);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setCompanySpy.called || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-
+    waitForPreconditionAndAssert(function () {
+      return (setCompanySpy.called && consoleLogStub.calledWith(EVENT_SUCCESSFUL));
+    }, function () {
       expect(setCompanySpy.calledWith(test.groupId)).to.be(true);
       expect(setAccountFieldSpy.called).to.be(false);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+      expectEventSentToServer();
+    }, done);
   });
 
-  it('should not call setCompany without groupId', function() {
+  it('should not call setCompany without groupId', function () {
     analytics.identify(test.userId);
     aaqPushAppliedSpy.reset();
     analytics.group();
@@ -522,45 +455,37 @@ describe('group', function() {
     expect(setAccountFieldSpy.called).to.be(false);
   });
 
-  it('should call setAccountField', function(done) {
+  it('should call setAccountField', function (done) {
     analytics.identify(test.userId);
     aaqPushAppliedSpy.reset();
     analytics.group(test.groupId, test.groupProperties);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setCompanySpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setCompanySpy.called;
+    }, function () {
       expect(setCompanySpy.calledWith(test.groupId)).to.be(true);
       expect(setAccountFieldSpy.calledWith('employees', test.groupProperties.employees, 'page')).to.be(true);
       expect(setAccountFieldSpy.calledWith('name', test.groupProperties.name, 'page')).to.be(true);
       expect(setAccountFieldSpy.calledWith('plan', test.groupProperties.plan, 'page')).to.be(true);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
-
 });
 
 
-describe('track', function () {
-
+describe('#track', function () {
   it('should call trackAction and not send action without userId', function (done) {
     analytics.track(test.event);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return trackActionSpy.called;
+    }, function () {
       expect(trackActionSpy.calledWith(test.event)).to.be(true);
       expect(consoleLogStub.calledWith('Evergage: [WARNING] Ignoring attempt to send event with no user ID. ')).to.be(true);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
   it('should call trackAction and not send action without account', function (done) {
@@ -568,16 +493,13 @@ describe('track', function () {
     analytics.track(test.event);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return trackActionSpy.called;
+    }, function () {
       expect(trackActionSpy.calledWith(test.event)).to.be(true);
       expect(consoleLogStub.calledWith('Evergage: [WARNING] Ignoring attempt to send event with no account. ')).to.be(true);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
   it('should call trackAction and send action', function (done) {
@@ -587,17 +509,9 @@ describe('track', function () {
     analytics.track(test.event);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-
+    waitForEventSuccessfullySent(function () {
       expect(trackActionSpy.calledWith(test.event)).to.be(true);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
   it('should call trackAction with properties and send action', function (done) {
@@ -607,34 +521,22 @@ describe('track', function () {
     analytics.track(test.event, test.properties);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-
+    waitForEventSuccessfullySent(function () {
       expect(trackActionSpy.calledWith(test.event, test.properties)).to.be(true);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 });
 
 
-describe('pageview', function () {
-
+describe('#pageview', function () {
   it('should call Evergage.init(true) and not send action without userId', function (done) {
     analytics.pageview();
     expect(evergageInitSpy.calledWith(true)).to.be(true);
-    var interval = setInterval(function () {
-      if (!consoleLogStub.calledWith('Evergage: [WARNING] Ignoring attempt to send event with no user ID. ')) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return consoleLogStub.calledWith('Evergage: [WARNING] Ignoring attempt to send event with no user ID. ');
+    }, function () {
       expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
   it('should call Evergage.init(true) and not send action until userId and account set', function (done) {
@@ -654,10 +556,8 @@ describe('pageview', function () {
       if (!consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
         return;
       }
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
+      expectEventSentToServer();
+      markTestAsComplete(interval, done);
     }, intervalTimer);
   });
 
@@ -666,15 +566,7 @@ describe('pageview', function () {
     analytics.group(test.groupId);
     analytics.pageview();
     expect(evergageInitSpy.calledWith(true)).to.be(true);
-    var interval = setInterval(function () {
-      if (!consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    waitForEventSuccessfullySent(null, done);
   });
 
   it('should call Evergage.init(true) and send action with url', function (done) {
@@ -682,15 +574,7 @@ describe('pageview', function () {
     analytics.group(test.groupId);
     analytics.pageview('http://www.google.com');
     expect(evergageInitSpy.calledWith(true)).to.be(true);
-    var interval = setInterval(function () {
-      if (!consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    waitForEventSuccessfullySent(null, done);
   });
 });
 
@@ -702,11 +586,10 @@ describe('pageview', function () {
 describe('Without Accounts', function () {
 
 
-describe('Anonymous Enabled', function() {
+describe('Anonymous Enabled', function () {
 
 
-describe('initialize', function () {
-
+describe('#initialize', function () {
   it('should call ready and load library and send page load action', function (done) {
     removePreviousEvergageBeaconAndSettings();
     analytics._readied = false;
@@ -728,48 +611,41 @@ describe('initialize', function () {
     expect(window[globalPushVariable]).not.to.be(undefined);
     expect(readySpy.called).to.be(true);
 
-    // When the library loads, push will be overriden.
-    var interval = setInterval(function () {
-      if (typeof window[globalAPI] === 'undefined') {
-        return;
-      }
-      expect(window[globalPushVariable]).not.to.eql(initialPushFunction);
-      expect(window[globalAPI]).not.to.be(undefined);
+    waitForPreconditionAndAssert(function () {
+        if (typeof window[globalAPI] === 'undefined') {
+          return;
+        }
+        expect(window[globalPushVariable]).not.to.eql(initialPushFunction);
+        expect(window[globalAPI]).not.to.be(undefined);
 
-      if (ajaxSpy == null) {
-        stubAjax();
-      }
-      if (!ajaxSpy.calledWithMatch({ url: twReceiverUrl })
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-      expect(ajaxSpy.callCount == 1).to.be(true);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      clearInterval(interval);
-      ajaxSpy.restore();
-      done();
-    }, intervalTimer);
+        if (ajaxSpy == null) {
+          stubAjax();
+        }
+        if (!ajaxSpy.calledWithMatch({ url: twReceiverUrl })
+            || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
+          return;
+        }
+        return true;
+      }, function () {
+        expect(ajaxSpy.callCount == 1).to.be(true);
+        expectEventSentToServer();
+      }, done);
   });
-
 });
 
 
-describe('identify', function () {
-
+describe('#identify', function () {
   it('should call setUser', function (done) {
     analytics.identify(test.userId);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setUserSpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setUserSpy.called;
+    }, function () {
       expect(setUserSpy.calledWith(test.userId)).to.be(true);
       expect(setUserFieldSpy.called).to.be(false);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
   it('should not call setUser without userId', function () {
@@ -783,44 +659,36 @@ describe('identify', function () {
     analytics.identify(test.userId, test.traits);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setUserSpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setUserSpy.called;
+    }, function () {
       expect(setUserSpy.calledWith(test.userId)).to.be(true);
       expect(setUserFieldSpy.calledWith('created', test.traits.created, 'page')).to.be(true);
       expect(setUserFieldSpy.calledWith('userEmail', test.traits.email, 'page')).to.be(true);
       expect(setUserFieldSpy.calledWith('userName', test.traits.name, 'page')).to.be(true);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
-
 });
 
 
-describe('group', function() {
-
-  it('should call setCompany', function(done) {
+describe('#group', function () {
+  it('should call setCompany', function (done) {
     analytics.identify(test.userId);
     aaqPushAppliedSpy.reset();
     analytics.group(test.groupId);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setCompanySpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setCompanySpy.called;
+    }, function () {
       expect(setCompanySpy.calledWith(test.groupId)).to.be(true);
       expect(setAccountFieldSpy.called).to.be(false);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
-  it('should not call setCompany without groupId', function() {
+  it('should not call setCompany without groupId', function () {
     analytics.identify(test.userId);
     aaqPushAppliedSpy.reset();
     analytics.group();
@@ -831,46 +699,33 @@ describe('group', function() {
     expect(setAccountFieldSpy.called).to.be(false);
   });
 
-  it('should call setAccountField', function(done) {
+  it('should call setAccountField', function (done) {
     analytics.identify(test.userId);
     aaqPushAppliedSpy.reset();
     analytics.group(test.groupId, test.groupProperties);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setCompanySpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setCompanySpy.called;
+    }, function () {
       expect(setCompanySpy.calledWith(test.groupId)).to.be(true);
       expect(setAccountFieldSpy.calledWith('employees', test.groupProperties.employees, 'page')).to.be(true);
       expect(setAccountFieldSpy.calledWith('name', test.groupProperties.name, 'page')).to.be(true);
       expect(setAccountFieldSpy.calledWith('plan', test.groupProperties.plan, 'page')).to.be(true);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
-
 });
 
 
-describe('track', function () {
-
+describe('#track', function () {
   it('should call trackAction and send action without userId', function (done) {
     analytics.track(test.event);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-
-      expect(trackActionSpy.calledWith(test.event)).to.be(true);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    waitForEventSuccessfullySent(function () {
+        expect(trackActionSpy.calledWith(test.event)).to.be(true);
+    }, done);
   });
 
   it('should call trackAction and send action', function (done) {
@@ -879,17 +734,9 @@ describe('track', function () {
     analytics.track(test.event);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-
+    waitForEventSuccessfullySent(function () {
       expect(trackActionSpy.calledWith(test.event)).to.be(true);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
   it('should call trackAction with properties and send action', function (done) {
@@ -898,75 +745,41 @@ describe('track', function () {
     analytics.track(test.event, test.properties);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-
+    waitForEventSuccessfullySent(function () {
       expect(trackActionSpy.calledWith(test.event, test.properties)).to.be(true);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 });
 
 
-describe('pageview', function () {
-
+describe('#pageview', function () {
   it('should call Evergage.init(true) and send action without userId', function (done) {
     analytics.pageview();
     expect(evergageInitSpy.calledWith(true)).to.be(true);
-    var interval = setInterval(function () {
-      if (!consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    waitForEventSuccessfullySent(null, done);
   });
 
   it('should call Evergage.init(true) and send action', function (done) {
     analytics.identify(test.userId);
     analytics.pageview();
     expect(evergageInitSpy.calledWith(true)).to.be(true);
-    var interval = setInterval(function () {
-      if (!consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    waitForEventSuccessfullySent(null, done);
   });
 
   it('should call Evergage.init(true) and send action with url', function (done) {
     analytics.identify(test.userId);
     analytics.pageview('http://www.google.com');
     expect(evergageInitSpy.calledWith(true)).to.be(true);
-    var interval = setInterval(function () {
-      if (!consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    waitForEventSuccessfullySent(null, done);
   });
 });
 
 });
 
 
-describe('Anonymous Disabled', function() {
+describe('Anonymous Disabled', function () {
 
-describe('initialize', function () {
-
+describe('#initialize', function () {
   it('should call ready and load library', function (done) {
     removePreviousEvergageBeaconAndSettings();
     analytics._readied = false;
@@ -986,43 +799,35 @@ describe('initialize', function () {
     expect(window[globalPushVariable]).not.to.be(undefined);
     expect(readySpy.called).to.be(true);
 
-    // When the library loads, push will be overriden.
-    var interval = setInterval(function () {
-      if (typeof window[globalAPI] === 'undefined') {
-        return;
-      }
-      expect(window[globalPushVariable]).not.to.eql(initialPushFunction);
-      expect(window[globalAPI]).not.to.be(undefined);
+    waitForPreconditionAndAssert(function () {
+        if (typeof window[globalAPI] === 'undefined') {
+          return false;
+        }
+        expect(window[globalPushVariable]).not.to.eql(initialPushFunction);
+        expect(window[globalAPI]).not.to.be(undefined);
 
-      if (!consoleLogStub.calledWith('Evergage: [WARNING] Ignoring attempt to send event with no account. ')
-          && !consoleLogStub.calledWith('Evergage: [WARNING] Ignoring attempt to send event with no user ID. ')) {
-        return;
-      }
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+        if (!consoleLogStub.calledWith('Evergage: [WARNING] Ignoring attempt to send event with no account. ')
+            && !consoleLogStub.calledWith('Evergage: [WARNING] Ignoring attempt to send event with no user ID. ')) {
+          return false;
+        }
+        return true;
+      }, function () {}, done);
   });
-
 });
 
 
-describe('identify', function () {
-
+describe('#identify', function () {
   it('should call setUser and send page load event', function (done) {
     analytics.identify(test.userId);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setUserSpy.called || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return (setUserSpy.called && consoleLogStub.calledWith(EVENT_SUCCESSFUL));
+    }, function () {
       expect(setUserSpy.calledWith(test.userId)).to.be(true);
       expect(setUserFieldSpy.called).to.be(false);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+      expectEventSentToServer();
+    }, done);
   });
 
   it('should not call setUser without userId', function () {
@@ -1036,44 +841,36 @@ describe('identify', function () {
     analytics.identify(test.userId, test.traits);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setUserSpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setUserSpy.called;
+    }, function () {
       expect(setUserSpy.calledWith(test.userId)).to.be(true);
       expect(setUserFieldSpy.calledWith('created', test.traits.created, 'page')).to.be(true);
       expect(setUserFieldSpy.calledWith('userEmail', test.traits.email, 'page')).to.be(true);
       expect(setUserFieldSpy.calledWith('userName', test.traits.name, 'page')).to.be(true);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
-
 });
 
 
-describe('group', function() {
-
-  it('should call setCompany', function(done) {
+describe('#group', function () {
+  it('should call setCompany', function (done) {
     analytics.identify(test.userId);
     aaqPushAppliedSpy.reset();
     analytics.group(test.groupId);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setCompanySpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setCompanySpy.called;
+    }, function () {
       expect(setCompanySpy.calledWith(test.groupId)).to.be(true);
       expect(setAccountFieldSpy.called).to.be(false);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
-  it('should not call setCompany without groupId', function() {
+  it('should not call setCompany without groupId', function () {
     analytics.identify(test.userId);
     aaqPushAppliedSpy.reset();
     analytics.group();
@@ -1084,45 +881,37 @@ describe('group', function() {
     expect(setAccountFieldSpy.called).to.be(false);
   });
 
-  it('should call setAccountField', function(done) {
+  it('should call setAccountField', function (done) {
     analytics.identify(test.userId);
     aaqPushAppliedSpy.reset();
     analytics.group(test.groupId, test.groupProperties);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!setCompanySpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return setCompanySpy.called;
+    }, function () {
       expect(setCompanySpy.calledWith(test.groupId)).to.be(true);
       expect(setAccountFieldSpy.calledWith('employees', test.groupProperties.employees, 'page')).to.be(true);
       expect(setAccountFieldSpy.calledWith('name', test.groupProperties.name, 'page')).to.be(true);
       expect(setAccountFieldSpy.calledWith('plan', test.groupProperties.plan, 'page')).to.be(true);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
-
 });
 
 
-describe('track', function () {
-
+describe('#track', function () {
   it('should call trackAction and not send action without userId', function (done) {
     analytics.track(test.event);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called) {
-        return;
-      }
+    waitForPreconditionAndAssert(function () {
+      return trackActionSpy.called;
+    }, function () {
       expect(trackActionSpy.calledWith(test.event)).to.be(true);
       expect(consoleLogStub.calledWith('Evergage: [WARNING] Ignoring attempt to send event with no user ID. ')).to.be(true);
       expect(ajaxSpy.called).to.be(false);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
   it('should call trackAction and send action', function (done) {
@@ -1131,17 +920,9 @@ describe('track', function () {
     analytics.track(test.event);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-
+    waitForEventSuccessfullySent(function () {
       expect(trackActionSpy.calledWith(test.event)).to.be(true);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 
   it('should call trackAction with properties and send action', function (done) {
@@ -1150,24 +931,15 @@ describe('track', function () {
     analytics.track(test.event, test.properties);
 
     expect(aaqPushAppliedSpy.called).to.be(true);
-    var interval = setInterval(function () {
-      if (!trackActionSpy.called || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-
+    waitForEventSuccessfullySent(function () {
       expect(trackActionSpy.calledWith(test.event, test.properties)).to.be(true);
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    }, done);
   });
 });
 
 
-describe('pageview', function () {
-
-    it('should call Evergage.init(true) and not send action until userId set', function (done) {
+describe('#pageview', function () {
+  it('should call Evergage.init(true) and not send action until userId set', function (done) {
     analytics.pageview();
     expect(evergageInitSpy.calledWith(true)).to.be(true);
     var assertedActionNotSentYet = false;
@@ -1183,10 +955,8 @@ describe('pageview', function () {
       if (!consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
         return;
       }
-      expect(consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)).to.be(true);
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
+      expectEventSentToServer();
+      markTestAsComplete(interval, done);
     }, intervalTimer);
   });
 
@@ -1194,33 +964,17 @@ describe('pageview', function () {
     analytics.identify(test.userId);
     analytics.pageview();
     expect(evergageInitSpy.calledWith(true)).to.be(true);
-    var interval = setInterval(function () {
-      if (!consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    waitForEventSuccessfullySent(null, done);
   });
 
   it('should call Evergage.init(true) and send action with url', function (done) {
     analytics.identify(test.userId);
     analytics.pageview('http://www.google.com');
     expect(evergageInitSpy.calledWith(true)).to.be(true);
-    var interval = setInterval(function () {
-      if (!consoleLogStub.calledWith(EVENT_SENT_TO_SERVER)
-              || !consoleLogStub.calledWith(EVENT_SUCCESSFUL)) {
-        return;
-      }
-      expect(ajaxSpy.calledWithMatch({ url: twReceiverUrl })).to.be(true);
-      clearInterval(interval);
-      done();
-    }, intervalTimer);
+    waitForEventSuccessfullySent(null, done);
   });
 
-  after(function() {
+  after(function () {
     if (typeof window[globalAPI] !== 'undefined') {
       window[globalAPI].setLoggingLevel('NONE');
     }

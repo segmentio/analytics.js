@@ -38,5 +38,5 @@ var pid = path.resolve(__dirname, '.pid.txt');
 
 app.listen(port, function () {
   fs.writeFileSync(pid, process.pid, 'utf-8');
-  console.log('Listening on ' + port + '...');
+  console.log('Started testing server on port ' + port + '...');
 });

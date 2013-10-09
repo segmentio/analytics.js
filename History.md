@@ -1,3 +1,65 @@
+0.17.6 - October 7, 2013
+------------------------
+* added [Yandex Metrica](http://metrika.yandex.com), by [@yury-egorenkov](https://github.com/yury-egorenkov)
+
+0.17.5 - October 2, 2013
+------------------------
+* fixed bug in `_invoke` not cloning arguments
+
+0.17.4 - September 30, 2013
+---------------------------
+* added conversion of ISO strings to dates for `track` calls
+
+0.17.3 - September 30, 2013
+---------------------------
+* fixed bug in key-only initialization
+
+0.17.2 - September 30, 2013
+---------------------------
+* UserVoice: added `classicMode` option
+
+0.17.1 - September 30, 2013
+---------------------------
+* UserVoice: fixed bug loading trigger with new widget
+
+0.17.0 - September 30, 2013
+---------------------------
+* added `debug` method, by [@yields](https://github.com/yields)
+
+0.16.0 - September 27, 2013
+---------------------------
+* UserVoice: updated integration to handle the new widget
+
+0.15.2 - September 26, 2013
+---------------------------
+* added Awesomatic, by [@robv](https://github.com/robv)
+
+0.15.1 - September 24, 2013
+---------------------------
+* fixed bug in `ready` causing it to never fire with faulty settings
+* fixed all `ready()` calls to always be async
+* cleared ready state after all analytics core `initialize` tests
+
+0.15.0 - September 18, 2013
+---------------------------
+* Crazy Egg: renamed from `CrazyEgg`
+* Google Analytics: changed `universalClient` option to `classic`
+* Google Analytics: changed `classic` default to `false`
+* Keen IO: changed pageview options defaults to `false`
+* LeadLander: changed `llactid` option to human-readable `accountId`* Intercom: make `#IntercomDefaultWidget` the default activator
+
+0.14.3 - September 18, 2013
+---------------------------
+* exposed `createIntegration` and `addIntegration`
+
+0.14.2 - September 17, 2013
+---------------------------
+* added [Spinnakr](http://spinnakr.com)
+
+0.14.1 - September 17, 2013
+---------------------------
+* removed old `Provider` for an `integration` factory
+
 0.14.0 - September 16, 2013
 ---------------------------
 * exposed `group` via the `#group` method

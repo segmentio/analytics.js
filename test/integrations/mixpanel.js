@@ -83,44 +83,44 @@ describe('#initialize', function () {
 describe('#identify', function () {
   beforeEach(function () {
     analytics.user().reset();
-    this.identifySpy = sinon.spy(window.mixpanel, 'identify');
-    this.registerSpy = sinon.spy(window.mixpanel, 'register');
-    this.nameTagSpy = sinon.spy(window.mixpanel, 'name_tag');
-    this.peopleSpy = sinon.spy(window.mixpanel.people, 'set');
+    this.identifyStub = sinon.stub(window.mixpanel, 'identify');
+    this.registerStub = sinon.stub(window.mixpanel, 'register');
+    this.nameTagStub = sinon.stub(window.mixpanel, 'name_tag');
+    this.peopleStub = sinon.stub(window.mixpanel.people, 'set');
   });
 
   afterEach(function () {
-    this.identifySpy.restore();
-    this.registerSpy.restore();
-    this.nameTagSpy.restore();
-    this.peopleSpy.restore();
+    this.identifyStub.restore();
+    this.registerStub.restore();
+    this.nameTagStub.restore();
+    this.peopleStub.restore();
     this.options.people = false;
   });
 
   it('should send an id', function () {
     analytics.identify('id');
-    assert(this.identifySpy.calledWith('id'));
+    assert(this.identifyStub.calledWith('id'));
   });
 
   it('should send traits', function () {
     analytics.identify({ trait: true });
-    assert(this.registerSpy.calledWith({ trait: true }));
+    assert(this.registerStub.calledWith({ trait: true }));
   });
 
   it('should send an id and traits', function () {
     analytics.identify('id', { trait: true });
-    assert(this.identifySpy.calledWith('id'));
-    assert(this.registerSpy.calledWith({ trait: true }));
+    assert(this.identifyStub.calledWith('id'));
+    assert(this.registerStub.calledWith({ trait: true }));
   });
 
   it('should use an id as a name tag', function () {
     analytics.identify('id');
-    assert(this.nameTagSpy.calledWith('id'));
+    assert(this.nameTagStub.calledWith('id'));
   });
 
   it('should prefer a username as a name tag', function () {
     analytics.identify('id', { username: 'username' });
-    assert(this.nameTagSpy.calledWith('username'));
+    assert(this.nameTagStub.calledWith('username'));
   });
 
   it('should prefer an email as a name tag', function () {
@@ -128,13 +128,13 @@ describe('#identify', function () {
       username: 'username',
       email: 'name@example.com'
     });
-    assert(this.nameTagSpy.calledWith('name@example.com'));
+    assert(this.nameTagStub.calledWith('name@example.com'));
   });
 
   it('should send traits to Mixpanel People', function () {
     this.options.people = true;
     analytics.identify({ trait: true });
-    assert(this.peopleSpy.calledWith({ trait: true }));
+    assert(this.peopleStub.calledWith({ trait: true }));
   });
 
   it('should alias traits', function () {
@@ -149,7 +149,7 @@ describe('#identify', function () {
       username: 'username',
       phone: 'phone'
     });
-    assert(this.registerSpy.calledWith({
+    assert(this.registerStub.calledWith({
       $created: date,
       $email: 'name@example.com',
       $first_name: 'first',
@@ -174,7 +174,7 @@ describe('#identify', function () {
       username: 'username',
       phone: 'phone'
     });
-    assert(this.peopleSpy.calledWith({
+    assert(this.peopleStub.calledWith({
       $created: date,
       $email: 'name@example.com',
       $first_name: 'first',
@@ -190,12 +190,12 @@ describe('#identify', function () {
 describe('#track', function () {
   beforeEach(function () {
     this.trackStub = sinon.stub(window.mixpanel, 'track');
-    this.revenueSpy = sinon.spy(window.mixpanel.people, 'track_charge');
+    this.revenueStub = sinon.stub(window.mixpanel.people, 'track_charge');
   });
 
   afterEach(function () {
     this.trackStub.restore();
-    this.revenueSpy.restore();
+    this.revenueStub.restore();
     this.options.people = false;
   });
 
@@ -212,18 +212,18 @@ describe('#track', function () {
   it('should send a revenue property to Mixpanel People', function () {
     this.options.people = true;
     analytics.track('event', { revenue: 9.99 });
-    assert(this.revenueSpy.calledWith(9.99));
+    assert(this.revenueStub.calledWith(9.99));
   });
 });
 
 describe('#pageview', function () {
   beforeEach(function () {
-    this.pageviewSpy = sinon.spy(window.mixpanel, 'track_pageview');
+    this.pageviewStub = sinon.stub(window.mixpanel, 'track_pageview');
     this.trackStub = sinon.stub(window.mixpanel, 'track');
   });
 
   afterEach(function () {
-    this.pageviewSpy.restore();
+    this.pageviewStub.restore();
     this.trackStub.restore();
     this.options.pageview = false;
   });
@@ -231,7 +231,7 @@ describe('#pageview', function () {
   it('should send a pageview', function () {
     this.options.pageview = true;
     analytics.pageview();
-    assert(this.pageviewSpy.called);
+    assert(this.pageviewStub.called);
   });
 
   it('shouldnt send an event by default', function () {
@@ -260,21 +260,21 @@ describe('#pageview', function () {
 
 describe('#alias', function () {
   beforeEach(function () {
-    this.spy = sinon.spy(window.mixpanel, 'alias');
+    this.stub = sinon.stub(window.mixpanel, 'alias');
   });
 
   afterEach(function () {
-    this.spy.restore();
+    this.stub.restore();
   });
 
   it('should send a new id', function () {
     analytics.alias('new');
-    assert(this.spy.calledWith('new'));
+    assert(this.stub.calledWith('new'));
   });
 
   it('should send a new and old id', function () {
     analytics.alias('new', 'old');
-    assert(this.spy.calledWith('new', 'old'));
+    assert(this.stub.calledWith('new', 'old'));
   });
 });
 

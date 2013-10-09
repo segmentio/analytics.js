@@ -27,14 +27,14 @@ describe('#name', function () {
 });
 
 describe('#key', function () {
-  it('llactid', function () {
-    assert(this.integration.key == 'llactid');
+  it('accountId', function () {
+    assert(this.integration.key == 'accountId');
   });
 });
 
 describe('#defaults', function () {
-  it('llactid', function () {
-    assert(this.integration.defaults.llactid === null);
+  it('accountId', function () {
+    assert(this.integration.defaults.accountId === null);
   });
 });
 
@@ -44,11 +44,11 @@ describe('#initialize', function () {
   });
 
   it('should store options', function () {
-    assert(this.options.llactid == settings.llactid);
+    assert(this.options.accountId == settings.accountId);
   });
 
   it('should pass options to LeadLander', function () {
-    assert(window.llactid == settings.llactid);
+    assert(window.llactid == settings.accountId);
   });
 });
 

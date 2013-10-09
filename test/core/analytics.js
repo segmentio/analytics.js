@@ -7,7 +7,7 @@ var analytics = window.analytics || require('analytics')
   , cookie = require('analytics/lib/cookie')
   , equal = require('equals')
   , group = require('analytics/lib/group')
-  , integration = require('analytics/lib/integration')
+  , createIntegration = require('analytics/lib/integration')
   , is = require('is')
   , jQuery = require('jquery')
   , store = require('analytics/lib/store')
@@ -17,7 +17,7 @@ var analytics = window.analytics || require('analytics')
 
 var settings = { Test: { key: 'x' }};
 var timeout = 1;
-var Test = integration('Test');
+var Test = createIntegration('Test');
 Test.prototype.key = 'key';
 Test.prototype.defaults = {};
 Test.prototype.initialize = function (options, ready) { setTimeout(ready, timeout); };
@@ -29,12 +29,7 @@ Test.prototype.alias = function (newId, originalId) {};
 
 before(function () {
   analytics.timeout(timeout);
-  analytics.integration(Test);
-});
-
-beforeEach(function (done) {
-  analytics.ready(done);
-  analytics.initialize(settings);
+  analytics.addIntegration(Test);
 });
 
 afterEach(function () {
@@ -43,6 +38,35 @@ afterEach(function () {
   analytics._readied = false;
   analytics.user().reset();
   analytics.group().reset();
+});
+
+describe('.VERSION', function () {
+  it('should be exposed', function () {
+    assert(analytics.VERSION);
+  });
+});
+
+describe('.Integrations', function () {
+  it('should be exposed', function () {
+    assert(analytics.Integrations);
+  });
+});
+
+describe('.createIntegration', function () {
+  it('should be exposed', function () {
+    assert(analytics.createIntegration = createIntegration);
+  });
+});
+
+describe('.addIntegration', function () {
+  it('should be exposed', function () {
+    assert(analytics.addIntegration);
+  });
+
+  it('should add an integration', function () {
+    analytics.addIntegration(Test);
+    assert(analytics.Integrations.Test == Test);
+  });
 });
 
 describe('#initialize', function () {
@@ -60,6 +84,8 @@ describe('#initialize', function () {
     this.userSpy.restore();
     this.groupSpy.restore();
     this.initializeSpy.restore();
+    analytics._readied = false;
+    analytics._integrations = {};
   });
 
   it('shouldnt error without settings', function (done) {
@@ -85,11 +111,17 @@ describe('#initialize', function () {
     analytics.initialize();
   });
 
+  it('should still call ready with unknown integrations', function (done) {
+    analytics.ready(done);
+    analytics.initialize({ Unknown: { apiKey: 'x' }});
+  });
+
   it('should set readied state', function (done) {
     analytics.ready(function () {
       assert(analytics._readied);
       done();
     });
+    analytics.initialize();
   });
 
   it('should reset enabled integrations', function (done) {
@@ -110,8 +142,12 @@ describe('#initialize', function () {
     assert(this.groupSpy.called);
   });
 
-  it('should store enabled integrations', function () {
-    assert(analytics._integrations.Test instanceof Test);
+  it('should store enabled integrations', function (done) {
+    analytics.ready(function () {
+      assert(analytics._integrations.Test instanceof Test);
+      done();
+    });
+    analytics.initialize(settings);
   });
 
   it('shouldnt error with an unknown integration', function (done) {
@@ -139,20 +175,28 @@ describe('#initialize', function () {
 });
 
 describe('#ready', function () {
+  afterEach(function () {
+    analytics._readied = false;
+    analytics._callbacks = [];
+  });
+
   it('should push a handler on to the queue', function () {
     var handler = function(){};
-    analytics.initialize(settings);
     analytics.ready(handler);
     assert(analytics._callbacks[0] == handler);
   });
 
   it('should callback on next tick when already ready', function (done) {
-    var spy = sinon.spy();
-    analytics.ready(spy);
-    tick(function () {
-      assert(spy.called);
-      done();
+    analytics.ready(function () {
+      var spy = sinon.spy();
+      analytics.ready(spy);
+      assert(!spy.called);
+      tick(function () {
+        assert(spy.called);
+        done();
+      });
     });
+    analytics.initialize();
   });
 
   it('shouldnt error when passed a non-function', function () {
@@ -161,36 +205,37 @@ describe('#ready', function () {
 });
 
 describe('#_invoke', function () {
-  beforeEach(function () {
-    this.identifySpy = sinon.spy(Test.prototype, 'identify');
-    this.enqueueSpy = sinon.spy(Test.prototype, 'enqueue');
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
+    this.spy = sinon.spy(Test.prototype, 'invoke');
   });
 
   afterEach(function () {
-    this.identifySpy.restore();
-    this.enqueueSpy.restore();
+    this.spy.restore();
   });
 
-  it('should call a method on an integration', function () {
+  it('should invoke a method on an integration', function () {
     analytics._invoke('identify', 'id', { trait: true });
-    assert(this.identifySpy.calledWith('id', { trait: true }));
+    assert(this.spy.calledWith('identify', 'id', { trait: true }));
+  });
+
+  it('should clone arguments before invoking each integration', function () {
+    var traits = { foo: 1 };
+    analytics._invoke('identify', 'id', traits);
+    assert(this.spy.calledWith('identify', 'id', traits));
+    assert(this.spy.args[0][2].foo == 1);
+    assert(this.spy.args[0][2] != traits);
   });
 
   it('shouldnt call a method when the `all` option is false', function () {
     analytics._invoke('identify', { providers: { all: false }});
-    assert(!this.identifySpy.called);
+    assert(!this.spy.called);
   });
 
   it('shouldnt call a method when the integration option is false', function () {
     analytics._invoke('identify', { providers: { Test: false }});
-    assert(!this.identifySpy.called);
-  });
-
-  it('should queue calls until the integration is ready', function (done) {
-    analytics.ready(done);
-    analytics.initialize(settings);
-    analytics._invoke('identify', 'id');
-    assert(this.enqueueSpy.calledWith('identify', ['id']));
+    assert(!this.spy.called);
   });
 });
 
@@ -258,7 +303,10 @@ describe('#_timeout', function () {
 });
 
 describe('#identify', function () {
-  beforeEach(function () {
+
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, '_invoke');
     this.userSpy = sinon.spy(user, 'identify');
   });
@@ -367,7 +415,9 @@ describe('#user', function () {
 });
 
 describe('#group', function () {
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, '_invoke');
     this.groupSpy = sinon.spy(group, 'identify');
   });
@@ -447,7 +497,9 @@ describe('#group', function () {
 });
 
 describe('#track', function () {
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, '_invoke');
   });
 
@@ -471,10 +523,20 @@ describe('#track', function () {
   it('should have an options overload', function (done) {
     analytics.track('event', {}, done);
   });
+
+  it('should convert ISO dates to date objects', function () {
+    var date = new Date();
+    analytics.track('event', {
+      date: date.toISOString()
+    });
+    assert(this.spy.args[0][2].date.getTime() == date.getTime());
+  });
 });
 
 describe('#trackLink', function () {
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, 'track');
     this.link = document.createElement('a');
   });
@@ -580,7 +642,9 @@ describe('#trackForm', function () {
     delete window.jQuery;
   });
 
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, 'track');
     this.form = document.createElement('form');
     this.form.action = '/test/server/mock.html';
@@ -672,7 +736,9 @@ describe('#trackForm', function () {
 });
 
 describe('#pageview', function () {
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, '_invoke');
   });
 
@@ -687,7 +753,9 @@ describe('#pageview', function () {
 });
 
 describe('#alias', function () {
-  beforeEach(function () {
+  beforeEach(function (done) {
+    analytics.ready(done);
+    analytics.initialize(settings);
     this.spy = sinon.spy(analytics, '_invoke');
   });
 

@@ -34,7 +34,7 @@ describe('#key', function () {
 
 describe('#defaults', function () {
   it('activator', function () {
-    assert(this.integration.defaults.activator === '');
+    assert(this.integration.defaults.activator === '#IntercomDefaultWidget');
   });
 
   it('appId', function () {
@@ -73,7 +73,8 @@ describe('#identify', function () {
 
   afterEach(function () {
     this.stub.restore();
-    this.options.inbox = false;
+    this.options.inbox = this.integration.defaults.inbox;
+    this.options.activator = this.integration.defaults.activator;
   });
 
   it('should call boot the first time and update the second', function () {
@@ -154,6 +155,20 @@ describe('#identify', function () {
       user_id: this.id,
       widget: {
         activator: '#IntercomDefaultWidget',
+        use_counter: true
+      }
+    }));
+  });
+
+  it('should allow overriding default activator', function () {
+    this.options.inbox = true;
+    this.options.activator = '#Intercom'
+    analytics.identify(this.id);
+    assert(this.stub.calledWith('boot', {
+      app_id: settings.appId,
+      user_id: this.id,
+      widget: {
+        activator: '#Intercom',
         use_counter: true
       }
     }));

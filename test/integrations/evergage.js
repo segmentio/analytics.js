@@ -1,6 +1,8 @@
 
 describe('Evergage', function () {
 
+  var analytics = window.analytics || require('analytics');
+
   // Global variables Evergage will bind to that we'll use in tests
   var globalPushVariable = '_aaq';
   var globalAPI = 'Evergage';
@@ -98,7 +100,8 @@ describe('Evergage', function () {
   }
 
   function purgeUserAndAccount() {
-    analytics._user.clear();
+    analytics.user().reset();
+    analytics.group().reset();
     window[evergagejQuery].removeCookie('ajq_user_id');
     window[globalAPI].deleteCustomField('userId', 'visit');
     window[globalAPI].deleteCustomField('_persistedUserId', 'visit');
@@ -228,7 +231,7 @@ describe('Evergage', function () {
         it('should not call setCompany without groupId', function() {
           analytics.identify(test.userId);
           aaqPushAppliedSpy.reset();
-          analytics.group(test.groupProperties);
+          analytics.group();
 
           expect(aaqPushAppliedSpy.called).to.be(false);
           expect(ajaxSpy.called).to.be(false);
@@ -510,7 +513,7 @@ describe('Evergage', function () {
         it('should not call setCompany without groupId', function() {
           analytics.identify(test.userId);
           aaqPushAppliedSpy.reset();
-          analytics.group(test.groupProperties);
+          analytics.group();
 
           expect(aaqPushAppliedSpy.called).to.be(false);
           expect(ajaxSpy.called).to.be(false);
@@ -817,7 +820,7 @@ describe('Evergage', function () {
         it('should not call setCompany without groupId', function() {
           analytics.identify(test.userId);
           aaqPushAppliedSpy.reset();
-          analytics.group(test.groupProperties);
+          analytics.group();
 
           expect(aaqPushAppliedSpy.called).to.be(false);
           expect(ajaxSpy.called).to.be(false);
@@ -1070,7 +1073,7 @@ describe('Evergage', function () {
         it('should not call setCompany without groupId', function() {
           analytics.identify(test.userId);
           aaqPushAppliedSpy.reset();
-          analytics.group(test.groupProperties);
+          analytics.group();
 
           expect(aaqPushAppliedSpy.called).to.be(false);
           expect(ajaxSpy.called).to.be(false);

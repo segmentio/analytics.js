@@ -527,9 +527,12 @@ describe('#track', function () {
   it('should convert ISO dates to date objects', function () {
     var date = new Date();
     analytics.track('event', {
-      date: date.toISOString()
+      date: date.toISOString(),
+      nonDate: '2013'
     });
-    assert(this.spy.args[0][2].date.getTime() == date.getTime());
+    var tracked = this.spy.args[0][2];
+    assert(tracked.date.getTime() == date.getTime());
+    assert(tracked.nonDate == '2013');
   });
 });
 

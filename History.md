@@ -1,3 +1,8 @@
+0.17.7 - October 10, 2013
+-------------------------
+
+* propagating traverse isodate fix
+
 0.17.6 - October 7, 2013
 ------------------------
 * added [Yandex Metrica](http://metrika.yandex.com), by [@yury-egorenkov](https://github.com/yury-egorenkov)

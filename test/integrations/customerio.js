@@ -50,7 +50,6 @@ describe('#initialize', function () {
   });
 });
 
-
 describe('#identify', function () {
   beforeEach(function () {
     analytics.user().reset();
@@ -66,7 +65,7 @@ describe('#identify', function () {
     assert(this.spy.calledWith({ id: 'id' }));
   });
 
-  it('should send just traits', function () {
+  it('should not send only traits', function () {
     analytics.identify({ trait: true });
     assert(!this.spy.called);
   });
@@ -94,6 +93,52 @@ describe('#identify', function () {
     assert(this.spy.calledWith({
       id: 'id',
       created_at: Math.floor(date / 1000)
+    }));
+  });
+});
+
+describe('#group', function () {
+  before(function () {
+    analytics.user().reset();
+    analytics.group().reset();
+  });
+
+  beforeEach(function () {
+    analytics.identify('id');
+    this.spy = sinon.spy(window._cio, 'identify');
+  });
+
+  afterEach(function () {
+    this.spy.restore();
+    analytics.user().reset();
+    analytics.group().reset();
+  });
+
+  it('should send an id', function () {
+    analytics.group('id');
+    assert(this.spy.calledWith({ id: 'id', 'Group id': 'id' }));
+  });
+
+  it('should send traits', function () {
+    analytics.group({ trait: true });
+    assert(this.spy.calledWith({ id: 'id', 'Group trait': true }));
+  });
+
+  it('should send an id and traits', function () {
+    analytics.group('id', { trait: true });
+    assert(this.spy.calledWith({
+      id: 'id',
+      'Group id': 'id',
+      'Group trait': true
+    }));
+  });
+
+  it('should convert dates', function () {
+    var date = new Date();
+    analytics.group({ date: date });
+    assert(this.spy.calledWith({
+      id: 'id',
+      'Group date': Math.floor(date / 1000)
     }));
   });
 });

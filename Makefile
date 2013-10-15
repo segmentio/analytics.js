@@ -5,15 +5,15 @@ PHANTOM = node_modules/.bin/mocha-phantomjs --setting web-security=false --setti
 
 
 # Default
-default: build/build.js
+default build: build/build.js
 
 
 # Reals
-analytics.js: node_modules components lib/*.js lib/**/*.js
+analytics.js: node_modules components $(shell find lib)
 	@$(COMPONENT) build --standalone analytics --out . --name analytics
 	@$(UGLIFY) analytics.js --output analytics.min.js
 
-build/build.js: node_modules components lib/*.js lib/**/*.js
+build/build.js: node_modules components $(shell find lib)
 	@$(COMPONENT) build --dev
 
 components: component.json

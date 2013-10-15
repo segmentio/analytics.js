@@ -1,6 +1,9 @@
+0.17.8 - October 14, 2013
+-------------------------
+* Customer.io: added preliminary `group` support
+
 0.17.7 - October 10, 2013
 -------------------------
-
 * propagating traverse isodate fix
 
 0.17.6 - October 7, 2013

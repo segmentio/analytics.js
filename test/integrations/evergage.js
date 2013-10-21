@@ -149,7 +149,6 @@ describe('#group', function () {
 describe('#track', function () {
   beforeEach(function () {
     this.stub = sinon.stub(window._aaq, 'push');
-    analytics.group().reset();
   });
 
   afterEach(function () {

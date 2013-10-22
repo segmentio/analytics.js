@@ -65,6 +65,7 @@
     "avetisk/defaults": "0.0.4",
     "component/clone": "0.1.0",
     "component/cookie": "1.0.1",
+    "component/domify": "1.0.1",
     "component/each": "0.0.1",
     "component/event": "0.1.1",
     "component/inherit": "0.0.2",

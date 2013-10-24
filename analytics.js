@@ -471,6 +471,182 @@ function array(obj, fn) {
   }
 }
 });
+require.register("component-indexof/index.js", function(exports, require, module){
+module.exports = function(arr, obj){
+  if (arr.indexOf) return arr.indexOf(obj);
+  for (var i = 0; i < arr.length; ++i) {
+    if (arr[i] === obj) return i;
+  }
+  return -1;
+};
+});
+require.register("component-emitter/index.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var index = require('indexof');
+
+/**
+ * Expose `Emitter`.
+ */
+
+module.exports = Emitter;
+
+/**
+ * Initialize a new `Emitter`.
+ *
+ * @api public
+ */
+
+function Emitter(obj) {
+  if (obj) return mixin(obj);
+};
+
+/**
+ * Mixin the emitter properties.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function mixin(obj) {
+  for (var key in Emitter.prototype) {
+    obj[key] = Emitter.prototype[key];
+  }
+  return obj;
+}
+
+/**
+ * Listen on the given `event` with `fn`.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.on =
+Emitter.prototype.addEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+  (this._callbacks[event] = this._callbacks[event] || [])
+    .push(fn);
+  return this;
+};
+
+/**
+ * Adds an `event` listener that will be invoked a single
+ * time then automatically removed.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.once = function(event, fn){
+  var self = this;
+  this._callbacks = this._callbacks || {};
+
+  function on() {
+    self.off(event, on);
+    fn.apply(this, arguments);
+  }
+
+  fn._off = on;
+  this.on(event, on);
+  return this;
+};
+
+/**
+ * Remove the given callback for `event` or all
+ * registered callbacks.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.off =
+Emitter.prototype.removeListener =
+Emitter.prototype.removeAllListeners =
+Emitter.prototype.removeEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+
+  // all
+  if (0 == arguments.length) {
+    this._callbacks = {};
+    return this;
+  }
+
+  // specific event
+  var callbacks = this._callbacks[event];
+  if (!callbacks) return this;
+
+  // remove all handlers
+  if (1 == arguments.length) {
+    delete this._callbacks[event];
+    return this;
+  }
+
+  // remove specific handler
+  var i = index(callbacks, fn._off || fn);
+  if (~i) callbacks.splice(i, 1);
+  return this;
+};
+
+/**
+ * Emit `event` with the given args.
+ *
+ * @param {String} event
+ * @param {Mixed} ...
+ * @return {Emitter}
+ */
+
+Emitter.prototype.emit = function(event){
+  this._callbacks = this._callbacks || {};
+  var args = [].slice.call(arguments, 1)
+    , callbacks = this._callbacks[event];
+
+  if (callbacks) {
+    callbacks = callbacks.slice(0);
+    for (var i = 0, len = callbacks.length; i < len; ++i) {
+      callbacks[i].apply(this, args);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Return array of callbacks for `event`.
+ *
+ * @param {String} event
+ * @return {Array}
+ * @api public
+ */
+
+Emitter.prototype.listeners = function(event){
+  this._callbacks = this._callbacks || {};
+  return this._callbacks[event] || [];
+};
+
+/**
+ * Check if this emitter has `event` handlers.
+ *
+ * @param {String} event
+ * @return {Boolean}
+ * @api public
+ */
+
+Emitter.prototype.hasListeners = function(event){
+  return !! this.listeners(event).length;
+};
+
+});
 require.register("component-event/index.js", function(exports, require, module){
 
 /**
@@ -731,15 +907,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -751,7 +927,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -763,7 +941,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -776,9 +954,9 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
@@ -2048,10 +2226,10 @@ module.exports = function loadScript (options, callback) {
 });
 require.register("segmentio-new-date/lib/index.js", function(exports, require, module){
 
-var is = require('is')
-  , isodate = require('isodate')
-  , milliseconds = require('./milliseconds')
-  , seconds = require('./seconds');
+var is = require('is');
+var isodate = require('isodate');
+var milliseconds = require('./milliseconds');
+var seconds = require('./seconds');
 
 
 /**
@@ -2062,8 +2240,8 @@ var is = require('is')
  */
 
 module.exports = function newDate (val) {
+  if (is.date(val)) return val;
   if (is.number(val)) return new Date(toMs(val));
-  if (is.date(val)) return new Date(val.getTime()); // firefox woulda floored
 
   // date strings
   if (isodate.is(val)) return isodate.parse(val);
@@ -2724,6 +2902,7 @@ var after = require('after')
   , createIntegration = require('./integration')
   , debug = require('debug')
   , each = require('each')
+  , Emitter = require('emitter')
   , group = require('./group')
   , Integrations = require('./integrations')
   , is = require('is')
@@ -2750,7 +2929,7 @@ module.exports = exports = Analytics;
  */
 
 exports.VERSION =
-Analytics.prototype.VERSION = '0.17.9';
+Analytics.prototype.VERSION = '0.18.0';
 
 
 /**
@@ -2798,6 +2977,13 @@ function Analytics () {
 
 
 /**
+ * Event Emitter.
+ */
+
+Emitter(Analytics.prototype);
+
+
+/**
  * Initialize with the given integration `settings` and `options`. Aliased to
  * `init` for convenience.
  *
@@ -2831,6 +3017,7 @@ Analytics.prototype.initialize = function (settings, options) {
     self._readied = true;
     var callback;
     while (callback = self._callbacks.shift()) callback();
+    self.emit('ready');
   });
 
   // initialize integrations, passing ready
@@ -2846,6 +3033,8 @@ Analytics.prototype.initialize = function (settings, options) {
   // backwards compat with angular plugin.
   // TODO: remove
   this.initialized = true;
+
+  this.emit('initialize');
 
   return this;
 };
@@ -3150,6 +3339,7 @@ Analytics.prototype._invoke = function (method, args) {
     var clonedArgs = clone(args)
     integration.invoke.apply(integration, clonedArgs);
   });
+  this.emit.apply(this, clone(args));
   return this;
 };
 
@@ -8561,6 +8751,7 @@ function push (callback) {
 
 
 
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -8574,6 +8765,10 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("component-emitter/index.js", "analytics/deps/emitter/index.js");
+require.alias("component-emitter/index.js", "emitter/index.js");
+require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
 require.alias("component-event/index.js", "event/index.js");

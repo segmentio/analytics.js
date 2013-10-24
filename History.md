@@ -1,7 +1,8 @@
 0.18.0 - October 24, 2013
 -------------------------
-* making `analytics` an event emitter
-* adding `initialize`, `ready`, `identify`, `alias`, `pageview`, `track`, and `group` events and tests
+* add event emitter
+* add `initialize`, `ready`, `identify`, `alias`, `pageview`, `track`, and `group` events and tests
+* fix date equality tests
 
 0.17.9 - October 24, 2013
 -------------------------

@@ -340,6 +340,16 @@ describe('#identify', function () {
     analytics.identify('id', {}, {}, done);
   });
 
+  it('should emit identify', function (done) {
+    analytics.once('identify', function (userId, traits, options) {
+      assert(userId === 'id');
+      assert(traits.a === 1);
+      assert(options.b === 2);
+      done();
+    });
+    analytics.identify('id', { a: 1 }, { b: 2 });
+  });
+
   it('should have an id overload', function () {
     analytics.identify({ trait: true }, { option: true });
     assert(this.spy.calledWith('identify', null, { trait: true }, { option: true }));
@@ -455,6 +465,16 @@ describe('#group', function () {
     analytics.group('id', {}, {}, done);
   });
 
+  it('should emit group', function (done) {
+    analytics.once('group', function (groupId, traits, options) {
+      assert(groupId === 'id');
+      assert(traits.a === 1);
+      assert(options.b === 2);
+      done();
+    });
+    analytics.group('id', { a: 1 }, { b: 2 });
+  });
+
   it('should have an id overload', function () {
     analytics.group({ property: true }, { option: true });
     assert(this.spy.calledWith('group', null, { property: true }, { option: true }));
@@ -522,6 +542,16 @@ describe('#track', function () {
 
   it('should have an options overload', function (done) {
     analytics.track('event', {}, done);
+  });
+
+  it('should emit track', function (done) {
+    analytics.once('track', function (event, properties, options) {
+      assert(event === 'event');
+      assert(properties.a === 1);
+      assert(options.b === 2);
+      done();
+    });
+    analytics.track('event', { a: 1 }, { b: 2 });
   });
 
   it('should convert ISO dates to date objects', function () {

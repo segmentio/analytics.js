@@ -66,6 +66,7 @@
     "component/clone": "0.1.0",
     "component/cookie": "1.0.1",
     "component/each": "0.0.1",
+    "component/emitter": "1.1.0",
     "component/event": "0.1.1",
     "component/inherit": "0.0.2",
     "component/object": "0.0.3",

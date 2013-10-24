@@ -218,20 +218,12 @@ describe('#track', function () {
 
 describe('#pageview', function () {
   beforeEach(function () {
-    this.pageviewStub = sinon.stub(window.mixpanel, 'track_pageview');
     this.trackStub = sinon.stub(window.mixpanel, 'track');
   });
 
   afterEach(function () {
-    this.pageviewStub.restore();
     this.trackStub.restore();
     this.options.pageview = false;
-  });
-
-  it('should send a pageview', function () {
-    this.options.pageview = true;
-    analytics.pageview();
-    assert(this.pageviewStub.called);
   });
 
   it('shouldnt send an event by default', function () {

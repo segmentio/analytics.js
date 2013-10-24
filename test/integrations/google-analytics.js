@@ -102,11 +102,11 @@ describe('#initialize', function () {
   });
 
   it('should pass domain option to Google Analytics', function () {
-    assert(this.gaSpy.args[1][2].cookieDomain == settings.domain);
+    assert(this.gaSpy.args[0][2].cookieDomain == settings.domain);
   });
 
   it('should pass sample rate option to Google Analytics', function () {
-    assert(this.gaSpy.args[1][2].siteSpeedSampleRate == settings.siteSpeedSampleRate);
+    assert(this.gaSpy.args[0][2].siteSpeedSampleRate == settings.siteSpeedSampleRate);
   });
 
   it('should pass anonymize ip option to Google Analytics', function () {

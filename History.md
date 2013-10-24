@@ -1,3 +1,8 @@
+0.17.9 - October 24, 2013
+-------------------------
+* Google Analytics: fix ip anonymization should come after `create`
+* Google Analytics: fix domain to default to `"none"`
+
 0.17.8 - October 14, 2013
 -------------------------
 * Customer.io: added preliminary `group` support

@@ -614,14 +614,17 @@ require.register("component-trim/index.js", function(exports, require, module){
 exports = module.exports = trim;
 
 function trim(str){
+  if (str.trim) return str.trim();
   return str.replace(/^\s*|\s*$/g, '');
 }
 
 exports.left = function(str){
+  if (str.trimLeft) return str.trimLeft();
   return str.replace(/^\s*/, '');
 };
 
 exports.right = function(str){
+  if (str.trimRight) return str.trimRight();
   return str.replace(/\s*$/, '');
 };
 
@@ -728,15 +731,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -748,9 +751,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -762,7 +763,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -775,9 +776,9 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
@@ -853,9 +854,13 @@ module.exports = function(obj, fn){
 });
 require.register("segmentio-bind-all/index.js", function(exports, require, module){
 
-var bind   = require('bind')
-  , type   = require('type');
-
+try {
+  var bind = require('bind');
+  var type = require('type');
+} catch (e) {
+  var bind = require('bind-component');
+  var type = require('type-component');
+}
 
 module.exports = function (obj) {
   for (var key in obj) {
@@ -1213,16 +1218,60 @@ module.exports = function after (times, func) {
 });
 require.register("segmentio-alias/index.js", function(exports, require, module){
 
-module.exports = function alias (object, aliases) {
-    // For each of our aliases, rename our object's keys.
-    for (var oldKey in aliases) {
-        var newKey = aliases[oldKey];
-        if (object[oldKey] !== undefined) {
-            object[newKey] = object[oldKey];
-            delete object[oldKey];
-        }
-    }
-};
+var type = require('type');
+
+
+/**
+ * Expose `alias`.
+ */
+
+module.exports = alias;
+
+
+/**
+ * Alias an `object`.
+ *
+ * @param {Object} obj
+ * @param {Mixed} method
+ */
+
+function alias (obj, method) {
+  switch (type(method)) {
+    case 'object': return aliasByDictionary(obj, method);
+    case 'function': return aliasByFunction(obj, method);
+  }
+}
+
+
+/**
+ * Convert the keys in an `obj` using a dictionary of `aliases`.
+ *
+ * @param {Object} obj
+ * @param {Object} aliases
+ */
+
+function aliasByDictionary (obj, aliases) {
+  for (var key in aliases) {
+    if (undefined === obj[key]) continue;
+    obj[aliases[key]] = obj[key];
+    delete obj[key];
+  }
+}
+
+
+/**
+ * Convert the keys in an `obj` using a `convert` function.
+ *
+ * @param {Object} obj
+ * @param {Function} convert
+ */
+
+function aliasByFunction (obj, convert) {
+  for (var key in obj) {
+    obj[convert(key)] = obj[key];
+    delete obj[key];
+  }
+}
 });
 require.register("segmentio-canonical/index.js", function(exports, require, module){
 module.exports = function canonical () {
@@ -1412,10 +1461,11 @@ module.exports = traverse;
  * @return {Object}
  */
 
-function traverse (obj) {
+function traverse (obj, strict) {
   obj = clone(obj);
+  if (strict === undefined) strict = true;
   each(obj, function (key, val) {
-    if (isodate.is(val)) {
+    if (isodate.is(val, strict)) {
       obj[key] = isodate.parse(val);
     } else if (is.object(val)) {
       obj[key] = traverse(val);
@@ -2700,7 +2750,7 @@ module.exports = exports = Analytics;
  */
 
 exports.VERSION =
-Analytics.prototype.VERSION = '0.17.6';
+Analytics.prototype.VERSION = '0.17.9';
 
 
 /**
@@ -2855,7 +2905,7 @@ Analytics.prototype.group = function (id, properties, options, fn) {
   if (0 === arguments.length) return group;
   if (is.fn(options)) fn = options, options = undefined;
   if (is.fn(properties)) fn = properties, properties = undefined;
-  if (is.object(id)) options = properties, properties = id, id = user.id();
+  if (is.object(id)) options = properties, properties = id, id = group.id();
 
   group.identify(id, properties);
 
@@ -4706,7 +4756,8 @@ var alias = require('alias')
   , callback = require('callback')
   , convertDates = require('convert-dates')
   , integration = require('../integration')
-  , load = require('load-script');
+  , load = require('load-script')
+  , user = require('../user');
 
 
 /**
@@ -4766,6 +4817,24 @@ Customerio.prototype.identify = function (id, traits, options) {
   convertDates(traits, convertDate);
   alias(traits, { created: 'created_at' });
   window._cio.identify(traits);
+};
+
+
+/**
+ * Group.
+ *
+ * @param {String} id (optional)
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Customerio.prototype.group = function (id, properties, options) {
+  if (id) properties.id = id;
+  alias(properties, function (prop) {
+    return 'Group ' + prop;
+  });
+
+  this.identify(user.id(), properties);
 };
 
 
@@ -5171,15 +5240,15 @@ GA.prototype.initialize = function (options, ready) {
   });
   window.ga.l = new Date().getTime();
 
-  // anonymize before initializing
-  if (options.anonymizeIp) window.ga('set', 'anonymizeIp', true);
-
-  // initialize
   window.ga('create', options.trackingId, {
-    cookieDomain: options.domain,
+    cookieDomain: options.domain || GA.prototype.defaults.domain, // to protect against empty string
     siteSpeedSampleRate: options.siteSpeedSampleRate,
     allowLinker: true
   });
+
+  // anonymize after initializing, otherwise a warning is shown
+  // in google analytics debugger
+  if (options.anonymizeIp) window.ga('set', 'anonymizeIp', true);
 
   // track a pageview with the canonical url
   if (options.initialPageview) {
@@ -6576,13 +6645,10 @@ Mixpanel.prototype.track = function (event, properties, options) {
 /**
  * Pageview.
  *
- * https://mixpanel.com/help/reference/javascript-full-api-reference#mixpanel.track_pageview
- *
  * @param {String} url (optional)
  */
 
 Mixpanel.prototype.pageview = function (url) {
-  window.mixpanel.track_pageview(url); // shows up in streams regardless
   if (!this.options.pageview) return;
 
   this.track('Loaded a Page', {
@@ -8537,12 +8603,10 @@ require.alias("ianstormtaylor-bind/index.js", "bind/index.js");
 require.alias("component-bind/index.js", "ianstormtaylor-bind/deps/bind/index.js");
 
 require.alias("segmentio-bind-all/index.js", "ianstormtaylor-bind/deps/bind-all/index.js");
-require.alias("segmentio-bind-all/index.js", "ianstormtaylor-bind/deps/bind-all/index.js");
 require.alias("component-bind/index.js", "segmentio-bind-all/deps/bind/index.js");
 
 require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js");
 
-require.alias("segmentio-bind-all/index.js", "segmentio-bind-all/index.js");
 require.alias("ianstormtaylor-is/index.js", "analytics/deps/is/index.js");
 require.alias("ianstormtaylor-is/index.js", "is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
@@ -8558,6 +8622,7 @@ require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
 require.alias("segmentio-alias/index.js", "alias/index.js");
+require.alias("component-type/index.js", "segmentio-alias/deps/type/index.js");
 
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 require.alias("segmentio-canonical/index.js", "canonical/index.js");

@@ -1,72 +1,88 @@
 
 describe('Awesomatic', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var Awesomatic = require('analytics/lib/integrations/awesomatic');
+  var assert = require('assert');
+  var sinon = require('sinon');
+  var when = require('when');
+  var user = require('analytics/lib/user');
+  var awesomatic;
 
-var settings = {
-  appId: 'af392af01603ca383672689241b648b2'
-};
-
-before(function (done) {
   this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ 'Awesomatic': settings });
-  this.integration = analytics._integrations.Awesomatic;
-  this.options = this.integration.options;
-  when(function () { return window.AwesomaticSettings; }, done);
-});
 
-describe('#name', function () {
-  it('Awesomatic', function () {
-    assert(this.integration.name == 'Awesomatic');
-  });
-});
+  var settings = {
+    appId: 'af392af01603ca383672689241b648b2'
+  };
 
-describe('#key', function () {
-  it('appId', function () {
-    assert(this.integration.key == 'appId');
-  });
-});
-
-describe('#defaults', function () {
-  it('appId', function () {
-    assert(this.integration.defaults.appId === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-  it('should store options', function () {
-    assert(this.options.appId == settings.appId);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window.Awesomatic, 'load');
-  });
-  afterEach(function () {
-    this.stub.restore();
-  });
-  it('should call load()', function () {
-    analytics.identify('x');
-    assert(this.stub.called);
-  });
-  it('should set email', function () {
-    analytics.identify('x', { email: 'email@example.com' });
-    assert(this.stub.calledWith({
-      userId: 'x',
-      email: 'email@example.com'
-    }));
+    awesomatic = new Awesomatic(settings, function () {});
   });
 
-});
+  describe('#name', function () {
+    it('Awesomatic', function () {
+      assert(awesomatic.name == 'Awesomatic');
+    });
+  });
 
+  describe('#defaults', function () {
+    it('appId', function () {
+      assert(awesomatic.defaults.appId === '');
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window.AwesomaticSettings', function (done) {
+      awesomatic.load();
+      when(function () { return window.Awesomatic; }, done);
+    });
+
+    it('should call the callback', function (done) {
+      awesomatic.load(done);
+    });
+  });
+
+  describe('#initialize', function () {
+    it('should call load', function () {
+      var spy = sinon.spy(awesomatic, 'load');
+      awesomatic.initialize();
+      assert(spy.called);
+    });
+
+    it('should call ready', function (done) {
+      var spy = sinon.spy();
+      awesomatic = new Awesomatic(settings, spy);
+      awesomatic.initialize();
+      when(function () { return spy.called; }, done);
+    });
+
+    it('should store options', function () {
+      assert(awesomatic.options.appId == settings.appId);
+    });
+  });
+
+  describe('#identify', function () {
+    var stub;
+
+    beforeEach(function () {
+      user.reset();
+      stub = sinon.stub(window.Awesomatic, 'load');
+    });
+
+    afterEach(function () {
+      stub.restore();
+    });
+
+    it('should call load()', function () {
+      awesomatic.identify('x', {});
+      assert(stub.called);
+    });
+
+    it('should set email', function () {
+      awesomatic.identify('x', { email: 'email@example.com' });
+      assert(stub.calledWith({
+        userId: 'x',
+        email: 'email@example.com'
+      }));
+    });
+  });
 });

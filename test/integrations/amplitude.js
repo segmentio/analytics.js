@@ -1,140 +1,162 @@
 
 describe('Amplitude', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
-
-var settings = {
-  apiKey: '07808866adb2510adf19ee69e8fc2201'
-};
-
-before(function (done) {
+  var Amplitude = require('analytics/lib/integrations/amplitude');
+  var assert = require('assert');
+  var equal = require('equals');
+  var sinon = require('sinon');
+  var when = require('when');
+  var user = require('analytics/lib/user');
+  var noop = function () {};
+  var amplitude;
   this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Amplitude: settings });
-  this.integration = analytics._integrations.Amplitude;
-  this.options = this.integration.options;
-  var stub = window.amplitude.logEvent;
-  when(function () { return window.amplitude.logEvent != stub; }, done);
-});
 
-describe('#name', function () {
-  it('Amplitude', function () {
-    assert(this.integration.name == 'Amplitude');
-  });
-});
+  var settings = {
+    apiKey: '07808866adb2510adf19ee69e8fc2201'
+  };
 
-describe('#key', function () {
-  it('apiKey', function () {
-    assert(this.integration.key == 'apiKey');
-  });
-});
-
-describe('#defaults', function () {
-  it('apiKey', function () {
-    assert(this.integration.defaults.apiKey === '');
-  });
-
-  it('pageview', function () {
-    assert(this.integration.defaults.pageview === false);
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options with defaults', function () {
-    assert(this.options.apiKey == settings.apiKey);
-    assert(this.options.pageview === false);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.idSpy = sinon.spy(window.amplitude, 'setUserId');
-    this.traitSpy = sinon.spy(window.amplitude, 'setGlobalUserProperties');
+    amplitude = new Amplitude(settings, noop);
   });
 
-  afterEach(function () {
-    this.idSpy.restore();
-    this.traitSpy.restore();
+  describe('#name', function () {
+    it('Amplitude', function () {
+      assert(amplitude.name == 'Amplitude');
+    });
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.idSpy.calledWith('id'));
+  describe('#defaults', function () {
+    it('apiKey', function () {
+      assert(amplitude.defaults.apiKey === '');
+    });
+
+    it('trackAllPages', function () {
+      assert(amplitude.defaults.trackAllPages === false);
+    });
+
+    it('trackNamedPages', function () {
+      assert(amplitude.defaults.trackNamedPages === true);
+    });
   });
 
-  it('should send traits', function () {
-    analytics.identify({ trait: true });
-    assert(this.traitSpy.calledWith({ trait: true }));
+  describe('#initialize', function () {
+    it('should call ready', function (done) {
+      var spy = sinon.spy();
+      amplitude = new Amplitude(settings, spy);
+      amplitude.initialize();
+      when(function () { return spy.called; }, done);
+    });
+
+    it('should store options with defaults', function () {
+      amplitude.initialize();
+      assert(amplitude.options.apiKey === settings.apiKey);
+      assert(amplitude.options.trackAllPages === false);
+      assert(amplitude.options.trackNamedPages === true);
+    });
+
+    it('should call #load', function () {
+      var spy = sinon.spy();
+      amplitude = new Amplitude(settings, spy);
+    });
   });
 
-  it('should send an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(this.idSpy.calledWith('id'));
-    assert(this.traitSpy.calledWith({ trait: true }));
-  });
-});
+  describe('#identify', function () {
+    var idSpy, traitSpy;
 
-describe('#track', function () {
-  beforeEach(function () {
-    this.spy = sinon.spy(window.amplitude, 'logEvent');
-  });
+    beforeEach(function () {
+      user.reset();
+      amplitude.initialize();
+      idSpy = sinon.spy(window.amplitude, 'setUserId');
+      traitSpy = sinon.spy(window.amplitude, 'setGlobalUserProperties');
+    });
 
-  afterEach(function () {
-    this.spy.restore();
-  });
+    afterEach(function () {
+      idSpy.restore();
+      traitSpy.restore();
+    });
 
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.spy.calledWith('event'));
-  });
+    it('should send an id', function () {
+      amplitude.identify('id');
+      assert(idSpy.calledWith('id'));
+    });
 
-  it('should send an event and properties', function () {
-    analytics.track('event', { property: true });
-    assert(this.spy.calledWith('event', { property: true }));
-  });
-});
+    it('should send traits', function () {
+      amplitude.identify(null, { trait: true });
+      assert(traitSpy.calledWith({ trait: true }));
+    });
 
-describe('#pageview', function () {
-  beforeEach(function () {
-    this.spy = sinon.spy(window.amplitude, 'logEvent');
-  });
-
-  afterEach(function () {
-    this.spy.restore();
-    this.options.pageview = false;
+    it('should send an id and traits', function () {
+      amplitude.identify('id', { trait: true });
+      assert(idSpy.calledWith('id'));
+      assert(traitSpy.calledWith({ trait: true }));
+    });
   });
 
-  it('shouldnt fire by default', function () {
-    analytics.pageview();
-    assert(!this.spy.called);
+  describe('#track', function () {
+    var spy;
+
+    beforeEach(function () {
+      spy = sinon.spy(window.amplitude, 'logEvent');
+    });
+
+    afterEach(function () {
+      spy.restore();
+    });
+
+    it('should send an event', function () {
+      amplitude.track('event');
+      assert(spy.calledWith('event'));
+    });
+
+    it('should send an event and properties', function () {
+      amplitude.track('event', { property: true });
+      assert(spy.calledWith('event', { property: true }));
+    });
   });
 
-  it('should send a "Loaded a Page" event', function () {
-    this.options.pageview = true;
-    analytics.pageview();
-    assert(this.spy.calledWith('Loaded a Page', {
-      url: window.location.href,
-      title: document.title
-    }));
-  });
+  describe('#page', function () {
+    var spy;
 
-  it('should send a url', function () {
-    this.options.pageview = true;
-    analytics.pageview('/path');
-    assert(this.spy.calledWith('Loaded a Page', {
-      url: '/path',
-      title: document.title
-    }));
-  });
-});
+    beforeEach(function () {
+      spy = sinon.spy(window.amplitude, 'logEvent');
+    });
 
+    afterEach(function () {
+      spy.restore();
+    });
+
+    it('shouldnt track unnamed pages by default', function () {
+      amplitude.page();
+      assert(!spy.called);
+    });
+
+    it('should track unnamed pages if enabled', function () {
+      amplitude.options.trackAllPages = true;
+      amplitude.page();
+      assert(spy.calledWith('Loaded a Page'));
+    });
+
+    it('should track unnamed pages with args', function () {
+      amplitude.options.trackAllPages = true;
+      amplitude.page('Signup', { url: window.location.href });
+      assert(spy.calledWith('Loaded a Page', { url: window.location.href }));
+    });
+
+    it('should track named pages by default', function () {
+      amplitude.page('Signup', {
+        url: window.location.href
+      });
+      assert(spy.calledWith('Viewed Signup Page', {
+        url: window.location.href
+      }));
+    });
+
+    it('should not track named pages if disabled', function () {
+      amplitude.options.trackNamedPages = false;
+      amplitude.page('Signup', {
+        url: window.location.href
+      });
+      assert(!spy.called);
+    });
+  });
 });

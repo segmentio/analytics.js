@@ -9,6 +9,7 @@ describe('Amplitude', function () {
   var user = require('analytics/lib/user');
   var noop = function () {};
   var amplitude;
+
   this.timeout(10000);
 
   var settings = {
@@ -39,6 +40,21 @@ describe('Amplitude', function () {
     });
   });
 
+  describe('#load', function () {
+    it('should load the window.amplitude object', function (done) {
+      assert(!window.amplitude);
+      amplitude.load();
+      when(function () {
+        return window.amplitude &&
+          window.amplitude.prototype !== Array.prototype;
+      }, done);
+    });
+
+    it('should call the callback', function (done) {
+      amplitude.load(done);
+    });
+  });
+
   describe('#initialize', function () {
     it('should call ready', function (done) {
       var spy = sinon.spy();
@@ -54,9 +70,20 @@ describe('Amplitude', function () {
       assert(amplitude.options.trackNamedPages === true);
     });
 
-    it('should call #load', function () {
-      var spy = sinon.spy();
-      amplitude = new Amplitude(settings, spy);
+    it('should call #load if window.amplitude is not defined', function () {
+      var original = window.amplitude;
+      delete window.amplitude;
+      var spy = sinon.spy(amplitude, 'load');
+      amplitude.initialize();
+      assert(spy.called);
+      window.amplitude = original; // have to replace the stup
+    });
+
+    it('should not call #load if window.amplitude is defined', function () {
+      window.amplitude = window.amplitude || true;
+      var spy = sinon.spy(amplitude, 'load');
+      amplitude.initialize();
+      assert(!spy.called);
     });
   });
 

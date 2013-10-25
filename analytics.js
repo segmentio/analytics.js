@@ -2125,65 +2125,6 @@ if (perf && perf.timing && perf.timing.responseEnd) {
 
 module.exports = time;
 });
-require.register("segmentio-load-script/index.js", function(exports, require, module){
-var type = require('type');
-
-
-module.exports = function loadScript (options, callback) {
-    if (!options) throw new Error('Cant load nothing...');
-
-    // Allow for the simplest case, just passing a `src` string.
-    if (type(options) === 'string') options = { src : options };
-
-    var https = document.location.protocol === 'https:' ||
-                document.location.protocol === 'chrome-extension:';
-
-    // If you use protocol relative URLs, third-party scripts like Google
-    // Analytics break when testing with `file:` so this fixes that.
-    if (options.src && options.src.indexOf('//') === 0) {
-        options.src = https ? 'https:' + options.src : 'http:' + options.src;
-    }
-
-    // Allow them to pass in different URLs depending on the protocol.
-    if (https && options.https) options.src = options.https;
-    else if (!https && options.http) options.src = options.http;
-
-    // Make the `<script>` element and insert it before the first script on the
-    // page, which is guaranteed to exist since this Javascript is running.
-    var script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.async = true;
-    script.src = options.src;
-
-    var firstScript = document.getElementsByTagName('script')[0];
-    firstScript.parentNode.insertBefore(script, firstScript);
-
-    // If we have a callback, attach event handlers, even in IE. Based off of
-    // the Third-Party Javascript script loading example:
-    // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
-    if (callback && type(callback) === 'function') {
-        if (script.addEventListener) {
-            script.addEventListener('load', function (event) {
-                callback(null, event);
-            }, false);
-            script.addEventListener('error', function (event) {
-                callback(new Error('Failed to load the script.'), event);
-            }, false);
-        } else if (script.attachEvent) {
-            script.attachEvent('onreadystatechange', function (event) {
-                if (/complete|loaded/.test(script.readyState)) {
-                    callback(null, event);
-                }
-            });
-        }
-    }
-
-    // Return the script element in case they want to do anything special, like
-    // give it an ID or attributes.
-    return script;
-};
-
-});
 require.register("component-to-function/index.js", function(exports, require, module){
 
 /**
@@ -2331,6 +2272,65 @@ function objectToFunction(obj) {
     return true;
   }
 }
+});
+require.register("segmentio-load-script/index.js", function(exports, require, module){
+var type = require('type');
+
+
+module.exports = function loadScript (options, callback) {
+    if (!options) throw new Error('Cant load nothing...');
+
+    // Allow for the simplest case, just passing a `src` string.
+    if (type(options) === 'string') options = { src : options };
+
+    var https = document.location.protocol === 'https:' ||
+                document.location.protocol === 'chrome-extension:';
+
+    // If you use protocol relative URLs, third-party scripts like Google
+    // Analytics break when testing with `file:` so this fixes that.
+    if (options.src && options.src.indexOf('//') === 0) {
+        options.src = https ? 'https:' + options.src : 'http:' + options.src;
+    }
+
+    // Allow them to pass in different URLs depending on the protocol.
+    if (https && options.https) options.src = options.https;
+    else if (!https && options.http) options.src = options.http;
+
+    // Make the `<script>` element and insert it before the first script on the
+    // page, which is guaranteed to exist since this Javascript is running.
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.async = true;
+    script.src = options.src;
+
+    var firstScript = document.getElementsByTagName('script')[0];
+    firstScript.parentNode.insertBefore(script, firstScript);
+
+    // If we have a callback, attach event handlers, even in IE. Based off of
+    // the Third-Party Javascript script loading example:
+    // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
+    if (callback && type(callback) === 'function') {
+        if (script.addEventListener) {
+            script.addEventListener('load', function (event) {
+                callback(null, event);
+            }, false);
+            script.addEventListener('error', function (event) {
+                callback(new Error('Failed to load the script.'), event);
+            }, false);
+        } else if (script.attachEvent) {
+            script.attachEvent('onreadystatechange', function (event) {
+                if (/complete|loaded/.test(script.readyState)) {
+                    callback(null, event);
+                }
+            });
+        }
+    }
+
+    // Return the script element in case they want to do anything special, like
+    // give it an ID or attributes.
+    return script;
+};
+
 });
 require.register("segmentio-memoize-async/index.js", function(exports, require, module){
 
@@ -3329,6 +3329,7 @@ Analytics.prototype.initialize = function (settings, options) {
   each(settings, function (name, options) {
     var Integration = self.Integrations[name];
     var integration = new Integration(clone(options), ready, self);
+    integration.initialize();
     self._integrations[name] = integration;
   });
 
@@ -4094,6 +4095,7 @@ require.register("analytics/lib/integration.js", function(exports, require, modu
 var after = require('after');
 var bind = require('bind');
 var callback = require('callback');
+var clone = require('clone');
 var debug = require('debug');
 var defaults = require('defaults');
 var each = require('each');
@@ -4124,7 +4126,7 @@ function createIntegration (name) {
    */
 
   function Integration (options, ready, analytics) {
-    this.options = defaults(options || {}, this.defaults);
+    this.options = defaults(clone(options) || {}, this.defaults);
     this.analytics = analytics;
     this._queue = [];
     this._initialized = false;
@@ -4703,7 +4705,7 @@ require.register("analytics/lib/integrations/amplitude.js", function(exports, re
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -4723,6 +4725,7 @@ var Amplitude = module.exports = integration('Amplitude')
  */
 
 Amplitude.prototype.initialize = function () {
+  if (window.amplitude) return callback.async(this.ready);
   (function(e,t){var r=e.amplitude||{};
   r._q=[];function i(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)));};}
   var s=["init","logEvent","setUserId","setGlobalUserProperties","setVersionName"];
@@ -4794,7 +4797,7 @@ Amplitude.prototype.page = function (name, properties, options) {
 require.register("analytics/lib/integrations/awesm.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 var user = require('../user');
 
 
@@ -4852,7 +4855,7 @@ Awesm.prototype.track = function (event, properties, options) {
 require.register("analytics/lib/integrations/awesomatic.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 var onBody = require('on-body');
 
 
@@ -4906,7 +4909,7 @@ Awesomatic.prototype.identify = function (id, traits, options) {
 require.register("analytics/lib/integrations/bugherd.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -4947,7 +4950,7 @@ require.register("analytics/lib/integrations/chartbeat.js", function(exports, re
 
 var integration = require('../integration');
 var onBody = require('on-body');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -5009,7 +5012,7 @@ var date = require('load-date');
 var domify = require('domify');
 var each = require('each');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 var onBody = require('on-body');
 
 
@@ -5103,7 +5106,7 @@ require.register("analytics/lib/integrations/clicky.js", function(exports, requi
 
 var extend = require('extend');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 var user = require('../user');
 
 
@@ -5188,7 +5191,7 @@ Clicky.prototype.page = function (name, properties, options) {
 require.register("analytics/lib/integrations/comscore.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -5227,7 +5230,7 @@ comScore.prototype.load = function (callback) {
 require.register("analytics/lib/integrations/crazy-egg.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -5267,7 +5270,7 @@ var alias = require('alias');
 var callback = require('callback');
 var convertDates = require('convert-dates');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 var user = require('../user');
 
 
@@ -5384,7 +5387,7 @@ require.register("analytics/lib/integrations/errorception.js", function(exports,
 var callback = require('callback');
 var extend = require('extend');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 var onError = require('on-error');
 
 
@@ -5443,7 +5446,7 @@ require.register("analytics/lib/integrations/foxmetrics.js", function(exports, r
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -5563,7 +5566,7 @@ require.register("analytics/lib/integrations/gauges.js", function(exports, requi
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -5617,7 +5620,7 @@ Gauges.prototype.page = function (name, properties, options) {
 require.register("analytics/lib/integrations/get-satisfaction.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 var onBody = require('on-body');
 
 
@@ -5668,7 +5671,7 @@ var canonical = require('canonical');
 var each = require('each');
 var integration = require('../integration');
 var is = require('is');
-var load = require('load-script');
+var load = require('load-script-once');
 var type = require('type');
 var url = require('url');
 
@@ -5914,7 +5917,7 @@ require.register("analytics/lib/integrations/gosquared.js", function(exports, re
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 var onBody = require('on-body');
 var user = require('../user');
 
@@ -6026,7 +6029,7 @@ require.register("analytics/lib/integrations/heap.js", function(exports, require
 var alias = require('alias');
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -6104,7 +6107,7 @@ Heap.prototype.track = function (event, properties, options) {
 require.register("analytics/lib/integrations/hittail.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -6140,7 +6143,7 @@ require.register("analytics/lib/integrations/hubspot.js", function(exports, requ
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -6236,7 +6239,7 @@ require.register("analytics/lib/integrations/improvely.js", function(exports, re
 var alias = require('alias');
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -6314,7 +6317,7 @@ require.register("analytics/lib/integrations/inspectlet.js", function(exports, r
 var integration = require('../integration');
 var alias = require('alias');
 var clone = require('clone');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -6356,7 +6359,7 @@ var integration = require('../integration');
 var each = require('each');
 var is = require('is');
 var isEmail = require('is-email');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -6463,7 +6466,7 @@ require.register("analytics/lib/integrations/keen-io.js", function(exports, requ
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -6565,7 +6568,7 @@ require.register("analytics/lib/integrations/kissmetrics.js", function(exports, 
 var alias = require('alias');
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -6673,7 +6676,7 @@ require.register("analytics/lib/integrations/klaviyo.js", function(exports, requ
 var alias = require('alias');
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -6779,7 +6782,7 @@ function push (args) {
 require.register("analytics/lib/integrations/leadlander.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -6814,7 +6817,7 @@ require.register("analytics/lib/integrations/livechat.js", function(exports, req
 
 var each = require('each');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -6882,7 +6885,7 @@ require.register("analytics/lib/integrations/lytics.js", function(exports, requi
 var alias = require('alias');
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -6977,7 +6980,7 @@ require.register("analytics/lib/integrations/mixpanel.js", function(exports, req
 var alias = require('alias')
   , clone = require('clone')
   , integration = require('../integration')
-  , load = require('load-script');
+  , load = require('load-script-once');
 
 
 /**
@@ -7132,7 +7135,7 @@ require.register("analytics/lib/integrations/mousestats.js", function(exports, r
 
 var each = require('each');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -7325,7 +7328,7 @@ var bind = require('bind');
 var callback = require('callback');
 var each = require('each');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 var tick = require('next-tick');
 
 
@@ -7403,7 +7406,7 @@ function push (args) {
 require.register("analytics/lib/integrations/perfect-audience.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -7454,7 +7457,7 @@ require.register("analytics/lib/integrations/pingdom.js", function(exports, requ
 
 var date = require('load-date');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -7505,7 +7508,7 @@ var alias = require('alias');
 var callback = require('callback');
 var convertDates = require('convert-dates');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -7626,7 +7629,7 @@ require.register("analytics/lib/integrations/qualaroo.js", function(exports, req
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -7711,7 +7714,7 @@ function push (args) {
 require.register("analytics/lib/integrations/quantcast.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -7753,7 +7756,7 @@ var callback = require('callback');
 var clone = require('clone');
 var extend = require('extend');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 var onError = require('on-error');
 
 
@@ -7817,7 +7820,7 @@ Rollbar.prototype.identify = function (id, traits, options) {
 require.register("analytics/lib/integrations/sentry.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -7873,7 +7876,7 @@ Sentry.prototype.identify = function (id, traits, options) {
 require.register("analytics/lib/integrations/snapengage.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -7924,7 +7927,7 @@ SnapEngage.prototype.identify = function (id, traits, options) {
 require.register("analytics/lib/integrations/spinnakr.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -7959,7 +7962,7 @@ require.register("analytics/lib/integrations/tapstream.js", function(exports, re
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 var slug = require('slug');
 
 
@@ -8042,7 +8045,7 @@ var alias = require('alias');
 var callback = require('callback');
 var clone = require('clone');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -8186,7 +8189,7 @@ require.register("analytics/lib/integrations/usercycle.js", function(exports, re
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -8267,7 +8270,7 @@ var alias = require('alias');
 var callback = require('callback');
 var convertDates = require('convert-dates');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -8357,7 +8360,7 @@ var callback = require('callback');
 var clone = require('clone');
 var convertDates = require('convert-dates');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 var unix = require('to-unix-timestamp');
 
 
@@ -8563,7 +8566,7 @@ require.register("analytics/lib/integrations/vero.js", function(exports, require
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -8745,7 +8748,7 @@ var each = require('each');
 var extend = require('extend');
 var integration = require('../integration');
 var isEmail = require('is-email');
-var load = require('load-script');
+var load = require('load-script-once');
 var type = require('type');
 var user = require('../user');
 
@@ -8828,7 +8831,7 @@ require.register("analytics/lib/integrations/yandex-metrica.js", function(export
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script');
+var load = require('load-script-once');
 
 
 /**
@@ -9036,10 +9039,6 @@ require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fall
 
 require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
 require.alias("segmentio-load-date/index.js", "load-date/index.js");
-
-require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
-require.alias("segmentio-load-script/index.js", "load-script/index.js");
-require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
 
 require.alias("segmentio-load-script-once/index.js", "analytics/deps/load-script-once/index.js");
 require.alias("segmentio-load-script-once/index.js", "analytics/deps/load-script-once/index.js");

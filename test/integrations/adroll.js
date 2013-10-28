@@ -5,12 +5,13 @@ describe('AdRoll', function () {
   var assert = require('assert');
   var equal = require('equals');
   var sinon = require('sinon');
+  var tick = require('next-tick');
   var user = require('analytics/lib/user');
   var when = require('when');
-  var noop = function () {};
-  var adroll;
+
   this.timeout(10000);
 
+  var adroll;
   var settings = {
     advId: 'LYFRCUIPPZCCTOBGRH7G32',
     pixId: 'V7TLXL5WWBA5NOU5MOJQW4'
@@ -22,7 +23,13 @@ describe('AdRoll', function () {
 
   describe('#name', function () {
     it('AdRoll', function () {
-      assert(adroll.name == 'AdRoll');
+      assert(adroll.name === 'AdRoll');
+    });
+  });
+
+  describe('#_assumesPageview', function () {
+    it('should be true', function () {
+      assert(adroll._assumesPageview === true);
     });
   });
 
@@ -37,15 +44,25 @@ describe('AdRoll', function () {
   });
 
   describe('#load', function () {
-    beforeEach(function () {
-      // AdRoll js requires these vars to be set for loading
+    before(function () {
+      // required for load to work
       window.adroll_adv_id = settings.advId;
       window.adroll_pix_id = settings.pixId;
+    });
+
+    after(function () {
+      window.adroll_adv_id = undefined;
+      window.adroll_pix_id = undefined;
     });
 
     it('should load window.__adroll', function (done) {
       adroll.load();
       when(function () { return window.__adroll; }, done);
+    });
+
+    it('should emit ready', function (done) {
+      adroll.once('ready', done);
+      adroll.load();
     });
 
     it('should callback', function (done) {
@@ -54,10 +71,26 @@ describe('AdRoll', function () {
   });
 
   describe('#initialize', function () {
+    var load, emit;
+
     beforeEach(function () {
-      adroll = new AdRoll(settings, noop);
-      delete window.adroll_adv_id;
-      delete window.adroll_pix_id;
+      window.__adroll = undefined;
+      load = sinon.spy(adroll, 'load');
+      emit = sinon.spy(adroll, 'emit');
+    });
+
+    afterEach(function () {
+      user.reset();
+      load.restore();
+      emit.restore();
+      window.__adroll_loaded = undefined;
+    });
+
+    it('should return if adroll is already loaded', function () {
+      window.__adroll = true;
+      adroll.initialize();
+      assert(emit.calledWith('ready'));
+      assert(!load.called);
     });
 
     it('should initialize the adroll variables', function () {
@@ -66,19 +99,21 @@ describe('AdRoll', function () {
       assert(window.adroll_pix_id === settings.pixId);
     });
 
-    it('should call #load', function () {
-      var spy = sinon.spy(adroll, 'load');
-      adroll.initialize();
-      assert(spy.called);
-    });
-
     it('should set custom data', function () {
       user.identify('id', { trait: true });
       adroll.initialize();
-      assert(equal(window.adroll_custom_data, {
-        id: 'id',
-        trait: true
-      }));
+      assert(equal(window.adroll_custom_data, { id: 'id', trait: true }));
+    });
+
+    it('should set __adroll_loaded', function () {
+      adroll.initialize();
+      assert(window.__adroll_loaded === true);
+    });
+
+    it('should call #load', function () {
+      adroll.initialize();
+      assert(load.called);
     });
   });
+
 });

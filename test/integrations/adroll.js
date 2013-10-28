@@ -33,6 +33,12 @@ describe('AdRoll', function () {
     });
   });
 
+  describe('#_readyOnLoad', function () {
+    it('should be true', function () {
+      assert(adroll._readyOnLoad === true);
+    });
+  });
+
   describe('#defaults', function () {
     it('advId', function () {
       assert(adroll.defaults.advId === '');
@@ -40,6 +46,19 @@ describe('AdRoll', function () {
 
     it('pixId', function () {
       assert(adroll.defaults.pixId === '');
+    });
+  });
+
+  describe('#exists', function () {
+    after(function () {
+      window.__adroll_loaded = undefined;
+    });
+
+    it('should check for window.__adroll_loaded', function () {
+      window.__adroll_loaded = false;
+      assert(!adroll.exists());
+      window.__adroll_loaded = true;
+      assert(adroll.exists());
     });
   });
 
@@ -61,37 +80,21 @@ describe('AdRoll', function () {
       when(function () { return window.__adroll; }, done);
     });
 
-    it('should emit ready', function (done) {
-      adroll.once('ready', done);
-      adroll.load();
-    });
-
     it('should callback', function (done) {
       adroll.load(done);
     });
   });
 
-  describe('#exists', function () {
-    it('should check for window.__adroll_loaded', function () {
-      window.__adroll_loaded = true;
-      assert(adroll.exists());
-      window.__adroll_loaded = false;
-      assert(!adroll.exists());
-    });
-  });
-
   describe('#initialize', function () {
-    var load, emit;
+    var load;
 
     beforeEach(function () {
       load = sinon.spy(adroll, 'load');
-      emit = sinon.spy(adroll, 'emit');
     });
 
     afterEach(function () {
       user.reset();
       load.restore();
-      emit.restore();
       window.__adroll_loaded = undefined;
     });
 

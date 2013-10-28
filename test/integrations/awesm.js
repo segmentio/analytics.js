@@ -6,10 +6,10 @@ describe('awe.sm', function () {
   var equal = require('equals');
   var sinon = require('sinon');
   var when = require('when');
-  var awesm;
 
   this.timeout(10000);
 
+  var awesm;
   var settings = {
     apiKey: '5c8b1a212434c2153c2f2c2f2c765a36140add243bf6eae876345f8fd11045d9',
     events: {
@@ -17,13 +17,25 @@ describe('awe.sm', function () {
     }
   };
 
-  beforeEach(function () {
-    awesm = new Awesm(settings, function () {});
+  before(function () {
+    awesm = new Awesm(settings);
   });
 
   describe('#name', function () {
     it('awe.sm', function () {
       assert(awesm.name == 'awe.sm');
+    });
+  });
+
+  describe('#_assumesPageview', function () {
+    it('should be true', function () {
+      assert(awesm._assumesPageview === true);
+    });
+  });
+
+  describe('#_readyOnLoad', function () {
+    it('should be true', function () {
+      assert(awesm._readyOnLoad === true);
     });
   });
 
@@ -37,66 +49,85 @@ describe('awe.sm', function () {
     });
   });
 
+  describe('#exists', function () {
+    after(function () {
+      window.AWESM = undefined;
+    });
+
+    it('should check for window.AWESM', function () {
+      window.AWESM = {};
+      assert(awesm.exists());
+      window.AWESM = undefined;
+      assert(!awesm.exists());
+    });
+  });
+
   describe('#load', function () {
-    it('should set the `window.AWESM._exists` var', function (done) {
+    it('should set window.AWESM._exists', function (done) {
+      assert(!window.AWESM);
       awesm.load();
       when(function () { return window.AWESM && window.AWESM._exists; }, done);
     });
 
-    it('should call the callback', function (done) {
+    it('should callback', function (done) {
       awesm.load(done);
     });
   });
 
-  describe('#intialize', function () {
-    it('should ready', function (done) {
-      var spy = sinon.spy();
-      awesm = new Awesm(settings, spy);
-      awesm.initialize();
-      when(function () { return spy.called; }, done);
+  describe('#initialize', function () {
+    var load, global;
+
+    beforeEach(function () {
+      load = sinon.spy(awesm, 'load');
+      global = window.AWESM;
+      window.AWESM = undefined;
     });
 
-    it('should store options with defaults', function () {
-      awesm.initialize();
-      assert(awesm.options.apiKey == settings.apiKey);
-      assert(equal(awesm.options.events, settings.events));
+    afterEach(function () {
+      load.restore();
+      window.AWESM = global;
     });
 
     it('should pass options to awe.sm', function () {
       awesm.initialize();
       assert(window.AWESM.api_key == settings.apiKey);
     });
+
+    it('should call #load', function () {
+      awesm.initialize();
+      assert(load.called);
+    });
   });
 
   describe('#track', function () {
-    var spy;
+    var convert;
 
     beforeEach(function () {
-      spy = sinon.spy(window.AWESM, 'convert');
+      convert = sinon.spy(window.AWESM, 'convert');
     });
 
     afterEach(function () {
-      spy.restore();
+      convert.restore();
     });
 
     it('should convert an event to a goal', function () {
       awesm.track('Test', {});
-      assert(spy.calledWith('goal_1', 0));
+      assert(convert.calledWith('goal_1', 0));
     });
 
-    it('shouldnt convert an unknown event', function () {
+    it('should not convert an unknown event', function () {
       awesm.track('Unknown', {});
-      assert(!spy.called);
+      assert(!convert.called);
     });
 
     it('should accept a value property', function () {
       awesm.track('Test', { value: 1 });
-      assert(spy.calledWith('goal_1', 1));
+      assert(convert.calledWith('goal_1', 1));
     });
 
     it('should prefer a revenue property', function () {
       awesm.track('Test', { value: 1, revenue: 42.99 });
-      assert(spy.calledWith('goal_1', 4299));
+      assert(convert.calledWith('goal_1', 4299));
     });
   });
 

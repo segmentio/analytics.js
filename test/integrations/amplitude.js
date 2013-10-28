@@ -39,6 +39,19 @@ describe('Amplitude', function () {
     });
   });
 
+  describe('#exists', function () {
+    after(function () {
+      window.amplitude = undefined;
+    });
+
+    it('should check for window.amplitude', function () {
+      window.amplitude = {};
+      assert(amplitude.exists());
+      window.amplitude = undefined;
+      assert(!amplitude.exists());
+    });
+  });
+
   describe('#load', function () {
     it('should load the window.amplitude object', function (done) {
       assert(!window.amplitude);
@@ -48,17 +61,8 @@ describe('Amplitude', function () {
       }, done);
     });
 
-    it('should call the callback', function (done) {
+    it('should callback', function (done) {
       amplitude.load(done);
-    });
-  });
-
-  describe('#exists', function () {
-    it('should check for window.amplitude', function () {
-      window.amplitude = null;
-      assert(!amplitude.exists());
-      window.amplitude = {};
-      assert(amplitude.exists());
     });
   });
 

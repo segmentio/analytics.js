@@ -70,11 +70,19 @@ describe('AdRoll', function () {
     });
   });
 
+  describe('#exists', function () {
+    it('should check for __adroll_loaded', function () {
+      window.__adroll_loaded = true;
+      assert(adroll.exists());
+      window.__adroll_loaded = false;
+      assert(!adroll.exists());
+    });
+  });
+
   describe('#initialize', function () {
     var load, emit;
 
     beforeEach(function () {
-      window.__adroll = undefined;
       load = sinon.spy(adroll, 'load');
       emit = sinon.spy(adroll, 'emit');
     });
@@ -84,13 +92,6 @@ describe('AdRoll', function () {
       load.restore();
       emit.restore();
       window.__adroll_loaded = undefined;
-    });
-
-    it('should return if adroll is already loaded', function () {
-      window.__adroll = true;
-      adroll.initialize();
-      assert(emit.calledWith('ready'));
-      assert(!load.called);
     });
 
     it('should initialize the adroll variables', function () {

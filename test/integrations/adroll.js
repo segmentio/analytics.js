@@ -1,25 +1,19 @@
 
 describe('AdRoll', function () {
-
-  var AdRoll = require('analytics/lib/integrations/adroll');
-  var assert = require('assert');
-  var equal = require('equals');
-  var sinon = require('sinon');
-  var tick = require('next-tick');
-  var user = require('analytics/lib/user');
-  var when = require('when');
-
   this.timeout(10000);
 
-  var adroll;
   var settings = {
     advId: 'LYFRCUIPPZCCTOBGRH7G32',
     pixId: 'V7TLXL5WWBA5NOU5MOJQW4'
   };
 
-  beforeEach(function () {
-    adroll = new AdRoll(settings);
-  });
+  var AdRoll = require('analytics/lib/integrations/adroll');
+  var adroll = new AdRoll(settings);
+  var assert = require('assert');
+  var equal = require('equals');
+  var sinon = require('sinon');
+  var user = require('analytics/lib/user');
+  var when = require('when');
 
   describe('#name', function () {
     it('AdRoll', function () {

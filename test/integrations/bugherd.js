@@ -1,62 +1,100 @@
 
 describe('BugHerd', function () {
-
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , equal = require('equals')
-  , sinon = require('sinon')
-  , when = require('when');
-
-var settings = {
-  apiKey: '7917d741-16cc-4c2b-bb1a-bdd903d53d72',
-  showFeedbackTab: false
-};
-
-before(function (done) {
   this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ BugHerd: settings });
-  this.integration = analytics._integrations.BugHerd;
-  this.options = this.integration.options;
-  when(function () { return window._bugHerd; }, done);
-});
 
-describe('#name', function () {
-  it('BugHerd', function () {
-    assert(this.integration.name == 'BugHerd');
-  });
-});
+  var settings = {
+    apiKey: '7917d741-16cc-4c2b-bb1a-bdd903d53d72'
+  };
 
-describe('#key', function () {
-  it('apiKey', function () {
-    assert(this.integration.key == 'apiKey');
-  });
-});
+  var analytics = window.analytics || require('analytics');
+  var assert = require('assert');
+  var BugHerd = require('analytics/lib/integrations/bugherd');
+  var bugherd = new BugHerd(settings);
+  var equal = require('equals');
+  var sinon = require('sinon');
+  var when = require('when');
 
-describe('#defaults', function () {
-  it('apiKey', function () {
-    assert(this.integration.defaults.apiKey === '');
+  describe('#name', function () {
+    it('BugHerd', function () {
+      assert(bugherd.name == 'BugHerd');
+    });
   });
 
-  it('showFeedbackTab', function () {
-    assert(this.integration.defaults.showFeedbackTab === true);
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
+  describe('#_assumesPageview', function () {
+    it('should be true', function () {
+      assert(bugherd._assumesPageview === true);
+    });
   });
 
-  it('should store options with defaults', function () {
-    assert(this.options.apiKey == settings.apiKey);
-    assert(this.options.showFeedbackTab == settings.showFeedbackTab);
+  describe('#_readyOnLoad', function () {
+    it('should be true', function () {
+      assert(bugherd._readyOnLoad === true);
+    });
   });
 
-  it('should hide feedback tab', function () {
-    assert(equal(window.BugHerdConfig, { feedback: { hide: true }}));
+  describe('#defaults', function () {
+    it('apiKey', function () {
+      assert(bugherd.defaults.apiKey === '');
+    });
+
+    it('showFeedbackTab', function () {
+      assert(bugherd.defaults.showFeedbackTab === true);
+    });
   });
-});
+
+  describe('#exists', function () {
+    after(function () {
+      window.BugHerdConfig = undefined;
+    });
+
+    it('should check for window.BugHerdConfig', function () {
+      window.BugHerdConfig = false;
+      assert(!bugherd.exists());
+      window.BugHerdConfig = true;
+      assert(bugherd.exists());
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window._bugHerd', function (done) {
+      assert(!window._bugHerd);
+      bugherd.load();
+      when(function () { return window._bugHerd; }, done);
+    });
+
+    it('should callback', function (done) {
+      bugherd.load(done);
+    });
+  });
+
+  describe('#initialize', function () {
+    var load;
+
+    beforeEach(function () {
+      load = sinon.spy(bugherd, 'load');
+    });
+
+    afterEach(function () {
+      load.restore();
+      window.BugHerdConfig = undefined;
+      bugherd.options.showFeedbackTab = true;
+    });
+
+    it('should create window.BugHerdConfig', function () {
+      bugherd.initialize();
+      assert(equal(window.BugHerdConfig, { feedback: { hide: false }}));
+    });
+
+    it('should be able to hide the tab', function () {
+      bugherd.options.showFeedbackTab = false;
+      bugherd.initialize();
+      assert(equal(window.BugHerdConfig, { feedback: { hide: true }}));
+    });
+
+    it('should call #load', function () {
+      bugherd.initialize();
+      assert(load.called);
+    });
+  });
 
 });

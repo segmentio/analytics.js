@@ -907,15 +907,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -927,9 +927,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -941,7 +939,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -954,9 +952,9 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
@@ -2226,10 +2224,10 @@ module.exports = function loadScript (options, callback) {
 });
 require.register("segmentio-new-date/lib/index.js", function(exports, require, module){
 
-var is = require('is');
-var isodate = require('isodate');
-var milliseconds = require('./milliseconds');
-var seconds = require('./seconds');
+var is = require('is')
+  , isodate = require('isodate')
+  , milliseconds = require('./milliseconds')
+  , seconds = require('./seconds');
 
 
 /**
@@ -2240,8 +2238,8 @@ var seconds = require('./seconds');
  */
 
 module.exports = function newDate (val) {
-  if (is.date(val)) return val;
   if (is.number(val)) return new Date(toMs(val));
+  if (is.date(val)) return new Date(val.getTime()); // firefox woulda floored
 
   // date strings
   if (isodate.is(val)) return isodate.parse(val);
@@ -2929,7 +2927,7 @@ module.exports = exports = Analytics;
  */
 
 exports.VERSION =
-Analytics.prototype.VERSION = '0.18.0';
+Analytics.prototype.VERSION = '0.18.1';
 
 
 /**
@@ -3625,6 +3623,7 @@ var integrations = [
   'comscore',
   'crazy-egg',
   'customerio',
+  'evergage',
   'errorception',
   'foxmetrics',
   'gauges',
@@ -5051,6 +5050,129 @@ Customerio.prototype.track = function (event, properties, options) {
 
 function convertDate (date) {
   return Math.floor(date.getTime() / 1000);
+}
+});
+require.register("analytics/lib/integrations/evergage.js", function(exports, require, module){
+
+var alias = require('alias');
+var each = require('each');
+var integration = require('../integration');
+var load = require('load-script');
+
+
+/**
+ * Expose `Evergage` integration.
+ */
+
+var Evergage = module.exports = integration('Evergage');
+
+
+/**
+ * Default options.
+ */
+
+Evergage.prototype.defaults = {
+  // your Evergage account name as seen in accountName.evergage.com (required)
+  account: null,
+  // your Evergage dataset ID, not dataset label (required)
+  dataset: null
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Evergage.prototype.initialize = function (options, ready) {
+  var account = options.account;
+  var dataset = options.dataset;
+
+  window._aaq = window._aaq || [];
+  push('setEvergageAccount', account);
+  push('setDataset', dataset);
+  push('setUseSiteConfig', true);
+  ready();
+
+  load('//cdn.evergage.com/beacon/' + account + '/' + dataset + '/scripts/evergage.min.js');
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Evergage.prototype.identify = function (id, traits, options) {
+  if (!id) return;
+  push('setUser', id);
+
+  alias(traits, {
+    name: 'userName',
+    email: 'userEmail'
+  });
+
+  each(traits, function (key, value) {
+    push('setUserField', key, value, 'page');
+  });
+};
+
+
+/**
+ * Group.
+ *
+ * @param {String} id
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Evergage.prototype.group = function (id, properties, options) {
+  if (!id) return;
+  push('setCompany', id);
+  each(properties, function(key, value) {
+    push('setAccountField', key, value, 'page');
+  });
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Evergage.prototype.track = function (event, properties, options) {
+  push('trackAction', event, properties);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+Evergage.prototype.pageview = function (url) {
+  window.Evergage.init(true);
+};
+
+
+/**
+ * Helper to push onto the Evergage queue.
+ *
+ * @param {Mixed} args...
+ */
+
+function push (args) {
+  args = [].slice.call(arguments);
+  window._aaq.push(args);
 }
 });
 require.register("analytics/lib/integrations/errorception.js", function(exports, require, module){

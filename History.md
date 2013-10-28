@@ -1,3 +1,7 @@
+0.18.1 - October 28, 2013
+-------------------------
+* add [Evergage](http://evergage.com), by [@glajchs](https://github.com/glajchs)
+
 0.18.0 - October 24, 2013
 -------------------------
 * add event emitter

@@ -6,21 +6,27 @@ describe('Awesomatic', function () {
   var sinon = require('sinon');
   var when = require('when');
   var user = require('analytics/lib/user');
-  var awesomatic;
 
   this.timeout(10000);
 
+  var awesomatic;
   var settings = {
     appId: 'af392af01603ca383672689241b648b2'
   };
 
   beforeEach(function () {
-    awesomatic = new Awesomatic(settings, function () {});
+    awesomatic = new Awesomatic(settings);
   });
 
   describe('#name', function () {
     it('Awesomatic', function () {
       assert(awesomatic.name == 'Awesomatic');
+    });
+  });
+
+  describe('#_assumesPageview', function () {
+    it('should be true', function () {
+      assert(awesomatic._assumesPageview === true);
     });
   });
 
@@ -30,59 +36,81 @@ describe('Awesomatic', function () {
     });
   });
 
+  describe('#exists', function () {
+    after(function () {
+      window.Awesomatic = undefined;
+    });
+
+    it('should check for window.Awesomatic', function () {
+      window.Awesomatic = undefined;
+      assert(!awesomatic.exists());
+      window.Awesomatic = {};
+      assert(awesomatic.exists());
+    });
+  });
+
   describe('#load', function () {
-    it('should create window.AwesomaticSettings', function (done) {
+    after(function () {
+      window.Awesomatic = undefined;
+    });
+
+    it('should create window.Awesomatic', function (done) {
       awesomatic.load();
       when(function () { return window.Awesomatic; }, done);
     });
 
-    it('should call the callback', function (done) {
+    it('should callback', function (done) {
       awesomatic.load(done);
     });
   });
 
   describe('#initialize', function () {
-    it('should call load', function () {
-      var spy = sinon.spy(awesomatic, 'load');
-      awesomatic.initialize();
-      assert(spy.called);
+    var load;
+
+    beforeEach(function () {
+      load = sinon.spy(awesomatic, 'load');
     });
 
-    it('should call ready', function (done) {
-      var spy = sinon.spy();
-      awesomatic = new Awesomatic(settings, spy);
-      awesomatic.initialize();
-      when(function () { return spy.called; }, done);
+    afterEach(function () {
+      load.restore();
     });
 
-    it('should store options', function () {
-      assert(awesomatic.options.appId == settings.appId);
+    it('should call #load', function () {
+      awesomatic.initialize();
+      assert(load.called);
     });
   });
 
   describe('#identify', function () {
-    var stub;
+    var load;
+
+    before(function (done) {
+      awesomatic.initialize();
+      awesomatic.once('ready', done);
+    });
 
     beforeEach(function () {
-      user.reset();
-      stub = sinon.stub(window.Awesomatic, 'load');
+      load = sinon.stub(window.Awesomatic, 'load');
     });
 
     afterEach(function () {
-      stub.restore();
+      user.reset();
+      load.restore();
     });
 
-    it('should call load()', function () {
-      awesomatic.identify('x', {});
-      assert(stub.called);
+    it('should send an id', function () {
+      awesomatic.identify('id', {});
+      assert(load.calledWith({ userId: 'id' }));
     });
 
-    it('should set email', function () {
-      awesomatic.identify('x', { email: 'email@example.com' });
-      assert(stub.calledWith({
-        userId: 'x',
-        email: 'email@example.com'
-      }));
+    it('should send an id and properties', function () {
+      awesomatic.identify('id', { property: true });
+      assert(load.calledWith({ userId: 'id', property: true }));
+    });
+
+    it('should require an id or email', function () {
+      awesomatic.identify(null, { property: true });
+      assert(!load.called);
     });
   });
 });

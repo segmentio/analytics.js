@@ -74,7 +74,7 @@ describe('AdRoll', function () {
       window.adroll_pix_id = undefined;
     });
 
-    it('should load window.__adroll', function (done) {
+    it('should create window.__adroll', function (done) {
       assert(!window.__adroll);
       adroll.load();
       when(function () { return window.__adroll; }, done);

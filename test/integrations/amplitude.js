@@ -25,6 +25,12 @@ describe('Amplitude', function () {
     });
   });
 
+  describe('#_readyOnInitialize', function () {
+    it('should be true', function () {
+      assert(awesm._readyOnInitialize === true);
+    });
+  });
+
   describe('#defaults', function () {
     it('apiKey', function () {
       assert(amplitude.defaults.apiKey === '');

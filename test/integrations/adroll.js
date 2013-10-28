@@ -56,6 +56,7 @@ describe('AdRoll', function () {
     });
 
     it('should load window.__adroll', function (done) {
+      assert(!window.__adroll);
       adroll.load();
       when(function () { return window.__adroll; }, done);
     });
@@ -71,7 +72,7 @@ describe('AdRoll', function () {
   });
 
   describe('#exists', function () {
-    it('should check for __adroll_loaded', function () {
+    it('should check for window.__adroll_loaded', function () {
       window.__adroll_loaded = true;
       assert(adroll.exists());
       window.__adroll_loaded = false;
@@ -106,7 +107,7 @@ describe('AdRoll', function () {
       assert(equal(window.adroll_custom_data, { id: 'id', trait: true }));
     });
 
-    it('should set __adroll_loaded', function () {
+    it('should set window.__adroll_loaded', function () {
       adroll.initialize();
       assert(window.__adroll_loaded === true);
     });

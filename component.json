@@ -98,7 +98,7 @@
     "timoxley/next-tick": "0.0.2",
     "yields/prevent": "0.0.2",
     "yields/slug": "1.1.0",
-    "visionmedia/debug": "0.7.2"
+    "visionmedia/debug": "cfd9c65"
   },
   "development": {
     "component/jquery": "*",

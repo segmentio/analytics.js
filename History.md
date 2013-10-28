@@ -1,3 +1,7 @@
+0.18.2 - October 28, 2013
+-------------------------
+* upgrade visionmedia/debug to most recent version, fixes security warnings when cookies are disabled.
+
 0.18.1 - October 28, 2013
 -------------------------
 * add [Evergage](http://evergage.com), by [@glajchs](https://github.com/glajchs)

@@ -6,7 +6,6 @@ describe('BugHerd', function () {
     apiKey: '7917d741-16cc-4c2b-bb1a-bdd903d53d72'
   };
 
-  var analytics = window.analytics || require('analytics');
   var assert = require('assert');
   var BugHerd = require('analytics/lib/integrations/bugherd');
   var bugherd = new BugHerd(settings);

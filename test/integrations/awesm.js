@@ -1,25 +1,18 @@
 
 describe('awe.sm', function () {
+  this.timeout(10000);
 
-  var Awesm = require('analytics/lib/integrations/awesm');
+  var settings = {
+    apiKey: '5c8b1a212434c2153c2f2c2f2c765a36140add243bf6eae876345f8fd11045d9',
+    events: { Test: 'goal_1' }
+  };
+
   var assert = require('assert');
+  var Awesm = require('analytics/lib/integrations/awesm');
+  var awesm = new Awesm(settings);
   var equal = require('equals');
   var sinon = require('sinon');
   var when = require('when');
-
-  this.timeout(10000);
-
-  var awesm;
-  var settings = {
-    apiKey: '5c8b1a212434c2153c2f2c2f2c765a36140add243bf6eae876345f8fd11045d9',
-    events: {
-      'Test': 'goal_1'
-    }
-  };
-
-  before(function () {
-    awesm = new Awesm(settings);
-  });
 
   describe('#name', function () {
     it('awe.sm', function () {

@@ -1,23 +1,18 @@
 
 describe('Amplitude', function () {
+  this.timeout(10000);
+
+  var settings = {
+    apiKey: '07808866adb2510adf19ee69e8fc2201'
+  };
 
   var Amplitude = require('analytics/lib/integrations/amplitude');
+  var amplitude = new Amplitude(settings);
   var assert = require('assert');
   var equal = require('equals');
   var sinon = require('sinon');
   var when = require('when');
   var user = require('analytics/lib/user');
-
-  this.timeout(10000);
-
-  var amplitude;
-  var settings = {
-    apiKey: '07808866adb2510adf19ee69e8fc2201'
-  };
-
-  beforeEach(function () {
-    amplitude = new Amplitude(settings);
-  });
 
   describe('#name', function () {
     it('Amplitude', function () {

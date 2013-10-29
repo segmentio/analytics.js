@@ -1,8 +1,8 @@
 
 describe('Awesomatic', function () {
 
-  var Awesomatic = require('analytics/lib/integrations/awesomatic');
   var assert = require('assert');
+  var Awesomatic = require('analytics/lib/integrations/awesomatic');
   var sinon = require('sinon');
   var when = require('when');
   var user = require('analytics/lib/user');

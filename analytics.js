@@ -960,6 +960,7 @@ exports.isCrossDomain = function(url){
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
+
 var next = require('next-tick');
 
 
@@ -1123,8 +1124,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -1463,6 +1469,12 @@ require.register("segmentio-convert-dates/index.js", function(exports, require, 
 
 var is = require('is');
 
+try {
+  var clone = require('clone');
+} catch (e) {
+  var clone = require('clone-component');
+}
+
 
 /**
  * Expose `convertDates`.
@@ -1480,11 +1492,13 @@ module.exports = convertDates;
  */
 
 function convertDates (obj, convert) {
+  obj = clone(obj);
   for (var key in obj) {
     var val = obj[key];
     if (is.date(val)) obj[key] = convert(val);
-    if (is.object(val)) convertDates(val, convert);
+    if (is.object(val)) obj[key] = convertDates(val, convert);
   }
+  return obj;
 }
 });
 require.register("segmentio-extend/index.js", function(exports, require, module){
@@ -2942,7 +2956,7 @@ module.exports = exports = Analytics;
  */
 
 exports.VERSION =
-Analytics.prototype.VERSION = '0.18.2';
+Analytics.prototype.VERSION = '0.18.3';
 
 
 /**
@@ -8976,6 +8990,9 @@ require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
 require.alias("segmentio-convert-dates/index.js", "analytics/deps/convert-dates/index.js");
 require.alias("segmentio-convert-dates/index.js", "convert-dates/index.js");
+require.alias("component-clone/index.js", "segmentio-convert-dates/deps/clone/index.js");
+require.alias("component-type/index.js", "component-clone/deps/type/index.js");
+
 require.alias("ianstormtaylor-is/index.js", "segmentio-convert-dates/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 

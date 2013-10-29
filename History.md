@@ -1,3 +1,7 @@
+0.18.3 - October 29, 2013
+-------------------------
+* hubspot: adding fix for date traits/properties (calvinfo)
+
 0.18.2 - October 28, 2013
 -------------------------
 * upgrade visionmedia/debug to most recent version, fixes security warnings when cookies are disabled.

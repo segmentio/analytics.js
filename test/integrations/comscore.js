@@ -29,6 +29,19 @@ describe('comScore', function () {
     });
   });
 
+  describe('#exists', function () {
+    after(function () {
+      window._comscore = undefined;
+    });
+
+    it('should check for window._comscore', function () {
+      window._comscore = undefined;
+      assert(!comscore.exists());
+      window._comscore = [];
+      assert(comscore.exists());
+    });
+  });
+
   describe('#load', function () {
     it('should create window.COMSCORE', function (done) {
       assert(!window.COMSCORE);

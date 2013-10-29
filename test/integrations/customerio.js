@@ -1,174 +1,202 @@
 
 describe('Customer.io', function () {
-
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , equal = require('equals')
-  , sinon = require('sinon')
-  , when = require('when');
-
-var settings = {
-  siteId: 'x'
-};
-
-before(function (done) {
   this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ 'Customer.io': settings });
-  this.integration = analytics._integrations['Customer.io'];
-  this.options = this.integration.options;
-  when(function () { return window._cio.pageHasLoaded; }, done);
-});
 
-describe('#name', function () {
-  it('Customer.io', function () {
-    assert(this.integration.name == 'Customer.io');
-  });
-});
+  var settings = {
+    siteId: 'x'
+  };
 
-describe('#key', function () {
-  it('siteId', function () {
-    assert(this.integration.key == 'siteId');
-  });
-});
+  var assert = require('assert');
+  var Customerio = require('analytics/lib/integrations/customerio');
+  var customerio = new Customerio(settings);
+  var equal = require('equals');
+  var group = require('analytics/lib/group');
+  var sinon = require('sinon');
+  var user = require('analytics/lib/user');
+  var when = require('when');
 
-describe('#defaults', function () {
-  it('siteId', function () {
-    assert(this.integration.defaults.siteId === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
+  describe('#name', function () {
+    it('Customer.io', function () {
+      assert(customerio.name == 'Customer.io');
+    });
   });
 
-  it('should store options', function () {
-    assert(this.options.siteId == settings.siteId);
-    assert(this.options.pixId == settings.pixId);
-  });
-});
-
-describe('#identify', function () {
-  beforeEach(function () {
-    analytics.user().reset();
-    this.spy = sinon.spy(window._cio, 'identify');
+  describe('#defaults', function () {
+    it('siteId', function () {
+      assert(customerio.defaults.siteId === '');
+    });
   });
 
-  afterEach(function () {
-    this.spy.restore();
+  describe('#exists', function () {
+    after(function () {
+      window._cio = undefined;
+    });
+
+    it('should check for window._cio', function () {
+      window._cio = undefined;
+      assert(!customerio.exists());
+      window._cio = [];
+      assert(customerio.exists());
+    });
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.spy.calledWith({ id: 'id' }));
+  describe('#load', function () {
+    it('should create window._cio.pageHasLoaded', function (done) {
+      window._cio = [];
+      customerio.load();
+      when(function () { return window._cio.pageHasLoaded; }, done);
+    });
+
+    it('should callback', function (done) {
+      customerio.load(done);
+    });
   });
 
-  it('should not send only traits', function () {
-    analytics.identify({ trait: true });
-    assert(!this.spy.called);
+  describe('#initialize', function () {
+    var load, global;
+
+    beforeEach(function () {
+      global = window._cio;
+      window._cio = undefined;
+      load = sinon.spy(customerio, 'load');
+    });
+
+    afterEach(function () {
+      load.restore();
+      window._cio = global;
+    });
+
+    it('should create window._cio', function () {
+      customerio.initialize();
+      assert(window._cio instanceof Array);
+    });
+
+    it('should call #load', function () {
+      customerio.initialize();
+      assert(load.called);
+    });
   });
 
-  it('should send an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(this.spy.calledWith({
-      id: 'id',
-      trait: true
-    }));
+  describe('#identify', function () {
+    var identify;
+
+    beforeEach(function () {
+      identify = sinon.spy(window._cio, 'identify');
+    });
+
+    afterEach(function () {
+      user.reset();
+      identify.restore();
+    });
+
+    it('should send an id', function () {
+      customerio.identify('id', {});
+      assert(identify.calledWith({ id: 'id' }));
+    });
+
+    it('should not send only traits', function () {
+      customerio.identify(null, { trait: true });
+      assert(!identify.called);
+    });
+
+    it('should send an id and traits', function () {
+      customerio.identify('id', { trait: true });
+      assert(identify.calledWith({
+        id: 'id',
+        trait: true
+      }));
+    });
+
+    it('should convert dates', function () {
+      var date = new Date();
+      customerio.identify('id', { date: date });
+      assert(identify.calledWith({
+        id: 'id',
+        date: Math.floor(date / 1000)
+      }));
+    });
+
+    it('should alias created to created_at', function () {
+      var date = new Date();
+      customerio.identify('id', { created: date });
+      assert(identify.calledWith({
+        id: 'id',
+        created_at: Math.floor(date / 1000)
+      }));
+    });
   });
 
-  it('should convert dates', function () {
-    var date = new Date();
-    analytics.identify('id', { date: date });
-    assert(this.spy.calledWith({
-      id: 'id',
-      date: Math.floor(date / 1000)
-    }));
+  describe('#group', function () {
+    var identify;
+
+    beforeEach(function () {
+      user.identify('id', {});
+      identify = sinon.spy(window._cio, 'identify');
+    });
+
+    afterEach(function () {
+      identify.restore();
+      user.reset();
+      group.reset();
+    });
+
+    it('should send an id', function () {
+      customerio.group('id', {});
+      assert(identify.calledWith({ id: 'id', 'Group id': 'id' }));
+    });
+
+    it('should send traits', function () {
+      customerio.group(null, { trait: true });
+      assert(identify.calledWith({ id: 'id', 'Group trait': true }));
+    });
+
+    it('should send an id and traits', function () {
+      customerio.group('id', { trait: true });
+      assert(identify.calledWith({
+        id: 'id',
+        'Group id': 'id',
+        'Group trait': true
+      }));
+    });
+
+    it('should convert dates', function () {
+      var date = new Date();
+      customerio.group(null, { date: date });
+      assert(identify.calledWith({
+        id: 'id',
+        'Group date': Math.floor(date / 1000)
+      }));
+    });
   });
 
-  it('should alias created to created_at', function () {
-    var date = new Date();
-    analytics.identify('id', { created: date });
-    assert(this.spy.calledWith({
-      id: 'id',
-      created_at: Math.floor(date / 1000)
-    }));
-  });
-});
+  describe('#track', function () {
+    var track;
 
-describe('#group', function () {
-  before(function () {
-    analytics.user().reset();
-    analytics.group().reset();
-  });
+    beforeEach(function () {
+      track = sinon.spy(window._cio, 'track');
+    });
 
-  beforeEach(function () {
-    analytics.identify('id');
-    this.spy = sinon.spy(window._cio, 'identify');
-  });
+    afterEach(function () {
+      track.restore();
+    });
 
-  afterEach(function () {
-    this.spy.restore();
-    analytics.user().reset();
-    analytics.group().reset();
-  });
+    it('should send an event', function () {
+      customerio.track('event', {});
+      assert(track.calledWith('event'));
+    });
 
-  it('should send an id', function () {
-    analytics.group('id');
-    assert(this.spy.calledWith({ id: 'id', 'Group id': 'id' }));
-  });
+    it('should send an event and properties', function () {
+      customerio.track('event', { property: true });
+      assert(track.calledWith('event', { property: true }));
+    });
 
-  it('should send traits', function () {
-    analytics.group({ trait: true });
-    assert(this.spy.calledWith({ id: 'id', 'Group trait': true }));
+    it('should convert dates', function () {
+      var date = new Date();
+      customerio.track('event', { date: date });
+      assert(track.calledWith('event', {
+        date: Math.floor(date / 1000)
+      }));
+    });
   });
-
-  it('should send an id and traits', function () {
-    analytics.group('id', { trait: true });
-    assert(this.spy.calledWith({
-      id: 'id',
-      'Group id': 'id',
-      'Group trait': true
-    }));
-  });
-
-  it('should convert dates', function () {
-    var date = new Date();
-    analytics.group({ date: date });
-    assert(this.spy.calledWith({
-      id: 'id',
-      'Group date': Math.floor(date / 1000)
-    }));
-  });
-});
-
-describe('#track', function () {
-  beforeEach(function () {
-    this.spy = sinon.spy(window._cio, 'track');
-  });
-
-  afterEach(function () {
-    this.spy.restore();
-  });
-
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.spy.calledWith('event'));
-  });
-
-  it('should send an event and properties', function () {
-    analytics.track('event', { property: true });
-    assert(this.spy.calledWith('event', { property: true }));
-  });
-
-  it('should convert dates', function () {
-    var date = new Date();
-    analytics.track('event', { date: date });
-    assert(this.spy.calledWith('event', {
-      date: Math.floor(date / 1000)
-    }));
-  });
-});
 
 });

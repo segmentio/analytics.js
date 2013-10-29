@@ -85,11 +85,6 @@ describe('Amplitude', function () {
       assert(window.amplitude.init);
     });
 
-    it('should emit ready', function (done) {
-      amplitude.once('ready', done);
-      amplitude.initialize();
-    });
-
     it('should call #load', function () {
       amplitude.initialize();
       assert(load.called);

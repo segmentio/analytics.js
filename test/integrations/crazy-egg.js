@@ -1,52 +1,71 @@
 
 describe('Crazy Egg', function () {
-
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , equal = require('equals')
-  , sinon = require('sinon')
-  , when = require('when');
-
-var settings = {
-  accountNumber: '00138301'
-};
-
-before(function (done) {
   this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ 'Crazy Egg': settings });
-  this.integration = analytics._integrations['Crazy Egg'];
-  this.options = this.integration.options;
-  when(function () { return window.CE2; }, done);
-});
 
-describe('#name', function () {
-  it('Crazy Egg', function () {
-    assert(this.integration.name == 'Crazy Egg');
-  });
-});
+  var settings = {
+    accountNumber: '00138301'
+  };
 
-describe('#key', function () {
-  it('accountNumber', function () {
-    assert(this.integration.key == 'accountNumber');
-  });
-});
+  var assert = require('assert');
+  var CrazyEgg = require('analytics/lib/integrations/crazy-egg');
+  var crazyegg = new CrazyEgg(settings);
+  var equal = require('equals');
+  var sinon = require('sinon');
+  var when = require('when');
 
-describe('#defaults', function () {
-  it('accountNumber', function () {
-    assert(this.integration.defaults.accountNumber === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
+  describe('#name', function () {
+    it('Crazy Egg', function () {
+      assert(crazyegg.name == 'Crazy Egg');
+    });
   });
 
-  it('should store options', function () {
-    assert(this.options.accountNumber == settings.accountNumber);
+  describe('#defaults', function () {
+    it('accountNumber', function () {
+      assert(crazyegg.defaults.accountNumber === '');
+    });
   });
-});
+
+  describe('#exists', function () {
+    after(function () {
+      window.CE2 = undefined;
+    });
+
+    it('should check for window.CE2', function () {
+      window.CE2 = {};
+      assert(crazyegg.exists());
+      window.CE2 = undefined;
+      assert(!crazyegg.exists());
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window.CE2', function (done) {
+      assert(!window.CE2);
+      crazyegg.load();
+      when(function () { return window.CE2; }, done);
+    });
+
+    it('should callback', function (done) {
+      crazyegg.load(done);
+    });
+  });
+
+  describe('#initialize', function () {
+    var load;
+
+    beforeEach(function () {
+      window.CE2 = undefined;
+      load = sinon.spy(crazyegg, 'load');
+    });
+
+    afterEach(function () {
+      load.restore();
+    });
+
+    it('should call #load', function () {
+      crazyegg.initialize();
+      assert(load.called);
+    });
+  });
 
 });

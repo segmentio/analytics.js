@@ -1,128 +1,161 @@
 
 describe('Clicky', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , equal = require('equals')
-  , sinon = require('sinon')
-  , user = require('analytics/lib/user')
-  , when = require('when');
+  var settings = {
+    siteId: 100649848
+  };
 
-var settings = {
-  siteId: 100649848
-};
+  var assert = require('assert');
+  var Clicky = require('analytics/lib/integrations/clicky');
+  var clicky = new Clicky(settings);
+  var equal = require('equals');
+  var sinon = require('sinon');
+  var user = require('analytics/lib/user');
+  var when = require('when');
 
-before(function (done) {
-  window.clicky_custom = { session: { existing: true }};
-  user.identify('id', { trait: true });
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Clicky: settings });
-  this.integration = analytics._integrations.Clicky;
-  this.options = this.integration.options;
-  when(function () { return window.clicky; }, done);
-});
-
-describe('#name', function () {
-  it('Clicky', function () {
-    assert(this.integration.name == 'Clicky');
-  });
-});
-
-describe('#key', function () {
-  it('siteId', function () {
-    assert(this.integration.key == 'siteId');
-  });
-});
-
-describe('#defaults', function () {
-  it('siteId', function () {
-    assert(this.integration.defaults.siteId === null);
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
+  describe('#name', function () {
+    it('Clicky', function () {
+      assert(clicky.name == 'Clicky');
+    });
   });
 
-  it('should store options', function () {
-    assert(this.options.siteId == settings.siteId);
+  describe('#defaults', function () {
+    it('siteId', function () {
+      assert(clicky.defaults.siteId === null);
+    });
   });
 
-  it('should extend the session with an id and traits', function () {
-    assert(equal(window.clicky_custom.session, {
-      id: 'id',
-      trait: true,
-      existing: true
-    }));
-  });
-});
+  describe('#exists', function () {
+    after(function () {
+      window.clicky_site_ids = undefined;
+    });
 
-describe('#identify', function () {
-  beforeEach(function () {
-    analytics.user().reset();
-    delete window.clicky_custom;
+    it('should check for window.clicky_site_ids', function () {
+      window.clicky_site_ids = undefined;
+      assert(!clicky.exists());
+      window.clicky_site_ids = [];
+      assert(clicky.exists());
+    });
   });
 
-  it('should set an id', function () {
-    analytics.identify('id');
-    assert(equal(window.clicky_custom.session, { id: 'id' }));
+  describe('#load', function () {
+    it('should create window.clicky', function (done) {
+      assert(!window.clicky);
+      clicky.load();
+      when(function () { return window.clicky; }, done);
+    });
+
+    it('should callback', function (done) {
+      clicky.load(done);
+    });
   });
 
-  it('should set traits', function () {
-    analytics.identify({ trait: true });
-    assert(equal(window.clicky_custom.session, { trait: true }));
+  describe('#initialize', function () {
+    var load;
+
+    beforeEach(function () {
+      load = sinon.spy(clicky, 'load');
+    });
+
+    afterEach(function () {
+      user.reset();
+      load.restore();
+      window.clicky_site_ids = undefined;
+      window.clicky_custom = undefined;
+    });
+
+    it('should create window.clicky_site_ids', function () {
+      assert(!window.clicky_site_ids);
+      clicky.initialize();
+      assert(window.clicky_site_ids instanceof Array);
+    });
+
+    it('should extend the window.clicky_custom.session', function () {
+      window.clicky_custom = { session: { existing: true }};
+      user.identify('id', { trait: true });
+      clicky.initialize();
+      assert(equal(window.clicky_custom.session, {
+        id: 'id',
+        trait: true,
+        existing: true
+      }));
+    });
+
+    it('should call #load', function () {
+      clicky.initialize();
+      assert(load.called);
+    });
   });
 
-  it('should set an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(equal(window.clicky_custom.session, {
-      id: 'id',
-      trait: true
-    }));
-  });
-});
+  describe('#identify', function () {
+    before(function (done) {
+      clicky.initialize();
+      clicky.on('ready', done);
+    });
 
-describe('#track', function () {
-  beforeEach(function () {
-    this.spy = sinon.spy(window.clicky, 'goal');
-  });
+    afterEach(function () {
+      user.reset();
+      window.clicky_custom.session = undefined;
+    });
 
-  afterEach(function () {
-    this.spy.restore();
-  });
+    it('should set an id', function () {
+      clicky.identify('id', {});
+      assert(equal(window.clicky_custom.session, { id: 'id' }));
+    });
 
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.spy.calledWith('event'));
-  });
+    it('should set traits', function () {
+      clicky.identify(null, { trait: true });
+      assert(equal(window.clicky_custom.session, { trait: true }));
+    });
 
-  it('should send revenue', function () {
-    analytics.track('event', { revenue: 42.99 });
-    assert(this.spy.calledWith('event', 42.99));
-  });
-});
-
-describe('#pageview', function () {
-  beforeEach(function () {
-    this.spy = sinon.spy(window.clicky, 'log');
+    it('should set an id and traits', function () {
+      clicky.identify('id', { trait: true });
+      assert(equal(window.clicky_custom.session, { id: 'id', trait: true }));
+    });
   });
 
-  afterEach(function () {
-    this.spy.restore();
+  describe('#track', function () {
+    var goal;
+
+    beforeEach(function () {
+      goal = sinon.spy(window.clicky, 'goal');
+    });
+
+    afterEach(function () {
+      goal.restore();
+    });
+
+    it('should send an event', function () {
+      clicky.track('event', {});
+      assert(goal.calledWith('event'));
+    });
+
+    it('should send revenue', function () {
+      clicky.track('event', { revenue: 42.99 });
+      assert(goal.calledWith('event', 42.99));
+    });
   });
 
-  it('should send a default url and title', function () {
-    analytics.pageview();
-    assert(this.spy.calledWith(window.location.pathname, document.title));
-  });
+  describe('#pageview', function () {
+    var log;
 
-  it('should send a url', function () {
-    analytics.pageview('/path');
-    assert(this.spy.calledWith('/path', document.title));
+    beforeEach(function () {
+      log = sinon.spy(window.clicky, 'log');
+    });
+
+    afterEach(function () {
+      log.restore();
+    });
+
+    it('should send a path and name', function () {
+      clicky.page('Page', { path: '/path' });
+      assert(log.calledWith('/path', 'Page'));
+    });
+
+    it('should fallback to title', function () {
+      clicky.page(null, { title: 'Title', path: '/path' });
+      assert(log.calledWith('/path', 'Title'));
+    });
   });
-});
 
 });

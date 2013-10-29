@@ -5971,6 +5971,7 @@ HitTail.prototype.initialize = function (options, ready) {
 require.register("analytics/lib/integrations/hubspot.js", function(exports, require, module){
 
 var callback = require('callback')
+  , convert = require('convert-dates')
   , integration = require('../integration')
   , load = require('load-script');
 
@@ -6029,7 +6030,8 @@ HubSpot.prototype.initialize = function (options, ready) {
 HubSpot.prototype.identify = function (id, traits, options) {
   if (!traits.email) return;
   if (id) traits.id = id;
-  window._hsq.push(["identify", traits]);
+  traits = convertDates(traits);
+  window._hsq.push(['identify', traits]);
 };
 
 
@@ -6042,7 +6044,8 @@ HubSpot.prototype.identify = function (id, traits, options) {
  */
 
 HubSpot.prototype.track = function (event, properties, options) {
-  window._hsq.push(["trackEvent", event, properties]);
+  if (properties) properties = convertDates(properties);
+  window._hsq.push(['trackEvent', event, properties]);
 };
 
 
@@ -6055,6 +6058,18 @@ HubSpot.prototype.track = function (event, properties, options) {
 HubSpot.prototype.pageview = function (url) {
   window._hsq.push(['_trackPageview']);
 };
+
+
+/**
+ * Convert all the dates in the HubSpot properties to millisecond times
+ *
+ * @param {Object} properties
+ */
+
+function convertDates (properties) {
+  return convert(properties, function (date) { return date.getTime(); });
+}
+
 });
 require.register("analytics/lib/integrations/improvely.js", function(exports, require, module){
 

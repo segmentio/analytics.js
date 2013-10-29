@@ -1,3 +1,7 @@
+0.18.4 - October 29, 2013
+-------------------------
+* adding convert-date 0.1.0 support
+
 0.18.3 - October 29, 2013
 -------------------------
 * hubspot: adding fix for date traits/properties (calvinfo)

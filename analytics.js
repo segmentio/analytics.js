@@ -960,7 +960,6 @@ exports.isCrossDomain = function(url){
 };
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
-
 var next = require('next-tick');
 
 
@@ -2956,7 +2955,7 @@ module.exports = exports = Analytics;
  */
 
 exports.VERSION =
-Analytics.prototype.VERSION = '0.18.3';
+Analytics.prototype.VERSION = '0.18.4';
 
 
 /**
@@ -5032,7 +5031,7 @@ Customerio.prototype.initialize = function (options, ready) {
 Customerio.prototype.identify = function (id, traits, options) {
   if (!id) return; // customer.io requires an id
   traits.id = id;
-  convertDates(traits, convertDate);
+  traits = convertDates(traits, convertDate);
   alias(traits, { created: 'created_at' });
   window._cio.identify(traits);
 };
@@ -5065,7 +5064,7 @@ Customerio.prototype.group = function (id, properties, options) {
  */
 
 Customerio.prototype.track = function (event, properties, options) {
-  convertDates(properties, convertDate);
+  properties = convertDates(properties, convertDate);
   window._cio.track(event, properties);
 };
 
@@ -6284,7 +6283,7 @@ Intercom.prototype.identify = function (id, traits, options) {
   if (id) traits.user_id = id;
 
   // handle dates
-  convertDates(traits, formatDate);
+  traits = convertDates(traits, formatDate);
   alias(traits, { created: 'created_at'});
   if (traits.company) alias(traits.company, { created: 'created_at' });
 
@@ -7483,7 +7482,7 @@ Preact.prototype.initialize = function (options, ready) {
 
 Preact.prototype.identify = function (id, traits, options) {
   if (!id) return;
-  convertDates(traits, convertDate);
+  traits = convertDates(traits, convertDate);
   alias(traits, { created: 'created_at' });
 
   window._lnq.push(['_setPersonData', {
@@ -8273,7 +8272,7 @@ Userfox.prototype.identify = function (id, traits, options) {
     email: traits.email
   }]);
 
-  convertDates(traits, formatDate);
+  traits = convertDates(traits, formatDate);
   alias(traits, { created: 'signup_date' });
   window._ufq.push(['track', traits]);
 };
@@ -8391,7 +8390,7 @@ UserVoice.prototype.initialize = function (options, ready) {
 
 UserVoice.prototype.identify = function (id, traits, options) {
   if (id) traits.id = id;
-  convertDates(traits, unix);
+  traits = convertDates(traits, unix);
   alias(traits, { created: 'created_at' });
   push('identify', traits);
 };
@@ -8407,7 +8406,7 @@ UserVoice.prototype.identify = function (id, traits, options) {
 
 UserVoice.prototype.group = function (id, properties, options) {
   if (id) properties.id = id;
-  convertDates(properties, unix);
+  properties = convertDates(properties, unix);
   alias(properties, { created: 'created_at' });
   push('identify', { account: properties });
 };

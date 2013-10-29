@@ -1,122 +1,161 @@
 
 describe('ClickTale', function () {
-
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , date = require('load-date')
-  , sinon = require('sinon')
-  , when = require('when');
-
-var settings = {
-  partitionId: 'www14',
-  projectId: '19370',
-  recordingRatio: '0.0089'
-};
-
-before(function (done) {
   this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ ClickTale: settings });
-  this.integration = analytics._integrations.ClickTale;
-  this.options = this.integration.options;
-  when(function () { return window.ClickTale; }, done);
-});
 
-describe('#name', function () {
-  it('ClickTale', function () {
-    assert(this.integration.name == 'ClickTale');
-  });
-});
+  var settings = {
+    partitionId: 'www14',
+    projectId: '19370',
+    recordingRatio: '0.0089'
+  };
 
-describe('#key', function () {
-  it('projectId', function () {
-    assert(this.integration.key == 'projectId');
-  });
-});
+  var assert = require('assert');
+  var date = require('load-date');
+  var sinon = require('sinon');
+  var user = require('analytics/lib/user');
+  var when = require('when');
+  var ClickTale = require('analytics/lib/integrations/clicktale');
+  var clicktale = new ClickTale(settings);
 
-describe('#defaults', function () {
-  it('httpCdnUrl', function () {
-    assert(this.integration.defaults.httpCdnUrl === 'http://s.clicktale.net/WRe0.js');
+
+  describe('#name', function () {
+    it('ClickTale', function () {
+      assert(clicktale.name == 'ClickTale');
+    });
   });
 
-  it('httpsCdnUrl', function () {
-    assert(this.integration.defaults.httpsCdnUrl === '');
+  describe('#_assumesPageview', function () {
+    it('should be true', function () {
+      assert(clicktale._assumesPageview === true);
+    });
   });
 
-  it('partitionId', function () {
-    assert(this.integration.defaults.partitionId === '');
+  describe('#_readyOnLoad', function () {
+    it('should be true', function () {
+      assert(clicktale._readyOnLoad === true);
+    });
   });
 
-  it('projectId', function () {
-    assert(this.integration.defaults.projectId === '');
+  describe('#defaults', function () {
+    it('httpCdnUrl', function () {
+      assert(clicktale.defaults.httpCdnUrl === 'http://s.clicktale.net/WRe0.js');
+    });
+
+    it('httpsCdnUrl', function () {
+      assert(clicktale.defaults.httpsCdnUrl === '');
+    });
+
+    it('partitionId', function () {
+      assert(clicktale.defaults.partitionId === '');
+    });
+
+    it('projectId', function () {
+      assert(clicktale.defaults.projectId === '');
+    });
+
+    it('recordingRatio', function () {
+      assert(clicktale.defaults.recordingRatio === 0.01);
+    });
   });
 
-  it('recordingRatio', function () {
-    assert(this.integration.defaults.recordingRatio === 0.01);
-  });
-});
+  describe('#exists', function () {
+    after(function () {
+      delete window.WRInitTime;
+    });
 
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options with defaults', function () {
-    assert(this.options.partitionId == settings.partitionId);
-    assert(this.options.projectId == settings.projectId);
-    assert(this.options.recordingRatio == settings.recordingRatio);
-    assert(this.options.httpCdnUrl == this.integration.defaults.httpCdnUrl);
-    assert(this.options.httpsCdnUrl == this.integration.defaults.httpsCdnUrl);
+    it('should check for window.WRInitTime', function () {
+      window.WRInitTime = undefined;
+      assert(!clicktale.exists());
+      window.WRInitTime = 1;
+      assert(clicktale.exists());
+    });
   });
 
-  it('should store the load time', function () {
-    assert(date.getTime() == window.WRInitTime);
-  });
-});
+  describe('#load', function () {
+    it('should create window.ClickTale', function (done) {
+      clicktale.load();
+      when(function () { return window.ClickTale; }, done);
+    });
 
-describe('#identify', function () {
-  beforeEach(function () {
-    analytics.user().reset();
-    this.idSpy = sinon.spy(window, 'ClickTaleSetUID');
-    this.traitSpy = sinon.spy(window, 'ClickTaleField');
-  });
-
-  afterEach(function () {
-    this.idSpy.restore();
-    this.traitSpy.restore();
+    it('should callback', function (done) {
+      clicktale.load(done);
+    });
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.idSpy.calledWith('id'));
+  describe('#initialize', function () {
+    var load;
+
+    beforeEach(function () {
+      load = sinon.spy(clicktale, 'load');
+      window.WRInitTime = undefined;
+    });
+
+    afterEach(function () {
+      load.restore();
+    });
+
+    it('should store the load time', function () {
+      assert(!window.WRInitTime);
+      clicktale.initialize();
+      assert('number' === typeof window.WRInitTime);
+    });
+
+    it('should append the clicktale div', function () {
+      clicktale.initialize();
+      assert(document.getElementById('ClickTaleDiv'));
+    });
+
+    it('should call #load', function () {
+      clicktale.initialize();
+      assert(load.called);
+    });
   });
 
-  it('should send traits', function () {
-    analytics.identify({ trait: true });
-    assert(this.traitSpy.calledWith('trait', true));
+  describe('#identify', function () {
+    var ClickTaleSetUID, ClickTaleField;
+
+    beforeEach(function () {
+      ClickTaleSetUID = sinon.spy(window, 'ClickTaleSetUID');
+      ClickTaleField = sinon.spy(window, 'ClickTaleField');
+    });
+
+    afterEach(function () {
+      user.reset();
+      ClickTaleSetUID.restore();
+      ClickTaleField.restore();
+    });
+
+    it('should send an id', function () {
+      clicktale.identify('id');
+      assert(ClickTaleSetUID.calledWith('id'));
+    });
+
+    it('should send traits', function () {
+      clicktale.identify(null, { trait: true });
+      assert(ClickTaleField.calledWith('trait', true));
+    });
+
+    it('should send an id and traits', function () {
+      clicktale.identify('id', { trait: true });
+      assert(ClickTaleSetUID.calledWith('id'));
+      assert(ClickTaleField.calledWith('trait', true));
+    });
   });
 
-  it('should send an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(this.idSpy.calledWith('id'));
-    assert(this.traitSpy.calledWith('trait', true));
-  });
-});
+  describe('#track', function () {
+    var ClickTaleEvent;
 
-describe('#track', function () {
-  beforeEach(function () {
-    this.spy = sinon.spy(window, 'ClickTaleEvent');
-  });
+    beforeEach(function () {
+      ClickTaleEvent = sinon.spy(window, 'ClickTaleEvent');
+    });
 
-  afterEach(function () {
-    this.spy.restore();
-  });
+    afterEach(function () {
+      ClickTaleEvent.restore();
+    });
 
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.spy.calledWith('event'));
+    it('should send an event', function () {
+      clicktale.track('event');
+      assert(ClickTaleEvent.calledWith('event'));
+    });
   });
-});
 
 });

@@ -30,6 +30,11 @@
 
   <script src="build/build.js"></script>
 
+  <script>
+    var debug = require('debug');
+    debug.enable('*');
+  </script>
+
   {{#if core}}
     <script src="test/core/analytics.js"></script>
     <script src="test/core/cookie.js"></script>
@@ -45,8 +50,8 @@
     <script src="test/integrations/awesomatic.js"></script>
     <script src="test/integrations/bugherd.js"></script>
     <script src="test/integrations/chartbeat.js"></script>
-    <!--<script src="test/integrations/clicktale.js"></script>
-    <script src="test/integrations/clicky.js"></script>
+    <script src="test/integrations/clicktale.js"></script>
+    <!--<script src="test/integrations/clicky.js"></script>
     <script src="test/integrations/comscore.js"></script>
     <script src="test/integrations/crazy-egg.js"></script>
     <script src="test/integrations/customerio.js"></script>

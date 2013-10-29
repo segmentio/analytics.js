@@ -54,7 +54,7 @@ describe('Amplitude', function () {
   });
 
   describe('#load', function () {
-    it('should load the window.amplitude object', function (done) {
+    it('should replace window.amplitude', function (done) {
       assert(!window.amplitude);
       amplitude.load();
       when(function () {
@@ -79,7 +79,7 @@ describe('Amplitude', function () {
       load.restore();
     });
 
-    it('should create the window.amplitude object', function () {
+    it('should create window.amplitude', function () {
       window.amplitude = null;
       amplitude.initialize();
       assert(window.amplitude.init);

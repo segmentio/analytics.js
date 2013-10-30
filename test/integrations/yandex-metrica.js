@@ -1,16 +1,20 @@
 
 describe('Yandex Metrica', function () {
 
-  var settings = {
-    counterId: 22522351
-  };
-
   var Yandex = require('analytics/lib/integrations/yandex-metrica');
-  var yandex = new Yandex(settings);
   var assert = require('assert');
   var sinon = require('sinon');
   var test = require('integration-tester');
   var when = require('when');
+
+  var yandex;
+  var settings = {
+    counterId: 22522351
+  };
+
+  beforeEach(function () {
+    yandex = new Yandex(settings);
+  });
 
   afterEach(function () {
     yandex.reset();
@@ -26,16 +30,14 @@ describe('Yandex Metrica', function () {
     });
 
   describe('#initialize', function () {
-    var load;
-
     beforeEach(function () {
-      load = sinon.spy(yandex, 'load');
+      yandex.load = sinon.spy(yandex, 'load');
       delete window.Ya;
       delete window.yandex_metrika_callbacks;
     });
 
     afterEach(function () {
-      load.restore();
+      yandex.load.restore();
     });
 
     it('should push onto the yandex_metrica_callbacks', function () {
@@ -52,7 +54,7 @@ describe('Yandex Metrica', function () {
 
     it('should call #load', function () {
       yandex.initialize();
-      assert(load.called);
+      assert(yandex.load.called);
     });
   });
 

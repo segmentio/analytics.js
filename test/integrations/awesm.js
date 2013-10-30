@@ -28,18 +28,6 @@ describe('awe.sm', function () {
       .option('events', {});
   });
 
-  describe('#load', function () {
-    it('should set window.AWESM._exists', function (done) {
-      assert(!window.AWESM);
-      awesm.load();
-      when(function () { return window.AWESM && window.AWESM._exists; }, done);
-    });
-
-    it('should callback', function (done) {
-      awesm.load(done);
-    });
-  });
-
   describe('#initialize', function () {
     var load, global;
 
@@ -62,6 +50,18 @@ describe('awe.sm', function () {
     it('should call #load', function () {
       awesm.initialize();
       assert(load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should set window.AWESM._exists', function (done) {
+      assert(!window.AWESM);
+      awesm.load();
+      when(function () { return window.AWESM && window.AWESM._exists; }, done);
+    });
+
+    it('should callback', function (done) {
+      awesm.load(done);
     });
   });
 

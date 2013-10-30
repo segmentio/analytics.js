@@ -29,13 +29,6 @@ describe('Chartbeat', function () {
       .option('uid', null);
   });
 
-  describe('#load', function () {
-    it('should create window.pSUPERFLY', function (done) {
-      chartbeat.load();
-      when(function () { return window.pSUPERFLY; }, done);
-    });
-  });
-
   describe('#initialize', function () {
     var load;
 
@@ -62,6 +55,13 @@ describe('Chartbeat', function () {
     it('should call #load', function () {
       chartbeat.initialize();
       assert(load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window.pSUPERFLY', function (done) {
+      chartbeat.load();
+      when(function () { return window.pSUPERFLY; }, done);
     });
   });
 

@@ -1,6 +1,5 @@
 
 describe('Yandex Metrica', function () {
-  this.timeout(10000);
 
   var settings = {
     counterId: 22522351
@@ -10,63 +9,21 @@ describe('Yandex Metrica', function () {
   var yandex = new Yandex(settings);
   var assert = require('assert');
   var sinon = require('sinon');
+  var test = require('integration-tester');
   var when = require('when');
 
-  describe('#name', function () {
-    it('Yandex Metrica', function () {
-      assert(yandex.name === 'Yandex Metrica');
-    });
+  afterEach(function () {
+    yandex.reset();
   });
 
-  describe('#_assumesPageview', function () {
-    it('should be true', function () {
-      assert(yandex._assumesPageview === true);
+  it('should have the right settings', function () {
+    test(yandex)
+      .name('Yandex Metrica')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('yandex_metrika_callbacks')
+      .option('counterId', null);
     });
-  });
-
-  describe('#_readyOnInitialize', function () {
-    it('should be true', function () {
-      assert(yandex._readyOnInitialize === true);
-    });
-  });
-
-  describe('#defaults', function () {
-    it('counterId', function () {
-      assert(yandex.defaults.counterId === null);
-    });
-  });
-
-  describe('#exists', function () {
-    afterEach(function () {
-      window.yandex_metrika_callbacks = undefined;
-      window.Ya = undefined;
-    });
-
-    it('should check for window.yandex_metrika_callbacks', function () {
-      window.yandex_metrika_callbacks = false;
-      assert(!yandex.exists());
-      window.yandex_metrika_callbacks = true;
-      assert(yandex.exists());
-    });
-
-    it('should check for window.Ya.Metrika', function () {
-      window.Ya = { Metrika: false };
-      assert(!yandex.exists());
-      window.Ya.Metrika = true;
-      assert(yandex.exists());
-    })
-  });
-
-  describe('#load', function () {
-    it('should create the window.Ya.Metrika variable', function (done) {
-      yandex.load();
-      when(function () { return window.Ya && window.Ya.Metrika; }, done);
-    });
-
-    it('should callback', function (done) {
-      yandex.load(done);
-    });
-  });
 
   describe('#initialize', function () {
     var load;
@@ -98,4 +55,16 @@ describe('Yandex Metrica', function () {
       assert(load.called);
     });
   });
+
+  describe('#load', function () {
+    it('should create the window.Ya.Metrika variable', function (done) {
+      yandex.load();
+      when(function () { return window.Ya && window.Ya.Metrika; }, done);
+    });
+
+    it('should callback', function (done) {
+      yandex.load(done);
+    });
+  });
+
 });

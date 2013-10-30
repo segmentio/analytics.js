@@ -28,18 +28,6 @@ describe('BugHerd', function () {
       .option('showFeedbackTab', true);
   });
 
-  describe('#load', function () {
-    it('should create window._bugHerd', function (done) {
-      assert(!window._bugHerd);
-      bugherd.load();
-      when(function () { return window._bugHerd; }, done);
-    });
-
-    it('should callback', function (done) {
-      bugherd.load(done);
-    });
-  });
-
   describe('#initialize', function () {
     var load;
 
@@ -67,6 +55,18 @@ describe('BugHerd', function () {
     it('should call #load', function () {
       bugherd.initialize();
       assert(load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window._bugHerd', function (done) {
+      assert(!window._bugHerd);
+      bugherd.load();
+      when(function () { return window._bugHerd; }, done);
+    });
+
+    it('should callback', function (done) {
+      bugherd.load(done);
     });
   });
 

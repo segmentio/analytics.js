@@ -32,24 +32,6 @@ describe('AdRoll', function () {
       .option('pixId', '');
   });
 
-  describe('#load', function () {
-    beforeEach(function () {
-      // required for load to work
-      window.adroll_adv_id = settings.advId;
-      window.adroll_pix_id = settings.pixId;
-    });
-
-    it('should create window.__adroll', function (done) {
-      assert(!window.__adroll);
-      adroll.load();
-      when(function () { return window.__adroll; }, done);
-    });
-
-    it('should callback', function (done) {
-      adroll.load(done);
-    });
-  });
-
   describe('#initialize', function () {
     var load;
 
@@ -82,6 +64,24 @@ describe('AdRoll', function () {
     it('should call #load', function () {
       adroll.initialize();
       assert(load.called);
+    });
+  });
+
+  describe('#load', function () {
+    beforeEach(function () {
+      // required for load to work
+      window.adroll_adv_id = settings.advId;
+      window.adroll_pix_id = settings.pixId;
+    });
+
+    it('should create window.__adroll', function (done) {
+      assert(!window.__adroll);
+      adroll.load();
+      when(function () { return window.__adroll; }, done);
+    });
+
+    it('should callback', function (done) {
+      adroll.load(done);
     });
   });
 

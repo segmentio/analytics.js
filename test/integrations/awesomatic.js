@@ -25,21 +25,6 @@ describe('Awesomatic', function () {
       .option('appId', '');
   });
 
-  describe('#load', function () {
-    after(function () {
-      window.Awesomatic = undefined;
-    });
-
-    it('should create window.Awesomatic', function (done) {
-      awesomatic.load();
-      when(function () { return window.Awesomatic; }, done);
-    });
-
-    it('should callback', function (done) {
-      awesomatic.load(done);
-    });
-  });
-
   describe('#initialize', function () {
     var load;
 
@@ -54,6 +39,21 @@ describe('Awesomatic', function () {
     it('should call #load', function () {
       awesomatic.initialize();
       assert(load.called);
+    });
+  });
+
+  describe('#load', function () {
+    after(function () {
+      window.Awesomatic = undefined;
+    });
+
+    it('should create window.Awesomatic', function (done) {
+      awesomatic.load();
+      when(function () { return window.Awesomatic; }, done);
+    });
+
+    it('should callback', function (done) {
+      awesomatic.load(done);
     });
   });
 

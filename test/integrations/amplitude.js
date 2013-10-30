@@ -25,20 +25,6 @@ describe('Amplitude', function () {
       .option('trackNamedPages', true);
   });
 
-  describe('#load', function () {
-    it('should replace window.amplitude', function (done) {
-      assert(!window.amplitude);
-      amplitude.load();
-      when(function () {
-        return window.amplitude && window.amplitude.prototype !== Array.prototype;
-      }, done);
-    });
-
-    it('should callback', function (done) {
-      amplitude.load(done);
-    });
-  });
-
   describe('#initialize', function () {
     var load;
 
@@ -60,6 +46,20 @@ describe('Amplitude', function () {
     it('should call #load', function () {
       amplitude.initialize();
       assert(load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should replace window.amplitude', function (done) {
+      assert(!window.amplitude);
+      amplitude.load();
+      when(function () {
+        return window.amplitude && window.amplitude.prototype !== Array.prototype;
+      }, done);
+    });
+
+    it('should callback', function (done) {
+      amplitude.load(done);
     });
   });
 

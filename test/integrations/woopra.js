@@ -1,52 +1,43 @@
 
 describe('Woopra', function () {
-  this.timeout(10000);
 
+  var Woopra = require('analytics/lib/integrations/woopra');
+  var assert = require('assert');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var user = require('analytics/lib/user');
+  var when = require('when');
+
+  var woopra;
   var settings = {
     domain: 'x'
   };
 
-  var Woopra = require('analytics/lib/integrations/woopra');
-  var woopra = new Woopra(settings);
-  var assert = require('assert');
-  var sinon = require('sinon');
-  var user = require('analytics/lib/user');
-  var when = require('when');
-
-  describe('#name', function () {
-    it('Woopra', function () {
-      assert(woopra.name == 'Woopra');
-    });
+  beforeEach(function () {
+    woopra = new Woopra(settings);
+    user.reset();
   });
 
-  describe('#_assumesPageview', function () {
-    it('should be true', function () {
-      assert(woopra._assumesPageview === true);
-    });
+  afterEach(function () {
+    woopra.reset();
   });
 
-  describe('#_readyOnLoad', function () {
-    it('should be true', function () {
-      assert(woopra._readyOnLoad === true);
-    });
-  });
-
-  describe('#defaults', function () {
-    it('domain', function () {
-      assert(woopra.defaults.domain === '');
-    });
+  it('should have the right settings', function () {
+    test(woopra)
+      .name('Woopra')
+      .global('woopra')
+      .assumesPageview()
+      .readyOnLoad()
+      .option('domain', '');
   });
 
   describe('#initialize', function () {
-    var load;
-
     beforeEach(function () {
-      delete window.woopra;
-      load = sinon.stub(woopra, 'load');
+      woopra.load = sinon.stub(woopra, 'load');
     });
 
     afterEach(function () {
-      load.restore();
+      woopra.load.restore();
     });
 
     it('should create a woopra object', function () {
@@ -57,36 +48,33 @@ describe('Woopra', function () {
 
     it('should call #load', function () {
       woopra.initialize();
-      assert(load.called);
+      assert(woopra.load.called);
     });
   });
 
   describe('#identify', function () {
-    var identify;
-
     beforeEach(function () {
-      user.reset();
       woopra.initialize();
-      identify = sinon.spy(window.woopra, 'identify');
+      window.woopra.identify = sinon.spy(window.woopra, 'identify');
     });
 
     afterEach(function () {
-      identify.restore();
+      window.woopra.identify.restore();
     });
 
     it('should send an id', function () {
-      woopra.identify('id', {});
-      assert(identify.calledWith({ id: 'id' }));
+      woopra.identify('id');
+      assert(window.woopra.identify.calledWith({ id: 'id' }));
     });
 
     it('should send traits', function () {
       woopra.identify(null, { trait: true });
-      assert(identify.calledWith({ trait: true }));
+      assert(window.woopra.identify.calledWith({ trait: true }));
     });
 
     it('should send an id and traits', function () {
       woopra.identify('id', { trait: true });
-      assert(identify.calledWith({
+      assert(window.woopra.identify.calledWith({
         id: 'id',
         trait: true
       }));
@@ -94,53 +82,48 @@ describe('Woopra', function () {
   });
 
   describe('#track', function () {
-    var track;
-
     beforeEach(function () {
       user.reset();
       woopra.initialize();
-      track = sinon.spy(window.woopra, 'track');
+      window.woopra.track = sinon.spy(window.woopra, 'track');
     });
 
     afterEach(function () {
-      track.restore();
+      window.woopra.track.restore();
     });
 
     it('should send an event', function () {
-      woopra.track('event', {});
-      assert(track.calledWith('event', {}));
+      woopra.track('event');
+      assert(window.woopra.track.calledWith('event'));
     });
 
     it('should send properties', function () {
       woopra.track('event', { property: 'Property' });
-      assert(track.calledWith('event', { property: 'Property' }));
+      assert(window.woopra.track.calledWith('event', { property: 'Property' }));
     });
   });
 
   describe('#page', function () {
-    var track;
-
     beforeEach(function () {
-      user.reset();
       woopra.initialize();
-      track = sinon.spy(window.woopra, 'track');
+      window.woopra.track = sinon.spy(window.woopra, 'track');
     });
 
     afterEach(function () {
-      track.restore();
+      window.woopra.track.restore();
     });
 
     it('should send a "pv" event with default properties', function () {
-      woopra.page(null, {});
-      assert(track.calledWith('pv', {
+      woopra.page();
+      assert(window.woopra.track.calledWith('pv', {
         title: undefined,
         url: undefined
       }));
     });
 
     it('should send a "pv" event with the specified name', function () {
-      woopra.page('Signup', {});
-      assert(track.calledWith('pv', {
+      woopra.page('Signup');
+      assert(window.woopra.track.calledWith('pv', {
         title: 'Signup',
         url: undefined
       }));
@@ -148,7 +131,7 @@ describe('Woopra', function () {
 
     it('should pass a title', function () {
       woopra.page(null, { title: 'x' });
-      assert(track.calledWith('pv', {
+      assert(window.woopra.track.calledWith('pv', {
         title: 'x',
         url: undefined
       }));
@@ -156,7 +139,7 @@ describe('Woopra', function () {
 
     it('should pass a url', function () {
       woopra.page('Signup', { url: '/signup' });
-      assert(track.calledWith('pv', {
+      assert(window.woopra.track.calledWith('pv', {
         url: '/signup',
         title: 'Signup'
       }));

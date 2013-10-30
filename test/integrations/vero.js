@@ -1,113 +1,116 @@
 
 describe('Vero', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var Vero = require('analytics/lib/integrations/vero');
+  var assert = require('assert');
+  var equal = require('equals');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var user = require('analytics/lib/user');
+  var when = require('when');
 
-var settings = {
-  apiKey: 'x'
-};
+  var vero;
+  var settings = {
+    apiKey: 'x'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Vero: settings });
-  this.integration = analytics._integrations.Vero;
-  this.options = this.integration.options;
-  var stub = window._veroq.push;
-  when(function () { return window._veroq.push != stub; }, done);
-});
-
-describe('#name', function () {
-  it('Vero', function () {
-    assert(this.integration.name == 'Vero');
-  });
-});
-
-describe('#key', function () {
-  it('apiKey', function () {
-    assert(this.integration.key == 'apiKey');
-  });
-});
-
-describe('#defaults', function () {
-  it('apiKey', function () {
-    assert(this.integration.defaults.apiKey === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.apiKey == settings.apiKey);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window._veroq, 'push');
+    vero = new Vero(settings);
+    user.reset();
   });
 
   afterEach(function () {
-    this.stub.restore();
+    vero.reset();
   });
 
-  it('shouldnt send just an id', function () {
-    analytics.identify('id');
-    assert(!this.stub.called);
+  it('should store the proper settings', function () {
+    test(vero)
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('_veroq')
+      .option('apiKey', '');
   });
 
-  it('shouldnt send without an id', function () {
-    analytics.identify({ trait: true });
-    assert(!this.stub.called);
-  });
-
-  it('should send an id and email', function () {
-    analytics.identify('id', { email: 'name@example.com' });
-    assert(this.stub.calledWith(['user', {
-      id: 'id',
-      email: 'name@example.com'
-    }]));
-  });
-
-  it('should send an id and traits', function () {
-    analytics.identify('id', {
-      email: 'name@example.com',
-      trait: true
+  describe('#initialize', function () {
+    beforeEach(function () {
+      vero.load = sinon.stub(vero, 'load');
     });
-    assert(this.stub.calledWith(['user', {
-      id: 'id',
-      email: 'name@example.com',
-      trait: true
-    }]));
-  });
-});
 
-describe('#track', function () {
-  beforeEach(function () {
-    this.stub = sinon.stub(window._veroq, 'push');
-  });
+    afterEach(function () {
+      vero.load.restore();
+    });
 
-  afterEach(function () {
-    this.stub.restore();
-  });
+    it('should call load', function () {
+      vero.initialize();
+      assert(vero.load.called);
+    });
 
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.stub.calledWith(['track', 'event', {}]));
+    it('should push onto _veroq', function () {
+      vero.initialize();
+      assert(equal(window._veroq[0], ['init', { api_key: settings.apiKey }]));
+    });
   });
 
-  it('should send an event and properties', function () {
-    analytics.track('event', { property: true });
-    assert(this.stub.calledWith(['track', 'event', { property: true }]));
+  describe('#identify', function () {
+    beforeEach(function () {
+      vero.initialize();
+      window._veroq.push = sinon.spy(window._veroq, 'push');
+    });
+
+    afterEach(function () {
+      window._veroq.push.restore();
+    });
+
+    it('shouldnt send just an id', function () {
+      vero.identify('id');
+      assert(!window._veroq.push.called);
+    });
+
+    it('shouldnt send without an id', function () {
+      vero.identify(null, { trait: true });
+      assert(!window._veroq.push.called);
+    });
+
+    it('should send an id and email', function () {
+      vero.identify('id', { email: 'name@example.com' });
+      assert(window._veroq.push.calledWith(['user', {
+        id: 'id',
+        email: 'name@example.com'
+      }]));
+    });
+
+    it('should send an id and traits', function () {
+      vero.identify('id', {
+        email: 'name@example.com',
+        trait: true
+      });
+      assert(window._veroq.push.calledWith(['user', {
+        id: 'id',
+        email: 'name@example.com',
+        trait: true
+      }]));
+    });
   });
-});
+
+  describe('#track', function () {
+    beforeEach(function () {
+      vero.initialize();
+      window._veroq.push = sinon.stub(window._veroq, 'push');
+    });
+
+    afterEach(function () {
+      window._veroq.push.restore();
+    });
+
+    it('should send an event', function () {
+      vero.track('event');
+      assert(window._veroq.push.calledWith(['track', 'event', undefined]));
+    });
+
+    it('should send an event and properties', function () {
+      vero.track('event', { property: true });
+      assert(window._veroq.push.calledWith(['track', 'event', { property: true }]));
+    });
+  });
 
 });

@@ -547,6 +547,182 @@ function array(obj, fn) {
   }
 }
 });
+require.register("component-indexof/index.js", function(exports, require, module){
+module.exports = function(arr, obj){
+  if (arr.indexOf) return arr.indexOf(obj);
+  for (var i = 0; i < arr.length; ++i) {
+    if (arr[i] === obj) return i;
+  }
+  return -1;
+};
+});
+require.register("component-emitter/index.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var index = require('indexof');
+
+/**
+ * Expose `Emitter`.
+ */
+
+module.exports = Emitter;
+
+/**
+ * Initialize a new `Emitter`.
+ *
+ * @api public
+ */
+
+function Emitter(obj) {
+  if (obj) return mixin(obj);
+};
+
+/**
+ * Mixin the emitter properties.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function mixin(obj) {
+  for (var key in Emitter.prototype) {
+    obj[key] = Emitter.prototype[key];
+  }
+  return obj;
+}
+
+/**
+ * Listen on the given `event` with `fn`.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.on =
+Emitter.prototype.addEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+  (this._callbacks[event] = this._callbacks[event] || [])
+    .push(fn);
+  return this;
+};
+
+/**
+ * Adds an `event` listener that will be invoked a single
+ * time then automatically removed.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.once = function(event, fn){
+  var self = this;
+  this._callbacks = this._callbacks || {};
+
+  function on() {
+    self.off(event, on);
+    fn.apply(this, arguments);
+  }
+
+  fn._off = on;
+  this.on(event, on);
+  return this;
+};
+
+/**
+ * Remove the given callback for `event` or all
+ * registered callbacks.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.off =
+Emitter.prototype.removeListener =
+Emitter.prototype.removeAllListeners =
+Emitter.prototype.removeEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+
+  // all
+  if (0 == arguments.length) {
+    this._callbacks = {};
+    return this;
+  }
+
+  // specific event
+  var callbacks = this._callbacks[event];
+  if (!callbacks) return this;
+
+  // remove all handlers
+  if (1 == arguments.length) {
+    delete this._callbacks[event];
+    return this;
+  }
+
+  // remove specific handler
+  var i = index(callbacks, fn._off || fn);
+  if (~i) callbacks.splice(i, 1);
+  return this;
+};
+
+/**
+ * Emit `event` with the given args.
+ *
+ * @param {String} event
+ * @param {Mixed} ...
+ * @return {Emitter}
+ */
+
+Emitter.prototype.emit = function(event){
+  this._callbacks = this._callbacks || {};
+  var args = [].slice.call(arguments, 1)
+    , callbacks = this._callbacks[event];
+
+  if (callbacks) {
+    callbacks = callbacks.slice(0);
+    for (var i = 0, len = callbacks.length; i < len; ++i) {
+      callbacks[i].apply(this, args);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Return array of callbacks for `event`.
+ *
+ * @param {String} event
+ * @return {Array}
+ * @api public
+ */
+
+Emitter.prototype.listeners = function(event){
+  this._callbacks = this._callbacks || {};
+  return this._callbacks[event] || [];
+};
+
+/**
+ * Check if this emitter has `event` handlers.
+ *
+ * @param {String} event
+ * @return {Boolean}
+ * @api public
+ */
+
+Emitter.prototype.hasListeners = function(event){
+  return !! this.listeners(event).length;
+};
+
+});
 require.register("component-event/index.js", function(exports, require, module){
 
 /**
@@ -709,12 +885,13 @@ var global = (function(){ return this })();
 
 module.exports = function(fn) {
   var id = n++;
+  var called;
 
   function once(){
     // no receiver
     if (this == global) {
-      if (once.called) return;
-      once.called = true;
+      if (called) return;
+      called = true;
       return fn.apply(this, arguments);
     }
 
@@ -1067,8 +1244,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -1342,12 +1524,6 @@ require.register("segmentio-alias/index.js", function(exports, require, module){
 
 var type = require('type');
 
-try {
-  var clone = require('clone');
-} catch (e) {
-  var clone = require('clone-component');
-}
-
 
 /**
  * Expose `alias`.
@@ -1365,8 +1541,8 @@ module.exports = alias;
 
 function alias (obj, method) {
   switch (type(method)) {
-    case 'object': return aliasByDictionary(clone(obj), method);
-    case 'function': return aliasByFunction(clone(obj), method);
+    case 'object': return aliasByDictionary(obj, method);
+    case 'function': return aliasByFunction(obj, method);
   }
 }
 
@@ -1384,7 +1560,6 @@ function aliasByDictionary (obj, aliases) {
     obj[aliases[key]] = obj[key];
     delete obj[key];
   }
-  return obj;
 }
 
 
@@ -1400,7 +1575,6 @@ function aliasByFunction (obj, convert) {
     obj[convert(key)] = obj[key];
     delete obj[key];
   }
-  return obj;
 }
 });
 require.register("segmentio-canonical/index.js", function(exports, require, module){
@@ -2125,6 +2299,65 @@ if (perf && perf.timing && perf.timing.responseEnd) {
 
 module.exports = time;
 });
+require.register("segmentio-load-script/index.js", function(exports, require, module){
+var type = require('type');
+
+
+module.exports = function loadScript (options, callback) {
+    if (!options) throw new Error('Cant load nothing...');
+
+    // Allow for the simplest case, just passing a `src` string.
+    if (type(options) === 'string') options = { src : options };
+
+    var https = document.location.protocol === 'https:' ||
+                document.location.protocol === 'chrome-extension:';
+
+    // If you use protocol relative URLs, third-party scripts like Google
+    // Analytics break when testing with `file:` so this fixes that.
+    if (options.src && options.src.indexOf('//') === 0) {
+        options.src = https ? 'https:' + options.src : 'http:' + options.src;
+    }
+
+    // Allow them to pass in different URLs depending on the protocol.
+    if (https && options.https) options.src = options.https;
+    else if (!https && options.http) options.src = options.http;
+
+    // Make the `<script>` element and insert it before the first script on the
+    // page, which is guaranteed to exist since this Javascript is running.
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.async = true;
+    script.src = options.src;
+
+    var firstScript = document.getElementsByTagName('script')[0];
+    firstScript.parentNode.insertBefore(script, firstScript);
+
+    // If we have a callback, attach event handlers, even in IE. Based off of
+    // the Third-Party Javascript script loading example:
+    // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
+    if (callback && type(callback) === 'function') {
+        if (script.addEventListener) {
+            script.addEventListener('load', function (event) {
+                callback(null, event);
+            }, false);
+            script.addEventListener('error', function (event) {
+                callback(new Error('Failed to load the script.'), event);
+            }, false);
+        } else if (script.attachEvent) {
+            script.attachEvent('onreadystatechange', function (event) {
+                if (/complete|loaded/.test(script.readyState)) {
+                    callback(null, event);
+                }
+            });
+        }
+    }
+
+    // Return the script element in case they want to do anything special, like
+    // give it an ID or attributes.
+    return script;
+};
+
+});
 require.register("component-to-function/index.js", function(exports, require, module){
 
 /**
@@ -2272,65 +2505,6 @@ function objectToFunction(obj) {
     return true;
   }
 }
-});
-require.register("segmentio-load-script/index.js", function(exports, require, module){
-var type = require('type');
-
-
-module.exports = function loadScript (options, callback) {
-    if (!options) throw new Error('Cant load nothing...');
-
-    // Allow for the simplest case, just passing a `src` string.
-    if (type(options) === 'string') options = { src : options };
-
-    var https = document.location.protocol === 'https:' ||
-                document.location.protocol === 'chrome-extension:';
-
-    // If you use protocol relative URLs, third-party scripts like Google
-    // Analytics break when testing with `file:` so this fixes that.
-    if (options.src && options.src.indexOf('//') === 0) {
-        options.src = https ? 'https:' + options.src : 'http:' + options.src;
-    }
-
-    // Allow them to pass in different URLs depending on the protocol.
-    if (https && options.https) options.src = options.https;
-    else if (!https && options.http) options.src = options.http;
-
-    // Make the `<script>` element and insert it before the first script on the
-    // page, which is guaranteed to exist since this Javascript is running.
-    var script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.async = true;
-    script.src = options.src;
-
-    var firstScript = document.getElementsByTagName('script')[0];
-    firstScript.parentNode.insertBefore(script, firstScript);
-
-    // If we have a callback, attach event handlers, even in IE. Based off of
-    // the Third-Party Javascript script loading example:
-    // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
-    if (callback && type(callback) === 'function') {
-        if (script.addEventListener) {
-            script.addEventListener('load', function (event) {
-                callback(null, event);
-            }, false);
-            script.addEventListener('error', function (event) {
-                callback(new Error('Failed to load the script.'), event);
-            }, false);
-        } else if (script.attachEvent) {
-            script.attachEvent('onreadystatechange', function (event) {
-                if (/complete|loaded/.test(script.readyState)) {
-                    callback(null, event);
-                }
-            });
-        }
-    }
-
-    // Return the script element in case they want to do anything special, like
-    // give it an ID or attributes.
-    return script;
-};
-
 });
 require.register("segmentio-memoize-async/index.js", function(exports, require, module){
 
@@ -2537,10 +2711,10 @@ function chooseUrl (options) {
 });
 require.register("segmentio-new-date/lib/index.js", function(exports, require, module){
 
-var is = require('is')
-  , isodate = require('isodate')
-  , milliseconds = require('./milliseconds')
-  , seconds = require('./seconds');
+var is = require('is');
+var isodate = require('isodate');
+var milliseconds = require('./milliseconds');
+var seconds = require('./seconds');
 
 
 /**
@@ -2551,8 +2725,8 @@ var is = require('is')
  */
 
 module.exports = function newDate (val) {
+  if (is.date(val)) return val;
   if (is.number(val)) return new Date(toMs(val));
-  if (is.date(val)) return new Date(val.getTime()); // firefox woulda floored
 
   // date strings
   if (isodate.is(val)) return isodate.parse(val);
@@ -2940,6 +3114,24 @@ module.exports = function (urlStr) {
   return topLevel ? topLevel[0] : host;
 };
 });
+require.register("segmentio-use-https/index.js", function(exports, require, module){
+
+/**
+ * Protocol.
+ */
+
+var protocol = document.location.protocol;
+
+
+/**
+ * Expose whether they should use `https:` for loading scripts.
+ */
+
+module.exports = (
+  protocol == 'https:' ||
+  protocol == 'chrome-extension'
+);
+});
 require.register("timoxley-next-tick/index.js", function(exports, require, module){
 "use strict"
 
@@ -3053,6 +3245,8 @@ function debug(name) {
   if (!debug.enabled(name)) return function(){};
 
   return function(fmt){
+    fmt = coerce(fmt);
+
     var curr = new Date;
     var ms = curr - (debug[name] || curr);
     debug[name] = curr;
@@ -3155,9 +3349,20 @@ debug.enabled = function(name) {
   return false;
 };
 
+/**
+ * Coerce `val`.
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
 // persist
 
-if (window.localStorage) debug.enable(localStorage.debug);
+try {
+  if (window.localStorage) debug.enable(localStorage.debug);
+} catch(e){}
 
 });
 require.register("analytics/lib/index.js", function(exports, require, module){
@@ -4090,174 +4295,6 @@ module.exports = bind.all(new Group());
 module.exports.Group = Group;
 
 });
-require.register("analytics/lib/integration.js", function(exports, require, module){
-
-var after = require('after');
-var bind = require('bind');
-var callback = require('callback');
-var clone = require('clone');
-var debug = require('debug');
-var defaults = require('defaults');
-var each = require('each');
-var slug = require('slug');
-
-
-/**
- * Expose `createIntegration`.
- */
-
-module.exports = createIntegration;
-
-
-/**
- * Create a new Integration constructor.
- *
- * @param {String} name
- */
-
-function createIntegration (name) {
-
-  /**
-   * Initialize a new `Integration`.
-   *
-   * @param {Object} options
-   * @param {Function} ready
-   * @param {Object} analytics
-   */
-
-  function Integration (options, ready, analytics) {
-    this.options = defaults(clone(options) || {}, this.defaults);
-    this.analytics = analytics;
-    this._queue = [];
-    this._initialized = false;
-    this._ready = false;
-    this.ready = readyHandler(ready);
-    this.debug = debug('analytics:integration:' + slug(name));
-    bind.all(this);
-
-    // BACKWARDS COMPATIBILITY: some providers had "initial" pageview settings
-    if (false === this.options.initialPageview) {
-      this.prototype.page = after(1, this.prototype.page);
-    }
-  }
-
-  /**
-   * Add a new option to the integration by `key` with default `value`.
-   *
-   * @param {String} key
-   * @param {Mixed} value
-   * @return {Integration}
-   */
-
-  Integration.option = function (key, value) {
-    this.prototype.defaults[key] = value;
-    return this;
-  };
-
-  /**
-   * Mark the integration as assuming an initial pageview, so to defer loading
-   * the script until the first `page` call, noop the first `initialize`.
-   *
-   * @return {Integration}
-   */
-
-  Integration.assumesPageview = function () {
-    this.prototype._assumesPageview = true;
-    this.prototype.initialize = after(1, this.prototype.initialize);
-    return this;
-  };
-
-  /**
-   * Name.
-   */
-
-  Integration.prototype.name = name;
-
-  /**
-   * Defaults.
-   */
-
-  Integration.prototype.defaults = {};
-
-  /**
-   * Initialize noop.
-   */
-
-  Integration.prototype.initialize = function () {
-    this.load(this.ready);
-  };
-
-  /**
-   * Load noop.
-   */
-
-  Integration.prototype.load = function (fn) {
-    callback.async(fn);
-  };
-
-  /**
-   * Invoke a `method` that may or may not exist on the prototype with `args`,
-   * queueing or not depending on whether the integration is "ready". Don't
-   * trust the method call, since it contains integration party code.
-   *
-   * @param {String} method
-   * @param {Mixed} args...
-   * @api private
-   */
-
-  Integration.prototype.invoke = function (method) {
-    if (!this[method]) return;
-    var args = [].slice.call(arguments, 1);
-    if (!this._ready) return this.queue(method, args);
-
-    try {
-      this.debug('%s with %o', method, args);
-      this[method].apply(this, args);
-    } catch (e) {
-      this.debug('error %o calling %s with %o', e, method, args);
-    }
-  };
-
-  /**
-   * Queue a `method` with `args`. If the integration assumes an initial
-   * pageview, then let the first call to `page` pass through to `initialize`.
-   *
-   * @param {String} method
-   * @param {Array} args
-   * @api private
-   */
-
-  Integration.prototype.queue = function (method, args) {
-    if ('page' == method && this._assumesPageview && !this._loaded) {
-      return this.initialize();
-    }
-
-    this._queue.push({ method: method, args: args });
-  };
-
-  /**
-   * Return `Integration`.
-   */
-
-  return Integration;
-}
-
-
-/**
- * Return a ready handler with a given `ready` callback.
- *
- * @param {Function} callback
- */
-
-function readyHandler (callback) {
-  return function () {
-    var call;
-    this._ready = true;
-    while (call = this._queue.shift()) this.invoke(call.method, call.args);
-    callback();
-  };
-}
-});
 require.register("analytics/lib/integrations.js", function(exports, require, module){
 
 var each = require('each');
@@ -4652,10 +4689,269 @@ module.exports = bind.all(new User());
 module.exports.User = User;
 
 });
+require.register("analytics/lib/integration/index.js", function(exports, require, module){
+
+var bind = require('bind');
+var callback = require('callback');
+var clone = require('clone');
+var debug = require('debug');
+var defaults = require('defaults');
+var protos = require('./protos');
+var slug = require('slug');
+var statics = require('./statics');
+
+
+/**
+ * Expose `createIntegration`.
+ */
+
+module.exports = createIntegration;
+
+
+/**
+ * Create a new Integration constructor.
+ *
+ * @param {String} name
+ */
+
+function createIntegration (name) {
+
+  /**
+   * Initialize a new `Integration`.
+   *
+   * @param {Object} options
+   * @param {Function} ready
+   * @param {Object} analytics
+   */
+
+  function Integration (options, analytics) {
+    this.debug = debug('analytics:integration:' + slug(name));
+    this.options = defaults(clone(options) || {}, this.defaults);
+    this.analytics = analytics;
+    this._queue = [];
+    this._wrapInitialize();
+    this._wrapLoad();
+    this._wrapPage();
+    this.once('ready', bind(this, this.flush));
+  }
+
+  Integration.prototype.defaults = {};
+  Integration.prototype.name = name;
+  for (var key in statics) Integration[key] = statics[key];
+  for (var key in protos) Integration.prototype[key] = protos[key];
+  return Integration;
+}
+});
+require.register("analytics/lib/integration/protos.js", function(exports, require, module){
+
+var after = require('after');
+var callback = require('callback');
+var Emitter = require('emitter');
+
+
+/**
+ * Mixin emitter.
+ */
+
+Emitter(exports);
+
+
+/**
+ * Exists noop.
+ */
+
+exports.exists = function () {
+  return false;
+};
+
+/**
+ * Initialize noop.
+ */
+
+exports.initialize = function () {
+  this.load();
+};
+
+/**
+ * Load noop.
+ */
+
+exports.load = function (fn) {
+  this.emit('ready');
+  callback.async(fn);
+};
+
+/**
+ * Invoke a `method` that may or may not exist on the prototype with `args`,
+ * queueing or not depending on whether the integration is "ready". Don't
+ * trust the method call, since it contains integration party code.
+ *
+ * @param {String} method
+ * @param {Mixed} args...
+ * @api private
+ */
+
+exports.invoke = function (method) {
+  if (!this[method]) return;
+  var args = [].slice.call(arguments, 1);
+  if (!this._ready) return this.queue(method, args);
+
+  try {
+    this.debug('%s with %o', method, args);
+    this[method].apply(this, args);
+  } catch (e) {
+    this.debug('error %o calling %s with %o', e, method, args);
+  }
+};
+
+/**
+ * Queue a `method` with `args`. If the integration assumes an initial
+ * pageview, then let the first call to `page` pass through to `initialize`.
+ *
+ * @param {String} method
+ * @param {Array} args
+ * @api private
+ */
+
+exports.queue = function (method, args) {
+  if ('page' == method && this._assumesPageview && !this._initialized) {
+    this._initialized = true;
+    return this.initialize();
+  }
+
+  this._queue.push({ method: method, args: args });
+};
+
+
+/**
+ * Flush the internal queue.
+ *
+ * @api private
+ */
+
+exports.flush = function () {
+  var call;
+  while (call = this._queue.shift()) this[call.method].apply(this, call.args);
+};
+
+
+/**
+ * Wrap the initialize method in an exists check, so we don't have to do it for
+ * every single integration.
+ *
+ * @api private
+ */
+
+exports._wrapInitialize = function () {
+  var initialize = this.initialize;
+  this.initialize = function () {
+    if (this.exists()) {
+      this.debug('already loaded');
+      this.emit('ready');
+      return;
+    }
+
+    initialize.apply(this, arguments);
+    if (this._readyOnInitialize) this.emit('ready');
+  };
+};
+
+
+/**
+ * Wrap the load method in `debug` calls, so every integration gets them
+ * automatically.
+ *
+ * @api private
+ */
+
+exports._wrapLoad = function () {
+  var load = this.load;
+  this.load = function (callback) {
+    var self = this;
+    this.debug('loading');
+    load.call(this, function (err, e) {
+      self.debug('loaded');
+      self.emit('load');
+      if (self._readyOnLoad) self.emit('ready');
+      callback && callback(err, e);
+    });
+  };
+};
+
+
+/**
+ * BACKWARDS COMPATIBILITY: Wrap the page method if the old `initialPageview`
+ * option was set to `false`.
+ *
+ * @api private
+ */
+
+exports._wrapPage = function () {
+  if (this.options.initialPageview === false) {
+    this.prototype.page = after(1, this.prototype.page);
+  }
+};
+});
+require.register("analytics/lib/integration/statics.js", function(exports, require, module){
+
+var after = require('after');
+
+
+/**
+ * Add a new option to the integration by `key` with default `value`.
+ *
+ * @param {String} key
+ * @param {Mixed} value
+ * @return {Integration}
+ */
+
+exports.option = function (key, value) {
+  this.prototype.defaults[key] = value;
+  return this;
+};
+
+
+/**
+ * Mark the integration as assuming an initial pageview, so to defer loading
+ * the script until the first `page` call, noop the first `initialize`.
+ *
+ * @return {Integration}
+ */
+
+exports.assumesPageview = function () {
+  this.prototype._assumesPageview = true;
+  this.prototype.initialize = after(1, this.prototype.initialize);
+  return this;
+};
+
+
+/**
+ * Mark the integration as being "ready" once `load` is called.
+ *
+ * @return {Integration}
+ */
+
+exports.readyOnLoad = function () {
+  this.prototype._readyOnLoad = true;
+  return this;
+};
+
+
+/**
+ * Mark the integration as being "ready" once `load` is called.
+ *
+ * @return {Integration}
+ */
+
+exports.readyOnInitialize = function () {
+  this.prototype._readyOnInitialize = true;
+  return this;
+};
+});
 require.register("analytics/lib/integrations/adroll.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script-once');
+var load = require('load-script');
 var user = require('../user');
 
 
@@ -4665,12 +4961,25 @@ var user = require('../user');
 
 var AdRoll = module.exports = integration('AdRoll')
   .assumesPageview()
+  .readyOnLoad()
   .option('advId', '')
   .option('pixId', '');
 
 
 /**
- * Initialize AdRoll.
+ * Exists?
+ */
+
+AdRoll.prototype.exists = function () {
+  return !! window.__adroll_loaded;
+};
+
+
+/**
+ * Initialize.
+ *
+ * http://support.adroll.com/getting-started-in-4-easy-steps/#step-one
+ * http://support.adroll.com/enhanced-conversion-tracking/
  */
 
 AdRoll.prototype.initialize = function () {
@@ -4683,8 +4992,7 @@ AdRoll.prototype.initialize = function () {
   window.adroll_pix_id = options.pixId;
   window.adroll_custom_data = traits;
   window.__adroll_loaded = true;
-
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -4705,7 +5013,7 @@ require.register("analytics/lib/integrations/amplitude.js", function(exports, re
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script-once');
+var load = require('load-script');
 
 
 /**
@@ -4713,9 +5021,20 @@ var load = require('load-script-once');
  */
 
 var Amplitude = module.exports = integration('Amplitude')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('apiKey', '')
   .option('trackAllPages', false)
   .option('trackNamedPages', true);
+
+
+/**
+ * Exists?
+ */
+
+Amplitude.prototype.exists = function () {
+  return !! window.amplitude;
+};
 
 
 /**
@@ -4725,13 +5044,8 @@ var Amplitude = module.exports = integration('Amplitude')
  */
 
 Amplitude.prototype.initialize = function () {
-  if (window.amplitude) return callback.async(this.ready);
-  (function(e,t){var r=e.amplitude||{};
-  r._q=[];function i(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)));};}
-  var s=["init","logEvent","setUserId","setGlobalUserProperties","setVersionName"];
-  for(var c=0;c<s.length;c++){i(s[c]);}e.amplitude=r;})(window,document);
+  (function(e,t){var r=e.amplitude||{}; r._q=[];function i(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)));};} var s=["init","logEvent","setUserId","setGlobalUserProperties","setVersionName"]; for(var c=0;c<s.length;c++){i(s[c]);}e.amplitude=r;})(window,document);
   window.amplitude.init(this.options.apiKey);
-  callback.async(this.ready);
   this.load();
 };
 
@@ -4797,7 +5111,7 @@ Amplitude.prototype.page = function (name, properties, options) {
 require.register("analytics/lib/integrations/awesm.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script-once');
+var load = require('load-script');
 var user = require('../user');
 
 
@@ -4806,8 +5120,19 @@ var user = require('../user');
  */
 
 var Awesm = module.exports = integration('awe.sm')
+  .assumesPageview()
+  .readyOnLoad()
   .option('apiKey', '')
   .option('events', {});
+
+
+/**
+ * Exists?
+ */
+
+Awesm.prototype.exists = function () {
+  return !! window.AWESM;
+};
 
 
 /**
@@ -4817,15 +5142,13 @@ var Awesm = module.exports = integration('awe.sm')
  */
 
 Awesm.prototype.initialize = function () {
-  var options = this.options;
-  window.AWESM = window.AWESM || {};
-  window.AWESM.api_key = options.apiKey;
-  this.load(this.ready);
+  window.AWESM = { api_key: this.options.apiKey };
+  this.load();
 };
 
 
 /**
- * Load the awe.sm library.
+ * Load.
  *
  * @param {Function} callback
  */
@@ -4855,7 +5178,8 @@ Awesm.prototype.track = function (event, properties, options) {
 require.register("analytics/lib/integrations/awesomatic.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script-once');
+var load = require('load-script');
+var noop = function(){};
 var onBody = require('on-body');
 
 
@@ -4864,7 +5188,17 @@ var onBody = require('on-body');
  */
 
 var Awesomatic = module.exports = integration('Awesomatic')
+  .assumesPageview()
   .option('appId', '');
+
+
+/**
+ * Exists?
+ */
+
+Awesomatic.prototype.exists = function () {
+  return !! window.Awesomatic;
+};
 
 
 /**
@@ -4872,10 +5206,12 @@ var Awesomatic = module.exports = integration('Awesomatic')
  */
 
 Awesomatic.prototype.initialize = function () {
-  var ready = this.ready;
+  var self = this;
   var id = this.options.appId;
   this.load(function () {
-    window.Awesomatic.initialize({ appId: id }, ready);
+    window.Awesomatic.initialize({ appId: id }, function () {
+      self.emit('ready');
+    });
   });
 };
 
@@ -4909,7 +5245,7 @@ Awesomatic.prototype.identify = function (id, traits, options) {
 require.register("analytics/lib/integrations/bugherd.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script-once');
+var load = require('load-script');
 
 
 /**
@@ -4917,8 +5253,19 @@ var load = require('load-script-once');
  */
 
 var BugHerd = module.exports = integration('BugHerd')
+  .assumesPageview()
+  .readyOnLoad()
   .option('apiKey', '')
   .option('showFeedbackTab', true);
+
+
+/**
+ * Exists?
+ */
+
+BugHerd.prototype.exists = function () {
+  return !! window.BugHerdConfig;
+};
 
 
 /**
@@ -4928,10 +5275,8 @@ var BugHerd = module.exports = integration('BugHerd')
  */
 
 BugHerd.prototype.initialize = function () {
-  var options = this.options;
-  var feedback = options.showFeedbackTab;
-  window.BugHerdConfig = { feedback: { hide: !feedback }};
-  this.load(this.ready);
+  window.BugHerdConfig = { feedback: { hide: !this.options.showFeedbackTab }};
+  this.load();
 };
 
 
@@ -4942,15 +5287,14 @@ BugHerd.prototype.initialize = function () {
  */
 
 BugHerd.prototype.load = function (callback) {
-  var key = this.options.apiKey;
-  load('//www.bugherd.com/sidebarv2.js?apikey=' + key, callback);
+  load('//www.bugherd.com/sidebarv2.js?apikey=' + this.options.apiKey, callback);
 };
 });
 require.register("analytics/lib/integrations/chartbeat.js", function(exports, require, module){
 
 var integration = require('../integration');
 var onBody = require('on-body');
-var load = require('load-script-once');
+var load = require('load-script');
 
 
 /**
@@ -4959,8 +5303,18 @@ var load = require('load-script-once');
 
 var Chartbeat = module.exports = integration('Chartbeat')
   .assumesPageview()
+  .readyOnLoad()
   .option('domain', '')
   .option('uid', null);
+
+
+/**
+ * Exists?
+ */
+
+Chartbeat.prototype.exists = function () {
+  return !! window._sf_async_config;
+};
 
 
 /**
@@ -4972,7 +5326,7 @@ var Chartbeat = module.exports = integration('Chartbeat')
 Chartbeat.prototype.initialize = function () {
   window._sf_async_config = this.options;
   onBody(function () { window._sf_endpt = new Date().getTime(); });
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -5012,7 +5366,8 @@ var date = require('load-date');
 var domify = require('domify');
 var each = require('each');
 var integration = require('../integration');
-var load = require('load-script-once');
+var useHttps = require('use-https');
+var load = require('load-script');
 var onBody = require('on-body');
 
 
@@ -5021,11 +5376,22 @@ var onBody = require('on-body');
  */
 
 var ClickTale = module.exports = integration('ClickTale')
-  .option('httpCdnUrl', 'http,//s.clicktale.net/WRe0.js')
+  .assumesPageview()
+  .readyOnLoad()
+  .option('httpCdnUrl', 'http://s.clicktale.net/WRe0.js')
   .option('httpsCdnUrl', '')
   .option('projectId', '')
   .option('recordingRatio', 0.01)
   .option('partitionId', '');
+
+
+/**
+ * Exists?
+ */
+
+ClickTale.prototype.exists = function () {
+  return !! window.WRInitTime;
+};
 
 
 /**
@@ -5038,20 +5404,12 @@ ClickTale.prototype.initialize = function () {
   var options = this.options;
   window.WRInitTime = date.getTime();
 
-  // if we're on HTTPS but don't have a secure library, return early
-  if (document.location.protocol === 'https:' && !options.httpsCdnUrl) {
-    return this.debug('https option required');
-  }
-
-  // add the required div to the body
   onBody(function (body) {
     body.appendChild(domify('<div id="ClickTaleDiv" style="display: none;">'));
   });
 
-  var self = this;
   this.load(function () {
     window.ClickTale(options.projectId, options.recordingRatio, options.partitionId);
-    self.ready();
   });
 };
 
@@ -5065,6 +5423,7 @@ ClickTale.prototype.initialize = function () {
 ClickTale.prototype.load = function (callback) {
   var http = this.options.httpCdnUrl;
   var https = this.options.httpsCdnUrl;
+  if (useHttps && !https) return this.debug('https option required');
   load({ http: http, https: https }, callback);
 };
 
@@ -5106,7 +5465,7 @@ require.register("analytics/lib/integrations/clicky.js", function(exports, requi
 
 var extend = require('extend');
 var integration = require('../integration');
-var load = require('load-script-once');
+var load = require('load-script');
 var user = require('../user');
 
 
@@ -5115,7 +5474,18 @@ var user = require('../user');
  */
 
 var Clicky = module.exports = integration('Clicky')
+  .assumesPageview()
+  .readyOnLoad()
   .option('siteId', null);
+
+
+/**
+ * Exists?
+ */
+
+Clicky.prototype.exists = function () {
+  return !! window.clicky_site_ids;
+};
 
 
 /**
@@ -5125,10 +5495,9 @@ var Clicky = module.exports = integration('Clicky')
  */
 
 Clicky.prototype.initialize = function () {
-  window.clicky_site_ids = window.clicky_site_ids || [];
-  window.clicky_site_ids.push(this.options.siteId);
+  window.clicky_site_ids = [this.options.siteId];
   this.identify(user.id(), user.traits());
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -5191,36 +5560,46 @@ Clicky.prototype.page = function (name, properties, options) {
 require.register("analytics/lib/integrations/comscore.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script-once');
+var load = require('load-script');
 
 
 /**
- * Expose `comScore`.
+ * Expose `Comscore`.
  */
 
-var comScore = module.exports = integration('comScore')
+var Comscore = module.exports = integration('Comscore')
+  .assumesPageview()
+  .readyOnLoad()
   .option('c1', '2')
   .option('c2', '');
+
+
+/**
+ * Exists?
+ */
+
+Comscore.prototype.exists = function () {
+  return !! window._comscore;
+};
 
 
 /**
  * Initialize.
  */
 
-comScore.prototype.initialize = function () {
-  window._comscore = window._comscore || [];
-  window._comscore.push(this.options);
-  this.load(this.ready);
+Comscore.prototype.initialize = function () {
+  window._comscore = [this.options];
+  this.load();
 };
 
 
 /**
- * Load the comScore library.
+ * Load.
  *
  * @param {Function} callback
  */
 
-comScore.prototype.load = function (callback) {
+Comscore.prototype.load = function (callback) {
   load({
     http: 'http://b.scorecardresearch.com/beacon.js',
     https: 'https://sb.scorecardresearch.com/beacon.js'
@@ -5230,7 +5609,7 @@ comScore.prototype.load = function (callback) {
 require.register("analytics/lib/integrations/crazy-egg.js", function(exports, require, module){
 
 var integration = require('../integration');
-var load = require('load-script-once');
+var load = require('load-script');
 
 
 /**
@@ -5238,7 +5617,18 @@ var load = require('load-script-once');
  */
 
 var CrazyEgg = module.exports = integration('Crazy Egg')
+  .assumesPageview()
+  .readyOnLoad()
   .option('accountNumber', '');
+
+
+/**
+ * Exists?
+ */
+
+CrazyEgg.prototype.exists = function () {
+  return !! window.CE2;
+};
 
 
 /**
@@ -5246,7 +5636,7 @@ var CrazyEgg = module.exports = integration('Crazy Egg')
  */
 
 CrazyEgg.prototype.initialize = function () {
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -5270,7 +5660,7 @@ var alias = require('alias');
 var callback = require('callback');
 var convertDates = require('convert-dates');
 var integration = require('../integration');
-var load = require('load-script-once');
+var load = require('load-script');
 var user = require('../user');
 
 
@@ -5279,7 +5669,18 @@ var user = require('../user');
  */
 
 var Customerio = module.exports = integration('Customer.io')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('siteId', '');
+
+
+/**
+ * Exists?
+ */
+
+Customerio.prototype.exists = function () {
+  return !! window._cio;
+};
 
 
 /**
@@ -5289,21 +5690,20 @@ var Customerio = module.exports = integration('Customer.io')
  */
 
 Customerio.prototype.initialize = function () {
-  var _cio = window._cio = window._cio || [];
+  var _cio = window._cio = [];
   (function() {var a,b,c; a = function (f) {return function () {_cio.push([f].concat(Array.prototype.slice.call(arguments,0))); }; }; b = ['identify', 'track']; for (c = 0; c < b.length; c++) {_cio[b[c]] = a(b[c]); } })();
-  callback.async(this.ready);
   this.load();
 };
 
 
 /**
- * Load the Customer.io library.
+ * Load.
  *
  * @param {Function} callback
  */
 
 Customerio.prototype.load = function (callback) {
-  var script = load('https://assets.customer.io/assets/track.js');
+  var script = load('https://assets.customer.io/assets/track.js', callback);
   script.id = 'cio-tracker';
   script.setAttribute('data-site-id', this.options.siteId);
 };
@@ -5396,8 +5796,18 @@ var onError = require('on-error');
  */
 
 var Errorception = module.exports = integration('Errorception')
+  .readyOnInitialize()
   .option('projectId', '')
   .option('meta', true);
+
+
+/**
+ * Exists?
+ */
+
+Errorception.prototype.exists = function () {
+  return !! window._errs;
+};
 
 
 /**
@@ -5409,7 +5819,6 @@ var Errorception = module.exports = integration('Errorception')
 Errorception.prototype.initialize = function () {
   window._errs = [this.options.projectId];
   onError(function() { window._errs.push(arguments); });
-  callback.async(this.ready);
   this.load();
 };
 
@@ -5454,7 +5863,18 @@ var load = require('load-script-once');
  */
 
 var FoxMetrics = module.exports = integration('FoxMetrics')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('appId', '');
+
+
+/**
+ * Exists?
+ */
+
+FoxMetrics.prototype.exists = function () {
+  return !! window._fxm;
+};
 
 
 /**
@@ -5464,8 +5884,7 @@ var FoxMetrics = module.exports = integration('FoxMetrics')
  */
 
 FoxMetrics.prototype.initialize = function () {
-  window._fxm = window._fxm ? window._fxm.events : [];
-  callback.async(this.ready);
+  window._fxm = [];
   this.load();
 };
 
@@ -5575,7 +5994,17 @@ var load = require('load-script-once');
 
 var Gauges = module.exports = integration('Gauges')
   .assumesPageview()
+  .readyOnInitialize()
   .option('siteId', '');
+
+
+/**
+ * Exists?
+ */
+
+Gauges.prototype.exists = function () {
+  return !! window._gauges;
+};
 
 
 /**
@@ -5585,8 +6014,7 @@ var Gauges = module.exports = integration('Gauges')
  */
 
 Gauges.prototype.initialize = function () {
-  window._gauges = window._gauges || [];
-  callback.async(this.ready);
+  window._gauges = [];
   this.load();
 };
 
@@ -5629,7 +6057,18 @@ var onBody = require('on-body');
  */
 
 var GetSatisfaction = module.exports = integration('Get Satisfaction')
+  .assumesPageview()
+  .readyOnLoad()
   .option('widgetId', '');
+
+
+/**
+ * Exists?
+ */
+
+GetSatisfaction.prototype.exists = function () {
+  return !! window.GSFN;
+};
 
 
 /**
@@ -5639,17 +6078,14 @@ var GetSatisfaction = module.exports = integration('Get Satisfaction')
  */
 
 GetSatisfaction.prototype.initialize = function () {
-  // append the div that will become the get satisfaction tab
   var widget = this.options.widgetId;
   var div = document.createElement('div');
   var id = div.id = 'getsat-widget-' + widget;
   onBody(function (body) { body.appendChild(div); });
 
   // usually the snippet is sync, so wait for it before initializing the tab
-  var self = this;
   this.load(function () {
     window.GSFN.loadWidget(widget, { containerId: id });
-    self.ready();
   });
 };
 
@@ -5684,15 +6120,25 @@ var url = require('url');
  */
 
 var GA = module.exports = integration('Google Analytics')
+  .readyOnLoad()
   .option('anonymizeIp', false)
   .option('classic', false)
   .option('domain', 'none')
   .option('doubleClick', false)
   .option('enhancedLinkAttribution', false)
   .option('ignoreReferrer', null)
-  .option('initialPageview', true)
   .option('siteSpeedSampleRate', null)
-  .option('trackingId', '');
+  .option('trackingId', '')
+  .option('trackNamedPages', true);
+
+
+/**
+ * Exists?
+ */
+
+GA.prototype.exists = function () {
+  return !! window.ga || window._gaq || window.GoogleAnalyticsObject;
+};
 
 
 /**
@@ -5729,7 +6175,6 @@ GA.prototype.initialize = function () {
     allowLinker: true
   });
 
-  callback.async(this.ready);
   this.load();
 };
 
@@ -5784,6 +6229,10 @@ GA.prototype.page = function (name, properties, options) {
     title: name || properties.title,
     url: properties.url
   });
+
+  if (name && this.options.trackNamedPages) {
+    this.track('Viewed ' + name + ' Page', properties);
+  }
 };
 
 
@@ -5830,7 +6279,7 @@ GA.prototype.initializeClassic = function () {
     this.pageview(path);
   }
 
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -5885,6 +6334,10 @@ GA.prototype.trackClassic = function (event, properties, options) {
 
 GA.prototype.pageClassic = function (name, properties, options) {
   push('_trackPageview', properties.path);
+
+  if (name && this.options.trackNamedPages) {
+    this.track('Viewed ' + name + ' Page', properties);
+  }
 };
 
 
@@ -5927,7 +6380,18 @@ var user = require('../user');
  */
 
 var GoSquared = module.exports = integration('GoSquared')
+  .assumesPageview()
+  .readyOnLoad()
   .option('siteToken', '');
+
+
+/**
+ * Exists?
+ */
+
+GoSquared.prototype.exists = function () {
+  return !! window.GoSquared;
+};
 
 
 /**
@@ -5948,7 +6412,6 @@ GoSquared.prototype.initialize = function () {
     window._gstc_lt = new Date().getTime(); // time from `load`
 
     self.identify(user.id(), user.traits());
-    callback.async(self.ready);
     self.load();
   });
 };
@@ -6037,7 +6500,18 @@ var load = require('load-script-once');
  */
 
 var Heap = module.exports = integration('Heap')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('apiKey', '');
+
+
+/**
+ * Exists?
+ */
+
+Heap.prototype.exists = function () {
+  return !! window.heap;
+};
 
 
 /**
@@ -6049,7 +6523,6 @@ var Heap = module.exports = integration('Heap')
 Heap.prototype.initialize = function () {
   window.heap=window.heap||[];window.heap.load=function(a){window._heapid=a;var d=function(a){return function(){window.heap.push([a].concat(Array.prototype.slice.call(arguments,0)));};},e=["identify","track"];for(var f=0;f<e.length;f++);window.heap[e[f]]=d(e[f]);};
   window.heap.load(this.options.apiKey);
-  callback.async(this.ready);
   this.load();
 };
 
@@ -6116,7 +6589,17 @@ var load = require('load-script-once');
 
 var HitTail = module.exports = integration('HitTail')
   .assumesPageview()
+  .readyOnLoad()
   .option('siteId', '');
+
+
+/**
+ * Exists?
+ */
+
+HitTail.prototype.exists = function () {
+  return !! window.htk;
+};
 
 
 /**
@@ -6124,7 +6607,7 @@ var HitTail = module.exports = integration('HitTail')
  */
 
 HitTail.prototype.initialize = function () {
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -6152,7 +6635,17 @@ var load = require('load-script-once');
 
 var HubSpot = module.exports = integration('HubSpot')
   .assumesPageview()
+  .readyOnInitialize()
   .option('portalId', null);
+
+
+/**
+ * Exists?
+ */
+
+HubSpot.prototype.exists = function () {
+  return !! window._hsq;
+};
 
 
 /**
@@ -6160,8 +6653,7 @@ var HubSpot = module.exports = integration('HubSpot')
  */
 
 HubSpot.prototype.initialize = function () {
-  window._hsq = window._hsq || [];
-  callback.async(this.ready);
+  window._hsq = [];
   this.load();
 };
 
@@ -6247,8 +6739,19 @@ var load = require('load-script-once');
  */
 
 var Improvely = module.exports = integration('Improvely')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('domain', '')
   .option('projectId', null);
+
+
+/**
+ * Exists?
+ */
+
+Heap.prototype.exists = function () {
+  return !! window._improvely || window.improvely;
+};
 
 
 /**
@@ -6258,13 +6761,12 @@ var Improvely = module.exports = integration('Improvely')
  */
 
 Improvely.prototype.initialize = function () {
-  window._improvely = window._improvely || [];
-  window.improvely = window.improvely || {init: function (e, t) { window._improvely.push(["init", e, t]); }, goal: function (e) { window._improvely.push(["goal", e]); }, label: function (e) { window._improvely.push(["label", e]); } };
+  window._improvely = [];
+  window.improvely = {init: function (e, t) { window._improvely.push(["init", e, t]); }, goal: function (e) { window._improvely.push(["goal", e]); }, label: function (e) { window._improvely.push(["label", e]); } };
 
   var domain = this.options.domain;
   var id = this.options.projectId;
   window.improvely.init(domain, id);
-  callback.async(this.ready);
   this.load();
 };
 
@@ -6318,6 +6820,7 @@ var integration = require('../integration');
 var alias = require('alias');
 var clone = require('clone');
 var load = require('load-script-once');
+var push = require('global-queue')('__insp');
 
 
 /**
@@ -6325,7 +6828,18 @@ var load = require('load-script-once');
  */
 
 var Inspectlet = module.exports = integration('Inspectlet')
+  .assumesPageview()
+  .readyOnLoad()
   .option('wid', '');
+
+
+/**
+ * Exists?
+ */
+
+Inspectlet.prototype.exists = function () {
+  return !! window.__insp;
+};
 
 
 /**
@@ -6335,9 +6849,8 @@ var Inspectlet = module.exports = integration('Inspectlet')
  */
 
 Inspectlet.prototype.initialize = function () {
-  window.__insp = window.__insp || [];
-  window.__insp.push(['wid', this.options.wid]);
-  this.load(this.ready);
+  push('wid', this.options.wid);
+  this.load();
 };
 
 
@@ -6367,10 +6880,21 @@ var load = require('load-script-once');
  */
 
 var Intercom = module.exports = integration('Intercom')
+  .assumesPageview()
+  .readyOnLoad()
   .option('activator', '#IntercomDefaultWidget')
   .option('appId', '')
   .option('counter', true)
   .option('inbox', false);
+
+
+/**
+ * Exists?
+ */
+
+Intercom.prototype.exists = function () {
+  return !! window.Intercom;
+};
 
 
 /**
@@ -6381,7 +6905,7 @@ var Intercom = module.exports = integration('Intercom')
  */
 
 Intercom.prototype.initialize = function () {
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -6474,11 +6998,21 @@ var load = require('load-script-once');
  */
 
 var Keen = module.exports = integration('Keen IO')
+  .readyOnInitialize()
   .option('projectId', '')
   .option('readKey', '')
   .option('writeKey', '')
   .option('trackNamedPages', true)
   .option('trackAllPages', false);
+
+
+/**
+ * Exists?
+ */
+
+Keen.prototype.exists = function () {
+  return !! window.Keen;
+};
 
 
 /**
@@ -6495,7 +7029,7 @@ Keen.prototype.initialize = function () {
     writeKey: options.writeKey,
     readKey: options.readKey
   });
-  callback.async(this.ready);
+  callback.async();
   this.load();
 };
 
@@ -6569,6 +7103,7 @@ var alias = require('alias');
 var callback = require('callback');
 var integration = require('../integration');
 var load = require('load-script-once');
+var push = require('global-queue')('_kmq');
 
 
 /**
@@ -6576,8 +7111,19 @@ var load = require('load-script-once');
  */
 
 var KISSmetrics = module.exports = integration('KISSmetrics')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('apiKey', '')
   .option('trackNamedPages', true);
+
+
+/**
+ * Exists?
+ */
+
+KISSmetrics.prototype.exists = function () {
+  return !! window._kmq;
+};
 
 
 /**
@@ -6587,8 +7133,6 @@ var KISSmetrics = module.exports = integration('KISSmetrics')
  */
 
 KISSmetrics.prototype.initialize = function () {
-  window._kmq = window._kmq || [];
-  callback.async(this.ready);
   this.load();
 };
 
@@ -6658,18 +7202,6 @@ KISSmetrics.prototype.page = function (name, properties, options) {
   if (!this.options.trackNamedPages || !name) return;
   this.track('Viewed ' + name + ' Page', properties);
 };
-
-
-/**
- * Helper to push onto the KISSmetrics queue.
- *
- * @param {Mixed} args...
- */
-
-function push (args) {
-  args = [].slice.call(arguments);
-  window._kmq.push(args);
-}
 });
 require.register("analytics/lib/integrations/klaviyo.js", function(exports, require, module){
 
@@ -6677,6 +7209,7 @@ var alias = require('alias');
 var callback = require('callback');
 var integration = require('../integration');
 var load = require('load-script-once');
+var push = require('global-queue')('_learnq');
 
 
 /**
@@ -6684,7 +7217,18 @@ var load = require('load-script-once');
  */
 
 var Klaviyo = module.exports = integration('Klaviyo')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('apiKey', '');
+
+
+/**
+ * Exists?
+ */
+
+Klaviyo.prototype.exists = function () {
+  return !! window._learnq;
+};
 
 
 /**
@@ -6694,9 +7238,7 @@ var Klaviyo = module.exports = integration('Klaviyo')
  */
 
 Klaviyo.prototype.initialize = function () {
-  window._learnq = window._learnq || [];
   push('account', this.options.apiKey);
-  callback.async(this.ready);
   this.load();
 };
 
@@ -6790,7 +7332,18 @@ var load = require('load-script-once');
  */
 
 var LeadLander = module.exports = integration('LeadLander')
+  .assumesPageview()
+  .readyOnLoad()
   .option('accountId', null);
+
+
+/**
+ * Exists?
+ */
+
+LeadLander.prototype.exists = function () {
+  return !! window.llactid;
+};
 
 
 /**
@@ -6799,7 +7352,7 @@ var LeadLander = module.exports = integration('LeadLander')
 
 LeadLander.prototype.initialize = function () {
   window.llactid = this.options.accountId;
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -6825,7 +7378,18 @@ var load = require('load-script-once');
  */
 
 var LiveChat = module.exports = integration('LiveChat')
+  .assumesPageview()
+  .readyOnLoad()
   .option('license', '');
+
+
+/**
+ * Exists?
+ */
+
+LiveChat.prototype.exists = function () {
+  return !! window.__lc;
+};
 
 
 /**
@@ -6836,7 +7400,7 @@ var LiveChat = module.exports = integration('LiveChat')
 
 LiveChat.prototype.initialize = function () {
   window.__lc = { license: this.options.license };
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -6893,12 +7457,23 @@ var load = require('load-script-once');
  */
 
 var Lytics = module.exports = integration('Lytics')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('cid', '')
   .option('cookie', 'seerid')
   .option('delay', 200)
   .option('initialPageview', true)
   .option('sessionTimeout', 1800)
   .option('url', '//c.lytics.io');
+
+
+/**
+ * Exists?
+ */
+
+Lytics.prototype.exists = function () {
+  return !! window.jstag;
+};
 
 
 /**
@@ -6919,7 +7494,6 @@ var aliases = {
 Lytics.prototype.initialize = function () {
   var options = alias(this.options, aliases);
   window.jstag = (function () {var t = {_q: [], _c: options, ts: (new Date()).getTime() }; t.send = function() {this._q.push([ 'ready', 'send', Array.prototype.slice.call(arguments) ]); return this; }; return t; })();
-  callback.async(this.ready);
   this.load();
 };
 
@@ -6977,10 +7551,10 @@ Lytics.prototype.page = function (name, properties, optional) {
 });
 require.register("analytics/lib/integrations/mixpanel.js", function(exports, require, module){
 
-var alias = require('alias')
-  , clone = require('clone')
-  , integration = require('../integration')
-  , load = require('load-script-once');
+var alias = require('alias');
+var clone = require('clone');
+var integration = require('../integration');
+var load = require('load-script-once');
 
 
 /**
@@ -6988,6 +7562,8 @@ var alias = require('alias')
  */
 
 var Mixpanel = module.exports = integration('Mixpanel')
+  .assumesPageview()
+  .readyOnLoad()
   .option('cookieName', '')
   .option('nameTag', true)
   .option('pageview', false)
@@ -6995,6 +7571,15 @@ var Mixpanel = module.exports = integration('Mixpanel')
   .option('token', '')
   .option('trackAllPages', false)
   .option('trackNamedPages', true);
+
+
+/**
+ * Exists?
+ */
+
+Mixpanel.prototype.exists = function () {
+  return !! window.mixpanel;
+};
 
 
 /**
@@ -7143,7 +7728,18 @@ var load = require('load-script-once');
  */
 
 var MouseStats = module.exports = integration('MouseStats')
+  .assumesPageview()
+  .readyOnLoad()
   .option('accountNumber', '');
+
+
+/**
+ * Exists?
+ */
+
+MouseStats.prototype.exists = function () {
+  return !! window.msaa;
+};
 
 
 /**
@@ -7195,6 +7791,7 @@ require.register("analytics/lib/integrations/olark.js", function(exports, requir
 
 var callback = require('callback');
 var integration = require('../integration');
+var https = require('use-https');
 
 
 /**
@@ -7202,10 +7799,21 @@ var integration = require('../integration');
  */
 
 var Olark = module.exports = integration('Olark')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('identify', true)
   .option('page', true)
   .option('siteId', '')
   .option('track', false);
+
+
+/**
+ * Exists?
+ */
+
+Olark.prototype.exists = function () {
+  return !! window.olark;
+};
 
 
 /**
@@ -7215,9 +7823,8 @@ var Olark = module.exports = integration('Olark')
  */
 
 Olark.prototype.initialize = function () {
-  window.olark||(function(c){var f=window,d=document,l=f.location.protocol=="https:"?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while(q--){(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={0:+new Date};a.P=function(u){a.p[u]=new Date-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if(!m){return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if(/MSIE[ ]+6/.test(navigator.userAgent)){b.src="javascript:false"}b.allowTransparency="true";v[j](b);try{b.contentWindow[g].open()}catch(w){c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try{var t=b.contentWindow[g];t.write(p());t.close()}catch(x){b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({loader: "static.olark.com/jsclient/loader0.js",name:"olark",methods:["configure","extend","declare","identify"]});
+  window.olark||(function(c){var f=window,d=document,l=https()?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while(q--){(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={0:+new Date};a.P=function(u){a.p[u]=new Date-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if(!m){return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if(/MSIE[ ]+6/.test(navigator.userAgent)){b.src="javascript:false"}b.allowTransparency="true";v[j](b);try{b.contentWindow[g].open()}catch(w){c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try{var t=b.contentWindow[g];t.write(p());t.close()}catch(x){b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({loader: "static.olark.com/jsclient/loader0.js",name:"olark",methods:["configure","extend","declare","identify"]});
   window.olark.identify(this.options.siteId);
-  callback.async(this.ready);
 
   // keep track of the widget's open state
   var self = this;
@@ -7329,6 +7936,7 @@ var callback = require('callback');
 var each = require('each');
 var integration = require('../integration');
 var load = require('load-script-once');
+var push = require('global-queue')('optimizely');
 var tick = require('next-tick');
 
 
@@ -7337,7 +7945,17 @@ var tick = require('next-tick');
  */
 
 var Optimizely = module.exports = integration('Optimizely')
+  .readyOnInitialize()
   .option('variations', true);
+
+
+/**
+ * Exists?
+ */
+
+Optimizely.prototype.exists = function () {
+  return false; // we require it to exist, no async support yet
+};
 
 
 /**
@@ -7347,8 +7965,6 @@ var Optimizely = module.exports = integration('Optimizely')
  */
 
 Optimizely.prototype.initialize = function () {
-  window.optimizely = window.optimizely || [];
-  callback.async(this.ready);
   if (this.options.variations) tick(this.replay);
 };
 
@@ -7390,18 +8006,6 @@ Optimizely.prototype.replay = function () {
 
   this.analytics.identify(traits);
 };
-
-
-/**
- * Helper to push onto the Optimizely queue.
- *
- * @param {Mixed} args...
- */
-
-function push (args) {
-  args = [].slice.call(arguments);
-  window.optimizely.push(args);
-}
 });
 require.register("analytics/lib/integrations/perfect-audience.js", function(exports, require, module){
 
@@ -7414,7 +8018,18 @@ var load = require('load-script-once');
  */
 
 var PerfectAudience = module.exports = integration('Perfect Audience')
+  .assumesPageview()
+  .readyOnLoad()
   .option('siteId', '');
+
+
+/**
+ * Exists?
+ */
+
+PerfectAudience.prototype.exists = function () {
+  return !! window._pa;
+};
 
 
 /**
@@ -7424,8 +8039,8 @@ var PerfectAudience = module.exports = integration('Perfect Audience')
  */
 
 PerfectAudience.prototype.initialize = function () {
-  window._pa = window._pa || {};
-  this.load(this.ready);
+  window._pa = {};
+  this.load();
 };
 
 
@@ -7458,6 +8073,7 @@ require.register("analytics/lib/integrations/pingdom.js", function(exports, requ
 var date = require('load-date');
 var integration = require('../integration');
 var load = require('load-script-once');
+var push = require('global-queue')('_prum');
 
 
 /**
@@ -7465,7 +8081,18 @@ var load = require('load-script-once');
  */
 
 var Pingdom = module.exports = integration('Pingdom')
+  .assumesPageview()
+  .readyOnLoad()
   .option('id', '');
+
+
+/**
+ * Exists?
+ */
+
+Pingdom.prototype.exists = function () {
+  return !! window._prum;
+};
 
 
 /**
@@ -7473,10 +8100,9 @@ var Pingdom = module.exports = integration('Pingdom')
  */
 
 Pingdom.prototype.initialize = function () {
-  window._prum = window._prum || [];
   push('id', this.options.id);
   push('mark', 'firstbyte', date.getTime());
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -7489,18 +8115,6 @@ Pingdom.prototype.initialize = function () {
 Pingdom.prototype.load = function (callback) {
   load('//rum-static.pingdom.net/prum.min.js', callback);
 };
-
-
-/**
- * Helper to push onto the Pingdom queue.
- *
- * @param {Mixed} args...
- */
-
-function push (args) {
-  args = [].slice.call(arguments);
-  window._prum.push(args);
-}
 });
 require.register("analytics/lib/integrations/preact.js", function(exports, require, module){
 
@@ -7509,6 +8123,7 @@ var callback = require('callback');
 var convertDates = require('convert-dates');
 var integration = require('../integration');
 var load = require('load-script-once');
+var push = require('global-queue')('_lnq');
 
 
 /**
@@ -7516,7 +8131,18 @@ var load = require('load-script-once');
  */
 
 var Preact = module.exports = integration('Preact')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('projectCode', '');
+
+
+/**
+ * Exists?
+ */
+
+Preact.prototype.exists = function () {
+  return !! window._lnq;
+};
 
 
 /**
@@ -7526,9 +8152,7 @@ var Preact = module.exports = integration('Preact')
  */
 
 Preact.prototype.initialize = function () {
-  window._lnq = window._lnq || [];
   push("_setCode", this.options.projectCode);
-  callback.async(this.ready);
 };
 
 
@@ -7630,6 +8254,7 @@ require.register("analytics/lib/integrations/qualaroo.js", function(exports, req
 var callback = require('callback');
 var integration = require('../integration');
 var load = require('load-script-once');
+var push = require('global-queue')('_kiq');
 
 
 /**
@@ -7637,9 +8262,20 @@ var load = require('load-script-once');
  */
 
 var Qualaroo = module.exports = integration('Qualaroo')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('customerId', '')
   .option('siteToken', '')
   .option('track', true);
+
+
+/**
+ * Exists?
+ */
+
+Qualaroo.prototype.exists = function () {
+  return !! window._kiq;
+};
 
 
 /**
@@ -7647,8 +8283,6 @@ var Qualaroo = module.exports = integration('Qualaroo')
  */
 
 Qualaroo.prototype.initialize = function () {
-  window._kiq = window._kiq || [];
-  callback.async(this.ready);
   this.load();
 };
 
@@ -7722,7 +8356,18 @@ var load = require('load-script-once');
  */
 
 var Quantcast = module.exports = integration('Quantcast')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('pCode', null);
+
+
+/**
+ * Exists?
+ */
+
+Quantcast.prototype.exists = function () {
+  return !! window._qevents;
+};
 
 
 /**
@@ -7732,8 +8377,7 @@ var Quantcast = module.exports = integration('Quantcast')
  */
 
 Quantcast.prototype.initialize = function () {
-  window._qevents = window._qevents || [];
-  window._qevents.push({ qacct: this.options.pCode });
+  window._qevents = [{ qacct: this.options.pCode }];
 };
 
 
@@ -7765,8 +8409,18 @@ var onError = require('on-error');
  */
 
 var Rollbar = module.exports = integration('Rollbar')
+  .readyOnInitialize()
   .option('accessToken', '')
   .option('identify', true);
+
+
+/**
+ * Exists?
+ */
+
+Rollbar.prototype.exists = function () {
+  return !! window._rollbar;
+};
 
 
 /**
@@ -7779,7 +8433,6 @@ Rollbar.prototype.initialize = function () {
   var options = this.options;
   window._rollbar = window._rollbar || window._ratchet || [options.accessToken, options];
   onError(function() { window._rollbar.push(arguments); });
-  callback.async(this.ready);
   this.load();
 };
 
@@ -7828,7 +8481,17 @@ var load = require('load-script-once');
  */
 
 var Sentry = module.exports = integration('Sentry')
+  .readyOnLoad()
   .option('config', '');
+
+
+/**
+ * Exists?
+ */
+
+Sentry.prototype.exists = function () {
+  return !! window.Raven;
+};
 
 
 /**
@@ -7838,13 +8501,11 @@ var Sentry = module.exports = integration('Sentry')
  */
 
 Sentry.prototype.initialize = function () {
-  var self = this;
   var config = this.options.config;
   this.load(function () {
     // for now, raven basically requires `install` to be called
     // https://github.com/getsentry/raven-js/blob/master/src/raven.js#L113
     window.Raven.config(config).install();
-    self.ready();
   });
 };
 
@@ -7884,7 +8545,18 @@ var load = require('load-script-once');
  */
 
 var SnapEngage = module.exports = integration('SnapEngage')
+  .assumesPageview()
+  .readyOnLoad()
   .option('apiKey', '');
+
+
+/**
+ * Exists?
+ */
+
+SnapEngage.prototype.exists = function () {
+  return !! window.SnapABug;
+};
 
 
 /**
@@ -7894,7 +8566,7 @@ var SnapEngage = module.exports = integration('SnapEngage')
  */
 
 SnapEngage.prototype.initialize = function () {
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -7935,7 +8607,18 @@ var load = require('load-script-once');
  */
 
 var Spinnakr = module.exports = integration('Spinnakr')
+  .assumesPageview()
+  .readyOnLoad()
   .option('siteId', '');
+
+
+/**
+ * Exists?
+ */
+
+Spinnakr.prototype.exists = function () {
+  return !! window._spinnakr_site_id;
+};
 
 
 /**
@@ -7944,7 +8627,7 @@ var Spinnakr = module.exports = integration('Spinnakr')
 
 Spinnakr.prototype.initialize = function () {
   window._spinnakr_site_id = this.options.siteId;
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -7964,6 +8647,7 @@ var callback = require('callback');
 var integration = require('../integration');
 var load = require('load-script-once');
 var slug = require('slug');
+var push = require('global-queue')('_tsq');
 
 
 /**
@@ -7971,9 +8655,20 @@ var slug = require('slug');
  */
 
 var Tapstream = module.exports = integration('Tapstream')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('accountName', '')
   .option('trackAllPages', true)
   .option('trackNamedPages', true);
+
+
+/**
+ * Exists?
+ */
+
+Tapstream.prototype.exists = function () {
+  return !! window._tsq;
+};
 
 
 /**
@@ -7981,9 +8676,7 @@ var Tapstream = module.exports = integration('Tapstream')
  */
 
 Tapstream.prototype.initialize = function () {
-  window._tsq = window._tsq || [];
   push('setAccountName', this.options.accountName);
-  callback.async(this.ready);
   this.load();
 };
 
@@ -8020,24 +8713,12 @@ Tapstream.prototype.track = function (event, properties, options) {
  * @param {Object} options (optional)
  */
 
-Tapstream.prototype.pageview = function (name, properties, options) {
+Tapstream.prototype.page = function (name, properties, options) {
   var named = this.options.trackNamePages;
   var all = this.options.trackAllPages;
   if (named && name) this.track('Viewed ' + name + ' Page', properties);
   if (all) this.track('Loaded a Page', properties);
 };
-
-
-/**
- * Helper to push onto the Tapstream queue.
- *
- * @param {Mixed} args...
- */
-
-function push (args) {
-  args = [].slice.call(arguments);
-  window._tsq.push(args);
-}
 });
 require.register("analytics/lib/integrations/trakio.js", function(exports, require, module){
 
@@ -8053,8 +8734,19 @@ var load = require('load-script-once');
  */
 
 var Trakio = module.exports = integration('trak.io')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('token', '')
   .option('trackNamedPages', true);
+
+
+/**
+ * Exists?
+ */
+
+Trakio.prototype.exists = function () {
+  return !! window.trak;
+};
 
 
 /**
@@ -8079,7 +8771,6 @@ Trakio.prototype.initialize = function () {
   window.trak.io = window.trak.io || {};
   window.trak.io.load = function(e) {self.load(); var r = function(e) {return function() {window.trak.push([e].concat(Array.prototype.slice.call(arguments,0))); }; } ,i=["initialize","identify","track","alias","channel","source","host","protocol","page_view"]; for (var s=0;s<i.length;s++) window.trak.io[i[s]]=r(i[s]); window.trak.io.initialize.apply(window.trak.io,arguments); };
   window.trak.io.load(options.token, alias(options, optionsAliases));
-  callback.async(this.ready);
   this.load();
 };
 
@@ -8190,14 +8881,26 @@ require.register("analytics/lib/integrations/usercycle.js", function(exports, re
 var callback = require('callback');
 var integration = require('../integration');
 var load = require('load-script-once');
+var push = require('global-queue')('_uc');
 
 
 /**
- * Expose `USERcycle`.
+ * Expose `Usercycle`.
  */
 
-var USERcycle = module.exports = integration('USERcycle')
+var Usercycle = module.exports = integration('USERcycle')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('key', '');
+
+
+/**
+ * Exists?
+ */
+
+Usercycle.prototype.exists = function () {
+  return !! window._uc;
+};
 
 
 /**
@@ -8206,10 +8909,8 @@ var USERcycle = module.exports = integration('USERcycle')
  * http://docs.usercycle.com/javascript_api
  */
 
-USERcycle.prototype.initialize = function () {
-  window._uc || (window._uc = []);
+Usercycle.prototype.initialize = function () {
   push('_key', this.options.key);
-  callback.async(this.ready);
   this.load();
 };
 
@@ -8220,7 +8921,7 @@ USERcycle.prototype.initialize = function () {
  * @param {Function} callback
  */
 
-USERcycle.prototype.load = function (callback) {
+Usercycle.prototype.load = function (callback) {
   load('//api.usercycle.com/javascripts/track.js', callback);
 };
 
@@ -8233,7 +8934,7 @@ USERcycle.prototype.load = function (callback) {
  * @param {Object} options (optional)
  */
 
-USERcycle.prototype.identify = function (id, traits, options) {
+Usercycle.prototype.identify = function (id, traits, options) {
   if (id) push('uid', id);
   // there's a special `came_back` event used for retention and traits
   push('action', 'came_back', traits);
@@ -8248,21 +8949,9 @@ USERcycle.prototype.identify = function (id, traits, options) {
  * @param {Object} options (optional)
  */
 
-USERcycle.prototype.track = function (event, properties, options) {
+Usercycle.prototype.track = function (event, properties, options) {
   push('action', event, properties);
 };
-
-
-/**
- * Helper to push onto the USERcycle queue.
- *
- * @param {Mixed} args...
- */
-
-function push (args) {
-  args = [].slice.call(arguments);
-  window._uc.push(args);
-}
 });
 require.register("analytics/lib/integrations/userfox.js", function(exports, require, module){
 
@@ -8271,6 +8960,7 @@ var callback = require('callback');
 var convertDates = require('convert-dates');
 var integration = require('../integration');
 var load = require('load-script-once');
+var push = require('global-queue')('_ufq');
 
 
 /**
@@ -8278,7 +8968,18 @@ var load = require('load-script-once');
  */
 
 var Userfox = module.exports = integration('userfox')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('clientId', '');
+
+
+/**
+ * Exists?
+ */
+
+Userfox.prototype.exists = function () {
+  return !! window._ufq;
+};
 
 
 /**
@@ -8288,8 +8989,6 @@ var Userfox = module.exports = integration('userfox')
  */
 
 Userfox.prototype.initialize = function (options, ready) {
-  window._ufq = window._ufq || [];
-  callback.async(this.ready);
   this.load();
 };
 
@@ -8340,18 +9039,6 @@ Userfox.prototype.identify = function (id, traits, options) {
 function formatDate (date) {
   return Math.round(date.getTime() / 1000).toString();
 }
-
-
-/**
- * Helper to push onto the userfox queue.
- *
- * @param {Mixed} args...
- */
-
-function push (args) {
-  args = [].slice.call(arguments);
-  window._ufq.push(args);
-}
 });
 require.register("analytics/lib/integrations/uservoice.js", function(exports, require, module){
 
@@ -8361,6 +9048,7 @@ var clone = require('clone');
 var convertDates = require('convert-dates');
 var integration = require('../integration');
 var load = require('load-script-once');
+var push = require('global-queue')('UserVoice');
 var unix = require('to-unix-timestamp');
 
 
@@ -8369,6 +9057,8 @@ var unix = require('to-unix-timestamp');
  */
 
 var UserVoice = module.exports = integration('UserVoice')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('apiKey', '')
   .option('classic', false)
   .option('forumId', null)
@@ -8391,6 +9081,15 @@ var UserVoice = module.exports = integration('UserVoice')
 
 
 /**
+ * Exists?
+ */
+
+UserVoice.prototype.exists = function () {
+  return !! window.UserVoice;
+};
+
+
+/**
  * Initialize.
  */
 
@@ -8403,7 +9102,6 @@ UserVoice.prototype.initialize = function () {
     return this.initializeClassic();
   }
 
-  window.UserVoice || (window.UserVoice = []);
   var opts = formatOptions(options);
   push('set', opts);
   push('autoprompt', {});
@@ -8413,7 +9111,6 @@ UserVoice.prototype.initialize = function () {
       : push('addTrigger', opts);
   }
 
-  callback.async(this.ready);
   this.load();
 };
 
@@ -8471,10 +9168,8 @@ UserVoice.prototype.group = function (id, properties, options) {
 
 UserVoice.prototype.initializeClassic = function () {
   var options = this.options;
-  window.UserVoice = window.UserVoice || [];
   window.showClassicWidget = showClassicWidget; // part of public api
   if (options.showWidget) showClassicWidget('showTab', formatClassicOptions(options));
-  callback.async(this.ready);
   this.load();
 };
 
@@ -8491,18 +9186,6 @@ UserVoice.prototype.identifyClassic = function (id, traits, options) {
   if (id) traits.id = id;
   push('setCustomFields', traits);
 };
-
-
-/**
- * Push a UserVoice call onto their queue.
- *
- * @param {Mixed} args...
- */
-
-function push (args) {
-  args = [].slice.call(arguments);
-  window.UserVoice.push(args);
-}
 
 
 /**
@@ -8567,6 +9250,7 @@ require.register("analytics/lib/integrations/vero.js", function(exports, require
 var callback = require('callback');
 var integration = require('../integration');
 var load = require('load-script-once');
+var push = require('global-queue')('_veroq');
 
 
 /**
@@ -8574,7 +9258,18 @@ var load = require('load-script-once');
  */
 
 var Vero = module.exports = integration('Vero')
+  .assumesPageview()
+  .readyOnInitialize()
   .option('apiKey', '');
+
+
+/**
+ * Exists?
+ */
+
+Vero.prototype.exists = function () {
+  return !! window._veroq;
+};
 
 
 /**
@@ -8584,9 +9279,7 @@ var Vero = module.exports = integration('Vero')
  */
 
 Vero.prototype.initialize = function () {
-  window._veroq || (window._veroq = []);
   push('init', { api_key: this.options.apiKey });
-  callback.async(this.ready);
   this.load();
 };
 
@@ -8632,18 +9325,6 @@ Vero.prototype.identify = function (id, traits, options) {
 Vero.prototype.track = function (event, properties, options) {
   push('track', event, properties);
 };
-
-
-/**
- * Helper to push onto the Vero queue.
- *
- * @param {Mixed} args...
- */
-
-function push (args) {
-  args = [].slice.call(arguments);
-  window._veroq.push(args);
-}
 });
 require.register("analytics/lib/integrations/visual-website-optimizer.js", function(exports, require, module){
 
@@ -8659,7 +9340,17 @@ var tick = require('next-tick');
  */
 
 var VWO = module.exports = integration('Visual Website Optimizer')
+  .readyOnInitialize()
   .option('replay', true);
+
+
+/**
+ * Exists?
+ */
+
+VWO.prototype.exists = function () {
+  return false; // we require it to be on the page already
+};
 
 
 /**
@@ -8670,7 +9361,6 @@ var VWO = module.exports = integration('Visual Website Optimizer')
 
 VWO.prototype.initialize = function () {
   if (this.options.replay) this.replay();
-  callback.async(this.ready);
 };
 
 
@@ -8758,7 +9448,18 @@ var user = require('../user');
  */
 
 var Woopra = module.exports = integration('Woopra')
+  .assumesPageview()
+  .readyOnLoad()
   .option('domain', '');
+
+
+/**
+ * Exists?
+ */
+
+Woopra.prototype.exists = function () {
+  return !! window.woopra;
+};
 
 
 /**
@@ -8770,7 +9471,7 @@ var Woopra = module.exports = integration('Woopra')
 Woopra.prototype.initialize = function () {
   (function () {var i, s, z, w = window, d = document, a = arguments, q = 'script', f = ['config', 'track', 'identify', 'visit', 'push', 'call'], c = function () {var i, self = this; self._e = []; for (i = 0; i < f.length; i++) {(function (f) {self[f] = function () {self._e.push([f].concat(Array.prototype.slice.call(arguments, 0))); return self; }; })(f[i]); } }; w._w = w._w || {}; for (i = 0; i < a.length; i++) { w._w[a[i]] = w[a[i]] = w[a[i]] || new c(); } })('woopra');
   window.woopra.config({ domain: this.options.domain });
-  this.load(this.ready);
+  this.load();
 };
 
 
@@ -8831,7 +9532,7 @@ require.register("analytics/lib/integrations/yandex-metrica.js", function(export
 
 var callback = require('callback');
 var integration = require('../integration');
-var load = require('load-script-once');
+var load = require('load-script');
 
 
 /**
@@ -8840,7 +9541,18 @@ var load = require('load-script-once');
 
 var Metrica = module.exports = integration('Yandex Metrica')
   .assumesPageview()
+  .readyOnInitialize()
   .option('counterId', null);
+
+
+/**
+ * Exists?
+ */
+
+Metrica.prototype.exists = function () {
+  return !! (window.yandex_metrika_callbacks ||
+             (window.Ya && window.Ya.Metrika));
+};
 
 
 /**
@@ -8857,7 +9569,6 @@ Metrica.prototype.initialize = function () {
     window['yaCounter' + id] = new window.Ya.Metrika({ id: id });
   });
 
-  callback.async(this.ready);
   this.load();
 };
 
@@ -8924,6 +9635,8 @@ function push (callback) {
 
 
 
+
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -8940,6 +9653,10 @@ require.alias("component-domify/index.js", "domify/index.js");
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("component-emitter/index.js", "analytics/deps/emitter/index.js");
+require.alias("component-emitter/index.js", "emitter/index.js");
+require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
 require.alias("component-event/index.js", "event/index.js");
@@ -8991,9 +9708,6 @@ require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
 require.alias("segmentio-alias/index.js", "alias/index.js");
-require.alias("component-clone/index.js", "segmentio-alias/deps/clone/index.js");
-require.alias("component-type/index.js", "component-clone/deps/type/index.js");
-
 require.alias("component-type/index.js", "segmentio-alias/deps/type/index.js");
 
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
@@ -9039,6 +9753,10 @@ require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fall
 
 require.alias("segmentio-load-date/index.js", "analytics/deps/load-date/index.js");
 require.alias("segmentio-load-date/index.js", "load-date/index.js");
+
+require.alias("segmentio-load-script/index.js", "analytics/deps/load-script/index.js");
+require.alias("segmentio-load-script/index.js", "load-script/index.js");
+require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
 
 require.alias("segmentio-load-script-once/index.js", "analytics/deps/load-script-once/index.js");
 require.alias("segmentio-load-script-once/index.js", "analytics/deps/load-script-once/index.js");
@@ -9094,6 +9812,9 @@ require.alias("segmentio-top-domain/index.js", "top-domain/index.js");
 require.alias("component-url/index.js", "segmentio-top-domain/deps/url/index.js");
 
 require.alias("segmentio-top-domain/index.js", "segmentio-top-domain/index.js");
+require.alias("segmentio-use-https/index.js", "analytics/deps/use-https/index.js");
+require.alias("segmentio-use-https/index.js", "use-https/index.js");
+
 require.alias("timoxley-next-tick/index.js", "analytics/deps/next-tick/index.js");
 require.alias("timoxley-next-tick/index.js", "next-tick/index.js");
 

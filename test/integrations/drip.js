@@ -8,7 +8,10 @@ var analytics = window.analytics || require('analytics')
   , when = require('when');
 
 var settings = {
-  account: '9999999'
+  account: '9999999',
+  events: { 
+    'Test': '1234'
+  }
 };
 
 before(function (done) {
@@ -36,7 +39,6 @@ describe('#key', function () {
 describe('#defaults', function () {
   it('account', function () {
     assert(this.integration.defaults.account === '');
-    assert(this.integration.defaults.debug === false);
   });
 });
 
@@ -45,16 +47,19 @@ describe('#initialize', function () {
     assert(this.spy.called);
   });
 
-  it('should store options', function () {
-    assert(this.options.account == settings.account);
+  it('should store account and events', function () {
+    assert(this.options.account === settings.account);
+    assert(equal(this.options.events, settings.events));
+  });
+
+  it('should pass account to Drip', function () {
+    assert(window._dcs.account === settings.account);
   });
 });
 
 
 describe('#track', function () {
   beforeEach(function () {
-    this.goal = 999;
-    this.context = { 'Drip': { 'goal': this.goal } };
     this.stub = sinon.stub(window._dcq, 'push');
   });
 
@@ -62,19 +67,19 @@ describe('#track', function () {
     this.stub.restore();
   });
 
-  it('should not track unless a goal id is provided', function () {
-    analytics.track('event', { revenue: 9.99 });
+  it('should not track the event is not in the goal map', function () {
+    analytics.track('Not In Goal Map');
     assert(this.stub.neverCalledWith(sinon.match.any));
   });
 
-  it('should exclude value property if revenue is not set', function () {
-    analytics.track('event', {}, this.context);
-    assert(this.stub.calledWith(['trackConversion', { id: this.goal }]));
+  it('should track if the event is in the goal map', function () {
+    analytics.track('Test');
+    assert(this.stub.calledWith(['trackConversion', { id: '1234' }]));
   });
 
   it('should convert revenue to cents and alias to "value"', function () {
-    analytics.track('event', { revenue: 9.99 }, this.context);
-    assert(this.stub.calledWith(['trackConversion', { id: this.goal, value: 999 }]));
+    analytics.track('Test', { revenue: 9.99 });
+    assert(this.stub.calledWith(['trackConversion', { id: '1234', value: 999 }]));
   });
 });
 

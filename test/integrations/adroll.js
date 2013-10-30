@@ -1,6 +1,5 @@
 
 describe('AdRoll', function () {
-  this.timeout(10000);
 
   var settings = {
     advId: 'LYFRCUIPPZCCTOBGRH7G32',
@@ -12,60 +11,32 @@ describe('AdRoll', function () {
   var assert = require('assert');
   var equal = require('equals');
   var sinon = require('sinon');
+  var test = require('integration-tester');
   var user = require('analytics/lib/user');
   var when = require('when');
 
-  describe('#name', function () {
-    it('AdRoll', function () {
-      assert(adroll.name === 'AdRoll');
-    });
+  afterEach(function () {
+    adroll.reset();
   });
 
-  describe('#_assumesPageview', function () {
-    it('should be true', function () {
-      assert(adroll._assumesPageview === true);
-    });
-  });
-
-  describe('#_readyOnLoad', function () {
-    it('should be true', function () {
-      assert(adroll._readyOnLoad === true);
-    });
-  });
-
-  describe('#defaults', function () {
-    it('advId', function () {
-      assert(adroll.defaults.advId === '');
-    });
-
-    it('pixId', function () {
-      assert(adroll.defaults.pixId === '');
-    });
-  });
-
-  describe('#exists', function () {
-    after(function () {
-      window.__adroll_loaded = undefined;
-    });
-
-    it('should check for window.__adroll_loaded', function () {
-      window.__adroll_loaded = false;
-      assert(!adroll.exists());
-      window.__adroll_loaded = true;
-      assert(adroll.exists());
-    });
+  it('should have the right settings', function () {
+    test(adroll)
+      .name('AdRoll')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('__adroll_loaded')
+      .global('adroll_adv_id')
+      .global('adroll_pix_id')
+      .global('adroll_custom_data')
+      .option('advId', '')
+      .option('pixId', '');
   });
 
   describe('#load', function () {
-    before(function () {
+    beforeEach(function () {
       // required for load to work
       window.adroll_adv_id = settings.advId;
       window.adroll_pix_id = settings.pixId;
-    });
-
-    after(function () {
-      window.adroll_adv_id = undefined;
-      window.adroll_pix_id = undefined;
     });
 
     it('should create window.__adroll', function (done) {
@@ -89,7 +60,6 @@ describe('AdRoll', function () {
     afterEach(function () {
       user.reset();
       load.restore();
-      window.__adroll_loaded = undefined;
     });
 
     it('should initialize the adroll variables', function () {

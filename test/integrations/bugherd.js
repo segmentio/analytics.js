@@ -1,6 +1,5 @@
 
 describe('BugHerd', function () {
-  this.timeout(10000);
 
   var settings = {
     apiKey: '7917d741-16cc-4c2b-bb1a-bdd903d53d72'
@@ -11,47 +10,22 @@ describe('BugHerd', function () {
   var bugherd = new BugHerd(settings);
   var equal = require('equals');
   var sinon = require('sinon');
+  var test = require('integration-tester');
   var when = require('when');
 
-  describe('#name', function () {
-    it('BugHerd', function () {
-      assert(bugherd.name == 'BugHerd');
-    });
+  afterEach(function () {
+    bugherd.reset();
   });
 
-  describe('#_assumesPageview', function () {
-    it('should be true', function () {
-      assert(bugherd._assumesPageview === true);
-    });
-  });
-
-  describe('#_readyOnLoad', function () {
-    it('should be true', function () {
-      assert(bugherd._readyOnLoad === true);
-    });
-  });
-
-  describe('#defaults', function () {
-    it('apiKey', function () {
-      assert(bugherd.defaults.apiKey === '');
-    });
-
-    it('showFeedbackTab', function () {
-      assert(bugherd.defaults.showFeedbackTab === true);
-    });
-  });
-
-  describe('#exists', function () {
-    after(function () {
-      window.BugHerdConfig = undefined;
-    });
-
-    it('should check for window.BugHerdConfig', function () {
-      window.BugHerdConfig = false;
-      assert(!bugherd.exists());
-      window.BugHerdConfig = true;
-      assert(bugherd.exists());
-    });
+  it('should have the right settings', function () {
+    test(bugherd)
+      .name('BugHerd')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('BugHerdConfig')
+      .global('_bugHerd')
+      .option('apiKey', '')
+      .option('showFeedbackTab', true);
   });
 
   describe('#load', function () {

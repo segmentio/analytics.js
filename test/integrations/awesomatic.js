@@ -1,52 +1,28 @@
 
 describe('Awesomatic', function () {
 
-  var assert = require('assert');
-  var Awesomatic = require('analytics/lib/integrations/awesomatic');
-  var sinon = require('sinon');
-  var when = require('when');
-  var user = require('analytics/lib/user');
-
-  this.timeout(10000);
-
-  var awesomatic;
   var settings = {
     appId: 'af392af01603ca383672689241b648b2'
   };
 
-  beforeEach(function () {
-    awesomatic = new Awesomatic(settings);
+  var assert = require('assert');
+  var Awesomatic = require('analytics/lib/integrations/awesomatic');
+  var awesomatic = new Awesomatic(settings);
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var user = require('analytics/lib/user');
+  var when = require('when');
+
+  afterEach(function () {
+    awesomatic.reset();
   });
 
-  describe('#name', function () {
-    it('Awesomatic', function () {
-      assert(awesomatic.name == 'Awesomatic');
-    });
-  });
-
-  describe('#_assumesPageview', function () {
-    it('should be true', function () {
-      assert(awesomatic._assumesPageview === true);
-    });
-  });
-
-  describe('#defaults', function () {
-    it('appId', function () {
-      assert(awesomatic.defaults.appId === '');
-    });
-  });
-
-  describe('#exists', function () {
-    after(function () {
-      window.Awesomatic = undefined;
-    });
-
-    it('should check for window.Awesomatic', function () {
-      window.Awesomatic = undefined;
-      assert(!awesomatic.exists());
-      window.Awesomatic = {};
-      assert(awesomatic.exists());
-    });
+  it('should have the right settings', function () {
+    test(awesomatic)
+      .name('Awesomatic')
+      .assumesPageview()
+      .global('Awesomatic')
+      .option('appId', '');
   });
 
   describe('#load', function () {

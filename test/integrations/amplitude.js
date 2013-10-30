@@ -1,6 +1,5 @@
 
 describe('Amplitude', function () {
-  this.timeout(10000);
 
   var settings = {
     apiKey: '07808866adb2510adf19ee69e8fc2201'
@@ -11,46 +10,19 @@ describe('Amplitude', function () {
   var assert = require('assert');
   var equal = require('equals');
   var sinon = require('sinon');
+  var test = require('integration-tester');
   var when = require('when');
   var user = require('analytics/lib/user');
 
-  describe('#name', function () {
-    it('Amplitude', function () {
-      assert(amplitude.name == 'Amplitude');
-    });
-  });
-
-  describe('#_readyOnInitialize', function () {
-    it('should be true', function () {
-      assert(awesm._readyOnInitialize === true);
-    });
-  });
-
-  describe('#defaults', function () {
-    it('apiKey', function () {
-      assert(amplitude.defaults.apiKey === '');
-    });
-
-    it('trackAllPages', function () {
-      assert(amplitude.defaults.trackAllPages === false);
-    });
-
-    it('trackNamedPages', function () {
-      assert(amplitude.defaults.trackNamedPages === true);
-    });
-  });
-
-  describe('#exists', function () {
-    after(function () {
-      window.amplitude = undefined;
-    });
-
-    it('should check for window.amplitude', function () {
-      window.amplitude = {};
-      assert(amplitude.exists());
-      window.amplitude = undefined;
-      assert(!amplitude.exists());
-    });
+  it('should have the right settings', function () {
+    test(amplitude)
+      .name('Amplitude')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('amplitude')
+      .option('apiKey', '')
+      .option('trackAllPages', false)
+      .option('trackNamedPages', true);
   });
 
   describe('#load', function () {

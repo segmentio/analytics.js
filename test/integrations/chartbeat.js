@@ -1,6 +1,5 @@
 
 describe('Chartbeat', function () {
-  this.timeout(10000);
 
   var settings = {
     uid: 'x',
@@ -14,32 +13,20 @@ describe('Chartbeat', function () {
   var sinon = require('sinon');
   var when = require('when');
 
-  describe('#name', function () {
-    it('Chartbeat', function () {
-      assert(chartbeat.name == 'Chartbeat');
-    });
+  afterEach(function () {
+    chartbeat.reset();
   });
 
-  describe('#_assumesPageview', function () {
-    it('should be true', function () {
-      assert(chartbeat._assumesPageview === true);
-    });
-  });
-
-  describe('#_readyOnLoad', function () {
-    it('should be true', function () {
-      assert(chartbeat._readyOnLoad === true);
-    });
-  });
-
-  describe('#defaults', function () {
-    it('domain', function () {
-      assert(chartbeat.defaults.domain === '');
-    });
-
-    it('uid', function () {
-      assert(chartbeat.defaults.uid === null);
-    });
+  it('should have the right settings', function () {
+    test(chartbeat)
+      .name('Chartbeat')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('_sf_async_config')
+      .global('_sf_endpt')
+      .global('pSUPERFLY')
+      .option('domain', '')
+      .option('uid', null);
   });
 
   describe('#load', function () {

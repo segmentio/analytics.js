@@ -1,6 +1,5 @@
 
 describe('awe.sm', function () {
-  this.timeout(10000);
 
   var settings = {
     apiKey: '5c8b1a212434c2153c2f2c2f2c765a36140add243bf6eae876345f8fd11045d9',
@@ -12,47 +11,21 @@ describe('awe.sm', function () {
   var awesm = new Awesm(settings);
   var equal = require('equals');
   var sinon = require('sinon');
+  var test = require('integration-tester');
   var when = require('when');
 
-  describe('#name', function () {
-    it('awe.sm', function () {
-      assert(awesm.name == 'awe.sm');
-    });
+  afterEach(function () {
+    awesm.reset();
   });
 
-  describe('#_assumesPageview', function () {
-    it('should be true', function () {
-      assert(awesm._assumesPageview === true);
-    });
-  });
-
-  describe('#_readyOnLoad', function () {
-    it('should be true', function () {
-      assert(awesm._readyOnLoad === true);
-    });
-  });
-
-  describe('#defaults', function () {
-    it('apiKey', function () {
-      assert(awesm.defaults.apiKey === '');
-    });
-
-    it('events', function () {
-      assert(equal(awesm.defaults.events, {}));
-    });
-  });
-
-  describe('#exists', function () {
-    after(function () {
-      window.AWESM = undefined;
-    });
-
-    it('should check for window.AWESM', function () {
-      window.AWESM = {};
-      assert(awesm.exists());
-      window.AWESM = undefined;
-      assert(!awesm.exists());
-    });
+  it('should have the right settings', function () {
+    test(awesm)
+      .name('awe.sm')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('AWESM')
+      .option('apiKey', '')
+      .option('events', {});
   });
 
   describe('#load', function () {

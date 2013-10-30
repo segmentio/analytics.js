@@ -85,6 +85,7 @@
     "segmentio/canonical": "0.0.1",
     "segmentio/convert-dates": "0.1.0",
     "segmentio/extend": "0.0.1",
+    "segmentio/global-queue": "0.0.2",
     "segmentio/is-email": "0.1.1",
     "segmentio/is-meta": "0.0.1",
     "segmentio/isodate-traverse": "0.1.0",

@@ -28,10 +28,10 @@ clean:
 	@rm -rf components build node_modules
 
 kill:
-	@kill -9 `cat test/server/.pid.txt`
-	@rm test/server/.pid.txt
+	@test ! -s test/server/.pid.txt || kill -9 `cat test/server/.pid.txt`
+	@rm -f test/server/.pid.txt
 
-server: node_modules
+server: node_modules kill
 	@node test/server/index.js &
 
 release: test-release

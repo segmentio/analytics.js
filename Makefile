@@ -28,7 +28,7 @@ clean:
 	@rm -rf components build node_modules
 
 kill:
-	@test ! -s test/server/.pid.txt || kill -9 `cat test/server/.pid.txt`
+	@test ! -s test/server/.pid.txt || kill `cat test/server/.pid.txt` > /dev/null
 	@rm -f test/server/.pid.txt
 
 server: node_modules kill

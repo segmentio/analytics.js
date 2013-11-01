@@ -87,14 +87,14 @@ describe('#identify', function () {
   });
 
   it('should convert date traits to ms timestamps', function () {
-    var date = new Date();
+    var date = '2013-11-04';
     analytics.identify({
       email: 'name@example.com',
       date: date
     });
     assert(this.stub.calledWith(['identify', {
       email: 'name@example.com',
-      date: date.getTime()
+      date: 1383523200000
     }]));
   });
 });
@@ -120,10 +120,10 @@ describe('#track', function () {
   });
 
   it('should convert date properties to ms timestamps', function () {
-    var date = new Date();
+    var date = '2013-11-04';
     analytics.track('event', { date: date });
     assert(this.stub.calledWith(['trackEvent', 'event', {
-      date: date.getTime()
+      date: 1383523200000
     }]));
   });
 });

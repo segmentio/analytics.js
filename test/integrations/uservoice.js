@@ -1,124 +1,86 @@
 
 describe('UserVoice', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , jQuery = require('jquery')
-  , sinon = require('sinon')
-  , unix = require('to-unix-timestamp')
-  , when = require('when');
+  var UserVoice = require('analytics/lib/integrations/uservoice');
+  var assert = require('assert');
+  var jQuery = require('jquery');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var unix = require('to-unix-timestamp');
+  var when = require('when');
 
-describe('New', function () {
+  var uservoice;
+  var settings = {
+    apiKey: 'EvAljSeJvWrrIidgVvI2g'
+  };
 
-var settings = {
-  apiKey: 'EvAljSeJvWrrIidgVvI2g'
-};
-
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ UserVoice: settings });
-  this.integration = analytics._integrations.UserVoice;
-  this.options = this.integration.options;
-  when(function () { return window.UserVoice.account; }, done);
-});
-
-describe('#name', function () {
-  it('UserVoice', function () {
-    assert(this.integration.name == 'UserVoice');
-  });
-});
-
-describe('#key', function () {
-  it('apiKey', function () {
-    assert(this.integration.key == 'apiKey');
-  });
-});
-
-describe('#defaults', function () {
-  it('classic', function () {
-    assert(this.integration.defaults.classic === false);
+  beforeEach(function () {
+    uservoice = new UserVoice(settings);
   });
 
-  it('apiKey', function () {
-    assert(this.integration.defaults.apiKey === '');
+  afterEach(function () {
+    uservoice.restore();
   });
 
-  it('forumId', function () {
-    assert(this.integration.defaults.forumId === null);
+  it('should store the right settings', function () {
+    test('UserVoice')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('UserVoice')
+      .option('apiKey', '')
+      .option('classic', false)
+      .option('forumId', null)
+      .option('showWidget', true)
+      .option('mode', 'contact')
+      .option('accentColor', '#448dd6')
+      .option('trigger', null)
+      .option('triggerPosition', 'bottom-right')
+      .option('triggerColor', '#ffffff')
+      .option('triggerBackgroundColor', 'rgba(46, 49, 51, 0.6)')
+      // BACKWARDS COMPATIBILITY: classic options
+      .option('classicMode', 'full')
+      .option('primaryColor', '#cc6d00')
+      .option('linkColor', '#007dbf')
+      .option('defaultMode', 'support')
+      .option('tabLabel', 'Feedback & Support')
+      .option('tabColor', '#cc6d00')
+      .option('tabPosition', 'middle-right')
+      .option('tabInverted', false);
   });
 
-  it('showWidget', function () {
-    assert(this.integration.defaults.showWidget === true);
-  });
+  describe('#initialize', function () {
+    beforeEach(function () {
+      uservoice.load = sinon.spy();
+    });
 
-  it('mode', function () {
-    assert(this.integration.defaults.mode === 'contact');
-  });
+    it('should call load', function () {
+      uservoice.initialize();
+      assert(uservoice.load.called);
+    });
 
-  it('accentColor', function () {
-    assert(this.integration.defaults.accentColor === '#448dd6');
-  });
+    it('should use identifyClassic if set to classic', function () {
+    });
 
-  it('trigger', function () {
-    assert(this.integration.defaults.trigger === null);
-  });
+    it('should not have a group method if set to classic', function () {
+    });
 
-  it('triggerPosition', function () {
-    assert(this.integration.defaults.triggerPosition === 'bottom-right');
-  });
+    it('should push the setup arguments onto the window.UserVoice object', function () {
 
-  it('triggerColor', function () {
-    assert(this.integration.defaults.triggerColor === '#ffffff');
-  });
+    });
 
-  it('triggerBackgroundColor', function () {
-    assert(this.integration.defaults.triggerBackgroundColor === 'rgba(46, 49, 51, 0.6)');
-  });
 
-  it('primaryColor', function () {
-    assert(this.integration.defaults.primaryColor === '#cc6d00');
-  });
+    it('should call ready', function () {
+      assert(this.spy.called);
+    });
 
-  it('linkColor', function () {
-    assert(this.integration.defaults.linkColor === '#007dbf');
-  });
+    it('should store options', function () {
+      assert(this.options.apiKey == settings.apiKey);
+    });
 
-  it('defaultMode', function () {
-    assert(this.integration.defaults.defaultMode === 'support');
+    it('should show the trigger', function (done) {
+      when(function () { return jQuery('.uv-icon').length; }, done);
+    });
   });
-
-  it('tabLabel', function () {
-    assert(this.integration.defaults.tabLabel === 'Feedback & Support');
-  });
-
-  it('tabColor', function () {
-    assert(this.integration.defaults.tabColor === '#cc6d00');
-  });
-
-  it('tabPosition', function () {
-    assert(this.integration.defaults.tabPosition === 'middle-right');
-  });
-
-  it('tabInverted', function () {
-    assert(this.integration.defaults.tabInverted === false);
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.apiKey == settings.apiKey);
-  });
-
-  it('should show the trigger', function (done) {
-    when(function () { return jQuery('.uv-icon').length; }, done);
-  });
-});
 
 describe('#identify', function () {
   beforeEach(function () {

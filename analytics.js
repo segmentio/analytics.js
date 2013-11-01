@@ -885,13 +885,12 @@ var global = (function(){ return this })();
 
 module.exports = function(fn) {
   var id = n++;
-  var called;
 
   function once(){
     // no receiver
     if (this == global) {
-      if (called) return;
-      called = true;
+      if (once.called) return;
+      once.called = true;
       return fn.apply(this, arguments);
     }
 
@@ -1524,6 +1523,12 @@ require.register("segmentio-alias/index.js", function(exports, require, module){
 
 var type = require('type');
 
+try {
+  var clone = require('clone');
+} catch (e) {
+  var clone = require('clone-component');
+}
+
 
 /**
  * Expose `alias`.
@@ -1541,8 +1546,8 @@ module.exports = alias;
 
 function alias (obj, method) {
   switch (type(method)) {
-    case 'object': return aliasByDictionary(obj, method);
-    case 'function': return aliasByFunction(obj, method);
+    case 'object': return aliasByDictionary(clone(obj), method);
+    case 'function': return aliasByFunction(clone(obj), method);
   }
 }
 
@@ -1560,6 +1565,7 @@ function aliasByDictionary (obj, aliases) {
     obj[aliases[key]] = obj[key];
     delete obj[key];
   }
+  return obj;
 }
 
 
@@ -1575,7 +1581,305 @@ function aliasByFunction (obj, convert) {
     obj[convert(key)] = obj[key];
     delete obj[key];
   }
+  return obj;
 }
+});
+require.register("segmentio-analytics.js-integration/lib/index.js", function(exports, require, module){
+
+var bind = require('bind');
+var callback = require('callback');
+var clone = require('clone');
+var debug = require('debug');
+var defaults = require('defaults');
+var protos = require('./protos');
+var slug = require('slug');
+var statics = require('./statics');
+
+
+/**
+ * Expose `createIntegration`.
+ */
+
+module.exports = createIntegration;
+
+
+/**
+ * Create a new Integration constructor.
+ *
+ * @param {String} name
+ */
+
+function createIntegration (name) {
+
+  /**
+   * Initialize a new `Integration`.
+   *
+   * @param {Object} options
+   */
+
+  function Integration (options) {
+    this.debug = debug('analytics:integration:' + slug(name));
+    this.options = defaults(clone(options) || {}, this.defaults);
+    this._queue = [];
+    this._wrapInitialize();
+    this._wrapLoad();
+    this._wrapPage();
+    this.once('ready', bind(this, this.flush));
+  }
+
+  Integration.prototype.defaults = {};
+  Integration.prototype.globals = [];
+  Integration.prototype.name = name;
+  for (var key in statics) Integration[key] = statics[key];
+  for (var key in protos) Integration.prototype[key] = protos[key];
+  return Integration;
+}
+});
+require.register("segmentio-analytics.js-integration/lib/protos.js", function(exports, require, module){
+
+var after = require('after');
+var callback = require('callback');
+var Emitter = require('emitter');
+
+
+/**
+ * Mixin emitter.
+ */
+
+Emitter(exports);
+
+
+/**
+ * Exists.
+ *
+ * @api private
+ */
+
+exports.exists = function () {
+  return false;
+};
+
+/**
+ * Initialize.
+ */
+
+exports.initialize = function () {
+  this.load();
+};
+
+/**
+ * Load.
+ *
+ * @param {Function} cb
+ */
+
+exports.load = function (cb) {
+  callback.async(cb);
+};
+
+/**
+ * Page.
+ *
+ * @param {String} name (optional)
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+exports.page = function (name, properties, options) {};
+
+/**
+ * Invoke a `method` that may or may not exist on the prototype with `args`,
+ * queueing or not depending on whether the integration is "ready". Don't
+ * trust the method call, since it contains integration party code.
+ *
+ * @param {String} method
+ * @param {Mixed} args...
+ * @api private
+ */
+
+exports.invoke = function (method) {
+  if (!this[method]) return;
+  var args = [].slice.call(arguments, 1);
+  if (!this._ready) return this.queue(method, args);
+
+  try {
+    this.debug('%s with %o', method, args);
+    this[method].apply(this, args);
+  } catch (e) {
+    this.debug('error %o calling %s with %o', e, method, args);
+  }
+};
+
+/**
+ * Queue a `method` with `args`. If the integration assumes an initial
+ * pageview, then let the first call to `page` pass through to `initialize`.
+ *
+ * @param {String} method
+ * @param {Array} args
+ * @api private
+ */
+
+exports.queue = function (method, args) {
+  if ('page' == method && this._assumesPageview && !this._initialized) {
+    this._initialized = true;
+    return this.initialize();
+  }
+
+  this._queue.push({ method: method, args: args });
+};
+
+
+/**
+ * Flush the internal queue.
+ *
+ * @api private
+ */
+
+exports.flush = function () {
+  this._ready = true;
+  var call;
+  while (call = this._queue.shift()) this[call.method].apply(this, call.args);
+};
+
+
+/**
+ * Reset the integration, removing its global variables.
+ *
+ * @api private
+ */
+
+exports.reset = function () {
+  for (var i = 0, key; key = this.globals[i]; i++) window[key] = undefined;
+};
+
+
+/**
+ * Wrap the initialize method in an exists check, so we don't have to do it for
+ * every single integration.
+ *
+ * @api private
+ */
+
+exports._wrapInitialize = function () {
+  var initialize = this.initialize;
+  this.initialize = function () {
+    if (this.exists()) {
+      this.debug('already exists');
+      this.emit('ready');
+      return;
+    }
+
+    this.debug('initialize');
+    initialize.call(this);
+    if (this._readyOnInitialize) this.emit('ready');
+  };
+};
+
+
+/**
+ * Wrap the load method in `debug` calls, so every integration gets them
+ * automatically.
+ *
+ * @api private
+ */
+
+exports._wrapLoad = function () {
+  var load = this.load;
+  this.load = function (callback) {
+    var self = this;
+    this.debug('loading');
+    load.call(this, function (err, e) {
+      self.debug('loaded');
+      self.emit('load');
+      if (self._readyOnLoad) self.emit('ready');
+      callback && callback(err, e);
+    });
+  };
+};
+
+
+/**
+ * BACKWARDS COMPATIBILITY: Wrap the page method if the old `initialPageview`
+ * option was set to `false`.
+ *
+ * @api private
+ */
+
+exports._wrapPage = function () {
+  if (this.options.initialPageview === false) {
+    this.page = after(2, this.page);
+  }
+};
+});
+require.register("segmentio-analytics.js-integration/lib/statics.js", function(exports, require, module){
+
+var after = require('after');
+
+
+/**
+ * Add a new option to the integration by `key` with default `value`.
+ *
+ * @param {String} key
+ * @param {Mixed} value
+ * @return {Integration}
+ */
+
+exports.option = function (key, value) {
+  this.prototype.defaults[key] = value;
+  return this;
+};
+
+
+/**
+ * Register a new global variable `key` owned by the integration, which will be
+ * used to test whether the integration is already on the page.
+ *
+ * @param {String} global
+ * @return {Integration}
+ */
+
+exports.global = function (key) {
+  this.prototype.globals.push(key);
+  return this;
+};
+
+
+/**
+ * Mark the integration as assuming an initial pageview, so to defer loading
+ * the script until the first `page` call, noop the first `initialize`.
+ *
+ * @return {Integration}
+ */
+
+exports.assumesPageview = function () {
+  this.prototype._assumesPageview = true;
+  this.prototype.initialize = after(2, this.prototype.initialize);
+  return this;
+};
+
+
+/**
+ * Mark the integration as being "ready" once `load` is called.
+ *
+ * @return {Integration}
+ */
+
+exports.readyOnLoad = function () {
+  this.prototype._readyOnLoad = true;
+  return this;
+};
+
+
+/**
+ * Mark the integration as being "ready" once `load` is called.
+ *
+ * @return {Integration}
+ */
+
+exports.readyOnInitialize = function () {
+  this.prototype._readyOnInitialize = true;
+  return this;
+};
 });
 require.register("segmentio-canonical/index.js", function(exports, require, module){
 module.exports = function canonical () {
@@ -1637,6 +1941,36 @@ module.exports = function extend (object) {
 
     return object;
 };
+});
+require.register("segmentio-global-queue/index.js", function(exports, require, module){
+
+/**
+ * Expose `generate`.
+ */
+
+module.exports = generate;
+
+
+/**
+ * Generate a global queue pushing method with `name`.
+ *
+ * @param {String} name
+ * @param {Object} options
+ *   @property {Boolean} wrap
+ * @return {Function}
+ */
+
+function generate (name, options) {
+  options = options || {};
+
+  return function (args) {
+    args = [].slice.call(arguments);
+    window[name] || (window[name] = []);
+    options.wrap === false
+      ? window[name].push.apply(window[name], args)
+      : window[name].push(args);
+  };
+}
 });
 require.register("segmentio-is-email/index.js", function(exports, require, module){
 
@@ -2711,10 +3045,10 @@ function chooseUrl (options) {
 });
 require.register("segmentio-new-date/lib/index.js", function(exports, require, module){
 
-var is = require('is');
-var isodate = require('isodate');
-var milliseconds = require('./milliseconds');
-var seconds = require('./seconds');
+var is = require('is')
+  , isodate = require('isodate')
+  , milliseconds = require('./milliseconds')
+  , seconds = require('./seconds');
 
 
 /**
@@ -2725,8 +3059,8 @@ var seconds = require('./seconds');
  */
 
 module.exports = function newDate (val) {
-  if (is.date(val)) return val;
   if (is.number(val)) return new Date(toMs(val));
+  if (is.date(val)) return new Date(val.getTime()); // firefox woulda floored
 
   // date strings
   if (isodate.is(val)) return isodate.parse(val);
@@ -3245,8 +3579,6 @@ function debug(name) {
   if (!debug.enabled(name)) return function(){};
 
   return function(fmt){
-    fmt = coerce(fmt);
-
     var curr = new Date;
     var ms = curr - (debug[name] || curr);
     debug[name] = curr;
@@ -3349,20 +3681,9 @@ debug.enabled = function(name) {
   return false;
 };
 
-/**
- * Coerce `val`.
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
 // persist
 
-try {
-  if (window.localStorage) debug.enable(localStorage.debug);
-} catch(e){}
+if (window.localStorage) debug.enable(localStorage.debug);
 
 });
 require.register("analytics/lib/index.js", function(exports, require, module){
@@ -3416,7 +3737,7 @@ var after = require('after')
   , canonical = require('canonical')
   , clone = require('clone')
   , cookie = require('./cookie')
-  , createIntegration = require('./integration')
+  , createIntegration = require('integration')
   , debug = require('debug')
   , defaults = require('defaults')
   , each = require('each')
@@ -4689,268 +5010,9 @@ module.exports = bind.all(new User());
 module.exports.User = User;
 
 });
-require.register("analytics/lib/integration/index.js", function(exports, require, module){
-
-var bind = require('bind');
-var callback = require('callback');
-var clone = require('clone');
-var debug = require('debug');
-var defaults = require('defaults');
-var protos = require('./protos');
-var slug = require('slug');
-var statics = require('./statics');
-
-
-/**
- * Expose `createIntegration`.
- */
-
-module.exports = createIntegration;
-
-
-/**
- * Create a new Integration constructor.
- *
- * @param {String} name
- */
-
-function createIntegration (name) {
-
-  /**
-   * Initialize a new `Integration`.
-   *
-   * @param {Object} options
-   * @param {Function} ready
-   * @param {Object} analytics
-   */
-
-  function Integration (options, analytics) {
-    this.debug = debug('analytics:integration:' + slug(name));
-    this.options = defaults(clone(options) || {}, this.defaults);
-    this.analytics = analytics;
-    this._queue = [];
-    this._wrapInitialize();
-    this._wrapLoad();
-    this._wrapPage();
-    this.once('ready', bind(this, this.flush));
-  }
-
-  Integration.prototype.defaults = {};
-  Integration.prototype.name = name;
-  for (var key in statics) Integration[key] = statics[key];
-  for (var key in protos) Integration.prototype[key] = protos[key];
-  return Integration;
-}
-});
-require.register("analytics/lib/integration/protos.js", function(exports, require, module){
-
-var after = require('after');
-var callback = require('callback');
-var Emitter = require('emitter');
-
-
-/**
- * Mixin emitter.
- */
-
-Emitter(exports);
-
-
-/**
- * Exists noop.
- */
-
-exports.exists = function () {
-  return false;
-};
-
-/**
- * Initialize noop.
- */
-
-exports.initialize = function () {
-  this.load();
-};
-
-/**
- * Load noop.
- */
-
-exports.load = function (fn) {
-  this.emit('ready');
-  callback.async(fn);
-};
-
-/**
- * Invoke a `method` that may or may not exist on the prototype with `args`,
- * queueing or not depending on whether the integration is "ready". Don't
- * trust the method call, since it contains integration party code.
- *
- * @param {String} method
- * @param {Mixed} args...
- * @api private
- */
-
-exports.invoke = function (method) {
-  if (!this[method]) return;
-  var args = [].slice.call(arguments, 1);
-  if (!this._ready) return this.queue(method, args);
-
-  try {
-    this.debug('%s with %o', method, args);
-    this[method].apply(this, args);
-  } catch (e) {
-    this.debug('error %o calling %s with %o', e, method, args);
-  }
-};
-
-/**
- * Queue a `method` with `args`. If the integration assumes an initial
- * pageview, then let the first call to `page` pass through to `initialize`.
- *
- * @param {String} method
- * @param {Array} args
- * @api private
- */
-
-exports.queue = function (method, args) {
-  if ('page' == method && this._assumesPageview && !this._initialized) {
-    this._initialized = true;
-    return this.initialize();
-  }
-
-  this._queue.push({ method: method, args: args });
-};
-
-
-/**
- * Flush the internal queue.
- *
- * @api private
- */
-
-exports.flush = function () {
-  var call;
-  while (call = this._queue.shift()) this[call.method].apply(this, call.args);
-};
-
-
-/**
- * Wrap the initialize method in an exists check, so we don't have to do it for
- * every single integration.
- *
- * @api private
- */
-
-exports._wrapInitialize = function () {
-  var initialize = this.initialize;
-  this.initialize = function () {
-    if (this.exists()) {
-      this.debug('already loaded');
-      this.emit('ready');
-      return;
-    }
-
-    initialize.apply(this, arguments);
-    if (this._readyOnInitialize) this.emit('ready');
-  };
-};
-
-
-/**
- * Wrap the load method in `debug` calls, so every integration gets them
- * automatically.
- *
- * @api private
- */
-
-exports._wrapLoad = function () {
-  var load = this.load;
-  this.load = function (callback) {
-    var self = this;
-    this.debug('loading');
-    load.call(this, function (err, e) {
-      self.debug('loaded');
-      self.emit('load');
-      if (self._readyOnLoad) self.emit('ready');
-      callback && callback(err, e);
-    });
-  };
-};
-
-
-/**
- * BACKWARDS COMPATIBILITY: Wrap the page method if the old `initialPageview`
- * option was set to `false`.
- *
- * @api private
- */
-
-exports._wrapPage = function () {
-  if (this.options.initialPageview === false) {
-    this.prototype.page = after(1, this.prototype.page);
-  }
-};
-});
-require.register("analytics/lib/integration/statics.js", function(exports, require, module){
-
-var after = require('after');
-
-
-/**
- * Add a new option to the integration by `key` with default `value`.
- *
- * @param {String} key
- * @param {Mixed} value
- * @return {Integration}
- */
-
-exports.option = function (key, value) {
-  this.prototype.defaults[key] = value;
-  return this;
-};
-
-
-/**
- * Mark the integration as assuming an initial pageview, so to defer loading
- * the script until the first `page` call, noop the first `initialize`.
- *
- * @return {Integration}
- */
-
-exports.assumesPageview = function () {
-  this.prototype._assumesPageview = true;
-  this.prototype.initialize = after(1, this.prototype.initialize);
-  return this;
-};
-
-
-/**
- * Mark the integration as being "ready" once `load` is called.
- *
- * @return {Integration}
- */
-
-exports.readyOnLoad = function () {
-  this.prototype._readyOnLoad = true;
-  return this;
-};
-
-
-/**
- * Mark the integration as being "ready" once `load` is called.
- *
- * @return {Integration}
- */
-
-exports.readyOnInitialize = function () {
-  this.prototype._readyOnInitialize = true;
-  return this;
-};
-});
 require.register("analytics/lib/integrations/adroll.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script');
 var user = require('../user');
 
@@ -4962,17 +5024,12 @@ var user = require('../user');
 var AdRoll = module.exports = integration('AdRoll')
   .assumesPageview()
   .readyOnLoad()
+  .global('__adroll_loaded')
+  .global('adroll_adv_id')
+  .global('adroll_pix_id')
+  .global('adroll_custom_data')
   .option('advId', '')
   .option('pixId', '');
-
-
-/**
- * Exists?
- */
-
-AdRoll.prototype.exists = function () {
-  return !! window.__adroll_loaded;
-};
 
 
 /**
@@ -5012,7 +5069,7 @@ AdRoll.prototype.load = function (callback) {
 require.register("analytics/lib/integrations/amplitude.js", function(exports, require, module){
 
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script');
 
 
@@ -5023,18 +5080,10 @@ var load = require('load-script');
 var Amplitude = module.exports = integration('Amplitude')
   .assumesPageview()
   .readyOnInitialize()
+  .global('amplitude')
   .option('apiKey', '')
   .option('trackAllPages', false)
   .option('trackNamedPages', true);
-
-
-/**
- * Exists?
- */
-
-Amplitude.prototype.exists = function () {
-  return !! window.amplitude;
-};
 
 
 /**
@@ -5110,7 +5159,7 @@ Amplitude.prototype.page = function (name, properties, options) {
 });
 require.register("analytics/lib/integrations/awesm.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script');
 var user = require('../user');
 
@@ -5122,17 +5171,9 @@ var user = require('../user');
 var Awesm = module.exports = integration('awe.sm')
   .assumesPageview()
   .readyOnLoad()
+  .global('AWESM')
   .option('apiKey', '')
   .option('events', {});
-
-
-/**
- * Exists?
- */
-
-Awesm.prototype.exists = function () {
-  return !! window.AWESM;
-};
 
 
 /**
@@ -5177,7 +5218,7 @@ Awesm.prototype.track = function (event, properties, options) {
 });
 require.register("analytics/lib/integrations/awesomatic.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script');
 var noop = function(){};
 var onBody = require('on-body');
@@ -5189,16 +5230,8 @@ var onBody = require('on-body');
 
 var Awesomatic = module.exports = integration('Awesomatic')
   .assumesPageview()
+  .global('Awesomatic')
   .option('appId', '');
-
-
-/**
- * Exists?
- */
-
-Awesomatic.prototype.exists = function () {
-  return !! window.Awesomatic;
-};
 
 
 /**
@@ -5210,7 +5243,7 @@ Awesomatic.prototype.initialize = function () {
   var id = this.options.appId;
   this.load(function () {
     window.Awesomatic.initialize({ appId: id }, function () {
-      self.emit('ready');
+      self.emit('ready'); // need to wait for initialize to callback
     });
   });
 };
@@ -5244,7 +5277,7 @@ Awesomatic.prototype.identify = function (id, traits, options) {
 });
 require.register("analytics/lib/integrations/bugherd.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script');
 
 
@@ -5255,17 +5288,10 @@ var load = require('load-script');
 var BugHerd = module.exports = integration('BugHerd')
   .assumesPageview()
   .readyOnLoad()
+  .global('BugHerdConfig')
+  .global('_bugHerd')
   .option('apiKey', '')
   .option('showFeedbackTab', true);
-
-
-/**
- * Exists?
- */
-
-BugHerd.prototype.exists = function () {
-  return !! window.BugHerdConfig;
-};
 
 
 /**
@@ -5292,7 +5318,7 @@ BugHerd.prototype.load = function (callback) {
 });
 require.register("analytics/lib/integrations/chartbeat.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var onBody = require('on-body');
 var load = require('load-script');
 
@@ -5304,17 +5330,11 @@ var load = require('load-script');
 var Chartbeat = module.exports = integration('Chartbeat')
   .assumesPageview()
   .readyOnLoad()
+  .global('_sf_async_config')
+  .global('_sf_endpt')
+  .global('pSUPERFLY')
   .option('domain', '')
   .option('uid', null);
-
-
-/**
- * Exists?
- */
-
-Chartbeat.prototype.exists = function () {
-  return !! window._sf_async_config;
-};
 
 
 /**
@@ -5365,7 +5385,7 @@ require.register("analytics/lib/integrations/clicktale.js", function(exports, re
 var date = require('load-date');
 var domify = require('domify');
 var each = require('each');
-var integration = require('../integration');
+var integration = require('integration');
 var useHttps = require('use-https');
 var load = require('load-script');
 var onBody = require('on-body');
@@ -5378,20 +5398,12 @@ var onBody = require('on-body');
 var ClickTale = module.exports = integration('ClickTale')
   .assumesPageview()
   .readyOnLoad()
+  .global('WRInitTime')
   .option('httpCdnUrl', 'http://s.clicktale.net/WRe0.js')
   .option('httpsCdnUrl', '')
   .option('projectId', '')
   .option('recordingRatio', 0.01)
   .option('partitionId', '');
-
-
-/**
- * Exists?
- */
-
-ClickTale.prototype.exists = function () {
-  return !! window.WRInitTime;
-};
 
 
 /**
@@ -5464,7 +5476,7 @@ ClickTale.prototype.track = function (event, properties, options) {
 require.register("analytics/lib/integrations/clicky.js", function(exports, require, module){
 
 var extend = require('extend');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script');
 var user = require('../user');
 
@@ -5476,16 +5488,8 @@ var user = require('../user');
 var Clicky = module.exports = integration('Clicky')
   .assumesPageview()
   .readyOnLoad()
+  .global('clicky_site_ids')
   .option('siteId', null);
-
-
-/**
- * Exists?
- */
-
-Clicky.prototype.exists = function () {
-  return !! window.clicky_site_ids;
-};
 
 
 /**
@@ -5559,7 +5563,7 @@ Clicky.prototype.page = function (name, properties, options) {
 });
 require.register("analytics/lib/integrations/comscore.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script');
 
 
@@ -5570,17 +5574,9 @@ var load = require('load-script');
 var Comscore = module.exports = integration('Comscore')
   .assumesPageview()
   .readyOnLoad()
+  .global('_comscore')
   .option('c1', '2')
   .option('c2', '');
-
-
-/**
- * Exists?
- */
-
-Comscore.prototype.exists = function () {
-  return !! window._comscore;
-};
 
 
 /**
@@ -5608,7 +5604,7 @@ Comscore.prototype.load = function (callback) {
 });
 require.register("analytics/lib/integrations/crazy-egg.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script');
 
 
@@ -5619,16 +5615,8 @@ var load = require('load-script');
 var CrazyEgg = module.exports = integration('Crazy Egg')
   .assumesPageview()
   .readyOnLoad()
+  .global('CE2')
   .option('accountNumber', '');
-
-
-/**
- * Exists?
- */
-
-CrazyEgg.prototype.exists = function () {
-  return !! window.CE2;
-};
 
 
 /**
@@ -5659,7 +5647,7 @@ require.register("analytics/lib/integrations/customerio.js", function(exports, r
 var alias = require('alias');
 var callback = require('callback');
 var convertDates = require('convert-dates');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script');
 var user = require('../user');
 
@@ -5671,16 +5659,8 @@ var user = require('../user');
 var Customerio = module.exports = integration('Customer.io')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_cio')
   .option('siteId', '');
-
-
-/**
- * Exists?
- */
-
-Customerio.prototype.exists = function () {
-  return !! window._cio;
-};
 
 
 /**
@@ -5786,7 +5766,7 @@ require.register("analytics/lib/integrations/errorception.js", function(exports,
 
 var callback = require('callback');
 var extend = require('extend');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var onError = require('on-error');
 
@@ -5797,17 +5777,9 @@ var onError = require('on-error');
 
 var Errorception = module.exports = integration('Errorception')
   .readyOnInitialize()
+  .global('_errs')
   .option('projectId', '')
   .option('meta', true);
-
-
-/**
- * Exists?
- */
-
-Errorception.prototype.exists = function () {
-  return !! window._errs;
-};
 
 
 /**
@@ -5854,7 +5826,7 @@ Errorception.prototype.identify = function (id, traits, options) {
 require.register("analytics/lib/integrations/foxmetrics.js", function(exports, require, module){
 
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -5865,16 +5837,8 @@ var load = require('load-script-once');
 var FoxMetrics = module.exports = integration('FoxMetrics')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_fxm')
   .option('appId', '');
-
-
-/**
- * Exists?
- */
-
-FoxMetrics.prototype.exists = function () {
-  return !! window._fxm;
-};
 
 
 /**
@@ -5984,7 +5948,7 @@ function push (args) {
 require.register("analytics/lib/integrations/gauges.js", function(exports, require, module){
 
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -5995,16 +5959,8 @@ var load = require('load-script-once');
 var Gauges = module.exports = integration('Gauges')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_gauges')
   .option('siteId', '');
-
-
-/**
- * Exists?
- */
-
-Gauges.prototype.exists = function () {
-  return !! window._gauges;
-};
 
 
 /**
@@ -6047,7 +6003,7 @@ Gauges.prototype.page = function (name, properties, options) {
 });
 require.register("analytics/lib/integrations/get-satisfaction.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var onBody = require('on-body');
 
@@ -6059,16 +6015,8 @@ var onBody = require('on-body');
 var GetSatisfaction = module.exports = integration('Get Satisfaction')
   .assumesPageview()
   .readyOnLoad()
+  .global('GSFN')
   .option('widgetId', '');
-
-
-/**
- * Exists?
- */
-
-GetSatisfaction.prototype.exists = function () {
-  return !! window.GSFN;
-};
 
 
 /**
@@ -6105,7 +6053,7 @@ require.register("analytics/lib/integrations/google-analytics.js", function(expo
 var callback = require('callback');
 var canonical = require('canonical');
 var each = require('each');
-var integration = require('../integration');
+var integration = require('integration');
 var is = require('is');
 var load = require('load-script-once');
 var type = require('type');
@@ -6121,6 +6069,9 @@ var url = require('url');
 
 var GA = module.exports = integration('Google Analytics')
   .readyOnLoad()
+  .global('ga')
+  .global('_gaq')
+  .global('GoogleAnalyticsObject')
   .option('anonymizeIp', false)
   .option('classic', false)
   .option('domain', 'none')
@@ -6130,15 +6081,6 @@ var GA = module.exports = integration('Google Analytics')
   .option('siteSpeedSampleRate', null)
   .option('trackingId', '')
   .option('trackNamedPages', true);
-
-
-/**
- * Exists?
- */
-
-GA.prototype.exists = function () {
-  return !! window.ga || window._gaq || window.GoogleAnalyticsObject;
-};
 
 
 /**
@@ -6369,7 +6311,7 @@ function formatValue (value) {
 require.register("analytics/lib/integrations/gosquared.js", function(exports, require, module){
 
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var onBody = require('on-body');
 var user = require('../user');
@@ -6382,16 +6324,8 @@ var user = require('../user');
 var GoSquared = module.exports = integration('GoSquared')
   .assumesPageview()
   .readyOnLoad()
+  .global('GoSquared')
   .option('siteToken', '');
-
-
-/**
- * Exists?
- */
-
-GoSquared.prototype.exists = function () {
-  return !! window.GoSquared;
-};
 
 
 /**
@@ -6491,7 +6425,7 @@ require.register("analytics/lib/integrations/heap.js", function(exports, require
 
 var alias = require('alias');
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -6502,16 +6436,8 @@ var load = require('load-script-once');
 var Heap = module.exports = integration('Heap')
   .assumesPageview()
   .readyOnInitialize()
+  .global('heap')
   .option('apiKey', '');
-
-
-/**
- * Exists?
- */
-
-Heap.prototype.exists = function () {
-  return !! window.heap;
-};
 
 
 /**
@@ -6579,7 +6505,7 @@ Heap.prototype.track = function (event, properties, options) {
 });
 require.register("analytics/lib/integrations/hittail.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -6590,16 +6516,8 @@ var load = require('load-script-once');
 var HitTail = module.exports = integration('HitTail')
   .assumesPageview()
   .readyOnLoad()
+  .global('htk')
   .option('siteId', '');
-
-
-/**
- * Exists?
- */
-
-HitTail.prototype.exists = function () {
-  return !! window.htk;
-};
 
 
 /**
@@ -6625,7 +6543,7 @@ HitTail.prototype.load = function (callback) {
 require.register("analytics/lib/integrations/hubspot.js", function(exports, require, module){
 
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -6636,16 +6554,8 @@ var load = require('load-script-once');
 var HubSpot = module.exports = integration('HubSpot')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_hsq')
   .option('portalId', null);
-
-
-/**
- * Exists?
- */
-
-HubSpot.prototype.exists = function () {
-  return !! window._hsq;
-};
 
 
 /**
@@ -6730,7 +6640,7 @@ require.register("analytics/lib/integrations/improvely.js", function(exports, re
 
 var alias = require('alias');
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -6741,17 +6651,10 @@ var load = require('load-script-once');
 var Improvely = module.exports = integration('Improvely')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_improvely')
+  .global('improvely')
   .option('domain', '')
   .option('projectId', null);
-
-
-/**
- * Exists?
- */
-
-Heap.prototype.exists = function () {
-  return !! window._improvely || window.improvely;
-};
 
 
 /**
@@ -6816,7 +6719,7 @@ Improvely.prototype.track = function (event, properties, options) {
 });
 require.register("analytics/lib/integrations/inspectlet.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var alias = require('alias');
 var clone = require('clone');
 var load = require('load-script-once');
@@ -6830,16 +6733,8 @@ var push = require('global-queue')('__insp');
 var Inspectlet = module.exports = integration('Inspectlet')
   .assumesPageview()
   .readyOnLoad()
+  .global('__insp')
   .option('wid', '');
-
-
-/**
- * Exists?
- */
-
-Inspectlet.prototype.exists = function () {
-  return !! window.__insp;
-};
 
 
 /**
@@ -6868,7 +6763,7 @@ require.register("analytics/lib/integrations/intercom.js", function(exports, req
 
 var alias = require('alias');
 var convertDates = require('convert-dates');
-var integration = require('../integration');
+var integration = require('integration');
 var each = require('each');
 var is = require('is');
 var isEmail = require('is-email');
@@ -6882,19 +6777,11 @@ var load = require('load-script-once');
 var Intercom = module.exports = integration('Intercom')
   .assumesPageview()
   .readyOnLoad()
+  .global('Intercom')
   .option('activator', '#IntercomDefaultWidget')
   .option('appId', '')
   .option('counter', true)
   .option('inbox', false);
-
-
-/**
- * Exists?
- */
-
-Intercom.prototype.exists = function () {
-  return !! window.Intercom;
-};
 
 
 /**
@@ -6989,7 +6876,7 @@ function formatDate (date) {
 require.register("analytics/lib/integrations/keen-io.js", function(exports, require, module){
 
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -6999,20 +6886,12 @@ var load = require('load-script-once');
 
 var Keen = module.exports = integration('Keen IO')
   .readyOnInitialize()
+  .global('Keen')
   .option('projectId', '')
   .option('readKey', '')
   .option('writeKey', '')
   .option('trackNamedPages', true)
   .option('trackAllPages', false);
-
-
-/**
- * Exists?
- */
-
-Keen.prototype.exists = function () {
-  return !! window.Keen;
-};
 
 
 /**
@@ -7101,7 +6980,7 @@ require.register("analytics/lib/integrations/kissmetrics.js", function(exports, 
 
 var alias = require('alias');
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var push = require('global-queue')('_kmq');
 
@@ -7113,17 +6992,9 @@ var push = require('global-queue')('_kmq');
 var KISSmetrics = module.exports = integration('KISSmetrics')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_kmq')
   .option('apiKey', '')
   .option('trackNamedPages', true);
-
-
-/**
- * Exists?
- */
-
-KISSmetrics.prototype.exists = function () {
-  return !! window._kmq;
-};
 
 
 /**
@@ -7207,7 +7078,7 @@ require.register("analytics/lib/integrations/klaviyo.js", function(exports, requ
 
 var alias = require('alias');
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var push = require('global-queue')('_learnq');
 
@@ -7219,16 +7090,8 @@ var push = require('global-queue')('_learnq');
 var Klaviyo = module.exports = integration('Klaviyo')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_learnq')
   .option('apiKey', '');
-
-
-/**
- * Exists?
- */
-
-Klaviyo.prototype.exists = function () {
-  return !! window._learnq;
-};
 
 
 /**
@@ -7323,7 +7186,7 @@ function push (args) {
 });
 require.register("analytics/lib/integrations/leadlander.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -7334,16 +7197,8 @@ var load = require('load-script-once');
 var LeadLander = module.exports = integration('LeadLander')
   .assumesPageview()
   .readyOnLoad()
+  .global('llactid')
   .option('accountId', null);
-
-
-/**
- * Exists?
- */
-
-LeadLander.prototype.exists = function () {
-  return !! window.llactid;
-};
 
 
 /**
@@ -7369,7 +7224,7 @@ LeadLander.prototype.load = function (callback) {
 require.register("analytics/lib/integrations/livechat.js", function(exports, require, module){
 
 var each = require('each');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -7380,16 +7235,8 @@ var load = require('load-script-once');
 var LiveChat = module.exports = integration('LiveChat')
   .assumesPageview()
   .readyOnLoad()
+  .global('__lc')
   .option('license', '');
-
-
-/**
- * Exists?
- */
-
-LiveChat.prototype.exists = function () {
-  return !! window.__lc;
-};
 
 
 /**
@@ -7448,7 +7295,7 @@ require.register("analytics/lib/integrations/lytics.js", function(exports, requi
 
 var alias = require('alias');
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -7459,21 +7306,13 @@ var load = require('load-script-once');
 var Lytics = module.exports = integration('Lytics')
   .assumesPageview()
   .readyOnInitialize()
+  .global('jstag')
   .option('cid', '')
   .option('cookie', 'seerid')
   .option('delay', 200)
   .option('initialPageview', true)
   .option('sessionTimeout', 1800)
   .option('url', '//c.lytics.io');
-
-
-/**
- * Exists?
- */
-
-Lytics.prototype.exists = function () {
-  return !! window.jstag;
-};
 
 
 /**
@@ -7553,7 +7392,7 @@ require.register("analytics/lib/integrations/mixpanel.js", function(exports, req
 
 var alias = require('alias');
 var clone = require('clone');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -7564,6 +7403,7 @@ var load = require('load-script-once');
 var Mixpanel = module.exports = integration('Mixpanel')
   .assumesPageview()
   .readyOnLoad()
+  .global('mixpanel')
   .option('cookieName', '')
   .option('nameTag', true)
   .option('pageview', false)
@@ -7571,15 +7411,6 @@ var Mixpanel = module.exports = integration('Mixpanel')
   .option('token', '')
   .option('trackAllPages', false)
   .option('trackNamedPages', true);
-
-
-/**
- * Exists?
- */
-
-Mixpanel.prototype.exists = function () {
-  return !! window.mixpanel;
-};
 
 
 /**
@@ -7719,7 +7550,7 @@ Mixpanel.prototype.alias = function (to, from) {
 require.register("analytics/lib/integrations/mousestats.js", function(exports, require, module){
 
 var each = require('each');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -7730,16 +7561,8 @@ var load = require('load-script-once');
 var MouseStats = module.exports = integration('MouseStats')
   .assumesPageview()
   .readyOnLoad()
+  .global('msaa')
   .option('accountNumber', '');
-
-
-/**
- * Exists?
- */
-
-MouseStats.prototype.exists = function () {
-  return !! window.msaa;
-};
 
 
 /**
@@ -7790,7 +7613,7 @@ MouseStats.prototype.identify = function (id, traits, options) {
 require.register("analytics/lib/integrations/olark.js", function(exports, require, module){
 
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var https = require('use-https');
 
 
@@ -7801,19 +7624,11 @@ var https = require('use-https');
 var Olark = module.exports = integration('Olark')
   .assumesPageview()
   .readyOnInitialize()
+  .global('olark')
   .option('identify', true)
   .option('page', true)
   .option('siteId', '')
   .option('track', false);
-
-
-/**
- * Exists?
- */
-
-Olark.prototype.exists = function () {
-  return !! window.olark;
-};
 
 
 /**
@@ -7934,7 +7749,7 @@ require.register("analytics/lib/integrations/optimizely.js", function(exports, r
 var bind = require('bind');
 var callback = require('callback');
 var each = require('each');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var push = require('global-queue')('optimizely');
 var tick = require('next-tick');
@@ -7947,15 +7762,6 @@ var tick = require('next-tick');
 var Optimizely = module.exports = integration('Optimizely')
   .readyOnInitialize()
   .option('variations', true);
-
-
-/**
- * Exists?
- */
-
-Optimizely.prototype.exists = function () {
-  return false; // we require it to exist, no async support yet
-};
 
 
 /**
@@ -8009,7 +7815,7 @@ Optimizely.prototype.replay = function () {
 });
 require.register("analytics/lib/integrations/perfect-audience.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -8020,16 +7826,8 @@ var load = require('load-script-once');
 var PerfectAudience = module.exports = integration('Perfect Audience')
   .assumesPageview()
   .readyOnLoad()
+  .global('_pa')
   .option('siteId', '');
-
-
-/**
- * Exists?
- */
-
-PerfectAudience.prototype.exists = function () {
-  return !! window._pa;
-};
 
 
 /**
@@ -8071,7 +7869,7 @@ PerfectAudience.prototype.track = function (event, properties, options) {
 require.register("analytics/lib/integrations/pingdom.js", function(exports, require, module){
 
 var date = require('load-date');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var push = require('global-queue')('_prum');
 
@@ -8083,16 +7881,8 @@ var push = require('global-queue')('_prum');
 var Pingdom = module.exports = integration('Pingdom')
   .assumesPageview()
   .readyOnLoad()
+  .global('_prum')
   .option('id', '');
-
-
-/**
- * Exists?
- */
-
-Pingdom.prototype.exists = function () {
-  return !! window._prum;
-};
 
 
 /**
@@ -8121,7 +7911,7 @@ require.register("analytics/lib/integrations/preact.js", function(exports, requi
 var alias = require('alias');
 var callback = require('callback');
 var convertDates = require('convert-dates');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var push = require('global-queue')('_lnq');
 
@@ -8133,16 +7923,8 @@ var push = require('global-queue')('_lnq');
 var Preact = module.exports = integration('Preact')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_lnq')
   .option('projectCode', '');
-
-
-/**
- * Exists?
- */
-
-Preact.prototype.exists = function () {
-  return !! window._lnq;
-};
 
 
 /**
@@ -8252,7 +8034,7 @@ function push (args) {
 require.register("analytics/lib/integrations/qualaroo.js", function(exports, require, module){
 
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var push = require('global-queue')('_kiq');
 
@@ -8264,18 +8046,10 @@ var push = require('global-queue')('_kiq');
 var Qualaroo = module.exports = integration('Qualaroo')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_kiq')
   .option('customerId', '')
   .option('siteToken', '')
   .option('track', true);
-
-
-/**
- * Exists?
- */
-
-Qualaroo.prototype.exists = function () {
-  return !! window._kiq;
-};
 
 
 /**
@@ -8347,7 +8121,7 @@ function push (args) {
 });
 require.register("analytics/lib/integrations/quantcast.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -8358,16 +8132,8 @@ var load = require('load-script-once');
 var Quantcast = module.exports = integration('Quantcast')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_qevents')
   .option('pCode', null);
-
-
-/**
- * Exists?
- */
-
-Quantcast.prototype.exists = function () {
-  return !! window._qevents;
-};
 
 
 /**
@@ -8399,7 +8165,7 @@ require.register("analytics/lib/integrations/rollbar.js", function(exports, requ
 var callback = require('callback');
 var clone = require('clone');
 var extend = require('extend');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var onError = require('on-error');
 
@@ -8410,17 +8176,9 @@ var onError = require('on-error');
 
 var Rollbar = module.exports = integration('Rollbar')
   .readyOnInitialize()
+  .global('_rollbar')
   .option('accessToken', '')
   .option('identify', true);
-
-
-/**
- * Exists?
- */
-
-Rollbar.prototype.exists = function () {
-  return !! window._rollbar;
-};
 
 
 /**
@@ -8472,7 +8230,7 @@ Rollbar.prototype.identify = function (id, traits, options) {
 });
 require.register("analytics/lib/integrations/sentry.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -8482,16 +8240,8 @@ var load = require('load-script-once');
 
 var Sentry = module.exports = integration('Sentry')
   .readyOnLoad()
+  .global('Raven')
   .option('config', '');
-
-
-/**
- * Exists?
- */
-
-Sentry.prototype.exists = function () {
-  return !! window.Raven;
-};
 
 
 /**
@@ -8536,7 +8286,7 @@ Sentry.prototype.identify = function (id, traits, options) {
 });
 require.register("analytics/lib/integrations/snapengage.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -8547,16 +8297,8 @@ var load = require('load-script-once');
 var SnapEngage = module.exports = integration('SnapEngage')
   .assumesPageview()
   .readyOnLoad()
+  .global('SnapABug')
   .option('apiKey', '');
-
-
-/**
- * Exists?
- */
-
-SnapEngage.prototype.exists = function () {
-  return !! window.SnapABug;
-};
 
 
 /**
@@ -8598,7 +8340,7 @@ SnapEngage.prototype.identify = function (id, traits, options) {
 });
 require.register("analytics/lib/integrations/spinnakr.js", function(exports, require, module){
 
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -8609,16 +8351,8 @@ var load = require('load-script-once');
 var Spinnakr = module.exports = integration('Spinnakr')
   .assumesPageview()
   .readyOnLoad()
+  .global('_spinnakr_site_id')
   .option('siteId', '');
-
-
-/**
- * Exists?
- */
-
-Spinnakr.prototype.exists = function () {
-  return !! window._spinnakr_site_id;
-};
 
 
 /**
@@ -8644,7 +8378,7 @@ Spinnakr.prototype.load = function (callback) {
 require.register("analytics/lib/integrations/tapstream.js", function(exports, require, module){
 
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var slug = require('slug');
 var push = require('global-queue')('_tsq');
@@ -8657,18 +8391,10 @@ var push = require('global-queue')('_tsq');
 var Tapstream = module.exports = integration('Tapstream')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_tsq')
   .option('accountName', '')
   .option('trackAllPages', true)
   .option('trackNamedPages', true);
-
-
-/**
- * Exists?
- */
-
-Tapstream.prototype.exists = function () {
-  return !! window._tsq;
-};
 
 
 /**
@@ -8725,7 +8451,7 @@ require.register("analytics/lib/integrations/trakio.js", function(exports, requi
 var alias = require('alias');
 var callback = require('callback');
 var clone = require('clone');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 
 
@@ -8736,17 +8462,9 @@ var load = require('load-script-once');
 var Trakio = module.exports = integration('trak.io')
   .assumesPageview()
   .readyOnInitialize()
+  .global('trak')
   .option('token', '')
   .option('trackNamedPages', true);
-
-
-/**
- * Exists?
- */
-
-Trakio.prototype.exists = function () {
-  return !! window.trak;
-};
 
 
 /**
@@ -8879,7 +8597,7 @@ Trakio.prototype.alias = function (to, from) {
 require.register("analytics/lib/integrations/usercycle.js", function(exports, require, module){
 
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var push = require('global-queue')('_uc');
 
@@ -8891,16 +8609,8 @@ var push = require('global-queue')('_uc');
 var Usercycle = module.exports = integration('USERcycle')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_uc')
   .option('key', '');
-
-
-/**
- * Exists?
- */
-
-Usercycle.prototype.exists = function () {
-  return !! window._uc;
-};
 
 
 /**
@@ -8958,7 +8668,7 @@ require.register("analytics/lib/integrations/userfox.js", function(exports, requ
 var alias = require('alias');
 var callback = require('callback');
 var convertDates = require('convert-dates');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var push = require('global-queue')('_ufq');
 
@@ -8970,16 +8680,8 @@ var push = require('global-queue')('_ufq');
 var Userfox = module.exports = integration('userfox')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_ufq')
   .option('clientId', '');
-
-
-/**
- * Exists?
- */
-
-Userfox.prototype.exists = function () {
-  return !! window._ufq;
-};
 
 
 /**
@@ -9046,7 +8748,7 @@ var alias = require('alias');
 var callback = require('callback');
 var clone = require('clone');
 var convertDates = require('convert-dates');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var push = require('global-queue')('UserVoice');
 var unix = require('to-unix-timestamp');
@@ -9059,6 +8761,7 @@ var unix = require('to-unix-timestamp');
 var UserVoice = module.exports = integration('UserVoice')
   .assumesPageview()
   .readyOnInitialize()
+  .global('UserVoice')
   .option('apiKey', '')
   .option('classic', false)
   .option('forumId', null)
@@ -9078,15 +8781,6 @@ var UserVoice = module.exports = integration('UserVoice')
   .option('tabColor', '#cc6d00')
   .option('tabPosition', 'middle-right')
   .option('tabInverted', false);
-
-
-/**
- * Exists?
- */
-
-UserVoice.prototype.exists = function () {
-  return !! window.UserVoice;
-};
 
 
 /**
@@ -9248,7 +8942,7 @@ function showClassicWidget (type, options) {
 require.register("analytics/lib/integrations/vero.js", function(exports, require, module){
 
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script-once');
 var push = require('global-queue')('_veroq');
 
@@ -9260,16 +8954,8 @@ var push = require('global-queue')('_veroq');
 var Vero = module.exports = integration('Vero')
   .assumesPageview()
   .readyOnInitialize()
+  .global('_veroq')
   .option('apiKey', '');
-
-
-/**
- * Exists?
- */
-
-Vero.prototype.exists = function () {
-  return !! window._veroq;
-};
 
 
 /**
@@ -9306,6 +8992,7 @@ Vero.prototype.load = function (callback) {
  */
 
 Vero.prototype.identify = function (id, traits, options) {
+  traits = traits || {};
   if (!id || !traits.email) return; // both required
   if (id) traits.id = id;
   push('user', traits);
@@ -9331,7 +9018,7 @@ require.register("analytics/lib/integrations/visual-website-optimizer.js", funct
 var callback = require('callback');
 var each = require('each');
 var inherit = require('inherit');
-var integration = require('../integration');
+var integration = require('integration');
 var tick = require('next-tick');
 
 
@@ -9342,15 +9029,6 @@ var tick = require('next-tick');
 var VWO = module.exports = integration('Visual Website Optimizer')
   .readyOnInitialize()
   .option('replay', true);
-
-
-/**
- * Exists?
- */
-
-VWO.prototype.exists = function () {
-  return false; // we require it to be on the page already
-};
 
 
 /**
@@ -9436,7 +9114,7 @@ require.register("analytics/lib/integrations/woopra.js", function(exports, requi
 
 var each = require('each');
 var extend = require('extend');
-var integration = require('../integration');
+var integration = require('integration');
 var isEmail = require('is-email');
 var load = require('load-script-once');
 var type = require('type');
@@ -9448,18 +9126,10 @@ var user = require('../user');
  */
 
 var Woopra = module.exports = integration('Woopra')
+  .global('woopra')
   .assumesPageview()
   .readyOnLoad()
   .option('domain', '');
-
-
-/**
- * Exists?
- */
-
-Woopra.prototype.exists = function () {
-  return !! window.woopra;
-};
 
 
 /**
@@ -9495,6 +9165,7 @@ Woopra.prototype.load = function (callback) {
  */
 
 Woopra.prototype.identify = function (id, traits, options) {
+  traits = traits || {};
   if (id) traits.id = id;
   window.woopra.identify(traits).push(); // `push` sends it off async
 };
@@ -9522,6 +9193,7 @@ Woopra.prototype.track = function (event, properties, options) {
  */
 
 Woopra.prototype.page = function (name, properties, options) {
+  properties = properties || {};
   window.woopra.track('pv', {
     url: properties.url,
     title: name || properties.title
@@ -9531,7 +9203,7 @@ Woopra.prototype.page = function (name, properties, options) {
 require.register("analytics/lib/integrations/yandex-metrica.js", function(exports, require, module){
 
 var callback = require('callback');
-var integration = require('../integration');
+var integration = require('integration');
 var load = require('load-script');
 
 
@@ -9540,19 +9212,10 @@ var load = require('load-script');
  */
 
 var Metrica = module.exports = integration('Yandex Metrica')
+  .global('yandex_metrika_callbacks')
   .assumesPageview()
   .readyOnInitialize()
   .option('counterId', null);
-
-
-/**
- * Exists?
- */
-
-Metrica.prototype.exists = function () {
-  return !! (window.yandex_metrika_callbacks ||
-             (window.Ya && window.Ya.Metrika));
-};
 
 
 /**
@@ -9595,6 +9258,8 @@ function push (callback) {
   window.yandex_metrika_callbacks.push(callback);
 }
 });
+
+
 
 
 
@@ -9708,8 +9373,43 @@ require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
 require.alias("segmentio-alias/index.js", "alias/index.js");
+require.alias("component-clone/index.js", "segmentio-alias/deps/clone/index.js");
+require.alias("component-type/index.js", "component-clone/deps/type/index.js");
+
 require.alias("component-type/index.js", "segmentio-alias/deps/type/index.js");
 
+require.alias("segmentio-analytics.js-integration/lib/index.js", "analytics/deps/integration/lib/index.js");
+require.alias("segmentio-analytics.js-integration/lib/protos.js", "analytics/deps/integration/lib/protos.js");
+require.alias("segmentio-analytics.js-integration/lib/statics.js", "analytics/deps/integration/lib/statics.js");
+require.alias("segmentio-analytics.js-integration/lib/index.js", "analytics/deps/integration/index.js");
+require.alias("segmentio-analytics.js-integration/lib/index.js", "integration/index.js");
+require.alias("avetisk-defaults/index.js", "segmentio-analytics.js-integration/deps/defaults/index.js");
+
+require.alias("component-clone/index.js", "segmentio-analytics.js-integration/deps/clone/index.js");
+require.alias("component-type/index.js", "component-clone/deps/type/index.js");
+
+require.alias("component-emitter/index.js", "segmentio-analytics.js-integration/deps/emitter/index.js");
+require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
+
+require.alias("ianstormtaylor-bind/index.js", "segmentio-analytics.js-integration/deps/bind/index.js");
+require.alias("component-bind/index.js", "ianstormtaylor-bind/deps/bind/index.js");
+
+require.alias("segmentio-bind-all/index.js", "ianstormtaylor-bind/deps/bind-all/index.js");
+require.alias("component-bind/index.js", "segmentio-bind-all/deps/bind/index.js");
+
+require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js");
+
+require.alias("ianstormtaylor-callback/index.js", "segmentio-analytics.js-integration/deps/callback/index.js");
+require.alias("timoxley-next-tick/index.js", "ianstormtaylor-callback/deps/next-tick/index.js");
+
+require.alias("segmentio-after/index.js", "segmentio-analytics.js-integration/deps/after/index.js");
+
+require.alias("yields-slug/index.js", "segmentio-analytics.js-integration/deps/slug/index.js");
+
+require.alias("visionmedia-debug/index.js", "segmentio-analytics.js-integration/deps/debug/index.js");
+require.alias("visionmedia-debug/debug.js", "segmentio-analytics.js-integration/deps/debug/debug.js");
+
+require.alias("segmentio-analytics.js-integration/lib/index.js", "segmentio-analytics.js-integration/index.js");
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
@@ -9725,6 +9425,9 @@ require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-emp
 
 require.alias("segmentio-extend/index.js", "analytics/deps/extend/index.js");
 require.alias("segmentio-extend/index.js", "extend/index.js");
+
+require.alias("segmentio-global-queue/index.js", "analytics/deps/global-queue/index.js");
+require.alias("segmentio-global-queue/index.js", "global-queue/index.js");
 
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
 require.alias("segmentio-is-email/index.js", "is-email/index.js");

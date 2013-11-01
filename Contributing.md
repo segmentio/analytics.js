@@ -14,7 +14,7 @@ Then after forking **analytics.js** just `cd` into the folder and run `make`:
     $ cd analytics.js
     $ make
     
-That will install all of our [npm](http://npmjs.org) and [component](http://component.io) dependencies and compile the latest version of the development build to test again. You can now add your changes to the library, and run `make test` to make sure everything is passing still.
+That will install all of our [npm](http://npmjs.org) and [component](http://component.io) dependencies and compile the latest version of the development build to test against. You can now add your changes to the library, and run `make test` to make sure everything is passing still.
 
 The commands you'll want to know for development are:
 
@@ -38,7 +38,7 @@ analytics.Integrations;
 // }
 ```
 
-Each integration inherits from our `/lib/integration` constructor. And when you call `analytics.initialize`, it will create a new instance of all of the integrations you give it settings for. To add a new integration, all you need to do is create the new construtor function, and add it to the integrations map. To do that, we've got a couple helper methods.
+Each integration inherits from our `/lib/integration` constructor. And when you call `analytics.initialize`, it will create a new instance of all of the integrations you give it settings for. To add a new integration, all you need to do is create the new constructor function, and add it to the integrations map. To do that, we've got a couple helper methods.
 
 Inside your integration file, just require the `integration` factory:
 
@@ -59,7 +59,7 @@ var createIntegration = require('integration');
 var MyIntegration = integration('My Integration');
 ```
 
-Once you have the prototype created, you just need to add any of the methods you can to add support for to the `prototype`. For example, and integration that implements `initialize` and `identify` would look like this:
+Once you have the prototype created, you just need to add any of the methods you can to add support for to the `prototype`. For example, an integration that implements `initialize` and `identify` would look like this:
 
 ```js
 var MyIntegration = integration('My Integration');
@@ -105,7 +105,7 @@ Every contribution you make to **analytics.js** should be accompanied by matchin
 
 When adding your own integration, the easiest way to figure out what major things to test is to look at everything you've added to the integration `prototype`. You'll want to write testing groups for `#initialize`, `#identify`, `#track`, etc. And each group should test all of the expected functionality.
 
-The most important thing to writing clean, easy-to-manage is to **keep them small** and **clean up after each test**, so that the environment is never polluted by an individual test. For example, in the [`/test/providers/customerio.js`](https://github.com/segmentio/analytics.js/tree/master/test/providers/customerio.js) `#identify` tests you'll notice that we use the `beforeEach` and `afterEach` to make sure that user and spy state is cleared before and after each test. That way no individual test failing means all of the rest of the tests fail too. (Avoid domino situations!)
+The most important thing to writing clean, easy-to-manage integrations is to **keep them small** and **clean up after each test**, so that the environment is never polluted by an individual test. For example, in the [`/test/providers/customerio.js`](https://github.com/segmentio/analytics.js/tree/master/test/providers/customerio.js) `#identify` tests you'll notice that we use the `beforeEach` and `afterEach` to make sure that user and spy state is cleared before and after each test. That way no individual test failing means all of the rest of the tests fail too. (Avoid domino situations!)
 
 _Note: the one exception to clearing testing state is that our integrations all interact with the page by adding global variables, event listeners, etc. and we don't clean those up. That's partly because it's hard as hell to clean all that stuff up, but also because we want them to all work together anyways. If something really is failing there, we'll want to know about it._
 

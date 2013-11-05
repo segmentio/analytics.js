@@ -1,102 +1,98 @@
 
 describe('userfox', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var Userfox = require('analytics/lib/integrations/userfox');
+  var assert = require('assert');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  clientId: '4v2erxr9c5vzqsy35z9gnk6az'
-};
+  var userfox;
+  var settings = {
+    clientId: '4v2erxr9c5vzqsy35z9gnk6az'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ userfox: settings });
-  this.integration = analytics._integrations.userfox;
-  this.options = this.integration.options;
-  when(function () { return window.UserfoxTracker; }, done);
-});
-
-describe('#name', function () {
-  it('userfox', function () {
-    assert(this.integration.name == 'userfox');
-  });
-});
-
-describe('#key', function () {
-  it('clientId', function () {
-    assert(this.integration.key == 'clientId');
-  });
-});
-
-describe('#defaults', function () {
-  it('clientId', function () {
-    assert(this.integration.defaults.clientId === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.clientId == settings.clientId);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window._ufq, 'push');
+    userfox = new Userfox(settings);
   });
 
   afterEach(function () {
-    this.stub.restore();
+    userfox.reset();
   });
 
-  it('should initialize the library with an email', function () {
-    analytics.identify('id', { email: 'name@example.com' });
-    assert(this.stub.calledWith(['init', {
-      clientId: settings.clientId,
-      email: 'name@example.com'
-    }]));
+  it('should store the right settings', function () {
+    test(userfox)
+      .name('userfox')
+      .assumesPageview()
+      .global('_ufq')
+      .option('clientId', '');
   });
 
-  it('should send traits', function () {
-    analytics.identify('id', { email: 'name@example.com', trait: true });
-    assert(this.stub.calledWith(['track', {
-      email: 'name@example.com',
-      trait: true
-    }]));
-  });
-
-  it('should convert dates to a format userfox supports', function () {
-    var date = new Date();
-    analytics.identify('id', {
-      email: 'name@example.com',
-      date: date
+  describe('#initialize', function () {
+    it('should call load', function () {
+      userfox.load = sinon.stub(userfox, 'load');
+      userfox.initialize();
+      assert(userfox.load.called);
+      userfox.load.restore();
     });
-    assert(this.stub.calledWith(['track', {
-      email: 'name@example.com',
-      date: Math.round(date.getTime() / 1000).toString()
-    }]));
-  });
 
-  it('should alias a created trait to signup_date', function () {
-    var date = new Date();
-    analytics.identify('id', {
-      email: 'name@example.com',
-      created: date
+    it('should load the window._ufq variable', function (done) {
+      userfox.initialize();
+      when(function () {
+        return window._ufq && window._ufq.push !== Array.prototype.push;
+      }, done);
     });
-    assert(this.stub.calledWith(['track', {
-      email: 'name@example.com',
-      signup_date: Math.round(date.getTime() / 1000).toString()
-    }]));
   });
-});
 
+  describe('#identify', function () {
+    beforeEach(function () {
+      userfox.initialize();
+      window._ufq = [];
+      window._ufq.push = sinon.stub(window._ufq, 'push');
+    });
+
+    afterEach(function () {
+      window._ufq.push.restore();
+    });
+
+    it('should initialize the library with an email', function () {
+      userfox.identify('id', { email: 'name@example.com' });
+      assert(window._ufq.push.calledWith(['init', {
+        clientId: settings.clientId,
+        email: 'name@example.com'
+      }]));
+    });
+
+    it('should send traits', function () {
+      userfox.identify(null, { email: 'name@example.com', trait: true });
+      assert(window._ufq.push.calledWith(['track', {
+        email: 'name@example.com',
+        trait: true
+      }]));
+    });
+
+    it('should convert dates to a format userfox supports', function () {
+      var date = new Date();
+      userfox.identify(null, {
+        email: 'name@example.com',
+        date: date
+      });
+      assert(window._ufq.push.calledWith(['track', {
+        email: 'name@example.com',
+        date: Math.round(date.getTime() / 1000).toString()
+      }]));
+    });
+
+    it('should alias a created trait to signup_date', function () {
+      var date = new Date();
+      userfox.identify(null, {
+        email: 'name@example.com',
+        created: date
+      });
+      assert(window._ufq.push.calledWith(['track', {
+        email: 'name@example.com',
+        signup_date: Math.round(date.getTime() / 1000).toString()
+      }]));
+    });
+  });
 });

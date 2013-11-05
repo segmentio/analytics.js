@@ -5,12 +5,10 @@ describe('UserVoice', function () {
   var assert = require('assert');
   var extend = require('extend');
   var equal = require('equals');
-  var group = require('analytics/lib/group');
   var jQuery = require('jquery');
   var sinon = require('sinon');
   var test = require('integration-tester');
   var unix = require('to-unix-timestamp');
-  var user = require('analytics/lib/user');
   var when = require('when');
 
   var uservoice;
@@ -20,8 +18,6 @@ describe('UserVoice', function () {
 
   beforeEach(function () {
     uservoice = new UserVoice(settings);
-    user.reset();
-    group.reset();
   });
 
   afterEach(function () {

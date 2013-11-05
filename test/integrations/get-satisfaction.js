@@ -1,57 +1,63 @@
 
 describe('Get Satisfaction', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , equal = require('equals')
-  , sinon = require('sinon')
-  , when = require('when');
+  var assert = require('assert');
+  var equal = require('equals');
+  var GetSatisfaction = require('analytics/lib/integrations/get-satisfaction');
+  var jquery = require('jquery');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  widgetId: 5005
-};
+  var getsatisfaction;
+  var settings = {
+    widgetId: 5005
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ 'Get Satisfaction': settings });
-  this.integration = analytics._integrations['Get Satisfaction'];
-  this.options = this.integration.options;
-  when(function () { return window.GSFN; }, done);
-});
-
-describe('#name', function () {
-  it('Get Satisfaction', function () {
-    assert(this.integration.name == 'Get Satisfaction');
-  });
-});
-
-describe('#key', function () {
-  it('widgetId', function () {
-    assert(this.integration.key == 'widgetId');
-  });
-});
-
-describe('#defaults', function () {
-  it('widgetId', function () {
-    assert(this.integration.defaults.widgetId === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
+  beforeEach(function () {
+    getsatisfaction = new GetSatisfaction(settings);
+    getsatisfaction.initialize(); // noop
   });
 
-  it('should store options', function () {
-    assert(this.options.widgetId == settings.widgetId);
+  afterEach(function () {
+    getsatisfaction.reset();
   });
 
-  it('should append a div to the dom', function () {
-    var div = document.getElementById('getsat-widget-' + settings.widgetId);
-    assert(div);
+  it('should have the right settings', function () {
+    test(getsatisfaction)
+      .name('Get Satisfaction')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('GSFN')
+      .option('widgetId', '');
   });
-});
+
+  describe('#initialize', function () {
+    beforeEach(function () {
+      getsatisfaction.load = sinon.spy(); // prevent loading
+    });
+
+    it('should add the get satisfaction widget to the dom', function () {
+      getsatisfaction.initialize();
+      assert(document.getElementById('getsat-widget-' + settings.widgetId));
+    });
+
+    it('should call #load', function () {
+      getsatisfaction.initialize();
+      assert(getsatisfaction.load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window.GSFN', function (done) {
+      assert(!window.GSFN);
+      getsatisfaction.load();
+      when(function () { return window.GSFN; }, done);
+    });
+
+    it('should callback', function (done) {
+      getsatisfaction.load(done);
+    });
+  });
 
 });

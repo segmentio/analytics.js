@@ -1,17 +1,23 @@
 
 describe('Chartbeat', function () {
 
+  var assert = require('assert');
+  var Chartbeat = require('analytics/lib/integrations/chartbeat');
+  var equal = require('equals');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
+
+  var chartbeat;
   var settings = {
     uid: 'x',
     domain: 'example.com'
   };
 
-  var assert = require('assert');
-  var Chartbeat = require('analytics/lib/integrations/chartbeat');
-  var chartbeat = new Chartbeat(settings);
-  var equal = require('equals');
-  var sinon = require('sinon');
-  var when = require('when');
+  beforeEach(function () {
+    chartbeat = new Chartbeat(settings);
+    chartbeat.initialize(); // noop
+  });
 
   afterEach(function () {
     chartbeat.reset();
@@ -30,16 +36,8 @@ describe('Chartbeat', function () {
   });
 
   describe('#initialize', function () {
-    var load;
-
     beforeEach(function () {
-      load = sinon.spy(chartbeat, 'load');
-    });
-
-    afterEach(function () {
-      load.restore();
-      delete window._sf_async_config;
-      delete window._sf_endpt;
+      chartbeat.load = sinon.spy(); // prevent loading
     });
 
     it('should create window._sf_async_config', function () {
@@ -54,7 +52,7 @@ describe('Chartbeat', function () {
 
     it('should call #load', function () {
       chartbeat.initialize();
-      assert(load.called);
+      assert(chartbeat.load.called);
     });
   });
 
@@ -66,29 +64,22 @@ describe('Chartbeat', function () {
   });
 
   describe('#page', function () {
-    var virtualPage;
-
-    before(function (done) {
+    beforeEach(function (done) {
       chartbeat.initialize();
-      chartbeat.once('ready', done);
-    });
-
-    beforeEach(function () {
-      virtualPage = sinon.spy(window.pSUPERFLY, 'virtualPage');
-    });
-
-    afterEach(function () {
-      virtualPage.restore();
+      chartbeat.once('ready', function () {
+        window.pSUPERFLY.virtualPage = sinon.spy();
+        done();
+      });
     });
 
     it('should send default url', function () {
       chartbeat.page(null, { path: '/path' });
-      assert(virtualPage.calledWith('/path'));
+      assert(window.pSUPERFLY.virtualPage.calledWith('/path'));
     });
 
     it('should send a url', function () {
       chartbeat.page('Page', { path: '/path' });
-      assert(virtualPage.calledWith('/path', 'Page'));
+      assert(window.pSUPERFLY.virtualPage.calledWith('/path', 'Page'));
     });
   });
 

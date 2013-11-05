@@ -1,17 +1,21 @@
 
 describe('Awesomatic', function () {
 
+  var assert = require('assert');
+  var Awesomatic = require('analytics/lib/integrations/awesomatic');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
+
+  var awesomatic;
   var settings = {
     appId: 'af392af01603ca383672689241b648b2'
   };
 
-  var assert = require('assert');
-  var Awesomatic = require('analytics/lib/integrations/awesomatic');
-  var awesomatic = new Awesomatic(settings);
-  var sinon = require('sinon');
-  var test = require('integration-tester');
-  var user = require('analytics/lib/user');
-  var when = require('when');
+  beforeEach(function () {
+    awesomatic = new Awesomatic(settings);
+    awesomatic.initialize(); // noop
+  });
 
   afterEach(function () {
     awesomatic.reset();
@@ -26,19 +30,13 @@ describe('Awesomatic', function () {
   });
 
   describe('#initialize', function () {
-    var load;
-
     beforeEach(function () {
-      load = sinon.spy(awesomatic, 'load');
-    });
-
-    afterEach(function () {
-      load.restore();
+      awesomatic.load = sinon.spy(); // prevent loading
     });
 
     it('should call #load', function () {
       awesomatic.initialize();
-      assert(load.called);
+      assert(awesomatic.load.called);
     });
   });
 
@@ -58,35 +56,27 @@ describe('Awesomatic', function () {
   });
 
   describe('#identify', function () {
-    var load;
-
-    before(function (done) {
+    beforeEach(function (done) {
       awesomatic.initialize();
-      awesomatic.once('ready', done);
-    });
-
-    beforeEach(function () {
-      load = sinon.stub(window.Awesomatic, 'load');
-    });
-
-    afterEach(function () {
-      user.reset();
-      load.restore();
+      awesomatic.once('ready', function () {
+        window.Awesomatic.load = sinon.spy();
+        done();
+      });
     });
 
     it('should send an id', function () {
       awesomatic.identify('id', {});
-      assert(load.calledWith({ userId: 'id' }));
+      assert(window.Awesomatic.load.calledWith({ userId: 'id' }));
     });
 
     it('should send an id and properties', function () {
       awesomatic.identify('id', { property: true });
-      assert(load.calledWith({ userId: 'id', property: true }));
+      assert(window.Awesomatic.load.calledWith({ userId: 'id', property: true }));
     });
 
     it('should require an id or email', function () {
       awesomatic.identify(null, { property: true });
-      assert(!load.called);
+      assert(!window.Awesomatic.load.called);
     });
   });
 });

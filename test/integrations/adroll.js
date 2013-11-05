@@ -1,13 +1,7 @@
 
 describe('AdRoll', function () {
 
-  var settings = {
-    advId: 'LYFRCUIPPZCCTOBGRH7G32',
-    pixId: 'V7TLXL5WWBA5NOU5MOJQW4'
-  };
-
   var AdRoll = require('analytics/lib/integrations/adroll');
-  var adroll = new AdRoll(settings);
   var assert = require('assert');
   var equal = require('equals');
   var sinon = require('sinon');
@@ -15,8 +9,20 @@ describe('AdRoll', function () {
   var user = require('analytics/lib/user');
   var when = require('when');
 
+  var adroll;
+  var settings = {
+    advId: 'LYFRCUIPPZCCTOBGRH7G32',
+    pixId: 'V7TLXL5WWBA5NOU5MOJQW4'
+  };
+
+  beforeEach(function () {
+    adroll = new AdRoll(settings);
+    adroll.initialize(); // noop
+  });
+
   afterEach(function () {
     adroll.reset();
+    user.reset();
   });
 
   it('should have the right settings', function () {
@@ -33,15 +39,8 @@ describe('AdRoll', function () {
   });
 
   describe('#initialize', function () {
-    var load;
-
     beforeEach(function () {
-      load = sinon.spy(adroll, 'load');
-    });
-
-    afterEach(function () {
-      user.reset();
-      load.restore();
+      adroll.load = sinon.spy(); // prevent loading
     });
 
     it('should initialize the adroll variables', function () {
@@ -63,7 +62,7 @@ describe('AdRoll', function () {
 
     it('should call #load', function () {
       adroll.initialize();
-      assert(load.called);
+      assert(adroll.load.called);
     });
   });
 

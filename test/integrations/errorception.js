@@ -1,93 +1,88 @@
 
 describe('Errorception', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , equal = require('equals')
-  , sinon = require('sinon')
-  , when = require('when');
+  var assert = require('assert');
+  var equal = require('equals');
+  var Errorception = require('analytics/lib/integrations/errorception');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  projectId: '506b76b52f52c3f662000140'
-};
+  var errorception;
+  var settings = {
+    projectId: '506b76b52f52c3f662000140'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Errorception: settings });
-  this.integration = analytics._integrations.Errorception;
-  this.options = this.integration.options;
-  var stub = window._errs.push;
-  when(function () { return window._errs.push != stub; }, done);
-});
-
-describe('#name', function () {
-  it('Errorception', function () {
-    assert(this.integration.name == 'Errorception');
-  });
-});
-
-describe('#key', function () {
-  it('projectId', function () {
-    assert(this.integration.key == 'projectId');
-  });
-});
-
-describe('#defaults', function () {
-  it('projectId', function () {
-    assert(this.integration.defaults.projectId === '');
-  });
-
-  it('meta', function () {
-    assert(this.integration.defaults.meta === true);
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.projectId == settings.projectId);
-    assert(this.options.meta == this.integration.defaults.meta);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
+    errorception = new Errorception(settings);
+    errorception.initialize(); // noop
   });
 
   afterEach(function () {
-    this.options.meta = true;
-    delete window._errs.meta;
+    errorception.reset();
   });
 
-  it('should add an id to metadata', function () {
-    analytics.identify('id');
-    assert(equal(window._errs.meta, { id: 'id' }));
+  it('should have the right settings', function () {
+    test(errorception)
+      .name('Errorception')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('_errs')
+      .option('projectId', '')
+      .option('meta', true);
   });
 
-  it('should add traits to metadata', function () {
-    analytics.identify({ trait: true });
-    assert(equal(window._errs.meta, { trait: true }));
+  describe('#initialize', function () {
+    beforeEach(function () {
+      errorception.load = sinon.spy(); // prevent loading
+    });
+
+    it('should initialize the errorception queue', function () {
+      errorception.initialize();
+      assert(equal(window._errs, [settings.projectId]));
+    });
+
+    it('should call #load', function () {
+      errorception.initialize();
+      assert(errorception.load.called);
+    });
   });
 
-  it('should add an id and traits to metadata', function () {
-    analytics.identify('id', { trait: true });
-    assert(equal(window._errs.meta, {
-      id: 'id',
-      trait: true
-    }));
+  describe('#load', function () {
+    it('should create window._errs', function (done) {
+      assert(!window._errs);
+      window._errs = [];
+      var push = window._errs.push;
+      errorception.load();
+      when(function () { return window._errs && window._errs.push !== push; }, done);
+    });
+
+    it('should callback', function (done) {
+      errorception.load(done);
+    });
   });
 
-  it('shouldnt add to metadata when meta option is false', function () {
-    this.options.meta = false;
-    analytics.identify('id');
-    assert(!window._errs.meta);
+  describe('#identify', function () {
+    it('should add an id to metadata', function () {
+      errorception.identify('id');
+      assert(equal(window._errs.meta, { id: 'id' }));
+    });
+
+    it('should add traits to metadata', function () {
+      errorception.identify(null, { trait: true });
+      assert(equal(window._errs.meta, { trait: true }));
+    });
+
+    it('should add an id and traits to metadata', function () {
+      errorception.identify('id', { trait: true });
+      assert(equal(window._errs.meta, { id: 'id', trait: true }));
+    });
+
+    it('should not add to metadata when meta option is false', function () {
+      errorception.options.meta = false;
+      errorception.identify('id');
+      assert(!window._errs);
+    });
   });
-});
 
 });

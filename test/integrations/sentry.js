@@ -1,80 +1,69 @@
 
 describe('Sentry', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var Sentry = require('analytics/lib/integrations/sentry');
+  var assert = require('assert');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  config: 'x'
-};
+  var sentry;
+  var settings = {
+    config: 'x'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Sentry: settings });
-  this.integration = analytics._integrations.Sentry;
-  this.options = this.integration.options;
-  when(function () { return window.Raven; }, done);
-});
-
-describe('#name', function () {
-  it('Sentry', function () {
-    assert(this.integration.name == 'Sentry');
-  });
-});
-
-describe('#key', function () {
-  it('config', function () {
-    assert(this.integration.key == 'config');
-  });
-});
-
-describe('#defaults', function () {
-  it('config', function () {
-    assert(this.integration.defaults.config === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.config == settings.config);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.spy = sinon.spy(window.Raven, 'setUser');
+    sentry = new Sentry(settings);
   });
 
-  afterEach(function () {
-    this.spy.restore();
+  it('should have the right settings', function () {
+    test(sentry)
+      .name('Sentry')
+      .readyOnLoad()
+      .global('Raven')
+      .option('config', '');
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.spy.calledWith({ id: 'id' }));
+  describe('#load', function () {
+    it('should call the callback', function (done) {
+      sentry.load(done);
+    });
+
+    it('should create window.Raven', function (done) {
+      sentry.load();
+      when(function () { return window.Raven; }, done);
+    });
   });
 
-  it('should send traits', function () {
-    analytics.identify({ trait: true });
-    assert(this.spy.calledWith({ trait: true }));
+  describe('#initialize', function () {
+    it('should call #load', function () {
+      sentry.load = sinon.spy();
+      sentry.initialize();
+      assert(sentry.load.called);
+    });
   });
 
-  it('should send an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(this.spy.calledWith({
-      id: 'id',
-      trait: true
-    }));
-  });
-});
+  describe('#identify', function () {
+    beforeEach(function () {
+      window.Raven.setUser = sinon.spy();
+    });
 
+    it('should send an id', function () {
+      sentry.identify('id');
+      assert(window.Raven.setUser.calledWith({ id: 'id' }));
+    });
+
+    it('should send traits', function () {
+      sentry.identify(null, { trait: true });
+      assert(window.Raven.setUser.calledWith({ trait: true }));
+    });
+
+    it('should send an id and traits', function () {
+      sentry.identify('id', { trait: true });
+      assert(window.Raven.setUser.calledWith({
+        id: 'id',
+        trait: true
+      }));
+    });
+  });
 });

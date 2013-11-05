@@ -42,13 +42,6 @@ describe('Errorception', function () {
       assert(equal(window._errs, [settings.projectId]));
     });
 
-    it('should setup an onerror handler', function () {
-      window._errs.push = sinon.spy();
-      errorception.initialize();
-      window.onerror('event');
-      assert(window._errs.push.calledWith('event'));
-    });
-
     it('should call #load', function () {
       errorception.initialize();
       assert(errorception.load.called);
@@ -56,20 +49,16 @@ describe('Errorception', function () {
   });
 
   describe('#load', function () {
-    beforeEach(function () {
-      // required for load to work
-      window.adroll_adv_id = settings.advId;
-      window.adroll_pix_id = settings.pixId;
-    });
-
     it('should create window._errs', function (done) {
       assert(!window._errs);
-      adroll.load();
-      when(function () { return window._errs; }, done);
+      window._errs = [];
+      var push = window._errs.push;
+      errorception.load();
+      when(function () { return window._errs && window._errs.push !== push; }, done);
     });
 
     it('should callback', function (done) {
-      adroll.load(done);
+      errorception.load(done);
     });
   });
 
@@ -90,9 +79,9 @@ describe('Errorception', function () {
     });
 
     it('should not add to metadata when meta option is false', function () {
-      this.options.meta = false;
+      errorception.options.meta = false;
       errorception.identify('id');
-      assert(!window._errs.meta);
+      assert(!window._errs);
     });
   });
 

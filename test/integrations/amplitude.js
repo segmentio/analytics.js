@@ -35,7 +35,7 @@ describe('Amplitude', function () {
 
   describe('#initialize', function () {
     beforeEach(function () {
-      amplitude.load = sinon.spy();
+      amplitude.load = sinon.spy(); // prevent loading
     });
 
     it('should create window.amplitude', function () {

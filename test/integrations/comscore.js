@@ -1,44 +1,50 @@
 
 describe('comScore', function () {
-  this.timeout(10000);
 
+  var assert = require('assert');
+  var Comscore = require('analytics/lib/integrations/comscore');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
+
+  var comscore;
   var settings = {
     c2: 'x'
   };
 
-  var assert = require('assert');
-  var Comscore = require('analytics/lib/integrations/comscore');
-  var comscore = new Comscore(settings);
-  var equal = require('equals');
-  var sinon = require('sinon');
-  var when = require('when');
-
-  describe('#name', function () {
-    it('comScore', function () {
-      assert(comscore.name == 'comScore');
-    });
+  beforeEach(function () {
+    comscore = new Comscore(settings);
+    comscore.initialize(); // noop
   });
 
-  describe('#defaults', function () {
-    it('c1', function () {
-      assert(comscore.defaults.c1 === '2');
-    });
-
-    it('c2', function () {
-      assert(comscore.defaults.c2 === '');
-    });
+  afterEach(function () {
+    comscore.reset();
   });
 
-  describe('#exists', function () {
-    after(function () {
-      window._comscore = undefined;
+  it('should have the right settings', function () {
+    test(comscore)
+      .name('comScore')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('_comscore')
+      .option('c1', '2')
+      .option('c2', '');
+  });
+
+  describe('#initialize', function () {
+    beforeEach(function () {
+      comscore.load = sinon.spy(); // prevent loading
     });
 
-    it('should check for window._comscore', function () {
-      window._comscore = undefined;
-      assert(!comscore.exists());
-      window._comscore = [];
-      assert(comscore.exists());
+    it('should create window._comscore', function () {
+      assert(!window._comscore);
+      comscore.initialize();
+      assert(window._comscore instanceof Array);
+    });
+
+    it('should call #load', function () {
+      comscore.initialize();
+      assert(comscore.load.called);
     });
   });
 
@@ -51,34 +57,6 @@ describe('comScore', function () {
 
     it('should callback', function (done) {
       comscore.load(done);
-    });
-  });
-
-  describe('#initialize', function () {
-    var load;
-
-    before(function () {
-      window._comscore = undefined;
-    });
-
-    beforeEach(function () {
-      load = sinon.spy(comscore, 'load');
-    });
-
-    afterEach(function () {
-      load.restore();
-      window._comscore = undefined;
-    });
-
-    it('should create window._comscore', function () {
-      window._comscore = null;
-      comscore.initialize();
-      assert(window._comscore instanceof Array);
-    });
-
-    it('should call #load', function () {
-      comscore.initialize();
-      assert(load.called);
     });
   });
 

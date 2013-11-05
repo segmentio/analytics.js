@@ -37,7 +37,7 @@ describe('awe.sm', function () {
 
   describe('#initialize', function () {
     beforeEach(function () {
-      awesm.load = sinon.spy();
+      awesm.load = sinon.spy(); // prevent loading
     });
 
     it('should pass options to awe.sm', function () {

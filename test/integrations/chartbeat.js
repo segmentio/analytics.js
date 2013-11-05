@@ -36,6 +36,10 @@ describe('Chartbeat', function () {
   });
 
   describe('#initialize', function () {
+    beforeEach(function () {
+      chartbeat.load = sinon.spy(); // prevent loading
+    });
+
     it('should create window._sf_async_config', function () {
       chartbeat.initialize();
       assert(equal(window._sf_async_config, settings));
@@ -47,7 +51,6 @@ describe('Chartbeat', function () {
     });
 
     it('should call #load', function () {
-      chartbeat.load = sinon.spy();
       chartbeat.initialize();
       assert(chartbeat.load.called);
     });

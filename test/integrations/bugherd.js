@@ -35,7 +35,7 @@ describe('BugHerd', function () {
 
   describe('#initialize', function () {
     beforeEach(function () {
-      bugherd.load = sinon.spy();
+      bugherd.load = sinon.spy(); // prevent loading
     });
 
     it('should create window.BugHerdConfig', function () {

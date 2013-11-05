@@ -6,7 +6,6 @@ describe('Vero', function () {
   var equal = require('equals');
   var sinon = require('sinon');
   var test = require('integration-tester');
-  var user = require('analytics/lib/user');
   var when = require('when');
 
   var vero;
@@ -16,7 +15,6 @@ describe('Vero', function () {
 
   beforeEach(function () {
     vero = new Vero(settings);
-    user.reset();
   });
 
   afterEach(function () {
@@ -33,11 +31,7 @@ describe('Vero', function () {
 
   describe('#initialize', function () {
     beforeEach(function () {
-      vero.load = sinon.stub(vero, 'load');
-    });
-
-    afterEach(function () {
-      vero.load.restore();
+      vero.load = sinon.spy();
     });
 
     it('should call load', function () {
@@ -54,11 +48,7 @@ describe('Vero', function () {
   describe('#identify', function () {
     beforeEach(function () {
       vero.initialize();
-      window._veroq.push = sinon.spy(window._veroq, 'push');
-    });
-
-    afterEach(function () {
-      window._veroq.push.restore();
+      window._veroq.push = sinon.spy();
     });
 
     it('shouldnt send just an id', function () {
@@ -95,11 +85,7 @@ describe('Vero', function () {
   describe('#track', function () {
     beforeEach(function () {
       vero.initialize();
-      window._veroq.push = sinon.stub(window._veroq, 'push');
-    });
-
-    afterEach(function () {
-      window._veroq.push.restore();
+      window._veroq.push = sinon.spy();
     });
 
     it('should send an event', function () {

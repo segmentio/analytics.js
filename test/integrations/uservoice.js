@@ -80,7 +80,7 @@ describe('UserVoice', function () {
       });
 
       it('should call load', function () {
-        uservoice.load = sinon.spy(uservoice, 'load');
+        uservoice.load = sinon.spy();
         uservoice.initialize();
         assert(uservoice.load.called);
       });
@@ -104,11 +104,7 @@ describe('UserVoice', function () {
     describe('#identify', function () {
       beforeEach(function () {
         uservoice.initialize();
-        window.UserVoice.push = sinon.stub(window.UserVoice, 'push');
-      });
-
-      afterEach(function () {
-        window.UserVoice.push.restore();
+        window.UserVoice.push = sinon.spy();
       });
 
       it('should send an id', function () {
@@ -148,11 +144,7 @@ describe('UserVoice', function () {
     describe('#group', function () {
       beforeEach(function () {
         uservoice.initialize();
-        window.UserVoice.push = sinon.stub(window.UserVoice, 'push');
-      });
-
-      afterEach(function () {
-        window.UserVoice.push.restore();
+        window.UserVoice.push = sinon.spy();
       });
 
       it('should send an id', function () {
@@ -263,11 +255,7 @@ describe('UserVoice', function () {
     describe('#identify', function () {
       beforeEach(function () {
         uservoice.initialize();
-        window.UserVoice.push = sinon.stub(window.UserVoice, 'push');
-      });
-
-      afterEach(function () {
-        window.UserVoice.push.restore();
+        window.UserVoice.push = sinon.spy();
       });
 
       it('should send an id', function () {

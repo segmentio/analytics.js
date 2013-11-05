@@ -48,11 +48,7 @@ describe('userfox', function () {
     beforeEach(function () {
       userfox.initialize();
       window._ufq = [];
-      window._ufq.push = sinon.stub(window._ufq, 'push');
-    });
-
-    afterEach(function () {
-      window._ufq.push.restore();
+      window._ufq.push = sinon.spy();
     });
 
     it('should initialize the library with an email', function () {

@@ -5,7 +5,6 @@ describe('Woopra', function () {
   var assert = require('assert');
   var sinon = require('sinon');
   var test = require('integration-tester');
-  var user = require('analytics/lib/user');
   var when = require('when');
 
   var woopra;
@@ -15,7 +14,6 @@ describe('Woopra', function () {
 
   beforeEach(function () {
     woopra = new Woopra(settings);
-    user.reset();
   });
 
   afterEach(function () {
@@ -33,11 +31,7 @@ describe('Woopra', function () {
 
   describe('#initialize', function () {
     beforeEach(function () {
-      woopra.load = sinon.stub(woopra, 'load');
-    });
-
-    afterEach(function () {
-      woopra.load.restore();
+      woopra.load = sinon.spy();
     });
 
     it('should create a woopra object', function () {
@@ -55,11 +49,8 @@ describe('Woopra', function () {
   describe('#identify', function () {
     beforeEach(function () {
       woopra.initialize();
+      // woopra identify has other methods on it
       window.woopra.identify = sinon.spy(window.woopra, 'identify');
-    });
-
-    afterEach(function () {
-      window.woopra.identify.restore();
     });
 
     it('should send an id', function () {
@@ -83,13 +74,8 @@ describe('Woopra', function () {
 
   describe('#track', function () {
     beforeEach(function () {
-      user.reset();
       woopra.initialize();
-      window.woopra.track = sinon.spy(window.woopra, 'track');
-    });
-
-    afterEach(function () {
-      window.woopra.track.restore();
+      window.woopra.track = sinon.spy();
     });
 
     it('should send an event', function () {
@@ -106,11 +92,7 @@ describe('Woopra', function () {
   describe('#page', function () {
     beforeEach(function () {
       woopra.initialize();
-      window.woopra.track = sinon.spy(window.woopra, 'track');
-    });
-
-    afterEach(function () {
-      window.woopra.track.restore();
+      window.woopra.track = sinon.spy();
     });
 
     it('should send a "pv" event with default properties', function () {

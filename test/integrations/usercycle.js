@@ -41,14 +41,14 @@ describe('USERcycle', function () {
 
   describe('#initialize', function () {
     it('should call #load', function () {
-      usercycle.load = sinon.stub(usercycle, 'load');
+      usercycle.load = sinon.spy();
       usercycle.initialize();
       assert(usercycle.load.called);
     });
 
     it('should set up the window._uc queue', function () {
       window._uc = [];
-      window._uc.push = sinon.stub(window._uc, 'push');
+      window._uc.push = sinon.spy();
       usercycle.initialize();
       assert(window._uc.push.calledWith(['_key', settings.key]));
     });
@@ -57,11 +57,7 @@ describe('USERcycle', function () {
   describe('#identify', function () {
     beforeEach(function () {
       usercycle.initialize();
-      window._uc.push = sinon.stub(window._uc, 'push');
-    });
-
-    afterEach(function () {
-      window._uc.push.restore();
+      window._uc.push = sinon.spy();
     });
 
     it('should send an id', function () {
@@ -89,11 +85,7 @@ describe('USERcycle', function () {
   describe('#track', function () {
     beforeEach(function () {
       usercycle.initialize();
-      window._uc.push = sinon.stub(window._uc, 'push');
-    });
-
-    afterEach(function () {
-      window._uc.push.restore();
+      window._uc.push = sinon.spy();
     });
 
     it('should send an event', function () {

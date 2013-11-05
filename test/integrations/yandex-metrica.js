@@ -18,6 +18,7 @@ describe('Yandex Metrica', function () {
 
   afterEach(function () {
     yandex.reset();
+    window['yaCounter' + settings.counterId] = undefined;
   });
 
   it('should have the right settings', function () {
@@ -26,18 +27,13 @@ describe('Yandex Metrica', function () {
       .assumesPageview()
       .readyOnInitialize()
       .global('yandex_metrika_callbacks')
+      .global('Ya')
       .option('counterId', null);
     });
 
   describe('#initialize', function () {
     beforeEach(function () {
       yandex.load = sinon.spy(yandex, 'load');
-      delete window.Ya;
-      delete window.yandex_metrika_callbacks;
-    });
-
-    afterEach(function () {
-      yandex.load.restore();
     });
 
     it('should push onto the yandex_metrica_callbacks', function () {

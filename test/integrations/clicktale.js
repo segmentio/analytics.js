@@ -1,73 +1,40 @@
 
 describe('ClickTale', function () {
-  this.timeout(10000);
 
+  var assert = require('assert');
+  var ClickTale = require('analytics/lib/integrations/clicktale');
+  var date = require('load-date');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
+
+  var clicktale;
   var settings = {
     partitionId: 'www14',
     projectId: '19370',
     recordingRatio: '0.0089'
   };
 
-  var assert = require('assert');
-  var date = require('load-date');
-  var sinon = require('sinon');
-  var user = require('analytics/lib/user');
-  var when = require('when');
-  var ClickTale = require('analytics/lib/integrations/clicktale');
-  var clicktale = new ClickTale(settings);
-
-
-  describe('#name', function () {
-    it('ClickTale', function () {
-      assert(clicktale.name == 'ClickTale');
-    });
+  beforeEach(function () {
+    clicktale = new ClickTale(settings);
+    clicktale.initialize(); // noop
   });
 
-  describe('#_assumesPageview', function () {
-    it('should be true', function () {
-      assert(clicktale._assumesPageview === true);
-    });
+  afterEach(function () {
+    clicktale.reset();
   });
 
-  describe('#_readyOnLoad', function () {
-    it('should be true', function () {
-      assert(clicktale._readyOnLoad === true);
-    });
-  });
-
-  describe('#defaults', function () {
-    it('httpCdnUrl', function () {
-      assert(clicktale.defaults.httpCdnUrl === 'http://s.clicktale.net/WRe0.js');
-    });
-
-    it('httpsCdnUrl', function () {
-      assert(clicktale.defaults.httpsCdnUrl === '');
-    });
-
-    it('partitionId', function () {
-      assert(clicktale.defaults.partitionId === '');
-    });
-
-    it('projectId', function () {
-      assert(clicktale.defaults.projectId === '');
-    });
-
-    it('recordingRatio', function () {
-      assert(clicktale.defaults.recordingRatio === 0.01);
-    });
-  });
-
-  describe('#exists', function () {
-    after(function () {
-      delete window.WRInitTime;
-    });
-
-    it('should check for window.WRInitTime', function () {
-      window.WRInitTime = undefined;
-      assert(!clicktale.exists());
-      window.WRInitTime = 1;
-      assert(clicktale.exists());
-    });
+  it('should have the right settings', function () {
+    test(clicktale)
+      .name('ClickTale')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('WRInitTime')
+      .option('httpCdnUrl', 'http://s.clicktale.net/WRe0.js')
+      .option('httpsCdnUrl', '')
+      .option('projectId', '')
+      .option('recordingRatio', 0.01)
+      .option('partitionId', '');
   });
 
   describe('#load', function () {

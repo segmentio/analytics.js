@@ -1,17 +1,22 @@
 
 describe('BugHerd', function () {
 
-  var settings = {
-    apiKey: '7917d741-16cc-4c2b-bb1a-bdd903d53d72'
-  };
-
   var assert = require('assert');
   var BugHerd = require('analytics/lib/integrations/bugherd');
-  var bugherd = new BugHerd(settings);
   var equal = require('equals');
   var sinon = require('sinon');
   var test = require('integration-tester');
   var when = require('when');
+
+  var bugherd;
+  var settings = {
+    apiKey: '7917d741-16cc-4c2b-bb1a-bdd903d53d72'
+  };
+
+  beforeEach(function () {
+    bugherd = new BugHerd(settings);
+    bugherd.initialize(); // noop
+  });
 
   afterEach(function () {
     bugherd.reset();
@@ -29,16 +34,8 @@ describe('BugHerd', function () {
   });
 
   describe('#initialize', function () {
-    var load;
-
     beforeEach(function () {
-      load = sinon.spy(bugherd, 'load');
-    });
-
-    afterEach(function () {
-      load.restore();
-      window.BugHerdConfig = undefined;
-      bugherd.options.showFeedbackTab = true;
+      bugherd.load = sinon.spy();
     });
 
     it('should create window.BugHerdConfig', function () {
@@ -54,7 +51,7 @@ describe('BugHerd', function () {
 
     it('should call #load', function () {
       bugherd.initialize();
-      assert(load.called);
+      assert(bugherd.load.called);
     });
   });
 

@@ -1,48 +1,60 @@
 
 describe('Customer.io', function () {
-  this.timeout(10000);
 
+  var assert = require('assert');
+  var Customerio = require('analytics/lib/integrations/customerio');
+  var equal = require('equals');
+  var group = require('analytics/lib/group');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var user = require('analytics/lib/user');
+  var when = require('when');
+
+  var customerio;
   var settings = {
     siteId: 'x'
   };
 
-  var assert = require('assert');
-  var Customerio = require('analytics/lib/integrations/customerio');
-  var customerio = new Customerio(settings);
-  var equal = require('equals');
-  var group = require('analytics/lib/group');
-  var sinon = require('sinon');
-  var user = require('analytics/lib/user');
-  var when = require('when');
-
-  describe('#name', function () {
-    it('Customer.io', function () {
-      assert(customerio.name == 'Customer.io');
-    });
+  beforeEach(function () {
+    customerio = new Customerio(settings);
+    customerio.initialize(); // noop
   });
 
-  describe('#defaults', function () {
-    it('siteId', function () {
-      assert(customerio.defaults.siteId === '');
-    });
+  afterEach(function () {
+    customerio.reset();
+    user.reset();
   });
 
-  describe('#exists', function () {
-    after(function () {
-      window._cio = undefined;
+  it('should have the right settings', function () {
+    test(customerio)
+      .name('Customer.io')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('_cio')
+      .option('siteId', '');
+  });
+
+  describe('#initialize', function () {
+    beforeEach(function () {
+      customerio.load = sinon.spy(); // prevent loading
     });
 
-    it('should check for window._cio', function () {
-      window._cio = undefined;
-      assert(!customerio.exists());
-      window._cio = [];
-      assert(customerio.exists());
+    it('should create the window._cio object', function () {
+      assert(!window._cio);
+      customerio.initialize();
+      assert(window._cio);
+    });
+
+    it('should call #load', function () {
+      customerio.initialize();
+      assert(customerio.load.called);
     });
   });
 
   describe('#load', function () {
-    it('should create window._cio.pageHasLoaded', function (done) {
-      window._cio = [];
+    it('should set window._cio.pageHasLoaded', function (done) {
+      customerio.initialize();
+      assert(!window._cio.pageHasLoaded);
       customerio.load();
       when(function () { return window._cio.pageHasLoaded; }, done);
     });
@@ -52,65 +64,31 @@ describe('Customer.io', function () {
     });
   });
 
-  describe('#initialize', function () {
-    var load, global;
-
-    beforeEach(function () {
-      global = window._cio;
-      window._cio = undefined;
-      load = sinon.spy(customerio, 'load');
-    });
-
-    afterEach(function () {
-      load.restore();
-      window._cio = global;
-    });
-
-    it('should create window._cio', function () {
-      customerio.initialize();
-      assert(window._cio instanceof Array);
-    });
-
-    it('should call #load', function () {
-      customerio.initialize();
-      assert(load.called);
-    });
-  });
-
   describe('#identify', function () {
-    var identify;
-
     beforeEach(function () {
-      identify = sinon.spy(window._cio, 'identify');
-    });
-
-    afterEach(function () {
-      user.reset();
-      identify.restore();
+      customerio.initialize();
+      window._cio.identify = sinon.spy();
     });
 
     it('should send an id', function () {
       customerio.identify('id', {});
-      assert(identify.calledWith({ id: 'id' }));
+      assert(window._cio.identify.calledWith({ id: 'id' }));
     });
 
     it('should not send only traits', function () {
       customerio.identify(null, { trait: true });
-      assert(!identify.called);
+      assert(!window._cio.identify.called);
     });
 
     it('should send an id and traits', function () {
       customerio.identify('id', { trait: true });
-      assert(identify.calledWith({
-        id: 'id',
-        trait: true
-      }));
+      assert(window._cio.identify.calledWith({ id: 'id', trait: true }));
     });
 
     it('should convert dates', function () {
       var date = new Date();
       customerio.identify('id', { date: date });
-      assert(identify.calledWith({
+      assert(window._cio.identify.calledWith({
         id: 'id',
         date: Math.floor(date / 1000)
       }));
@@ -119,7 +97,7 @@ describe('Customer.io', function () {
     it('should alias created to created_at', function () {
       var date = new Date();
       customerio.identify('id', { created: date });
-      assert(identify.calledWith({
+      assert(window._cio.identify.calledWith({
         id: 'id',
         created_at: Math.floor(date / 1000)
       }));
@@ -127,32 +105,25 @@ describe('Customer.io', function () {
   });
 
   describe('#group', function () {
-    var identify;
-
     beforeEach(function () {
-      user.identify('id', {});
-      identify = sinon.spy(window._cio, 'identify');
-    });
-
-    afterEach(function () {
-      identify.restore();
-      user.reset();
-      group.reset();
+      user.identify('id');
+      customerio.initialize();
+      window._cio.identify = sinon.spy();
     });
 
     it('should send an id', function () {
       customerio.group('id', {});
-      assert(identify.calledWith({ id: 'id', 'Group id': 'id' }));
+      assert(window._cio.identify.calledWith({ id: 'id', 'Group id': 'id' }));
     });
 
     it('should send traits', function () {
       customerio.group(null, { trait: true });
-      assert(identify.calledWith({ id: 'id', 'Group trait': true }));
+      assert(window._cio.identify.calledWith({ id: 'id', 'Group trait': true }));
     });
 
     it('should send an id and traits', function () {
       customerio.group('id', { trait: true });
-      assert(identify.calledWith({
+      assert(window._cio.identify.calledWith({
         id: 'id',
         'Group id': 'id',
         'Group trait': true
@@ -162,7 +133,7 @@ describe('Customer.io', function () {
     it('should convert dates', function () {
       var date = new Date();
       customerio.group(null, { date: date });
-      assert(identify.calledWith({
+      assert(window._cio.identify.calledWith({
         id: 'id',
         'Group date': Math.floor(date / 1000)
       }));
@@ -170,30 +141,25 @@ describe('Customer.io', function () {
   });
 
   describe('#track', function () {
-    var track;
-
     beforeEach(function () {
-      track = sinon.spy(window._cio, 'track');
-    });
-
-    afterEach(function () {
-      track.restore();
+      customerio.initialize();
+      window._cio.track = sinon.spy();
     });
 
     it('should send an event', function () {
       customerio.track('event', {});
-      assert(track.calledWith('event'));
+      assert(window._cio.track.calledWith('event'));
     });
 
     it('should send an event and properties', function () {
       customerio.track('event', { property: true });
-      assert(track.calledWith('event', { property: true }));
+      assert(window._cio.track.calledWith('event', { property: true }));
     });
 
     it('should convert dates', function () {
       var date = new Date();
       customerio.track('event', { date: date });
-      assert(track.calledWith('event', {
+      assert(window._cio.track.calledWith('event', {
         date: Math.floor(date / 1000)
       }));
     });

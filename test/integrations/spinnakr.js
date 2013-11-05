@@ -1,58 +1,60 @@
 
 describe('Spinnakr', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var Spinnakr = require('analytics/lib/integrations/spinnakr');
+  var assert = require('assert');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  siteId: '668925604'
-};
+  var spinnakr;
+  var settings = {
+    siteId: '668925604'
+  };
 
-before(function (done) {
-  // needed for spinnakr's script to set a global we can read
-  window._spinnakr_development = true;
-
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Spinnakr: settings });
-  this.integration = analytics._integrations.Spinnakr;
-  this.options = this.integration.options;
-  when(function () { return window._spinnakr; }, done);
-});
-
-after(function () {
-  delete window._spinnakr_development;
-});
-
-describe('#name', function () {
-  it('Spinnakr', function () {
-    assert(this.integration.name == 'Spinnakr');
-  });
-});
-
-describe('#key', function () {
-  it('siteId', function () {
-    assert(this.integration.key == 'siteId');
-  });
-});
-
-describe('#defaults', function () {
-  it('siteId', function () {
-    assert(this.integration.defaults.siteId === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
+  beforeEach(function () {
+    // needed for spinnakr's script to set a global we can read
+    window._spinnakr_development = true;
+    spinnakr = new Spinnakr(settings);
   });
 
-  it('should store options with defaults', function () {
-    assert(this.options.siteId == settings.siteId);
+  afterEach(function () {
+    spinnakr.reset();
+    delete window._spinnakr_development;
   });
-});
 
+  it('should store the right settings', function () {
+    test(spinnakr)
+      .name('Spinnakr')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('_spinnakr_site_id')
+      .global('_spinnakr')
+      .option('siteId', '');
+  });
+
+  describe('#load', function () {
+    it('should set window._spinnakr', function (done) {
+      spinnakr.load();
+      when(function () { return window._spinnakr; }, done);
+    });
+
+    it('should call the callback', function (done) {
+      spinnakr.load(done);
+    });
+  });
+
+  describe('#initialize', function () {
+    it('should call #load', function () {
+      spinnakr.load = sinon.spy();
+      spinnakr.initialize();
+      assert(spinnakr.load.called);
+    });
+
+    it('should set window._spinnakr_site_id', function () {
+      assert(!window._spinnakr_site_id);
+      spinnakr.initialize();
+      assert(window._spinnakr_site_id === settings.siteId);
+    });
+  });
 });

@@ -1,100 +1,111 @@
 
 describe('USERcycle', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var USERcycle = require('analytics/lib/integrations/usercycle');
+  var assert = require('assert');
+  var equal = require('equals');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  key: 'x'
-};
+  var usercycle;
+  var settings = {
+    key: 'x'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ USERcycle: settings });
-  this.integration = analytics._integrations.USERcycle;
-  this.options = this.integration.options;
-  var stub = window._uc.push;
-  when(function () { return window._uc.push != stub; }, done);
-});
-
-describe('#name', function () {
-  it('USERcycle', function () {
-    assert(this.integration.name == 'USERcycle');
-  });
-});
-
-describe('#key', function () {
-  it('key', function () {
-    assert(this.integration.key == 'key');
-  });
-});
-
-describe('#defaults', function () {
-  it('key', function () {
-    assert(this.integration.defaults.key === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.key == settings.key);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window._uc, 'push');
+    usercycle = new USERcycle(settings);
   });
 
   afterEach(function () {
-    this.stub.restore();
+    usercycle.reset();
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.stub.calledWith(['uid', 'id']));
-    assert(this.stub.calledWith(['action', 'came_back', {}]));
+  it('should have the right settings', function () {
+    test(usercycle)
+      .name('USERcycle')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('_uc')
+      .option('key', '');
   });
 
-  it('should send traits', function () {
-    analytics.identify({ trait: true });
-    assert(this.stub.calledWith(['action', 'came_back', { trait: true }]));
+  describe('#load', function () {
+    it('should load the window._uc script', function (done) {
+      usercycle.load();
+      when(function () {
+        return window._uc && window._uc.push !== Array.prototype.push;
+      }, done);
+    });
   });
 
-  it('should send an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(this.stub.calledWith(['uid', 'id']));
-    assert(this.stub.calledWith(['action', 'came_back', { trait: true }]));
-  });
-});
+  describe('#initialize', function () {
+    it('should call #load', function () {
+      usercycle.load = sinon.stub(usercycle, 'load');
+      usercycle.initialize();
+      assert(usercycle.load.called);
+    });
 
-describe('#track', function () {
-  beforeEach(function () {
-    this.stub = sinon.stub(window._uc, 'push');
-  });
-
-  afterEach(function () {
-    this.stub.restore();
-  });
-
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.stub.calledWith(['action', 'event', {}]));
+    it('should set up the window._uc queue', function () {
+      window._uc = [];
+      window._uc.push = sinon.stub(window._uc, 'push');
+      usercycle.initialize();
+      assert(window._uc.push.calledWith(['_key', settings.key]));
+    });
   });
 
-  it('should send an event and properties', function () {
-    analytics.track('event', { property: true });
-    assert(this.stub.calledWith(['action', 'event', { property: true }]));
-  });
-});
+  describe('#identify', function () {
+    beforeEach(function () {
+      usercycle.initialize();
+      window._uc.push = sinon.stub(window._uc, 'push');
+    });
 
+    afterEach(function () {
+      window._uc.push.restore();
+    });
+
+    it('should send an id', function () {
+      usercycle.identify('id');
+      assert(window._uc.push.calledWith(['uid', 'id']));
+      assert(window._uc.push.calledWith(['action', 'came_back', undefined]));
+    });
+
+    it('should send traits', function () {
+      usercycle.identify(null, { trait: true });
+      assert(window._uc.push.calledWith(['action', 'came_back', {
+        trait: true
+      }]));
+    });
+
+    it('should send an id and traits', function () {
+      usercycle.identify('id', { trait: true });
+      assert(window._uc.push.calledWith(['uid', 'id']));
+      assert(window._uc.push.calledWith(['action', 'came_back', {
+        trait: true
+      }]));
+    });
+  });
+
+  describe('#track', function () {
+    beforeEach(function () {
+      usercycle.initialize();
+      window._uc.push = sinon.stub(window._uc, 'push');
+    });
+
+    afterEach(function () {
+      window._uc.push.restore();
+    });
+
+    it('should send an event', function () {
+      usercycle.track('event');
+      assert(window._uc.push.calledWith(['action', 'event', undefined]));
+    });
+
+    it('should send an event and properties', function () {
+      usercycle.track('event', { property: true });
+      assert(window._uc.push.calledWith(['action', 'event', {
+        property: true
+      }]));
+    });
+  });
 });

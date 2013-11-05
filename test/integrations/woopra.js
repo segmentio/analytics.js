@@ -49,6 +49,7 @@ describe('Woopra', function () {
   describe('#identify', function () {
     beforeEach(function () {
       woopra.initialize();
+      // woopra identify has other methods on it
       window.woopra.identify = sinon.spy(window.woopra, 'identify');
     });
 

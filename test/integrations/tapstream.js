@@ -1,95 +1,115 @@
 
 describe('Tapstream', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var Tapstream = require('analytics/lib/integrations/tapstream');
+  var assert = require('assert');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  accountName: 'tapstreamTestAccount'
-};
+  var tapstream;
+  var settings = {
+    accountName: 'tapstreamTestAccount'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Tapstream: settings });
-  this.integration = analytics._integrations.Tapstream;
-  this.options = this.integration.options;
-  when(function () { return window._tsq._api; }, done);
-});
-
-describe('#name', function () {
-  it('Tapstream', function () {
-    assert(this.integration.name == 'Tapstream');
-  });
-});
-
-describe('#key', function () {
-  it('accountName', function () {
-    assert(this.integration.key == 'accountName');
-  });
-});
-
-describe('#defaults', function () {
-  it('accountName', function () {
-    assert(this.integration.defaults.accountName === '');
-  });
-
-  it('initialPageview', function () {
-    assert(this.integration.defaults.initialPageview === true);
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options with defaults', function () {
-    assert(this.options.accountName == settings.accountName);
-    assert(this.options.initialPageview == this.integration.defaults.initialPageview);
-  });
-
-  it('should pass options to Tapstream', function () {
-    assert(window._tsq._api.accountName == settings.accountName);
-  });
-});
-
-describe('#track', function () {
   beforeEach(function () {
-    this.stub = sinon.stub(window._tsq, 'push');
+    tapstream = new Tapstream(settings);
   });
 
   afterEach(function () {
-    this.stub.restore();
+    tapstream.reset();
   });
 
-  it('should send an event as a slug', function () {
-    analytics.track('Event');
-    assert(this.stub.calledWith(['fireHit', 'event', []]));
-  });
-});
-
-describe('#pageview', function () {
-  beforeEach(function () {
-    this.stub = sinon.stub(window._tsq, 'push');
-  });
-
-  afterEach(function () {
-    this.stub.restore();
+  it('should store the right settings', function () {
+    test(tapstream)
+      .name('Tapstream')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('_tsq')
+      .option('accountName', '')
+      .option('trackAllPages', true)
+      .option('trackNamedPages', true);
   });
 
-  it('should send a "Loaded a Page" event', function () {
-    analytics.pageview();
-    assert(this.stub.calledWith(['fireHit', 'loaded-a-page', [undefined]]));
+  describe('#load', function () {
+    it('should replace the window._tsq object', function (done) {
+      tapstream.load();
+      when(function () {
+        return window._tsq && window._tsq.push !== Array.prototype.push;
+      }, done);
+    });
+
+    it('should call the callback', function (done) {
+      tapstream.load(done);
+    });
   });
 
-  it('should send a url', function () {
-    analytics.pageview('url');
-    assert(this.stub.calledWith(['fireHit', 'loaded-a-page', ['url']]));
-  });
-});
+  describe('#initialize', function () {
+    it('should call #load', function () {
+      tapstream.load = sinon.spy();
+      tapstream.initialize();
+      assert(tapstream.load.called);
+    });
 
+    it('should push setAccount name onto window._tsq', function () {
+      window._tsq = [];
+      window._tsq.push = sinon.spy();
+      tapstream.initialize();
+      assert(window._tsq.push.calledWith([
+        'setAccountName',
+        settings.accountName
+      ]));
+    });
+  });
+
+  describe('#track', function () {
+    beforeEach(function () {
+      tapstream.initialize();
+      window._tsq.push = sinon.spy();
+    });
+
+    it('should send an event as a slug', function () {
+      tapstream.track('Event');
+      assert(window._tsq.push.calledWith(['fireHit', 'event', [undefined]]));
+    });
+  });
+
+  describe('#page', function () {
+    beforeEach(function () {
+      tapstream.initialize();
+      window._tsq.push = sinon.spy();
+    });
+
+    it('should send a "Loaded a Page" event', function () {
+      tapstream.page();
+      assert(window._tsq.push.calledWith([
+        'fireHit',
+        'loaded-a-page',
+        [undefined]
+      ]));
+    });
+
+    it('should send a named page', function () {
+      tapstream.page('Signup');
+      assert(window._tsq.push.calledWith([
+        'fireHit',
+        'loaded-a-page',
+        [undefined]
+      ]));
+      assert(window._tsq.push.calledWith([
+        'fireHit',
+        'viewed-signup-page',
+        [undefined]
+      ]));
+    });
+
+    it('should send unnamed pages', function () {
+      tapstream.page(undefined, { url: 'test' });
+      assert(window._tsq.push.calledWith([
+        'fireHit',
+        'loaded-a-page',
+        ['test']
+      ]));
+    });
+  });
 });

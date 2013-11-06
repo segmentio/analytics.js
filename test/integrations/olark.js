@@ -23,15 +23,10 @@ describe('Olark', function () {
     window.olark('api.box.shrink');
   }
 
-  beforeEach(function () {
+  before(function () {
     olark = new Olark(settings);
     olark.initialize(); // noop
-  });
-
-  afterEach(function () {
-    var global = window.olark;
-    olark.reset();
-    window.olark = global;
+    olark.initialize();
   });
 
   it('should have the right settings', function () {
@@ -48,19 +43,17 @@ describe('Olark', function () {
 
   describe('#initialize', function () {
     it('should create the window.olark variable', function () {
-      assert(!window.olark);
-      olark.initialize();
       assert(window.olark);
     });
 
-    it('should initialize window.olark if it exists', function () {
-      window.olark = sinon.spy();
-      window.olark.identify = sinon.spy();
-      olark.initialize();
-      assert(window.olark.identify.calledWith(settings.siteId));
-      assert(window.olark.calledWithMatch('api.box.onExpand'));
-      assert(window.olark.calledWithMatch('api.box.onShrink'));
-      window.olark = undefined;
+    it('should set up expand/shrink listeners', function (done) {
+      expandThen(function () {
+        assert(olark._open);
+        shrinkThen(function () {
+          assert(!olark._open);
+          done();
+        });
+      });
     });
   });
 
@@ -244,28 +237,47 @@ describe('Olark', function () {
       });
     });
 
-    it('shouldnt send an event when the chat isnt open', function () {
-      olark.pageview();
+    it('should not send an event when the chat isnt open', function () {
+      olark.page();
       assert(!window.olark.called);
     });
 
-    it('should send a pageview', function (done) {
-      var spy = window.olark;
+    it('should not send a message without a name or url', function (done) {
       expandThen(function () {
+        window.olark.reset();
         olark.page();
-        assert(spy.calledWith('api.chat.sendNotificationToOperator', {
-          body: 'looking at ' + window.location.href
+        assert(!window.olark.called);
+        done();
+      });
+    });
+
+    it('should send a page name', function (done) {
+      expandThen(function () {
+        olark.page('Name');
+        assert(window.olark.calledWith('api.chat.sendNotificationToOperator', {
+          body: 'looking at name page'
         }));
         done();
       });
     });
 
-    it('shouldnt send an event when pageview is disabled', function () {
-      this.options.pageview = false;
-      var spy = window.olark;
+    it('should send a page url', function (done) {
       expandThen(function () {
+        olark.page(undefined, { url: 'url' });
+        assert(window.olark.calledWith('api.chat.sendNotificationToOperator', {
+          body: 'looking at url'
+        }));
+        done();
+      });
+    });
+
+    it('should not send an event when page is disabled', function (done) {
+      olark.options.page = false;
+      expandThen(function () {
+        window.olark.reset();
         olark.page();
         assert(!window.olark.called);
+        done();
       });
     });
   });

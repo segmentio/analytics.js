@@ -1,52 +1,57 @@
 
 describe('HitTail', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , equal = require('equals')
-  , sinon = require('sinon')
-  , when = require('when');
+  var assert = require('assert');
+  var equal = require('equals');
+  var HitTail = require('analytics/lib/integrations/hittail');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  siteId: 'x'
-};
+  var hittail;
+  var settings = {
+    siteId: 'x'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ HitTail: settings });
-  this.integration = analytics._integrations.HitTail;
-  this.options = this.integration.options;
-  when(function () { return window.htk; }, done);
-});
-
-describe('#name', function () {
-  it('HitTail', function () {
-    assert(this.integration.name == 'HitTail');
-  });
-});
-
-describe('#key', function () {
-  it('siteId', function () {
-    assert(this.integration.key == 'siteId');
-  });
-});
-
-describe('#defaults', function () {
-  it('siteId', function () {
-    assert(this.integration.defaults.siteId === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
+  beforeEach(function () {
+    hittal = new HitTail(settings);
+    hittal.initialize(); // noop
   });
 
-  it('should store options', function () {
-    assert(this.options.siteId == settings.siteId);
+  afterEach(function () {
+    hittal.reset();
   });
-});
+
+  it('should have the right settings', function () {
+    test(hittal)
+      .name('HitTail')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('htk')
+      .option('siteId', '');
+  });
+
+  describe('#initialize', function () {
+    beforeEach(function () {
+      hittal.load = sinon.spy(); // prevent loading
+    });
+
+    it('should call #load', function () {
+      hittal.initialize();
+      assert(hittal.load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window.htk', function (done) {
+      assert(!window.htk);
+      hittal.load();
+      when(function () { return window.htk; }, done);
+    });
+
+    it('should callback', function (done) {
+      hittal.load(done);
+    });
+  });
 
 });

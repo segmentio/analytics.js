@@ -1,110 +1,107 @@
 
 describe('Qualaroo', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var Qualaroo = require('analytics/lib/integrations/qualaroo');
+  var assert = require('assert');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var user = require('analytics/lib/user');
+  var when = require('when');
 
-var settings = {
-  customerId: '47517',
-  siteToken: '9Fd'
-};
+  var qualaroo;
+  var settings = {
+    customerId: '47517',
+    siteToken: '9Fd'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Qualaroo: settings });
-  this.integration = analytics._integrations.Qualaroo;
-  this.options = this.integration.options;
-  when(function () { return window.KI; }, done);
-});
-
-describe('#name', function () {
-  it('Qualaroo', function () {
-    assert(this.integration.name == 'Qualaroo');
-  });
-});
-
-describe('#defaults', function () {
-  it('customerId', function () {
-    assert(this.integration.defaults.customerId === '');
-  });
-
-  it('siteToken', function () {
-    assert(this.integration.defaults.siteToken === '');
-  });
-
-  it('track', function () {
-    assert(this.integration.defaults.track === false);
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options with defaults', function () {
-    assert(this.options.customerId == settings.customerId);
-    assert(this.options.siteToken == settings.siteToken);
-    assert(this.options.track == this.integration.defaults.track);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window._kiq, 'push');
+    qualaroo = new Qualaroo(settings);
   });
 
   afterEach(function () {
-    this.stub.restore();
+    qualaroo.reset();
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.stub.calledWith(['identify', 'id']));
+  it('should have the right settings', function () {
+    test(qualaroo)
+      .name('Qualaroo')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('_kiq')
+      .option('customerId', '')
+      .option('siteToken', '')
+      .option('track', false);
   });
 
-  it('should send traits', function () {
-    analytics.identify({ trait: true });
-    assert(this.stub.calledWith(['set', { trait: true }]));
+  describe('#load', function () {
+    it('should callback', function (done) {
+      qualaroo.load(done);
+    });
+
+    it('should create window._kiq', function (done) {
+      assert(!window._kiq);
+      qualaroo.load();
+      when(function () { return window._kiq; }, done);
+    });
   });
 
-  it('should send an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(this.stub.calledWith(['identify', 'id']));
-    assert(this.stub.calledWith(['set', { trait: true }]));
+  describe('#initialize', function () {
+    it('should call #load', function () {
+      qualaroo.load = sinon.spy();
+      qualaroo.initialize();
+      assert(qualaroo.load.called);
+    });
   });
 
-  it('should prefer an email', function () {
-    analytics.identify('id', { email: 'name@example.com' });
-    assert(this.stub.calledWith(['identify', 'name@example.com']));
-  });
-});
+  describe('#identify', function () {
+    beforeEach(function () {
+      qualaroo.initialize();
+      window._kiq = [];
+      window._kiq.push = sinon.spy();
+    });
 
-describe('#track', function () {
-  beforeEach(function () {
-    this.stub = sinon.stub(window._kiq, 'push');
+    afterEach(function () {
+      user.reset();
+    });
+
+    it('should send an id', function () {
+      qualaroo.identify('id');
+      assert(window._kiq.push.calledWith(['identify', 'id']));
+    });
+
+    it('should send traits', function () {
+      qualaroo.identify(null, { trait: true });
+      assert(window._kiq.push.calledWith(['set', { trait: true }]));
+    });
+
+    it('should send an id and traits', function () {
+      qualaroo.identify('id', { trait: true });
+      assert(window._kiq.push.calledWith(['identify', 'id']));
+      assert(window._kiq.push.calledWith(['set', { trait: true }]));
+    });
+
+    it('should prefer an email', function () {
+      qualaroo.identify('id', { email: 'name@example.com' });
+      assert(window._kiq.push.calledWith(['identify', 'name@example.com']));
+    });
   });
 
-  afterEach(function () {
-    this.stub.restore();
-    this.options.track = false;
-  });
+  describe('#track', function () {
+    beforeEach(function () {
+      qualaroo.initialize();
+      window._kiq = [];
+      window._kiq.push = sinon.spy();
+    });
 
-  it('shouldnt send anything by default', function () {
-    analytics.track('event');
-    assert(!this.stub.called);
-  });
+    it('should not send anything by default', function () {
+      qualaroo.track('event');
+      assert(!window._kiq.push.called);
+    });
 
-  it('should set an event trait', function () {
-    this.options.track = true;
-    analytics.track('event');
-    assert(this.stub.calledWith(['set', { 'Triggered: event': true }]));
+    it('should set an event trait', function () {
+      qualaroo.options.track = true;
+      qualaroo.track('event');
+      assert(window._kiq.push.calledWith(['set', { 'Triggered: event': true }]));
+    });
   });
-});
-
 });

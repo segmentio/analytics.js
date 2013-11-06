@@ -1,57 +1,66 @@
 
 describe('Pingdom', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , date = require('load-date')
-  , equal = require('equals')
-  , sinon = require('sinon')
-  , when = require('when');
+  var Pingdom = require('analytics/lib/integrations/pingdom');
+  var assert = require('assert');
+  var date = require('load-date');
+  var equal = require('equals');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  id: '5168f8c6abe53db732000000'
-};
+  var pingdom;
+  var settings = {
+    id: '5168f8c6abe53db732000000'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Pingdom: settings });
-  this.integration = analytics._integrations.Pingdom;
-  this.options = this.integration.options;
-  when(function () { return window.PRUM_EPISODES; }, done);
-});
-
-describe('#name', function () {
-  it('Pingdom', function () {
-    assert(this.integration.name == 'Pingdom');
-  });
-});
-
-describe('#key', function () {
-  it('id', function () {
-    assert(this.integration.key == 'id');
-  });
-});
-
-describe('#defaults', function () {
-  it('id', function () {
-    assert(this.integration.defaults.id === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
+  beforeEach(function () {
+    pingdom = new Pingdom(settings);
   });
 
-  it('should store options', function () {
-    assert(this.options.id == settings.id);
+  afterEach(function () {
+    pingdom.reset();
   });
 
-  it('should send first byte time to Pingdom', function () {
-    assert(date.getTime() == window.PRUM_EPISODES.marks.firstbyte);
+  it('should have the right settings', function () {
+    test(pingdom)
+      .name('Pingdom')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('_prum')
+      .option('id', '');
   });
-});
 
+  describe('#load', function () {
+    it('should create window._prum', function (done) {
+      pingdom.load();
+      when(function () { return window._prum; }, done);
+    });
+
+    it('should callback', function (done) {
+      pingdom.load(done);
+    });
+  });
+
+  describe('#initialize', function () {
+    it('should call #load', function () {
+      pingdom.load = sinon.spy();
+      pingdom.initialize();
+      assert(pingdom.load.called);
+    });
+
+    it('should push the id onto window._prum', function () {
+      window._prum = [];
+      window._prum.push = sinon.spy();
+      pingdom.initialize();
+      assert(window._prum.push.calledWith(['id', settings.id]));
+    });
+
+    it('should send first byte time to Pingdom', function () {
+      pingdom.initialize();
+      pingdom.on('ready', function () {
+        assert(date.getTime() == window.PRUM_EPISODES.marks.firstbyte);
+      });
+    });
+  });
 });

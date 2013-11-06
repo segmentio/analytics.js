@@ -1,167 +1,157 @@
 
 describe('Preact', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var Preact = require('analytics/lib/integrations/preact');
+  var assert = require('assert');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  projectCode: 'x'
-};
+  var preact;
+  var settings = {
+    projectCode: 'x'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Preact: settings });
-  this.integration = analytics._integrations.Preact;
-  this.options = this.integration.options;
-  when(function () { return window._lnq; }, done);
-});
-
-describe('#name', function () {
-  it('Preact', function () {
-    assert(this.integration.name == 'Preact');
-  });
-});
-
-describe('#key', function () {
-  it('projectCode', function () {
-    assert(this.integration.key == 'projectCode');
-  });
-});
-
-describe('#defaults', function () {
-  it('projectCode', function () {
-    assert(this.integration.defaults.projectCode === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.projectCode == settings.projectCode);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window._lnq, 'push');
+    preact = new Preact(settings);
   });
 
   afterEach(function () {
-    this.stub.restore();
+    preact.reset();
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.stub.calledWith(['_setPersonData', {
-      uid: 'id',
-      email: undefined,
-      name: undefined,
-      properties: {}
-    }]));
+  it('should have the right settings', function () {
+    test(preact)
+      .name('Preact')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('_lnq')
+      .option('projectCode', '');
   });
 
-  it('shouldnt send just traits', function () {
-    analytics.identify({ trait: true });
-    assert(!this.stub.called);
+  describe('#load', function () {
+    it('should create the window._lnq object', function (done) {
+      assert(!window._lnq);
+      preact.load();
+      when(function () { return window._lnq; }, done);
+    });
+
+    it('should callback', function (done) {
+      preact.load(done);
+    });
   });
 
-  it('should send an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(this.stub.calledWith(['_setPersonData', {
-      uid: 'id',
-      email: undefined,
-      name: undefined,
-      properties: { trait: true }
-    }]));
+  describe('#initialize', function () {
+    it('should push _setCode onto the window._lnq object', function () {
+      window._lnq = [];
+      window._lnq.push = sinon.spy();
+      preact.initialize();
+      assert(window._lnq.push.calledWith(['_setCode', settings.projectCode]));
+    });
   });
 
-  it('should send an email', function () {
-    analytics.identify('id', { email: 'name@example.com' });
-    assert(this.stub.calledWith(['_setPersonData', {
-      uid: 'id',
-      email: 'name@example.com',
-      name: undefined,
-      properties: { email: 'name@example.com' }
-    }]));
+  describe('#identify', function () {
+    beforeEach(function () {
+      preact.initialize();
+      window._lnq.push = sinon.spy();
+    });
+
+    it('should send an id', function () {
+      preact.identify('id');
+      assert(window._lnq.push.calledWith(['_setPersonData', {
+        uid: 'id',
+        email: undefined,
+        name: undefined,
+        properties: {}
+      }]));
+    });
+
+    it('shouldnt send just traits', function () {
+      preact.identify(null, { trait: true });
+      assert(!window._lnq.push.called);
+    });
+
+    it('should send an id and traits', function () {
+      preact.identify('id', { trait: true });
+      assert(window._lnq.push.calledWith(['_setPersonData', {
+        uid: 'id',
+        email: undefined,
+        name: undefined,
+        properties: { trait: true }
+      }]));
+    });
+
+    it('should send an email', function () {
+      preact.identify('id', { email: 'name@example.com' });
+      assert(window._lnq.push.calledWith(['_setPersonData', {
+        uid: 'id',
+        email: 'name@example.com',
+        name: undefined,
+        properties: { email: 'name@example.com' }
+      }]));
+    });
+
+    it('should send a name', function () {
+      preact.identify('id', { name: 'name' });
+      assert(window._lnq.push.calledWith(['_setPersonData', {
+        uid: 'id',
+        email: undefined,
+        name: 'name',
+        properties: { name: 'name' }
+      }]));
+    });
   });
 
-  it('should send a name', function () {
-    analytics.identify('id', { name: 'name' });
-    assert(this.stub.calledWith(['_setPersonData', {
-      uid: 'id',
-      email: undefined,
-      name: 'name',
-      properties: { name: 'name' }
-    }]));
-  });
-});
+  describe('#group', function () {
+    beforeEach(function () {
+      preact.initialize();
+      window._lnq.push = sinon.spy();
+    });
 
-describe('#group', function () {
-  beforeEach(function () {
-    this.stub = sinon.stub(window._lnq, 'push');
-    analytics.group().reset();
-  });
+    it('should send an id', function () {
+      preact.group('id');
+      assert(window._lnq.push.calledWith(['_setAccount', { id: 'id' }]));
+    });
 
-  afterEach(function () {
-    this.stub.restore();
-  });
-
-  it('should send an id', function () {
-    analytics.group('id');
-    assert(this.stub.calledWith(['_setAccount', { id: 'id' }]));
+    it('should send an id and properties', function () {
+      preact.group('id', { property: true });
+      assert(window._lnq.push.calledWith(['_setAccount', {
+        id: 'id',
+        property: true
+      }]));
+    });
   });
 
-  it('should send an id and properties', function () {
-    analytics.group('id', { property: true });
-    assert(this.stub.calledWith(['_setAccount', {
-      id: 'id',
-      property: true
-    }]));
-  });
-});
+  describe('#track', function () {
+    beforeEach(function () {
+      preact.initialize();
+      window._lnq.push = sinon.spy();
+    });
 
-describe('#track', function () {
-  beforeEach(function () {
-    this.stub = sinon.stub(window._lnq, 'push');
-  });
+    it('should send an event', function () {
+      preact.track('event');
+      assert(window._lnq.push.calledWith(['_logEvent', { name: 'event' }, {}]));
+    });
 
-  afterEach(function () {
-    this.stub.restore();
-  });
+    it('should send an event and properties', function () {
+      preact.track('event', { property: true });
+      assert(window._lnq.push.calledWith(['_logEvent', { name: 'event' }, { property: true }]));
+    });
 
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.stub.calledWith(['_logEvent', { name: 'event' }, {}]));
-  });
+    it('should special case a revenue property', function () {
+      preact.track('event', { revenue: 9.99 });
+      assert(window._lnq.push.calledWith(['_logEvent', {
+        name: 'event',
+        revenue: 999
+      }, {}]));
+    });
 
-  it('should send an event and properties', function () {
-    analytics.track('event', { property: true });
-    assert(this.stub.calledWith(['_logEvent', { name: 'event' }, { property: true }]));
+    it('should special case a note property', function () {
+      preact.track('event', { note: 'note' });
+      assert(window._lnq.push.calledWith(['_logEvent', {
+        name: 'event',
+        note: 'note'
+      }, {}]));
+    });
   });
-
-  it('should special case a revenue property', function () {
-    analytics.track('event', { revenue: 9.99 });
-    assert(this.stub.calledWith(['_logEvent', {
-      name: 'event',
-      revenue: 999
-    }, {}]));
-  });
-
-  it('should special case a note property', function () {
-    analytics.track('event', { note: 'note' });
-    assert(this.stub.calledWith(['_logEvent', {
-      name: 'event',
-      note: 'note'
-    }, {}]));
-  });
-});
-
 });

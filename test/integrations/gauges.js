@@ -1,68 +1,76 @@
 
 describe('Gauges', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , equal = require('equals')
-  , sinon = require('sinon')
-  , when = require('when');
+  var assert = require('assert');
+  var equal = require('equals');
+  var Gauges = require('analytics/lib/integrations/gauges');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  siteId: 'x'
-};
+  var gauges;
+  var settings = {
+    siteId: 'x'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Gauges: settings });
-  this.integration = analytics._integrations.Gauges;
-  this.options = this.integration.options;
-  var stub = window._gauges.push;
-  when(function () { return window._gauges.push != stub; }, done);
-});
-
-describe('#name', function () {
-  it('Gauges', function () {
-    assert(this.integration.name == 'Gauges');
-  });
-});
-
-describe('#key', function () {
-  it('siteId', function () {
-    assert(this.integration.key == 'siteId');
-  });
-});
-
-describe('#defaults', function () {
-  it('siteId', function () {
-    assert(this.integration.defaults.siteId === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.siteId == settings.siteId);
-  });
-});
-
-describe('#pageview', function () {
   beforeEach(function () {
-    this.stub = sinon.stub(window._gauges, 'push');
+    gauges = new Gauges(settings);
+    gauges.initialize(); // noop
   });
 
   afterEach(function () {
-    this.stub.restore();
+    gauges.reset();
   });
 
-  it('should send a pageview', function () {
-    analytics.pageview();
-    assert(this.stub.calledWith(['track']));
+  it('should have the right settings', function () {
+    test(gauges)
+      .name('Gauges')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('_gauges')
+      .option('siteId', '');
   });
-});
+
+  describe('#initialize', function () {
+    beforeEach(function () {
+      gauges.load = sinon.spy(); // prevent loading
+    });
+
+    it('should create the gauges queue', function () {
+      assert(!window._gauges);
+      gauges.initialize();
+      assert(window._gauges instanceof Array);
+    });
+
+    it('should call #load', function () {
+      gauges.initialize();
+      assert(gauges.load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should replace the gauges queue', function (done) {
+      window._gauges = [];
+      var push = window._gauges.push;
+      gauges.load();
+      when(function () { return window._gauges.push !== push; }, done);
+    });
+
+    it('should callback', function (done) {
+      gauges.load(done);
+    });
+  });
+
+  describe('#page', function () {
+    beforeEach(function () {
+      gauges.initialize();
+      window._gauges.push = sinon.spy();
+    });
+
+    it('should send a page view', function () {
+      gauges.page();
+      assert(window._gauges.push.calledWith(['track']));
+    });
+  });
 
 });

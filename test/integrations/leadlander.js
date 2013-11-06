@@ -1,55 +1,62 @@
 
 describe('LeadLander', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var assert = require('assert');
+  var LeadLander = require('analytics/lib/integrations/leadlander');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  llactid: 'x'
-};
+  var leadlander;
+  var settings = {
+    accountId: 'x'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ LeadLander: settings });
-  this.integration = analytics._integrations.LeadLander;
-  this.options = this.integration.options;
-  when(function () { return window.trackalyzer; }, done);
-});
-
-describe('#name', function () {
-  it('LeadLander', function () {
-    assert(this.integration.name == 'LeadLander');
-  });
-});
-
-describe('#key', function () {
-  it('accountId', function () {
-    assert(this.integration.key == 'accountId');
-  });
-});
-
-describe('#defaults', function () {
-  it('accountId', function () {
-    assert(this.integration.defaults.accountId === null);
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
+  beforeEach(function () {
+    leadlander = new LeadLander(settings);
+    leadlander.initialize(); // noop
   });
 
-  it('should store options', function () {
-    assert(this.options.accountId == settings.accountId);
+  afterEach(function () {
+    leadlander.reset();
   });
 
-  it('should pass options to LeadLander', function () {
-    assert(window.llactid == settings.accountId);
+  it('should have the right settings', function () {
+    test(leadlander)
+      .name('LeadLander')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('llactid')
+      .global('trackalyzer')
+      .option('accountId', null);
   });
-});
+
+  describe('#initialize', function () {
+    beforeEach(function () {
+      leadlander.load = sinon.spy(); // prevent loading
+    });
+
+    it('should set window.llactid', function () {
+      leadlander.initialize();
+      assert(window.llactid === settings.accountId);
+    });
+
+    it('should call #load', function () {
+      leadlander.initialize();
+      assert(leadlander.load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window.trackalyzer', function (done) {
+      assert(!window.trackalyzer);
+      leadlander.load();
+      when(function () { return window.trackalyzer; }, done);
+    });
+
+    it('should callback', function (done) {
+      leadlander.load(done);
+    });
+  });
 
 });

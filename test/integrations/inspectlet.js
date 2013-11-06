@@ -1,51 +1,71 @@
 
 describe('Inspectlet', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var assert = require('assert');
+  var Inspectlet = require('analytics/lib/integrations/inspectlet');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  wid: 'x'
-};
+  var inspectlet;
+  var settings = {
+    wid: 'x'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Inspectlet: settings });
-  this.integration = analytics._integrations.Inspectlet;
-  this.options = this.integration.options;
-  when(function () { return window.__insp_; }, done);
-});
-
-describe('#name', function () {
-  it('Inspectlet', function () {
-    assert(this.integration.name == 'Inspectlet');
-  });
-});
-
-describe('#key', function () {
-  it('wid', function () {
-    assert(this.integration.key == 'wid');
-  });
-});
-
-describe('#defaults', function () {
-  it('wid', function () {
-    assert(this.integration.defaults.wid === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
+  beforeEach(function () {
+    inspectlet = new Inspectlet(settings);
+    inspectlet.initialize(); // noop
   });
 
-  it('should store options', function () {
-    expect(this.options.wid == settings.wid);
+  afterEach(function () {
+    var global = window.__insp;
+    inspectlet.reset();
+    window.__insp = global; // keep around for jsonp callbacks
   });
-});
+
+  it('should have the right settings', function () {
+    test(inspectlet)
+      .name('Inspectlet')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('__insp')
+      .option('wid', '');
+  });
+
+  describe('#initialize', function () {
+    beforeEach(function () {
+      inspectlet.load = sinon.spy(); // prevent loading
+    });
+
+    it('should create the inspectlet queue', function () {
+      assert(!window.__insp);
+      inspectlet.initialize();
+      assert(window.__insp);
+    });
+
+    it('should push the wid', function () {
+      window.__insp = [];
+      window.__insp.push = sinon.spy();
+      inspectlet.initialize();
+      assert(window.__insp.push.calledWith(['wid', settings.wid]));
+    });
+
+    it('should call #load', function () {
+      inspectlet.initialize();
+      assert(inspectlet.load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window.__insp_', function (done) {
+      assert(!window.__insp_);
+      inspectlet.load();
+      when(function () { return window.__insp_; }, done);
+    });
+
+    it('should callback', function (done) {
+      inspectlet.load(done);
+    });
+  });
 
 });

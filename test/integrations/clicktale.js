@@ -37,17 +37,6 @@ describe('ClickTale', function () {
       .option('partitionId', '');
   });
 
-  describe('#load', function () {
-    it('should create window.ClickTale', function (done) {
-      clicktale.load();
-      when(function () { return window.ClickTale; }, done);
-    });
-
-    it('should callback', function (done) {
-      clicktale.load(done);
-    });
-  });
-
   describe('#initialize', function () {
     it('should store the load time', function () {
       assert(!window.WRInitTime);
@@ -64,6 +53,18 @@ describe('ClickTale', function () {
       clicktale.load = sinon.spy();
       clicktale.initialize();
       assert(clicktale.load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window.ClickTale', function (done) {
+      assert(!window.ClickTale);
+      clicktale.load();
+      when(function () { return window.ClickTale; }, done);
+    });
+
+    it('should callback', function (done) {
+      clicktale.load(done);
     });
   });
 

@@ -3,7 +3,7 @@ window.mocha.setup({
   ui: 'bdd',
   ignoreLeaks: true,
   slow: 500,
-  timeout: 10000
+  timeout: 5000
 });
 
 $(function () {

@@ -1,140 +1,142 @@
 
 describe('Klaviyo', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var assert = require('assert');
+  var Klaviyo = require('analytics/lib/integrations/klaviyo');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  apiKey: 'x'
-};
+  var klaviyo;
+  var settings = {
+    apiKey: 'x'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Klaviyo: settings });
-  this.integration = analytics._integrations.Klaviyo;
-  this.options = this.integration.options;
-  var stub = window._learnq.push;
-  when(function () { return window._learnq.push != stub; }, done);
-});
-
-describe('#name', function () {
-  it('Klaviyo', function () {
-    assert(this.integration.name == 'Klaviyo');
-  });
-});
-
-describe('#key', function () {
-  it('apiKey', function () {
-    assert(this.integration.key == 'apiKey');
-  });
-});
-
-describe('#defaults', function () {
-  it('apiKey', function () {
-    assert(this.integration.defaults.apiKey === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.apiKey == settings.apiKey);
-  });
-
-  it('should make a queue', function () {
-    assert(window._learnq instanceof Array);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window._learnq, 'push');
+    klaviyo = new Klaviyo(settings);
+    klaviyo.initialize(); // noop
   });
 
   afterEach(function () {
-    this.stub.restore();
+    klaviyo.reset();
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.stub.calledWith(['identify', { $id: 'id' }]));
+  it('should have the right settings', function () {
+    test(klaviyo)
+      .name('Klaviyo')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('_learnq')
+      .option('apiKey', '');
   });
 
-  it('shouldnt send just traits', function () {
-    analytics.identify({ trait: true });
-    assert(!this.stub.called);
-  });
-
-  it('should send an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(this.stub.calledWith(['identify', {
-      $id: 'id',
-      trait: true
-    }]));
-  });
-
-  it('should alias traits', function () {
-    analytics.identify('id', {
-      email: 'name@example.com',
-      firstName: 'first',
-      lastName: 'last',
-      phone: 'phone',
-      title: 'title'
+  describe('#initialize', function () {
+    beforeEach(function () {
+      klaviyo.load = sinon.spy(); // prevent loading
     });
-    assert(this.stub.calledWith(['identify', {
-      $id: 'id',
-      $email: 'name@example.com',
-      $first_name: 'first',
-      $last_name: 'last',
-      $phone_number: 'phone',
-      $title: 'title',
-      name: 'first last'
-    }]));
-  });
-});
 
-describe('#group', function () {
-  beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window._learnq, 'push');
-  });
+    it('should create window._learnq', function () {
+      assert(!window._learnq);
+      klaviyo.initialize();
+      assert(window._learnq instanceof Array);
+    });
 
-  afterEach(function () {
-    this.stub.restore();
+    it('should push an api key', function () {
+      window._learnq = [];
+      window._learnq.push = sinon.spy();
+      klaviyo.initialize();
+      assert(window._learnq.push.calledWith(['account', settings.apiKey]));
+    });
+
+    it('should call #load', function () {
+      klaviyo.initialize();
+      assert(klaviyo.load.called);
+    });
   });
 
-  it('should send a name', function () {
-    analytics.group('id', { name: 'name' });
-    assert(this.stub.calledWith(['identify', { $organization: 'name' }]));
-  });
-});
+  describe('#load', function () {
+    it('should replace window._learnq.push', function (done) {
+      window._learnq = [];
+      var push = window._learnq.push;
+      klaviyo.load();
+      when(function () { return window._learnq.push !== push; }, done);
+    });
 
-describe('#track', function () {
-  beforeEach(function () {
-    this.stub = sinon.stub(window._learnq, 'push');
-  });
-
-  afterEach(function () {
-    this.stub.restore();
+    it('should callback', function (done) {
+      klaviyo.load(done);
+    });
   });
 
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.stub.calledWith(['track', 'event', {}]));
+  describe('#identify', function () {
+    beforeEach(function () {
+      klaviyo.initialize();
+      window._learnq.push = sinon.spy();
+    });
+
+    it('should send an id', function () {
+      klaviyo.identify('id');
+      assert(window._learnq.push.calledWith(['identify', { $id: 'id' }]));
+    });
+
+    it('shouldnt send just traits', function () {
+      klaviyo.identify(null, { trait: true });
+      assert(!window._learnq.push.called);
+    });
+
+    it('should send an id and traits', function () {
+      klaviyo.identify('id', { trait: true });
+      assert(window._learnq.push.calledWith(['identify', {
+        $id: 'id',
+        trait: true
+      }]));
+    });
+
+    it('should alias traits', function () {
+      klaviyo.identify('id', {
+        email: 'name@example.com',
+        firstName: 'first',
+        lastName: 'last',
+        phone: 'phone',
+        title: 'title'
+      });
+      assert(window._learnq.push.calledWith(['identify', {
+        $id: 'id',
+        $email: 'name@example.com',
+        $first_name: 'first',
+        $last_name: 'last',
+        $phone_number: 'phone',
+        $title: 'title'
+      }]));
+    });
   });
 
-  it('should send an event and properties', function () {
-    analytics.track('event', { property: true });
-    assert(this.stub.calledWith(['track', 'event', { property: true }]));
+  describe('#group', function () {
+    beforeEach(function () {
+      klaviyo.initialize();
+      window._learnq.push = sinon.spy();
+    });
+
+    it('should send a name', function () {
+      klaviyo.group('id', { name: 'name' });
+      assert(window._learnq.push.calledWith(['identify', { $organization: 'name' }]));
+    });
   });
-});
+
+  describe('#track', function () {
+    beforeEach(function () {
+      klaviyo.initialize();
+      window._learnq.push = sinon.spy();
+    });
+
+    it('should send an event', function () {
+      klaviyo.track('event');
+      assert(window._learnq.push.calledWith(['track', 'event', {}]));
+    });
+
+    it('should send an event and properties', function () {
+      klaviyo.track('event', { property: true });
+      assert(window._learnq.push.calledWith(['track', 'event', { property: true }]));
+    });
+  });
 
 });

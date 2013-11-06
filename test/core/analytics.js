@@ -111,6 +111,11 @@ describe('#initialize', function () {
     analytics.initialize();
   });
 
+  it('should emit initialize', function (done) {
+    analytics.once('initialize', done);
+    analytics.initialize();
+  });
+
   it('should still call ready with unknown integrations', function (done) {
     analytics.ready(done);
     analytics.initialize({ Unknown: { apiKey: 'x' }});
@@ -196,6 +201,11 @@ describe('#ready', function () {
         done();
       });
     });
+    analytics.initialize();
+  });
+
+  it('should emit ready', function (done) {
+    analytics.once('ready', done);
     analytics.initialize();
   });
 
@@ -340,6 +350,16 @@ describe('#identify', function () {
     analytics.identify('id', {}, {}, done);
   });
 
+  it('should emit identify', function (done) {
+    analytics.once('identify', function (userId, traits, options) {
+      assert(userId === 'id');
+      assert(traits.a === 1);
+      assert(options.b === 2);
+      done();
+    });
+    analytics.identify('id', { a: 1 }, { b: 2 });
+  });
+
   it('should have an id overload', function () {
     analytics.identify({ trait: true }, { option: true });
     assert(this.spy.calledWith('identify', null, { trait: true }, { option: true }));
@@ -455,6 +475,16 @@ describe('#group', function () {
     analytics.group('id', {}, {}, done);
   });
 
+  it('should emit group', function (done) {
+    analytics.once('group', function (groupId, traits, options) {
+      assert(groupId === 'id');
+      assert(traits.a === 1);
+      assert(options.b === 2);
+      done();
+    });
+    analytics.group('id', { a: 1 }, { b: 2 });
+  });
+
   it('should have an id overload', function () {
     analytics.group({ property: true }, { option: true });
     assert(this.spy.calledWith('group', null, { property: true }, { option: true }));
@@ -522,6 +552,16 @@ describe('#track', function () {
 
   it('should have an options overload', function (done) {
     analytics.track('event', {}, done);
+  });
+
+  it('should emit track', function (done) {
+    analytics.once('track', function (event, properties, options) {
+      assert(event === 'event');
+      assert(properties.a === 1);
+      assert(options.b === 2);
+      done();
+    });
+    analytics.track('event', { a: 1 }, { b: 2 });
   });
 
   it('should convert ISO dates to date objects', function () {
@@ -753,6 +793,15 @@ describe('#pageview', function () {
     analytics.pageview('/path', { option: true });
     assert(this.spy.calledWith('pageview', '/path', { option: true }));
   });
+
+  it('should emit pageview', function (done) {
+    analytics.once('pageview', function (path, options) {
+      assert(path === '/path');
+      assert(options.a === 1);
+      done();
+    });
+    analytics.pageview('/path', { a: 1 });
+  });
 });
 
 describe('#alias', function () {
@@ -769,6 +818,16 @@ describe('#alias', function () {
   it('should invoke with a new id, old id and options', function () {
     analytics.alias('new', 'old', { option: true });
     assert(this.spy.calledWith('alias', 'new', 'old', { option: true }));
+  });
+
+  it('should emit alias', function (done) {
+    analytics.once('alias', function (newId, oldId, options) {
+      assert(newId === 'new');
+      assert(oldId === 'old');
+      assert(options.a === 1);
+      done();
+    });
+    analytics.alias('new', 'old', { a: 1 });
   });
 
   it('should have an old id override', function () {

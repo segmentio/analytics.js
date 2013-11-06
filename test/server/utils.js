@@ -48,6 +48,7 @@
       'CrazyEgg' : '00138301',
       'Customer.io' : 'x',
       'Errorception' : '506b76b52f52c3f662000140',
+      'Evergage' : 'x',
       'FoxMetrics' : '5135085424023236bca9c08c',
       'Gauges' : 'x',
       'Get Satisfaction' : 5005,

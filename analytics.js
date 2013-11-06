@@ -471,6 +471,182 @@ function array(obj, fn) {
   }
 }
 });
+require.register("component-indexof/index.js", function(exports, require, module){
+module.exports = function(arr, obj){
+  if (arr.indexOf) return arr.indexOf(obj);
+  for (var i = 0; i < arr.length; ++i) {
+    if (arr[i] === obj) return i;
+  }
+  return -1;
+};
+});
+require.register("component-emitter/index.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var index = require('indexof');
+
+/**
+ * Expose `Emitter`.
+ */
+
+module.exports = Emitter;
+
+/**
+ * Initialize a new `Emitter`.
+ *
+ * @api public
+ */
+
+function Emitter(obj) {
+  if (obj) return mixin(obj);
+};
+
+/**
+ * Mixin the emitter properties.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function mixin(obj) {
+  for (var key in Emitter.prototype) {
+    obj[key] = Emitter.prototype[key];
+  }
+  return obj;
+}
+
+/**
+ * Listen on the given `event` with `fn`.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.on =
+Emitter.prototype.addEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+  (this._callbacks[event] = this._callbacks[event] || [])
+    .push(fn);
+  return this;
+};
+
+/**
+ * Adds an `event` listener that will be invoked a single
+ * time then automatically removed.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.once = function(event, fn){
+  var self = this;
+  this._callbacks = this._callbacks || {};
+
+  function on() {
+    self.off(event, on);
+    fn.apply(this, arguments);
+  }
+
+  fn._off = on;
+  this.on(event, on);
+  return this;
+};
+
+/**
+ * Remove the given callback for `event` or all
+ * registered callbacks.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.off =
+Emitter.prototype.removeListener =
+Emitter.prototype.removeAllListeners =
+Emitter.prototype.removeEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+
+  // all
+  if (0 == arguments.length) {
+    this._callbacks = {};
+    return this;
+  }
+
+  // specific event
+  var callbacks = this._callbacks[event];
+  if (!callbacks) return this;
+
+  // remove all handlers
+  if (1 == arguments.length) {
+    delete this._callbacks[event];
+    return this;
+  }
+
+  // remove specific handler
+  var i = index(callbacks, fn._off || fn);
+  if (~i) callbacks.splice(i, 1);
+  return this;
+};
+
+/**
+ * Emit `event` with the given args.
+ *
+ * @param {String} event
+ * @param {Mixed} ...
+ * @return {Emitter}
+ */
+
+Emitter.prototype.emit = function(event){
+  this._callbacks = this._callbacks || {};
+  var args = [].slice.call(arguments, 1)
+    , callbacks = this._callbacks[event];
+
+  if (callbacks) {
+    callbacks = callbacks.slice(0);
+    for (var i = 0, len = callbacks.length; i < len; ++i) {
+      callbacks[i].apply(this, args);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Return array of callbacks for `event`.
+ *
+ * @param {String} event
+ * @return {Array}
+ * @api public
+ */
+
+Emitter.prototype.listeners = function(event){
+  this._callbacks = this._callbacks || {};
+  return this._callbacks[event] || [];
+};
+
+/**
+ * Check if this emitter has `event` handlers.
+ *
+ * @param {String} event
+ * @return {Boolean}
+ * @api public
+ */
+
+Emitter.prototype.hasListeners = function(event){
+  return !! this.listeners(event).length;
+};
+
+});
 require.register("component-event/index.js", function(exports, require, module){
 
 /**
@@ -614,14 +790,17 @@ require.register("component-trim/index.js", function(exports, require, module){
 exports = module.exports = trim;
 
 function trim(str){
+  if (str.trim) return str.trim();
   return str.replace(/^\s*|\s*$/g, '');
 }
 
 exports.left = function(str){
+  if (str.trimLeft) return str.trimLeft();
   return str.replace(/^\s*/, '');
 };
 
 exports.right = function(str){
+  if (str.trimRight) return str.trimRight();
   return str.replace(/\s*$/, '');
 };
 
@@ -853,9 +1032,13 @@ module.exports = function(obj, fn){
 });
 require.register("segmentio-bind-all/index.js", function(exports, require, module){
 
-var bind   = require('bind')
-  , type   = require('type');
-
+try {
+  var bind = require('bind');
+  var type = require('type');
+} catch (e) {
+  var bind = require('bind-component');
+  var type = require('type-component');
+}
 
 module.exports = function (obj) {
   for (var key in obj) {
@@ -940,8 +1123,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -1213,16 +1401,60 @@ module.exports = function after (times, func) {
 });
 require.register("segmentio-alias/index.js", function(exports, require, module){
 
-module.exports = function alias (object, aliases) {
-    // For each of our aliases, rename our object's keys.
-    for (var oldKey in aliases) {
-        var newKey = aliases[oldKey];
-        if (object[oldKey] !== undefined) {
-            object[newKey] = object[oldKey];
-            delete object[oldKey];
-        }
-    }
-};
+var type = require('type');
+
+
+/**
+ * Expose `alias`.
+ */
+
+module.exports = alias;
+
+
+/**
+ * Alias an `object`.
+ *
+ * @param {Object} obj
+ * @param {Mixed} method
+ */
+
+function alias (obj, method) {
+  switch (type(method)) {
+    case 'object': return aliasByDictionary(obj, method);
+    case 'function': return aliasByFunction(obj, method);
+  }
+}
+
+
+/**
+ * Convert the keys in an `obj` using a dictionary of `aliases`.
+ *
+ * @param {Object} obj
+ * @param {Object} aliases
+ */
+
+function aliasByDictionary (obj, aliases) {
+  for (var key in aliases) {
+    if (undefined === obj[key]) continue;
+    obj[aliases[key]] = obj[key];
+    delete obj[key];
+  }
+}
+
+
+/**
+ * Convert the keys in an `obj` using a `convert` function.
+ *
+ * @param {Object} obj
+ * @param {Function} convert
+ */
+
+function aliasByFunction (obj, convert) {
+  for (var key in obj) {
+    obj[convert(key)] = obj[key];
+    delete obj[key];
+  }
+}
 });
 require.register("segmentio-canonical/index.js", function(exports, require, module){
 module.exports = function canonical () {
@@ -1235,6 +1467,12 @@ module.exports = function canonical () {
 require.register("segmentio-convert-dates/index.js", function(exports, require, module){
 
 var is = require('is');
+
+try {
+  var clone = require('clone');
+} catch (e) {
+  var clone = require('clone-component');
+}
 
 
 /**
@@ -1253,11 +1491,13 @@ module.exports = convertDates;
  */
 
 function convertDates (obj, convert) {
+  obj = clone(obj);
   for (var key in obj) {
     var val = obj[key];
     if (is.date(val)) obj[key] = convert(val);
-    if (is.object(val)) convertDates(val, convert);
+    if (is.object(val)) obj[key] = convertDates(val, convert);
   }
+  return obj;
 }
 });
 require.register("segmentio-extend/index.js", function(exports, require, module){
@@ -1412,10 +1652,11 @@ module.exports = traverse;
  * @return {Object}
  */
 
-function traverse (obj) {
+function traverse (obj, strict) {
   obj = clone(obj);
+  if (strict === undefined) strict = true;
   each(obj, function (key, val) {
-    if (isodate.is(val)) {
+    if (isodate.is(val, strict)) {
       obj[key] = isodate.parse(val);
     } else if (is.object(val)) {
       obj[key] = traverse(val);
@@ -1998,10 +2239,10 @@ module.exports = function loadScript (options, callback) {
 });
 require.register("segmentio-new-date/lib/index.js", function(exports, require, module){
 
-var is = require('is')
-  , isodate = require('isodate')
-  , milliseconds = require('./milliseconds')
-  , seconds = require('./seconds');
+var is = require('is');
+var isodate = require('isodate');
+var milliseconds = require('./milliseconds');
+var seconds = require('./seconds');
 
 
 /**
@@ -2012,8 +2253,8 @@ var is = require('is')
  */
 
 module.exports = function newDate (val) {
+  if (is.date(val)) return val;
   if (is.number(val)) return new Date(toMs(val));
-  if (is.date(val)) return new Date(val.getTime()); // firefox woulda floored
 
   // date strings
   if (isodate.is(val)) return isodate.parse(val);
@@ -2514,6 +2755,8 @@ function debug(name) {
   if (!debug.enabled(name)) return function(){};
 
   return function(fmt){
+    fmt = coerce(fmt);
+
     var curr = new Date;
     var ms = curr - (debug[name] || curr);
     debug[name] = curr;
@@ -2616,9 +2859,20 @@ debug.enabled = function(name) {
   return false;
 };
 
+/**
+ * Coerce `val`.
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
 // persist
 
-if (window.localStorage) debug.enable(localStorage.debug);
+try {
+  if (window.localStorage) debug.enable(localStorage.debug);
+} catch(e){}
 
 });
 require.register("analytics/lib/index.js", function(exports, require, module){
@@ -2674,6 +2928,7 @@ var after = require('after')
   , createIntegration = require('./integration')
   , debug = require('debug')
   , each = require('each')
+  , Emitter = require('emitter')
   , group = require('./group')
   , Integrations = require('./integrations')
   , is = require('is')
@@ -2700,7 +2955,7 @@ module.exports = exports = Analytics;
  */
 
 exports.VERSION =
-Analytics.prototype.VERSION = '0.17.6';
+Analytics.prototype.VERSION = '0.18.4';
 
 
 /**
@@ -2748,6 +3003,13 @@ function Analytics () {
 
 
 /**
+ * Event Emitter.
+ */
+
+Emitter(Analytics.prototype);
+
+
+/**
  * Initialize with the given integration `settings` and `options`. Aliased to
  * `init` for convenience.
  *
@@ -2781,6 +3043,7 @@ Analytics.prototype.initialize = function (settings, options) {
     self._readied = true;
     var callback;
     while (callback = self._callbacks.shift()) callback();
+    self.emit('ready');
   });
 
   // initialize integrations, passing ready
@@ -2796,6 +3059,8 @@ Analytics.prototype.initialize = function (settings, options) {
   // backwards compat with angular plugin.
   // TODO: remove
   this.initialized = true;
+
+  this.emit('initialize');
 
   return this;
 };
@@ -2855,7 +3120,7 @@ Analytics.prototype.group = function (id, properties, options, fn) {
   if (0 === arguments.length) return group;
   if (is.fn(options)) fn = options, options = undefined;
   if (is.fn(properties)) fn = properties, properties = undefined;
-  if (is.object(id)) options = properties, properties = id, id = user.id();
+  if (is.object(id)) options = properties, properties = id, id = group.id();
 
   group.identify(id, properties);
 
@@ -3100,6 +3365,7 @@ Analytics.prototype._invoke = function (method, args) {
     var clonedArgs = clone(args)
     integration.invoke.apply(integration, clonedArgs);
   });
+  this.emit.apply(this, clone(args));
   return this;
 };
 
@@ -3385,6 +3651,7 @@ var integrations = [
   'comscore',
   'crazy-egg',
   'customerio',
+  'evergage',
   'errorception',
   'foxmetrics',
   'gauges',
@@ -4706,7 +4973,8 @@ var alias = require('alias')
   , callback = require('callback')
   , convertDates = require('convert-dates')
   , integration = require('../integration')
-  , load = require('load-script');
+  , load = require('load-script')
+  , user = require('../user');
 
 
 /**
@@ -4763,9 +5031,27 @@ Customerio.prototype.initialize = function (options, ready) {
 Customerio.prototype.identify = function (id, traits, options) {
   if (!id) return; // customer.io requires an id
   traits.id = id;
-  convertDates(traits, convertDate);
+  traits = convertDates(traits, convertDate);
   alias(traits, { created: 'created_at' });
   window._cio.identify(traits);
+};
+
+
+/**
+ * Group.
+ *
+ * @param {String} id (optional)
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Customerio.prototype.group = function (id, properties, options) {
+  if (id) properties.id = id;
+  alias(properties, function (prop) {
+    return 'Group ' + prop;
+  });
+
+  this.identify(user.id(), properties);
 };
 
 
@@ -4778,7 +5064,7 @@ Customerio.prototype.identify = function (id, traits, options) {
  */
 
 Customerio.prototype.track = function (event, properties, options) {
-  convertDates(properties, convertDate);
+  properties = convertDates(properties, convertDate);
   window._cio.track(event, properties);
 };
 
@@ -4792,6 +5078,129 @@ Customerio.prototype.track = function (event, properties, options) {
 
 function convertDate (date) {
   return Math.floor(date.getTime() / 1000);
+}
+});
+require.register("analytics/lib/integrations/evergage.js", function(exports, require, module){
+
+var alias = require('alias');
+var each = require('each');
+var integration = require('../integration');
+var load = require('load-script');
+
+
+/**
+ * Expose `Evergage` integration.
+ */
+
+var Evergage = module.exports = integration('Evergage');
+
+
+/**
+ * Default options.
+ */
+
+Evergage.prototype.defaults = {
+  // your Evergage account name as seen in accountName.evergage.com (required)
+  account: null,
+  // your Evergage dataset ID, not dataset label (required)
+  dataset: null
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Evergage.prototype.initialize = function (options, ready) {
+  var account = options.account;
+  var dataset = options.dataset;
+
+  window._aaq = window._aaq || [];
+  push('setEvergageAccount', account);
+  push('setDataset', dataset);
+  push('setUseSiteConfig', true);
+  ready();
+
+  load('//cdn.evergage.com/beacon/' + account + '/' + dataset + '/scripts/evergage.min.js');
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Evergage.prototype.identify = function (id, traits, options) {
+  if (!id) return;
+  push('setUser', id);
+
+  alias(traits, {
+    name: 'userName',
+    email: 'userEmail'
+  });
+
+  each(traits, function (key, value) {
+    push('setUserField', key, value, 'page');
+  });
+};
+
+
+/**
+ * Group.
+ *
+ * @param {String} id
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Evergage.prototype.group = function (id, properties, options) {
+  if (!id) return;
+  push('setCompany', id);
+  each(properties, function(key, value) {
+    push('setAccountField', key, value, 'page');
+  });
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Evergage.prototype.track = function (event, properties, options) {
+  push('trackAction', event, properties);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+Evergage.prototype.pageview = function (url) {
+  window.Evergage.init(true);
+};
+
+
+/**
+ * Helper to push onto the Evergage queue.
+ *
+ * @param {Mixed} args...
+ */
+
+function push (args) {
+  args = [].slice.call(arguments);
+  window._aaq.push(args);
 }
 });
 require.register("analytics/lib/integrations/errorception.js", function(exports, require, module){
@@ -5171,15 +5580,15 @@ GA.prototype.initialize = function (options, ready) {
   });
   window.ga.l = new Date().getTime();
 
-  // anonymize before initializing
-  if (options.anonymizeIp) window.ga('set', 'anonymizeIp', true);
-
-  // initialize
   window.ga('create', options.trackingId, {
-    cookieDomain: options.domain,
+    cookieDomain: options.domain || GA.prototype.defaults.domain, // to protect against empty string
     siteSpeedSampleRate: options.siteSpeedSampleRate,
     allowLinker: true
   });
+
+  // anonymize after initializing, otherwise a warning is shown
+  // in google analytics debugger
+  if (options.anonymizeIp) window.ga('set', 'anonymizeIp', true);
 
   // track a pageview with the canonical url
   if (options.initialPageview) {
@@ -5575,6 +5984,7 @@ HitTail.prototype.initialize = function (options, ready) {
 require.register("analytics/lib/integrations/hubspot.js", function(exports, require, module){
 
 var callback = require('callback')
+  , convert = require('convert-dates')
   , integration = require('../integration')
   , load = require('load-script');
 
@@ -5633,7 +6043,8 @@ HubSpot.prototype.initialize = function (options, ready) {
 HubSpot.prototype.identify = function (id, traits, options) {
   if (!traits.email) return;
   if (id) traits.id = id;
-  window._hsq.push(["identify", traits]);
+  traits = convertDates(traits);
+  window._hsq.push(['identify', traits]);
 };
 
 
@@ -5646,7 +6057,8 @@ HubSpot.prototype.identify = function (id, traits, options) {
  */
 
 HubSpot.prototype.track = function (event, properties, options) {
-  window._hsq.push(["trackEvent", event, properties]);
+  if (properties) properties = convertDates(properties);
+  window._hsq.push(['trackEvent', event, properties]);
 };
 
 
@@ -5659,6 +6071,18 @@ HubSpot.prototype.track = function (event, properties, options) {
 HubSpot.prototype.pageview = function (url) {
   window._hsq.push(['_trackPageview']);
 };
+
+
+/**
+ * Convert all the dates in the HubSpot properties to millisecond times
+ *
+ * @param {Object} properties
+ */
+
+function convertDates (properties) {
+  return convert(properties, function (date) { return date.getTime(); });
+}
+
 });
 require.register("analytics/lib/integrations/improvely.js", function(exports, require, module){
 
@@ -5859,7 +6283,7 @@ Intercom.prototype.identify = function (id, traits, options) {
   if (id) traits.user_id = id;
 
   // handle dates
-  convertDates(traits, formatDate);
+  traits = convertDates(traits, formatDate);
   alias(traits, { created: 'created_at'});
   if (traits.company) alias(traits.company, { created: 'created_at' });
 
@@ -6576,13 +7000,10 @@ Mixpanel.prototype.track = function (event, properties, options) {
 /**
  * Pageview.
  *
- * https://mixpanel.com/help/reference/javascript-full-api-reference#mixpanel.track_pageview
- *
  * @param {String} url (optional)
  */
 
 Mixpanel.prototype.pageview = function (url) {
-  window.mixpanel.track_pageview(url); // shows up in streams regardless
   if (!this.options.pageview) return;
 
   this.track('Loaded a Page', {
@@ -7061,7 +7482,7 @@ Preact.prototype.initialize = function (options, ready) {
 
 Preact.prototype.identify = function (id, traits, options) {
   if (!id) return;
-  convertDates(traits, convertDate);
+  traits = convertDates(traits, convertDate);
   alias(traits, { created: 'created_at' });
 
   window._lnq.push(['_setPersonData', {
@@ -7851,7 +8272,7 @@ Userfox.prototype.identify = function (id, traits, options) {
     email: traits.email
   }]);
 
-  convertDates(traits, formatDate);
+  traits = convertDates(traits, formatDate);
   alias(traits, { created: 'signup_date' });
   window._ufq.push(['track', traits]);
 };
@@ -7969,7 +8390,7 @@ UserVoice.prototype.initialize = function (options, ready) {
 
 UserVoice.prototype.identify = function (id, traits, options) {
   if (id) traits.id = id;
-  convertDates(traits, unix);
+  traits = convertDates(traits, unix);
   alias(traits, { created: 'created_at' });
   push('identify', traits);
 };
@@ -7985,7 +8406,7 @@ UserVoice.prototype.identify = function (id, traits, options) {
 
 UserVoice.prototype.group = function (id, properties, options) {
   if (id) properties.id = id;
-  convertDates(properties, unix);
+  properties = convertDates(properties, unix);
   alias(properties, { created: 'created_at' });
   push('identify', { account: properties });
 };
@@ -8495,6 +8916,7 @@ function push (callback) {
 
 
 
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -8508,6 +8930,10 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("component-emitter/index.js", "analytics/deps/emitter/index.js");
+require.alias("component-emitter/index.js", "emitter/index.js");
+require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
 
 require.alias("component-event/index.js", "analytics/deps/event/index.js");
 require.alias("component-event/index.js", "event/index.js");
@@ -8537,12 +8963,10 @@ require.alias("ianstormtaylor-bind/index.js", "bind/index.js");
 require.alias("component-bind/index.js", "ianstormtaylor-bind/deps/bind/index.js");
 
 require.alias("segmentio-bind-all/index.js", "ianstormtaylor-bind/deps/bind-all/index.js");
-require.alias("segmentio-bind-all/index.js", "ianstormtaylor-bind/deps/bind-all/index.js");
 require.alias("component-bind/index.js", "segmentio-bind-all/deps/bind/index.js");
 
 require.alias("component-type/index.js", "segmentio-bind-all/deps/type/index.js");
 
-require.alias("segmentio-bind-all/index.js", "segmentio-bind-all/index.js");
 require.alias("ianstormtaylor-is/index.js", "analytics/deps/is/index.js");
 require.alias("ianstormtaylor-is/index.js", "is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
@@ -8558,12 +8982,16 @@ require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
 require.alias("segmentio-alias/index.js", "alias/index.js");
+require.alias("component-type/index.js", "segmentio-alias/deps/type/index.js");
 
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 require.alias("segmentio-canonical/index.js", "canonical/index.js");
 
 require.alias("segmentio-convert-dates/index.js", "analytics/deps/convert-dates/index.js");
 require.alias("segmentio-convert-dates/index.js", "convert-dates/index.js");
+require.alias("component-clone/index.js", "segmentio-convert-dates/deps/clone/index.js");
+require.alias("component-type/index.js", "component-clone/deps/type/index.js");
+
 require.alias("ianstormtaylor-is/index.js", "segmentio-convert-dates/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 

@@ -85,6 +85,18 @@ describe('#identify', function () {
       email: 'name@example.com'
     }]));
   });
+
+  it('should convert date traits to ms timestamps', function () {
+    var date = '2013-11-04';
+    analytics.identify({
+      email: 'name@example.com',
+      date: date
+    });
+    assert(this.stub.calledWith(['identify', {
+      email: 'name@example.com',
+      date: 1383523200000
+    }]));
+  });
 });
 
 describe('#track', function () {
@@ -105,6 +117,14 @@ describe('#track', function () {
   it('should send an event and properties', function () {
     analytics.track('event', { property: true });
     assert(this.stub.calledWith(['trackEvent', 'event', { property: true }]));
+  });
+
+  it('should convert date properties to ms timestamps', function () {
+    var date = '2013-11-04';
+    analytics.track('event', { date: date });
+    assert(this.stub.calledWith(['trackEvent', 'event', {
+      date: 1383523200000
+    }]));
   });
 });
 

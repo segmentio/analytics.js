@@ -99,7 +99,7 @@
     "segmentio/store.js": "1.3.8",
     "segmentio/to-unix-timestamp": "0.0.1",
     "segmentio/top-domain": "0.0.1",
-    "segmentio/use-https": "0.0.1",
+    "segmentio/use-https": "0.1.0",
     "timoxley/next-tick": "0.0.2",
     "yields/prevent": "0.0.2",
     "yields/slug": "1.1.0",

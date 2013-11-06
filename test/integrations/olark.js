@@ -1,279 +1,272 @@
 
 describe('Olark', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , once = require('once')
-  , sinon = require('sinon')
-  , when = require('when');
+  var Olark = require('analytics/lib/integrations/olark');
+  var assert = require('assert');
+  var once = require('once');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  siteId: '5798-949-10-1692'
-};
+  var olark;
+  var settings = {
+    siteId: '5798-949-10-1692'
+  };
 
-function expandThen (fn) {
-  window.olark('api.box.onExpand', once(fn));
-  window.olark('api.box.expand');
-}
+  function expandThen (fn) {
+    window.olark('api.box.onExpand', once(fn));
+    window.olark('api.box.expand');
+  }
 
-function shrinkThen (fn) {
-  window.olark('api.box.onShrink', once(fn));
-  window.olark('api.box.shrink');
-}
+  function shrinkThen (fn) {
+    window.olark('api.box.onShrink', once(fn));
+    window.olark('api.box.shrink');
+  }
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Olark: settings });
-  this.integration = analytics._integrations.Olark;
-  this.options = this.integration.options;
-  when(function () { return window.__get_olark_key; }, done);
-});
-
-describe('#name', function () {
-  it('Olark', function () {
-    assert(this.integration.name == 'Olark');
-  });
-});
-
-describe('#key', function () {
-  it('siteId', function () {
-    assert(this.integration.key == 'siteId');
-  });
-});
-
-describe('#defaults', function () {
-  it('identify', function () {
-    assert(this.integration.defaults.identify === true);
-  });
-
-  it('track', function () {
-    assert(this.integration.defaults.track === false);
-  });
-
-  it('pageview', function () {
-    assert(this.integration.defaults.pageview === true);
-  });
-
-  it('siteId', function () {
-    assert(this.integration.defaults.siteId === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.siteId == settings.siteId);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.spy = sinon.spy(window, 'olark');
+    olark = new Olark(settings);
+    olark.initialize(); // noop
   });
 
   afterEach(function () {
-    this.spy.restore();
+    var global = window.olark;
+    olark.reset();
+    window.olark = global;
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.spy.calledWith('api.visitor.updateCustomFields', { id: 'id' }));
+  it('should have the right settings', function () {
+    test(olark)
+      .name('Olark')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('olark')
+      .option('identify', true)
+      .option('page', true)
+      .option('siteId', '')
+      .option('track', false);
   });
 
-  it('should send traits', function () {
-    analytics.identify({ trait: true });
-    assert(this.spy.calledWith('api.visitor.updateCustomFields', {
-      trait: true
-    }));
-  });
-
-  it('should send an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(this.spy.calledWith('api.visitor.updateCustomFields', {
-      id: 'id',
-      trait: true
-    }));
-  });
-
-  it('should send an email', function () {
-    analytics.identify({ email: 'name@example.com' });
-    assert(this.spy.calledWith('api.visitor.updateEmailAddress', {
-      emailAddress: 'name@example.com'
-    }));
-  });
-
-  it('shouldnt send an empty email', function () {
-    analytics.identify('id');
-    assert(!this.spy.calledWith('api.visitor.updateEmailAddress'));
-  });
-
-  it('should send a name', function () {
-    analytics.identify({ name: 'first last' });
-    assert(this.spy.calledWith('api.visitor.updateFullName', {
-      fullName: 'first last'
-    }));
-  });
-
-  it('shouldnt send an empty name', function () {
-    analytics.identify('id');
-    assert(!this.spy.calledWith('api.visitor.updateFullName'));
-  });
-
-  it('should fallback to sending first and last name', function () {
-    analytics.identify({
-      firstName: 'first',
-      lastName: 'last'
+  describe('#initialize', function () {
+    it('should create the window.olark variable', function () {
+      assert(!window.olark);
+      olark.initialize();
+      assert(window.olark);
     });
-    assert(this.spy.calledWith('api.visitor.updateFullName', {
-      fullName: 'first last'
-    }));
-  });
 
-  it('should fallback to sending only a first name', function () {
-    analytics.identify({ firstName: 'first' });
-    assert(this.spy.calledWith('api.visitor.updateFullName', {
-      fullName: 'first'
-    }));
-  });
-
-  it('should send a phone number', function () {
-    analytics.identify({ phone: 'phone' });
-    assert(this.spy.calledWith('api.visitor.updatePhoneNumber', {
-      phoneNumber: 'phone'
-    }));
-  });
-
-  it('shouldnt send an empty phone number', function () {
-    analytics.identify('id');
-    assert(!this.spy.calledWith('api.visitor.updatePhoneNumber'));
-  });
-
-  it('should us an id as a nickname', function () {
-    analytics.identify('id');
-    assert(this.spy.calledWith('api.chat.updateVisitorNickname', {
-      snippet: 'id'
-    }));
-  });
-
-  it('should prefer a username as a nickname', function () {
-    analytics.identify('id', { username: 'username' });
-    assert(this.spy.calledWith('api.chat.updateVisitorNickname', {
-      snippet: 'username'
-    }));
-  });
-
-  it('should prefer an email as a nickname', function () {
-    analytics.identify('id', {
-      username: 'username',
-      email: 'name@example.com'
-    });
-    assert(this.spy.calledWith('api.chat.updateVisitorNickname', {
-      snippet: 'name@example.com'
-    }));
-  });
-
-  it('should prefer a name as a nickname', function () {
-    analytics.identify('id', {
-      username: 'username',
-      name: 'name'
-    });
-    assert(this.spy.calledWith('api.chat.updateVisitorNickname', {
-      snippet: 'name'
-    }));
-  });
-
-  it('should prefer a name and email as a nickname', function () {
-    analytics.identify('id', {
-      username: 'username',
-      name: 'name',
-      email: 'name@example.com'
-    });
-    assert(this.spy.calledWith('api.chat.updateVisitorNickname', {
-      snippet: 'name (name@example.com)'
-    }));
-  });
-});
-
-describe('#track', function () {
-  beforeEach(function () {
-    this.spy = sinon.spy(window, 'olark');
-  });
-
-  afterEach(function (done) {
-    this.spy.restore();
-    this.options.track = false;
-    shrinkThen(function () {
-      done();
+    it('should initialize window.olark if it exists', function () {
+      window.olark = sinon.spy();
+      window.olark.identify = sinon.spy();
+      olark.initialize();
+      assert(window.olark.identify.calledWith(settings.siteId));
+      assert(window.olark.calledWithMatch('api.box.onExpand'));
+      assert(window.olark.calledWithMatch('api.box.onShrink'));
+      window.olark = undefined;
     });
   });
 
-  it('shouldnt send an event by default', function () {
-    analytics.track('event');
-    assert(!this.spy.called);
-  });
+  describe('#identify', function () {
+    beforeEach(function () {
+      olark.initialize();
+      window.olark = sinon.spy(window, 'olark');
+    });
 
-  it('shouldnt send an event when the chat isnt open', function () {
-    this.options.track = true;
-    analytics.track('event');
-    assert(!this.spy.called);
-  });
+    afterEach(function () {
+      window.olark.restore();
+    });
 
-  it('should send an event', function (done) {
-    this.options.track = true;
-    var spy = this.spy;
-    expandThen(function () {
-      analytics.track('event');
-      assert(spy.calledWith('api.chat.sendNotificationToOperator', {
-        body: 'visitor triggered "event"'
+    it('should send an id', function () {
+      olark.identify('id');
+      assert(window.olark.calledWith('api.visitor.updateCustomFields', {
+        id: 'id'
       }));
-      done();
     });
-  });
-});
 
-describe('#pageview', function () {
-  beforeEach(function () {
-    this.spy = sinon.spy(window, 'olark');
-  });
-
-  afterEach(function (done) {
-    this.spy.restore();
-    this.options.pageview = true;
-    shrinkThen(function () {
-      done();
-    });
-  });
-
-  it('shouldnt send an event when the chat isnt open', function () {
-    analytics.pageview();
-    assert(!this.spy.called);
-  });
-
-  it('should send a pageview', function (done) {
-    var spy = this.spy;
-    expandThen(function () {
-      analytics.pageview();
-      assert(spy.calledWith('api.chat.sendNotificationToOperator', {
-        body: 'looking at ' + window.location.href
+    it('should send traits', function () {
+      olark.identify(undefined, { trait: true });
+      assert(window.olark.calledWith('api.visitor.updateCustomFields', {
+        trait: true
       }));
-      done();
+    });
+
+    it('should send an id and traits', function () {
+      olark.identify('id', { trait: true });
+      assert(window.olark.calledWith('api.visitor.updateCustomFields', {
+        id: 'id',
+        trait: true
+      }));
+    });
+
+    it('should send an email', function () {
+      olark.identify(undefined, { email: 'name@example.com' });
+      assert(window.olark.calledWith('api.visitor.updateEmailAddress', {
+        emailAddress: 'name@example.com'
+      }));
+    });
+
+    it('shouldnt send an empty email', function () {
+      olark.identify('id');
+      assert(!window.olark.calledWith('api.visitor.updateEmailAddress'));
+    });
+
+    it('should send a name', function () {
+      olark.identify(undefined, { name: 'first last' });
+      assert(window.olark.calledWith('api.visitor.updateFullName', {
+        fullName: 'first last'
+      }));
+    });
+
+    it('shouldnt send an empty name', function () {
+      olark.identify('id');
+      assert(!window.olark.calledWith('api.visitor.updateFullName'));
+    });
+
+    it('should fallback to sending first and last name', function () {
+      olark.identify(undefined, {
+        firstName: 'first',
+        lastName: 'last'
+      });
+      assert(window.olark.calledWith('api.visitor.updateFullName', {
+        fullName: 'first last'
+      }));
+    });
+
+    it('should fallback to sending only a first name', function () {
+      olark.identify(undefined, { firstName: 'first' });
+      assert(window.olark.calledWith('api.visitor.updateFullName', {
+        fullName: 'first'
+      }));
+    });
+
+    it('should send a phone number', function () {
+      olark.identify(undefined, { phone: 'phone' });
+      assert(window.olark.calledWith('api.visitor.updatePhoneNumber', {
+        phoneNumber: 'phone'
+      }));
+    });
+
+    it('shouldnt send an empty phone number', function () {
+      olark.identify('id');
+      assert(!window.olark.calledWith('api.visitor.updatePhoneNumber'));
+    });
+
+    it('should us an id as a nickname', function () {
+      olark.identify('id');
+      assert(window.olark.calledWith('api.chat.updateVisitorNickname', {
+        snippet: 'id'
+      }));
+    });
+
+    it('should prefer a username as a nickname', function () {
+      olark.identify('id', { username: 'username' });
+      assert(window.olark.calledWith('api.chat.updateVisitorNickname', {
+        snippet: 'username'
+      }));
+    });
+
+    it('should prefer an email as a nickname', function () {
+      olark.identify('id', {
+        username: 'username',
+        email: 'name@example.com'
+      });
+      assert(window.olark.calledWith('api.chat.updateVisitorNickname', {
+        snippet: 'name@example.com'
+      }));
+    });
+
+    it('should prefer a name as a nickname', function () {
+      olark.identify('id', {
+        username: 'username',
+        name: 'name'
+      });
+      assert(window.olark.calledWith('api.chat.updateVisitorNickname', {
+        snippet: 'name'
+      }));
+    });
+
+    it('should prefer a name and email as a nickname', function () {
+      olark.identify('id', {
+        username: 'username',
+        name: 'name',
+        email: 'name@example.com'
+      });
+      assert(window.olark.calledWith('api.chat.updateVisitorNickname', {
+        snippet: 'name (name@example.com)'
+      }));
     });
   });
 
-  it('shouldnt send an event when pageview is disabled', function () {
-    this.options.pageview = false;
-    var spy = this.spy;
-    expandThen(function () {
-      analytics.pageview();
-      assert(!this.spy.called);
+  describe('#track', function () {
+    beforeEach(function () {
+      olark.initialize();
+      window.olark = sinon.spy(window, 'olark');
+    });
+
+    afterEach(function (done) {
+      window.olark.restore();
+      shrinkThen(function () {
+        done();
+      });
+    });
+
+    it('should not send an event by default', function () {
+      olark.track('event');
+      assert(!window.olark.called);
+    });
+
+    it('should not send an event when the chat isnt open', function () {
+      olark.options.track = true;
+      olark.track('event');
+      assert(!window.olark.called);
+    });
+
+    it('should send an event', function (done) {
+      olark.options.track = true;
+      expandThen(function () {
+        olark.track('event');
+        assert(window.olark.calledWith('api.chat.sendNotificationToOperator', {
+          body: 'visitor triggered "event"'
+        }));
+        done();
+      });
     });
   });
-});
 
+  describe('#page', function () {
+    beforeEach(function () {
+      olark.initialize();
+      window.olark = sinon.spy(window, 'olark');
+    });
+
+    afterEach(function (done) {
+      window.olark.restore();
+      shrinkThen(function () {
+        done();
+      });
+    });
+
+    it('shouldnt send an event when the chat isnt open', function () {
+      olark.pageview();
+      assert(!window.olark.called);
+    });
+
+    it('should send a pageview', function (done) {
+      var spy = window.olark;
+      expandThen(function () {
+        olark.page();
+        assert(spy.calledWith('api.chat.sendNotificationToOperator', {
+          body: 'looking at ' + window.location.href
+        }));
+        done();
+      });
+    });
+
+    it('shouldnt send an event when pageview is disabled', function () {
+      this.options.pageview = false;
+      var spy = window.olark;
+      expandThen(function () {
+        olark.page();
+        assert(!window.olark.called);
+      });
+    });
+  });
 });

@@ -2,6 +2,7 @@
 describe('Improvely', function () {
 
   var assert = require('assert');
+  var equal = require('equals');
   var Improvely = require('analytics/lib/integrations/improvely');
   var sinon = require('sinon');
   var test = require('integration-tester');
@@ -20,7 +21,6 @@ describe('Improvely', function () {
 
   afterEach(function () {
     improvely.reset();
-    user.reset();
   });
 
   it('should have the right settings', function () {
@@ -66,7 +66,7 @@ describe('Improvely', function () {
     it('should create window.improvely', function (done) {
       assert(!window.improvely);
       improvely.load();
-      when(function () { return window.improvely.identify; }, done);
+      when(function () { return window.improvely && window.improvely.identify; }, done);
     });
 
     it('should callback', function (done) {

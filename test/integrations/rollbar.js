@@ -27,6 +27,7 @@ describe('Rollbar', function () {
     test(rollbar)
       .name('Rollbar')
       .readyOnInitialize()
+      .assumesPageview()
       .global('_rollbar')
       .option('accessToken', '')
       .option('identify', true);

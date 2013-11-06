@@ -33,8 +33,11 @@ describe('Pingdom', function () {
   });
 
   describe('#initialize', function () {
-    it('should call #load', function () {
+    beforeEach(function () {
       pingdom.load = sinon.spy();
+    });
+
+    it('should call #load', function () {
       pingdom.initialize();
       assert(pingdom.load.called);
     });
@@ -45,23 +48,28 @@ describe('Pingdom', function () {
       pingdom.initialize();
       assert(window._prum.push.calledWith(['id', settings.id]));
     });
-
-    it('should send first byte time to Pingdom', function () {
-      pingdom.initialize();
-      pingdom.on('ready', function () {
-        assert(date.getTime() == window.PRUM_EPISODES.marks.firstbyte);
-      });
-    });
   });
 
   describe('#load', function () {
-    it('should create window._prum', function (done) {
-      pingdom.load();
-      when(function () { return window._prum; }, done);
+    beforeEach(function () {
+      var load = pingdom.load;
+      pingdom.load = function (){};
+      pingdom.initialize();
+      pingdom.load = load;
     });
 
-    it('should callback', function (done) {
-      pingdom.load(done);
+    it('should create window._prum', function (done) {
+      pingdom.load(function () {
+        assert(window._prum.push !== Array.prototype.push);
+        done();
+      });
+    });
+
+    it('should send first byte time to Pingdom', function (done) {
+      pingdom.load(function () {
+        assert(date.getTime() == window.PRUM_EPISODES.marks.firstbyte);
+        done();
+      });
     });
   });
 });

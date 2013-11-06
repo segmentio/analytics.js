@@ -5,6 +5,7 @@ describe('Vero', function () {
   var equal = require('equals');
   var sinon = require('sinon');
   var test = require('integration-tester');
+  var tick = require('next-tick');
   var Vero = require('analytics/lib/integrations/vero');
   var when = require('when');
 
@@ -18,21 +19,9 @@ describe('Vero', function () {
     vero.initialize(); // noop
   });
 
-  /**
-   * Add setup and reset functions so that mid-loading js won't error out,
-   * only used for suites which actually load the js.
-   */
-
-  function setup () {
-    vero.on('load', function () { vero._loaded = true; });
-  }
-
-  function reset (done) {
-    when(function () { return vero._loaded; }, function () {
-      vero.reset();
-      done();
-    });
-  }
+  afterEach(function () {
+    vero.reset();
+  });
 
   it('should store the proper settings', function () {
     test(vero)
@@ -43,8 +32,9 @@ describe('Vero', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(setup);
-    afterEach(reset);
+    beforeEach(function () {
+      vero.load = sinon.spy();
+    });
 
     it('should push onto window._veroq', function () {
       window._veroq = [];
@@ -54,36 +44,35 @@ describe('Vero', function () {
     });
 
     it('should call #load', function () {
-      vero.load = sinon.spy(vero, 'load');
       vero.initialize();
       assert(vero.load.called);
     });
   });
 
   describe('#load', function () {
-    beforeEach(setup);
-    afterEach(reset);
-
-    it('should replace window._veroq.push', function (done) {
-      vero.load();
-      when(function () {
-        return window._veroq && window._veroq.push !== Array.prototype.push;
-      }, done);
+    beforeEach(function () {
+      var load = vero.load;
+      vero.load = function () {};
+      vero.initialize();
+      vero.load = load;
     });
 
-    it('should callback', function (done) {
-      vero.load(done);
+    it('should replace window._veroq.push', function (done) {
+      vero.load(function () {
+        assert(window._veroq.push !== Array.prototype.push);
+        done();
+      });
     });
   });
 
   describe('#identify', function () {
-    beforeEach(function () {
-      setup();
+    beforeEach(function (done) {
+      vero.once('load', function () {
+        window._veroq.push = sinon.spy();
+        done();
+      });
       vero.initialize();
-      window._veroq.push = sinon.spy();
     });
-
-    afterEach(reset);
 
     it('shouldnt send just an id', function () {
       vero.identify('id');
@@ -117,13 +106,13 @@ describe('Vero', function () {
   });
 
   describe('#track', function () {
-    beforeEach(function () {
-      setup();
+    beforeEach(function (done) {
+      vero.once('load', function () {
+        window._veroq.push = sinon.spy();
+        done();
+      });
       vero.initialize();
-      window._veroq.push = sinon.spy();
     });
-
-    afterEach(reset);
 
     it('should send an event', function () {
       vero.track('event');

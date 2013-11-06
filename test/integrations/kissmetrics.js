@@ -1,127 +1,125 @@
 
 describe('KISSmetrics', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var assert = require('assert');
+  var KISSmetrics = require('analytics/lib/integrations/kissmetrics');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  apiKey: '67f57ae9d61a6981fa07d141bec8c6c37e8b88c7'
-};
+  var kissmetrics;
+  var settings = {
+    apiKey: '67f57ae9d61a6981fa07d141bec8c6c37e8b88c7'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ KISSmetrics: settings });
-  this.integration = analytics._integrations.KISSmetrics;
-  this.options = this.integration.options;
-  when(function () { return window.KM; }, done);
-});
-
-describe('#name', function () {
-  it('KISSmetrics', function () {
-    assert(this.integration.name == 'KISSmetrics');
-  });
-});
-
-describe('#key', function () {
-  it('apiKey', function () {
-    assert(this.integration.key == 'apiKey');
-  });
-});
-
-describe('#defaults', function () {
-  it('apiKey', function () {
-    assert(this.integration.defaults.apiKey === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.apiKey == settings.apiKey);
-  });
-
-  it('should created a queue', function () {
-    assert(window._kmq);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window._kmq, 'push');
+    kissmetrics = new KISSmetrics(settings);
+    kissmetrics.initialize(); // noop
   });
 
   afterEach(function () {
-    this.stub.restore();
+    kissmetrics.reset();
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.stub.calledWith(['identify', 'id']));
+  it('should have the right settings', function () {
+    test(kissmetrics)
+      .name('KISSmetrics')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('_kmq')
+      .option('apiKey', '')
+      .option('trackNamedPages', true);
   });
 
-  it('should send traits', function () {
-    analytics.identify({ trait: true });
-    assert(this.stub.calledWith(['set', { trait: true }]));
+  describe('#initialize', function () {
+    beforeEach(function () {
+      kissmetrics.load = sinon.spy(); // prevent loading
+    });
+
+    it('should create window._kmq', function () {
+      assert(!window._kmq);
+      kissmetrics.initialize();
+      assert(window._kmq instanceof Array);
+    });
+
+    it('should call #load', function () {
+      kissmetrics.initialize();
+      assert(kissmetrics.load.called);
+    });
   });
 
-  it('should send an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(this.stub.calledWith(['identify', 'id']));
-    assert(this.stub.calledWith(['set', { trait: true }]));
-  });
-});
+  describe('#load', function () {
+    it('should create window.KM', function (done) {
+      assert(!window.KM);
+      kissmetrics.load();
+      when(function () { return window.KM; }, done);
+    });
 
-describe('#track', function () {
-  beforeEach(function () {
-    this.stub = sinon.stub(window._kmq, 'push');
-  });
-
-  afterEach(function () {
-    this.stub.restore();
+    it('should callback', function (done) {
+      kissmetrics.load(done);
+    });
   });
 
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.stub.calledWith(['record', 'event', {}]));
+  describe('#identify', function () {
+    beforeEach(function () {
+      kissmetrics.initialize();
+      window._kmq.push = sinon.spy();
+    });
+
+    it('should send an id', function () {
+      kissmetrics.identify('id');
+      assert(window._kmq.push.calledWith(['identify', 'id']));
+    });
+
+    it('should send traits', function () {
+      kissmetrics.identify(null, { trait: true });
+      assert(window._kmq.push.calledWith(['set', { trait: true }]));
+    });
+
+    it('should send an id and traits', function () {
+      kissmetrics.identify('id', { trait: true });
+      assert(window._kmq.push.calledWith(['identify', 'id']));
+      assert(window._kmq.push.calledWith(['set', { trait: true }]));
+    });
   });
 
-  it('should send an event and properties', function () {
-    analytics.track('event', { property: true });
-    assert(this.stub.calledWith(['record', 'event', { property: true }]));
+  describe('#track', function () {
+    beforeEach(function () {
+      kissmetrics.initialize();
+      window._kmq.push = sinon.spy();
+    });
+
+    it('should send an event', function () {
+      kissmetrics.track('event');
+      assert(window._kmq.push.calledWith(['record', 'event', {}]));
+    });
+
+    it('should send an event and properties', function () {
+      kissmetrics.track('event', { property: true });
+      assert(window._kmq.push.calledWith(['record', 'event', { property: true }]));
+    });
+
+    it('should alias revenue to "Billing Amount"', function () {
+      kissmetrics.track('event', { revenue: 9.99 });
+      assert(window._kmq.push.calledWith(['record', 'event', { 'Billing Amount': 9.99 }]));
+    });
   });
 
-  it('should alias revenue to "Billing Amount"', function () {
-    analytics.track('event', { revenue: 9.99 });
-    assert(this.stub.calledWith(['record', 'event', { 'Billing Amount': 9.99 }]));
-  });
-});
+  describe('#alias', function () {
+    beforeEach(function () {
+      kissmetrics.initialize();
+      window._kmq.push = sinon.spy();
+    });
 
-describe('#alias', function () {
-  beforeEach(function () {
-    this.stub = sinon.stub(window._kmq, 'push');
-  });
+    it('should send a new id', function () {
+      kissmetrics.alias('new');
+      assert(window._kmq.push.calledWith(['alias', 'new', undefined]));
+    });
 
-  afterEach(function () {
-    this.stub.restore();
+    it('should send a new and old id', function () {
+      kissmetrics.alias('new', 'old');
+      assert(window._kmq.push.calledWith(['alias', 'new', 'old']));
+    });
   });
-
-  it('should send a new id', function () {
-    analytics.alias('new');
-    assert(this.stub.calledWith(['alias', 'new', undefined]));
-  });
-
-  it('should send a new and old id', function () {
-    analytics.alias('new', 'old');
-    assert(this.stub.calledWith(['alias', 'new', 'old']));
-  });
-});
 
 });

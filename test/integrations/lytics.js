@@ -1,145 +1,120 @@
 
 describe('Lytics', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , tick = require('next-tick')
-  , when = require('when');
+  var assert = require('assert');
+  var Lytics = require('analytics/lib/integrations/lytics');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var tick = require('next-tick');
+  var when = require('when');
 
-var settings = {
-  cid: 'x',
-  cookie: 'lytics_cookie'
-};
+  var lytics;
+  var settings = {
+    cid: 'x',
+    cookie: 'lytics_cookie'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Lytics: settings });
-  this.integration = analytics._integrations.Lytics;
-  this.options = this.integration.options;
-  when(function () { return window.jstag.bind; }, done);
-});
-
-describe('#name', function () {
-  it('Lytics', function () {
-    assert(this.integration.name == 'Lytics');
-  });
-});
-
-describe('#key', function () {
-  it('cid', function () {
-    assert(this.integration.key == 'cid');
-  });
-});
-
-describe('#defaults', function () {
-  it('cid', function () {
-    assert(this.integration.defaults.cid === '');
-  });
-
-  it('cookie', function () {
-    assert(this.integration.defaults.cookie === 'seerid');
-  });
-
-  it('delay', function () {
-    assert(this.integration.defaults.delay === 200);
-  });
-
-  it('initialPageview', function () {
-    assert(this.integration.defaults.initialPageview === true);
-  });
-
-  it('sessionTimeout', function () {
-    assert(this.integration.defaults.sessionTimeout === 1800);
-  });
-
-  it('url', function () {
-    assert(this.integration.defaults.url === '//c.lytics.io');
-  });
-});
-
-describe('#initialize', function () {
-  it('should load library and call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options with defaults', function () {
-    assert(this.options.cid == settings.cid);
-    assert(this.options.cookie == settings.cookie);
-    assert(this.options.delay == 200);
-    assert(this.options.initialPageview);
-    assert(this.options.sessionTimeout == 1800);
-    assert(this.options.url == '//c.lytics.io');
-  });
-
-  it('should pass options to lytics', function () {
-    assert(this.options.cid == settings.cid);
-    assert(this.options.cookie == settings.cookie);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    this.stub = sinon.stub(window.jstag, 'send');
-    analytics.user().reset();
+    lytics = new Lytics(settings);
+    lytics.initialize(); // noop
   });
 
   afterEach(function () {
-    this.stub.restore();
+    lytics.reset();
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.stub.calledWith({ _uid: 'id' }));
+  it('should have the right settings', function () {
+    test(lytics)
+      .name('Lytics')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('jstag')
+      .option('cid', '')
+      .option('cookie', 'seerid')
+      .option('delay', 200)
+      .option('initialPageview', true)
+      .option('sessionTimeout', 1800)
+      .option('url', '//c.lytics.io');
   });
 
-  it('should send traits', function () {
-    analytics.identify({ trait: true });
-    assert(this.stub.calledWith({ trait: true }));
+  describe('#initialize', function () {
+    beforeEach(function () {
+      lytics.load = sinon.spy(); // prevent loading
+    });
+
+    it('should create window.jstag', function () {
+      assert(!window.jstag);
+      lytics.initialize();
+      assert(window.jstag);
+    });
+
+    it('should call #load', function () {
+      lytics.initialize();
+      assert(lytics.load.called);
+    });
   });
 
-  it('should send an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(this.stub.calledWith({ _uid: 'id', trait: true }));
-  });
-});
+  describe('#load', function () {
+    it('should create window.jstag.bind', function (done) {
+      assert(!window.jstag);
+      lytics.load();
+      when(function () { return window.jstag && window.jstag.bind; }, done);
+    });
 
-describe('#track', function () {
-  beforeEach(function () {
-    this.stub = sinon.stub(window.jstag, 'send');
-    analytics.user().reset();
-  });
-
-  afterEach(function () {
-    this.stub.restore();
+    it('should callback', function (done) {
+      lytics.load(done);
+    });
   });
 
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.stub.calledWith({ _e: 'event' }));
+  describe('#identify', function () {
+    beforeEach(function () {
+      lytics.initialize();
+      window.jstag.send = sinon.spy();
+    });
+
+    it('should send an id', function () {
+      lytics.identify('id');
+      assert(window.jstag.send.calledWith({ _uid: 'id' }));
+    });
+
+    it('should send traits', function () {
+      lytics.identify(null, { trait: true });
+      assert(window.jstag.send.calledWith({ trait: true }));
+    });
+
+    it('should send an id and traits', function () {
+      lytics.identify('id', { trait: true });
+      assert(window.jstag.send.calledWith({ _uid: 'id', trait: true }));
+    });
   });
 
-  it('should send an event and properties', function () {
-    analytics.track('event', { property: true });
-    assert(this.stub.calledWith({ _e: 'event', property: true }));
-  });
-});
+  describe('#track', function () {
+    beforeEach(function () {
+      lytics.initialize();
+      window.jstag.send = sinon.spy();
+    });
 
-describe('#pageview', function () {
-  beforeEach(function () {
-    this.stub = sinon.stub(window.jstag, 'send');
+    it('should send an event', function () {
+      lytics.track('event');
+      assert(window.jstag.send.calledWith({ _e: 'event' }));
+    });
+
+    it('should send an event and properties', function () {
+      lytics.track('event', { property: true });
+      assert(window.jstag.send.calledWith({ _e: 'event', property: true }));
+    });
   });
 
-  afterEach(function () {
-    this.stub.restore();
-  });
+  describe('#page', function () {
+    beforeEach(function () {
+      lytics.initialize();
+      window.jstag.send = sinon.spy();
+    });
 
-  it('should call send', function () {
-    analytics.pageview();
-    assert(this.spy.called);
+    it('should call send', function () {
+      lytics.page(null, { property: true });
+      assert(window.jstag.send.calledWith({ property: true }));
+    });
   });
-});
 
 });

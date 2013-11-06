@@ -17,12 +17,11 @@ describe('awe.sm', function () {
   beforeEach(function () {
     awesm = new Awesm(settings);
     awesm.initialize(); // noop
+    window.AWESMEXTRA = { capture_data: false };
   });
 
   afterEach(function () {
-    var global = window.AWESM;
     awesm.reset();
-    window.AWESM = global;
   });
 
   it('should have the right settings', function () {
@@ -36,34 +35,43 @@ describe('awe.sm', function () {
   });
 
   describe('#initialize', function () {
+    beforeEach(function () {
+      awesm.load = sinon.spy();
+    });
+
     it('should pass options to awe.sm', function () {
       awesm.initialize();
       assert(window.AWESM.api_key == settings.apiKey);
     });
 
     it('should call #load', function () {
-      awesm.load = sinon.spy();
       awesm.initialize();
       assert(awesm.load.called);
     });
   });
 
   describe('#load', function () {
-    it('should set window.AWESM._exists', function (done) {
-      window.AWESM = null;
-      awesm.load();
-      when(function () { return window.AWESM && window.AWESM._exists; }, done);
+    beforeEach(function () {
+      sinon.stub(awesm, 'load');
+      awesm.initialize();
+      awesm.load.restore();
     });
 
-    it('should callback', function (done) {
-      awesm.load(done);
+    it('should set window.AWESM._exists', function (done) {
+      awesm.load(function () {
+        assert(window.AWESM._exists);
+        done();
+      });
     });
   });
 
   describe('#track', function () {
-    beforeEach(function () {
+    beforeEach(function (done) {
+      awesm.on('load', function () {
+        window.AWESM.convert = sinon.spy();
+        done();
+      });
       awesm.initialize();
-      window.AWESM.convert = sinon.spy();
     });
 
     it('should convert an event to a goal', function () {

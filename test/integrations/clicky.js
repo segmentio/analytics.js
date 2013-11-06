@@ -24,6 +24,11 @@ describe('Clicky', function () {
     user.reset();
   });
 
+  after(function () {
+    // set up global vars so clicky doesn't error other tests
+    window.clicky_custom = {};
+  });
+
   it('should have the right settings', function () {
     test(clicky)
       .name('Clicky')

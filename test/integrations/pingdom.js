@@ -52,10 +52,9 @@ describe('Pingdom', function () {
 
   describe('#load', function () {
     beforeEach(function () {
-      var load = pingdom.load;
-      pingdom.load = function (){};
+      sinon.stub(pingdom, 'load');
       pingdom.initialize();
-      pingdom.load = load;
+      pingdom.load.restore();
     });
 
     it('should create window._prum', function (done) {

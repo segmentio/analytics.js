@@ -35,6 +35,10 @@ describe('Customer.io', function () {
   });
 
   describe('#initialize', function () {
+    beforeEach(function () {
+      customerio.load = sinon.spy();
+    });
+
     it('should create the window._cio object', function () {
       assert(!window._cio);
       customerio.initialize();
@@ -42,29 +46,34 @@ describe('Customer.io', function () {
     });
 
     it('should call #load', function () {
-      customerio.load = sinon.spy();
       customerio.initialize();
       assert(customerio.load.called);
     });
   });
 
   describe('#load', function () {
-    it('should set window._cio.pageHasLoaded', function (done) {
+    beforeEach(function () {
+      sinon.stub(customerio, 'load');
       customerio.initialize();
-      assert(!window._cio.pageHasLoaded);
-      customerio.load();
-      when(function () { return window._cio.pageHasLoaded; }, done);
+      customerio.load.restore();
     });
 
-    it('should callback', function (done) {
-      customerio.load(done);
+    it('should set window._cio.pageHasLoaded', function (done) {
+      assert(!window._cio.pageHasLoaded);
+      customerio.load(function () {
+        assert(window._cio.pageHasLoaded);
+        done();
+      });
     });
   });
 
   describe('#identify', function () {
-    beforeEach(function () {
+    beforeEach(function (done) {
+      customerio.once('load', function () {
+        window._cio.identify = sinon.spy();
+        setTimeout(done, 50);
+      });
       customerio.initialize();
-      window._cio.identify = sinon.spy();
     });
 
     it('should send an id', function () {
@@ -102,10 +111,13 @@ describe('Customer.io', function () {
   });
 
   describe('#group', function () {
-    beforeEach(function () {
+    beforeEach(function (done) {
       user.identify('id');
+      customerio.once('load', function () {
+        window._cio.identify = sinon.spy();
+        setTimeout(done, 50);
+      });
       customerio.initialize();
-      window._cio.identify = sinon.spy();
     });
 
     it('should send an id', function () {
@@ -138,9 +150,12 @@ describe('Customer.io', function () {
   });
 
   describe('#track', function () {
-    beforeEach(function () {
+    beforeEach(function (done) {
+      customerio.once('load', function () {
+        window._cio.track = sinon.spy();
+        setTimeout(done, 50);
+      });
       customerio.initialize();
-      window._cio.track = sinon.spy();
     });
 
     it('should send an event', function () {

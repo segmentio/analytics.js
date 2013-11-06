@@ -34,10 +34,6 @@ describe('GoSquared', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      gosquared.load = sinon.spy(); // prevent loading
-    });
-
     it('should initialize the gosquared globals', function () {
       assert(!window.GoSquared);
       gosquared.initialize();
@@ -62,6 +58,7 @@ describe('GoSquared', function () {
     });
 
     it('should call #load', function () {
+      gosquared.load = sinon.spy();
       gosquared.initialize();
       assert(gosquared.load.called);
     });

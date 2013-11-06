@@ -34,10 +34,6 @@ describe('Clicky', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      clicky.load = sinon.spy(); // prevent loading
-    });
-
     it('should initialize the clicky global', function () {
       clicky.initialize();
       assert(equal(window.clicky_site_ids, [settings.siteId]));
@@ -51,6 +47,7 @@ describe('Clicky', function () {
     });
 
     it('should call #load', function () {
+      clicky.load = sinon.spy();
       clicky.initialize();
       assert(clicky.load.called);
     });

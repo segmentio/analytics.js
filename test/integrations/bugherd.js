@@ -34,10 +34,6 @@ describe('BugHerd', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      bugherd.load = sinon.spy(); // prevent loading
-    });
-
     it('should create window.BugHerdConfig', function () {
       bugherd.initialize();
       assert(equal(window.BugHerdConfig, { feedback: { hide: false }}));
@@ -50,6 +46,7 @@ describe('BugHerd', function () {
     });
 
     it('should call #load', function () {
+      bugherd.load = sinon.spy();
       bugherd.initialize();
       assert(bugherd.load.called);
     });

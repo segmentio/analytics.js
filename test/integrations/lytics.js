@@ -38,10 +38,6 @@ describe('Lytics', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      lytics.load = sinon.spy(); // prevent loading
-    });
-
     it('should create window.jstag', function () {
       assert(!window.jstag);
       lytics.initialize();
@@ -49,6 +45,7 @@ describe('Lytics', function () {
     });
 
     it('should call #load', function () {
+      lytics.load = sinon.spy();
       lytics.initialize();
       assert(lytics.load.called);
     });

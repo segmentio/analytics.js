@@ -1,8 +1,8 @@
 
 describe('Preact', function () {
 
-  var Preact = require('analytics/lib/integrations/preact');
   var assert = require('assert');
+  var Preact = require('analytics/lib/integrations/preact');
   var sinon = require('sinon');
   var test = require('integration-tester');
   var when = require('when');
@@ -14,6 +14,7 @@ describe('Preact', function () {
 
   beforeEach(function () {
     preact = new Preact(settings);
+    preact.initialize(); // noop
   });
 
   afterEach(function () {
@@ -29,6 +30,15 @@ describe('Preact', function () {
       .option('projectCode', '');
   });
 
+  describe('#initialize', function () {
+    it('should push _setCode onto the window._lnq object', function () {
+      window._lnq = [];
+      window._lnq.push = sinon.spy();
+      preact.initialize();
+      assert(window._lnq.push.calledWith(['_setCode', settings.projectCode]));
+    });
+  });
+
   describe('#load', function () {
     it('should create the window._lnq object', function (done) {
       assert(!window._lnq);
@@ -38,15 +48,6 @@ describe('Preact', function () {
 
     it('should callback', function (done) {
       preact.load(done);
-    });
-  });
-
-  describe('#initialize', function () {
-    it('should push _setCode onto the window._lnq object', function () {
-      window._lnq = [];
-      window._lnq.push = sinon.spy();
-      preact.initialize();
-      assert(window._lnq.push.calledWith(['_setCode', settings.projectCode]));
     });
   });
 

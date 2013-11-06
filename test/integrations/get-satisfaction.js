@@ -33,16 +33,13 @@ describe('Get Satisfaction', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      getsatisfaction.load = sinon.spy(); // prevent loading
-    });
-
     it('should add the get satisfaction widget to the dom', function () {
       getsatisfaction.initialize();
       assert(document.getElementById('getsat-widget-' + settings.widgetId));
     });
 
     it('should call #load', function () {
+      getsatisfaction.load = sinon.spy();
       getsatisfaction.initialize();
       assert(getsatisfaction.load.called);
     });

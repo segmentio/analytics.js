@@ -32,10 +32,6 @@ describe('KISSmetrics', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      kissmetrics.load = sinon.spy(); // prevent loading
-    });
-
     it('should create window._kmq', function () {
       assert(!window._kmq);
       kissmetrics.initialize();
@@ -43,6 +39,7 @@ describe('KISSmetrics', function () {
     });
 
     it('should call #load', function () {
+      kissmetrics.load = sinon.spy();
       kissmetrics.initialize();
       assert(kissmetrics.load.called);
     });

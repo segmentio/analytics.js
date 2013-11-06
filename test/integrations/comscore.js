@@ -32,10 +32,6 @@ describe('comScore', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      comscore.load = sinon.spy(); // prevent loading
-    });
-
     it('should create window._comscore', function () {
       assert(!window._comscore);
       comscore.initialize();
@@ -43,6 +39,7 @@ describe('comScore', function () {
     });
 
     it('should call #load', function () {
+      comscore.load = sinon.spy();
       comscore.initialize();
       assert(comscore.load.called);
     });

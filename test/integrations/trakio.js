@@ -1,10 +1,10 @@
 
 describe('trak.io', function () {
 
-  var Trakio = require('analytics/lib/integrations/trakio');
   var assert = require('assert');
   var sinon = require('sinon');
   var test = require('integration-tester');
+  var Trakio = require('analytics/lib/integrations/trakio');
   var when = require('when');
 
   var trakio;
@@ -14,6 +14,7 @@ describe('trak.io', function () {
 
   beforeEach(function () {
     trakio = new Trakio(settings);
+    trakio.initialize(); // noop
   });
 
   afterEach(function () {
@@ -30,17 +31,6 @@ describe('trak.io', function () {
       .option('trackNamedPages', true);
   });
 
-
-  describe('#load', function () {
-    it('should load the trak object', function (done) {
-      trakio.load();
-      when(function () {
-        return window.trak && window.trak.loaded;
-      }, done);
-    });
-  });
-
-
   describe('#initialize', function () {
     it('should call load', function () {
       trakio.load = sinon.spy();
@@ -54,6 +44,16 @@ describe('trak.io', function () {
       assert(window.trak.io.identify);
       assert(window.trak.io.track);
       assert(window.trak.io.alias);
+    });
+  });
+
+  describe('#load', function () {
+    it('should load the trak object', function (done) {
+      assert(!window.trak);
+      trakio.load();
+      when(function () {
+        return window.trak && window.trak.loaded;
+      }, done);
     });
   });
 
@@ -126,13 +126,8 @@ describe('trak.io', function () {
     });
 
     it('should send properties if they are included', function () {
-      var title = 'x';
-      var url = 'y';
-      trakio.page(null, {
-        url: url,
-        title: title
-      });
-      assert(window.trak.io.page_view.calledWith(url, title));
+      trakio.page(null, { url: 'url', title: 'title' });
+      assert(window.trak.io.page_view.calledWith('url', 'title'));
     });
 
     it('should call #track for named pages by default', function () {
@@ -144,12 +139,11 @@ describe('trak.io', function () {
 
   describe('#alias', function () {
     beforeEach(function (done) {
-      trakio.initialize();
-      // wait for trak to load fully so we can use distinct_id
-      when(function () { return window.trak.io.loaded; }, function () {
+      trakio.once('ready', function () {
         window.trak.io.alias = sinon.spy();
         done();
       });
+      trakio.initialize();
     });
 
     it('should send a new id', function () {

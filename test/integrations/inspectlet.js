@@ -33,10 +33,6 @@ describe('Inspectlet', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      inspectlet.load = sinon.spy(); // prevent loading
-    });
-
     it('should create the inspectlet queue', function () {
       assert(!window.__insp);
       inspectlet.initialize();
@@ -51,6 +47,7 @@ describe('Inspectlet', function () {
     });
 
     it('should call #load', function () {
+      inspectlet.load = sinon.spy();
       inspectlet.initialize();
       assert(inspectlet.load.called);
     });

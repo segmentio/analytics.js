@@ -1,9 +1,9 @@
 
 describe('Tapstream', function () {
 
-  var Tapstream = require('analytics/lib/integrations/tapstream');
   var assert = require('assert');
   var sinon = require('sinon');
+  var Tapstream = require('analytics/lib/integrations/tapstream');
   var test = require('integration-tester');
   var when = require('when');
 
@@ -14,6 +14,7 @@ describe('Tapstream', function () {
 
   beforeEach(function () {
     tapstream = new Tapstream(settings);
+    tapstream.initialize(); // noop
   });
 
   afterEach(function () {
@@ -31,8 +32,24 @@ describe('Tapstream', function () {
       .option('trackNamedPages', true);
   });
 
+  describe('#initialize', function () {
+    it('should push setAccount name onto window._tsq', function () {
+      window._tsq = [];
+      window._tsq.push = sinon.spy();
+      tapstream.initialize();
+      assert(window._tsq.push.calledWith(['setAccountName', settings.accountName]));
+    });
+
+    it('should call #load', function () {
+      tapstream.load = sinon.spy();
+      tapstream.initialize();
+      assert(tapstream.load.called);
+    });
+  });
+
   describe('#load', function () {
     it('should replace the window._tsq object', function (done) {
+      assert(!window._tsq);
       tapstream.load();
       when(function () {
         return window._tsq && window._tsq.push !== Array.prototype.push;
@@ -41,24 +58,6 @@ describe('Tapstream', function () {
 
     it('should call the callback', function (done) {
       tapstream.load(done);
-    });
-  });
-
-  describe('#initialize', function () {
-    it('should call #load', function () {
-      tapstream.load = sinon.spy();
-      tapstream.initialize();
-      assert(tapstream.load.called);
-    });
-
-    it('should push setAccount name onto window._tsq', function () {
-      window._tsq = [];
-      window._tsq.push = sinon.spy();
-      tapstream.initialize();
-      assert(window._tsq.push.calledWith([
-        'setAccountName',
-        settings.accountName
-      ]));
     });
   });
 

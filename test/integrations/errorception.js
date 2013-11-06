@@ -33,8 +33,16 @@ describe('Errorception', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      errorception.load = sinon.spy(); // prevent loading
+    var onerror;
+
+    before(function () {
+      // set up custom onerror so mocha won't complain
+      onerror = window.onerror;
+      window.onerror = function(){};
+    });
+
+    after(function () {
+      window.onerror = onerror;
     });
 
     it('should initialize the errorception queue', function () {
@@ -42,7 +50,16 @@ describe('Errorception', function () {
       assert(equal(window._errs, [settings.projectId]));
     });
 
+    it('should add the error handler', function () {
+      errorception.initialize();
+      var err = new Error('a test error');
+      window._errs.push = sinon.spy();
+      window.onerror(err);
+      assert(window._errs.push.calledWith(err));
+    });
+
     it('should call #load', function () {
+      errorception.load = sinon.spy();
       errorception.initialize();
       assert(errorception.load.called);
     });

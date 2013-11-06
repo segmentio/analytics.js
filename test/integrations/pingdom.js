@@ -16,6 +16,7 @@ describe('Pingdom', function () {
 
   beforeEach(function () {
     pingdom = new Pingdom(settings);
+    pingdom.initialize(); // noop
   });
 
   afterEach(function () {
@@ -29,17 +30,6 @@ describe('Pingdom', function () {
       .readyOnLoad()
       .global('_prum')
       .option('id', '');
-  });
-
-  describe('#load', function () {
-    it('should create window._prum', function (done) {
-      pingdom.load();
-      when(function () { return window._prum; }, done);
-    });
-
-    it('should callback', function (done) {
-      pingdom.load(done);
-    });
   });
 
   describe('#initialize', function () {
@@ -61,6 +51,17 @@ describe('Pingdom', function () {
       pingdom.on('ready', function () {
         assert(date.getTime() == window.PRUM_EPISODES.marks.firstbyte);
       });
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window._prum', function (done) {
+      pingdom.load();
+      when(function () { return window._prum; }, done);
+    });
+
+    it('should callback', function (done) {
+      pingdom.load(done);
     });
   });
 });

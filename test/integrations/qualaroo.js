@@ -1,11 +1,10 @@
 
 describe('Qualaroo', function () {
 
-  var Qualaroo = require('analytics/lib/integrations/qualaroo');
   var assert = require('assert');
+  var Qualaroo = require('analytics/lib/integrations/qualaroo');
   var sinon = require('sinon');
   var test = require('integration-tester');
-  var user = require('analytics/lib/user');
   var when = require('when');
 
   var qualaroo;
@@ -16,6 +15,7 @@ describe('Qualaroo', function () {
 
   beforeEach(function () {
     qualaroo = new Qualaroo(settings);
+    qualaroo.initialize(); // noop
   });
 
   afterEach(function () {
@@ -34,14 +34,14 @@ describe('Qualaroo', function () {
   });
 
   describe('#load', function () {
-    it('should callback', function (done) {
-      qualaroo.load(done);
-    });
-
     it('should create window._kiq', function (done) {
       assert(!window._kiq);
       qualaroo.load();
       when(function () { return window._kiq; }, done);
+    });
+
+    it('should callback', function (done) {
+      qualaroo.load(done);
     });
   });
 
@@ -58,10 +58,6 @@ describe('Qualaroo', function () {
       qualaroo.initialize();
       window._kiq = [];
       window._kiq.push = sinon.spy();
-    });
-
-    afterEach(function () {
-      user.reset();
     });
 
     it('should send an id', function () {

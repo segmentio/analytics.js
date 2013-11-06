@@ -34,11 +34,8 @@ describe('Intercom', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      intercom.load = sinon.spy(); // prevent loading
-    });
-
     it('should call #load', function () {
+      intercom.load = sinon.spy();
       intercom.initialize();
       assert(intercom.load.called);
     });

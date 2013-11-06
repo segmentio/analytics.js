@@ -1,11 +1,11 @@
 
 describe('Woopra', function () {
 
-  var Woopra = require('analytics/lib/integrations/woopra');
   var assert = require('assert');
   var sinon = require('sinon');
   var test = require('integration-tester');
   var when = require('when');
+  var Woopra = require('analytics/lib/integrations/woopra');
 
   var woopra;
   var settings = {
@@ -23,17 +23,13 @@ describe('Woopra', function () {
   it('should have the right settings', function () {
     test(woopra)
       .name('Woopra')
-      .global('woopra')
       .assumesPageview()
       .readyOnLoad()
+      .global('woopra')
       .option('domain', '');
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      woopra.load = sinon.spy();
-    });
-
     it('should create a woopra object', function () {
       assert(!window.woopra);
       woopra.initialize();
@@ -41,6 +37,7 @@ describe('Woopra', function () {
     });
 
     it('should call #load', function () {
+      woopra.load = sinon.spy();
       woopra.initialize();
       assert(woopra.load.called);
     });
@@ -65,10 +62,7 @@ describe('Woopra', function () {
 
     it('should send an id and traits', function () {
       woopra.identify('id', { trait: true });
-      assert(window.woopra.identify.calledWith({
-        id: 'id',
-        trait: true
-      }));
+      assert(window.woopra.identify.calledWith({ id: 'id', trait: true }));
     });
   });
 

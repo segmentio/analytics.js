@@ -1,7 +1,6 @@
 
 describe('UserVoice', function () {
 
-  var UserVoice = require('analytics/lib/integrations/uservoice');
   var assert = require('assert');
   var extend = require('extend');
   var equal = require('equals');
@@ -9,6 +8,7 @@ describe('UserVoice', function () {
   var sinon = require('sinon');
   var test = require('integration-tester');
   var unix = require('to-unix-timestamp');
+  var UserVoice = require('analytics/lib/integrations/uservoice');
   var when = require('when');
 
   var uservoice;
@@ -199,7 +199,6 @@ describe('UserVoice', function () {
     describe('#initialize', function () {
       beforeEach(function () {
         uservoice.load = sinon.spy();
-        delete window.showClassicWidget;
       });
 
       it('should push the options onto window.UserVoice.push', function () {

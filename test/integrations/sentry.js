@@ -1,8 +1,8 @@
 
 describe('Sentry', function () {
 
-  var Sentry = require('analytics/lib/integrations/sentry');
   var assert = require('assert');
+  var Sentry = require('analytics/lib/integrations/sentry');
   var sinon = require('sinon');
   var test = require('integration-tester');
   var when = require('when');
@@ -25,13 +25,13 @@ describe('Sentry', function () {
   });
 
   describe('#load', function () {
-    it('should call the callback', function (done) {
-      sentry.load(done);
-    });
-
     it('should create window.Raven', function (done) {
       sentry.load();
       when(function () { return window.Raven; }, done);
+    });
+
+    it('should callback', function (done) {
+      sentry.load(done);
     });
   });
 
@@ -60,10 +60,7 @@ describe('Sentry', function () {
 
     it('should send an id and traits', function () {
       sentry.identify('id', { trait: true });
-      assert(window.Raven.setUser.calledWith({
-        id: 'id',
-        trait: true
-      }));
+      assert(window.Raven.setUser.calledWith({ id: 'id', trait: true }));
     });
   });
 });

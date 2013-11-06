@@ -35,10 +35,6 @@ describe('Improvely', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      improvely.load = sinon.spy(); // prevent loading
-    });
-
     it('should create window._improvely', function () {
       assert(!window._improvely);
       improvely.initialize();
@@ -57,6 +53,7 @@ describe('Improvely', function () {
     });
 
     it('should call #load', function () {
+      improvely.load = sinon.spy();
       improvely.initialize();
       assert(improvely.load.called);
     });

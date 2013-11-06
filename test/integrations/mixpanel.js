@@ -37,10 +37,6 @@ describe('Mixpanel', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      mixpanel.load = sinon.spy(); // prevent loading
-    });
-
     it('should create window.mixpanel', function () {
       assert(!window.mixpanel);
       mixpanel.initialize();
@@ -48,6 +44,7 @@ describe('Mixpanel', function () {
     });
 
     it('should call #load', function () {
+      mixpanel.load = sinon.spy();
       mixpanel.initialize();
       assert(mixpanel.load.called);
     });

@@ -30,11 +30,8 @@ describe('Awesomatic', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      awesomatic.load = sinon.spy(); // prevent loading
-    });
-
     it('should call #load', function () {
+      awesomatic.load = sinon.spy();
       awesomatic.initialize();
       assert(awesomatic.load.called);
     });

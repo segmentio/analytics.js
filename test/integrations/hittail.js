@@ -32,11 +32,8 @@ describe('HitTail', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      hittal.load = sinon.spy(); // prevent loading
-    });
-
     it('should call #load', function () {
+      hittal.load = sinon.spy();
       hittal.initialize();
       assert(hittal.load.called);
     });

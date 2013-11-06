@@ -35,10 +35,6 @@ describe('Keen IO', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      keen.load = sinon.spy(); // prevent loading
-    });
-
     it('should create window.Keen', function () {
       assert(!window.Keen);
       keen.initialize();
@@ -55,6 +51,7 @@ describe('Keen IO', function () {
     });
 
     it('should call #load', function () {
+      keen.load = sinon.spy();
       keen.initialize();
       assert(keen.load.called);
     });

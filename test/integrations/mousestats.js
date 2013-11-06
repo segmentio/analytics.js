@@ -32,11 +32,8 @@ describe('MouseStats', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      mousestats.load = sinon.spy(); // prevent loading
-    });
-
     it('should call #load', function () {
+      mousestats.load = sinon.spy();
       mousestats.initialize();
       assert(mousestats.load.called);
     });

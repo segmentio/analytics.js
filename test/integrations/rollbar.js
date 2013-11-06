@@ -16,6 +16,7 @@ describe('Rollbar', function () {
 
   beforeEach(function () {
     rollbar = new Rollbar(settings);
+    rollbar.initialize(); // noop
   });
 
   afterEach(function () {
@@ -47,20 +48,15 @@ describe('Rollbar', function () {
 
   describe('#initialize', function () {
     var onerror;
+
     before(function () {
       // set up custom onerror so mocha won't complain
       onerror = window.onerror;
-      window.onerror = function () {};
+      window.onerror = function(){};
     });
 
     after(function () {
       window.onerror = onerror;
-    });
-
-    it('should call #load', function () {
-      rollbar.load = sinon.spy();
-      rollbar.initialize();
-      assert(rollbar.load.called);
     });
 
     it('should add the error handler', function () {
@@ -71,6 +67,12 @@ describe('Rollbar', function () {
       assert(window._rollbar.push.calledWith(err));
     });
   });
+
+    it('should call #load', function () {
+      rollbar.load = sinon.spy();
+      rollbar.initialize();
+      assert(rollbar.load.called);
+    });
 
   describe('#identify', function () {
     beforeEach(function () {

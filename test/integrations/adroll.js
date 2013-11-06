@@ -39,10 +39,6 @@ describe('AdRoll', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      adroll.load = sinon.spy(); // prevent loading
-    });
-
     it('should initialize the adroll variables', function () {
       adroll.initialize();
       assert(window.adroll_adv_id === settings.advId);
@@ -61,6 +57,7 @@ describe('AdRoll', function () {
     });
 
     it('should call #load', function () {
+      adroll.load = sinon.spy();
       adroll.initialize();
       assert(adroll.load.called);
     });

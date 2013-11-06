@@ -1,12 +1,12 @@
 
 describe('Visual Website Optimizer', function () {
 
-  var VWO = require('analytics/lib/integrations/visual-website-optimizer');
   var assert = require('assert');
   var sinon = require('sinon');
   var test = require('integration-tester');
   var tick = require('next-tick');
   var when = require('when');
+  var VWO = require('analytics/lib/integrations/visual-website-optimizer');
 
   var vwo;
   var settings = {};

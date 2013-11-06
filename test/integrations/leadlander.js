@@ -32,16 +32,13 @@ describe('LeadLander', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      leadlander.load = sinon.spy(); // prevent loading
-    });
-
     it('should set window.llactid', function () {
       leadlander.initialize();
       assert(window.llactid === settings.accountId);
     });
 
     it('should call #load', function () {
+      leadlander.load = sinon.spy();
       leadlander.initialize();
       assert(leadlander.load.called);
     });

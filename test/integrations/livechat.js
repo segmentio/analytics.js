@@ -32,10 +32,6 @@ describe('LiveChat', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      livechat.load = sinon.spy(); // prevent loading
-    });
-
     it('should create window.__lc', function () {
       assert(!window.__lc);
       livechat.initialize();
@@ -43,6 +39,7 @@ describe('LiveChat', function () {
     });
 
     it('should call #load', function () {
+      livechat.load = sinon.spy();
       livechat.initialize();
       assert(livechat.load.called);
     });

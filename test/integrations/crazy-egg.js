@@ -32,11 +32,8 @@ describe('Crazy Egg', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      crazyegg.load = sinon.spy(); // prevent loading
-    });
-
     it('should call #load', function () {
+      crazyegg.load = sinon.spy();
       crazyegg.initialize();
       assert(crazyegg.load.called);
     });

@@ -1,9 +1,9 @@
 
 describe('SnapEngage', function () {
 
-  var SnapEngage = require('analytics/lib/integrations/snapengage');
   var assert = require('assert');
   var sinon = require('sinon');
+  var SnapEngage = require('analytics/lib/integrations/snapengage');
   var test = require('integration-tester');
   var when = require('when');
 
@@ -14,6 +14,7 @@ describe('SnapEngage', function () {
 
   beforeEach(function () {
     snapengage = new SnapEngage(settings);
+    snapengage.initialize(); // noop
   });
 
   afterEach(function () {
@@ -30,7 +31,13 @@ describe('SnapEngage', function () {
   });
 
   describe('#load', function () {
-    it('should call the callback', function (done) {
+    it('should create window.SnapABug', function (done) {
+      assert(!window.SnapABug);
+      snapengage.load();
+      when(function () { return window.SnapABug; }, done);
+    });
+
+    it('should callback', function (done) {
       snapengage.load(done);
     });
   });
@@ -45,11 +52,11 @@ describe('SnapEngage', function () {
 
   describe('#identify', function () {
     beforeEach(function (done) {
-      window.SnapABug = {};
-      window.SnapABug.setUserEmail = sinon.spy();
-      snapengage
-        .once('ready', done)
-        .initialize();
+      snapengage.once('ready', function () {
+        window.SnapABug.setUserEmail = sinon.spy();
+        done();
+      });
+      snapengage.initialize();
     });
 
     it('should send an email', function () {

@@ -35,10 +35,6 @@ describe('Customer.io', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      customerio.load = sinon.spy(); // prevent loading
-    });
-
     it('should create the window._cio object', function () {
       assert(!window._cio);
       customerio.initialize();
@@ -46,6 +42,7 @@ describe('Customer.io', function () {
     });
 
     it('should call #load', function () {
+      customerio.load = sinon.spy();
       customerio.initialize();
       assert(customerio.load.called);
     });

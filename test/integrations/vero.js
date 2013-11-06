@@ -18,9 +18,21 @@ describe('Vero', function () {
     vero.initialize(); // noop
   });
 
-  afterEach(function () {
-    vero.reset();
-  });
+  /**
+   * Add setup and reset functions so that mid-loading js won't error out,
+   * only used for suites which actually load the js.
+   */
+
+  function setup () {
+    vero.on('load', function () { vero._loaded = true; });
+  }
+
+  function reset (done) {
+    when(function () { return vero._loaded; }, function () {
+      vero.reset();
+      done();
+    });
+  }
 
   it('should store the proper settings', function () {
     test(vero)
@@ -31,6 +43,9 @@ describe('Vero', function () {
   });
 
   describe('#initialize', function () {
+    beforeEach(setup);
+    afterEach(reset);
+
     it('should push onto window._veroq', function () {
       window._veroq = [];
       window._veroq.push = sinon.spy();
@@ -39,15 +54,17 @@ describe('Vero', function () {
     });
 
     it('should call #load', function () {
-      vero.load = sinon.spy();
+      vero.load = sinon.spy(vero, 'load');
       vero.initialize();
       assert(vero.load.called);
     });
   });
 
   describe('#load', function () {
+    beforeEach(setup);
+    afterEach(reset);
+
     it('should replace window._veroq.push', function (done) {
-      assert(!window._veroq);
       vero.load();
       when(function () {
         return window._veroq && window._veroq.push !== Array.prototype.push;
@@ -61,9 +78,12 @@ describe('Vero', function () {
 
   describe('#identify', function () {
     beforeEach(function () {
+      setup();
       vero.initialize();
       window._veroq.push = sinon.spy();
     });
+
+    afterEach(reset);
 
     it('shouldnt send just an id', function () {
       vero.identify('id');
@@ -98,9 +118,12 @@ describe('Vero', function () {
 
   describe('#track', function () {
     beforeEach(function () {
+      setup();
       vero.initialize();
       window._veroq.push = sinon.spy();
     });
+
+    afterEach(reset);
 
     it('should send an event', function () {
       vero.track('event');
@@ -112,5 +135,4 @@ describe('Vero', function () {
       assert(window._veroq.push.calledWith(['track', 'event', { property: true }]));
     });
   });
-
 });

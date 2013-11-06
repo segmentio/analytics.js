@@ -1,127 +1,118 @@
 
 describe('HubSpot', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , equal = require('equals')
-  , sinon = require('sinon')
-  , when = require('when');
+  var assert = require('assert');
+  var equal = require('equals');
+  var HubSpot = require('analytics/lib/integrations/hubspot');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  portalId: 62515
-};
+  var hubspot;
+  var settings = {
+    portalId: 62515
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ HubSpot: settings });
-  this.integration = analytics._integrations.HubSpot;
-  this.options = this.integration.options;
-  var stub = window._hsq.push;
-  when(function () { return window._hsq.push != stub; }, done);
-});
-
-describe('#name', function () {
-  it('HubSpot', function () {
-    assert(this.integration.name == 'HubSpot');
-  });
-});
-
-describe('#key', function () {
-  it('portalId', function () {
-    assert(this.integration.key == 'portalId');
-  });
-});
-
-describe('#defaults', function () {
-  it('portalId', function () {
-    assert(this.integration.defaults.portalId === null);
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.portalId == settings.portalId);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window._hsq, 'push');
+    hubspot = new HubSpot(settings);
+    hubspot.initialize(); // noop
   });
 
   afterEach(function () {
-    this.stub.restore();
+    hubspot.reset();
   });
 
-  it('shouldnt send traits without an email', function () {
-    analytics.identify('id');
-    assert(!this.stub.called);
+  it('should have the right settings', function () {
+    test(hubspot)
+      .name('HubSpot')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('_hsq')
+      .option('portalId', null);
   });
 
-  it('should send traits with an email', function () {
-    analytics.identify({ email: 'name@example.com' });
-    assert(this.stub.calledWith(['identify', { email: 'name@example.com' }]));
+  describe('#initialize', function () {
+    beforeEach(function () {
+      hubspot.load = sinon.spy(); // prevent loading
+    });
+
+    it('should create window._hsq', function () {
+      assert(!window._hsq);
+      hubspot.initialize();
+      assert(window._hsq instanceof Array);
+    });
+
+    it('should call #load', function () {
+      hubspot.initialize();
+      assert(hubspot.load.called);
+    });
   });
 
-  it('should send an id and traits with an email', function () {
-    analytics.identify('id', { email: 'name@example.com' });
-    assert(this.stub.calledWith(['identify', {
-      id: 'id',
-      email: 'name@example.com'
-    }]));
+  describe('#load', function () {
+    it('should replace window._hsq.push', function (done) {
+      window._hsq = [];
+      var push = window._hsq.push;
+      hubspot.load();
+      when(function () { return window._hsq.push !== push; }, done);
+    });
+
+    it('should callback', function (done) {
+      hubspot.load(done);
+    });
   });
 
-  it('should send traits with an email id', function () {
-    analytics.identify('name@example.com');
-    assert(this.stub.calledWith(['identify', {
-      id: 'name@example.com',
-      email: 'name@example.com'
-    }]));
-  });
-});
+  describe('#identify', function () {
+    beforeEach(function () {
+      hubspot.initialize();
+      window._hsq.push = sinon.spy();
+    });
 
-describe('#track', function () {
-  beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window._hsq, 'push');
-  });
+    it('should not send traits without an email', function () {
+      hubspot.identify('id');
+      assert(!window._hsq.push.called);
+    });
 
-  afterEach(function () {
-    this.stub.restore();
-  });
+    it('should send traits with an email', function () {
+      hubspot.identify(null, { email: 'name@example.com' });
+      assert(window._hsq.push.calledWith(['identify', { email: 'name@example.com' }]));
+    });
 
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.stub.calledWith(['trackEvent', 'event', {}]));
-  });
-
-  it('should send an event and properties', function () {
-    analytics.track('event', { property: true });
-    assert(this.stub.calledWith(['trackEvent', 'event', { property: true }]));
-  });
-});
-
-describe('#pageview', function () {
-  beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window._hsq, 'push');
+    it('should send an id and traits with an email', function () {
+      hubspot.identify('id', { email: 'name@example.com' });
+      assert(window._hsq.push.calledWith(['identify', {
+        id: 'id',
+        email: 'name@example.com'
+      }]));
+    });
   });
 
-  afterEach(function () {
-    this.stub.restore();
+  describe('#track', function () {
+    beforeEach(function () {
+      hubspot.initialize();
+      window._hsq.push = sinon.spy();
+    });
+
+    it('should send an event', function () {
+      hubspot.track('event');
+      assert(window._hsq.push.calledWith(['trackEvent', 'event', undefined]));
+    });
+
+    it('should send an event and properties', function () {
+      hubspot.track('event', { property: true });
+      assert(window._hsq.push.calledWith(['trackEvent', 'event', { property: true }]));
+    });
   });
 
-  it('should send a pageview', function () {
-    analytics.pageview();
-    assert(this.stub.calledWith(['_trackPageview']));
+  describe('#page', function () {
+    beforeEach(function () {
+      hubspot.initialize();
+      window._hsq.push = sinon.spy();
+    });
+
+    it('should send a page view', function () {
+      hubspot.page();
+      assert(window._hsq.push.calledWith(['_trackPageview']));
+    });
   });
-});
 
 });

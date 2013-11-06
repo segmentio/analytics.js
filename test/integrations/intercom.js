@@ -1,204 +1,170 @@
 
 describe('Intercom', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var assert = require('assert');
+  var Intercom = require('analytics/lib/integrations/intercom');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  appId: 'e2a1655e0444b4cb3f5e593bd35b0602aa1039ae'
-};
-
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Intercom: settings });
-  this.integration = analytics._integrations.Intercom;
-  this.options = this.integration.options;
-  when(function () { return window.Intercom; }, done);
-});
-
-describe('#name', function () {
-  it('Intercom', function () {
-    assert(this.integration.name == 'Intercom');
-  });
-});
-
-describe('#key', function () {
-  it('appId', function () {
-    assert(this.integration.key == 'appId');
-  });
-});
-
-describe('#defaults', function () {
-  it('activator', function () {
-    assert(this.integration.defaults.activator === '#IntercomDefaultWidget');
-  });
-
-  it('appId', function () {
-    assert(this.integration.defaults.appId === '');
-  });
-
-  it('counter', function () {
-    assert(this.integration.defaults.counter === true);
-  });
-
-  it('inbox', function () {
-    assert(this.integration.defaults.inbox === false);
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options with defaults', function () {
-    assert(this.options.appId == settings.appId);
-  });
-});
-
-describe('#identify', function () {
-  before(function () {
-    this.id = 0;
-  });
+  var intercom;
+  var settings = {
+    appId: 'e2a1655e0444b4cb3f5e593bd35b0602aa1039ae'
+  };
 
   beforeEach(function () {
-    analytics.user().reset();
-    this.id++;
-    this.stub = sinon.stub(window, 'Intercom');
+    intercom = new Intercom(settings);
+    intercom.initialize(); // noop
   });
 
   afterEach(function () {
-    this.stub.restore();
-    this.options.inbox = this.integration.defaults.inbox;
-    this.options.activator = this.integration.defaults.activator;
+    intercom.reset();
   });
 
-  it('should call boot the first time and update the second', function () {
-    var date = new Date();
-    analytics.identify(this.id, {
-      email: 'email@example.com',
-      created: date
+  it('should have the right settings', function () {
+    test(intercom)
+      .name('Intercom')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('Intercom')
+      .option('activator', '#IntercomDefaultWidget')
+      .option('appId', '')
+      .option('counter', true)
+      .option('inbox', false);
+  });
+
+  describe('#initialize', function () {
+    beforeEach(function () {
+      intercom.load = sinon.spy(); // prevent loading
     });
-    assert(this.stub.calledWith('boot', {
-      app_id: settings.appId,
-      email: 'email@example.com',
-      user_id: this.id,
-      created_at: Math.floor(date / 1000)
-    }));
-    analytics.identify(this.id);
-    assert(this.stub.calledWith('update', {
-      app_id: settings.appId,
-      email: 'email@example.com',
-      user_id: this.id,
-      created_at: Math.floor(date / 1000)
-    }));
-  });
 
-  it('should send an id and traits', function () {
-    analytics.identify(this.id, { email: 'email@example.com' });
-    assert(this.stub.calledWith('boot', {
-      app_id: settings.appId,
-      email: 'email@example.com',
-      user_id: this.id
-    }));
-  });
-
-  it('should convert dates', function () {
-    var date = new Date();
-    analytics.identify(this.id, {
-      created: date,
-      company: { created: date }
+    it('should call #load', function () {
+      intercom.initialize();
+      assert(intercom.load.called);
     });
-    assert(this.stub.calledWith('boot', {
-      app_id: settings.appId,
-      user_id: this.id,
-      created_at: Math.floor(date / 1000),
-      company: { created_at: Math.floor(date / 1000) }
-    }));
   });
 
-  it('should allow passing a user hash', function () {
-    analytics.identify(this.id, {}, {
-      Intercom: {
-        userHash: 'x'
-      }
+  describe('#load', function () {
+    it('should create window.Intercom', function (done) {
+      assert(!window.Intercom);
+      intercom.load();
+      when(function () { return window.Intercom; }, done);
     });
-    assert(this.stub.calledWith('boot', {
-      app_id: settings.appId,
-      user_id: this.id,
-      user_hash: 'x'
-    }));
+
+    it('should callback', function (done) {
+      intercom.load(done);
+    });
   });
 
-  it('should allow passing increments', function () {
-    analytics.identify(this.id, {}, {
-      Intercom: {
+  describe('#identify', function () {
+    beforeEach(function () {
+      window.Intercom = sinon.spy();
+    });
+
+    it('should call boot the first time and update the second', function () {
+      var app = settings.appId;
+      intercom.identify('id');
+      assert(window.Intercom.calledWith('boot', { app_id: app, user_id: 'id' }));
+      intercom.identify('id');
+      assert(window.Intercom.calledWith('update', { app_id: app, user_id: 'id' }));
+    });
+
+    it('should send an id and traits', function () {
+      intercom.identify('id', { email: 'email@example.com' });
+      assert(window.Intercom.calledWith('boot', {
+        app_id: settings.appId,
+        email: 'email@example.com',
+        user_id: 'id'
+      }));
+    });
+
+    it('should convert dates', function () {
+      var date = new Date();
+      intercom.identify('id', {
+        created: date,
+        company: { created: date }
+      });
+      assert(window.Intercom.calledWith('boot', {
+        app_id: settings.appId,
+        user_id: 'id',
+        created_at: Math.floor(date / 1000),
+        company: { created_at: Math.floor(date / 1000) }
+      }));
+    });
+
+    it('should allow passing a user hash', function () {
+      intercom.identify('id', {}, {
+        Intercom: {
+          userHash: 'x'
+        }
+      });
+      assert(window.Intercom.calledWith('boot', {
+        app_id: settings.appId,
+        user_id: 'id',
+        user_hash: 'x'
+      }));
+    });
+
+    it('should allow passing increments', function () {
+      intercom.identify('id', {}, {
+        Intercom: {
+          increments: { number: 42 }
+        }
+      });
+      assert(window.Intercom.calledWith('boot', {
+        app_id: settings.appId,
+        user_id: 'id',
         increments: { number: 42 }
-      }
+      }));
     });
-    assert(this.stub.calledWith('boot', {
-      app_id: settings.appId,
-      user_id: this.id,
-      increments: { number: 42 }
-    }));
+
+    it('should send inbox settings', function () {
+      intercom.options.inbox = true;
+      intercom.identify('id');
+      assert(window.Intercom.calledWith('boot', {
+        app_id: settings.appId,
+        user_id: 'id',
+        widget: {
+          activator: '#IntercomDefaultWidget',
+          use_counter: true
+        }
+      }));
+    });
+
+    it('should allow overriding default activator', function () {
+      intercom.options.inbox = true;
+      intercom.options.activator = '#Intercom';
+      intercom.identify('id');
+      assert(window.Intercom.calledWith('boot', {
+        app_id: settings.appId,
+        user_id: 'id',
+        widget: {
+          activator: '#Intercom',
+          use_counter: true
+        }
+      }));
+    });
   });
 
-  it('should send inbox settings', function () {
-    this.options.inbox = true;
-    analytics.identify(this.id);
-    assert(this.stub.calledWith('boot', {
-      app_id: settings.appId,
-      user_id: this.id,
-      widget: {
-        activator: '#IntercomDefaultWidget',
-        use_counter: true
-      }
-    }));
-  });
+  describe('#group', function () {
+    beforeEach(function () {
+      window.Intercom = sinon.spy();
+    });
 
-  it('should allow overriding default activator', function () {
-    this.options.inbox = true;
-    this.options.activator = '#Intercom'
-    analytics.identify(this.id);
-    assert(this.stub.calledWith('boot', {
-      app_id: settings.appId,
-      user_id: this.id,
-      widget: {
-        activator: '#Intercom',
-        use_counter: true
-      }
-    }));
-  });
-});
+    it('should send an id', function () {
+      intercom.group('id');
+      assert(window.Intercom.calledWith('update', { company: { id: 'id' }}));
+    });
 
-describe('group', function () {
-  beforeEach(function () {
-    this.stub = sinon.stub(window, 'Intercom');
-    analytics.group().reset();
+    it('should send an id and properties', function () {
+      intercom.group('id', { name: 'Name' });
+      assert(window.Intercom.calledWith('update', {
+        company: {
+          id: 'id',
+          name: 'Name'
+        }
+      }));
+    });
   });
-
-  afterEach(function () {
-    this.stub.restore();
-  });
-
-  it('should send an id', function () {
-    analytics.group('id');
-    assert(this.stub.calledWith('update', { company: { id: 'id' }}));
-  });
-
-  it('should send an id and properties', function () {
-    analytics.group('id', { name: 'Name' });
-    assert(this.stub.calledWith('update', {
-      company: {
-        id: 'id',
-        name: 'Name'
-      }
-    }));
-  });
-});
 
 });

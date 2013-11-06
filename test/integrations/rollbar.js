@@ -1,97 +1,109 @@
 
 describe('Rollbar', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , equal = require('equals')
-  , sinon = require('sinon')
-  , when = require('when');
+  var Rollbar = require('analytics/lib/integrations/rollbar');
+  var assert = require('assert');
+  var equal = require('equals');
+  var test = require('integration-tester');
+  var sinon = require('sinon');
+  var when = require('when');
 
-var settings = {
-  accessToken: 'e1674422cbe9419987eb2e7f98adc5ec',
-  'server.environment': 'testenvironment'
-};
+  var rollbar;
+  var settings = {
+    accessToken: 'e1674422cbe9419987eb2e7f98adc5ec',
+    'server.environment': 'testenvironment'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Rollbar: settings });
-  this.integration = analytics._integrations.Rollbar;
-  this.options = this.integration.options;
-  var stub = window._rollbar.push;
-  when(function () { return window._rollbar.push != stub; }, done);
-});
-
-describe('#name', function () {
-  it('Rollbar', function () {
-    assert(this.integration.name == 'Rollbar');
-  });
-});
-
-describe('#key', function () {
-  it('accessToken', function () {
-    assert(this.integration.key == 'accessToken');
-  });
-});
-
-describe('#defaults', function () {
-  it('accessToken', function () {
-    assert(this.integration.defaults.accessToken === '');
-  });
-
-  it('identify', function () {
-    assert(this.integration.defaults.identify === true);
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options with defaults', function () {
-    assert(this.options.accessToken == settings.accessToken);
-    assert(this.options.identify == this.integration.defaults.identify);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    window._rollbar.extraParams = {};
+    rollbar = new Rollbar(settings);
   });
 
   afterEach(function () {
-    this.options.identify = true;
+    rollbar.reset();
   });
 
-  it('should add an id to metadata', function () {
-    analytics.identify('id');
-    assert(equal(window._rollbar.extraParams, { person: { id: 'id' } }));
+  it('should store the right settings', function () {
+    test(rollbar)
+      .name('Rollbar')
+      .readyOnInitialize()
+      .global('_rollbar')
+      .option('accessToken', '')
+      .option('identify', true);
   });
 
-  it('should add traits to person data', function () {
-    analytics.identify({ trait: true });
-    assert(equal(window._rollbar.extraParams, { person: { trait: true } }));
+  describe('#load', function () {
+    it('should call the callback', function (done) {
+      rollbar.load(done);
+    });
+
+    it('should set window._rollbar', function (done) {
+      window._rollbar = [settings.accessToken, settings];
+      rollbar.load();
+      when(function () {
+        return window._rollbar.push !== Array.prototype.push;
+      }, done);
+    });
   });
 
-  it('should add an id and traits to person data', function () {
-    analytics.identify('id', { trait: true });
-    assert(equal(window._rollbar.extraParams, {
-      person: {
-        id: 'id',
-        trait: true
-      }
-    }));
+  describe('#initialize', function () {
+    var onerror;
+    before(function () {
+      // set up custom onerror so mocha won't complain
+      onerror = window.onerror;
+      window.onerror = function () {};
+    });
+
+    after(function () {
+      window.onerror = onerror;
+    });
+
+    it('should call #load', function () {
+      rollbar.load = sinon.spy();
+      rollbar.initialize();
+      assert(rollbar.load.called);
+    });
+
+    it('should add the error handler', function () {
+      rollbar.initialize();
+      var err = new Error('a test error');
+      window._rollbar.push = sinon.spy();
+      window.onerror(err);
+      assert(window._rollbar.push.calledWith(err));
+    });
   });
 
-  it('shouldn\'t add to person data when identify option is false', function () {
-    this.options.identify = false;
-    analytics.identify('id');
-    assert(equal(window._rollbar.extraParams, {}));
+  describe('#identify', function () {
+    beforeEach(function () {
+      rollbar.initialize();
+      window._rollbar.extraParams = {};
+    });
+
+    it('should add an id to metadata', function () {
+      rollbar.identify('id');
+      assert(equal(window._rollbar.extraParams, { person: { id: 'id' } }));
+    });
+
+    it('should add traits to person data', function () {
+      rollbar.identify(null, { trait: true });
+      assert(equal(window._rollbar.extraParams, { person: { trait: true } }));
+    });
+
+    it('should add an id and traits to person data', function () {
+      rollbar.identify('id', { trait: true });
+      assert(equal(window._rollbar.extraParams, {
+        person: {
+          id: 'id',
+          trait: true
+        }
+      }));
+    });
+
+    it('should not add to person data when identify option is false', function () {
+      rollbar.options.identify = false;
+      rollbar.identify('id');
+      assert(equal(window._rollbar.extraParams, {}));
+    });
   });
-});
 
 });
 

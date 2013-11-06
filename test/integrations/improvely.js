@@ -1,98 +1,117 @@
 
 describe('Improvely', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var assert = require('assert');
+  var equal = require('equals');
+  var Improvely = require('analytics/lib/integrations/improvely');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  domain: 'demo',
-  projectId: 1
-};
+  var improvely;
+  var settings = {
+    domain: 'demo',
+    projectId: 1
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Improvely: settings });
-  this.integration = analytics._integrations.Improvely;
-  this.options = this.integration.options;
-  when(function () { return window.improvely.identify; }, done);
-});
-
-describe('#name', function () {
-  it('Improvely', function () {
-    assert(this.integration.name == 'Improvely');
-  });
-});
-
-describe('#defaults', function () {
-  it('domain', function () {
-    assert(this.integration.defaults.domain === '');
-  });
-
-  it('projectId', function () {
-    assert(this.integration.defaults.projectId === null);
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.domain == settings.domain);
-    assert(this.options.projectId == settings.projectId);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.spy = sinon.spy(window.improvely, 'label');
+    improvely = new Improvely(settings);
+    improvely.initialize(); // noop
   });
 
   afterEach(function () {
-    this.spy.restore();
+    improvely.reset();
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.spy.calledWith('id'));
-  });
-});
-
-describe('#track', function () {
-  beforeEach(function () {
-    this.spy = sinon.spy(window.improvely, 'goal');
-  });
-
-  afterEach(function () {
-    this.spy.restore();
+  it('should have the right settings', function () {
+    test(improvely)
+      .name('Improvely')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('_improvely')
+      .global('improvely')
+      .option('domain', '')
+      .option('projectId', null);
   });
 
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.spy.calledWith({ type: 'event' }));
+  describe('#initialize', function () {
+    beforeEach(function () {
+      improvely.load = sinon.spy(); // prevent loading
+    });
+
+    it('should create window._improvely', function () {
+      assert(!window._improvely);
+      improvely.initialize();
+      assert(window._improvely instanceof Array);
+    });
+
+    it('should create window.improvely', function () {
+      assert(!window.improvely);
+      improvely.initialize();
+      assert(window.improvely);
+    });
+
+    it('should init with a domain and project id', function () {
+      improvely.initialize();
+      assert(equal(window._improvely[0], ['init', settings.domain, settings.projectId]));
+    });
+
+    it('should call #load', function () {
+      improvely.initialize();
+      assert(improvely.load.called);
+    });
   });
 
-  it('should send an event and properties', function () {
-    analytics.track('event', { property: true });
-    assert(this.spy.calledWith({
-      type: 'event',
-      property: true
-    }));
+  describe('#load', function () {
+    it('should create window.improvely', function (done) {
+      assert(!window.improvely);
+      improvely.load();
+      when(function () { return window.improvely && window.improvely.identify; }, done);
+    });
+
+    it('should callback', function (done) {
+      improvely.load(done);
+    });
   });
 
-  it('should alias revenue to amount', function () {
-    analytics.track('event', { revenue: 42.99 });
-    assert(this.spy.calledWith({
-      type: 'event',
-      amount: 42.99
-    }));
+  describe('#identify', function () {
+    beforeEach(function () {
+      improvely.initialize();
+      window.improvely.label = sinon.spy();
+    });
+
+    it('should send an id', function () {
+      improvely.identify('id');
+      assert(window.improvely.label.calledWith('id'));
+    });
   });
-});
+
+  describe('#track', function () {
+    beforeEach(function () {
+      improvely.initialize();
+      window.improvely.goal = sinon.spy();
+    });
+
+    it('should send an event', function () {
+      improvely.track('event');
+      assert(window.improvely.goal.calledWith({ type: 'event' }));
+    });
+
+    it('should send an event and properties', function () {
+      improvely.track('event', { property: true });
+      assert(window.improvely.goal.calledWith({
+        type: 'event',
+        property: true
+      }));
+    });
+
+    it('should alias revenue to amount', function () {
+      improvely.track('event', { revenue: 42.99 });
+      assert(window.improvely.goal.calledWith({
+        type: 'event',
+        amount: 42.99
+      }));
+    });
+  });
 
 });

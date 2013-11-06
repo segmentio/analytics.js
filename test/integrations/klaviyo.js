@@ -31,10 +31,6 @@ describe('Klaviyo', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      klaviyo.load = sinon.spy(); // prevent loading
-    });
-
     it('should create window._learnq', function () {
       assert(!window._learnq);
       klaviyo.initialize();
@@ -49,6 +45,7 @@ describe('Klaviyo', function () {
     });
 
     it('should call #load', function () {
+      klaviyo.load = sinon.spy();
       klaviyo.initialize();
       assert(klaviyo.load.called);
     });

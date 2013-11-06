@@ -45,10 +45,6 @@ describe('Google Analytics', function () {
     });
 
     describe('#initialize', function () {
-      beforeEach(function () {
-        ga.load = sinon.spy(); // prevent loading
-      });
-
       it('should create window.GoogleAnalyticsObject', function () {
         assert(!window.GoogleAnalyticsObject);
         ga.initialize();
@@ -84,6 +80,7 @@ describe('Google Analytics', function () {
       });
 
       it('should call #load', function () {
+        ga.load = sinon.spy();
         ga.initialize();
         assert(ga.load.called);
       });
@@ -234,10 +231,6 @@ describe('Google Analytics', function () {
     });
 
     describe('#initializeClassic', function () {
-      beforeEach(function () {
-        ga.loadClassic = sinon.spy(); // prevent loading
-      });
-
       it('should create window._gaq', function () {
         assert(!window._gaq);
         ga.initialize();
@@ -295,6 +288,7 @@ describe('Google Analytics', function () {
       });
 
       it('should call #load', function () {
+        ga.loadClassic = sinon.spy();
         ga.initialize();
         assert(ga.load.called);
       });

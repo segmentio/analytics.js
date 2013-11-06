@@ -32,10 +32,6 @@ describe('HubSpot', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      hubspot.load = sinon.spy(); // prevent loading
-    });
-
     it('should create window._hsq', function () {
       assert(!window._hsq);
       hubspot.initialize();
@@ -43,6 +39,7 @@ describe('HubSpot', function () {
     });
 
     it('should call #load', function () {
+      hubspot.load = sinon.spy();
       hubspot.initialize();
       assert(hubspot.load.called);
     });

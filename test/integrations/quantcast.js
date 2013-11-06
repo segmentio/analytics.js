@@ -15,7 +15,7 @@ describe('Quantcast', function () {
 
   beforeEach(function () {
     quantcast = new Quantcast(settings);
-    quantcast.initialize(); // noop cuz it assumes a pageview
+    quantcast.initialize(); // noop
   });
 
   afterEach(function () {
@@ -70,8 +70,6 @@ describe('Quantcast', function () {
   });
 
   describe('#page', function () {
-    var item;
-
     beforeEach(function () {
       quantcast.initialize();
     });

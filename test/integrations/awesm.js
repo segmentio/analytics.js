@@ -36,16 +36,13 @@ describe('awe.sm', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      awesm.load = sinon.spy(); // prevent loading
-    });
-
     it('should pass options to awe.sm', function () {
       awesm.initialize();
       assert(window.AWESM.api_key == settings.apiKey);
     });
 
     it('should call #load', function () {
+      awesm.load = sinon.spy();
       awesm.initialize();
       assert(awesm.load.called);
     });

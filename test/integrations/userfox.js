@@ -1,10 +1,10 @@
 
 describe('userfox', function () {
 
-  var Userfox = require('analytics/lib/integrations/userfox');
   var assert = require('assert');
   var sinon = require('sinon');
   var test = require('integration-tester');
+  var Userfox = require('analytics/lib/integrations/userfox');
   var when = require('when');
 
   var userfox;
@@ -29,15 +29,23 @@ describe('userfox', function () {
   });
 
   describe('#initialize', function () {
-    it('should call load', function () {
-      userfox.load = sinon.stub(userfox, 'load');
+    it('should create window._ufq', function () {
+      assert(!window._ufq);
       userfox.initialize();
-      assert(userfox.load.called);
-      userfox.load.restore();
+      assert(window._ufq instanceof Array);
     });
 
-    it('should load the window._ufq variable', function (done) {
+    it('should call #load', function () {
+      userfox.load = sinon.spy();
       userfox.initialize();
+      assert(userfox.load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should replace window._ufq.push', function (done) {
+      assert(!window._ufq);
+      userfox.load();
       when(function () {
         return window._ufq && window._ufq.push !== Array.prototype.push;
       }, done);
@@ -47,7 +55,6 @@ describe('userfox', function () {
   describe('#identify', function () {
     beforeEach(function () {
       userfox.initialize();
-      window._ufq = [];
       window._ufq.push = sinon.spy();
     });
 

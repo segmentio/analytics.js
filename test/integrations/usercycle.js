@@ -1,11 +1,11 @@
 
 describe('USERcycle', function () {
 
-  var USERcycle = require('analytics/lib/integrations/usercycle');
   var assert = require('assert');
   var equal = require('equals');
   var sinon = require('sinon');
   var test = require('integration-tester');
+  var USERcycle = require('analytics/lib/integrations/usercycle');
   var when = require('when');
 
   var usercycle;
@@ -30,15 +30,6 @@ describe('USERcycle', function () {
       .option('key', '');
   });
 
-  describe('#load', function () {
-    it('should load the window._uc script', function (done) {
-      usercycle.load();
-      when(function () {
-        return window._uc && window._uc.push !== Array.prototype.push;
-      }, done);
-    });
-  });
-
   describe('#initialize', function () {
     it('should call #load', function () {
       usercycle.load = sinon.spy();
@@ -46,11 +37,21 @@ describe('USERcycle', function () {
       assert(usercycle.load.called);
     });
 
-    it('should set up the window._uc queue', function () {
+    it('should push a key onto window._uc', function () {
       window._uc = [];
       window._uc.push = sinon.spy();
       usercycle.initialize();
       assert(window._uc.push.calledWith(['_key', settings.key]));
+    });
+  });
+
+  describe('#load', function () {
+    it('should load the window._uc script', function (done) {
+      assert(!window._uc);
+      usercycle.load();
+      when(function () {
+        return window._uc && window._uc.push !== Array.prototype.push;
+      }, done);
     });
   });
 

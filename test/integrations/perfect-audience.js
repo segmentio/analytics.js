@@ -14,6 +14,7 @@ describe('Perfect Audience', function () {
 
   beforeEach(function () {
     pa = new PerfectAudience(settings);
+    pa.initialize(); // noop
   });
 
   afterEach(function () {
@@ -29,6 +30,20 @@ describe('Perfect Audience', function () {
       .option('siteId', '');
   });
 
+  describe('#initialize', function () {
+    it('should create the window._pa object', function () {
+      assert(!window._pa);
+      pa.initialize();
+      assert(window._pa);
+    });
+
+    it('should call #load', function () {
+      pa.load = sinon.spy();
+      pa.initialize();
+      assert(pa.load.called);
+    });
+  });
+
   describe('#load', function () {
     it('should create window._pa.track', function (done) {
       pa.load();
@@ -37,20 +52,6 @@ describe('Perfect Audience', function () {
 
     it('should callback', function (done) {
       pa.load(done);
-    });
-  });
-
-  describe('#initialize', function () {
-    it('should call #load', function () {
-      pa.load = sinon.spy();
-      pa.initialize();
-      assert(pa.load.called);
-    });
-
-    it('should create the window._pa object', function () {
-      assert(!window._pa);
-      pa.initialize();
-      assert(window._pa);
     });
   });
 

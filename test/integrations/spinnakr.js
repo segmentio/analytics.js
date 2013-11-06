@@ -1,9 +1,9 @@
 
 describe('Spinnakr', function () {
 
-  var Spinnakr = require('analytics/lib/integrations/spinnakr');
   var assert = require('assert');
   var sinon = require('sinon');
+  var Spinnakr = require('analytics/lib/integrations/spinnakr');
   var test = require('integration-tester');
   var when = require('when');
 
@@ -16,6 +16,7 @@ describe('Spinnakr', function () {
     // needed for spinnakr's script to set a global we can read
     window._spinnakr_development = true;
     spinnakr = new Spinnakr(settings);
+    spinnakr.initialize(); // noop
   });
 
   afterEach(function () {
@@ -33,28 +34,29 @@ describe('Spinnakr', function () {
       .option('siteId', '');
   });
 
+  describe('#initialize', function () {
+    it('should set window._spinnakr_site_id', function () {
+      assert(!window._spinnakr_site_id);
+      spinnakr.initialize();
+      assert(window._spinnakr_site_id === settings.siteId);
+    });
+
+    it('should call #load', function () {
+      spinnakr.load = sinon.spy();
+      spinnakr.initialize();
+      assert(spinnakr.load.called);
+    });
+  });
+
   describe('#load', function () {
     it('should set window._spinnakr', function (done) {
+      assert(!window._spinnakr);
       spinnakr.load();
       when(function () { return window._spinnakr; }, done);
     });
 
     it('should call the callback', function (done) {
       spinnakr.load(done);
-    });
-  });
-
-  describe('#initialize', function () {
-    it('should call #load', function () {
-      spinnakr.load = sinon.spy();
-      spinnakr.initialize();
-      assert(spinnakr.load.called);
-    });
-
-    it('should set window._spinnakr_site_id', function () {
-      assert(!window._spinnakr_site_id);
-      spinnakr.initialize();
-      assert(window._spinnakr_site_id === settings.siteId);
     });
   });
 });

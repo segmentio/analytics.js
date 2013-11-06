@@ -1,11 +1,11 @@
 
 describe('Vero', function () {
 
-  var Vero = require('analytics/lib/integrations/vero');
   var assert = require('assert');
   var equal = require('equals');
   var sinon = require('sinon');
   var test = require('integration-tester');
+  var Vero = require('analytics/lib/integrations/vero');
   var when = require('when');
 
   var vero;
@@ -15,6 +15,7 @@ describe('Vero', function () {
 
   beforeEach(function () {
     vero = new Vero(settings);
+    vero.initialize(); // noop
   });
 
   afterEach(function () {
@@ -30,18 +31,29 @@ describe('Vero', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      vero.load = sinon.spy();
-    });
-
-    it('should call load', function () {
-      vero.initialize();
-      assert(vero.load.called);
-    });
-
     it('should push onto _veroq', function () {
       vero.initialize();
       assert(equal(window._veroq[0], ['init', { api_key: settings.apiKey }]));
+    });
+
+    it('should call #load', function () {
+      vero.load = sinon.spy();
+      vero.initialize();
+      assert(vero.load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window.__adroll', function (done) {
+      assert(!window._veroq);
+      vero.load();
+      when(function () {
+        return window._veroq && window._veroq.push !== Array.prototype.push;
+      }, done);
+    });
+
+    it('should callback', function (done) {
+      vero.load(done);
     });
   });
 

@@ -1,11 +1,11 @@
 
 describe('Yandex Metrica', function () {
 
-  var Yandex = require('analytics/lib/integrations/yandex-metrica');
   var assert = require('assert');
   var sinon = require('sinon');
   var test = require('integration-tester');
   var when = require('when');
+  var Yandex = require('analytics/lib/integrations/yandex-metrica');
 
   var yandex;
   var settings = {
@@ -32,10 +32,6 @@ describe('Yandex Metrica', function () {
     });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      yandex.load = sinon.spy(yandex, 'load');
-    });
-
     it('should push onto the yandex_metrica_callbacks', function () {
       assert(!window.yandex_metrika_callbacks);
       yandex.initialize();
@@ -49,6 +45,7 @@ describe('Yandex Metrica', function () {
     });
 
     it('should call #load', function () {
+      yandex.load = sinon.spy();
       yandex.initialize();
       assert(yandex.load.called);
     });
@@ -56,6 +53,7 @@ describe('Yandex Metrica', function () {
 
   describe('#load', function () {
     it('should create the window.Ya.Metrika variable', function (done) {
+      assert(!window.Ya);
       yandex.load();
       when(function () { return window.Ya && window.Ya.Metrika; }, done);
     });

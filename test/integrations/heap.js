@@ -34,10 +34,6 @@ describe('Heap', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      heap.load = sinon.spy(); // prevent loading
-    });
-
     it('should create window.heap', function () {
       assert(!window.heap);
       heap.initialize();
@@ -51,6 +47,7 @@ describe('Heap', function () {
     });
 
     it('should call #load', function () {
+      heap.load = sinon.spy();
       heap.initialize();
       assert(heap.load.called);
     });

@@ -32,10 +32,6 @@ describe('Gauges', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      gauges.load = sinon.spy(); // prevent loading
-    });
-
     it('should create the gauges queue', function () {
       assert(!window._gauges);
       gauges.initialize();
@@ -43,6 +39,7 @@ describe('Gauges', function () {
     });
 
     it('should call #load', function () {
+      gauges.load = sinon.spy();
       gauges.initialize();
       assert(gauges.load.called);
     });

@@ -34,10 +34,6 @@ describe('Amplitude', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      amplitude.load = sinon.spy(); // prevent loading
-    });
-
     it('should create window.amplitude', function () {
       assert(!window.amplitude);
       amplitude.initialize();
@@ -45,6 +41,7 @@ describe('Amplitude', function () {
     });
 
     it('should call #load', function () {
+      amplitude.load = sinon.spy();
       amplitude.initialize();
       assert(amplitude.load.called);
     });

@@ -49,17 +49,6 @@ describe('ClickTale', function () {
   });
 
   describe('#initialize', function () {
-    var load;
-
-    beforeEach(function () {
-      load = sinon.spy(clicktale, 'load');
-      window.WRInitTime = undefined;
-    });
-
-    afterEach(function () {
-      load.restore();
-    });
-
     it('should store the load time', function () {
       assert(!window.WRInitTime);
       clicktale.initialize();
@@ -72,56 +61,43 @@ describe('ClickTale', function () {
     });
 
     it('should call #load', function () {
+      clicktale.load = sinon.spy();
       clicktale.initialize();
-      assert(load.called);
+      assert(clicktale.load.called);
     });
   });
 
   describe('#identify', function () {
-    var ClickTaleSetUID, ClickTaleField;
-
     beforeEach(function () {
-      ClickTaleSetUID = sinon.spy(window, 'ClickTaleSetUID');
-      ClickTaleField = sinon.spy(window, 'ClickTaleField');
-    });
-
-    afterEach(function () {
-      user.reset();
-      ClickTaleSetUID.restore();
-      ClickTaleField.restore();
+      window.ClickTaleSetUID = sinon.spy();
+      window.ClickTaleField = sinon.spy();
     });
 
     it('should send an id', function () {
       clicktale.identify('id');
-      assert(ClickTaleSetUID.calledWith('id'));
+      assert(window.ClickTaleSetUID.calledWith('id'));
     });
 
     it('should send traits', function () {
       clicktale.identify(null, { trait: true });
-      assert(ClickTaleField.calledWith('trait', true));
+      assert(window.ClickTaleField.calledWith('trait', true));
     });
 
     it('should send an id and traits', function () {
       clicktale.identify('id', { trait: true });
-      assert(ClickTaleSetUID.calledWith('id'));
-      assert(ClickTaleField.calledWith('trait', true));
+      assert(window.ClickTaleSetUID.calledWith('id'));
+      assert(window.ClickTaleField.calledWith('trait', true));
     });
   });
 
   describe('#track', function () {
-    var ClickTaleEvent;
-
     beforeEach(function () {
-      ClickTaleEvent = sinon.spy(window, 'ClickTaleEvent');
-    });
-
-    afterEach(function () {
-      ClickTaleEvent.restore();
+      window.ClickTaleEvent = sinon.spy();
     });
 
     it('should send an event', function () {
       clicktale.track('event');
-      assert(ClickTaleEvent.calledWith('event'));
+      assert(window.ClickTaleEvent.calledWith('event'));
     });
   });
 

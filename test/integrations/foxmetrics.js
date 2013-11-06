@@ -32,11 +32,8 @@ describe('FoxMetrics', function () {
   });
 
   describe('#initialize', function () {
-    beforeEach(function () {
-      foxmetrics.load = sinon.spy(); // prevent loading
-    });
-
     it('should call #load', function () {
+      foxmetrics.load = sinon.spy();
       foxmetrics.initialize();
       assert(foxmetrics.load.called);
     });

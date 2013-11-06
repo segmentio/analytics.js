@@ -1,55 +1,54 @@
 
 describe('MouseStats', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var analytics = window.analytics || require('analytics');
+  var assert = require('assert');
+  var MouseStats = require('analytics/lib/integrations/mousestats');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  accountNumber: '5532375730335616295'
-};
+  var mousestats;
+  var settings = {
+    accountNumber: '5532375730335616295'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ MouseStats: settings });
-  this.integration = analytics._integrations.MouseStats;
-  this.options = this.integration.options;
-  when(function () { return window.msaa; }, done);
-});
-
-describe('#name', function () {
-  it('MouseStats', function () {
-    assert(this.integration.name == 'MouseStats');
-  });
-});
-
-describe('#key', function () {
-  it('accountNumber', function () {
-    assert(this.integration.key == 'accountNumber');
-  });
-});
-
-describe('#defaults', function () {
-  it('accountNumber', function () {
-    assert(this.integration.defaults.accountNumber === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
+  beforeEach(function () {
+    mousestats = new MouseStats(settings);
+    mousestats.initialize(); // noop
   });
 
-  it('should store options with defaults', function () {
-    assert(this.options.accountNumber == settings.accountNumber);
+  afterEach(function () {
+    mousestats.reset();
   });
 
-  it('should pass options to MouseStats', function () {
-    assert(window.mousestats_Site == settings.accountNumber);
+  it('should have the right settings', function () {
+    test(mousestats)
+      .name('MouseStats')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('msaa')
+      .option('accountNumber', '');
   });
-});
+
+  describe('#initialize', function () {
+    it('should call #load', function () {
+      mousestats.load = sinon.spy();
+      mousestats.initialize();
+      assert(mousestats.load.called);
+    });
+  });
+
+  describe('#load', function () {
+    it('should create window.msaa', function (done) {
+      assert(!window.msaa);
+      mousestats.load();
+      when(function () { return window.msaa; }, done);
+    });
+
+    it('should callback', function (done) {
+      mousestats.load(done);
+    });
+  });
 
 });

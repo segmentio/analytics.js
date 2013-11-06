@@ -1,88 +1,89 @@
 
 describe('LiveChat', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var assert = require('assert');
+  var equal = require('equals');
+  var LiveChat = require('analytics/lib/integrations/livechat');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  license: '1520'
-};
+  var livechat;
+  var settings = {
+    license: '1520'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ LiveChat: settings });
-  this.integration = analytics._integrations.LiveChat;
-  this.options = this.integration.options;
-  when(function () { return window.LC_API; }, done);
-});
-
-describe('#name', function () {
-  it('LiveChat', function () {
-    assert(this.integration.name == 'LiveChat');
-  });
-});
-
-describe('#key', function () {
-  it('license', function () {
-    assert(this.integration.key == 'license');
-  });
-});
-
-describe('#defaults', function () {
-  it('license', function () {
-    assert(this.integration.defaults.license === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.license == settings.license);
-  });
-
-  it('should pass options to LiveChat', function () {
-    assert(window.__lc.license == settings.license);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.stub = sinon.stub(window.LC_API, 'set_custom_variables');
+    livechat = new LiveChat(settings);
+    livechat.initialize(); // noop
   });
 
   afterEach(function () {
-    this.stub.restore();
+    livechat.reset();
   });
 
-  it('should send an id', function () {
-    analytics.identify('id');
-    assert(this.stub.calledWith([
-      { name: 'User ID', value: 'id' }
-    ]));
+  it('should have the right settings', function () {
+    test(livechat)
+      .name('LiveChat')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('__lc')
+      .option('license', '');
   });
 
-  it('should send traits', function () {
-    analytics.identify({ trait: true });
-    assert(this.stub.calledWith([
-      { name: 'trait', value: true }
-    ]));
+  describe('#initialize', function () {
+    it('should create window.__lc', function () {
+      assert(!window.__lc);
+      livechat.initialize();
+      assert(equal(window.__lc, { license: settings.license }));
+    });
+
+    it('should call #load', function () {
+      livechat.load = sinon.spy();
+      livechat.initialize();
+      assert(livechat.load.called);
+    });
   });
 
-  it('should send an id and traits', function () {
-    analytics.identify('id', { trait: true });
-    assert(this.stub.calledWith([
-      { name: 'trait', value: true },
-      { name: 'User ID', value: 'id' }
-    ]));
+  describe('#load', function () {
+    it('should create window.LC_API', function (done) {
+      assert(!window.LC_API);
+      livechat.load();
+      when(function () { return window.LC_API; }, done);
+    });
+
+    it('should callback', function (done) {
+      livechat.load(done);
+    });
   });
-});
+
+  describe('#identify', function () {
+    beforeEach(function () {
+      livechat.initialize();
+      window.LC_API.set_custom_variables = sinon.spy();
+    });
+
+    it('should send an id', function () {
+      livechat.identify('id');
+      assert(window.LC_API.set_custom_variables.calledWith([
+        { name: 'User ID', value: 'id' }
+      ]));
+    });
+
+    it('should send traits', function () {
+      livechat.identify(null, { trait: true });
+      assert(window.LC_API.set_custom_variables.calledWith([
+        { name: 'trait', value: true }
+      ]));
+    });
+
+    it('should send an id and traits', function () {
+      livechat.identify('id', { trait: true });
+      assert(window.LC_API.set_custom_variables.calledWith([
+        { name: 'trait', value: true },
+        { name: 'User ID', value: 'id' }
+      ]));
+    });
+  });
 
 });

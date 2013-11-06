@@ -2,9 +2,11 @@
 describe('trak.io', function () {
 
   var assert = require('assert');
+  var each = require('each');
   var sinon = require('sinon');
   var test = require('integration-tester');
   var Trakio = require('analytics/lib/integrations/trakio');
+  var tick = require('next-tick');
   var when = require('when');
 
   var trakio;
@@ -139,9 +141,12 @@ describe('trak.io', function () {
 
   describe('#alias', function () {
     beforeEach(function (done) {
-      trakio.once('ready', function () {
-        window.trak.io.alias = sinon.spy();
-        done();
+      trakio.once('load', function () {
+        tick(function () {
+          window.trak.io.distinct_id = sinon.stub();
+          window.trak.io.alias = sinon.spy();
+          done();
+        });
       });
       trakio.initialize();
     });

@@ -1,98 +1,105 @@
 
 describe('Heap', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , equal = require('equals')
-  , sinon = require('sinon')
-  , when = require('when');
+  var analytics = window.analytics || require('analytics');
+  var assert = require('assert');
+  var equal = require('equals');
+  var Heap = require('analytics/lib/integrations/heap');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  apiKey: 'x'
-};
+  var heap;
+  var settings = {
+    apiKey: 'x'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ Heap: settings });
-  this.integration = analytics._integrations.Heap;
-  this.options = this.integration.options;
-  var stub = window.heap;
-  when(function () { return window.heap != stub; }, done);
-});
-
-describe('#name', function () {
-  it('Heap', function () {
-    assert(this.integration.name == 'Heap');
-  });
-});
-
-describe('#key', function () {
-  it('apiKey', function () {
-    assert(this.integration.key == 'apiKey');
-  });
-});
-
-describe('#defaults', function () {
-  it('apiKey', function () {
-    assert(this.integration.defaults.apiKey === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.apiKey == settings.apiKey);
-  });
-
-  it('should pass options to Heap', function () {
-    assert(window._heapid == settings.apiKey);
-  });
-});
-
-describe('#identify', function () {
   beforeEach(function () {
-    analytics.user().reset();
-    this.spy = sinon.spy(window.heap, 'identify');
+    heap = new Heap(settings);
+    heap.initialize(); // noop
   });
 
   afterEach(function () {
-    this.spy.restore();
+    heap.reset();
   });
 
-  it('should send traits', function () {
-    analytics.identify({ trait: true });
-    assert(this.spy.calledWith({ trait: true }));
+  it('should have the right settings', function () {
+    test(heap)
+      .name('Heap')
+      .assumesPageview()
+      .readyOnInitialize()
+      .global('heap')
+      .global('_heapid')
+      .option('apiKey', '');
   });
 
-  it('should alias a username', function () {
-    analytics.identify({ username: 'username' });
-    assert(this.spy.calledWith({ handle: 'username' }));
-  });
-});
+  describe('#initialize', function () {
+    beforeEach(function () {
+      heap.load = sinon.spy(); // prevent loading
+    });
 
-describe('#track', function () {
-  beforeEach(function () {
-    this.spy = sinon.spy(window.heap, 'track');
+    it('should create window.heap', function () {
+      assert(!window.heap);
+      heap.initialize();
+      assert(window.heap);
+    });
+
+    it('should set window._heapid', function () {
+      assert(!window._heapid);
+      heap.initialize();
+      assert(window._heapid === settings.apiKey);
+    });
+
+    it('should call #load', function () {
+      heap.initialize();
+      assert(heap.load.called);
+    });
   });
 
-  afterEach(function () {
-    this.spy.restore();
+  describe('#load', function () {
+    it('should replace window.heap', function (done) {
+      var global = window.heap = {};
+      heap.load();
+      when(function () { return window.heap != global; }, done);
+    });
+
+    it('should callback', function (done) {
+      heap.load(done);
+    });
   });
 
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.spy.calledWith('event'));
+  describe('#identify', function () {
+    beforeEach(function () {
+      heap.initialize();
+      window.heap.identify = sinon.spy();
+    });
+
+    it('should send traits', function () {
+      heap.identify(null, { trait: true });
+      assert(window.heap.identify.calledWith({ trait: true }));
+    });
+
+    it('should alias a username', function () {
+      heap.identify(null, { username: 'username' });
+      assert(window.heap.identify.calledWith({ handle: 'username' }));
+    });
   });
 
-  it('should send an event and properties', function () {
-    analytics.track('event', { property: true });
-    assert(this.spy.calledWith('event', { property: true }));
+  describe('#track', function () {
+    beforeEach(function () {
+      heap.initialize();
+      window.heap.track = sinon.spy();
+    });
+
+    it('should send an event', function () {
+      heap.track('event');
+      assert(window.heap.track.calledWith('event'));
+    });
+
+    it('should send an event and properties', function () {
+      heap.track('event', { property: true });
+      assert(window.heap.track.calledWith('event', { property: true }));
+    });
   });
-});
 
 });

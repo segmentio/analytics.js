@@ -66,13 +66,13 @@ describe('Rollbar', function () {
       window.onerror(err);
       assert(window._rollbar.push.calledWith(err));
     });
-  });
 
     it('should call #load', function () {
       rollbar.load = sinon.spy();
       rollbar.initialize();
       assert(rollbar.load.called);
     });
+  });
 
   describe('#identify', function () {
     beforeEach(function () {

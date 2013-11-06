@@ -31,9 +31,11 @@ describe('Vero', function () {
   });
 
   describe('#initialize', function () {
-    it('should push onto _veroq', function () {
+    it('should push onto window._veroq', function () {
+      window._veroq = [];
+      window._veroq.push = sinon.spy();
       vero.initialize();
-      assert(equal(window._veroq[0], ['init', { api_key: settings.apiKey }]));
+      assert(window._veroq.push.calledWith(['init', { api_key: settings.apiKey }]));
     });
 
     it('should call #load', function () {
@@ -44,7 +46,7 @@ describe('Vero', function () {
   });
 
   describe('#load', function () {
-    it('should create window.__adroll', function (done) {
+    it('should replace window._veroq.push', function (done) {
       assert(!window._veroq);
       vero.load();
       when(function () {

@@ -14,6 +14,7 @@ describe('Yandex Metrica', function () {
 
   beforeEach(function () {
     yandex = new Yandex(settings);
+    yandex.initialize(); // noop
   });
 
   afterEach(function () {

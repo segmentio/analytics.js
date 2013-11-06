@@ -18,6 +18,7 @@ describe('UserVoice', function () {
 
   beforeEach(function () {
     uservoice = new UserVoice(settings);
+    uservoice.initialize(); // noop
   });
 
   afterEach(function () {

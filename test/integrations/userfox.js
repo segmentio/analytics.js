@@ -14,6 +14,7 @@ describe('userfox', function () {
 
   beforeEach(function () {
     userfox = new Userfox(settings);
+    userfox.initialize(); // noop
   });
 
   afterEach(function () {

@@ -14,6 +14,7 @@ describe('Woopra', function () {
 
   beforeEach(function () {
     woopra = new Woopra(settings);
+    woopra.initialize(); // noop
   });
 
   afterEach(function () {

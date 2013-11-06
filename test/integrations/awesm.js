@@ -20,7 +20,9 @@ describe('awe.sm', function () {
   });
 
   afterEach(function () {
+    var global = window.AWESM;
     awesm.reset();
+    window.AWESM = global;
   });
 
   it('should have the right settings', function () {
@@ -48,7 +50,7 @@ describe('awe.sm', function () {
 
   describe('#load', function () {
     it('should set window.AWESM._exists', function (done) {
-      assert(!window.AWESM);
+      window.AWESM = null;
       awesm.load();
       when(function () { return window.AWESM && window.AWESM._exists; }, done);
     });

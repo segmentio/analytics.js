@@ -15,6 +15,7 @@ describe('USERcycle', function () {
 
   beforeEach(function () {
     usercycle = new USERcycle(settings);
+    usercycle.initialize(); // noop
   });
 
   afterEach(function () {

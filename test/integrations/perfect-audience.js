@@ -1,71 +1,77 @@
 
 describe('Perfect Audience', function () {
 
-var analytics = window.analytics || require('analytics')
-  , assert = require('assert')
-  , sinon = require('sinon')
-  , when = require('when');
+  var PerfectAudience = require('analytics/lib/integrations/perfect-audience');
+  var assert = require('assert');
+  var sinon = require('sinon');
+  var test = require('integration-tester');
+  var when = require('when');
 
-var settings = {
-  siteId: '4ff6ade4361ed500020000a5'
-};
+  var pa;
+  var settings = {
+    siteId: '4ff6ade4361ed500020000a5'
+  };
 
-before(function (done) {
-  this.timeout(10000);
-  this.spy = sinon.spy();
-  analytics.ready(this.spy);
-  analytics.initialize({ 'Perfect Audience': settings });
-  this.integration = analytics._integrations['Perfect Audience'];
-  this.options = this.integration.options;
-  when(function () { return window._pa.track; }, done);
-});
-
-describe('#name', function () {
-  it('Perfect Audience', function () {
-    assert(this.integration.name == 'Perfect Audience');
-  });
-});
-
-describe('#key', function () {
-  it('siteId', function () {
-    assert(this.integration.key == 'siteId');
-  });
-});
-
-describe('#defaults', function () {
-  it('siteId', function () {
-    assert(this.integration.defaults.siteId === '');
-  });
-});
-
-describe('#initialize', function () {
-  it('should call ready', function () {
-    assert(this.spy.called);
-  });
-
-  it('should store options', function () {
-    assert(this.options.siteId == settings.siteId);
-  });
-});
-
-describe('#track', function () {
   beforeEach(function () {
-    this.spy = sinon.spy(window._pa, 'track');
+    pa = new PerfectAudience(settings);
   });
 
   afterEach(function () {
-    this.spy.restore();
+    pa.reset();
   });
 
-  it('should send an event', function () {
-    analytics.track('event');
-    assert(this.spy.calledWith('event', {}));
+  it('should have the right settings', function () {
+    test(pa)
+      .name('Perfect Audience')
+      .assumesPageview()
+      .readyOnLoad()
+      .global('_pa')
+      .option('siteId', '');
   });
 
-  it('should send an event and properties', function () {
-    analytics.track('event', { property: true });
-    assert(this.spy.calledWith('event', { property: true }));
-  });
-});
+  describe('#load', function () {
+    it('should create window._pa.track', function (done) {
+      pa.load();
+      when(function () { return window._pa && window._pa.track; }, done);
+    });
 
+    it('should callback', function (done) {
+      pa.load(done);
+    });
+  });
+
+  describe('#initialize', function () {
+    it('should call #load', function () {
+      pa.load = sinon.spy();
+      pa.initialize();
+      assert(pa.load.called);
+    });
+
+    it('should create the window._pa object', function () {
+      assert(!window._pa);
+      pa.initialize();
+      assert(window._pa);
+    });
+  });
+
+  describe('#track', function () {
+    beforeEach(function (done) {
+      pa.initialize();
+      // wait for ready to ensure that calls aren't queued
+      pa.on('ready', function () {
+        window._pa.track = sinon.spy();
+        done();
+      });
+    });
+
+    it('should send an event', function () {
+      pa.track('event');
+      assert(window._pa.track.calledWith('event', undefined));
+    });
+
+    it('should send an event and properties', function () {
+      pa.track('event', { property: true });
+      assert(window._pa.track.calledWith('event', { property: true }));
+    });
+  });
 });

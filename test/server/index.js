@@ -1,8 +1,15 @@
 
-var express = require('express')
-  , fs = require('fs')
-  , hbs = require('hbs')
-  , path = require('path');
+var express = require('express');
+var fs = require('fs');
+var hbs = require('hbs');
+var path = require('path');
+
+
+/**
+ * Port.
+ */
+
+var port = 4200;
 
 
 /**
@@ -12,31 +19,11 @@ var express = require('express')
 var app = express()
   .use(express.static(__dirname + '/../..'))
   .set('views', __dirname)
-  .engine('html', hbs.__express);
-
-
-/**
- * Routes.
- */
-
-app.get('/:type?', function (req, res, next) {
-  var type = req.params.type || 'all';
-  res.render('index.html', {
-    integrations: type == 'integrations' || type == 'all',
-    core: type == 'core' || type == 'all',
-    all: type == 'all'
+  .engine('html', hbs.__express)
+  .get('*', function (req, res, next) {
+    res.render('index.html');
+  })
+  .listen(port, function () {
+    fs.writeFileSync(__dirname + '/pid.txt', process.pid, 'utf-8');
+    console.log('Started testing server on port ' + port + '...');
   });
-});
-
-
-/**
- * Start.
- */
-
-var port = 4200;
-var pid = path.resolve(__dirname, '.pid.txt');
-
-app.listen(port, function () {
-  fs.writeFileSync(pid, process.pid, 'utf-8');
-  console.log('Started testing server on port ' + port + '...');
-});

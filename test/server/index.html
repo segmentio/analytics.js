@@ -26,13 +26,21 @@
   </script>
 
   <script src="test/server/utils.js"></script>
-  <script src="test/server/runner.js"></script>
 
   <script src="build/build.js"></script>
 
   <script>
-    var debug = require('debug');
-    debug.enable('*');
+    window.mocha.setup({
+      ui: 'bdd',
+      ignoreLeaks: true,
+      slow: 500,
+      timeout: 5000
+    });
+
+    if (!window.mochaPhantomJS) {
+      var debug = require('debug');
+      debug.enable('*');
+    }
   </script>
 
   {{#if core}}
@@ -45,7 +53,7 @@
 
   {{#if integrations}}
     <script src="test/integrations/adroll.js"></script>
-    <script src="test/integrations/amplitude.js"></script>
+    <!--<script src="test/integrations/amplitude.js"></script>
     <script src="test/integrations/awesm.js"></script>
     <script src="test/integrations/awesomatic.js"></script>
     <script src="test/integrations/bugherd.js"></script>
@@ -91,13 +99,20 @@
     <script src="test/integrations/usercycle.js"></script>
     <script src="test/integrations/userfox.js"></script>
     <script src="test/integrations/uservoice.js"></script>
-    <script src="test/integrations/vero.js"></script>
+    <script src="test/integrations/vero.js"></script>-->
     <!--<script src="test/integrations/visual-website-optimizer.js"></script>-->
-    <script src="test/integrations/woopra.js"></script>
-    <script src="test/integrations/yandex-metrica.js"></script>
+    <!--<script src="test/integrations/woopra.js"></script>
+    <script src="test/integrations/yandex-metrica.js"></script>-->
   {{/if}}
 </head>
 <body>
   <div id="mocha"></div>
+  <script>
+    if (window.mochaPhantomJS) {
+      window.mochaPhantomJS.run();
+    } else {
+      window.cloud(window.mocha.run());
+    }
+  </script>
 </body>
 </html>

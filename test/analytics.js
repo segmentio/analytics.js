@@ -84,6 +84,15 @@ describe('analytics', function () {
     });
   });
 
+  describe('#use', function () {
+    it('should work', function (done) {
+      analytics.use(function (singleton) {
+        assert(analytics == singleton);
+        done();
+      });
+    });
+  });
+
   describe('#initialize', function () {
     beforeEach(function () {
       sinon.spy(user, 'load');

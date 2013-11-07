@@ -2,12 +2,13 @@
 describe('Inspectlet', function () {
 
   var assert = require('assert');
+  var equal = require('equals');
   var Inspectlet = require('analytics/lib/integrations/inspectlet');
   var sinon = require('sinon');
   var test = require('integration-tester');
-  var when = require('when');
 
   var inspectlet;
+  var open = XMLHttpRequest.prototype.open;
   var settings = {
     wid: 'x'
   };
@@ -18,9 +19,11 @@ describe('Inspectlet', function () {
   });
 
   afterEach(function () {
-    var global = window.__insp;
     inspectlet.reset();
-    window.__insp = global; // keep around for jsonp callbacks
+  });
+
+  after(function () {
+    XMLHttpRequest.prototype.open = open; // inspectlet clobbers it
   });
 
   it('should have the right settings', function () {
@@ -29,10 +32,15 @@ describe('Inspectlet', function () {
       .assumesPageview()
       .readyOnLoad()
       .global('__insp')
+      .global('__insp_')
       .option('wid', '');
   });
 
   describe('#initialize', function () {
+    beforeEach(function () {
+      inspectlet.load = sinon.spy();
+    });
+
     it('should create the inspectlet queue', function () {
       assert(!window.__insp);
       inspectlet.initialize();
@@ -40,28 +48,29 @@ describe('Inspectlet', function () {
     });
 
     it('should push the wid', function () {
-      window.__insp = [];
-      window.__insp.push = sinon.spy();
       inspectlet.initialize();
-      assert(window.__insp.push.calledWith(['wid', settings.wid]));
+      assert(equal(window.__insp, [['wid', settings.wid]]));
     });
 
     it('should call #load', function () {
-      inspectlet.load = sinon.spy();
       inspectlet.initialize();
       assert(inspectlet.load.called);
     });
   });
 
   describe('#load', function () {
-    it('should create window.__insp_', function (done) {
-      assert(!window.__insp_);
-      inspectlet.load();
-      when(function () { return window.__insp_; }, done);
+    beforeEach(function () {
+      sinon.stub(inspectlet, 'load');
+      inspectlet.initialize();
+      inspectlet.load.restore();
     });
 
-    it('should callback', function (done) {
-      inspectlet.load(done);
+    it('should create window.__insp_', function (done) {
+      assert(!window.__insp_);
+      inspectlet.load(function () {
+        assert(window.__insp_);
+        done();
+      });
     });
   });
 

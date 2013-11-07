@@ -43,10 +43,8 @@ describe('Pingdom', function () {
     });
 
     it('should push the id onto window._prum', function () {
-      window._prum = [];
-      window._prum.push = sinon.spy();
       pingdom.initialize();
-      assert(window._prum.push.calledWith(['id', settings.id]));
+      assert(equal(window._prum[0], ['id', settings.id]));
     });
   });
 
@@ -64,7 +62,7 @@ describe('Pingdom', function () {
       });
     });
 
-    it('should send first byte time to Pingdom', function (done) {
+    it('should mark the first byte', function (done) {
       pingdom.load(function () {
         assert(date.getTime() == window.PRUM_EPISODES.marks.firstbyte);
         done();

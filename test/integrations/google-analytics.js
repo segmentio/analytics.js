@@ -2,10 +2,10 @@
 describe('Google Analytics', function () {
 
   var assert = require('assert');
+  var equal = require('equals');
   var GA = require('analytics/lib/integrations/google-analytics');
   var sinon = require('sinon');
   var test = require('integration-tester');
-  var when = require('when');
 
   it('should have the right settings', function () {
     var ga = new GA();
@@ -45,6 +45,10 @@ describe('Google Analytics', function () {
     });
 
     describe('#initialize', function () {
+      beforeEach(function () {
+        ga.load = sinon.spy();
+      });
+
       it('should create window.GoogleAnalyticsObject', function () {
         assert(!window.GoogleAnalyticsObject);
         ga.initialize();
@@ -64,37 +68,39 @@ describe('Google Analytics', function () {
       });
 
       it('should anonymize the ip', function () {
-        window.ga = sinon.spy();
         ga.initialize();
-        assert(window.ga.calledWith('set', 'anonymizeIp', true));
+        assert(equal(window.ga.q[0], ['set', 'anonymizeIp', true]));
       });
 
       it('should call window.ga.create with options', function () {
-        window.ga = sinon.spy();
         ga.initialize();
-        assert(window.ga.calledWith('create', settings.trackingId, {
+        assert(equal(window.ga.q[1], ['create', settings.trackingId, {
           cookieDomain: settings.domain,
           siteSpeedSampleRate: settings.siteSpeedSampleRate,
           allowLinker: true
-        }));
+        }]));
       });
 
       it('should call #load', function () {
-        ga.load = sinon.spy();
         ga.initialize();
         assert(ga.load.called);
       });
     });
 
     describe('#load', function () {
-      it('should create window.gaplugins', function (done) {
-        assert(!window.gaplugins);
-        ga.load();
-        when(function () { return window.gaplugins; }, done);
+      beforeEach(function () {
+        sinon.stub(ga, 'load');
+        ga.initialize();
+        ga.load.restore();
       });
 
-      it('should callback', function (done) {
-        ga.load(done);
+      it('should create window.gaplugins', function (done) {
+        assert(!window.gaplugins);
+        ga.load(function (err) {
+          if (err) return done(err);
+          assert(window.gaplugins);
+          done();
+        });
       });
     });
 
@@ -231,6 +237,10 @@ describe('Google Analytics', function () {
     });
 
     describe('#initializeClassic', function () {
+      beforeEach(function () {
+        ga.load = sinon.spy();
+      });
+
       it('should create window._gaq', function () {
         assert(!window._gaq);
         ga.initialize();
@@ -238,53 +248,39 @@ describe('Google Analytics', function () {
       });
 
       it('should push the tracking id', function () {
-        window._gaq = [];
-        window._gaq.push = sinon.spy();
         ga.initialize();
-        assert(window._gaq.push.calledWith(['_setAccount', settings.trackingId]));
+        assert(equal(window._gaq[0], ['_setAccount', settings.trackingId]));
       });
 
       it('should set allow linker', function () {
-        window._gaq = [];
-        window._gaq.push = sinon.spy();
         ga.initialize();
-        assert(window._gaq.push.calledWith(['_setAllowLinker', true]));
+        assert(equal(window._gaq[1], ['_setAllowLinker', true]));
       });
 
       it('should set anonymize ip', function () {
-        window._gaq = [];
-        window._gaq.push = sinon.spy();
         ga.initialize();
-        assert(window._gaq.push.calledWith(['_gat._anonymizeIp']));
+        assert(equal(window._gaq[2], ['_gat._anonymizeIp']));
       });
 
       it('should set domain name', function () {
-        window._gaq = [];
-        window._gaq.push = sinon.spy();
         ga.initialize();
-        assert(window._gaq.push.calledWith(['_setDomainName', settings.domain]));
+        assert(equal(window._gaq[3], ['_setDomainName', settings.domain]));
       });
 
       it('should set site speed sample rate', function () {
-        window._gaq = [];
-        window._gaq.push = sinon.spy();
         ga.initialize();
-        assert(window._gaq.push.calledWith(['_setSiteSpeedSampleRate', settings.siteSpeedSampleRate]));
+        assert(equal(window._gaq[4], ['_setSiteSpeedSampleRate', settings.siteSpeedSampleRate]));
       });
 
       it('should set enhanced link attribution', function () {
-        window._gaq = [];
-        window._gaq.push = sinon.spy();
         ga.initialize();
-        assert(window._gaq.push.calledWith(['_require', 'inpage_linkid', 'http://www.google-analytics.com/plugins/ga/inpage_linkid.js']));
+        assert(equal(window._gaq[5], ['_require', 'inpage_linkid', 'http://www.google-analytics.com/plugins/ga/inpage_linkid.js']));
       });
 
       it('should set ignored referrers', function () {
-        window._gaq = [];
-        window._gaq.push = sinon.spy();
         ga.initialize();
-        assert(window._gaq.push.calledWith(['_addIgnoredRef', settings.ignoreReferrer[0]]));
-        assert(window._gaq.push.calledWith(['_addIgnoredRef', settings.ignoreReferrer[1]]));
+        assert(equal(window._gaq[6], ['_addIgnoredRef', settings.ignoreReferrer[0]]));
+        assert(equal(window._gaq[7], ['_addIgnoredRef', settings.ignoreReferrer[1]]));
       });
 
       it('should call #load', function () {
@@ -295,15 +291,18 @@ describe('Google Analytics', function () {
     });
 
     describe('#loadClassic', function () {
-      it('should replace window._gaq.push', function (done) {
-        window._gaq = [];
-        var push = window._gaq.push;
-        ga.loadClassic();
-        when(function () { return window._gaq.push !== push; }, done);
+      beforeEach(function () {
+        sinon.stub(ga, 'loadClassic');
+        ga.initialize();
+        ga.loadClassic.restore();
       });
 
-      it('should callback', function (done) {
-        ga.loadClassic(done);
+      it('should replace window._gaq.push', function (done) {
+        ga.loadClassic(function (err) {
+          if (err) return done(err);
+          assert(window._gaq.push !== Array.prototype.push);
+          done();
+        });
       });
     });
 

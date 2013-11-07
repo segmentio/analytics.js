@@ -37,10 +37,8 @@ describe('Vero', function () {
     });
 
     it('should push onto window._veroq', function () {
-      window._veroq = [];
-      window._veroq.push = sinon.spy();
       vero.initialize();
-      assert(window._veroq.push.calledWith(['init', { api_key: settings.apiKey }]));
+      assert(equal(window._veroq[0], ['init', { api_key: settings.apiKey }]));
     });
 
     it('should call #load', function () {
@@ -51,14 +49,14 @@ describe('Vero', function () {
 
   describe('#load', function () {
     beforeEach(function () {
-      var load = vero.load;
-      vero.load = function () {};
+      sinon.stub(vero, 'load');
       vero.initialize();
-      vero.load = load;
+      vero.load.restore();
     });
 
     it('should replace window._veroq.push', function (done) {
-      vero.load(function () {
+      vero.load(function (err) {
+        if (err) return done(err);
         assert(window._veroq.push !== Array.prototype.push);
         done();
       });

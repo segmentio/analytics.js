@@ -2,6 +2,7 @@
 describe('Preact', function () {
 
   var assert = require('assert');
+  var equal = require('equals');
   var Preact = require('analytics/lib/integrations/preact');
   var sinon = require('sinon');
   var test = require('integration-tester');
@@ -32,22 +33,23 @@ describe('Preact', function () {
 
   describe('#initialize', function () {
     it('should push _setCode onto the window._lnq object', function () {
-      window._lnq = [];
-      window._lnq.push = sinon.spy();
       preact.initialize();
-      assert(window._lnq.push.calledWith(['_setCode', settings.projectCode]));
+      assert(equal(window._lnq[0], ['_setCode', settings.projectCode]));
     });
   });
 
   describe('#load', function () {
-    it('should create the window._lnq object', function (done) {
-      assert(!window._lnq);
-      preact.load();
-      when(function () { return window._lnq; }, done);
+    beforeEach(function () {
+      sinon.stub(preact, 'load');
+      preact.initialize();
+      preact.load.restore();
     });
 
-    it('should callback', function (done) {
-      preact.load(done);
+    it('should create the window._lnq object', function (done) {
+      preact.load(function () {
+        assert(window._lnq);
+        done();
+      });
     });
   });
 

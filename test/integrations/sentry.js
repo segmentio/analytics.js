@@ -24,22 +24,26 @@ describe('Sentry', function () {
       .option('config', '');
   });
 
-  describe('#load', function () {
-    it('should create window.Raven', function (done) {
-      sentry.load();
-      when(function () { return window.Raven; }, done);
-    });
-
-    it('should callback', function (done) {
-      sentry.load(done);
-    });
-  });
-
   describe('#initialize', function () {
     it('should call #load', function () {
       sentry.load = sinon.spy();
       sentry.initialize();
       assert(sentry.load.called);
+    });
+  });
+
+  describe('#load', function () {
+    beforeEach(function () {
+      sinon.stub(sentry, 'load');
+      sentry.initialize();
+      sentry.load.restore();
+    });
+
+    it('should create window.Raven', function (done) {
+      sentry.load(function () {
+        assert(window.Raven);
+        done();
+      });
     });
   });
 

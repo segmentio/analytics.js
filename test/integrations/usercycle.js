@@ -32,27 +32,34 @@ describe('USERcycle', function () {
   });
 
   describe('#initialize', function () {
-    it('should call #load', function () {
+    beforeEach(function () {
       usercycle.load = sinon.spy();
-      usercycle.initialize();
-      assert(usercycle.load.called);
     });
 
     it('should push a key onto window._uc', function () {
-      window._uc = [];
-      window._uc.push = sinon.spy();
       usercycle.initialize();
-      assert(window._uc.push.calledWith(['_key', settings.key]));
+      assert(equal(window._uc[0], ['_key', settings.key]));
+    });
+
+    it('should call #load', function () {
+      usercycle.initialize();
+      assert(usercycle.load.called);
     });
   });
 
   describe('#load', function () {
+    beforeEach(function () {
+      sinon.stub(usercycle, 'load');
+      usercycle.initialize();
+      usercycle.load.restore();
+    });
+
     it('should load the window._uc script', function (done) {
-      assert(!window._uc);
-      usercycle.load();
-      when(function () {
-        return window._uc && window._uc.push !== Array.prototype.push;
-      }, done);
+      usercycle.load(function (err) {
+        if (err) return done(err);
+        assert(window._uc.push !== Array.prototype.push);
+        done();
+      });
     });
   });
 

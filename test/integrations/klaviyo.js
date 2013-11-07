@@ -2,10 +2,11 @@
 describe('Klaviyo', function () {
 
   var assert = require('assert');
+  var equal = require('equals');
   var Klaviyo = require('analytics/lib/integrations/klaviyo');
   var sinon = require('sinon');
   var test = require('integration-tester');
-  var when = require('when');
+  var tick = require('next-tick');
 
   var klaviyo;
   var settings = {
@@ -31,6 +32,10 @@ describe('Klaviyo', function () {
   });
 
   describe('#initialize', function () {
+    beforeEach(function () {
+      klaviyo.load = sinon.spy();
+    });
+
     it('should create window._learnq', function () {
       assert(!window._learnq);
       klaviyo.initialize();
@@ -38,29 +43,30 @@ describe('Klaviyo', function () {
     });
 
     it('should push an api key', function () {
-      window._learnq = [];
-      window._learnq.push = sinon.spy();
       klaviyo.initialize();
-      assert(window._learnq.push.calledWith(['account', settings.apiKey]));
+      assert(equal(window._learnq, [['account', settings.apiKey]]));
     });
 
     it('should call #load', function () {
-      klaviyo.load = sinon.spy();
       klaviyo.initialize();
       assert(klaviyo.load.called);
     });
   });
 
   describe('#load', function () {
-    it('should replace window._learnq.push', function (done) {
-      window._learnq = [];
-      var push = window._learnq.push;
-      klaviyo.load();
-      when(function () { return window._learnq.push !== push; }, done);
+    beforeEach(function () {
+      sinon.stub(klaviyo, 'load');
+      klaviyo.initialize();
+      klaviyo.load.restore();
     });
 
-    it('should callback', function (done) {
-      klaviyo.load(done);
+    it('should replace window._learnq.push', function (done) {
+      klaviyo.load(function () {
+        tick(function () {
+          assert(window._learnq.push !== Array.prototype.push);
+          done();
+        });
+      });
     });
   });
 

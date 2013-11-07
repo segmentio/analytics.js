@@ -81,6 +81,18 @@ describe('HubSpot', function () {
         email: 'name@example.com'
       }]));
     });
+
+    it('should convert date traits to ms timestamps', function () {
+      var date = '2013-11-04';
+      hubspot.identify(null, {
+        email: 'name@example.com',
+        date: date
+      });
+      assert(window._hsq.push.calledWith(['identify', {
+        email: 'name@example.com',
+        date: 1383523200000
+      }]));
+    });
   });
 
   describe('#track', function () {
@@ -96,7 +108,17 @@ describe('HubSpot', function () {
 
     it('should send an event and properties', function () {
       hubspot.track('event', { property: true });
-      assert(window._hsq.push.calledWith(['trackEvent', 'event', { property: true }]));
+      assert(window._hsq.push.calledWith(['trackEvent', 'event', {
+        property: true
+      }]));
+    });
+
+    it('should convert date properties to ms timestamps', function () {
+      var date = '2013-11-04';
+      hubspot.track('event', { date: date });
+      assert(window._hsq.push.calledWith(['trackEvent', 'event', {
+        date: 1383523200000
+      }]));
     });
   });
 

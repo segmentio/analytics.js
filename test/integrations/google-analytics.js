@@ -67,18 +67,18 @@ describe('Google Analytics', function () {
         assert('number' === typeof window.ga.l);
       });
 
-      it('should anonymize the ip', function () {
-        ga.initialize();
-        assert(equal(window.ga.q[0], ['set', 'anonymizeIp', true]));
-      });
-
       it('should call window.ga.create with options', function () {
         ga.initialize();
-        assert(equal(window.ga.q[1], ['create', settings.trackingId, {
+        assert(equal(window.ga.q[0], ['create', settings.trackingId, {
           cookieDomain: settings.domain,
           siteSpeedSampleRate: settings.siteSpeedSampleRate,
           allowLinker: true
         }]));
+      });
+
+      it('should anonymize the ip', function () {
+        ga.initialize();
+        assert(equal(window.ga.q[1], ['set', 'anonymizeIp', true]));
       });
 
       it('should call #load', function () {
@@ -370,7 +370,6 @@ describe('Google Analytics', function () {
         assert(window._gaq.push.calledWith(['_trackEvent', 'All', 'Viewed Name Page', undefined, 0, true]));
       });
     });
-
   });
 
 });

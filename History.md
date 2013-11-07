@@ -1,3 +1,30 @@
+0.18.4 - October 29, 2013
+-------------------------
+* adding convert-date 0.1.0 support
+
+0.18.3 - October 29, 2013
+-------------------------
+* hubspot: adding fix for date traits/properties (calvinfo)
+
+0.18.2 - October 28, 2013
+-------------------------
+* upgrade visionmedia/debug to most recent version, fixes security warnings when cookies are disabled.
+
+0.18.1 - October 28, 2013
+-------------------------
+* add [Evergage](http://evergage.com), by [@glajchs](https://github.com/glajchs)
+
+0.18.0 - October 24, 2013
+-------------------------
+* add event emitter
+* add `initialize`, `ready`, `identify`, `alias`, `pageview`, `track`, and `group` events and tests
+* fix date equality tests
+
+0.17.9 - October 24, 2013
+-------------------------
+* Google Analytics: fix ip anonymization should come after `create`
+* Google Analytics: fix domain to default to `"none"`
+
 0.17.8 - October 14, 2013
 -------------------------
 * Customer.io: added preliminary `group` support

@@ -1522,6 +1522,78 @@ module.exports = function after (times, func) {
 require.register("segmentio-alias/index.js", function(exports, require, module){
 
 var type = require('type');
+<<<<<<< HEAD
+=======
+
+
+/**
+ * Expose `alias`.
+ */
+
+module.exports = alias;
+
+
+/**
+ * Alias an `object`.
+ *
+ * @param {Object} obj
+ * @param {Mixed} method
+ */
+
+function alias (obj, method) {
+  switch (type(method)) {
+    case 'object': return aliasByDictionary(obj, method);
+    case 'function': return aliasByFunction(obj, method);
+  }
+}
+
+
+/**
+ * Convert the keys in an `obj` using a dictionary of `aliases`.
+ *
+ * @param {Object} obj
+ * @param {Object} aliases
+ */
+
+function aliasByDictionary (obj, aliases) {
+  for (var key in aliases) {
+    if (undefined === obj[key]) continue;
+    obj[aliases[key]] = obj[key];
+    delete obj[key];
+  }
+}
+
+
+/**
+ * Convert the keys in an `obj` using a `convert` function.
+ *
+ * @param {Object} obj
+ * @param {Function} convert
+ */
+
+function aliasByFunction (obj, convert) {
+  for (var key in obj) {
+    obj[convert(key)] = obj[key];
+    delete obj[key];
+  }
+}
+});
+require.register("segmentio-canonical/index.js", function(exports, require, module){
+module.exports = function canonical () {
+  var tags = document.getElementsByTagName('link');
+  for (var i = 0, tag; tag = tags[i]; i++) {
+    if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
+  }
+};
+});
+require.register("segmentio-convert-dates/index.js", function(exports, require, module){
+>>>>>>> master
+
+try {
+  var clone = require('clone');
+} catch (e) {
+  var clone = require('clone-component');
+}
 
 try {
   var clone = require('clone');
@@ -1544,11 +1616,21 @@ module.exports = alias;
  * @param {Mixed} method
  */
 
+<<<<<<< HEAD
 function alias (obj, method) {
   switch (type(method)) {
     case 'object': return aliasByDictionary(clone(obj), method);
     case 'function': return aliasByFunction(clone(obj), method);
+=======
+function convertDates (obj, convert) {
+  obj = clone(obj);
+  for (var key in obj) {
+    var val = obj[key];
+    if (is.date(val)) obj[key] = convert(val);
+    if (is.object(val)) obj[key] = convertDates(val, convert);
+>>>>>>> master
   }
+  return obj;
 }
 
 
@@ -3045,10 +3127,10 @@ function chooseUrl (options) {
 });
 require.register("segmentio-new-date/lib/index.js", function(exports, require, module){
 
-var is = require('is')
-  , isodate = require('isodate')
-  , milliseconds = require('./milliseconds')
-  , seconds = require('./seconds');
+var is = require('is');
+var isodate = require('isodate');
+var milliseconds = require('./milliseconds');
+var seconds = require('./seconds');
 
 
 /**
@@ -3059,8 +3141,8 @@ var is = require('is')
  */
 
 module.exports = function newDate (val) {
+  if (is.date(val)) return val;
   if (is.number(val)) return new Date(toMs(val));
-  if (is.date(val)) return new Date(val.getTime()); // firefox woulda floored
 
   // date strings
   if (isodate.is(val)) return isodate.parse(val);
@@ -3579,6 +3661,8 @@ function debug(name) {
   if (!debug.enabled(name)) return function(){};
 
   return function(fmt){
+    fmt = coerce(fmt);
+
     var curr = new Date;
     var ms = curr - (debug[name] || curr);
     debug[name] = curr;
@@ -3681,9 +3765,20 @@ debug.enabled = function(name) {
   return false;
 };
 
+/**
+ * Coerce `val`.
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
 // persist
 
-if (window.localStorage) debug.enable(localStorage.debug);
+try {
+  if (window.localStorage) debug.enable(localStorage.debug);
+} catch(e){}
 
 });
 require.register("analytics/lib/index.js", function(exports, require, module){
@@ -3741,6 +3836,7 @@ var after = require('after')
   , debug = require('debug')
   , defaults = require('defaults')
   , each = require('each')
+  , Emitter = require('emitter')
   , group = require('./group')
   , Integrations = require('./integrations')
   , is = require('is')
@@ -3768,7 +3864,11 @@ module.exports = exports = Analytics;
  */
 
 exports.VERSION =
+<<<<<<< HEAD
 Analytics.prototype.VERSION = '0.17.8';
+=======
+Analytics.prototype.VERSION = '0.18.4';
+>>>>>>> master
 
 
 /**
@@ -3816,6 +3916,13 @@ function Analytics () {
 
 
 /**
+ * Event Emitter.
+ */
+
+Emitter(Analytics.prototype);
+
+
+/**
  * Initialize with the given integration `settings` and `options`. Aliased to
  * `init` for convenience.
  *
@@ -3849,6 +3956,7 @@ Analytics.prototype.initialize = function (settings, options) {
     self._readied = true;
     var callback;
     while (callback = self._callbacks.shift()) callback();
+    self.emit('ready');
   });
 
   // initialize integrations, passing ready
@@ -3865,6 +3973,8 @@ Analytics.prototype.initialize = function (settings, options) {
   // backwards compat with angular plugin.
   // TODO: remove
   this.initialized = true;
+
+  this.emit('initialize');
 
   return this;
 };
@@ -4198,6 +4308,7 @@ Analytics.prototype._invoke = function (method, args) {
     var clonedArgs = clone(args)
     integration.invoke.apply(integration, clonedArgs);
   });
+  this.emit.apply(this, clone(args));
   return this;
 };
 
@@ -4382,6 +4493,168 @@ Cookie.prototype.remove = function (key) {
     return false;
   }
 };
+<<<<<<< HEAD
+=======
+
+
+/**
+ * Expose singleton cookie.
+ */
+
+module.exports = bind.all(new Cookie());
+
+
+/**
+ * Expose `Cookie` constructor.
+ */
+
+module.exports.Cookie = Cookie;
+});
+require.register("analytics/lib/store.js", function(exports, require, module){
+
+var bind = require('bind')
+  , defaults = require('defaults')
+  , store = require('store');
+
+
+function Store (options) {
+  this.options(options);
+}
+
+
+/**
+ * Sets the options for the store
+ *
+ * @param  {Object} options
+ *   @field {Boolean} enabled (true)
+ */
+
+Store.prototype.options = function (options) {
+  if (arguments.length === 0) return this._options;
+
+  options || (options = {});
+  defaults(options, { enabled : true });
+
+  this.enabled  = options.enabled && store.enabled;
+  this._options = options;
+};
+
+
+/**
+ * Sets a value in local storage
+ *
+ * @param  {String} key
+ * @param  {Object} value
+ */
+
+Store.prototype.set = function (key, value) {
+  if (!this.enabled) return false;
+  return store.set(key, value);
+};
+
+
+/**
+ * Gets a value from local storage
+ *
+ * @param  {String} key
+ * @return {Object}
+ */
+
+Store.prototype.get = function (key) {
+  if (!this.enabled) return null;
+  return store.get(key);
+};
+
+
+/**
+ * Removes a value from local storage
+ *
+ * @param  {String} key
+ */
+
+Store.prototype.remove = function (key) {
+  if (!this.enabled) return false;
+  return store.remove(key);
+};
+
+
+/**
+ * Expose a store singleton.
+ */
+
+module.exports = bind.all(new Store());
+
+
+/**
+ * Expose the `Store` constructor.
+ */
+
+module.exports.Store = Store;
+});
+require.register("analytics/lib/integrations.js", function(exports, require, module){
+
+var each = require('each');
+
+
+/**
+ * A list all of our integration slugs.
+ */
+
+var integrations = [
+  'adroll',
+  'amplitude',
+  'awesm',
+  'awesomatic',
+  'bugherd',
+  'chartbeat',
+  'clicktale',
+  'clicky',
+  'comscore',
+  'crazy-egg',
+  'customerio',
+  'evergage',
+  'errorception',
+  'foxmetrics',
+  'gauges',
+  'get-satisfaction',
+  'google-analytics',
+  'gosquared',
+  'heap',
+  'hittail',
+  'hubspot',
+  'improvely',
+  'inspectlet',
+  'intercom',
+  'keen-io',
+  'kissmetrics',
+  'klaviyo',
+  'leadlander',
+  'livechat',
+  'lytics',
+  'mixpanel',
+  'mousestats',
+  'olark',
+  'optimizely',
+  'perfect-audience',
+  'pingdom',
+  'preact',
+  'qualaroo',
+  'quantcast',
+  'rollbar',
+  'sentry',
+  'snapengage',
+  'spinnakr',
+  'tapstream',
+  'trakio',
+  'usercycle',
+  'userfox',
+  'uservoice',
+  'vero',
+  'visual-website-optimizer',
+  'woopra',
+  'yandex-metrica'
+];
+>>>>>>> master
 
 
 /**
@@ -5644,12 +5917,21 @@ CrazyEgg.prototype.load = function (callback) {
 });
 require.register("analytics/lib/integrations/customerio.js", function(exports, require, module){
 
+<<<<<<< HEAD
 var alias = require('alias');
 var callback = require('callback');
 var convertDates = require('convert-dates');
 var integration = require('integration');
 var load = require('load-script');
 var user = require('../user');
+=======
+var alias = require('alias')
+  , callback = require('callback')
+  , convertDates = require('convert-dates')
+  , integration = require('../integration')
+  , load = require('load-script')
+  , user = require('../user');
+>>>>>>> master
 
 
 /**
@@ -5712,7 +5994,11 @@ Customerio.prototype.identify = function (id, traits, options) {
   if (!id) return this.debug('user id required');
   traits.id = id;
   traits = convertDates(traits, convertDate);
+<<<<<<< HEAD
   traits = alias(traits, traitAliases);
+=======
+  alias(traits, { created: 'created_at' });
+>>>>>>> master
   window._cio.identify(traits);
 };
 
@@ -5727,7 +6013,11 @@ Customerio.prototype.identify = function (id, traits, options) {
 
 Customerio.prototype.group = function (id, properties, options) {
   if (id) properties.id = id;
+<<<<<<< HEAD
   properties = alias(properties, function (prop) {
+=======
+  alias(properties, function (prop) {
+>>>>>>> master
     return 'Group ' + prop;
   });
 
@@ -5760,6 +6050,129 @@ Customerio.prototype.track = function (event, properties, options) {
 
 function convertDate (date) {
   return Math.floor(date.getTime() / 1000);
+}
+});
+require.register("analytics/lib/integrations/evergage.js", function(exports, require, module){
+
+var alias = require('alias');
+var each = require('each');
+var integration = require('../integration');
+var load = require('load-script');
+
+
+/**
+ * Expose `Evergage` integration.
+ */
+
+var Evergage = module.exports = integration('Evergage');
+
+
+/**
+ * Default options.
+ */
+
+Evergage.prototype.defaults = {
+  // your Evergage account name as seen in accountName.evergage.com (required)
+  account: null,
+  // your Evergage dataset ID, not dataset label (required)
+  dataset: null
+};
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} options
+ * @param {Function} ready
+ */
+
+Evergage.prototype.initialize = function (options, ready) {
+  var account = options.account;
+  var dataset = options.dataset;
+
+  window._aaq = window._aaq || [];
+  push('setEvergageAccount', account);
+  push('setDataset', dataset);
+  push('setUseSiteConfig', true);
+  ready();
+
+  load('//cdn.evergage.com/beacon/' + account + '/' + dataset + '/scripts/evergage.min.js');
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Evergage.prototype.identify = function (id, traits, options) {
+  if (!id) return;
+  push('setUser', id);
+
+  alias(traits, {
+    name: 'userName',
+    email: 'userEmail'
+  });
+
+  each(traits, function (key, value) {
+    push('setUserField', key, value, 'page');
+  });
+};
+
+
+/**
+ * Group.
+ *
+ * @param {String} id
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Evergage.prototype.group = function (id, properties, options) {
+  if (!id) return;
+  push('setCompany', id);
+  each(properties, function(key, value) {
+    push('setAccountField', key, value, 'page');
+  });
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Evergage.prototype.track = function (event, properties, options) {
+  push('trackAction', event, properties);
+};
+
+
+/**
+ * Pageview.
+ *
+ * @param {String} url (optional)
+ */
+
+Evergage.prototype.pageview = function (url) {
+  window.Evergage.init(true);
+};
+
+
+/**
+ * Helper to push onto the Evergage queue.
+ *
+ * @param {Mixed} args...
+ */
+
+function push (args) {
+  args = [].slice.call(arguments);
+  window._aaq.push(args);
 }
 });
 require.register("analytics/lib/integrations/errorception.js", function(exports, require, module){
@@ -6107,19 +6520,28 @@ GA.prototype.initialize = function () {
   });
   window.ga.l = new Date().getTime();
 
-  // anonymize before initializing
-  if (options.anonymizeIp) window.ga('set', 'anonymizeIp', true);
-
-  // initialize
   window.ga('create', options.trackingId, {
-    cookieDomain: options.domain,
+    cookieDomain: options.domain || GA.prototype.defaults.domain, // to protect against empty string
     siteSpeedSampleRate: options.siteSpeedSampleRate,
     allowLinker: true
   });
 
+<<<<<<< HEAD
   this.load();
 };
 
+=======
+  // anonymize after initializing, otherwise a warning is shown
+  // in google analytics debugger
+  if (options.anonymizeIp) window.ga('set', 'anonymizeIp', true);
+
+  // track a pageview with the canonical url
+  if (options.initialPageview) {
+    var path, canon = canonical();
+    if (canon) path = url.parse(canon).pathname;
+    this.pageview(path);
+  }
+>>>>>>> master
 
 /**
  * Load the Google Analytics library.
@@ -6542,9 +6964,23 @@ HitTail.prototype.load = function (callback) {
 });
 require.register("analytics/lib/integrations/hubspot.js", function(exports, require, module){
 
+<<<<<<< HEAD
 var callback = require('callback');
 var integration = require('integration');
 var load = require('load-script-once');
+=======
+var callback = require('callback')
+  , convert = require('convert-dates')
+  , integration = require('../integration')
+  , load = require('load-script');
+
+
+/**
+ * Expose `HubSpot` integration.
+ */
+
+var HubSpot = module.exports = integration('HubSpot');
+>>>>>>> master
 
 
 /**
@@ -6595,7 +7031,12 @@ HubSpot.prototype.load = function (callback) {
 HubSpot.prototype.identify = function (id, traits, options) {
   if (!traits.email) return;
   if (id) traits.id = id;
+<<<<<<< HEAD
   push('identify', traits);
+=======
+  traits = convertDates(traits);
+  window._hsq.push(['identify', traits]);
+>>>>>>> master
 };
 
 
@@ -6608,7 +7049,12 @@ HubSpot.prototype.identify = function (id, traits, options) {
  */
 
 HubSpot.prototype.track = function (event, properties, options) {
+<<<<<<< HEAD
   push('trackEvent', event, properties);
+=======
+  if (properties) properties = convertDates(properties);
+  window._hsq.push(['trackEvent', event, properties]);
+>>>>>>> master
 };
 
 
@@ -6626,6 +7072,7 @@ HubSpot.prototype.page = function (name, properties, options) {
 
 
 /**
+<<<<<<< HEAD
  * Helper to push onto the HubSpot queue.
  *
  * @param {Mixed} args...
@@ -6635,6 +7082,17 @@ function push (args) {
   args = [].slice.call(arguments);
   window._hsq.push(args);
 }
+=======
+ * Convert all the dates in the HubSpot properties to millisecond times
+ *
+ * @param {Object} properties
+ */
+
+function convertDates (properties) {
+  return convert(properties, function (date) { return date.getTime(); });
+}
+
+>>>>>>> master
 });
 require.register("analytics/lib/integrations/improvely.js", function(exports, require, module){
 
@@ -6825,7 +7283,11 @@ Intercom.prototype.identify = function (id, traits, options) {
 
   // handle dates
   traits = convertDates(traits, formatDate);
+<<<<<<< HEAD
   traits = alias(traits, { created: 'created_at'});
+=======
+  alias(traits, { created: 'created_at'});
+>>>>>>> master
   if (traits.company) alias(traits.company, { created: 'created_at' });
 
   // handle options
@@ -7513,6 +7975,7 @@ Mixpanel.prototype.track = function (event, properties, options) {
 /**
  * Page.
  *
+<<<<<<< HEAD
  * https://mixpanel.com/help/reference/javascript-full-api-reference#mixpanel.track_pageview
  *
  * @param {String} name (optional)
@@ -7525,6 +7988,18 @@ Mixpanel.prototype.page = function (name, properties, options) {
   var named = this.options.trackNamedPages;
   if (named && name) this.track('Viewed ' + name + ' Page', properties);
   if (all) this.track('Loaded a Page', properties);
+=======
+ * @param {String} url (optional)
+ */
+
+Mixpanel.prototype.pageview = function (url) {
+  if (!this.options.pageview) return;
+
+  this.track('Loaded a Page', {
+    url: url || document.location.href,
+    name: document.title
+  });
+>>>>>>> master
 };
 
 
@@ -7960,8 +8435,14 @@ Preact.prototype.load = function (callback) {
 Preact.prototype.identify = function (id, traits, options) {
   if (!id) return;
   traits = convertDates(traits, convertDate);
+<<<<<<< HEAD
   traits = alias(traits, { created: 'created_at' });
   push('_setPersonData', {
+=======
+  alias(traits, { created: 'created_at' });
+
+  window._lnq.push(['_setPersonData', {
+>>>>>>> master
     name: traits.name,
     email: traits.email,
     uid: id,
@@ -8725,7 +9206,7 @@ Userfox.prototype.identify = function (id, traits, options) {
     email: traits.email
   });
 
-  convertDates(traits, formatDate);
+  traits = convertDates(traits, formatDate);
   alias(traits, { created: 'signup_date' });
   push('track', traits);
 };
@@ -8831,7 +9312,7 @@ UserVoice.prototype.load = function (callback) {
 
 UserVoice.prototype.identify = function (id, traits, options) {
   if (id) traits.id = id;
-  convertDates(traits, unix);
+  traits = convertDates(traits, unix);
   alias(traits, { created: 'created_at' });
   push('identify', traits);
 };
@@ -8847,7 +9328,7 @@ UserVoice.prototype.identify = function (id, traits, options) {
 
 UserVoice.prototype.group = function (id, properties, options) {
   if (id) properties.id = id;
-  convertDates(properties, unix);
+  properties = convertDates(properties, unix);
   alias(properties, { created: 'created_at' });
   push('identify', { account: properties });
 };
@@ -9295,6 +9776,7 @@ function push (callback) {
 
 
 
+<<<<<<< HEAD
 
 
 
@@ -9302,6 +9784,8 @@ function push (callback) {
 
 
 
+=======
+>>>>>>> master
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -9373,6 +9857,7 @@ require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-alias/index.js", "analytics/deps/alias/index.js");
 require.alias("segmentio-alias/index.js", "alias/index.js");
+<<<<<<< HEAD
 require.alias("component-clone/index.js", "segmentio-alias/deps/clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
@@ -9403,6 +9888,9 @@ require.alias("ianstormtaylor-callback/index.js", "segmentio-analytics.js-integr
 require.alias("timoxley-next-tick/index.js", "ianstormtaylor-callback/deps/next-tick/index.js");
 
 require.alias("segmentio-after/index.js", "segmentio-analytics.js-integration/deps/after/index.js");
+=======
+require.alias("component-type/index.js", "segmentio-alias/deps/type/index.js");
+>>>>>>> master
 
 require.alias("yields-slug/index.js", "segmentio-analytics.js-integration/deps/slug/index.js");
 

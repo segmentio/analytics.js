@@ -39,6 +39,10 @@ describe('AdRoll', function () {
   });
 
   describe('#initialize', function () {
+    beforeEach(function () {
+      adroll.load = sinon.spy();
+    });
+
     it('should initialize the adroll variables', function () {
       adroll.initialize();
       assert(window.adroll_adv_id === settings.advId);
@@ -57,7 +61,6 @@ describe('AdRoll', function () {
     });
 
     it('should call #load', function () {
-      adroll.load = sinon.spy();
       adroll.initialize();
       assert(adroll.load.called);
     });
@@ -65,19 +68,18 @@ describe('AdRoll', function () {
 
   describe('#load', function () {
     beforeEach(function () {
-      // required for load to work
-      window.adroll_adv_id = settings.advId;
-      window.adroll_pix_id = settings.pixId;
+      sinon.stub(adroll, 'load');
+      adroll.initialize();
+      adroll.load.restore();
     });
 
     it('should create window.__adroll', function (done) {
       assert(!window.__adroll);
-      adroll.load();
-      when(function () { return window.__adroll; }, done);
-    });
-
-    it('should callback', function (done) {
-      adroll.load(done);
+      adroll.load(function (err) {
+        if (err) return done(err);
+        assert(window.__adroll);
+        done();
+      });
     });
   });
 

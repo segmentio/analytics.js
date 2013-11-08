@@ -5,15 +5,11 @@
 
 The hassle-free way to integrate analytics into any web application. [See the docs.](https://segment.io/libraries/analytics.js/)
 
-Looking for an _even_ easier way to setup analytics on your website? [Check out Segment.io!](https://segment.io) It's our hosted solution that lets you add analytics services without touching any code at all.
+Looking for an _even easier_ way to setup analytics on your website? [Check out Segment.io!](https://segment.io) It's our hosted solution that lets you add analytics services without touching any code at all.
 
+Looking to add a new integration? Check out the [analytics.js-integrations](https://github.com/analytics.js-integrations) repo.
 
-## Contributing
-
-Check out our [contributing guide](https://github.com/segmentio/analytics.js/blob/master/Contributing.md)!
-
-
-## License
+## License (MIT)
 
 ```
 WWWWWW||WWWWWW
@@ -27,8 +23,6 @@ WWWWWW||WWWWWW
         _||_|| _||_||
        (__|__|(__|__|
 ```
-
-(The MIT License)
 
 Copyright (c) 2013 Segment.io Inc. <friends@segment.io>
 

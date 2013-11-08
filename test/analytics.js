@@ -1,5 +1,5 @@
 
-describe('analytics', function () {
+describe('Analytics', function () {
 
   var Analytics = require('analytics/lib/analytics');
   var assert = require('assert');
@@ -35,53 +35,25 @@ describe('analytics', function () {
     group.reset();
   });
 
-  describe('.VERSION', function () {
-    it('should be exposed', function () {
-      assert(analytics.VERSION);
-    });
+  it('should setup an Integrations object', function () {
+    assert(is.object(analytics.Integrations));
   });
 
-  describe('.Integrations', function () {
-    it('should be exposed', function () {
-      assert(is.object(analytics.Integrations));
-    });
+  it('should setup an _integrations object', function () {
+    assert(is.object(analytics._integrations));
   });
 
-  describe('.createIntegration', function () {
-    it('should be exposed', function () {
-      assert(is.function(analytics.createIntegration));
-      assert(analytics.createIntegration === createIntegration);
-    });
+  it('should set a _readied state', function () {
+    assert(false === analytics._readied);
   });
 
-  describe('.addIntegration', function () {
-    it('should be exposed', function () {
-      assert(is.function(analytics.addIntegration));
-    });
-
-    it('should add an integration', function () {
-      analytics.addIntegration(Test);
-      assert(analytics.Integrations.Test === Test);
-    });
+  it('should set a default timeout', function () {
+    analytics = new Analytics();
+    assert(300 === analytics._timeout);
   });
 
-  describe('Analytics', function () {
-    it('should setup an _integrations object', function () {
-      assert(is.object(analytics._integrations));
-    });
-
-    it('should set a _readied state', function () {
-      assert(false === analytics._readied);
-    });
-
-    it('should set a default timeout', function () {
-      analytics = new Analytics();
-      assert(300 === analytics._timeout);
-    });
-
-    it('should set the _user for backwards compatibility', function () {
-      assert(analytics._user === user);
-    });
+  it('should set the _user for backwards compatibility', function () {
+    assert(analytics._user === user);
   });
 
   describe('#use', function () {
@@ -90,6 +62,13 @@ describe('analytics', function () {
         assert(analytics == singleton);
         done();
       });
+    });
+  });
+
+  describe('#addIntegration', function () {
+    it('should add an integration', function () {
+      analytics.addIntegration(Test);
+      assert(analytics.Integrations.Test === Test);
     });
   });
 

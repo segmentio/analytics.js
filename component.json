@@ -149,6 +149,7 @@
     "lib/integrations/klaviyo.js",
     "lib/integrations/leadlander.js",
     "lib/integrations/livechat.js",
+	"lib/integrations/luckyorange.js",
     "lib/integrations/lytics.js",
     "lib/integrations/mixpanel.js",
     "lib/integrations/mousestats.js",

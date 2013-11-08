@@ -8,10 +8,7 @@ var analytics = window.analytics || require('analytics')
   , when = require('when');
 
 var settings = {
-  account: '9999999',
-  events: { 
-    'Test': '1234'
-  }
+  account: '9999999'
 };
 
 before(function (done) {
@@ -47,9 +44,8 @@ describe('#initialize', function () {
     assert(this.spy.called);
   });
 
-  it('should store account and events', function () {
+  it('should store account', function () {
     assert(this.options.account === settings.account);
-    assert(equal(this.options.events, settings.events));
   });
 
   it('should pass account to Drip', function () {
@@ -67,19 +63,14 @@ describe('#track', function () {
     this.stub.restore();
   });
 
-  it('should not track the event is not in the goal map', function () {
-    analytics.track('Not In Goal Map');
-    assert(this.stub.neverCalledWith(sinon.match.any));
-  });
-
-  it('should track if the event is in the goal map', function () {
+  it('should send event as the action', function () {
     analytics.track('Test');
-    assert(this.stub.calledWith(['trackConversion', { id: '1234' }]));
+    assert(this.stub.calledWith(['track', { action: 'Test' }]));
   });
 
   it('should convert revenue to cents and alias to "value"', function () {
     analytics.track('Test', { revenue: 9.99 });
-    assert(this.stub.calledWith(['trackConversion', { id: '1234', value: 999 }]));
+    assert(this.stub.calledWith(['track', { action: 'Test', value: 999 }]));
   });
 });
 

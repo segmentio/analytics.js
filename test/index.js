@@ -4,6 +4,8 @@ describe('analytics', function () {
   var analytics = require('analytics');
   var assert = require('assert');
   var createIntegration = require('integration');
+  var each = require('each');
+  var Integrations = require('integrations');
   var is = require('is');
 
   it('should expose a .VERSION', function () {
@@ -11,7 +13,9 @@ describe('analytics', function () {
   });
 
   it('should add integrations', function () {
-    assert(analytics.Integrations.length !== 0);
+    each(Integrations, function (name, plugin) {
+      assert(analytics.Integrations[name] === plugin.Integration);
+    });
   });
 
   it('should expose .createIntegration', function () {

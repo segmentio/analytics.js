@@ -158,7 +158,7 @@ describe('Analytics', function () {
     });
 
     it('should parse the query string', function () {
-      analytics._parseQuery = sinon.spy();
+      sinon.stub(analytics, '_parseQuery');
       analytics.initialize();
       assert(analytics._parseQuery.called);
     });
@@ -169,7 +169,9 @@ describe('Analytics', function () {
     });
 
     it('should emit initialize', function (done) {
-      analytics.once('initialize', done);
+      analytics.once('initialize',function () {
+        done();
+      });
       analytics.initialize();
     });
   });

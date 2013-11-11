@@ -311,27 +311,27 @@ describe('Analytics', function () {
     });
 
     it('should back properties with defaults', function () {
-      analytics.page('section', 'name', {});
-      assert(analytics._invoke.calledWith('page', 'section', 'name', properties));
+      analytics.page('category', 'name', {});
+      assert(analytics._invoke.calledWith('page', 'category', 'name', properties));
     });
 
-    it('should accept (section, name, properties, options, callback)', function (done) {
-      analytics.page('section', 'name', {}, {}, function () {
-        assert(analytics._invoke.calledWith('page', 'section', 'name', properties, {}));
+    it('should accept (category, name, properties, options, callback)', function (done) {
+      analytics.page('category', 'name', {}, {}, function () {
+        assert(analytics._invoke.calledWith('page', 'category', 'name', properties, {}));
         done();
       });
     });
 
-    it('should accept (section, name, properties, callback)', function (done) {
-      analytics.page('section', 'name', {}, function () {
-        assert(analytics._invoke.calledWith('page', 'section', 'name', properties));
+    it('should accept (category, name, properties, callback)', function (done) {
+      analytics.page('category', 'name', {}, function () {
+        assert(analytics._invoke.calledWith('page', 'category', 'name', properties));
         done();
       });
     });
 
-    it('should accept (section, name, callback)', function (done) {
-      analytics.page('section', 'name', function () {
-        assert(analytics._invoke.calledWith('page', 'section', 'name', properties));
+    it('should accept (category, name, callback)', function (done) {
+      analytics.page('category', 'name', function () {
+        assert(analytics._invoke.calledWith('page', 'category', 'name', properties));
         done();
       });
     });
@@ -358,14 +358,14 @@ describe('Analytics', function () {
     });
 
     it('should emit page', function (done) {
-      analytics.once('page', function (section, name, props, opts) {
-        assert('section' === section);
+      analytics.once('page', function (category, name, props, opts) {
+        assert('category' === category);
         assert('name' === name);
         assert(equal(opts, {}));
         assert(equal(props, properties));
         done();
       });
-      analytics.page('section', 'name', {}, {});
+      analytics.page('category', 'name', {}, {});
     });
   });
 

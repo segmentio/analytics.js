@@ -1,4 +1,3 @@
-
 # analytics.js
 
 [![Build Status](https://travis-ci.org/segmentio/analytics.js.png?branch=master)](https://travis-ci.org/segmentio/analytics.js)
@@ -7,7 +6,7 @@ The hassle-free way to integrate analytics into any web application. [See the do
 
 Looking for an _even easier_ way to setup analytics on your website? [Check out Segment.io!](https://segment.io) It's our hosted solution that lets you add analytics services without touching any code at all.
 
-Looking to add a new integration? Check out the [analytics.js-integrations](https://github.com/analytics.js-integrations) repo.
+Looking to add a new integration? Check out the [analytics.js-integrations](https://github.com/segmentio/analytics.js-integrations) repo.
 
 ## License (MIT)
 

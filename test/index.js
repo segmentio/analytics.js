@@ -18,9 +18,4 @@ describe('analytics', function () {
     });
   });
 
-  it('should expose .createIntegration', function () {
-    assert(is.function(analytics.createIntegration));
-    assert(analytics.createIntegration === createIntegration);
-  });
-
 });

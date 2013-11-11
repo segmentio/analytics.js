@@ -1,3 +1,34 @@
+1.0.0 - November 10, 2013
+-------------------------
+* change `pageview` method to `page`
+* add call to `page` as mandatory to initialize some analytics tools 
+* remove ability to `initialize` by `key`
+* add checking for an integration already being loaded before loading
+* add `#use` method for plugins
+* add event emitter to `analytics`
+* move integrations to [`analytics.js-integrations`](https://github.com/segmentio/analytics.js-integrations)
+* add debugging to all integrations
+* move integration factory to [`analytics.js-integration`](https://github.com/segmentio/analytics.js-integration)
+* Amplitude: rename `pageview` option to `trackAllPages`
+* Amplitude: add `trackNamedPages` option
+* Google Analytics: add `trackNamedPages` option
+* Google Analytics: remove `initialPageview` option
+* Keen IO: rename `pageview` option to `trackAllPages`
+* Keen IO: add `trackNamedPages` option
+* Keen IO: remove `initialPageview` option
+* Lytics: remove `initialPageview` option
+* Mixpanel: rename `pageview` option to `trackAllPages`
+* Mixpanel: add `trackNamedPages` option
+* Mixpanel: remove `initialPageview` option
+* Olark: rename `pageview` option  to `page`
+* Tapstream: remove `initialPageview` option
+* Tapstream: add `trackAllPages` option
+* Tapstream: add `trackNamedPages` option
+* Trak.io: remove `pageview` option
+* Trak.io: remove `initialPageview` option
+* Trak.io: add `trackNamedPages` option
+* Woopra: remove `initialPageview` option
+
 0.18.4 - October 29, 2013
 -------------------------
 * adding convert-date 0.1.0 support

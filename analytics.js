@@ -898,15 +898,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -918,9 +918,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -932,7 +930,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -945,9 +943,9 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
 });
 require.register("component-bind/index.js", function(exports, require, module){
@@ -2433,7 +2431,7 @@ var Amplitude = exports.Integration = integration('Amplitude')
   .option('apiKey', '')
   .option('trackAllPages', false)
   .option('trackNamedPages', true)
-  .option('trackSectionedPages', true);
+  .option('trackCategorizedPages', true);
 
 
 /**
@@ -2476,13 +2474,13 @@ Amplitude.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Amplitude.prototype.page = function (section, name, properties, options) {
+Amplitude.prototype.page = function (category, name, properties, options) {
   var opts = this.options;
 
   // all pages
@@ -2490,14 +2488,15 @@ Amplitude.prototype.page = function (section, name, properties, options) {
     this.track('Loaded a Page', properties);
   }
 
-  // named pages
-  if (name && opts.trackNamedPages) {
-    this.track('Viewed ' + name + ' Page', properties);
+  // categorized pages
+  if (category && opts.trackCategorizedPages) {
+    this.track('Viewed ' + category + ' Page', properties);
   }
 
-  // sectioned pages
-  if (name && section && opts.trackSectionedPages) {
-    this.track('Viewed ' + section + ' ' + name + ' Page', properties);
+  // named pages
+  if (name && opts.trackNamedPages) {
+    if (name && category) name = category + ' ' + name;
+    this.track('Viewed ' + name + ' Page', properties);
   }
 };
 
@@ -2840,15 +2839,15 @@ Chartbeat.prototype.load = function (callback) {
  *
  * http://chartbeat.com/docs/handling_virtual_page_changes/
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Chartbeat.prototype.page = function (section, name, properties, options) {
+Chartbeat.prototype.page = function (category, name, properties, options) {
   properties = properties || {};
-  if (section && name) name = section + ' ' + name;
+  if (category && name) name = category + ' ' + name;
   window.pSUPERFLY.virtualPage(properties.path, name || properties.title);
 };
 });
@@ -3050,15 +3049,15 @@ Clicky.prototype.load = function (callback) {
  *
  * http://clicky.com/help/customization#/help/custom/manual
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Clicky.prototype.page = function (section, name, properties, options) {
+Clicky.prototype.page = function (category, name, properties, options) {
   properties = properties || {};
-  if (section && name) name = section + ' ' + name;
+  if (category && name) name = category + ' ' + name;
   window.clicky.log(properties.path, name || properties.title);
 };
 
@@ -3445,13 +3444,13 @@ Evergage.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Evergage.prototype.page = function (section, name, properties, options) {
+Evergage.prototype.page = function (category, name, properties, options) {
   window.Evergage.init(true);
 };
 
@@ -3672,21 +3671,21 @@ FoxMetrics.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-FoxMetrics.prototype.page = function (section, name, properties, options) {
+FoxMetrics.prototype.page = function (category, name, properties, options) {
   properties = properties || {};
-  this._category = section; // store for later
+  this._category = category; // store for later
 
   push(
     '_fxm.pages.view',
     properties.title,   // title
     name,               // name
-    section,            // category
+    category,           // category
     properties.url,     // url
     properties.referrer // referrer
   );
@@ -3813,13 +3812,13 @@ Gauges.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Gauges.prototype.page = function (section, name, properties, options) {
+Gauges.prototype.page = function (category, name, properties, options) {
   push('track');
 };
 });
@@ -3936,7 +3935,7 @@ var GA = exports.Integration = integration('Google Analytics')
   .option('siteSpeedSampleRate', null)
   .option('trackingId', '')
   .option('trackNamedPages', true)
-  .option('trackSectionedPages', true);
+  .option('trackCategorizedPages', true);
 
 
 /**
@@ -4012,15 +4011,16 @@ GA.prototype.load = function (callback) {
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/pages
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-GA.prototype.page = function (section, name, properties, options) {
+GA.prototype.page = function (category, name, properties, options) {
   properties = properties || {};
-  this._category = section; // store for later
+  this._category = category; // store for later
+  if (name && category) name = category + ' ' + name;
 
   window.ga('send', 'pageview', {
     page: properties.path,
@@ -4028,14 +4028,14 @@ GA.prototype.page = function (section, name, properties, options) {
     url: properties.url
   });
 
+  // categorized pages
+  if (category && this.options.trackCategorizedPages) {
+    this.track('Viewed ' + category + ' Page', properties, { noninteraction: true });
+  }
+
   // named pages
   if (name && this.options.trackNamedPages) {
     this.track('Viewed ' + name + ' Page', properties, { noninteraction: true });
-  }
-
-  // sectioned pages
-  if (name && section && this.options.trackSectionedPages) {
-    this.track('Viewed ' + section + ' ' + name + ' Page', properties, { noninteraction: true });
   }
 };
 
@@ -4139,27 +4139,28 @@ GA.prototype.loadClassic = function (callback) {
  *
  * https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-GA.prototype.pageClassic = function (section, name, properties, options) {
+GA.prototype.pageClassic = function (category, name, properties, options) {
   properties = properties || {};
   options = options || {};
-  this._category = section; // store for later
+  this._category = category; // store for later
 
   push('_trackPageview', properties.path);
 
-  // named pages
-  if (name && this.options.trackNamedPages) {
-    this.track('Viewed ' + name + ' Page', properties, { noninteraction: true });
+  // categorized pages
+  if (category && this.options.trackCategorizedPages) {
+    this.track('Viewed ' + category + ' Page', properties, { noninteraction: true });
   }
 
-  // sectioned pages
-  if (name && section && this.options.trackSectionedPages) {
-    this.track('Viewed ' + section + ' ' + name + ' Page', properties, { noninteraction: true });
+  // named pages
+  if (name && this.options.trackNamedPages) {
+    if (name && category) name = category + ' ' + name;
+    this.track('Viewed ' + name + ' Page', properties, { noninteraction: true });
   }
 };
 
@@ -4289,15 +4290,15 @@ GoSquared.prototype.load = function (callback) {
  *
  * https://www.gosquared.com/customer/portal/articles/612063-tracker-functions
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-GoSquared.prototype.page = function (section, name, properties, options) {
+GoSquared.prototype.page = function (category, name, properties, options) {
   properties = properties || {};
-  if (name && section) name = section + ' ' + name;
+  if (name && category) name = category + ' ' + name;
   push('TrackView', properties.path, name || properties.title);
 };
 
@@ -4587,13 +4588,13 @@ HubSpot.prototype.load = function (fn) {
 /**
  * Page.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-HubSpot.prototype.page = function (section, name, properties, options) {
+HubSpot.prototype.page = function (category, name, properties, options) {
   push('_trackPageview');
 };
 
@@ -4979,7 +4980,7 @@ var Keen = exports.Integration = integration('Keen IO')
   .option('writeKey', '')
   .option('trackNamedPages', true)
   .option('trackAllPages', false)
-  .option('trackSectionedPages', true);
+  .option('trackCategorizedPages', true);
 
 
 /**
@@ -5025,13 +5026,13 @@ Keen.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Keen.prototype.page = function (section, name, properties, options) {
+Keen.prototype.page = function (category, name, properties, options) {
   var opts = this.options;
 
   // all pages
@@ -5041,12 +5042,13 @@ Keen.prototype.page = function (section, name, properties, options) {
 
   // named pages
   if (name && opts.trackNamedPages) {
+    if (name && category) name = category + ' ' + name;
     this.track('Viewed ' + name + ' Page', properties);
   }
 
-  // sectioned pages
-  if (name && section && opts.trackSectionedPages) {
-    this.track('Viewed ' + section + ' ' + name + ' Page', properties);
+  // categorized pages
+  if (category && opts.trackCategorizedPages) {
+    this.track('Viewed ' + category + ' Page', properties);
   }
 };
 
@@ -5115,7 +5117,7 @@ var KISSmetrics = exports.Integration = integration('KISSmetrics')
   .global('_kmil')
   .option('apiKey', '')
   .option('trackNamedPages', true)
-  .option('trackSectionedPages', true);
+  .option('trackCategorizedPages', true);
 
 
 /**
@@ -5164,24 +5166,25 @@ KISSmetrics.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-KISSmetrics.prototype.page = function (section, name, properties, options) {
+KISSmetrics.prototype.page = function (category, name, properties, options) {
   properties = properties || {};
   var opts = this.options;
 
   // named pages
   if (name && opts.trackNamedPages) {
+    if (name && category) name = category + ' ' + name;
     this.track('Viewed ' + name + ' Page', properties);
   }
 
-  // sectioned pages
-  if (name && section && opts.trackSectionedPages) {
-    this.track('Viewed ' + section + ' ' + name + ' Page', properties);
+  // categorized pages
+  if (category && opts.trackCategorizedPages) {
+    this.track('Viewed ' + category + ' Page', properties);
   }
 };
 
@@ -5584,13 +5587,13 @@ Lytics.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Lytics.prototype.page = function (section, name, properties, optional) {
+Lytics.prototype.page = function (category, name, properties, optional) {
   properties = properties || {};
   window.jstag.send(properties);
 };
@@ -5656,7 +5659,7 @@ var Mixpanel = exports.Integration = integration('Mixpanel')
   .option('token', '')
   .option('trackAllPages', false)
   .option('trackNamedPages', true)
-  .option('trackSectionedPages', true);
+  .option('trackCategorizedPages', true);
 
 
 /**
@@ -5710,28 +5713,29 @@ Mixpanel.prototype.load = function (callback) {
  *
  * https://mixpanel.com/help/reference/javascript-full-api-reference#mixpanel.track_pageview
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Mixpanel.prototype.page = function (section, name, properties, options) {
- var opts = this.options;
+Mixpanel.prototype.page = function (category, name, properties, options) {
+  var opts = this.options;
 
   // all pages
   if (opts.trackAllPages) {
     this.track('Loaded a Page', properties);
   }
 
-  // named pages
-  if (name && opts.trackNamedPages) {
-    this.track('Viewed ' + name + ' Page', properties);
+  // categorized pages
+  if (category && opts.trackCategorizedPages) {
+    this.track('Viewed ' + category + ' Page', properties);
   }
 
-  // sectioned pages
-  if (name && section && opts.trackSectionedPages) {
-    this.track('Viewed ' + section + ' ' + name + ' Page', properties);
+  // named pages
+  if (name && opts.trackNamedPages) {
+    if (name && category) name = category + ' ' + name;
+    this.track('Viewed ' + name + ' Page', properties);
   }
 };
 
@@ -5957,22 +5961,20 @@ Olark.prototype.initialize = function (page) {
 /**
  * Page.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Olark.prototype.page = function (section, name, properties, options) {
+Olark.prototype.page = function (category, name, properties, options) {
   if (!this.options.page || !this._open) return;
   properties = properties || {};
   if (!name && !properties.url) return;
 
-  if (name && section) name = section + ' ' + name;
+  if (name && category) name = category + ' ' + name;
+  var msg = name ? name.toLowerCase() + ' page' : properties.url;
 
-  var msg = name
-    ? name.toLowerCase() + ' page'
-    : properties.url;
   chat('sendNotificationToOperator', {
     body: 'looking at ' + msg // lowercase since olark does
   });
@@ -6613,19 +6615,17 @@ Quantcast.prototype.load = function (callback) {
  *
  * https://cloudup.com/cBRRFAfq6mf
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Quantcast.prototype.page = function (section, name, properties, options) {
-  var opts = this.options;
+Quantcast.prototype.page = function (category, name, properties, options) {
   var settings = {
     event: 'refresh',
-    qacct: opts.pCode,
+    qacct: this.options.pCode,
   };
-
   if (user.id()) settings.uid = user.id();
   push(settings);
 };
@@ -7001,7 +7001,7 @@ var Tapstream = exports.Integration = integration('Tapstream')
   .option('accountName', '')
   .option('trackAllPages', true)
   .option('trackNamedPages', true)
-  .option('trackSectionedPages', true);
+  .option('trackCategorizedPages', true);
 
 
 /**
@@ -7042,13 +7042,13 @@ Tapstream.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Tapstream.prototype.page = function (section, name, properties, options) {
+Tapstream.prototype.page = function (category, name, properties, options) {
   var opts = this.options;
 
   // all pages
@@ -7058,12 +7058,13 @@ Tapstream.prototype.page = function (section, name, properties, options) {
 
   // named pages
   if (name && opts.trackNamedPages) {
+    if (name && category) name = category + ' ' + name;
     this.track('Viewed ' + name + ' Page', properties);
   }
 
-  // sectioned pages
-  if (name && section && opts.trackSectionedPages) {
-    this.track('Viewed ' + section + ' ' + name + ' Page', properties);
+  // categorized pages
+  if (category && opts.trackCategorizedPages) {
+    this.track('Viewed ' + category + ' Page', properties);
   }
 };
 
@@ -7109,7 +7110,7 @@ var Trakio = exports.Integration = integration('trak.io')
   .global('trak')
   .option('token', '')
   .option('trackNamedPages', true)
-  .option('trackSectionedPages', true);
+  .option('trackCategorizedPages', true);
 
 
 /**
@@ -7165,27 +7166,26 @@ Trakio.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Trakio.prototype.page = function (section, name, properties, options) {
+Trakio.prototype.page = function (category, name, properties, options) {
   properties = properties || {};
-  var title = name || properties.title;
-  if (name && section) title = section + ' ' + name;
+  if (name && category) name = category + ' ' + name;
 
-  window.trak.io.page_view(properties.path, title);
+  window.trak.io.page_view(properties.path, name || properties.title);
 
   // named pages
   if (name && this.options.trackNamedPages) {
     this.track('Viewed ' + name + ' Page', properties);
   }
 
-  // sectioned pages
-  if (name && section && this.options.trackSectionedPages) {
-    this.track('Viewed ' + section + ' ' + name + ' Page', properties);
+  // categorized pages
+  if (category && this.options.trackCategorizedPages) {
+    this.track('Viewed ' + category + ' Page', properties);
   }
 };
 
@@ -7962,15 +7962,15 @@ Woopra.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-Woopra.prototype.page = function (section, name, properties, options) {
+Woopra.prototype.page = function (category, name, properties, options) {
   properties = properties || {};
-  if (name && section) name = section + ' ' + name;
+  if (name && category) name = category + ' ' + name;
   if (name) properties.title = name;
   window.woopra.track('pv', properties);
 };
@@ -9364,13 +9364,13 @@ Analytics.prototype.initialize = function (settings, options) {
   });
 
   // initialize integrations, passing ready
-  each(settings, function (name, options) {
+  each(settings, function (name, opts) {
     var Integration = self.Integrations[name];
-    if (options.initialPageview === false) {
+    if (options.initialPageview && opts.initialPageview === false) {
       Integration.prototype.page = after(2, Integration.prototype.page);
     }
 
-    var integration = new Integration(clone(options));
+    var integration = new Integration(clone(opts));
     integration.once('ready', ready);
     integration.initialize();
     self._integrations[name] = integration;
@@ -9561,10 +9561,10 @@ Analytics.prototype.trackForm = function (forms, event, properties) {
 
 
 /**
- * Trigger a pageview, labeling the current page with an optional `name` and
- * `properties`.
+ * Trigger a pageview, labeling the current page with an optional `category`,
+ * `name` and `properties`.
  *
- * @param {String} section (optional)
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object or String} properties (or path) (optional)
  * @param {Object} options (optional)
@@ -9572,10 +9572,10 @@ Analytics.prototype.trackForm = function (forms, event, properties) {
  * @return {Analytics}
  */
 
-Analytics.prototype.page = function (section, name, properties, options, fn) {
-  // handle section first to make everything else easier
-  if (is.string(section) && !is.string(name)) {
-    fn = options, options = properties, properties = name, name = section, section = null;
+Analytics.prototype.page = function (category, name, properties, options, fn) {
+  // handle category first to make everything else easier
+  if (is.string(category) && !is.string(name)) {
+    fn = options, options = properties, properties = name, name = category, category = null;
   }
 
   if (is.fn(options)) fn = options, options = null;
@@ -9592,7 +9592,7 @@ Analytics.prototype.page = function (section, name, properties, options, fn) {
     url: location.href
   });
 
-  this._invoke('page', section, name, properties, options);
+  this._invoke('page', category, name, properties, options);
   this._callback(fn);
   return this;
 };

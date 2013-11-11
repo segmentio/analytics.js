@@ -306,71 +306,66 @@ describe('Analytics', function () {
     });
 
     it('should call #_invoke', function () {
-      analytics.page('name');
-      assert(analytics._invoke.calledWith('page', undefined, 'name'));
-    });
-
-    it('should accept a callback', function (done) {
-      analytics.page('name', {}, {}, function () {
-        assert(analytics._invoke.calledWith('page', undefined, 'name',
-          properties, {}));
-        done();
-      });
-    });
-
-    it('should have a properties overload', function (done) {
-      analytics.page('name', function () {
-        assert(analytics._invoke.calledWith('page', undefined, 'name'));
-        done();
-      });
-    });
-
-    it('should have a properties with section overload', function (done) {
-      analytics.page('section', 'name', function () {
-        assert(analytics._invoke.calledWith('page', 'section', 'name',
-          properties));
-        done();
-      });
-    });
-
-    it('should have an options overload', function (done) {
-      analytics.page('name', {}, function () {
-        assert(analytics._invoke.calledWith('page', undefined, 'name',
-          properties));
-        done();
-      });
-    });
-
-    it('should have a section overload', function () {
-      analytics.page('section', 'name');
-      assert(analytics._invoke.calledWith('page', 'section', 'name'));
+      analytics.page();
+      assert(analytics._invoke.calledWith('page'));
     });
 
     it('should back properties with defaults', function () {
-      analytics.page('name', {});
-      assert(analytics._invoke.calledWith('page', undefined, 'name', {
-        path: location.pathname,
-        referrer: document.referrer,
-        title: document.title,
-        url: location.href
-      }));
+      analytics.page('section', 'name', {});
+      assert(analytics._invoke.calledWith('page', 'section', 'name', properties));
+    });
+
+    it('should accept (section, name, properties, options, callback)', function (done) {
+      analytics.page('section', 'name', {}, {}, function () {
+        assert(analytics._invoke.calledWith('page', 'section', 'name', properties, {}));
+        done();
+      });
+    });
+
+    it('should accept (section, name, properties, callback)', function (done) {
+      analytics.page('section', 'name', {}, function () {
+        assert(analytics._invoke.calledWith('page', 'section', 'name', properties));
+        done();
+      });
+    });
+
+    it('should accept (section, name, callback)', function (done) {
+      analytics.page('section', 'name', function () {
+        assert(analytics._invoke.calledWith('page', 'section', 'name', properties));
+        done();
+      });
+    });
+
+    it('should accept (name, properties, options, callback)', function (done) {
+      analytics.page('name', {}, {}, function () {
+        assert(analytics._invoke.calledWith('page', null, 'name', properties, {}));
+        done();
+      });
+    });
+
+    it('should accept (name, properties, callback)', function (done) {
+      analytics.page('name', {}, function () {
+        assert(analytics._invoke.calledWith('page', null, 'name', properties));
+        done();
+      });
+    });
+
+    it('should accept (name, callback)', function (done) {
+      analytics.page('name', function () {
+        assert(analytics._invoke.calledWith('page', null, 'name'));
+        done();
+      });
     });
 
     it('should emit page', function (done) {
       analytics.once('page', function (section, name, props, opts) {
-        assert(undefined === section);
-        assert('name' == name);
-        assert(equal(opts, { opt: true }));
-        assert(equal(props, {
-          prop: true,
-          path: location.pathname,
-          referrer: document.referrer,
-          title: document.title,
-          url: location.href
-        }));
+        assert('section' === section);
+        assert('name' === name);
+        assert(equal(opts, {}));
+        assert(equal(props, properties));
         done();
       });
-      analytics.page('name', { prop: true }, { opt: true });
+      analytics.page('section', 'name', {}, {});
     });
   });
 
@@ -395,9 +390,44 @@ describe('Analytics', function () {
       user.identify.restore();
     });
 
-    it('should invoke with an id, traits and options', function () {
-      analytics.identify('id', { trait: true }, { option: true });
-      assert(analytics._invoke.calledWith('identify', 'id', { trait: true }, { option: true }));
+    it('should call #_invoke', function () {
+      analytics.identify();
+      assert(analytics._invoke.calledWith('identify'));
+    });
+
+    it('should accept (id, traits, options, callback)', function (done) {
+      analytics.identify('id', {}, {}, function () {
+        assert(analytics._invoke.calledWith('identify', 'id', {}, {}));
+        done();
+      });
+    });
+
+    it('should accept (id, traits, callback)', function (done) {
+      analytics.identify('id', {}, function () {
+        assert(analytics._invoke.calledWith('identify', 'id', {}, null));
+        done();
+      });
+    });
+
+    it('should accept (id, callback)', function (done) {
+      analytics.identify('id', function () {
+        assert(analytics._invoke.calledWith('identify', 'id', {}, null));
+        done();
+      });
+    });
+
+    it('should accept (traits, options, callback)', function (done) {
+      analytics.identify({}, {}, function () {
+        assert(analytics._invoke.calledWith('identify', null, {}, {}));
+        done();
+      });
+    });
+
+    it('should accept (traits, callback)', function (done) {
+      analytics.identify({}, function () {
+        assert(analytics._invoke.calledWith('identify', null, {}));
+        done();
+      });
     });
 
     it('should identify the user', function () {
@@ -415,10 +445,6 @@ describe('Analytics', function () {
       }));
     });
 
-    it('should accept a callback', function (done) {
-      analytics.identify('id', {}, {}, done);
-    });
-
     it('should emit identify', function (done) {
       analytics.once('identify', function (id, traits, options) {
         assert(id === 'id');
@@ -427,19 +453,6 @@ describe('Analytics', function () {
         done();
       });
       analytics.identify('id', { a: 1 }, { b: 2 });
-    });
-
-    it('should have an id overload', function () {
-      analytics.identify({ trait: true }, { option: true });
-      assert(analytics._invoke.calledWith('identify', null, { trait: true }, { option: true }));
-    });
-
-    it('should have a traits overload', function (done) {
-      analytics.identify('id', done);
-    });
-
-    it('should have an options overload', function (done) {
-      analytics.identify('id', {}, done);
     });
 
     it('should parse a created string into a date', function () {
@@ -517,9 +530,44 @@ describe('Analytics', function () {
       assert(analytics.group() == group);
     });
 
-    it('should call #invoke with an id, properties and options', function () {
-      analytics.group('id', { property: true }, { option: true });
-      assert(analytics._invoke.calledWith('group', 'id', { property: true }, { option: true }));
+    it('should call #_invoke', function () {
+      analytics.group('id');
+      assert(analytics._invoke.calledWith('group'));
+    });
+
+    it('should accept (id, properties, options, callback)', function (done) {
+      analytics.group('id', {}, {}, function () {
+        assert(analytics._invoke.calledWith('group', 'id', {}, {}));
+        done();
+      });
+    });
+
+    it('should accept (id, properties, callback)', function (done) {
+      analytics.group('id', {}, function () {
+        assert(analytics._invoke.calledWith('group', 'id', {}, null));
+        done();
+      });
+    });
+
+    it('should accept (id, callback)', function (done) {
+      analytics.group('id', function () {
+        assert(analytics._invoke.calledWith('group', 'id', {}, null));
+        done();
+      });
+    });
+
+    it('should accept (properties, options, callback)', function (done) {
+      analytics.group({}, {}, function () {
+        assert(analytics._invoke.calledWith('group', null, {}, {}));
+        done();
+      });
+    });
+
+    it('should accept (properties, callback)', function (done) {
+      analytics.group({}, function () {
+        assert(analytics._invoke.calledWith('group', null, {}));
+        done();
+      });
     });
 
     it('should call #identify on the group', function () {
@@ -537,10 +585,6 @@ describe('Analytics', function () {
       }));
     });
 
-    it('should accept a callback', function (done) {
-      analytics.group('id', {}, {}, done);
-    });
-
     it('should emit group', function (done) {
       analytics.once('group', function (groupId, traits, options) {
         assert(groupId === 'id');
@@ -549,19 +593,6 @@ describe('Analytics', function () {
         done();
       });
       analytics.group('id', { a: 1 }, { b: 2 });
-    });
-
-    it('should have an id overload', function () {
-      analytics.group({ property: true }, { option: true });
-      assert(analytics._invoke.calledWith('group', null, { property: true }, { option: true }));
-    });
-
-    it('should have a properties overload', function (done) {
-      analytics.group('id', done);
-    });
-
-    it('should have an options overload', function (done) {
-      analytics.group('id', {}, done);
     });
 
     it('should parse a created string into a date', function () {
@@ -597,21 +628,30 @@ describe('Analytics', function () {
       sinon.spy(analytics, '_invoke');
     });
 
-    it('should invoke with an event, properties and options', function () {
-      analytics.track('event', { property: true }, { option: true });
-      assert(analytics._invoke.calledWith('track', 'event', { property: true }, { option: true }));
+    it('should call #_invoke', function () {
+      analytics.track();
+      assert(analytics._invoke.calledWith('track'));
     });
 
-    it('should accept a callback', function (done) {
-      analytics.track('event', {}, {}, done);
+    it('should accept (event, properties, options, callback)', function (done) {
+      analytics.track('event', {}, {}, function () {
+        assert(analytics._invoke.calledWith('track', 'event', {}, {}));
+        done();
+      });
     });
 
-    it('should have a properties overload', function (done) {
-      analytics.track('event', done);
+    it('should accept (event, properties, callback)', function (done) {
+      analytics.track('event', {}, function () {
+        assert(analytics._invoke.calledWith('track', 'event', {}, null));
+        done();
+      });
     });
 
-    it('should have an options overload', function (done) {
-      analytics.track('event', {}, done);
+    it('should accept (event, callback)', function (done) {
+      analytics.track('event', function () {
+        assert(analytics._invoke.calledWith('track', 'event', {}, null));
+        done();
+      });
     });
 
     it('should emit track', function (done) {
@@ -804,21 +844,30 @@ describe('Analytics', function () {
       sinon.spy(analytics, '_invoke');
     });
 
-    it('should invoke with a new id, old id and options', function () {
-      analytics.alias('new', 'old', {});
-      assert(analytics._invoke.calledWith('alias', 'new', 'old', {}));
+    it('should call #_invoke', function () {
+      analytics.alias();
+      assert(analytics._invoke.calledWith('alias'));
     });
 
-    it('should accept a callback', function (done) {
-      analytics.alias('new', 'old', {}, done);
+    it('should accept (new, old, options, callback)', function (done) {
+      analytics.alias('new', 'old', {}, function () {
+        assert(analytics._invoke.calledWith('alias', 'new', 'old', {}));
+        done();
+      });
     });
 
-    it('should have an options overload', function (done) {
-      analytics.alias('new', 'old', done);
+    it('should accept (new, old, callback)', function (done) {
+      analytics.alias('new', 'old', function () {
+        assert(analytics._invoke.calledWith('alias', 'new', 'old', null));
+        done();
+      });
     });
 
-    it('should have a old id overload', function (done) {
-      analytics.alias('new', done);
+    it('should accept (new, callback)', function (done) {
+      analytics.alias('new', function () {
+        assert(analytics._invoke.calledWith('alias', 'new', null, null));
+        done();
+      });
     });
 
     it('should emit alias', function (done) {

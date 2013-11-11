@@ -1,6 +1,6 @@
 1.0.2 - November 11, 2013
 -------------------------
-* rename the page method's `section` argument to `category`
+* rename the page methods `section` argument to `category`
 * update `analytics.js-integration`
 * update `analytics.js-integrations`
 

@@ -1,6 +1,8 @@
 1.0.1 - November 11, 2013
 -------------------------
 * change `page` to take a `section`
+* update `analytics.js-integration`
+* update `analytics.js-integrations`
 
 1.0.0 - November 10, 2013
 -------------------------

@@ -2,7 +2,7 @@
   "name": "analytics",
   "repo": "segmentio/analytics.js",
   "description": "The hassle-free way to integrate analytics into any web application.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "keywords": ["analytics", "analytics.js", "segment", "segment.io"],
   "dependencies": {
     "avetisk/defaults": "0.0.4",

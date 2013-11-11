@@ -13,7 +13,7 @@
 1.0.0 - November 10, 2013
 -------------------------
 * change `pageview` method to `page`
-* add call to `page` as mandatory to initialize some analytics tools 
+* add call to `page` as mandatory to initialize some analytics tools
 * remove ability to `initialize` by `key`
 * add checking for an integration already being loaded before loading
 * add `#use` method for plugins

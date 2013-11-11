@@ -1072,6 +1072,7 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
+
 var next = require('next-tick');
 
 
@@ -1327,25 +1328,25 @@ Emitter(exports);
 
 
 /**
- * Exists.
- *
- * @api private
- */
-
-exports.exists = function () {
-  for (var i = 0, key; key = this.globals[i]; i++) {
-    if (window[key] != null) return true;
-  }
-  return false;
-};
-
-/**
  * Initialize.
  */
 
 exports.initialize = function () {
   this.load();
 };
+
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ * @api private
+ */
+
+exports.loaded = function () {
+  return false;
+};
+
 
 /**
  * Load.
@@ -1357,15 +1358,18 @@ exports.load = function (cb) {
   callback.async(cb);
 };
 
+
 /**
  * Page.
  *
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-exports.page = function (name, properties, options) {};
+exports.page = function (category, name, properties, options) {};
+
 
 /**
  * Invoke a `method` that may or may not exist on the prototype with `args`,
@@ -1389,6 +1393,7 @@ exports.invoke = function (method) {
     this.debug('error %o calling %s with %o', e, method, args);
   }
 };
+
 
 /**
  * Queue a `method` with `args`. If the integration assumes an initial
@@ -1442,19 +1447,12 @@ exports.reset = function () {
 exports._wrapInitialize = function () {
   var initialize = this.initialize;
   this.initialize = function () {
-    var self = this;
     this.debug('initialize');
     this._initialized = true;
-
-    if (this.exists()) {
-      this.debug('already exists');
-      tick(function () {
-        self.emit('ready');
-      });
-      return;
-    }
-
     initialize.apply(this, arguments);
+    this.emit('initialize');
+
+    var self = this;
     if (this._readyOnInitialize) {
       tick(function () {
         self.emit('ready');
@@ -1476,9 +1474,20 @@ exports._wrapInitialize = function () {
 exports._wrapLoad = function () {
   var load = this.load;
   this.load = function (callback) {
+    var self = this;
     this.debug('loading');
 
-    var self = this;
+    if (this.loaded()) {
+      this.debug('already loaded');
+      if (self._readyOnLoad) {
+        tick(function () {
+          self.emit('ready');
+          callback && callback();
+        });
+      }
+      return;
+    }
+
     load.call(this, function (err, e) {
       self.debug('loaded');
       self.emit('load');
@@ -1501,9 +1510,10 @@ exports._wrapPage = function () {
   this.page = function () {
     if (this._assumesPageview && !this._initialized) {
       return this.initialize({
-        name: arguments[0],
-        properties: arguments[1],
-        options: arguments[2]
+        category: arguments[0],
+        name: arguments[1],
+        properties: arguments[2],
+        options: arguments[3]
       });
     }
     page.apply(this, arguments);
@@ -6327,7 +6337,8 @@ var Preact = exports.Integration = integration('Preact')
 
 Preact.prototype.initialize = function (page) {
   window._lnq = window._lnq || [];
-  push("_setCode", this.options.projectCode);
+  push('_setCode', this.options.projectCode);
+  this.load();
 };
 
 

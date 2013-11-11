@@ -294,30 +294,61 @@ describe('Analytics', function () {
   });
 
   describe('#page', function () {
+    var properties = {
+      path: window.location.pathname,
+      referrer: document.referrer,
+      title: document.title,
+      url: window.location.href
+    };
+
     beforeEach(function () {
       sinon.spy(analytics, '_invoke');
     });
 
     it('should call #_invoke', function () {
       analytics.page('name');
-      assert(analytics._invoke.calledWith('page', 'name'));
+      assert(analytics._invoke.calledWith('page', undefined, 'name'));
     });
 
     it('should accept a callback', function (done) {
-      analytics.page('name', {}, {}, done);
+      analytics.page('name', {}, {}, function () {
+        assert(analytics._invoke.calledWith('page', undefined, 'name',
+          properties, {}));
+        done();
+      });
     });
 
     it('should have a properties overload', function (done) {
-      analytics.page('name', done);
+      analytics.page('name', function () {
+        assert(analytics._invoke.calledWith('page', undefined, 'name'));
+        done();
+      });
+    });
+
+    it('should have a properties with section overload', function (done) {
+      analytics.page('section', 'name', function () {
+        assert(analytics._invoke.calledWith('page', 'section', 'name',
+          properties));
+        done();
+      });
     });
 
     it('should have an options overload', function (done) {
-      analytics.page('name', {}, done);
+      analytics.page('name', {}, function () {
+        assert(analytics._invoke.calledWith('page', undefined, 'name',
+          properties));
+        done();
+      });
+    });
+
+    it('should have a section overload', function () {
+      analytics.page('section', 'name');
+      assert(analytics._invoke.calledWith('page', 'section', 'name'));
     });
 
     it('should back properties with defaults', function () {
       analytics.page('name', {});
-      assert(analytics._invoke.calledWith('page', 'name', {
+      assert(analytics._invoke.calledWith('page', undefined, 'name', {
         path: location.pathname,
         referrer: document.referrer,
         title: document.title,
@@ -326,7 +357,8 @@ describe('Analytics', function () {
     });
 
     it('should emit page', function (done) {
-      analytics.once('page', function (name, props, opts) {
+      analytics.once('page', function (section, name, props, opts) {
+        assert(undefined === section);
         assert('name' == name);
         assert(equal(opts, { opt: true }));
         assert(equal(props, {

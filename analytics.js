@@ -1327,25 +1327,25 @@ Emitter(exports);
 
 
 /**
- * Exists.
- *
- * @api private
- */
-
-exports.exists = function () {
-  for (var i = 0, key; key = this.globals[i]; i++) {
-    if (window[key] != null) return true;
-  }
-  return false;
-};
-
-/**
  * Initialize.
  */
 
 exports.initialize = function () {
   this.load();
 };
+
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ * @api private
+ */
+
+exports.loaded = function () {
+  return false;
+};
+
 
 /**
  * Load.
@@ -1357,15 +1357,18 @@ exports.load = function (cb) {
   callback.async(cb);
 };
 
+
 /**
  * Page.
  *
+ * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-exports.page = function (name, properties, options) {};
+exports.page = function (category, name, properties, options) {};
+
 
 /**
  * Invoke a `method` that may or may not exist on the prototype with `args`,
@@ -1389,6 +1392,7 @@ exports.invoke = function (method) {
     this.debug('error %o calling %s with %o', e, method, args);
   }
 };
+
 
 /**
  * Queue a `method` with `args`. If the integration assumes an initial
@@ -1442,19 +1446,12 @@ exports.reset = function () {
 exports._wrapInitialize = function () {
   var initialize = this.initialize;
   this.initialize = function () {
-    var self = this;
     this.debug('initialize');
     this._initialized = true;
-
-    if (this.exists()) {
-      this.debug('already exists');
-      tick(function () {
-        self.emit('ready');
-      });
-      return;
-    }
-
     initialize.apply(this, arguments);
+    this.emit('initialize');
+
+    var self = this;
     if (this._readyOnInitialize) {
       tick(function () {
         self.emit('ready');
@@ -1476,9 +1473,20 @@ exports._wrapInitialize = function () {
 exports._wrapLoad = function () {
   var load = this.load;
   this.load = function (callback) {
+    var self = this;
     this.debug('loading');
 
-    var self = this;
+    if (this.loaded()) {
+      this.debug('already loaded');
+      if (self._readyOnLoad) {
+        tick(function () {
+          self.emit('ready');
+          callback && callback();
+        });
+      }
+      return;
+    }
+
     load.call(this, function (err, e) {
       self.debug('loaded');
       self.emit('load');
@@ -1501,9 +1509,10 @@ exports._wrapPage = function () {
   this.page = function () {
     if (this._assumesPageview && !this._initialized) {
       return this.initialize({
-        name: arguments[0],
-        properties: arguments[1],
-        options: arguments[2]
+        category: arguments[0],
+        name: arguments[1],
+        properties: arguments[2],
+        options: arguments[3]
       });
     }
     page.apply(this, arguments);
@@ -2258,12 +2267,14 @@ var integrations = [
   'awesm',
   'awesomatic',
   'bugherd',
+  'bugsnag',
   'chartbeat',
   'clicktale',
   'clicky',
   'comscore',
   'crazy-egg',
   'customerio',
+  'drip',
   'evergage',
   'errorception',
   'foxmetrics',
@@ -2282,6 +2293,7 @@ var integrations = [
   'klaviyo',
   'leadlander',
   'livechat',
+  'lucky-orange',
   'lytics',
   'mixpanel',
   'mousestats',
@@ -2758,6 +2770,84 @@ BugHerd.prototype.loaded = function () {
 
 BugHerd.prototype.load = function (callback) {
   load('//www.bugherd.com/sidebarv2.js?apikey=' + this.options.apiKey, callback);
+};
+});
+require.register("segmentio-analytics.js-integrations/lib/bugsnag.js", function(exports, require, module){
+
+var integration = require('integration');
+var extend = require('extend');
+var load = require('load-script');
+var onError = require('on-error');
+
+
+/**
+ * Expose plugin.
+ */
+
+module.exports = exports = function (analytics) {
+  analytics.addIntegration(Bugsnag);
+};
+
+
+/**
+ * Expose `Bugsnag` integration.
+ */
+
+var Bugsnag = exports.Integration = integration('Bugsnag')
+  .readyOnLoad()
+  .global('Bugsnag')
+  .option('apiKey', '');
+
+
+/**
+ * Initialize.
+ *
+ * https://bugsnag.com/docs/notifiers/js
+ *
+ * @param {Object} page
+ */
+
+Bugsnag.prototype.initialize = function (page) {
+  this.load();
+};
+
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Bugsnag.prototype.loaded = function () {
+  return !! window.Bugsnag;
+};
+
+
+/**
+ * Load.
+ *
+ * @param {Function} callback (optional)
+ */
+
+Bugsnag.prototype.load = function (callback) {
+  var script = load('//d2wy8f7a9ursnm.cloudfront.net/bugsnag-1.0.9.min.js', callback);
+  script.setAttribute('data-apikey', this.options.apiKey);
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+Bugsnag.prototype.identify = function (id, traits, options) {
+  traits = traits || {};
+  window.Bugsnag.metaData = window.Bugsnag.metaData || {};
+  if (id) traits.id = id;
+  extend(window.Bugsnag.metaData, traits);
 };
 });
 require.register("segmentio-analytics.js-integrations/lib/chartbeat.js", function(exports, require, module){
@@ -3365,6 +3455,99 @@ Customerio.prototype.track = function (event, properties, options) {
 
 function convertDate (date) {
   return Math.floor(date.getTime() / 1000);
+}
+});
+require.register("segmentio-analytics.js-integrations/lib/drip.js", function(exports, require, module){
+
+var alias = require('alias');
+var integration = require('integration');
+var load = require('load-script');
+var push = require('global-queue')('_dcq');
+
+
+/**
+ * Expose plugin.
+ */
+
+module.exports = exports = function (analytics) {
+  analytics.addIntegration(Drip);
+};
+
+
+/**
+ * Expose `Drip` integration.
+ */
+
+var Drip = exports.Integration = integration('Drip')
+  .assumesPageview()
+  .readyOnLoad()
+  .global('dc')
+  .global('_dcq')
+  .global('_dcs')
+  .option('account', '');
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} page
+ */
+
+Drip.prototype.initialize = function (page) {
+  window._dcq = window._dcq || [];
+  window._dcs = window._dcs || {};
+  window._dcs.account = this.options.account;
+  this.load();
+};
+
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Drip.prototype.loaded = function () {
+  return window.dc;
+};
+
+
+/**
+ * Load.
+ *
+ * @param {Function} callback
+ */
+
+Drip.prototype.load = function (callback) {
+  load('//tag.getdrip.com/' + this.options.account + '.js', callback);
+};
+
+
+/**
+ * Track.
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Drip.prototype.track = function (event, properties, options) {
+  properties = properties || {};
+  properties.action = event;
+  properties = alias(properties, { revenue: 'value' });
+  if (properties.value) properties.value = cents(properties.value);
+  push('track', properties);
+};
+
+
+/**
+ * Helper to convert revenue into a cents integer.
+ *
+ * @param {Object} props
+ */
+
+function cents (val) {
+  return Math.round(val * 100);
 }
 });
 require.register("segmentio-analytics.js-integrations/lib/evergage.js", function(exports, require, module){
@@ -4810,6 +4993,21 @@ Inspectlet.prototype.loaded = function () {
 Inspectlet.prototype.load = function (callback) {
   load('//www.inspectlet.com/inspectlet.js', callback);
 };
+
+
+/**
+ * Track.
+ *
+ * http://www.inspectlet.com/docs/tags
+ *
+ * @param {String} event
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Inspectlet.prototype.track = function (event, properties, options) {
+  push('tagSession', event);
+};
 });
 require.register("segmentio-analytics.js-integrations/lib/intercom.js", function(exports, require, module){
 
@@ -5505,6 +5703,86 @@ function convert (traits) {
   });
   return arr;
 }
+});
+require.register("segmentio-analytics.js-integrations/lib/lucky-orange.js", function(exports, require, module){
+
+var integration = require('integration');
+var load = require('load-script');
+
+
+/**
+ * Expose plugin.
+ */
+
+module.exports = exports = function (analytics) {
+  analytics.addIntegration(LuckyOrange);
+};
+
+
+/**
+ * Expose `LuckyOrange` integration.
+ */
+
+var LuckyOrange = exports.Integration = integration('Lucky Orange')
+  .assumesPageview()
+  .readyOnLoad()
+  .global('_loq')
+  .global('__wtw_lucky_site_id')
+  .global('__wtw_lucky_is_segment_io')
+  .option('siteId', null);
+
+
+/**
+ * Initialize.
+ *
+ * @param {Object} page
+ */
+
+LuckyOrange.prototype.initialize = function (page) {
+  window._loq || (window._loq = []);
+  window.__wtw_lucky_site_id = this.options.siteId;
+  this.load();
+};
+
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+LuckyOrange.prototype.loaded = function () {
+  return (window._loq && window._loq.push !== Array.prototype.push);
+};
+
+
+/**
+ * Load.
+ *
+ * @param {Function} callback
+ */
+
+LuckyOrange.prototype.load = function (callback) {
+  var cache = Math.floor(new Date().getTime() / 60000);
+  load({
+    http: 'http://www.luckyorange.com/w.js?' + cache,
+    https: 'https://ssl.luckyorange.com/w.js?' + cache
+  }, callback);
+};
+
+
+/**
+ * Identify.
+ *
+ * @param {String} id (optional)
+ * @param {Object} traits (optional)
+ * @param {Object} options (optional)
+ */
+
+LuckyOrange.prototype.identify = function (id, traits, options) {
+  if (id) window._loq.push(['identify', id]);
+  if (traits) window._loq.push(['set', traits]);
+};
 });
 require.register("segmentio-analytics.js-integrations/lib/lytics.js", function(exports, require, module){
 
@@ -6327,7 +6605,8 @@ var Preact = exports.Integration = integration('Preact')
 
 Preact.prototype.initialize = function (page) {
   window._lnq = window._lnq || [];
-  push("_setCode", this.options.projectCode);
+  push('_setCode', this.options.projectCode);
+  this.load();
 };
 
 
@@ -9080,8 +9359,6 @@ function debug(name) {
   if (!debug.enabled(name)) return function(){};
 
   return function(fmt){
-    fmt = coerce(fmt);
-
     var curr = new Date;
     var ms = curr - (debug[name] || curr);
     debug[name] = curr;
@@ -9184,20 +9461,9 @@ debug.enabled = function(name) {
   return false;
 };
 
-/**
- * Coerce `val`.
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
 // persist
 
-try {
-  if (window.localStorage) debug.enable(localStorage.debug);
-} catch(e){}
+if (window.localStorage) debug.enable(localStorage.debug);
 
 });
 require.register("analytics/lib/index.js", function(exports, require, module){
@@ -9224,7 +9490,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.0.1';
+exports.VERSION = '1.0.3';
 
 
 /**
@@ -10611,12 +10877,14 @@ require.alias("segmentio-analytics.js-integrations/lib/amplitude.js", "analytics
 require.alias("segmentio-analytics.js-integrations/lib/awesm.js", "analytics/deps/integrations/lib/awesm.js");
 require.alias("segmentio-analytics.js-integrations/lib/awesomatic.js", "analytics/deps/integrations/lib/awesomatic.js");
 require.alias("segmentio-analytics.js-integrations/lib/bugherd.js", "analytics/deps/integrations/lib/bugherd.js");
+require.alias("segmentio-analytics.js-integrations/lib/bugsnag.js", "analytics/deps/integrations/lib/bugsnag.js");
 require.alias("segmentio-analytics.js-integrations/lib/chartbeat.js", "analytics/deps/integrations/lib/chartbeat.js");
 require.alias("segmentio-analytics.js-integrations/lib/clicktale.js", "analytics/deps/integrations/lib/clicktale.js");
 require.alias("segmentio-analytics.js-integrations/lib/clicky.js", "analytics/deps/integrations/lib/clicky.js");
 require.alias("segmentio-analytics.js-integrations/lib/comscore.js", "analytics/deps/integrations/lib/comscore.js");
 require.alias("segmentio-analytics.js-integrations/lib/crazy-egg.js", "analytics/deps/integrations/lib/crazy-egg.js");
 require.alias("segmentio-analytics.js-integrations/lib/customerio.js", "analytics/deps/integrations/lib/customerio.js");
+require.alias("segmentio-analytics.js-integrations/lib/drip.js", "analytics/deps/integrations/lib/drip.js");
 require.alias("segmentio-analytics.js-integrations/lib/evergage.js", "analytics/deps/integrations/lib/evergage.js");
 require.alias("segmentio-analytics.js-integrations/lib/errorception.js", "analytics/deps/integrations/lib/errorception.js");
 require.alias("segmentio-analytics.js-integrations/lib/foxmetrics.js", "analytics/deps/integrations/lib/foxmetrics.js");
@@ -10635,6 +10903,7 @@ require.alias("segmentio-analytics.js-integrations/lib/kissmetrics.js", "analyti
 require.alias("segmentio-analytics.js-integrations/lib/klaviyo.js", "analytics/deps/integrations/lib/klaviyo.js");
 require.alias("segmentio-analytics.js-integrations/lib/leadlander.js", "analytics/deps/integrations/lib/leadlander.js");
 require.alias("segmentio-analytics.js-integrations/lib/livechat.js", "analytics/deps/integrations/lib/livechat.js");
+require.alias("segmentio-analytics.js-integrations/lib/lucky-orange.js", "analytics/deps/integrations/lib/lucky-orange.js");
 require.alias("segmentio-analytics.js-integrations/lib/lytics.js", "analytics/deps/integrations/lib/lytics.js");
 require.alias("segmentio-analytics.js-integrations/lib/mixpanel.js", "analytics/deps/integrations/lib/mixpanel.js");
 require.alias("segmentio-analytics.js-integrations/lib/mousestats.js", "analytics/deps/integrations/lib/mousestats.js");

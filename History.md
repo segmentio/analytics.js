@@ -1,10 +1,15 @@
+1.0.5 - November 12, 2013
+-------------------------
+* update `analytics.js-integrations` to `0.2.2`
+* fix `properties` overload for `page` method
+
 1.0.4 - November 12, 2013
 -------------------------
-* update to `analytics.js-integrations` version `0.2.1`
+* update `analytics.js-integrations` to `0.2.1`
 
 1.0.3 - November 11, 2013
 -------------------------
-* update to `analytics.js-integrations` version `0.2.0`
+* update `analytics.js-integrations` to `0.2.0`
 
 1.0.2 - November 11, 2013
 -------------------------

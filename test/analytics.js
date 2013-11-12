@@ -357,6 +357,20 @@ describe('Analytics', function () {
       });
     });
 
+    it('should accept (properties, options, callback)', function (done) {
+      analytics.page({}, {}, function () {
+        assert(analytics._invoke.calledWith('page', null, null, properties, {}));
+        done();
+      });
+    });
+
+    it('should accept (properties, callback)', function (done) {
+      analytics.page({}, function () {
+        assert(analytics._invoke.calledWith('page', null, null, properties));
+        done();
+      });
+    });
+
     it('should emit page', function (done) {
       analytics.once('page', function (category, name, props, opts) {
         assert('category' === category);

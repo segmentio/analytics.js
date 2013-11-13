@@ -1074,6 +1074,7 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
+
 var next = require('next-tick');
 
 
@@ -2373,14 +2374,9 @@ var AdRoll = exports.Integration = integration('AdRoll')
  */
 
 AdRoll.prototype.initialize = function (page) {
-  var options = this.options;
-  var id = user.id();
-  var traits = user.traits();
-  if (id) traits.id = id;
-
-  window.adroll_adv_id = options.advId;
-  window.adroll_pix_id = options.pixId;
-  window.adroll_custom_data = traits;
+  window.adroll_adv_id = this.options.advId;
+  window.adroll_pix_id = this.options.pixId;
+  if (user.id()) window.adroll_custom_data = { USER_ID: user.id() };
   window.__adroll_loaded = true;
   this.load();
 };
@@ -9508,7 +9504,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.0.5';
+exports.VERSION = '1.0.7';
 
 
 /**

@@ -898,15 +898,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? location.port : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -918,7 +918,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -930,7 +932,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -943,9 +945,9 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
 });
 require.register("component-bind/index.js", function(exports, require, module){
@@ -1327,25 +1329,25 @@ Emitter(exports);
 
 
 /**
+ * Exists.
+ *
+ * @api private
+ */
+
+exports.exists = function () {
+  for (var i = 0, key; key = this.globals[i]; i++) {
+    if (window[key] != null) return true;
+  }
+  return false;
+};
+
+/**
  * Initialize.
  */
 
 exports.initialize = function () {
   this.load();
 };
-
-
-/**
- * Loaded?
- *
- * @return {Boolean}
- * @api private
- */
-
-exports.loaded = function () {
-  return false;
-};
-
 
 /**
  * Load.
@@ -1357,18 +1359,15 @@ exports.load = function (cb) {
   callback.async(cb);
 };
 
-
 /**
  * Page.
  *
- * @param {String} category (optional)
  * @param {String} name (optional)
  * @param {Object} properties (optional)
  * @param {Object} options (optional)
  */
 
-exports.page = function (category, name, properties, options) {};
-
+exports.page = function (name, properties, options) {};
 
 /**
  * Invoke a `method` that may or may not exist on the prototype with `args`,
@@ -1392,7 +1391,6 @@ exports.invoke = function (method) {
     this.debug('error %o calling %s with %o', e, method, args);
   }
 };
-
 
 /**
  * Queue a `method` with `args`. If the integration assumes an initial
@@ -1446,12 +1444,19 @@ exports.reset = function () {
 exports._wrapInitialize = function () {
   var initialize = this.initialize;
   this.initialize = function () {
+    var self = this;
     this.debug('initialize');
     this._initialized = true;
-    initialize.apply(this, arguments);
-    this.emit('initialize');
 
-    var self = this;
+    if (this.exists()) {
+      this.debug('already exists');
+      tick(function () {
+        self.emit('ready');
+      });
+      return;
+    }
+
+    initialize.apply(this, arguments);
     if (this._readyOnInitialize) {
       tick(function () {
         self.emit('ready');
@@ -1473,20 +1478,9 @@ exports._wrapInitialize = function () {
 exports._wrapLoad = function () {
   var load = this.load;
   this.load = function (callback) {
-    var self = this;
     this.debug('loading');
 
-    if (this.loaded()) {
-      this.debug('already loaded');
-      if (self._readyOnLoad) {
-        tick(function () {
-          self.emit('ready');
-          callback && callback();
-        });
-      }
-      return;
-    }
-
+    var self = this;
     load.call(this, function (err, e) {
       self.debug('loaded');
       self.emit('load');
@@ -1509,10 +1503,9 @@ exports._wrapPage = function () {
   this.page = function () {
     if (this._assumesPageview && !this._initialized) {
       return this.initialize({
-        category: arguments[0],
-        name: arguments[1],
-        properties: arguments[2],
-        options: arguments[3]
+        name: arguments[0],
+        properties: arguments[1],
+        options: arguments[2]
       });
     }
     page.apply(this, arguments);
@@ -2334,6 +2327,7 @@ each(integrations, function (slug) {
 require.register("segmentio-analytics.js-integrations/lib/adroll.js", function(exports, require, module){
 
 var integration = require('integration');
+var is = require('is');
 var load = require('load-script');
 
 
@@ -2399,7 +2393,7 @@ AdRoll.prototype.initialize = function (page) {
  */
 
 AdRoll.prototype.loaded = function () {
-  return !! window.__adroll;
+  return window.__adroll;
 };
 
 
@@ -2631,6 +2625,7 @@ Awesm.prototype.track = function (event, properties, options) {
 require.register("segmentio-analytics.js-integrations/lib/awesomatic.js", function(exports, require, module){
 
 var integration = require('integration');
+var is = require('is');
 var load = require('load-script');
 var noop = function(){};
 var onBody = require('on-body');
@@ -2679,7 +2674,7 @@ Awesomatic.prototype.initialize = function (page) {
  */
 
 Awesomatic.prototype.loaded = function () {
-  return !! window.Awesomatic;
+  return is.object(window.Awesomatic);
 };
 
 
@@ -2775,6 +2770,7 @@ BugHerd.prototype.load = function (callback) {
 require.register("segmentio-analytics.js-integrations/lib/bugsnag.js", function(exports, require, module){
 
 var integration = require('integration');
+var is = require('is');
 var extend = require('extend');
 var load = require('load-script');
 var onError = require('on-error');
@@ -2819,7 +2815,7 @@ Bugsnag.prototype.initialize = function (page) {
  */
 
 Bugsnag.prototype.loaded = function () {
-  return !! window.Bugsnag;
+  return is.object(window.Bugsnag);
 };
 
 
@@ -2947,6 +2943,7 @@ var date = require('load-date');
 var domify = require('domify');
 var each = require('each');
 var integration = require('integration');
+var is = require('is');
 var useHttps = require('use-https');
 var load = require('load-script');
 var onBody = require('on-body');
@@ -3009,7 +3006,7 @@ ClickTale.prototype.initialize = function (page) {
  */
 
 ClickTale.prototype.loaded = function () {
-  return !! window.ClickTale;
+  return is.fn(window.ClickTale);
 };
 
 
@@ -3064,6 +3061,7 @@ require.register("segmentio-analytics.js-integrations/lib/clicky.js", function(e
 
 var extend = require('extend');
 var integration = require('integration');
+var is = require('is');
 var load = require('load-script');
 
 
@@ -3119,7 +3117,7 @@ Clicky.prototype.initialize = function (page) {
  */
 
 Clicky.prototype.loaded = function () {
-  return !! window.clicky;
+  return is.object(window.clicky);
 };
 
 
@@ -3461,6 +3459,7 @@ require.register("segmentio-analytics.js-integrations/lib/drip.js", function(exp
 
 var alias = require('alias');
 var integration = require('integration');
+var is = require('is');
 var load = require('load-script');
 var push = require('global-queue')('_dcq');
 
@@ -3508,7 +3507,7 @@ Drip.prototype.initialize = function (page) {
  */
 
 Drip.prototype.loaded = function () {
-  return window.dc;
+  return is.object(window.dc);
 };
 
 
@@ -4643,6 +4642,7 @@ Heap.prototype.track = function (event, properties, options) {
 require.register("segmentio-analytics.js-integrations/lib/hittail.js", function(exports, require, module){
 
 var integration = require('integration');
+var is = require('is');
 var load = require('load-script');
 
 
@@ -4684,7 +4684,7 @@ HitTail.prototype.initialize = function (page) {
  */
 
 HitTail.prototype.loaded = function () {
-  return !! window.htk;
+  return is.fn(window.htk);
 };
 
 
@@ -5064,7 +5064,7 @@ Intercom.prototype.initialize = function (page) {
  */
 
 Intercom.prototype.loaded = function () {
-  return !! window.Intercom;
+  return is.fn(window.Intercom);
 };
 
 
@@ -5290,6 +5290,7 @@ var alias = require('alias');
 var Batch = require('batch');
 var callback = require('callback');
 var integration = require('integration');
+var is = require('is');
 var load = require('load-script');
 var push = require('global-queue')('_kmq');
 
@@ -5339,7 +5340,7 @@ KISSmetrics.prototype.initialize = function (page) {
  */
 
 KISSmetrics.prototype.loaded = function () {
-  return !! window.KM;
+  return is.object(window.KM);
 };
 
 
@@ -6106,6 +6107,7 @@ require.register("segmentio-analytics.js-integrations/lib/mousestats.js", functi
 
 var each = require('each');
 var integration = require('integration');
+var is = require('is');
 var load = require('load-script');
 
 
@@ -6149,7 +6151,7 @@ MouseStats.prototype.initialize = function (page) {
  */
 
 MouseStats.prototype.loaded = function () {
-  return !! window.msaa;
+  return is.fn(window.msaa);
 };
 
 
@@ -6412,6 +6414,8 @@ Optimizely.prototype.track = function (event, properties, options) {
  */
 
 Optimizely.prototype.replay = function () {
+  if (!window.optimizely) return; // in case the snippet isnt on the page
+
   var data = window.optimizely.data;
   if (!data) return;
 
@@ -7040,6 +7044,7 @@ Rollbar.prototype.identify = function (id, traits, options) {
 require.register("segmentio-analytics.js-integrations/lib/sentry.js", function(exports, require, module){
 
 var integration = require('integration');
+var is = require('is');
 var load = require('load-script');
 
 
@@ -7085,7 +7090,7 @@ Sentry.prototype.initialize = function () {
  */
 
 Sentry.prototype.loaded = function () {
-  return !! window.Raven;
+  return is.object(window.Raven);
 };
 
 
@@ -7117,6 +7122,7 @@ Sentry.prototype.identify = function (id, traits, options) {
 require.register("segmentio-analytics.js-integrations/lib/snapengage.js", function(exports, require, module){
 
 var integration = require('integration');
+var is = require('is');
 var load = require('load-script');
 
 
@@ -7160,7 +7166,7 @@ SnapEngage.prototype.initialize = function (page) {
  */
 
 SnapEngage.prototype.loaded = function () {
-  return !! window.SnapABug;
+  return is.object(window.SnapABug);
 };
 
 
@@ -8195,7 +8201,6 @@ module.exports = exports = function (analytics) {
  */
 
 var Woopra = exports.Integration = integration('Woopra')
-  .assumesPageview()
   .readyOnLoad()
   .global('woopra')
   .option('domain', '');
@@ -9359,6 +9364,8 @@ function debug(name) {
   if (!debug.enabled(name)) return function(){};
 
   return function(fmt){
+    fmt = coerce(fmt);
+
     var curr = new Date;
     var ms = curr - (debug[name] || curr);
     debug[name] = curr;
@@ -9461,9 +9468,20 @@ debug.enabled = function(name) {
   return false;
 };
 
+/**
+ * Coerce `val`.
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
 // persist
 
-if (window.localStorage) debug.enable(localStorage.debug);
+try {
+  if (window.localStorage) debug.enable(localStorage.debug);
+} catch(e){}
 
 });
 require.register("analytics/lib/index.js", function(exports, require, module){
@@ -9490,7 +9508,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.0.3';
+exports.VERSION = '1.0.5';
 
 
 /**
@@ -9839,17 +9857,13 @@ Analytics.prototype.trackForm = function (forms, event, properties) {
  */
 
 Analytics.prototype.page = function (category, name, properties, options, fn) {
-  // handle category first to make everything else easier
-  if (is.string(category) && !is.string(name)) {
-    fn = options, options = properties, properties = name, name = category, category = null;
-  }
-
   if (is.fn(options)) fn = options, options = null;
-  if (is.fn(properties)) fn = properties, options = null, properties = null;
-  if (is.fn(name)) fn = name, options = null, properties = null, name = null;
+  if (is.fn(properties)) fn = properties, options = properties = null;
+  if (is.fn(name)) fn = name, options = properties = name = null;
   if (is.object(name)) options = properties, properties = name, name = null;
+  if (is.object(category)) options = properties, properties = name, name = category = null;
+  if (is.string(category) && !is.string(name)) name = category, category = null;
 
-  if (is.string(properties)) properties = { path: properties };
   properties = clone(properties) || {};
   defaults(properties, {
     path: canonicalPath(),

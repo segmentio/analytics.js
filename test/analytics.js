@@ -679,9 +679,9 @@ describe('Analytics', function () {
     });
 
     it('should safely convert ISO dates to date objects', function () {
-      var date = new Date();
+      var date = new Date(Date.UTC(2013, 9, 5));
       analytics.track('event', {
-        date: date.toISOString(),
+        date: '2013-10-05T00:00:00.000Z',
         nonDate: '2013'
       });
       var tracked = analytics._invoke.args[0][2];

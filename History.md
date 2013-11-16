@@ -1,3 +1,8 @@
+1.0.9 - November 15, 2013
+-------------------------
+* update `analytics.js-integrations` to `0.2.6`
+* update dependencies
+
 1.0.8 - November 14, 2013
 -------------------------
 * update `analytics.js-integrations` to `0.2.5`

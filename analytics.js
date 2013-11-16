@@ -1641,7 +1641,7 @@ function parse(html) {
 
   // tag name
   var m = /<([\w:]+)/.exec(html);
-  if (!m) throw new Error('No elements were generated.');
+  if (!m) return document.createTextNode(html);
   var tag = m[1];
 
   // body support
@@ -1660,14 +1660,16 @@ function parse(html) {
   el.innerHTML = prefix + html + suffix;
   while (depth--) el = el.lastChild;
 
-  var els = el.children;
-  if (1 == els.length) {
-    return el.removeChild(els[0]);
+  // Note: when moving children, don't rely on el.children
+  // being 'live' to support Polymer's broken behaviour.
+  // See: https://github.com/component/domify/pull/23
+  if (1 == el.children.length) {
+    return el.removeChild(el.children[0]);
   }
 
   var fragment = document.createDocumentFragment();
-  while (els.length) {
-    fragment.appendChild(el.removeChild(els[0]));
+  while (el.children.length) {
+    fragment.appendChild(el.removeChild(el.children[0]));
   }
 
   return fragment;
@@ -1776,11 +1778,10 @@ function aliasByDictionary (obj, aliases) {
  */
 
 function aliasByFunction (obj, convert) {
-  for (var key in obj) {
-    obj[convert(key)] = obj[key];
-    delete obj[key];
-  }
-  return obj;
+  // have to create another object so that ie8 won't infinite loop on keys
+  var output = {};
+  for (var key in obj) output[convert(key)] = obj[key];
+  return output;
 }
 });
 require.register("segmentio-convert-dates/index.js", function(exports, require, module){
@@ -4576,7 +4577,7 @@ var Heap = exports.Integration = integration('Heap')
  */
 
 Heap.prototype.initialize = function (page) {
-  window.heap=window.heap||[];window.heap.load=function(a){window._heapid=a;var d=function(a){return function(){window.heap.push([a].concat(Array.prototype.slice.call(arguments,0)));};},e=["identify","track"];for(var f=0;f<e.length;f++);window.heap[e[f]]=d(e[f]);};
+  window.heap=window.heap||[];window.heap.load=function(a){window._heapid=a;var d=function(a){return function(){window.heap.push([a].concat(Array.prototype.slice.call(arguments,0)));};},e=["identify","track"];for(var f=0;f<e.length;f++)window.heap[e[f]]=d(e[f]);};
   window.heap.load(this.options.apiKey);
   this.load();
 };
@@ -9512,7 +9513,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.0.8';
+exports.VERSION = '1.0.9';
 
 
 /**

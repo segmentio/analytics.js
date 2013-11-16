@@ -3,7 +3,12 @@
   "repo": "segmentio/analytics.js",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "version": "1.0.8",
-  "keywords": ["analytics", "analytics.js", "segment", "segment.io"],
+  "keywords": [
+    "analytics",
+    "analytics.js",
+    "segment",
+    "segment.io"
+  ],
   "dependencies": {
     "avetisk/defaults": "0.0.4",
     "component/clone": "0.1.0",
@@ -14,12 +19,12 @@
     "component/object": "0.0.3",
     "component/querystring": "1.1.0",
     "component/url": "0.1.0",
-    "ianstormtaylor/bind": "0.0.1",
+    "ianstormtaylor/bind": "0.0.2",
     "ianstormtaylor/callback": "0.0.1",
-    "ianstormtaylor/is": "0.0.5",
-    "segmentio/after": "0.0.1",
+    "ianstormtaylor/is": "0.1.0",
+    "segmentio/after": "0.1.0",
     "segmentio/analytics.js-integration": "0.1.4",
-    "segmentio/analytics.js-integrations": "0.2.5",
+    "segmentio/analytics.js-integrations": "0.2.6",
     "segmentio/canonical": "0.0.1",
     "segmentio/extend": "0.0.1",
     "segmentio/is-email": "0.1.1",
@@ -30,7 +35,7 @@
     "segmentio/store.js": "1.3.8",
     "segmentio/top-domain": "0.0.1",
     "yields/prevent": "0.0.2",
-    "visionmedia/debug": "0.7.3"
+    "visionmedia/debug": "0.7.4"
   },
   "development": {
     "component/jquery": "*",

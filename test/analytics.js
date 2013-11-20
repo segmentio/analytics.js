@@ -294,14 +294,15 @@ describe('Analytics', function () {
   });
 
   describe('#page', function () {
-    var properties = {
-      path: window.location.pathname,
-      referrer: document.referrer,
-      title: document.title,
-      url: window.location.href
-    };
+    var defaults;
 
     beforeEach(function () {
+      defaults = {
+        path: window.location.pathname,
+        referrer: document.referrer,
+        title: document.title,
+        url: window.location.href
+      };
       sinon.spy(analytics, '_invoke');
     });
 
@@ -311,46 +312,57 @@ describe('Analytics', function () {
     });
 
     it('should back properties with defaults', function () {
+      defaults.category = 'category';
+      defaults.name = 'name';
       analytics.page('category', 'name', {});
-      assert(analytics._invoke.calledWith('page', 'category', 'name', properties));
+      assert(analytics._invoke.calledWith('page', 'category', 'name', defaults));
     });
 
     it('should accept (category, name, properties, options, callback)', function (done) {
+      defaults.category = 'category';
+      defaults.name = 'name';
       analytics.page('category', 'name', {}, {}, function () {
-        assert(analytics._invoke.calledWith('page', 'category', 'name', properties, {}));
+        assert(analytics._invoke.calledWith('page', 'category', 'name', defaults, {}));
         done();
       });
     });
 
     it('should accept (category, name, properties, callback)', function (done) {
+      defaults.category = 'category';
+      defaults.name = 'name';
       analytics.page('category', 'name', {}, function () {
-        assert(analytics._invoke.calledWith('page', 'category', 'name', properties));
+        assert(analytics._invoke.calledWith('page', 'category', 'name', defaults));
         done();
       });
     });
 
     it('should accept (category, name, callback)', function (done) {
+      defaults.category = 'category';
+      defaults.name = 'name';
       analytics.page('category', 'name', function () {
-        assert(analytics._invoke.calledWith('page', 'category', 'name', properties));
+        assert(analytics._invoke.calledWith('page', 'category', 'name', defaults));
         done();
       });
     });
 
     it('should accept (name, properties, options, callback)', function (done) {
+      defaults.name = 'name';
       analytics.page('name', {}, {}, function () {
-        assert(analytics._invoke.calledWith('page', null, 'name', properties, {}));
+        assert(analytics._invoke.calledWith('page', null, 'name', defaults, {}));
         done();
       });
     });
 
     it('should accept (name, properties, callback)', function (done) {
+      defaults.name = 'name';
       analytics.page('name', {}, function () {
-        assert(analytics._invoke.calledWith('page', null, 'name', properties));
+        assert(analytics._invoke.calledWith('page', null, 'name', defaults));
         done();
       });
     });
 
     it('should accept (name, callback)', function (done) {
+      defaults.name = 'name';
       analytics.page('name', function () {
         assert(analytics._invoke.calledWith('page', null, 'name'));
         done();
@@ -359,24 +371,26 @@ describe('Analytics', function () {
 
     it('should accept (properties, options, callback)', function (done) {
       analytics.page({}, {}, function () {
-        assert(analytics._invoke.calledWith('page', null, null, properties, {}));
+        assert(analytics._invoke.calledWith('page', null, null, defaults, {}));
         done();
       });
     });
 
     it('should accept (properties, callback)', function (done) {
       analytics.page({}, function () {
-        assert(analytics._invoke.calledWith('page', null, null, properties));
+        assert(analytics._invoke.calledWith('page', null, null, defaults));
         done();
       });
     });
 
     it('should emit page', function (done) {
+      defaults.category = 'category';
+      defaults.name = 'name';
       analytics.once('page', function (category, name, props, opts) {
         assert('category' === category);
         assert('name' === name);
         assert(equal(opts, {}));
-        assert(equal(props, properties));
+        assert(equal(props, defaults));
         done();
       });
       analytics.page('category', 'name', {}, {});

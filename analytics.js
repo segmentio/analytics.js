@@ -898,15 +898,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -918,7 +918,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -930,7 +932,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -943,29 +945,10 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
-
-/**
- * Return default port for `protocol`.
- *
- * @param  {String} protocol
- * @return {String}
- * @api private
- */
-function port (protocol){
-  switch (protocol) {
-    case 'http:':
-      return 80;
-    case 'https:':
-      return 443;
-    default:
-      return location.port;
-  }
-}
-
 });
 require.register("component-bind/index.js", function(exports, require, module){
 
@@ -1014,8 +997,13 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-var bind = require('bind')
-  , bindAll = require('bind-all');
+try {
+  var bind = require('bind');
+} catch (e) {
+  var bind = require('bind-component');
+}
+
+var bindAll = require('bind-all');
 
 
 /**
@@ -4790,7 +4778,7 @@ HubSpot.prototype.load = function (fn) {
 
   var id = this.options.portalId;
   var cache = Math.ceil(new Date() / 300000) * 300000;
-  var url = 'https://js.hubspot.com/analytics/' + cache + '/' + id + '.js';
+  var url = 'https://js.hs-analytics.net/analytics/' + cache + '/' + id + '.js';
   var script = load(url, fn);
   script.id = 'hs-analytics';
 };
@@ -4852,6 +4840,7 @@ HubSpot.prototype.track = function (event, properties, options) {
 function convertDates (properties) {
   return convert(properties, function (date) { return date.getTime(); });
 }
+
 });
 require.register("segmentio-analytics.js-integrations/lib/improvely.js", function(exports, require, module){
 
@@ -9544,7 +9533,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.1.0';
+exports.VERSION = '1.1.1';
 
 
 /**

@@ -1,3 +1,7 @@
+1.1.1 - November 20, 2013
+-------------------------
+* update `analytics.js-integrations` to `0.2.8`
+
 1.1.0 - November 20, 2013
 -------------------------
 * add `name` and `category` defaults to `page` method calls

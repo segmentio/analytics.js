@@ -997,13 +997,8 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-try {
-  var bind = require('bind');
-} catch (e) {
-  var bind = require('bind-component');
-}
-
-var bindAll = require('bind-all');
+var bind = require('bind')
+  , bindAll = require('bind-all');
 
 
 /**
@@ -2642,11 +2637,19 @@ var onBody = require('on-body');
 
 
 /**
+ * User reference.
+ */
+
+var user;
+
+
+/**
  * Expose plugin.
  */
 
 module.exports = exports = function (analytics) {
   analytics.addIntegration(Awesomatic);
+  user = analytics.user(); // store for later
 };
 
 
@@ -2657,6 +2660,9 @@ module.exports = exports = function (analytics) {
 var Awesomatic = exports.Integration = integration('Awesomatic')
   .assumesPageview()
   .global('Awesomatic')
+  .global('AwesomaticSettings')
+  .global('AwsmSetup')
+  .global('AwsmTmp')
   .option('appId', '');
 
 
@@ -2668,9 +2674,14 @@ var Awesomatic = exports.Integration = integration('Awesomatic')
 
 Awesomatic.prototype.initialize = function (page) {
   var self = this;
-  var id = this.options.appId;
+  var id = user.id();
+  var options = user.traits();
+
+  options.appId = this.options.appId;
+  if (id) options.user_id = id;
+
   this.load(function () {
-    window.Awesomatic.initialize({ appId: id }, function () {
+    window.Awesomatic.initialize(options, function () {
       self.emit('ready'); // need to wait for initialize to callback
     });
   });
@@ -2697,21 +2708,6 @@ Awesomatic.prototype.loaded = function () {
 Awesomatic.prototype.load = function (callback) {
   var url = 'https://1c817b7a15b6941337c0-dff9b5f4adb7ba28259631e99c3f3691.ssl.cf2.rackcdn.com/gen/embed.js';
   load(url, callback);
-};
-
-
-/**
- * Identify.
- *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
- */
-
-Awesomatic.prototype.identify = function (id, traits, options) {
-  if (!id && !traits.email) return;
-  if (id) traits.userId = id;
-  window.Awesomatic.load(traits);
 };
 });
 require.register("segmentio-analytics.js-integrations/lib/bugherd.js", function(exports, require, module){
@@ -6393,7 +6389,9 @@ module.exports = exports = function (ajs) {
 
 var Optimizely = exports.Integration = integration('Optimizely')
   .readyOnInitialize()
-  .option('variations', true);
+  .option('variations', true)
+  .option('trackNamedPages', true)
+  .option('trackCategorizedPages', true);
 
 
 /**
@@ -6421,6 +6419,33 @@ Optimizely.prototype.track = function (event, properties, options) {
   properties || (properties = {});
   if (properties.revenue) properties.revenue = properties.revenue * 100;
   push('trackEvent', event, properties);
+};
+
+
+/**
+ * Page.
+ *
+ * https://www.optimizely.com/docs/api#track-event
+ *
+ * @param {String} category (optional)
+ * @param {String} name (optional)
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
+ */
+
+Optimizely.prototype.page = function (category, name, properties, options) {
+  var opts = this.options;
+
+  // categorized pages
+  if (category && opts.trackCategorizedPages) {
+    this.track('Viewed ' + category + ' Page', properties);
+  }
+
+  // named pages
+  if (name && opts.trackNamedPages) {
+    if (name && category) name = category + ' ' + name;
+    this.track('Viewed ' + name + ' Page', properties);
+  }
 };
 
 
@@ -9533,7 +9558,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.1.1';
+exports.VERSION = '1.1.3';
 
 
 /**

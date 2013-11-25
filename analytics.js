@@ -9533,7 +9533,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.1.1';
+exports.VERSION = '1.1.3';
 
 
 /**
@@ -9885,8 +9885,8 @@ Analytics.prototype.page = function (category, name, properties, options, fn) {
   if (is.fn(options)) fn = options, options = null;
   if (is.fn(properties)) fn = properties, options = properties = null;
   if (is.fn(name)) fn = name, options = properties = name = null;
+  if (is.object(category)) options = name, properties = category, name = category = null;
   if (is.object(name)) options = properties, properties = name, name = null;
-  if (is.object(category)) options = properties, properties = name, name = category = null;
   if (is.string(category) && !is.string(name)) name = category, category = null;
 
   var defs = {

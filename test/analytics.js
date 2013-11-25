@@ -311,13 +311,6 @@ describe('Analytics', function () {
       assert(analytics._invoke.calledWith('page'));
     });
 
-    it('should back properties with defaults', function () {
-      defaults.category = 'category';
-      defaults.name = 'name';
-      analytics.page('category', 'name', {});
-      assert(analytics._invoke.calledWith('page', 'category', 'name', defaults));
-    });
-
     it('should accept (category, name, properties, options, callback)', function (done) {
       defaults.category = 'category';
       defaults.name = 'name';
@@ -381,6 +374,12 @@ describe('Analytics', function () {
         assert(analytics._invoke.calledWith('page', null, null, defaults));
         done();
       });
+    });
+
+    it('should back properties with defaults', function () {
+      defaults.property = true;
+      analytics.page({ property: true });
+      assert(analytics._invoke.calledWith('page', null, null, defaults));
     });
 
     it('should emit page', function (done) {

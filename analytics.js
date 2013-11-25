@@ -9533,7 +9533,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.1.3';
+exports.VERSION = '1.1.4';
 
 
 /**

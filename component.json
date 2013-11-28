@@ -17,6 +17,7 @@
     "component/emitter": "1.1.0",
     "component/event": "0.1.1",
     "component/object": "0.0.3",
+    "component/inherit": "0.0.2",
     "component/querystring": "1.1.0",
     "component/url": "0.1.0",
     "ianstormtaylor/bind": "0.0.2",
@@ -51,6 +52,7 @@
     "lib/index.js",
     "lib/analytics.js",
     "lib/cookie.js",
+    "lib/entity.js",
     "lib/group.js",
     "lib/store.js",
     "lib/user.js"

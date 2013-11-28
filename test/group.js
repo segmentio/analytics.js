@@ -57,19 +57,19 @@ describe('group', function () {
 
     it('should get a copy of properties', function () {
       store.set(localStorageKey, { property: true });
-      assert(group._properties != group.properties());
+      assert(group._traits != group.properties());
     });
 
     it('should get properties when not persisting', function () {
       group.options({ persist: false });
-      group._properties = { property: true };
+      group._traits = { property: true };
       assert(equal({ property: true }, group.properties()));
     });
 
     it('should get a copy of properties when not persisting', function () {
       group.options({ persist: false });
-      group._properties = { property: true };
-      assert(group._properties != group.properties());
+      group._traits = { property: true };
+      assert(group._traits != group.properties());
     });
 
     it('should set properties', function () {
@@ -80,7 +80,7 @@ describe('group', function () {
     it('should set the id when not persisting', function () {
       group.options({ persist: false });
       group.properties({ property: true });
-      assert(equal({ property: true }, group._properties));
+      assert(equal({ property: true }, group._traits));
     });
 
     it('should default properties to an empty object', function () {
@@ -91,7 +91,7 @@ describe('group', function () {
     it('should default properties to an empty object when not persisting', function () {
       group.options({ persist: false });
       group.properties(null);
-      assert(equal({}, group._properties));
+      assert(equal({}, group._traits));
     });
 
     it('should be an empty object by default', function () {

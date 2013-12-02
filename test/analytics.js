@@ -908,4 +908,15 @@ describe('Analytics', function () {
     });
   });
 
+  describe('#debug', function() {
+    beforeEach(function () {
+      sinon.spy(analytics, 'debug');
+    });
+
+    it('should call #debug', function () {
+      analytics.debug();
+      assert(analytics.debug.called);
+    });
+  });
+
 });

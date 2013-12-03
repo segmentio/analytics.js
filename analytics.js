@@ -811,6 +811,15 @@ exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
 });
+require.register("component-inherit/index.js", function(exports, require, module){
+
+module.exports = function(a, b){
+  var fn = function(){};
+  fn.prototype = b.prototype;
+  a.prototype = new fn;
+  a.prototype.constructor = a;
+};
+});
 require.register("component-trim/index.js", function(exports, require, module){
 
 exports = module.exports = trim;
@@ -951,7 +960,6 @@ exports.isCrossDomain = function(url){
 };
 });
 require.register("component-bind/index.js", function(exports, require, module){
-
 /**
  * Slice reference.
  */
@@ -970,7 +978,7 @@ var slice = [].slice;
 module.exports = function(obj, fn){
   if ('string' == typeof fn) fn = obj[fn];
   if ('function' != typeof fn) throw new Error('bind() requires a function');
-  var args = [].slice.call(arguments, 2);
+  var args = slice.call(arguments, 2);
   return function(){
     return fn.apply(obj, args.concat(slice.call(arguments)));
   }
@@ -2041,6 +2049,48 @@ function onError (fn) {
     callbacks.push(window.onerror);
     window.onerror = handler;
   }
+}
+});
+require.register("segmentio-to-iso-string/index.js", function(exports, require, module){
+
+/**
+ * Expose `toIsoString`.
+ */
+
+module.exports = toIsoString;
+
+
+/**
+ * Turn a `date` into an ISO string.
+ *
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString
+ *
+ * @param {Date} date
+ * @return {String}
+ */
+
+function toIsoString (date) {
+  return date.getUTCFullYear()
+    + '-' + pad(date.getUTCMonth() + 1)
+    + '-' + pad(date.getUTCDate())
+    + 'T' + pad(date.getUTCHours())
+    + ':' + pad(date.getUTCMinutes())
+    + ':' + pad(date.getUTCSeconds())
+    + '.' + String((date.getUTCMilliseconds()/1000).toFixed(3)).slice(2, 5)
+    + 'Z';
+}
+
+
+/**
+ * Pad a `number` with a ten's place zero.
+ *
+ * @param {Number} number
+ * @return {String}
+ */
+
+function pad (number) {
+  var n = number.toString();
+  return n.length === 1 ? '0' + n : n;
 }
 });
 require.register("segmentio-to-unix-timestamp/index.js", function(exports, require, module){
@@ -5932,7 +5982,9 @@ require.register("segmentio-analytics.js-integrations/lib/mixpanel.js", function
 
 var alias = require('alias');
 var clone = require('clone');
+var dates = require('convert-dates');
 var integration = require('integration');
+var iso = require('to-iso-string');
 var load = require('load-script');
 
 
@@ -6098,6 +6150,7 @@ Mixpanel.prototype.identify = function (id, traits, options) {
 
 Mixpanel.prototype.track = function (event, properties, options) {
   properties = properties || {};
+  properties = dates(properties, iso);
   window.mixpanel.track(event, properties);
   if (properties.revenue && this.options.people) {
     window.mixpanel.people.track_charge(properties.revenue);
@@ -9566,7 +9619,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.1.5';
+exports.VERSION = '1.1.6';
 
 
 /**
@@ -10278,28 +10331,33 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 });
-require.register("analytics/lib/group.js", function(exports, require, module){
+require.register("analytics/lib/entity.js", function(exports, require, module){
 
-var debug = require('debug')('analytics:group');
-var bind = require('bind');
-var clone = require('clone');
-var cookie = require('./cookie');
-var defaults = require('defaults');
-var extend = require('extend');
-var store = require('./store');
 var traverse = require('isodate-traverse');
+var defaults = require('defaults');
+var cookie = require('./cookie');
+var store = require('./store');
+var extend = require('extend');
+var clone = require('clone');
 
 
 /**
- * Initialize a new `Group` with `options`.
+ * Expose `Entity`
+ */
+
+module.exports = Entity;
+
+
+/**
+ * Initialize new `Entity` with `options`.
  *
  * @param {Object} options
  */
 
-function Group (options) {
+function Entity(options){
   this.options(options);
   this.id(null);
-  this.properties({});
+  this.traits({});
 }
 
 
@@ -10312,31 +10370,21 @@ function Group (options) {
  *   @property {Boolean} persist (default: `true`)
  */
 
-Group.prototype.options = function (options) {
+Entity.prototype.options = function (options) {
   if (arguments.length === 0) return this._options;
   options || (options = {});
-
-  defaults(options, {
-    persist: true,
-    cookie: {
-      key: 'ajs_group_id'
-    },
-    localStorage: {
-      key: 'ajs_group_properties'
-    }
-  });
-
+  defaults(options, this.defaults || {});
   this._options = options;
 };
 
 
 /**
- * Get or set the group's `id`.
+ * Get or set the entity's `id`.
  *
  * @param {String} id
  */
 
-Group.prototype.id = function (id) {
+Entity.prototype.id = function (id) {
   switch (arguments.length) {
     case 0: return this._getId();
     case 1: return this._setId(id);
@@ -10345,12 +10393,12 @@ Group.prototype.id = function (id) {
 
 
 /**
- * Get the group's id.
+ * Get the entity's id.
  *
  * @return {String}
  */
 
-Group.prototype._getId = function () {
+Entity.prototype._getId = function () {
   var ret = this._options.persist
     ? cookie.get(this._options.cookie.key)
     : this._id;
@@ -10359,12 +10407,12 @@ Group.prototype._getId = function () {
 
 
 /**
- * Set the group's `id`.
+ * Set the entity's `id`.
  *
  * @param {String} id
  */
 
-Group.prototype._setId = function (id) {
+Entity.prototype._setId = function (id) {
   if (this._options.persist) {
     cookie.set(this._options.cookie.key, id);
   } else {
@@ -10374,113 +10422,160 @@ Group.prototype._setId = function (id) {
 
 
 /**
- * Get or set the group's `properties`.
+ * Get or set the entity's `traits`.
  *
- * @param {String} properties
+ * BACKWARDS COMPATIBILITY: aliased to `properties`
+ *
+ * @param {Object} traits
  */
 
-Group.prototype.properties = function (properties) {
+Entity.prototype.properties =
+Entity.prototype.traits = function (traits) {
   switch (arguments.length) {
-    case 0: return this._getProperties();
-    case 1: return this._setProperties(properties);
+    case 0: return this._getTraits();
+    case 1: return this._setTraits(traits);
   }
 };
 
 
 /**
- * Get the group's properties. Always convert ISO date strings into real dates,
+ * Get the entity's traits. Always convert ISO date strings into real dates,
  * since they aren't parsed back from local storage.
  *
  * @return {Object}
  */
 
-Group.prototype._getProperties = function () {
+Entity.prototype._getTraits = function () {
   var ret = this._options.persist
     ? store.get(this._options.localStorage.key)
-    : this._properties;
+    : this._traits;
   return ret ? traverse(clone(ret)) : {};
 };
 
 
 /**
- * Set the group's `properties`.
+ * Set the entity's `traits`.
  *
- * @param {Object} properties
+ * @param {Object} traits
  */
 
-Group.prototype._setProperties = function (properties) {
-  properties || (properties = {});
+Entity.prototype._setTraits = function (traits) {
+  traits || (traits = {});
   if (this._options.persist) {
-    store.set(this._options.localStorage.key, properties);
+    store.set(this._options.localStorage.key, traits);
   } else {
-    this._properties = properties;
+    this._traits = traits;
   }
 };
 
 
 /**
- * Idenfity the group with an `id` and `properties`. If we it's the same group,
- * extend the existing `properties` instead of overwriting.
+ * Idenfity the entity with an `id` and `traits`. If we it's the same entity,
+ * extend the existing `traits` instead of overwriting.
  *
  * @param {String} id
- * @param {Object} properties
+ * @param {Object} traits
  */
 
-Group.prototype.identify = function (id, properties) {
-  properties || (properties = {});
+Entity.prototype.identify = function (id, traits) {
+  traits || (traits = {});
   var current = this.id();
-  if (current === null || current === id) properties = extend(this.properties(), properties);
+  if (current === null || current === id) traits = extend(this.traits(), traits);
   if (id) this.id(id);
-  debug('identify %o, %o', id, properties);
-  this.properties(properties);
+  this.debug('identify %o, %o', id, traits);
+  this.traits(traits);
   this.save();
 };
 
 
 /**
- * Save the group to local storage and the cookie.
+ * Save the entity to local storage and the cookie.
  *
  * @return {Boolean}
  */
 
-Group.prototype.save = function () {
+Entity.prototype.save = function () {
   if (!this._options.persist) return false;
   cookie.set(this._options.cookie.key, this.id());
-  store.set(this._options.localStorage.key, this.properties());
+  store.set(this._options.localStorage.key, this.traits());
   return true;
 };
 
 
 /**
- * Log the group out, reseting `id` and `properties` to defaults.
+ * Log the entity out, reseting `id` and `traits` to defaults.
  */
 
-Group.prototype.logout = function () {
+Entity.prototype.logout = function () {
   this.id(null);
-  this.properties({});
+  this.traits({});
   cookie.remove(this._options.cookie.key);
   store.remove(this._options.localStorage.key);
 };
 
 
 /**
- * Reset all group state, logging out and returning options to defaults.
+ * Reset all entity state, logging out and returning options to defaults.
  */
 
-Group.prototype.reset = function () {
+Entity.prototype.reset = function () {
   this.logout();
   this.options({});
 };
 
 
 /**
- * Load saved group `id` or `properties` from storage.
+ * Load saved entity `id` or `traits` from storage.
  */
 
-Group.prototype.load = function () {
+Entity.prototype.load = function () {
   this.id(cookie.get(this._options.cookie.key));
-  this.properties(store.get(this._options.localStorage.key));
+  this.traits(store.get(this._options.localStorage.key));
 };
+
+
+});
+require.register("analytics/lib/group.js", function(exports, require, module){
+
+var debug = require('debug')('analytics:group');
+var Entity = require('./entity');
+var inherit = require('inherit');
+var bind = require('bind');
+
+
+/**
+ * Group defaults
+ */
+
+Group.defaults = {
+  persist: true,
+  cookie: {
+    key: 'ajs_group_id'
+  },
+  localStorage: {
+    key: 'ajs_group_properties'
+  }
+};
+
+
+/**
+ * Initialize a new `Group` with `options`.
+ *
+ * @param {Object} options
+ */
+
+function Group (options) {
+  this.defaults = Group.defaults;
+  this.debug = debug;
+  Entity.call(this, options);
+}
+
+
+/**
+ * Inherit `Entity`
+ */
+
+inherit(Group, Entity);
 
 
 /**
@@ -10587,13 +10682,26 @@ module.exports.Store = Store;
 require.register("analytics/lib/user.js", function(exports, require, module){
 
 var debug = require('debug')('analytics:user');
+var Entity = require('./entity');
+var inherit = require('inherit');
 var bind = require('bind');
-var clone = require('clone');
 var cookie = require('./cookie');
-var defaults = require('defaults');
-var extend = require('extend');
-var store = require('./store');
-var traverse = require('isodate-traverse');
+
+
+/**
+ * User defaults
+ */
+
+User.defaults = {
+  persist: true,
+  cookie: {
+    key: 'ajs_user_id',
+    oldKey: 'ajs_user'
+  },
+  localStorage: {
+    key: 'ajs_user_traits'
+  }
+};
 
 
 /**
@@ -10603,181 +10711,17 @@ var traverse = require('isodate-traverse');
  */
 
 function User (options) {
-  this.options(options);
-  this.id(null);
-  this.traits({});
+  this.defaults = User.defaults;
+  this.debug = debug;
+  Entity.call(this, options);
 }
 
 
 /**
- * Get or set storage `options`.
- *
- * @param {Object} options
- *   @property {Object} cookie
- *   @property {Object} localStorage
- *   @property {Boolean} persist (default: `true`)
+ * Inherit `Entity`
  */
 
-User.prototype.options = function (options) {
-  if (arguments.length === 0) return this._options;
-  options || (options = {});
-
-  defaults(options, {
-    persist: true,
-    cookie: {
-      key: 'ajs_user_id',
-      oldKey: 'ajs_user'
-    },
-    localStorage: {
-      key: 'ajs_user_traits'
-    }
-  });
-
-  this._options = options;
-};
-
-
-/**
- * Get or set the user's `id`.
- *
- * @param {String} id
- */
-
-User.prototype.id = function (id) {
-  switch (arguments.length) {
-    case 0: return this._getId();
-    case 1: return this._setId(id);
-  }
-};
-
-
-/**
- * Get the user's id.
- *
- * @return {String}
- */
-
-User.prototype._getId = function () {
-  var ret = this._options.persist
-    ? cookie.get(this._options.cookie.key)
-    : this._id;
-  return ret === undefined ? null : ret;
-};
-
-
-/**
- * Set the user's `id`.
- *
- * @param {String} id
- */
-
-User.prototype._setId = function (id) {
-  if (this._options.persist) {
-    cookie.set(this._options.cookie.key, id);
-  } else {
-    this._id = id;
-  }
-};
-
-
-/**
- * Get or set the user's `traits`.
- *
- * @param {String} traits
- */
-
-User.prototype.traits = function (traits) {
-  switch (arguments.length) {
-    case 0: return this._getTraits();
-    case 1: return this._setTraits(traits);
-  }
-};
-
-
-/**
- * Get the user's traits. Always convert ISO date strings into real dates, since
- * they aren't parsed back from local storage.
- *
- * @return {Object}
- */
-
-User.prototype._getTraits = function () {
-  var ret = this._options.persist
-    ? store.get(this._options.localStorage.key)
-    : this._traits;
-  return ret ? traverse(clone(ret)) : {};
-};
-
-
-/**
- * Set the user's `traits`.
- *
- * @param {Object} traits
- */
-
-User.prototype._setTraits = function (traits) {
-  traits || (traits = {});
-  if (this._options.persist) {
-    store.set(this._options.localStorage.key, traits);
-  } else {
-    this._traits = traits;
-  }
-};
-
-
-/**
- * Idenfity the user with an `id` and `traits`. If we it's the same user, extend
- * the existing `traits` instead of overwriting.
- *
- * @param {String} id
- * @param {Object} traits
- */
-
-User.prototype.identify = function (id, traits) {
-  traits || (traits = {});
-  var current = this.id();
-  if (current === null || current === id) traits = extend(this.traits(), traits);
-  if (id) this.id(id);
-  debug('identify %o, %o', id, traits);
-  this.traits(traits);
-  this.save();
-};
-
-
-/**
- * Save the user to local storage and the cookie.
- *
- * @return {Boolean}
- */
-
-User.prototype.save = function () {
-  if (!this._options.persist) return false;
-  cookie.set(this._options.cookie.key, this.id());
-  store.set(this._options.localStorage.key, this.traits());
-  return true;
-};
-
-
-/**
- * Log the user out, reseting `id` and `traits` to defaults.
- */
-
-User.prototype.logout = function () {
-  this.id(null);
-  this.traits({});
-  cookie.remove(this._options.cookie.key);
-  store.remove(this._options.localStorage.key);
-};
-
-
-/**
- * Reset all user state, logging out and returning options to defaults.
- */
-
-User.prototype.reset = function () {
-  this.logout();
-  this.options({});
-};
+inherit(User, Entity);
 
 
 /**
@@ -10786,8 +10730,7 @@ User.prototype.reset = function () {
 
 User.prototype.load = function () {
   if (this._loadOldCookie()) return;
-  this.id(cookie.get(this._options.cookie.key));
-  this.traits(store.get(this._options.localStorage.key));
+  Entity.prototype.load.call(this);
 };
 
 
@@ -10861,6 +10804,8 @@ module.exports.User = User;
 
 
 
+
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -10884,6 +10829,9 @@ require.alias("component-event/index.js", "event/index.js");
 
 require.alias("component-object/index.js", "analytics/deps/object/index.js");
 require.alias("component-object/index.js", "object/index.js");
+
+require.alias("component-inherit/index.js", "analytics/deps/inherit/index.js");
+require.alias("component-inherit/index.js", "inherit/index.js");
 
 require.alias("component-querystring/index.js", "analytics/deps/querystring/index.js");
 require.alias("component-querystring/index.js", "querystring/index.js");
@@ -11101,6 +11049,8 @@ require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js")
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-on-error/index.js", "segmentio-analytics.js-integrations/deps/on-error/index.js");
+
+require.alias("segmentio-to-iso-string/index.js", "segmentio-analytics.js-integrations/deps/to-iso-string/index.js");
 
 require.alias("segmentio-to-unix-timestamp/index.js", "segmentio-analytics.js-integrations/deps/to-unix-timestamp/index.js");
 

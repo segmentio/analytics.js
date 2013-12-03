@@ -1,6 +1,14 @@
+1.1.6 - December 2, 2013
+------------------------
+* update `analytics.js-integrations` to `0.2.12`
+* add `entity`
+* change `user` to inherit from `entity`
+* change `group` to inherit from `entity`
+
 1.1.5 - November 26, 2013
 -------------------------
-* updating `analytics.js-integration` to `0.1.5` and `analytics.js-integrations` to `0.2.11`
+* update `analytics.js-integration` to `0.1.5` 
+* update `analytics.js-integrations` to `0.2.11`
 
 1.1.4 - November 25, 2013
 -------------------------

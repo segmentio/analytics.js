@@ -39,6 +39,7 @@
     "visionmedia/debug": "0.7.4"
   },
   "development": {
+    "yields/coverage": "*",
     "component/jquery": "*",
     "ianstormtaylor/assert": "*",
     "ianstormtaylor/sinon": "*",

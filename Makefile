@@ -40,4 +40,8 @@ test-browser: node_modules build/build.js server
 	@sleep 1
 	@open $(test)
 
+coverage: node_modules build/build.js server
+	@sleep 1
+	@open $(test)/coverage
+
 .PHONY: clean kill release server test test-browser

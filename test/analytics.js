@@ -20,6 +20,7 @@ describe('Analytics', function () {
   var Group = Facade.Group;
   var Track = Facade.Track;
   var Alias = Facade.Alias;
+  var Page = Facade.Page;
 
   var analytics;
   var Test;
@@ -316,11 +317,21 @@ describe('Analytics', function () {
       assert(analytics._invoke.calledWith('page'));
     });
 
+    it('should call #_invoke with Page instance', function(){
+      analytics.page();
+      var page = analytics._invoke.args[0][1];
+      assert(page instanceof Page);
+    })
+
     it('should accept (category, name, properties, options, callback)', function (done) {
       defaults.category = 'category';
       defaults.name = 'name';
       analytics.page('category', 'name', {}, {}, function () {
-        assert(analytics._invoke.calledWith('page', 'category', 'name', defaults, {}));
+        var page = analytics._invoke.args[0][1];
+        assert('category' == page.category());
+        assert('name' == page.name());
+        assert('object' == typeof page.traits());
+        assert('object' == typeof page.options());
         done();
       });
     });
@@ -329,7 +340,10 @@ describe('Analytics', function () {
       defaults.category = 'category';
       defaults.name = 'name';
       analytics.page('category', 'name', {}, function () {
-        assert(analytics._invoke.calledWith('page', 'category', 'name', defaults));
+        var page = analytics._invoke.args[0][1];
+        assert('category' == page.category());
+        assert('name' == page.name());
+        assert('object' == typeof page.traits());
         done();
       });
     });
@@ -338,7 +352,9 @@ describe('Analytics', function () {
       defaults.category = 'category';
       defaults.name = 'name';
       analytics.page('category', 'name', function () {
-        assert(analytics._invoke.calledWith('page', 'category', 'name', defaults));
+        var page = analytics._invoke.args[0][1];
+        assert('category' == page.category());
+        assert('name' == page.name());
         done();
       });
     });
@@ -346,7 +362,10 @@ describe('Analytics', function () {
     it('should accept (name, properties, options, callback)', function (done) {
       defaults.name = 'name';
       analytics.page('name', {}, {}, function () {
-        assert(analytics._invoke.calledWith('page', null, 'name', defaults, {}));
+        var page = analytics._invoke.args[0][1];
+        assert('name' == page.name());
+        assert('object' == typeof page.traits());
+        assert('object' == typeof page.options());
         done();
       });
     });
@@ -354,7 +373,9 @@ describe('Analytics', function () {
     it('should accept (name, properties, callback)', function (done) {
       defaults.name = 'name';
       analytics.page('name', {}, function () {
-        assert(analytics._invoke.calledWith('page', null, 'name', defaults));
+        var page = analytics._invoke.args[0][1];
+        assert('name' == page.name());
+        assert('object' == typeof page.traits());
         done();
       });
     });
@@ -362,21 +383,29 @@ describe('Analytics', function () {
     it('should accept (name, callback)', function (done) {
       defaults.name = 'name';
       analytics.page('name', function () {
-        assert(analytics._invoke.calledWith('page', null, 'name'));
+        var page = analytics._invoke.args[0][1];
+        assert('name' == page.name());
         done();
       });
     });
 
     it('should accept (properties, options, callback)', function (done) {
       analytics.page({}, {}, function () {
-        assert(analytics._invoke.calledWith('page', null, null, defaults, {}));
+        var page = analytics._invoke.args[0][1];
+        assert(null == page.category());
+        assert(null == page.name());
+        assert('object' == typeof page.traits());
+        assert('object' == typeof page.options());
         done();
       });
     });
 
     it('should accept (properties, callback)', function (done) {
       analytics.page({}, function () {
-        assert(analytics._invoke.calledWith('page', null, null, defaults));
+        var page = analytics._invoke.args[0][1];
+        assert(null == page.category());
+        assert(null == page.name());
+        assert('object' == typeof page.options());
         done();
       });
     });
@@ -384,7 +413,8 @@ describe('Analytics', function () {
     it('should back properties with defaults', function () {
       defaults.property = true;
       analytics.page({ property: true });
-      assert(analytics._invoke.calledWith('page', null, null, defaults));
+      var page = analytics._invoke.args[0][1];
+      assert(true == page.traits().property);
     });
 
     it('should emit page', function (done) {

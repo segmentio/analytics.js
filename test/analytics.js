@@ -19,6 +19,7 @@ describe('Analytics', function () {
   var Identify = Facade.Identify;
   var Group = Facade.Group;
   var Track = Facade.Track;
+  var Alias = Facade.Alias;
 
   var analytics;
   var Test;
@@ -933,23 +934,37 @@ describe('Analytics', function () {
       assert(analytics._invoke.calledWith('alias'));
     });
 
+    it('should call #_invoke with instanceof Alias', function(){
+      analytics.alias();
+      var alias = analytics._invoke.args[0][1];
+      assert(alias instanceof Alias);
+    })
+
     it('should accept (new, old, options, callback)', function (done) {
       analytics.alias('new', 'old', {}, function () {
-        assert(analytics._invoke.calledWith('alias', 'new', 'old', {}));
+        var alias = analytics._invoke.args[0][1];
+        assert('old' == alias.from());
+        assert('new' == alias.to());
+        assert('object' == typeof alias.options());
         done();
       });
     });
 
     it('should accept (new, old, callback)', function (done) {
       analytics.alias('new', 'old', function () {
-        assert(analytics._invoke.calledWith('alias', 'new', 'old', null));
+        var alias = analytics._invoke.args[0][1];
+        assert('old' == alias.from());
+        assert('new' == alias.to());
+        assert('object' == typeof alias.options());
         done();
       });
     });
 
     it('should accept (new, callback)', function (done) {
       analytics.alias('new', function () {
-        assert(analytics._invoke.calledWith('alias', 'new', null, null));
+        var alias = analytics._invoke.args[0][1];
+        assert('new' == alias.to());
+        assert('object' == typeof alias.options());
         done();
       });
     });

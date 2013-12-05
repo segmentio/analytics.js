@@ -338,7 +338,7 @@ describe('Analytics', function () {
         var page = analytics._invoke.args[0][1];
         assert('category' == page.category());
         assert('name' == page.name());
-        assert('object' == typeof page.traits());
+        assert('object' == typeof page.properties());
         assert('object' == typeof page.options());
         done();
       });
@@ -351,7 +351,7 @@ describe('Analytics', function () {
         var page = analytics._invoke.args[0][1];
         assert('category' == page.category());
         assert('name' == page.name());
-        assert('object' == typeof page.traits());
+        assert('object' == typeof page.properties());
         done();
       });
     });
@@ -372,7 +372,7 @@ describe('Analytics', function () {
       analytics.page('name', {}, {}, function () {
         var page = analytics._invoke.args[0][1];
         assert('name' == page.name());
-        assert('object' == typeof page.traits());
+        assert('object' == typeof page.properties());
         assert('object' == typeof page.options());
         done();
       });
@@ -383,7 +383,7 @@ describe('Analytics', function () {
       analytics.page('name', {}, function () {
         var page = analytics._invoke.args[0][1];
         assert('name' == page.name());
-        assert('object' == typeof page.traits());
+        assert('object' == typeof page.properties());
         done();
       });
     });
@@ -402,7 +402,7 @@ describe('Analytics', function () {
         var page = analytics._invoke.args[0][1];
         assert(null == page.category());
         assert(null == page.name());
-        assert('object' == typeof page.traits());
+        assert('object' == typeof page.properties());
         assert('object' == typeof page.options());
         done();
       });
@@ -422,7 +422,7 @@ describe('Analytics', function () {
       defaults.property = true;
       analytics.page({ property: true });
       var page = analytics._invoke.args[0][1];
-      assert(true == page.traits().property);
+      assert(true == page.properties().property);
     });
 
     it('should emit page', function (done) {

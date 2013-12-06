@@ -15,6 +15,7 @@ describe('Analytics', function () {
   var tick = require('next-tick');
   var trigger = require('trigger-event');
   var user = require('analytics/lib/user');
+  var debug = require('debug');
 
   var analytics;
   var Test;
@@ -905,6 +906,64 @@ describe('Analytics', function () {
         done();
       });
       analytics.alias('new', 'old', { opt: true });
+    });
+  });
+
+  describe.only('#debug', function() {
+    describe('enable()', function () {
+      beforeEach(function () {
+        sinon.spy(debug, 'enable');
+      });
+
+      afterEach(function () {
+        debug.enable.restore();
+      });
+
+      it('should call debug.enable when no arguments are given', function () {
+        analytics.debug();
+        assert(debug.enable.called);
+      });
+
+      it('should call debug.enable when the Boolean true is given as the only argument', function () {
+        analytics.debug(true);
+        assert(debug.enable.called);
+      });
+
+      it('should call debug.enable when a truthy value is given as the only argument', function () {
+        analytics.debug("foobar");
+        assert(debug.enable.called);
+      });
+
+      it('should call debug.enable when a truthy value is given as the first argument', function () {
+        analytics.debug("foobar", null, undefined, false);
+        assert(debug.enable.called);
+      });
+
+      it('should store the wildcard debug mode in localStorage when no arguments are given', function () {
+        debug.enable.restore();
+        analytics.debug();
+        assert(localStorage.debug === 'analytics:*');
+        sinon.spy(debug, 'enable');
+      });
+
+      it('should store a named debug mode in localStorage when a truthy argument is given', function () {
+        var name = "foo";
+        debug.enable.restore();
+        analytics.debug(name);
+        assert(localStorage.debug === ('analytics:' + name));
+        sinon.spy(debug, 'enable');
+      });
+    });
+
+    describe('disable()', function () {
+      before(function () {
+        sinon.spy(debug, 'disable');
+      });
+
+      it('should call debug.disable when the first argument is falsy', function () {
+        analytics.debug(false);
+        assert(debug.disable.called);
+      });
     });
   });
 

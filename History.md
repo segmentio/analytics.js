@@ -1,3 +1,8 @@
+1.1.8 - December 11, 2013
+------------------------
+* added [WebEngage](http://webengage.com)
+* heap: fallback to user id as handle
+
 1.1.7 - December 4, 2013
 ------------------------
 * upgrade `analytics.js-integrations` to `0.2.13`
@@ -11,7 +16,7 @@
 
 1.1.5 - November 26, 2013
 -------------------------
-* update `analytics.js-integration` to `0.1.5` 
+* update `analytics.js-integration` to `0.1.5`
 * update `analytics.js-integrations` to `0.2.11`
 
 1.1.4 - November 25, 2013

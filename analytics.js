@@ -907,15 +907,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -927,7 +927,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -939,7 +941,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -952,29 +954,10 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
-
-/**
- * Return default port for `protocol`.
- *
- * @param  {String} protocol
- * @return {String}
- * @api private
- */
-function port (protocol){
-  switch (protocol) {
-    case 'http:':
-      return 80;
-    case 'https:':
-      return 443;
-    default:
-      return location.port;
-  }
-}
-
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1104,7 +1087,6 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
-
 var next = require('next-tick');
 
 
@@ -2389,6 +2371,7 @@ var integrations = [
   'uservoice',
   'vero',
   'visual-website-optimizer',
+  'webengage',
   'woopra',
   'yandex-metrica'
 ];
@@ -4703,7 +4686,9 @@ var traitAliases = {
  */
 
 Heap.prototype.identify = function (id, traits, options) {
+  traits = traits || {};
   traits = alias(traits, traitAliases);
+  if (!traits.handle && id) traits.handle = id;
   window.heap.identify(traits);
 };
 
@@ -4721,6 +4706,7 @@ Heap.prototype.identify = function (id, traits, options) {
 Heap.prototype.track = function (event, properties, options) {
   window.heap.track(event, properties);
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/hittail.js", function(exports, require, module){
 
@@ -8295,6 +8281,69 @@ function variation (id) {
   return variationId ? experiment.comb_n[variationId] : null;
 }
 });
+require.register("segmentio-analytics.js-integrations/lib/webengage.js", function(exports, require, module){
+
+var integration = require('integration');
+var load = require('load-script');
+
+/**
+ * Expose plugin
+ */
+
+module.exports = exports = function(analytics){
+  analytics.addIntegration(WebEngage);
+};
+
+/**
+ * Expose `WebEngage` integration
+ */
+
+var WebEngage = exports.Integration = integration('WebEngage')
+  .assumesPageview()
+  .readyOnLoad()
+  .global('_weq')
+  .global('webengage')
+  .option('widgetVersion', '4.0')
+  .option('licenseCode', '');
+
+/**
+ * Initialize.
+ *
+ * @param {Object} page
+ */
+
+WebEngage.prototype.initialize = function(page){
+  var _weq = window._weq = window._weq || {};
+  _weq['webengage.licenseCode'] = this.options.licenseCode;
+  _weq['webengage.widgetVersion'] = this.options.widgetVersion;
+  this.load();
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+WebEngage.prototype.loaded = function(){
+  return !! window.webengage;
+};
+
+/**
+ * Load
+ *
+ * @param {Function} fn
+ */
+
+WebEngage.prototype.load = function(fn){
+  var path = '/js/widget/webengage-min-v-4.0.js';
+  load({
+    https: 'https://ssl.widgets.webengage.com' + path,
+    http: 'http://cdn.widgets.webengage.com' + path
+  }, fn);
+};
+
+});
 require.register("segmentio-analytics.js-integrations/lib/woopra.js", function(exports, require, module){
 
 var each = require('each');
@@ -10485,7 +10534,7 @@ Entity.prototype._setTraits = function (traits) {
 
 
 /**
- * Idenfity the entity with an `id` and `traits`. If we it's the same entity,
+ * Identify the entity with an `id` and `traits`. If we it's the same entity,
  * extend the existing `traits` instead of overwriting.
  *
  * @param {String} id
@@ -10965,6 +11014,7 @@ require.alias("segmentio-analytics.js-integrations/lib/userfox.js", "analytics/d
 require.alias("segmentio-analytics.js-integrations/lib/uservoice.js", "analytics/deps/integrations/lib/uservoice.js");
 require.alias("segmentio-analytics.js-integrations/lib/vero.js", "analytics/deps/integrations/lib/vero.js");
 require.alias("segmentio-analytics.js-integrations/lib/visual-website-optimizer.js", "analytics/deps/integrations/lib/visual-website-optimizer.js");
+require.alias("segmentio-analytics.js-integrations/lib/webengage.js", "analytics/deps/integrations/lib/webengage.js");
 require.alias("segmentio-analytics.js-integrations/lib/woopra.js", "analytics/deps/integrations/lib/woopra.js");
 require.alias("segmentio-analytics.js-integrations/lib/yandex-metrica.js", "analytics/deps/integrations/lib/yandex-metrica.js");
 require.alias("segmentio-analytics.js-integrations/index.js", "integrations/index.js");

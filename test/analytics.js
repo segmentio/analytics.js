@@ -301,7 +301,8 @@ describe('Analytics', function () {
         path: window.location.pathname,
         referrer: document.referrer,
         title: document.title,
-        url: window.location.href
+        url: window.location.href,
+        search: window.location.search
       };
       sinon.spy(analytics, '_invoke');
     });

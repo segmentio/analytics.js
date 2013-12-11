@@ -1005,13 +1005,8 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-try {
-  var bind = require('bind');
-} catch (e) {
-  var bind = require('bind-component');
-}
-
-var bindAll = require('bind-all');
+var bind = require('bind')
+  , bindAll = require('bind-all');
 
 
 /**
@@ -4180,6 +4175,7 @@ var GA = exports.Integration = integration('Google Analytics')
   .option('doubleClick', false)
   .option('enhancedLinkAttribution', false)
   .option('ignoreReferrer', null)
+  .option('includeSearch', false)
   .option('siteSpeedSampleRate', null)
   .option('trackingId', '')
   .option('trackNamedPages', true)
@@ -4271,7 +4267,7 @@ GA.prototype.page = function (category, name, properties, options) {
   if (name && category) name = category + ' ' + name;
 
   window.ga('send', 'pageview', {
-    page: properties.path,
+    page: path(properties, this.options),
     title: name || properties.title,
     url: properties.url
   });
@@ -4398,7 +4394,7 @@ GA.prototype.pageClassic = function (category, name, properties, options) {
   options = options || {};
   this._category = category; // store for later
 
-  push('_trackPageview', properties.path);
+  push('_trackPageview', path(properties, this.options));
 
   // categorized pages
   if (category && this.options.trackCategorizedPages) {
@@ -4434,6 +4430,21 @@ GA.prototype.trackClassic = function (event, properties, options) {
 
   push('_trackEvent', category, event, label, value, noninteraction);
 };
+
+
+/**
+ * Return the path based on `properties` and `options`.
+ *
+ * @param {Object} properties
+ * @param {Object} options
+ */
+
+function path (properties, options) {
+  if (!properties) return;
+  var str = properties.path;
+  if (options.includeSearch && properties.search) str += properties.search;
+  return str;
+}
 
 
 /**
@@ -9683,7 +9694,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.1.7';
+exports.VERSION = '1.1.9';
 
 
 /**
@@ -10043,7 +10054,8 @@ Analytics.prototype.page = function (category, name, properties, options, fn) {
     path: canonicalPath(),
     referrer: document.referrer,
     title: document.title,
-    url: location.href
+    url: location.href,
+    search: location.search
   };
 
   if (name) defs.name = name;

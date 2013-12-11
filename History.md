@@ -1,6 +1,12 @@
+1.1.9 - December 11, 2013
+-------------------------
+* upgrade `analytics.js-integrations` to `0.2.16`
+* add `search` to page property defaults
+
 1.1.8 - December 11, 2013
 ------------------------
-* added [WebEngage](http://webengage.com)
+* upgrade `analytics.js-integrations` to `0.2.15`
+* add [WebEngage](http://webengage.com)
 * heap: fallback to user id as handle
 
 1.1.7 - December 4, 2013

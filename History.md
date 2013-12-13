@@ -1,3 +1,7 @@
+1.2.0 - December 13, 2013
+-------------------------
+* add [`facade`](https://github.com/segmentio/facade)
+
 1.1.9 - December 11, 2013
 -------------------------
 * upgrade `analytics.js-integrations` to `0.2.16`

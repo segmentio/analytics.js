@@ -907,15 +907,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -927,9 +927,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -941,7 +939,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -954,10 +952,29 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
+
+/**
+ * Return default port for `protocol`.
+ *
+ * @param  {String} protocol
+ * @return {String}
+ * @api private
+ */
+function port (protocol){
+  switch (protocol) {
+    case 'http:':
+      return 80;
+    case 'https:':
+      return 443;
+    default:
+      return location.port;
+  }
+}
+
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1005,8 +1022,13 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-var bind = require('bind')
-  , bindAll = require('bind-all');
+try {
+  var bind = require('bind');
+} catch (e) {
+  var bind = require('bind-component');
+}
+
+var bindAll = require('bind-all');
 
 
 /**
@@ -9670,6 +9692,1603 @@ try {
 } catch(e){}
 
 });
+require.register("CamShaft-require-component/index.js", function(exports, require, module){
+/**
+ * Require a module with a fallback
+ */
+module.exports = function(parent) {
+  function require(name, fallback) {
+    try {
+      return parent(name);
+    }
+    catch (e) {
+      try {
+        return parent(fallback || name+"-component");
+      }
+      catch(e2) {
+        throw e;
+      }
+    }
+  };
+
+  // Merge the old properties
+  for (var key in parent) {
+    require[key] = parent[key];
+  }
+
+  return require;
+};
+
+});
+require.register("component-user-agent-parser/src/ua-parser.js", function(exports, require, module){
+// UAParser.js v0.6.0
+// Lightweight JavaScript-based User-Agent string parser
+// https://github.com/faisalman/ua-parser-js
+//
+// Copyright © 2012-2013 Faisalman <fyzlman@gmail.com>
+// Dual licensed under GPLv2 & MIT
+
+(function (window, undefined) {
+
+    'use strict';
+
+    //////////////
+    // Constants
+    /////////////
+
+
+    var EMPTY       = '',
+        UNKNOWN     = '?',
+        FUNC_TYPE   = 'function',
+        UNDEF_TYPE  = 'undefined',
+        OBJ_TYPE    = 'object',
+        MAJOR       = 'major',
+        MODEL       = 'model',
+        NAME        = 'name',
+        TYPE        = 'type',
+        VENDOR      = 'vendor',
+        VERSION     = 'version',
+        ARCHITECTURE= 'architecture',
+        CONSOLE     = 'console',
+        MOBILE      = 'mobile',
+        TABLET      = 'tablet';
+
+
+    ///////////
+    // Helper
+    //////////
+
+
+    var util = {
+        has : function (str1, str2) {
+            return str2.toLowerCase().indexOf(str1.toLowerCase()) !== -1;
+        },
+        lowerize : function (str) {
+            return str.toLowerCase();
+        }
+    };
+
+
+    ///////////////
+    // Map helper
+    //////////////
+
+
+    var mapper = {
+
+        rgx : function () {
+
+            // loop through all regexes maps
+            for (var result, i = 0, j, k, p, q, matches, match, args = arguments; i < args.length; i += 2) {
+
+                var regex = args[i],       // even sequence (0,2,4,..)
+                    props = args[i + 1];   // odd sequence (1,3,5,..)
+
+                // construct object barebones
+                if (typeof(result) === UNDEF_TYPE) {
+                    result = {};
+                    for (p in props) {
+                        q = props[p];
+                        if (typeof(q) === OBJ_TYPE) {
+                            result[q[0]] = undefined;
+                        } else {
+                            result[q] = undefined;
+                        }
+                    }
+                }
+
+                // try matching uastring with regexes
+                for (j = k = 0; j < regex.length; j++) {
+                    matches = regex[j].exec(this.getUA());
+                    if (!!matches) {
+                        for (p in props) {
+                            match = matches[++k];
+                            q = props[p];
+                            // check if given property is actually array
+                            if (typeof(q) === OBJ_TYPE && q.length > 0) {
+                                if (q.length == 2) {
+                                    if (typeof(q[1]) == FUNC_TYPE) {
+                                        // assign modified match
+                                        result[q[0]] = q[1].call(this, match);
+                                    } else {
+                                        // assign given value, ignore regex match
+                                        result[q[0]] = q[1];
+                                    }
+                                } else if (q.length == 3) {
+                                    // check whether function or regex
+                                    if (typeof(q[1]) === FUNC_TYPE && !(q[1].exec && q[1].test)) {
+                                        // call function (usually string mapper)
+                                        result[q[0]] = match ? q[1].call(this, match, q[2]) : undefined;
+                                    } else {
+                                        // sanitize match using given regex
+                                        result[q[0]] = match ? match.replace(q[1], q[2]) : undefined;
+                                    }
+                                } else if (q.length == 4) {
+                                        result[q[0]] = match ? q[3].call(this, match.replace(q[1], q[2])) : undefined;
+                                }
+                            } else {
+                                result[q] = match ? match : undefined;
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                if(!!matches) break; // break the loop immediately if match found
+            }
+            return result;
+        },
+
+        str : function (str, map) {
+
+            for (var i in map) {
+                // check if array
+                if (typeof(map[i]) === OBJ_TYPE && map[i].length > 0) {
+                    for (var j in map[i]) {
+                        if (util.has(map[i][j], str)) {
+                            return (i === UNKNOWN) ? undefined : i;
+                        }
+                    }
+                } else if (util.has(map[i], str)) {
+                    return (i === UNKNOWN) ? undefined : i;
+                }
+            }
+            return str;
+        }
+    };
+
+
+    ///////////////
+    // String map
+    //////////////
+
+
+    var maps = {
+
+        browser : {
+            oldsafari : {
+                major : {
+                    '1' : ['/8', '/1', '/3'],
+                    '2' : '/4',
+                    '?' : '/'
+                },
+                version : {
+                    '1.0'   : '/8',
+                    '1.2'   : '/1',
+                    '1.3'   : '/3',
+                    '2.0'   : '/412',
+                    '2.0.2' : '/416',
+                    '2.0.3' : '/417',
+                    '2.0.4' : '/419',
+                    '?'     : '/'
+                }
+            }
+        },
+
+        device : {
+            sprint : {
+                model : {
+                    'Evo Shift 4G' : '7373KT'
+                },
+                vendor : {
+                    'HTC'       : 'APA',
+                    'Sprint'    : 'Sprint'
+                }
+            }
+        },
+
+        os : {
+            windows : {
+                version : {
+                    'ME'        : '4.90',
+                    'NT 3.11'   : 'NT3.51',
+                    'NT 4.0'    : 'NT4.0',
+                    '2000'      : 'NT 5.0',
+                    'XP'        : ['NT 5.1', 'NT 5.2'],
+                    'Vista'     : 'NT 6.0',
+                    '7'         : 'NT 6.1',
+                    '8'         : 'NT 6.2',
+                    'RT'        : 'ARM'
+                }
+            }
+        }
+    };
+
+
+    //////////////
+    // Regex map
+    /////////////
+
+
+    var regexes = {
+
+        browser : [[
+
+            // Presto based
+            /(opera\smini)\/((\d+)?[\w\.-]+)/i,                                 // Opera Mini
+            /(opera\s[mobiletab]+).+version\/((\d+)?[\w\.-]+)/i,                // Opera Mobi/Tablet
+            /(opera).+version\/((\d+)?[\w\.]+)/i,                               // Opera > 9.80
+            /(opera)[\/\s]+((\d+)?[\w\.]+)/i                                    // Opera < 9.80
+
+            ], [NAME, VERSION, MAJOR], [
+
+            /\s(opr)\/((\d+)?[\w\.]+)/i                                         // Opera Webkit
+            ], [[NAME, 'Opera'], VERSION, MAJOR], [
+
+            // Mixed
+            /(kindle)\/((\d+)?[\w\.]+)/i,                                       // Kindle
+            /(lunascape|maxthon|netfront|jasmine|blazer)[\/\s]?((\d+)?[\w\.]+)*/i,
+                                                                                // Lunascape/Maxthon/Netfront/Jasmine/Blazer
+
+            // Trident based
+            /(avant\s|iemobile|slim|baidu)(?:browser)?[\/\s]?((\d+)?[\w\.]*)/i,
+                                                                                // Avant/IEMobile/SlimBrowser/Baidu
+            /(?:ms|\()(ie)\s((\d+)?[\w\.]+)/i,                                  // Internet Explorer
+
+            // Webkit/KHTML based
+            /(rekonq)((?:\/)[\w\.]+)*/i,                                        // Rekonq
+            /(chromium|flock|rockmelt|midori|epiphany|silk|skyfire|ovibrowser|bolt)\/((\d+)?[\w\.-]+)/i
+                                                                                // Chromium/Flock/RockMelt/Midori/Epiphany/Silk/Skyfire/Bolt
+            ], [NAME, VERSION, MAJOR], [
+
+            /(yabrowser)\/((\d+)?[\w\.]+)/i                                     // Yandex
+            ], [[NAME, 'Yandex'], VERSION, MAJOR], [
+
+            /(comodo_dragon)\/((\d+)?[\w\.]+)/i                                 // Comodo Dragon
+            ], [[NAME, /_/g, ' '], VERSION, MAJOR], [
+
+            /(chrome|omniweb|arora|[tizenoka]{5}\s?browser)\/v?((\d+)?[\w\.]+)/i
+                                                                                // Chrome/OmniWeb/Arora/Tizen/Nokia
+            ], [NAME, VERSION, MAJOR], [
+
+            /(dolfin)\/((\d+)?[\w\.]+)/i                                        // Dolphin
+            ], [[NAME, 'Dolphin'], VERSION, MAJOR], [
+
+            /((?:android.+)crmo|crios)\/((\d+)?[\w\.]+)/i                       // Chrome for Android/iOS
+            ], [[NAME, 'Chrome'], VERSION, MAJOR], [
+
+            /version\/((\d+)?[\w\.]+).+?mobile\/\w+\s(safari)/i                 // Mobile Safari
+            ], [VERSION, MAJOR, [NAME, 'Mobile Safari']], [
+
+            /version\/((\d+)?[\w\.]+).+?(mobile\s?safari|safari)/i              // Safari & Safari Mobile
+            ], [VERSION, MAJOR, NAME], [
+
+            /webkit.+?(mobile\s?safari|safari)((\/[\w\.]+))/i                   // Safari < 3.0
+            ], [NAME, [MAJOR, mapper.str, maps.browser.oldsafari.major], [VERSION, mapper.str, maps.browser.oldsafari.version]], [
+
+            /(konqueror)\/((\d+)?[\w\.]+)/i,                                    // Konqueror
+            /(webkit|khtml)\/((\d+)?[\w\.]+)/i
+            ], [NAME, VERSION, MAJOR], [
+
+            // Gecko based
+            /(navigator|netscape)\/((\d+)?[\w\.-]+)/i                           // Netscape
+            ], [[NAME, 'Netscape'], VERSION, MAJOR], [
+            /(swiftfox)/i,                                                      // Swiftfox
+            /(iceweasel|camino|chimera|fennec|maemo\sbrowser|minimo|conkeror)[\/\s]?((\d+)?[\w\.\+]+)/i,
+                                                                                // Iceweasel/Camino/Chimera/Fennec/Maemo/Minimo/Conkeror
+            /(firefox|seamonkey|k-meleon|icecat|iceape|firebird|phoenix)\/((\d+)?[\w\.-]+)/i,
+                                                                                // Firefox/SeaMonkey/K-Meleon/IceCat/IceApe/Firebird/Phoenix
+            /(mozilla)\/((\d+)?[\w\.]+).+rv\:.+gecko\/\d+/i,                    // Mozilla
+
+            // Other
+            /(uc\s?browser|polaris|lynx|dillo|icab|doris|amaya|w3m|netsurf)[\/\s]?((\d+)?[\w\.]+)/i,
+                                                                                // UCBrowser/Polaris/Lynx/Dillo/iCab/Doris/Amaya/w3m/NetSurf
+            /(links)\s\(((\d+)?[\w\.]+)/i,                                      // Links
+            /(gobrowser)\/?((\d+)?[\w\.]+)*/i,                                  // GoBrowser
+            /(ice\s?browser)\/v?((\d+)?[\w\._]+)/i,                             // ICE Browser
+            /(mosaic)[\/\s]((\d+)?[\w\.]+)/i                                    // Mosaic
+            ], [NAME, VERSION, MAJOR]
+        ],
+
+        cpu : [[
+
+            /(?:(amd|x(?:(?:86|64)[_-])?|wow|win)64)[;\)]/i                     // AMD64
+            ], [[ARCHITECTURE, 'amd64']], [
+
+            /((?:i[346]|x)86)[;\)]/i                                            // IA32
+            ], [[ARCHITECTURE, 'ia32']], [
+
+            /((?:ppc|powerpc)(?:64)?)(?:\smac|;|\))/i                           // PowerPC
+            ], [[ARCHITECTURE, /ower/, '', util.lowerize]], [
+
+            /(sun4\w)[;\)]/i                                                    // SPARC
+            ], [[ARCHITECTURE, 'sparc']], [
+
+            /(ia64(?=;)|68k(?=\))|arm(?=v\d+;)|(?:irix|mips|sparc)(?:64)?(?=;)|pa-risc)/i
+                                                                                // IA64, 68K, ARM, IRIX, MIPS, SPARC, PA-RISC
+            ], [ARCHITECTURE, util.lowerize]
+        ],
+
+        device : [[
+
+            /\((ipad|playbook);[\w\s\);-]+(rim|apple)/i                         // iPad/PlayBook
+            ], [MODEL, VENDOR, [TYPE, TABLET]], [
+
+            /(hp).+(touchpad)/i,                                                // HP TouchPad
+            /(kindle)\/([\w\.]+)/i,                                             // Kindle
+            /\s(nook)[\w\s]+build\/(\w+)/i,                                     // Nook
+            /(dell)\s(strea[kpr\s\d]*[\dko])/i                                  // Dell Streak
+            ], [VENDOR, MODEL, [TYPE, TABLET]], [
+
+            /\((ip[honed]+);.+(apple)/i                                         // iPod/iPhone
+            ], [MODEL, VENDOR, [TYPE, MOBILE]], [
+
+            /(blackberry)[\s-]?(\w+)/i,                                         // BlackBerry
+            /(blackberry|benq|palm(?=\-)|sonyericsson|acer|asus|dell|huawei|meizu|motorola)[\s_-]?([\w-]+)*/i,
+                                                                                // BenQ/Palm/Sony-Ericsson/Acer/Asus/Dell/Huawei/Meizu/Motorola
+            /(hp)\s([\w\s]+\w)/i,                                               // HP iPAQ
+            /(asus)-?(\w+)/i                                                    // Asus
+            ], [VENDOR, MODEL, [TYPE, MOBILE]], [
+            /\((bb10);\s(\w+)/i                                                 // BlackBerry 10
+            ], [[VENDOR, 'BlackBerry'], MODEL, [TYPE, MOBILE]], [
+
+            /android.+((transfo[prime\s]{4,10}\s\w+|eeepc|slider\s\w+))/i       // Asus Tablets
+            ], [[VENDOR, 'Asus'], MODEL, [TYPE, TABLET]], [
+
+            /(sony)\s(tablet\s[ps])/i                                           // Sony Tablets
+            ], [VENDOR, MODEL, [TYPE, TABLET]], [
+
+            /(nintendo)\s([wids3u]+)/i                                          // Nintendo
+            ], [VENDOR, MODEL, [TYPE, CONSOLE]], [
+
+            /((playstation)\s[3portablevi]+)/i                                  // Playstation
+            ], [[VENDOR, 'Sony'], MODEL, [TYPE, CONSOLE]], [
+
+            /(sprint\s(\w+))/i                                                  // Sprint Phones
+            ], [[VENDOR, mapper.str, maps.device.sprint.vendor], [MODEL, mapper.str, maps.device.sprint.model], [TYPE, MOBILE]], [
+
+            /(htc)[;_\s-]+([\w\s]+(?=\))|\w+)*/i,                               // HTC
+            /(zte)-(\w+)*/i,                                                    // ZTE
+            /(alcatel|geeksphone|huawei|lenovo|nexian|panasonic|(?=;\s)sony)[_\s-]?([\w-]+)*/i
+                                                                                // Alcatel/GeeksPhone/Huawei/Lenovo/Nexian/Panasonic/Sony
+            ], [VENDOR, [MODEL, /_/g, ' '], [TYPE, MOBILE]], [
+
+            /\s((milestone|droid[2x]?))[globa\s]*\sbuild\//i,                   // Motorola
+            /(mot)[\s-]?(\w+)*/i
+            ], [[VENDOR, 'Motorola'], MODEL, [TYPE, MOBILE]], [
+            /android.+\s((mz60\d|xoom[\s2]{0,2}))\sbuild\//i
+            ], [[VENDOR, 'Motorola'], MODEL, [TYPE, TABLET]], [
+
+            /android.+((sch-i[89]0\d|shw-m380s|gt-p\d{4}|gt-n8000|sgh-t8[56]9))/i
+            ], [[VENDOR, 'Samsung'], MODEL, [TYPE, TABLET]], [                  // Samsung
+            /((s[cgp]h-\w+|gt-\w+|galaxy\snexus))/i,
+            /(sam[sung]*)[\s-]*(\w+-?[\w-]*)*/i,
+            /sec-((sgh\w+))/i
+            ], [[VENDOR, 'Samsung'], MODEL, [TYPE, MOBILE]], [
+            /(sie)-(\w+)*/i                                                     // Siemens
+            ], [[VENDOR, 'Siemens'], MODEL, [TYPE, MOBILE]], [
+
+            /(maemo|nokia).*(n900|lumia\s\d+)/i,                                // Nokia
+            /(nokia)[\s_-]?([\w-]+)*/i
+            ], [[VENDOR, 'Nokia'], MODEL, [TYPE, MOBILE]], [
+
+            /android\s3\.[\s\w-;]{10}((a\d{3}))/i                               // Acer
+            ], [[VENDOR, 'Acer'], MODEL, [TYPE, TABLET]], [
+
+            /android\s3\.[\s\w-;]{10}(lg?)-([06cv9]{3,4})/i                     // LG
+            ], [[VENDOR, 'LG'], MODEL, [TYPE, TABLET]], [
+            /((nexus\s4))/i,
+            /(lg)[e;\s-\/]+(\w+)*/i
+            ], [[VENDOR, 'LG'], MODEL, [TYPE, MOBILE]], [
+
+            /(mobile|tablet);.+rv\:.+gecko\//i                                  // Unidentifiable
+            ], [TYPE, VENDOR, MODEL]
+        ],
+
+        engine : [[
+
+            /(presto)\/([\w\.]+)/i,                                             // Presto
+            /(webkit|trident|netfront|netsurf|amaya|lynx|w3m)\/([\w\.]+)/i,     // WebKit/Trident/NetFront/NetSurf/Amaya/Lynx/w3m
+            /(khtml|tasman|links)[\/\s]\(?([\w\.]+)/i,                          // KHTML/Tasman/Links
+            /(icab)[\/\s]([23]\.[\d\.]+)/i                                      // iCab
+            ], [NAME, VERSION], [
+
+            /rv\:([\w\.]+).*(gecko)/i                                           // Gecko
+            ], [VERSION, NAME]
+        ],
+
+        os : [[
+
+            // Windows based
+            /(windows)\snt\s6\.2;\s(arm)/i,                                     // Windows RT
+            /(windows\sphone(?:\sos)*|windows\smobile|windows)[\s\/]?([ntce\d\.\s]+\w)/i
+            ], [NAME, [VERSION, mapper.str, maps.os.windows.version]], [
+            /(win(?=3|9|n)|win\s9x\s)([nt\d\.]+)/i
+            ], [[NAME, 'Windows'], [VERSION, mapper.str, maps.os.windows.version]], [
+
+            // Mobile/Embedded OS
+            /\((bb)(10);/i                                                      // BlackBerry 10
+            ], [[NAME, 'BlackBerry'], VERSION], [
+            /(blackberry)\w*\/?([\w\.]+)*/i,                                    // Blackberry
+            /(tizen)\/([\w\.]+)/i,                                              // Tizen
+            /(android|webos|palm\os|qnx|bada|rim\stablet\sos|meego)[\/\s-]?([\w\.]+)*/i
+                                                                                // Android/WebOS/Palm/QNX/Bada/RIM/MeeGo
+            ], [NAME, VERSION], [
+            /(symbian\s?os|symbos|s60(?=;))[\/\s-]?([\w\.]+)*/i                 // Symbian
+            ], [[NAME, 'Symbian'], VERSION],[
+            /mozilla.+\(mobile;.+gecko.+firefox/i                               // Firefox OS
+            ], [[NAME, 'Firefox OS'], VERSION], [
+
+            // Console
+            /(nintendo|playstation)\s([wids3portablevu]+)/i,                    // Nintendo/Playstation
+
+            // GNU/Linux based
+            /(mint)[\/\s\(]?(\w+)*/i,                                           // Mint
+            /(joli|[kxln]?ubuntu|debian|[open]*suse|gentoo|arch|slackware|fedora|mandriva|centos|pclinuxos|redhat|zenwalk)[\/\s-]?([\w\.-]+)*/i,
+                                                                                // Joli/Ubuntu/Debian/SUSE/Gentoo/Arch/Slackware
+                                                                                // Fedora/Mandriva/CentOS/PCLinuxOS/RedHat/Zenwalk
+            /(hurd|linux)\s?([\w\.]+)*/i,                                       // Hurd/Linux
+            /(gnu)\s?([\w\.]+)*/i                                               // GNU
+            ], [NAME, VERSION], [
+
+            /(cros)\s[\w]+\s([\w\.]+\w)/i                                       // Chromium OS
+            ], [[NAME, 'Chromium OS'], VERSION],[
+
+            // Solaris
+            /(sunos)\s?([\w\.]+\d)*/i                                           // Solaris
+            ], [[NAME, 'Solaris'], VERSION], [
+
+            // BSD based
+            /\s([frentopc-]{0,4}bsd|dragonfly)\s?([\w\.]+)*/i                   // FreeBSD/NetBSD/OpenBSD/PC-BSD/DragonFly
+            ], [NAME, VERSION],[
+
+            /(ip[honead]+)(?:.*os\s*([\w]+)*\slike\smac|;\sopera)/i             // iOS
+            ], [[NAME, 'iOS'], [VERSION, /_/g, '.']], [
+
+            /(mac\sos\sx)\s?([\w\s\.]+\w)*/i                                    // Mac OS
+            ], [NAME, [VERSION, /_/g, '.']], [
+
+            // Other
+            /(haiku)\s(\w+)/i,                                                  // Haiku
+            /(aix)\s((\d)(?=\.|\)|\s)[\w\.]*)*/i,                               // AIX
+            /(macintosh|mac(?=_powerpc)|plan\s9|minix|beos|os\/2|amigaos|morphos|risc\sos)/i,
+                                                                                // Plan9/Minix/BeOS/OS2/AmigaOS/MorphOS/RISCOS
+            /(unix)\s?([\w\.]+)*/i                                              // UNIX
+            ], [NAME, VERSION]
+        ]
+    };
+
+    var UAParser = function UAParser (uastring) {
+        if (!(this instanceof UAParser)) return new UAParser(uastring).getResult();
+
+        var ua = uastring || ((window && window.navigator && window.navigator.userAgent) ? window.navigator.userAgent : EMPTY);
+
+        if (!(this instanceof UAParser)) {
+            return new UAParser(uastring).getResult();
+        }
+        this.getBrowser = function () {
+            return mapper.rgx.apply(this, regexes.browser);
+        };
+        this.getCPU = function () {
+            return mapper.rgx.apply(this, regexes.cpu);
+        };
+        this.getDevice = function () {
+            return mapper.rgx.apply(this, regexes.device);
+        };
+        this.getEngine = function () {
+            return mapper.rgx.apply(this, regexes.engine);
+        };
+        this.getOS = function () {
+            return mapper.rgx.apply(this, regexes.os);
+        };
+        this.getResult = function() {
+            return {
+                browser : this.getBrowser(),
+                engine  : this.getEngine(),
+                os      : this.getOS(),
+                device  : this.getDevice(),
+                cpu     : this.getCPU()
+            };
+        };
+        this.getUA = function () {
+            return ua;
+        };
+        this.setUA = function (uastring) {
+            ua = uastring;
+            return this;
+        };
+        this.setUA(ua);
+    };
+
+    module.exports = UAParser;
+})(this);
+
+});
+require.register("yields-case/dist/Case.js", function(exports, require, module){
+/*! Case - v1.0.3 - 2013-08-23
+* Copyright (c) 2013 Nathan Bubna; Licensed MIT, GPL */
+(function() {
+    "use strict";
+    var re = {
+        capitalize: /(^|\W|_)([a-z])/g,
+        squish: /(^|[\W_])+([a-zA-Z])/g,
+        fill: /[\W_]+(.|$)/g,
+        sentence: /(^\s*|[\?\!\.]+"?\s+"?|,\s+")([a-z])/g,
+        improper: /\b(A|An|And|As|At|But|By|En|For|If|In|Of|On|Or|The|To|Vs?\.?|Via)\b/g,
+        relax: /([^A-Z])([A-Z]*)([A-Z])(?=[a-z]|$)/g,
+        upper: /^[^a-z]+$/,
+        hole: /\s/,
+        room: /[\W_]/
+    },
+    _ = {
+        re: re,
+        types: [],
+        up: String.prototype.toUpperCase,
+        low: String.prototype.toLowerCase,
+        cap: function(s) {
+            return _.up.call(s.charAt(0))+s.slice(1);
+        },
+        decap: function(s) {
+            return _.low.call(s.charAt(0))+s.slice(1);
+        },
+        fill: function(s, fill) {
+            return !s || fill == null ? s : s.replace(re.fill, function(m, next) {
+                return next ? fill + next : '';
+            });
+        },
+        prep: function(s, fill, squish, upper) {
+            if (!s){ return s || ''; }
+            if (!upper && re.upper.test(s)) {
+                s = _.low.call(s);
+            }
+            if (!fill && !re.hole.test(s)) {
+                s = _.fill(s, ' ');
+            }
+            if (!squish && !re.room.test(s)) {
+                s = s.replace(re.relax, _.relax);
+            }
+            return s;
+        },
+        relax: function(m, before, acronym, caps) {
+            return before + ' ' + (acronym ? acronym+' ' : '') + caps;
+        }
+    },
+    Case = {
+        _: _,
+        of: function(s) {
+            for (var i=0,m=_.types.length; i<m; i++) {
+                if (Case[_.types[i]](s) === s){ return _.types[i]; }
+            }
+        },
+        flip: function(s) {
+            return s.replace(/\w/g, function(l) {
+                return l == _.up.call(l) ? _.low.call(l) : _.up.call(l);
+            });
+        },
+        type: function(type, fn) {
+            Case[type] = fn;
+            _.types.push(type);
+        }
+    },
+    types = {
+        snake: function(s){ return Case.lower(s, '_'); },
+        constant: function(s){ return Case.upper(s, '_'); },
+        camel: function(s){ return _.decap(Case.squish(s)); },
+        lower: function(s, fill) {
+            return _.fill(_.low.call(_.prep(s, fill)), fill);
+        },
+        upper: function(s, fill) {
+            return _.fill(_.up.call(_.prep(s, fill, false, true)), fill);
+        },
+        capital: function(s, fill) {
+            return _.fill(_.prep(s).replace(re.capitalize, function(m, border, letter) {
+                return border+_.up.call(letter);
+            }), fill);
+        },
+        squish: function(s) {
+            return _.fill(_.prep(s, false, true).replace(re.squish, function(m, border, letter) {
+                return _.up.call(letter);
+            }), '');
+        },
+        title: function(s) {
+            return Case.capital(s).replace(re.improper, function(small) {
+                return _.low.call(small);
+            });
+        },
+        sentence: function(s, names) {
+            s = Case.lower(s).replace(re.sentence, function(m, prelude, letter) {
+                return prelude + _.up.call(letter);
+            });
+            if (names) {
+                names.forEach(function(name) {
+                    s = s.replace(new RegExp('\\b'+Case.lower(name)+'\\b', "g"), _.cap);
+                });
+            }
+            return s;
+        }
+    };
+
+    for (var type in types) {
+        Case.type(type, types[type]);
+    }
+    if (typeof define === 'function' && define.amd) {
+        define(function(){ return Case; });
+    } else if (typeof module !== 'undefined' && module.exports) {
+        module.exports = Case;
+    } else {
+        this.Case = Case;
+    }
+}).call(this);
+
+});
+require.register("segmentio-obj-case/index.js", function(exports, require, module){
+
+var Case = require('case');
+
+
+var cases = [
+  Case.upper,
+  Case.lower,
+  Case.snake,
+  Case.squish,
+  Case.camel,
+  Case.constant,
+  Case.title,
+  Case.capital,
+  Case.sentence
+];
+
+
+/**
+ * Module exports, export
+ */
+
+module.exports = module.exports.find = multiple(find);
+
+
+/**
+ * Export the replacement function, return the modified object
+ */
+
+module.exports.replace = function (obj, key, val) {
+  multiple(replace).apply(this, arguments);
+  return obj;
+};
+
+
+/**
+ * Export the delete function, return the modified object
+ */
+
+module.exports.del = function (obj, key) {
+  multiple(del).apply(this, arguments);
+  return obj;
+};
+
+
+/**
+ * Compose applying the function to a nested key
+ */
+
+function multiple (fn) {
+  return function (obj, key, val) {
+    var keys = key.split('.');
+    if (keys.length === 0) return;
+
+    while (keys.length > 1) {
+      key = keys.shift();
+      obj = find(obj, key);
+
+      if (obj === null || obj === undefined) return;
+    }
+
+    key = keys.shift();
+    return fn(obj, key, val);
+  };
+}
+
+
+/**
+ * Find an object by its key
+ *
+ * find({ first_name : 'Calvin' }, 'firstName')
+ */
+
+function find (obj, key) {
+  for (var i = 0; i < cases.length; i++) {
+    var cased = cases[i](key);
+    if (obj.hasOwnProperty(cased)) return obj[cased];
+  }
+}
+
+
+/**
+ * Delete a value for a given key
+ *
+ * del({ a : 'b', x : 'y' }, 'X' }) -> { a : 'b' }
+ */
+
+function del (obj, key) {
+  for (var i = 0; i < cases.length; i++) {
+    var cased = cases[i](key);
+    if (obj.hasOwnProperty(cased)) delete obj[cased];
+  }
+  return obj;
+}
+
+
+/**
+ * Replace an objects existing value with a new one
+ *
+ * replace({ a : 'b' }, 'a', 'c') -> { a : 'c' }
+ */
+
+function replace (obj, key, val) {
+  for (var i = 0; i < cases.length; i++) {
+    var cased = cases[i](key);
+    if (obj.hasOwnProperty(cased)) obj[cased] = val;
+  }
+  return obj;
+}
+});
+require.register("segmentio-facade/lib/index.js", function(exports, require, module){
+
+var Facade = require('./facade');
+
+/**
+ * Expose `Facade` facade.
+ */
+
+module.exports = Facade;
+
+/**
+ * Expose specific-method facades.
+ */
+
+Facade.Alias = require('./alias');
+Facade.Group = require('./group');
+Facade.Identify = require('./identify');
+Facade.Track = require('./track');
+Facade.Page = require('./page');
+
+});
+require.register("segmentio-facade/lib/alias.js", function(exports, require, module){
+
+var Facade = require('./facade');
+var component = require('require-component')(require);
+var inherit = component('inherit');
+
+/**
+ * Expose `Alias` facade.
+ */
+
+module.exports = Alias;
+
+/**
+ * Initialize a new `Alias` facade with a `dictionary` of arguments.
+ *
+ * @param {Object} dictionary
+ *   @property {String} from
+ *   @property {String} to
+ *   @property {Object} options
+ */
+
+function Alias (dictionary) {
+  Facade.call(this, dictionary);
+}
+
+/**
+ * Inherit from `Facade`.
+ */
+
+inherit(Alias, Facade);
+
+/**
+ * Return type of facade.
+ *
+ * @return {String}
+ */
+
+Alias.prototype.action = function () {
+  return 'alias';
+};
+
+/**
+ * Setup some basic proxies.
+ */
+
+Alias.prototype.from = Facade.field('from');
+Alias.prototype.to = Facade.field('to');
+});
+require.register("segmentio-facade/lib/facade.js", function(exports, require, module){
+
+var component = require('require-component')(require);
+var clone = component('clone');
+var isEnabled = component('./is-enabled');
+var objCase = component('obj-case');
+
+/**
+ * Expose `Facade`.
+ */
+
+module.exports = Facade;
+
+/**
+ * Initialize a new `Facade` with an `obj` of arguments.
+ *
+ * @param {Object} obj
+ */
+
+function Facade (obj) {
+  if (!obj.hasOwnProperty('timestamp')) obj.timestamp = new Date();
+  else obj.timestamp = new Date(obj.timestamp);
+  this.obj = obj;
+}
+
+/**
+ * Return a proxy function for a `field` that will attempt to first use methods,
+ * and fallback to accessing the underlying object directly. You can specify
+ * deeply nested fields too like:
+ *
+ *   this.proxy('options.Librato');
+ *
+ * @param {String} field
+ */
+
+Facade.prototype.proxy = function (field) {
+  var fields = field.split('.');
+  field = fields.shift();
+
+  // Call a function at the beginning to take advantage of facaded fields
+  var obj = this[field] || this.field(field);
+  if (!obj) return obj;
+  if (typeof obj === 'function') obj = obj.call(this) || {};
+  if (fields.length === 0) return clone(obj);
+
+  obj = objCase(obj, fields.join('.'));
+  return clone(obj);
+};
+
+/**
+ * Directly access a specific `field` from the underlying object, returning a
+ * clone so outsiders don't mess with stuff.
+ *
+ * @param {String} field
+ * @return {Mixed}
+ */
+
+Facade.prototype.field = function (field) {
+  return clone(this.obj[field]);
+};
+
+/**
+ * Utility method to always proxy a particular `field`. You can specify deeply
+ * nested fields too like:
+ *
+ *   Facade.proxy('options.Librato');
+ *
+ * @param {String} field
+ * @return {Function}
+ */
+
+Facade.proxy = function (field) {
+  return function () {
+    return this.proxy(field);
+  };
+};
+
+/**
+ * Utility method to directly access a `field`.
+ *
+ * @param {String} field
+ * @return {Function}
+ */
+
+Facade.field = function (field) {
+  return function () {
+    return this.field(field);
+  };
+};
+
+/**
+ * Get the basic json object of this facade.
+ *
+ * @return {Object}
+ */
+
+Facade.prototype.json = function () {
+  return clone(this.obj);
+};
+
+/**
+ * Get the options of a call (formerly called "context"). If you pass an
+ * integration name, it will get the options for that specific integration, or
+ * undefined if the integration is not enabled.
+ *
+ * @param {String} integration (optional)
+ * @return {Object or Null}
+ */
+
+Facade.prototype.options = function (integration) {
+  var options = clone(this.obj.options || this.obj.context) || {};
+  if (!integration) return clone(options);
+  if (!this.enabled(integration)) return;
+
+  options = options[integration] || {};
+  return typeof options === 'boolean' ? {} : clone(options);
+};
+
+/**
+ * Check whether an integration is enabled.
+ *
+ * @param {String} integration
+ * @return {Boolean}
+ */
+
+Facade.prototype.enabled = function (integration) {
+  var allEnabled = this.proxy('options.providers.all');
+  if (typeof allEnabled !== 'boolean') allEnabled = this.proxy('options.all');
+  if (typeof allEnabled !== 'boolean') allEnabled = true;
+
+  var enabled = allEnabled && isEnabled(integration);
+  var options = this.options();
+
+  // If the integration is explicitly enabled or disabled, use that
+  // First, check options.providers for backwards compatibility
+  if (options.providers && options.providers.hasOwnProperty(integration)) {
+    enabled = options.providers[integration];
+  }
+
+  // Next, check for the integration's existence in 'options' to enable it.
+  // If the settings are a boolean, use that, otherwise it should be enabled.
+  if (options.hasOwnProperty(integration)) {
+    var settings = options[integration];
+    if (typeof settings === 'boolean') {
+      enabled = settings;
+    } else {
+      enabled = true;
+    }
+  }
+
+  return enabled ? true : false;
+};
+
+/**
+ * Get the `userAgent` option.
+ *
+ * @return {String}
+ */
+
+Facade.prototype.userAgent = function () {};
+
+/**
+ * Check whether the user is active.
+ *
+ * @return {Boolean}
+ */
+
+Facade.prototype.active = function () {
+  var active = this.proxy('options.active');
+  if (active === null || active === undefined) active = true;
+  return active;
+};
+
+/**
+ * Setup some basic proxies.
+ */
+
+Facade.prototype.channel = Facade.field('channel');
+Facade.prototype.timestamp = Facade.field('timestamp');
+Facade.prototype.ip = Facade.proxy('options.ip');
+
+});
+require.register("segmentio-facade/lib/group.js", function(exports, require, module){
+
+var Facade = require('./facade');
+var component = require('require-component')(require);
+var inherit = component('inherit');
+var newDate = component('new-date');
+
+/**
+ * Expose `Group` facade.
+ */
+
+module.exports = Group;
+
+/**
+ * Initialize a new `Group` facade with a `dictionary` of arguments.
+ *
+ * @param {Object} dictionary
+ *   @param {String} userId
+ *   @param {String} groupId
+ *   @param {Object} properties
+ *   @param {Object} options
+ */
+
+function Group (dictionary) {
+  Facade.call(this, dictionary);
+}
+
+/**
+ * Inherit from `Facade`
+ */
+
+inherit(Group, Facade);
+
+/**
+ * Get the facade's action.
+ */
+
+Group.prototype.action = function () {
+  return 'group';
+};
+
+/**
+ * Setup some basic proxies.
+ */
+
+Group.prototype.groupId = Facade.field('groupId');
+Group.prototype.userId  = Facade.field('userId');
+
+/**
+ * Get created or createdAt.
+ *
+ * @return {Date}
+ */
+
+Group.prototype.created = function(){
+  var created = this.proxy('traits.createdAt')
+    || this.proxy('traits.created')
+    || this.proxy('properties.createdAt')
+    || this.proxy('properties.created');
+
+  if (created) return newDate(created);
+};
+
+/**
+ * Get the group's traits.
+ *
+ * @param {Object} aliases
+ * @return {Object}
+ */
+
+Group.prototype.traits = function (aliases) {
+  var ret = this.properties();
+  var id = this.groupId();
+  aliases = aliases || {};
+
+  if (id) ret.id = id;
+
+  for (var alias in aliases) {
+    var value = null == this[alias]
+      ? this.proxy('traits.' + alias)
+      : this[alias]();
+    if (null == value) continue;
+    ret[aliases[alias]] = value;
+    delete ret[alias];
+  }
+
+  return ret;
+};
+
+/**
+ * Get traits or properties.
+ *
+ * TODO: remove me
+ *
+ * @return {Object}
+ */
+
+Group.prototype.properties = function(){
+  return this.field('traits')
+    || this.field('properties')
+    || {};
+};
+
+});
+require.register("segmentio-facade/lib/page.js", function(exports, require, module){
+
+var component = require('require-component')(require);
+var Facade = component('./facade');
+var inherit = component('inherit');
+var Track = require('./track');
+
+/**
+ * Expose `Page` facade
+ */
+
+module.exports = Page;
+
+/**
+ * Initialize new `Page` facade with `dictionary`.
+ *
+ * @param {Object} dictionary
+ *   @param {String} category
+ *   @param {String} name
+ *   @param {Object} traits
+ *   @param {Object} options
+ */
+
+function Page(dictionary){
+  Facade.call(this, dictionary);
+}
+
+/**
+ * Inherit from `Facade`
+ */
+
+inherit(Page, Facade);
+
+/**
+ * Get the facade's action.
+ *
+ * @return {String}
+ */
+
+Page.prototype.action = function(){
+  return 'page';
+};
+
+/**
+ * Proxies
+ */
+
+Page.prototype.category = Facade.field('category');
+Page.prototype.name = Facade.field('name');
+
+/**
+ * Get the page properties mixing `category` and `name`.
+ *
+ * @return {Object}
+ */
+
+Page.prototype.properties = function(){
+  var props = this.field('properties') || {};
+  var category = this.category();
+  var name = this.name();
+  if (category) props.category = category;
+  if (name) props.name = name;
+  return props;
+};
+
+/**
+ * Get the page fullName.
+ *
+ * @return {String}
+ */
+
+Page.prototype.fullName = function(){
+  var category = this.category();
+  var name = this.name();
+  return name && category
+    ? category + ' ' + name
+    : name;
+};
+
+/**
+ * Get event with `name`.
+ *
+ * @return {String}
+ */
+
+Page.prototype.event = function(name){
+  return name
+    ? 'Viewed ' + name + ' Page'
+    : 'Loaded a Page';
+};
+
+/**
+ * Convert this Page to a Track facade with `name`.
+ *
+ * @param {String} name
+ * @return {Track}
+ */
+
+Page.prototype.track = function(name){
+  var props = this.properties();
+  return new Track({
+    event: this.event(name),
+    properties: props
+  });
+};
+
+});
+require.register("segmentio-facade/lib/identify.js", function(exports, require, module){
+
+var component = require('require-component')(require);
+var clone = component('clone');
+var Facade = component('./facade');
+var inherit = component('inherit');
+var isEmail = component('is-email');
+var newDate = component('new-date');
+var trim = component('trim');
+
+/**
+ * Expose `Idenfity` facade.
+ */
+
+module.exports = Identify;
+
+/**
+ * Initialize a new `Identify` facade with a `dictionary` of arguments.
+ *
+ * @param {Object} dictionary
+ *   @param {String} userId
+ *   @param {String} sessionId
+ *   @param {Object} traits
+ *   @param {Object} options
+ */
+
+function Identify (dictionary) {
+  Facade.call(this, dictionary);
+}
+
+/**
+ * Inherit from `Facade`.
+ */
+
+inherit(Identify, Facade);
+
+/**
+ * Get the facade's action.
+ */
+
+Identify.prototype.action = function () {
+  return 'identify';
+};
+
+/**
+ * Setup some basic proxies.
+ */
+
+Identify.prototype.userId = Facade.field('userId');
+Identify.prototype.sessionId = Facade.field('sessionId');
+
+/**
+ * Get the user's traits.
+ *
+ * @param {Object} aliases
+ * @return {Object}
+ */
+
+Identify.prototype.traits = function (aliases) {
+  var ret = this.field('traits') || {};
+  var id = this.userId();
+  aliases = aliases || {};
+
+  if (id) ret.id = id;
+
+  for (var alias in aliases) {
+    var value = null == this[alias]
+      ? this.proxy('traits.' + alias)
+      : this[alias]();
+    if (null == value) continue;
+    ret[aliases[alias]] = value;
+    delete ret[alias];
+  }
+
+  return ret;
+};
+
+/**
+ * Get the user's email, falling back to their user ID if it's a valid email.
+ *
+ * @return {String}
+ */
+
+Identify.prototype.email = function () {
+  var email = this.proxy('traits.email');
+  if (email) return email;
+
+  var userId = this.userId();
+  if (isEmail(userId)) return userId;
+};
+
+/**
+ * Get the user's created date, optionally looking for `createdAt` since lots of
+ * people do that instead.
+ *
+ * @return {Date or Undefined}
+ */
+
+Identify.prototype.created = function () {
+  var created = this.proxy('traits.created') || this.proxy('traits.createdAt');
+  if (created) return newDate(created);
+};
+
+/**
+ * Get the company created date.
+ *
+ * @return {Date or undefined}
+ */
+
+Identify.prototype.companyCreated = function(){
+  var created = this.proxy('traits.company.created')
+    || this.proxy('traits.company.createdAt');
+
+  if (created) return newDate(created);
+};
+
+/**
+ * Get the user's name, optionally combining a first and last name if that's all
+ * that was provided.
+ *
+ * @return {String or Undefined}
+ */
+
+Identify.prototype.name = function () {
+  var name = this.proxy('traits.name');
+  if (name) return trim(name);
+
+  var firstName = this.firstName();
+  var lastName = this.lastName();
+  if (firstName && lastName) return trim(firstName + ' ' + lastName);
+};
+
+/**
+ * Get the user's first name, optionally splitting it out of a single name if
+ * that's all that was provided.
+ *
+ * @return {String or Undefined}
+ */
+
+Identify.prototype.firstName = function () {
+  var firstName = this.proxy('traits.firstName');
+  if (firstName) return trim(firstName);
+
+  var name = this.proxy('traits.name');
+  if (name) return trim(name).split(' ')[0];
+};
+
+/**
+ * Get the user's last name, optionally splitting it out of a single name if
+ * that's all that was provided.
+ *
+ * @return {String or Undefined}
+ */
+
+Identify.prototype.lastName = function () {
+  var lastName = this.proxy('traits.lastName');
+  if (lastName) return trim(lastName);
+
+  var name = this.proxy('traits.name');
+  if (!name) return;
+
+  var space = trim(name).indexOf(' ');
+  if (space === -1) return;
+
+  return trim(name.substr(space + 1));
+};
+
+/**
+ * Get the user's unique id.
+ *
+ * @return {String or undefined}
+ */
+
+Identify.prototype.uid = function(){
+  return this.userId()
+    || this.username()
+    || this.email();
+};
+
+/**
+ * Setup sme basic "special" trait proxies.
+ */
+
+Identify.prototype.username = Facade.proxy('traits.username');
+Identify.prototype.website = Facade.proxy('traits.website');
+Identify.prototype.phone = Facade.proxy('traits.phone');
+Identify.prototype.address = Facade.proxy('traits.address');
+Identify.prototype.avatar = Facade.proxy('traits.avatar');
+
+});
+require.register("segmentio-facade/lib/is-enabled.js", function(exports, require, module){
+
+/**
+ * A few integrations are disabled by default. They must be explicitly
+ * enabled by setting options[Provider] = true.
+ */
+
+var disabled = {
+  Salesforce: true,
+  Marketo: true
+};
+
+/**
+ * Check whether an integration should be enabled by default.
+ *
+ * @param {String} integration
+ * @return {Boolean}
+ */
+
+module.exports = function (integration) {
+  return ! disabled[integration];
+};
+});
+require.register("segmentio-facade/lib/track.js", function(exports, require, module){
+
+var component = require('require-component')(require);
+var clone = component('clone');
+var Facade = component('./facade');
+var Identify = component('./identify');
+var inherit = component('inherit');
+var isEmail = component('is-email');
+var traverse = component('isodate-traverse');
+
+/**
+ * Expose `Track` facade.
+ */
+
+module.exports = Track;
+
+/**
+ * Initialize a new `Track` facade with a `dictionary` of arguments.
+ *
+ * @param {object} dictionary
+ *   @property {String} event
+ *   @property {String} userId
+ *   @property {String} sessionId
+ *   @property {Object} properties
+ *   @property {Object} options
+ */
+
+function Track (dictionary) {
+  Facade.call(this, dictionary);
+}
+
+/**
+ * Inherit from `Facade`.
+ */
+
+inherit(Track, Facade);
+
+/**
+ * Return the facade's action.
+ *
+ * @return {String}
+ */
+
+Track.prototype.action = function () {
+  return 'track';
+};
+
+/**
+ * Setup some basic proxies.
+ */
+
+Track.prototype.userId = Facade.field('userId');
+Track.prototype.sessionId = Facade.field('sessionId');
+Track.prototype.event = Facade.field('event');
+Track.prototype.value = Facade.proxy('properties.value');
+
+/**
+ * BACKWARDS COMPATIBILITY: should probably re-examine where these come from.
+ */
+
+Track.prototype.referrer = Facade.proxy('properties.referrer');
+Track.prototype.query = Facade.proxy('options.query');
+
+/**
+ * Get the call's properties.
+ *
+ * @param {Object} aliases
+ * @return {Object}
+ */
+
+Track.prototype.properties = function (aliases) {
+  var ret = this.field('properties') || {};
+  aliases = aliases || {};
+
+  for (var alias in aliases) {
+    var value = null == this[alias]
+      ? this.proxy('properties.' + alias)
+      : this[alias]();
+    if (null == value) continue;
+    ret[aliases[alias]] = value;
+    delete ret[alias];
+  }
+
+  return clone(traverse(ret));
+};
+
+/**
+ * Get the call's "super properties" which are just traits that have been
+ * passed in as if from an identify call.
+ *
+ * @return {Object}
+ */
+
+Track.prototype.traits = function () {
+  return this.proxy('options.traits') || {};
+};
+
+/**
+ * Get the call's username.
+ *
+ * @return {String or Undefined}
+ */
+
+Track.prototype.username = function () {
+  return this.proxy('traits.username') ||
+         this.proxy('properties.username') ||
+         this.userId() ||
+         this.sessionId();
+};
+
+/**
+ * Get the call's email, using an the user ID if it's a valid email.
+ *
+ * @return {String or Undefined}
+ */
+
+Track.prototype.email = function () {
+  var email = this.proxy('traits.email');
+  if (email) return email;
+
+  var userId = this.userId();
+  if (isEmail(userId)) return userId;
+};
+
+/**
+ * Get the call's revenue, parsing it from a string with an optional leading
+ * dollar sign.
+ *
+ * @return {String or Undefined}
+ */
+
+Track.prototype.revenue = function () {
+  var revenue = this.proxy('properties.revenue');
+
+  if (!revenue) return;
+  if (typeof revenue === 'number') return revenue;
+  if (typeof revenue !== 'string') return;
+
+  revenue = revenue.replace(/\$/g, '');
+  revenue = parseFloat(revenue);
+
+  if (!isNaN(revenue)) return revenue;
+};
+
+/**
+ * Get cents.
+ *
+ * @return {Number}
+ */
+
+Track.prototype.cents = function(){
+  var revenue = this.revenue();
+  return 'number' != typeof revenue
+    ? this.value() || 0
+    : revenue * 100;
+};
+
+/**
+ * A utility to turn the pieces of a track call into an identify. Used for
+ * integrations with super properties or rate limits.
+ *
+ * TODO: remove me.
+ *
+ * @return {Facade}
+ */
+
+Track.prototype.identify = function () {
+  var json = this.json();
+  json.traits = this.traits();
+  return new Identify(json);
+};
+
+});
 require.register("analytics/lib/index.js", function(exports, require, module){
 /**
  * Analytics.js
@@ -9694,7 +11313,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.1.9';
+exports.VERSION = '1.2.0';
 
 
 /**
@@ -9727,9 +11346,14 @@ var prevent = require('prevent');
 var querystring = require('querystring');
 var size = require('object').length;
 var store = require('./store');
-var traverse = require('isodate-traverse');
 var url = require('url');
 var user = require('./user');
+var Facade = require('facade');
+var Identify = Facade.Identify;
+var Group = Facade.Group;
+var Alias = Facade.Alias;
+var Track = Facade.Track;
+var Page = Facade.Page;
 
 
 /**
@@ -9870,14 +11494,21 @@ Analytics.prototype.identify = function (id, traits, options, fn) {
   if (is.fn(traits)) fn = traits, options = null, traits = null;
   if (is.object(id)) options = traits, traits = id, id = user.id();
 
-  user.identify(id, traits);
 
   // clone traits before we manipulate so we don't do anything uncouth, and take
   // from `user` so that we carryover anonymous traits
+  user.identify(id, traits);
   id = user.id();
-  traits = cleanTraits(id, user.traits());
+  traits = user.traits();
 
-  this._invoke('identify', id, traits, options);
+  this._invoke('identify', new Identify({
+    options: options,
+    traits: traits,
+    userId: id
+  }));
+
+  // emit
+  this.emit('identify', id, traits, options);
   this._callback(fn);
   return this;
 };
@@ -9895,32 +11526,35 @@ Analytics.prototype.user = function () {
 
 
 /**
- * Identify a group by optional `id` and `properties`. Or, if no arguments are
+ * Identify a group by optional `id` and `traits`. Or, if no arguments are
  * supplied, return the current group.
  *
  * @param {String} id (optional)
- * @param {Object} properties (optional)
+ * @param {Object} traits (optional)
  * @param {Object} options (optional)
  * @param {Function} fn (optional)
  * @return {Analytics or Object}
  */
 
-Analytics.prototype.group = function (id, properties, options, fn) {
+Analytics.prototype.group = function (id, traits, options, fn) {
   if (0 === arguments.length) return group;
   if (is.fn(options)) fn = options, options = null;
-  if (is.fn(properties)) fn = properties, options = null, properties = null;
-  if (is.object(id)) options = properties, properties = id, id = group.id();
+  if (is.fn(traits)) fn = traits, options = null, traits = null;
+  if (is.object(id)) options = traits, traits = id, id = group.id();
 
-  group.identify(id, properties);
 
   // grab from group again to make sure we're taking from the source
+  group.identify(id, traits);
   id = group.id();
-  properties = group.properties();
+  traits = group.traits();
 
-  // convert a create date to a date
-  if (properties.created) properties.created = newDate(properties.created);
+  this._invoke('group', new Group({
+    options: options,
+    traits: traits,
+    groupId: id
+  }));
 
-  this._invoke('group', id, properties, options);
+  this.emit('group', id, traits, options);
   this._callback(fn);
   return this;
 };
@@ -9940,9 +11574,13 @@ Analytics.prototype.track = function (event, properties, options, fn) {
   if (is.fn(options)) fn = options, options = null;
   if (is.fn(properties)) fn = properties, options = null, properties = null;
 
-  properties = traverse(clone(properties)) || {};
+  this._invoke('track', new Track({
+    properties: properties,
+    options: options,
+    event: event
+  }));
 
-  this._invoke('track', event, properties, options);
+  this.emit('track', event, properties, options);
   this._callback(fn);
   return this;
 };
@@ -10064,7 +11702,14 @@ Analytics.prototype.page = function (category, name, properties, options, fn) {
   properties = clone(properties) || {};
   defaults(properties, defs);
 
-  this._invoke('page', category, name, properties, options);
+  this._invoke('page', new Page({
+    properties: properties,
+    category: category,
+    options: options,
+    name: name
+  }));
+
+  this.emit('page', category, name, properties, options);
   this._callback(fn);
   return this;
 };
@@ -10101,7 +11746,14 @@ Analytics.prototype.alias = function (to, from, options, fn) {
   if (is.fn(options)) fn = options, options = null;
   if (is.fn(from)) fn = from, options = null, from = null;
   if (is.object(from)) options = from, from = null;
-  this._invoke('alias', to, from, options);
+
+  this._invoke('alias', new Alias({
+    options: options,
+    from: from,
+    to: to
+  }));
+
+  this.emit('alias', to, from, options);
   this._callback(fn);
   return this;
 };
@@ -10182,27 +11834,22 @@ Analytics.prototype._callback = function (fn) {
 
 
 /**
- * Call a `method` on all of initialized integrations, passing clones of arguments
- * along to keep each integration isolated.
- *
- * TODO: check integration enabled
+ * Call `method` with `facade` on all enabled integrations.
  *
  * @param {String} method
- * @param {Mixed} args...
+ * @param {Facade} facade
  * @return {Analytics}
  * @api private
  */
 
-Analytics.prototype._invoke = function () {
-  var args = [].slice.call(arguments);
-  var options = args[args.length-1]; // always the last one
+Analytics.prototype._invoke = function (method, facade) {
+  var options = facade.options();
 
   each(this._integrations, function (name, integration) {
-    if (!isEnabled(integration, options)) return;
-    integration.invoke.apply(integration, clone(args));
+    if (!facade.enabled(name)) return;
+    integration.invoke.call(integration, method, facade);
   });
 
-  this.emit.apply(this, clone(args));
   return this;
 };
 
@@ -10224,59 +11871,6 @@ Analytics.prototype._parseQuery = function () {
 
 
 /**
- * Determine whether a `integration` is enabled or not based on `options`.
- *
- * @param {Object} integration
- * @param {Object} options
- * @return {Boolean}
- */
-
-function isEnabled (integration, options) {
-  var enabled = true;
-  if (!options || !options.providers) return enabled;
-
-  // Default to the 'all' or 'All' setting.
-  var map = options.providers;
-  if (map.all !== undefined) enabled = map.all;
-  if (map.All !== undefined) enabled = map.All;
-
-  // Look for this integration's specific setting.
-  var name = integration.name;
-  if (map[name] !== undefined) enabled = map[name];
-
-  return enabled;
-}
-
-
-/**
- * Clean up traits, default some useful things both so the user doesn't have to
- * and so we don't have to do it on a integration-basis.
- *
- * @param {Object} traits
- * @return {Object}
- */
-
-function cleanTraits (userId, traits) {
-  // Add the `email` trait if it doesn't exist and the `userId` is an email.
-  if (!traits.email && isEmail(userId)) traits.email = userId;
-
-  // Create the `name` trait if it doesn't exist and `firstName` and `lastName`
-  // are both supplied.
-  if (!traits.name && traits.firstName && traits.lastName) {
-    traits.name = traits.firstName + ' ' + traits.lastName;
-  }
-
-  // Convert dates from more types of input into Date objects.
-  if (traits.created) traits.created = newDate(traits.created);
-  if (traits.company && traits.company.created) {
-    traits.company.created = newDate(traits.company.created);
-  }
-
-  return traits;
-}
-
-
-/**
  * Return the canonical path for the page.
  *
  * @return {String}
@@ -10288,6 +11882,7 @@ function canonicalPath () {
   var parsed = url.parse(canon);
   return parsed.pathname;
 }
+
 });
 require.register("analytics/lib/cookie.js", function(exports, require, module){
 
@@ -10882,6 +12477,9 @@ module.exports.User = User;
 
 
 
+
+
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -11205,6 +12803,63 @@ require.alias("visionmedia-debug/index.js", "analytics/deps/debug/index.js");
 require.alias("visionmedia-debug/debug.js", "analytics/deps/debug/debug.js");
 require.alias("visionmedia-debug/index.js", "debug/index.js");
 
+require.alias("segmentio-facade/lib/index.js", "analytics/deps/facade/lib/index.js");
+require.alias("segmentio-facade/lib/alias.js", "analytics/deps/facade/lib/alias.js");
+require.alias("segmentio-facade/lib/facade.js", "analytics/deps/facade/lib/facade.js");
+require.alias("segmentio-facade/lib/group.js", "analytics/deps/facade/lib/group.js");
+require.alias("segmentio-facade/lib/page.js", "analytics/deps/facade/lib/page.js");
+require.alias("segmentio-facade/lib/identify.js", "analytics/deps/facade/lib/identify.js");
+require.alias("segmentio-facade/lib/is-enabled.js", "analytics/deps/facade/lib/is-enabled.js");
+require.alias("segmentio-facade/lib/track.js", "analytics/deps/facade/lib/track.js");
+require.alias("segmentio-facade/lib/index.js", "analytics/deps/facade/index.js");
+require.alias("segmentio-facade/lib/index.js", "facade/index.js");
+require.alias("CamShaft-require-component/index.js", "segmentio-facade/deps/require-component/index.js");
+
+require.alias("segmentio-isodate-traverse/index.js", "segmentio-facade/deps/isodate-traverse/index.js");
+require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone/index.js");
+require.alias("component-type/index.js", "component-clone/deps/type/index.js");
+
+require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
+require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
+require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
+
+require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
+
+require.alias("segmentio-isodate/index.js", "segmentio-isodate-traverse/deps/isodate/index.js");
+
+require.alias("component-clone/index.js", "segmentio-facade/deps/clone/index.js");
+require.alias("component-type/index.js", "component-clone/deps/type/index.js");
+
+require.alias("component-inherit/index.js", "segmentio-facade/deps/inherit/index.js");
+
+require.alias("component-trim/index.js", "segmentio-facade/deps/trim/index.js");
+
+require.alias("component-user-agent-parser/src/ua-parser.js", "segmentio-facade/deps/user-agent-parser/src/ua-parser.js");
+require.alias("component-user-agent-parser/src/ua-parser.js", "segmentio-facade/deps/user-agent-parser/index.js");
+require.alias("component-user-agent-parser/src/ua-parser.js", "component-user-agent-parser/index.js");
+require.alias("segmentio-is-email/index.js", "segmentio-facade/deps/is-email/index.js");
+
+require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/lib/index.js");
+require.alias("segmentio-new-date/lib/milliseconds.js", "segmentio-facade/deps/new-date/lib/milliseconds.js");
+require.alias("segmentio-new-date/lib/seconds.js", "segmentio-facade/deps/new-date/lib/seconds.js");
+require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/index.js");
+require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
+require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
+
+require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
+
+require.alias("segmentio-isodate/index.js", "segmentio-new-date/deps/isodate/index.js");
+
+require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
+require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
+require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
+require.alias("yields-case/dist/Case.js", "segmentio-obj-case/deps/case/dist/Case.js");
+require.alias("yields-case/dist/Case.js", "segmentio-obj-case/deps/case/index.js");
+require.alias("yields-case/dist/Case.js", "yields-case/index.js");
+require.alias("segmentio-obj-case/index.js", "segmentio-obj-case/index.js");
+require.alias("segmentio-facade/lib/index.js", "segmentio-facade/index.js");
 require.alias("analytics/lib/index.js", "analytics/index.js");if (typeof exports == "object") {
   module.exports = require("analytics");
 } else if (typeof define == "function" && define.amd) {

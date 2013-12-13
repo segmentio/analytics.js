@@ -36,7 +36,8 @@
     "segmentio/store.js": "1.3.8",
     "segmentio/top-domain": "0.0.1",
     "yields/prevent": "0.0.2",
-    "visionmedia/debug": "0.7.4"
+    "visionmedia/debug": "0.7.4",
+    "segmentio/facade": "0.2.0"
   },
   "development": {
     "yields/coverage": "*",

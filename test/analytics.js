@@ -229,14 +229,6 @@ describe('Analytics', function () {
       assert(true == b.traits().trait);
     })
 
-    it.skip('should clone arguments before invoking each integration', function () {
-      var traits = { foo: 1 };
-      analytics._invoke('identify', 'id', traits);
-      assert(Test.prototype.invoke.calledWith('identify', 'id', traits));
-      assert(Test.prototype.invoke.args[0][2].foo == 1);
-      assert(Test.prototype.invoke.args[0][2] != traits);
-    });
-
     it('shouldnt call a method when the `all` option is false', function () {
       var opts = { providers: { all: false } };
       var facade = new Facade({ options: opts });

@@ -1,3 +1,8 @@
+
+1.2.1 - December 16, 2013
+-------------------------
+ * add #push, fixes #253
+
 1.2.0 - December 13, 2013
 -------------------------
 * add [`facade`](https://github.com/segmentio/facade)

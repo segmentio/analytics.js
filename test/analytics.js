@@ -1011,4 +1011,15 @@ describe('Analytics', function () {
     });
   });
 
+  describe('#push', function(){
+    beforeEach(function(){
+      analytics.track = sinon.spy();
+    })
+
+    it('should call methods with args', function(){
+      analytics.push(['track', 'event', { prop: true }]);
+      assert(analytics.track.calledWith('event', { prop: true }));
+    })
+  })
+
 });

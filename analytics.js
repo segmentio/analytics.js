@@ -428,13 +428,121 @@ function parse(str) {
 }
 
 });
+require.register("component-to-function/index.js", function(exports, require, module){
+
+/**
+ * Expose `toFunction()`.
+ */
+
+module.exports = toFunction;
+
+/**
+ * Convert `obj` to a `Function`.
+ *
+ * @param {Mixed} obj
+ * @return {Function}
+ * @api private
+ */
+
+function toFunction(obj) {
+  switch ({}.toString.call(obj)) {
+    case '[object Object]':
+      return objectToFunction(obj);
+    case '[object Function]':
+      return obj;
+    case '[object String]':
+      return stringToFunction(obj);
+    case '[object RegExp]':
+      return regexpToFunction(obj);
+    default:
+      return defaultToFunction(obj);
+  }
+}
+
+/**
+ * Default to strict equality.
+ *
+ * @param {Mixed} val
+ * @return {Function}
+ * @api private
+ */
+
+function defaultToFunction(val) {
+  return function(obj){
+    return val === obj;
+  }
+}
+
+/**
+ * Convert `re` to a function.
+ *
+ * @param {RegExp} re
+ * @return {Function}
+ * @api private
+ */
+
+function regexpToFunction(re) {
+  return function(obj){
+    return re.test(obj);
+  }
+}
+
+/**
+ * Convert property `str` to a function.
+ *
+ * @param {String} str
+ * @return {Function}
+ * @api private
+ */
+
+function stringToFunction(str) {
+  // immediate such as "> 20"
+  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
+
+  // properties such as "name.first" or "age > 18"
+  return new Function('_', 'return _.' + str);
+}
+
+/**
+ * Convert `object` to a function.
+ *
+ * @param {Object} object
+ * @return {Function}
+ * @api private
+ */
+
+function objectToFunction(obj) {
+  var match = {}
+  for (var key in obj) {
+    match[key] = typeof obj[key] === 'string'
+      ? defaultToFunction(obj[key])
+      : toFunction(obj[key])
+  }
+  return function(val){
+    if (typeof val !== 'object') return false;
+    for (var key in match) {
+      if (!(key in val)) return false;
+      if (!match[key](val[key])) return false;
+    }
+    return true;
+  }
+}
+
+});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var type = require('type');
+var toFunction = require('to-function');
+var type;
+
+try {
+  type = require('type-component');
+} catch (e) {
+  type = require('type');
+}
 
 /**
  * HOP reference.
@@ -451,6 +559,7 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
+  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -505,6 +614,7 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
+
 });
 require.register("component-indexof/index.js", function(exports, require, module){
 module.exports = function(arr, obj){
@@ -907,15 +1017,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -927,7 +1037,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -939,7 +1051,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -952,29 +1064,10 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
-
-/**
- * Return default port for `protocol`.
- *
- * @param  {String} protocol
- * @return {String}
- * @api private
- */
-function port (protocol){
-  switch (protocol) {
-    case 'http:':
-      return 80;
-    case 'https:':
-      return 443;
-    default:
-      return location.port;
-  }
-}
-
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1022,13 +1115,8 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-try {
-  var bind = require('bind');
-} catch (e) {
-  var bind = require('bind-component');
-}
-
-var bindAll = require('bind-all');
+var bind = require('bind')
+  , bindAll = require('bind-all');
 
 
 /**
@@ -1104,6 +1192,7 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
+
 var next = require('next-tick');
 
 
@@ -1180,8 +1269,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -2354,6 +2448,7 @@ var integrations = [
   'gauges',
   'get-satisfaction',
   'google-analytics',
+  'google-tag-manager',
   'gosquared',
   'heap',
   'hittail',
@@ -2556,29 +2651,28 @@ Amplitude.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-Amplitude.prototype.page = function (category, name, properties, options) {
+Amplitude.prototype.page = function (page) {
+  var properties = page.properties();
+  var category = page.category();
+  var name = page.fullName();
   var opts = this.options;
 
   // all pages
   if (opts.trackAllPages) {
-    this.track('Loaded a Page', properties);
+    this.track(page.track());
   }
 
   // categorized pages
   if (category && opts.trackCategorizedPages) {
-    this.track('Viewed ' + category + ' Page', properties);
+    this.track(page.track(category));
   }
 
   // named pages
   if (name && opts.trackNamedPages) {
-    if (name && category) name = category + ' ' + name;
-    this.track('Viewed ' + name + ' Page', properties);
+    this.track(page.track(name));
   }
 };
 
@@ -2586,12 +2680,12 @@ Amplitude.prototype.page = function (category, name, properties, options) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Facade} identify
  */
 
-Amplitude.prototype.identify = function (id, traits, options) {
+Amplitude.prototype.identify = function (identify) {
+  var id = identify.userId();
+  var traits = identify.traits();
   if (id) window.amplitude.setUserId(id);
   if (traits) window.amplitude.setGlobalUserProperties(traits);
 };
@@ -2600,14 +2694,15 @@ Amplitude.prototype.identify = function (id, traits, options) {
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} event
  */
 
-Amplitude.prototype.track = function (event, properties, options) {
-  window.amplitude.logEvent(event, properties);
+Amplitude.prototype.track = function (track) {
+  var props = track.properties();
+  var event = track.event();
+  window.amplitude.logEvent(event, props);
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/awesm.js", function(exports, require, module){
 
@@ -2685,18 +2780,16 @@ Awesm.prototype.load = function (callback) {
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Awesm.prototype.track = function (event, properties, options) {
+Awesm.prototype.track = function (track) {
+  var event = track.event();
   var goal = this.options.events[event];
   if (!goal) return;
-  var value = properties.value || 0;
-  if (properties.revenue) value = properties.revenue * 100; // prefer revenue
-  window.AWESM.convert(goal, value, null, user.id());
+  window.AWESM.convert(goal, track.cents(), null, user.id());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/awesomatic.js", function(exports, require, module){
 
@@ -2911,17 +3004,14 @@ Bugsnag.prototype.load = function (callback) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Bugsnag.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
+Bugsnag.prototype.identify = function (identify) {
   window.Bugsnag.metaData = window.Bugsnag.metaData || {};
-  if (id) traits.id = id;
-  extend(window.Bugsnag.metaData, traits);
+  extend(window.Bugsnag.metaData, identify.traits());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/chartbeat.js", function(exports, require, module){
 
@@ -3002,17 +3092,15 @@ Chartbeat.prototype.load = function (callback) {
  *
  * http://chartbeat.com/docs/handling_virtual_page_changes/
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-Chartbeat.prototype.page = function (category, name, properties, options) {
-  properties = properties || {};
-  if (category && name) name = category + ' ' + name;
-  window.pSUPERFLY.virtualPage(properties.path, name || properties.title);
+Chartbeat.prototype.page = function (page) {
+  var props = page.properties();
+  var name = page.fullName();
+  window.pSUPERFLY.virtualPage(props.path, name || props.title);
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/clicktale.js", function(exports, require, module){
 
@@ -3107,14 +3195,13 @@ ClickTale.prototype.load = function (callback) {
  * http://wiki.clicktale.com/Article/ClickTaleTag#ClickTaleSetUID
  * http://wiki.clicktale.com/Article/ClickTaleTag#ClickTaleField
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-ClickTale.prototype.identify = function (id, traits, options) {
+ClickTale.prototype.identify = function (identify) {
+  var id = identify.userId();
   window.ClickTaleSetUID(id);
-  each(traits, function (key, value) {
+  each(identify.traits(), function (key, value) {
     window.ClickTaleField(key, value);
   });
 };
@@ -3125,17 +3212,17 @@ ClickTale.prototype.identify = function (id, traits, options) {
  *
  * http://wiki.clicktale.com/Article/ClickTaleTag#ClickTaleEvent
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-ClickTale.prototype.track = function (event, properties, options) {
-  window.ClickTaleEvent(event);
+ClickTale.prototype.track = function (track) {
+  window.ClickTaleEvent(track.event());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/clicky.js", function(exports, require, module){
 
+var Identify = require('facade').Identify;
 var extend = require('extend');
 var integration = require('integration');
 var is = require('is');
@@ -3182,7 +3269,10 @@ var Clicky = exports.Integration = integration('Clicky')
 
 Clicky.prototype.initialize = function (page) {
   window.clicky_site_ids = window.clicky_site_ids || [this.options.siteId];
-  this.identify(user.id(), user.traits());
+  this.identify(new Identify({
+    userId: user.id(),
+    traits: user.traits()
+  }));
   this.load();
 };
 
@@ -3214,15 +3304,13 @@ Clicky.prototype.load = function (callback) {
  *
  * http://clicky.com/help/customization#/help/custom/manual
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-Clicky.prototype.page = function (category, name, properties, options) {
-  properties = properties || {};
-  if (category && name) name = category + ' ' + name;
+Clicky.prototype.page = function (page) {
+  var properties = page.properties();
+  var category = page.category();
+  var name = page.fullName();
   window.clicky.log(properties.path, name || properties.title);
 };
 
@@ -3230,16 +3318,13 @@ Clicky.prototype.page = function (category, name, properties, options) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} id (optional)
  */
 
-Clicky.prototype.identify = function (id, traits, options) {
+Clicky.prototype.identify = function (identify) {
   window.clicky_custom = window.clicky_custom || {};
   window.clicky_custom.session = window.clicky_custom.session || {};
-  if (id) traits.id = id;
-  extend(window.clicky_custom.session, traits);
+  extend(window.clicky_custom.session, identify.traits());
 };
 
 
@@ -3248,14 +3333,13 @@ Clicky.prototype.identify = function (id, traits, options) {
  *
  * http://clicky.com/help/customization#/help/custom/manual
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} event
  */
 
-Clicky.prototype.track = function (event, properties, options) {
-  window.clicky.goal(event, properties.revenue);
+Clicky.prototype.track = function (track) {
+  window.clicky.goal(track.event(), track.revenue());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/comscore.js", function(exports, require, module){
 
@@ -3388,6 +3472,7 @@ require.register("segmentio-analytics.js-integrations/lib/customerio.js", functi
 var alias = require('alias');
 var callback = require('callback');
 var convertDates = require('convert-dates');
+var Identify = require('facade').Identify;
 var integration = require('integration');
 var load = require('load-script');
 
@@ -3460,29 +3545,17 @@ Customerio.prototype.load = function (callback) {
 
 
 /**
- * Trait aliases.
- */
-
-var traitAliases = {
-  created: 'created_at'
-};
-
-
-/**
  * Identify.
  *
  * http://customer.io/docs/api/javascript.html#section-Identify_customers
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Customerio.prototype.identify = function (id, traits, options) {
-  if (!id) return this.debug('user id required');
-  traits.id = id;
+Customerio.prototype.identify = function (identify) {
+  if (!identify.userId()) return this.debug('user id required');
+  var traits = identify.traits({ created: 'created_at' });
   traits = convertDates(traits, convertDate);
-  traits = alias(traits, traitAliases);
   window._cio.identify(traits);
 };
 
@@ -3490,18 +3563,20 @@ Customerio.prototype.identify = function (id, traits, options) {
 /**
  * Group.
  *
- * @param {String} id (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Group} group
  */
 
-Customerio.prototype.group = function (id, properties, options) {
-  if (id) properties.id = id;
-  properties = alias(properties, function (prop) {
-    return 'Group ' + prop;
+Customerio.prototype.group = function (group) {
+  var traits = group.traits();
+
+  traits = alias(traits, function (trait) {
+    return 'Group ' + trait;
   });
 
-  this.identify(user.id(), properties);
+  this.identify(new Identify({
+    userId: user.id(),
+    traits: traits
+  }));
 };
 
 
@@ -3510,14 +3585,13 @@ Customerio.prototype.group = function (id, properties, options) {
  *
  * http://customer.io/docs/api/javascript.html#section-Track_a_custom_event
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Customerio.prototype.track = function (event, properties, options) {
+Customerio.prototype.track = function (track) {
+  var properties = track.properties();
   properties = convertDates(properties, convertDate);
-  window._cio.track(event, properties);
+  window._cio.track(track.event(), properties);
 };
 
 
@@ -3531,6 +3605,7 @@ Customerio.prototype.track = function (event, properties, options) {
 function convertDate (date) {
   return Math.floor(date.getTime() / 1000);
 }
+
 });
 require.register("segmentio-analytics.js-integrations/lib/drip.js", function(exports, require, module){
 
@@ -3602,33 +3677,21 @@ Drip.prototype.load = function (callback) {
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Drip.prototype.track = function (event, properties, options) {
-  properties = properties || {};
-  properties.action = event;
-  properties = alias(properties, { revenue: 'value' });
-  if (properties.value) properties.value = cents(properties.value);
-  push('track', properties);
+Drip.prototype.track = function (track) {
+  var props = track.properties();
+  var cents = Math.round(track.cents());
+  props.action = track.event();
+  if (cents) props.value = cents;
+  delete props.revenue;
+  push('track', props);
 };
 
-
-/**
- * Helper to convert revenue into a cents integer.
- *
- * @param {Object} props
- */
-
-function cents (val) {
-  return Math.round(val * 100);
-}
 });
 require.register("segmentio-analytics.js-integrations/lib/evergage.js", function(exports, require, module){
 
-var alias = require('alias');
 var each = require('each');
 var integration = require('integration');
 var load = require('load-script');
@@ -3703,17 +3766,16 @@ Evergage.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-Evergage.prototype.page = function (category, name, properties, options) {
+Evergage.prototype.page = function (page) {
+  var props = page.properties();
+  var name = page.name();
+
   if (name) push('namePage', name);
 
-  properties = properties || {};
-  each(properties, function(key, value) {
+  each(props, function(key, value) {
     push('setCustomField', key, value, 'page');
   });
 
@@ -3721,29 +3783,23 @@ Evergage.prototype.page = function (category, name, properties, options) {
 };
 
 /**
- * Trait aliases.
- */
-
-var traitAliases = {
-  name: 'userName',
-  email: 'userEmail'
-};
-
-
-/**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Evergage.prototype.identify = function (id, traits, options) {
+Evergage.prototype.identify = function (identify) {
+  var id = identify.userId();
+
   if (!id) return;
+
   push('setUser', id);
 
-  traits = traits || {};
-  traits = alias(traits, traitAliases);
+  var traits = identify.traits({
+    email: 'userEmail',
+    name: 'userName'
+  });;
+
   each(traits, function (key, value) {
     push('setUserField', key, value, 'page');
   });
@@ -3753,15 +3809,17 @@ Evergage.prototype.identify = function (id, traits, options) {
 /**
  * Group.
  *
- * @param {String} id
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Group} group
  */
 
-Evergage.prototype.group = function (id, properties, options) {
+Evergage.prototype.group = function (group) {
+  var props = group.traits();
+  var id = group.groupId();
+
   if (!id) return;
+
   push('setCompany', id);
-  each(properties, function(key, value) {
+  each(props, function(key, value) {
     push('setAccountField', key, value, 'page');
   });
 };
@@ -3770,14 +3828,13 @@ Evergage.prototype.group = function (id, properties, options) {
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Evergage.prototype.track = function (event, properties, options) {
-  push('trackAction', event, properties);
+Evergage.prototype.track = function (track) {
+  push('trackAction', track.event(), track.properties());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/errorception.js", function(exports, require, module){
 
@@ -3852,21 +3909,17 @@ Errorception.prototype.load = function (callback) {
  *
  * http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Object} identify
  */
 
-Errorception.prototype.identify = function (id, traits, options) {
+Errorception.prototype.identify = function (identify) {
   if (!this.options.meta) return;
-
-  traits = traits || {};
+  var traits = identify.traits();
   window._errs = window._errs || [];
   window._errs.meta = window._errs.meta || {};
-
-  if (id) traits.id = id;
   extend(window._errs.meta, traits);
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/foxmetrics.js", function(exports, require, module){
 
@@ -3936,14 +3989,13 @@ FoxMetrics.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-FoxMetrics.prototype.page = function (category, name, properties, options) {
-  properties = properties || {};
+FoxMetrics.prototype.page = function (page) {
+  var properties = page.proxy('properties');
+  var category = page.category();
+  var name = page.name();
   this._category = category; // store for later
 
   push(
@@ -3960,32 +4012,24 @@ FoxMetrics.prototype.page = function (category, name, properties, options) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-FoxMetrics.prototype.identify = function (id, traits, options) {
-  if (!id) return; // foxmetrics requires an `id`
+FoxMetrics.prototype.identify = function (identify) {
+  var id = identify.userId();
 
-  // foxmetrics needs the first and last name separately
-  // TODO: remove when we have facade
-  traits = traits || {};
-  var firstName = traits.firstName;
-  var lastName = traits.lastName;
-  if (!firstName && traits.name) firstName = traits.name.split(' ')[0];
-  if (!lastName && traits.name) lastName = traits.name.split(' ')[1];
+  if (!id) return;
 
   push(
     '_fxm.visitor.profile',
-    id,             // user id
-    firstName,      // first name
-    lastName,       // last name
-    traits.email,   // email
-    traits.address, // address
-    undefined,      // social
-    undefined,      // partners
-    traits          // attributes
+    id,                    // user id
+    identify.firstName(), // first name
+    identify.lastName(),  // last name
+    identify.email(),     // email
+    identify.address(),   // address
+    undefined,            // social
+    undefined,            // partners
+    identify.traits()     // attributes
   );
 };
 
@@ -3993,19 +4037,15 @@ FoxMetrics.prototype.identify = function (id, traits, options) {
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-FoxMetrics.prototype.track = function (event, properties, options) {
-  properties = properties || {};
-  push(
-    event,                                 // event name
-    this._category || properties.category, // category
-    properties                             // properties
-  );
+FoxMetrics.prototype.track = function (track) {
+  var props = track.properties();
+  var category = this._category || props.category;
+  push(track.event(), category, props);
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/gauges.js", function(exports, require, module){
 
@@ -4077,15 +4117,13 @@ Gauges.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-Gauges.prototype.page = function (category, name, properties, options) {
+Gauges.prototype.page = function (page) {
   push('track');
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/get-satisfaction.js", function(exports, require, module){
 
@@ -4277,31 +4315,33 @@ GA.prototype.load = function (callback) {
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/pages
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-GA.prototype.page = function (category, name, properties, options) {
-  properties = properties || {};
+GA.prototype.page = function (page) {
+  var category = page.category();
+  var props = page.properties();
+  var name = page.fullName();
+  var track;
+
   this._category = category; // store for later
-  if (name && category) name = category + ' ' + name;
 
   window.ga('send', 'pageview', {
-    page: path(properties, this.options),
-    title: name || properties.title,
-    url: properties.url
+    page: path(props, this.options),
+    title: name || props.title,
+    url: props.url
   });
 
   // categorized pages
   if (category && this.options.trackCategorizedPages) {
-    this.track('Viewed ' + category + ' Page', properties, { noninteraction: true });
+    track = page.track(category);
+    this.track(track, { noninteraction: true });
   }
 
   // named pages
   if (name && this.options.trackNamedPages) {
-    this.track('Viewed ' + name + ' Page', properties, { noninteraction: true });
+    track = page.track(name);
+    this.track(track, { noninteraction: true });
   }
 };
 
@@ -4312,21 +4352,21 @@ GA.prototype.page = function (category, name, properties, options) {
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/events
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} event
  */
 
-GA.prototype.track = function (event, properties, options) {
-  properties = properties || {};
-  options = options || {};
+GA.prototype.track = function (track, options) {
+  var opts = options || track.options(this.name);
+  var props = track.properties();
+  var revenue = track.revenue();
+  var event = track.event();
 
   window.ga('send', 'event', {
     eventAction: event,
-    eventCategory: this._category || properties.category || 'All',
-    eventLabel: properties.label,
-    eventValue: formatValue(properties.value || properties.revenue),
-    nonInteraction: properties.noninteraction || options.noninteraction
+    eventCategory: this._category || props.category || 'All',
+    eventLabel: props.label,
+    eventValue: formatValue(props.value || revenue),
+    nonInteraction: props.noninteraction || opts.noninteraction
   });
 };
 
@@ -4405,28 +4445,28 @@ GA.prototype.loadClassic = function (callback) {
  *
  * https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-GA.prototype.pageClassic = function (category, name, properties, options) {
-  properties = properties || {};
-  options = options || {};
-  this._category = category; // store for later
+GA.prototype.pageClassic = function (page) {
+  var opts = page.options(this.name);
+  var category = page.category();
+  var props = page.properties();
+  var name = page.fullName();
+  var track;
 
-  push('_trackPageview', path(properties, this.options));
+  push('_trackPageview', path(props, this.options));
 
   // categorized pages
   if (category && this.options.trackCategorizedPages) {
-    this.track('Viewed ' + category + ' Page', properties, { noninteraction: true });
+    track = page.track(category);
+    this.track(track, { noninteraction: true });
   }
 
   // named pages
   if (name && this.options.trackNamedPages) {
-    if (name && category) name = category + ' ' + name;
-    this.track('Viewed ' + name + ' Page', properties, { noninteraction: true });
+    track = page.track(name);
+    this.track(track, { noninteraction: true });
   }
 };
 
@@ -4436,20 +4476,18 @@ GA.prototype.pageClassic = function (category, name, properties, options) {
  *
  * https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiEventTracking
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-GA.prototype.trackClassic = function (event, properties, options) {
-  properties = properties || {};
-  options = options || {};
-
-  var category = this._category || properties.category || 'All';
-  var label = properties.label;
-  var value = formatValue(properties.revenue || properties.value);
-  var noninteraction = properties.noninteraction || options.noninteraction;
-
+GA.prototype.trackClassic = function (track, options) {
+  var opts = options || track.options(this.name);
+  var props = track.properties();
+  var revenue = track.revenue();
+  var event = track.event();
+  var category = this._category || props.category || 'All';
+  var label = props.label;
+  var value = formatValue(revenue || props.value);
+  var noninteraction = props.noninteraction || opts.noninteraction;
   push('_trackEvent', category, event, label, value, noninteraction);
 };
 
@@ -4480,9 +4518,118 @@ function formatValue (value) {
   if (!value || value < 0) return 0;
   return Math.round(value);
 }
+
+});
+require.register("segmentio-analytics.js-integrations/lib/google-tag-manager.js", function(exports, require, module){
+
+var push = require('global-queue')('dataLayer', { wrap: false });
+var integration = require('integration');
+var load = require('load-script');
+
+/**
+ * Expose plugin
+ */
+
+module.exports = exports = function(analytics){
+  analytics.addIntegration(GTM);
+};
+
+/**
+ * Expose `GTM`
+ */
+
+var GTM = exports.Integration = integration('Google Tag Manager')
+  .assumesPageview()
+  .readyOnLoad()
+  .global('dataLayer')
+  .global('google_tag_manager')
+  .option('containerId', '')
+  .option('trackNamedPages', true)
+  .option('trackCategorizedPages', true)
+
+/**
+ * Initialize
+ *
+ * https://developers.google.com/tag-manager
+ *
+ * @param {Object} page
+ */
+
+GTM.prototype.initialize = function(){
+  this.load();
+};
+
+/**
+ * Loaded
+ *
+ * @return {Boolean}
+ */
+
+GTM.prototype.loaded = function(){
+  return !! (window.dataLayer && [].push != window.dataLayer.push);
+};
+
+/**
+ * Load.
+ *
+ * @param {Function} fn
+ */
+
+GTM.prototype.load = function(fn){
+  var id = this.options.containerId;
+  push({ 'gtm.start': +new Date, event: 'gtm.js' });
+  load('//www.googletagmanager.com/gtm.js?id=' + id + '&l=dataLayer', fn);
+};
+
+/**
+ * Page.
+ *
+ * @param {Page} page
+ * @api public
+ */
+
+GTM.prototype.page = function(page){
+  var category = page.category();
+  var props = page.properties();
+  var name = page.fullName();
+  var opts = this.options;
+  var track;
+
+  // all
+  if (opts.trackAllPages) {
+    this.track(page.track());
+  }
+
+  // categorized
+  if (category && opts.trackCategorizedPages) {
+    this.track(page.track(category));
+  }
+
+  // named
+  if (name && opts.trackNamedPages) {
+    this.track(page.track(name));
+  }
+};
+
+/**
+ * Track.
+ *
+ * https://developers.google.com/tag-manager/devguide#events
+ *
+ * @param {Track} track
+ * @api public
+ */
+
+GTM.prototype.track = function(track){
+  var props = track.properties();
+  props.event = track.event();
+  push(props);
+};
+
 });
 require.register("segmentio-analytics.js-integrations/lib/gosquared.js", function(exports, require, module){
 
+var Identify = require('facade').Identify;
 var callback = require('callback');
 var integration = require('integration');
 var load = require('load-script');
@@ -4538,7 +4685,10 @@ GoSquared.prototype.initialize = function (page) {
     window.GoSquared.q = [];
     window._gstc_lt = new Date().getTime(); // time from `load`
 
-    self.identify(user.id(), user.traits());
+    self.identify(new Identify({
+      traits: user.traits(),
+      userId: user.id()
+    }));
     self.load();
   });
 };
@@ -4571,16 +4721,13 @@ GoSquared.prototype.load = function (callback) {
  *
  * https://www.gosquared.com/customer/portal/articles/612063-tracker-functions
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-GoSquared.prototype.page = function (category, name, properties, options) {
-  properties = properties || {};
-  if (name && category) name = category + ' ' + name;
-  push('TrackView', properties.path, name || properties.title);
+GoSquared.prototype.page = function (page) {
+  var props = page.properties();
+  var name = page.fullName();
+  push('TrackView', props.path, name || props.title);
 };
 
 
@@ -4589,20 +4736,17 @@ GoSquared.prototype.page = function (category, name, properties, options) {
  *
  * https://www.gosquared.com/customer/portal/articles/612063-tracker-functions
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-GoSquared.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-
-  if (id) traits.userID = id; // gosquared recognizes this in `Visitor`
-  if (id) window.GoSquared.UserName = id;
-  if (id || traits.email || traits.username) {
-    window.GoSquared.VisitorName = traits.email || traits.username || id;
-  }
-
+GoSquared.prototype.identify = function (identify) {
+  var traits = identify.traits({ userId: 'userID' });
+  var username = identify.username();
+  var email = identify.email();
+  var id = identify.userId();
+  var name = email || username || id;
+  if (id || username) window.GoSquared.UserName = id || username;
+  if (name) window.GoSquared.VisitorName = name;
   window.GoSquared.Visitor = traits;
 };
 
@@ -4612,13 +4756,11 @@ GoSquared.prototype.identify = function (id, traits, options) {
  *
  * https://www.gosquared.com/customer/portal/articles/609683-event-tracking
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-GoSquared.prototype.track = function (event, properties, options) {
-  push('TrackEvent', event, properties);
+GoSquared.prototype.track = function (track) {
+  push('TrackEvent', track.event(), track.properties());
 };
 
 
@@ -4632,6 +4774,7 @@ function push (args) {
   args = [].slice.call(arguments);
   window.GoSquared.q.push(args);
 }
+
 });
 require.register("segmentio-analytics.js-integrations/lib/heap.js", function(exports, require, module){
 
@@ -4700,28 +4843,20 @@ Heap.prototype.load = function (callback) {
 
 
 /**
- * Trait aliases.
- */
-
-var traitAliases = {
-  username: 'handle'
-};
-
-
-/**
  * Identify.
  *
  * https://heapanalytics.com/docs#identify
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Heap.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-  traits = alias(traits, traitAliases);
-  if (!traits.handle && id) traits.handle = id;
+Heap.prototype.identify = function (identify) {
+  var traits = identify.traits();
+  var username = identify.username();
+  var id = identify.userId();
+  var handle = username || id;
+  if (handle) traits.handle = handle;
+  delete traits.username;
   window.heap.identify(traits);
 };
 
@@ -4731,13 +4866,11 @@ Heap.prototype.identify = function (id, traits, options) {
  *
  * https://heapanalytics.com/docs#track
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Heap.prototype.track = function (event, properties, options) {
-  window.heap.track(event, properties);
+Heap.prototype.track = function (track) {
+  window.heap.track(track.event(), track.properties());
 };
 
 });
@@ -4879,7 +5012,7 @@ HubSpot.prototype.load = function (fn) {
  * @param {Object} options (optional)
  */
 
-HubSpot.prototype.page = function (category, name, properties, options) {
+HubSpot.prototype.page = function (page) {
   push('_trackPageview');
 };
 
@@ -4887,16 +5020,12 @@ HubSpot.prototype.page = function (category, name, properties, options) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-HubSpot.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-
-  if (!traits.email) return;
-  if (id) traits.id = id;
+HubSpot.prototype.identify = function (identify) {
+  if (!identify.email()) return;
+  var traits = identify.traits();
   traits = convertDates(traits);
   push('identify', traits);
 };
@@ -4905,15 +5034,13 @@ HubSpot.prototype.identify = function (id, traits, options) {
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-HubSpot.prototype.track = function (event, properties, options) {
-  properties = properties || {};
-  properties = convertDates(properties);
-  push('trackEvent', event, properties);
+HubSpot.prototype.track = function (track) {
+  var props = track.properties();
+  props = convertDates(props);
+  push('trackEvent', track.event(), props);
 };
 
 
@@ -5005,12 +5132,11 @@ Improvely.prototype.load = function (callback) {
  *
  * http://www.improvely.com/docs/labeling-visitors
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Improvely.prototype.identify = function (id, traits, options) {
+Improvely.prototype.identify = function (identify) {
+  var id = identify.userId();
   if (id) window.improvely.label(id);
 };
 
@@ -5020,17 +5146,15 @@ Improvely.prototype.identify = function (id, traits, options) {
  *
  * http://www.improvely.com/docs/conversion-code
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Improvely.prototype.track = function (event, properties, options) {
-  properties = properties || {};
-  properties.type = event;
-  properties = alias(properties, { revenue: 'amount' });
-  window.improvely.goal(properties);
+Improvely.prototype.track = function (track) {
+  var props = track.properties({ revenue: 'amount' });
+  props.type = track.event();
+  window.improvely.goal(props);
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/inspectlet.js", function(exports, require, module){
 
@@ -5103,14 +5227,13 @@ Inspectlet.prototype.load = function (callback) {
  *
  * http://www.inspectlet.com/docs/tags
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Inspectlet.prototype.track = function (event, properties, options) {
-  push('tagSession', event);
+Inspectlet.prototype.track = function (track) {
+  push('tagSession', track.event());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/intercom.js", function(exports, require, module){
 
@@ -5187,32 +5310,32 @@ Intercom.prototype.load = function (callback) {
  *
  * http://docs.intercom.io/#IntercomJS
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Intercom.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-  options = options || {};
+Intercom.prototype.identify = function (identify) {
+  var traits = identify.traits({ userId: 'user_id' });
+  var opts = identify.options(this.name);
+  var email = identify.email();
+  var id = identify.userId();
 
   if (!id && !traits.email) return; // one is required
 
   traits.app_id = this.options.appId;
-  if (id) traits.user_id = id;
 
   // handle dates
   traits = convertDates(traits, formatDate);
   traits = alias(traits, { created: 'created_at'});
+
+  // company
   if (traits.company) {
     traits.company = alias(traits.company, { created: 'created_at' });
   }
 
   // handle options
-  var Intercom = options.Intercom || options.intercom || {};
-  if (Intercom.increments) traits.increments = Intercom.increments;
-  if (Intercom.userHash) traits.user_hash = Intercom.userHash;
-  if (Intercom.user_hash) traits.user_hash = Intercom.user_hash;
+  if (opts.increments) traits.increments = opts.increments;
+  if (opts.userHash) traits.user_hash = opts.userHash;
+  if (opts.user_hash) traits.user_hash = opts.user_hash;
   if (this.options.inbox) {
     traits.widget = {
       activator: this.options.activator,
@@ -5230,15 +5353,14 @@ Intercom.prototype.identify = function (id, traits, options) {
 /**
  * Group.
  *
- * @param {String} id (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Group} group
  */
 
-Intercom.prototype.group = function (id, properties, options) {
-  properties = properties || {};
-  if (id) properties.id = id;
-  window.Intercom('update', { company: properties });
+Intercom.prototype.group = function (group) {
+  var props = group.properties();
+  var id = group.groupId();
+  if (id) props.id = id;
+  window.Intercom('update', { company: props });
 };
 
 
@@ -5252,6 +5374,7 @@ Intercom.prototype.group = function (id, properties, options) {
 function formatDate (date) {
   return Math.floor(date / 1000);
 }
+
 });
 require.register("segmentio-analytics.js-integrations/lib/keen-io.js", function(exports, require, module){
 
@@ -5327,29 +5450,28 @@ Keen.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-Keen.prototype.page = function (category, name, properties, options) {
+Keen.prototype.page = function (page) {
+  var category = page.category();
+  var props = page.properties();
+  var name = page.fullName();
   var opts = this.options;
 
   // all pages
   if (opts.trackAllPages) {
-    this.track('Loaded a Page', properties);
+    this.track(page.track());
   }
 
   // named pages
   if (name && opts.trackNamedPages) {
-    if (name && category) name = category + ' ' + name;
-    this.track('Viewed ' + name + ' Page', properties);
+    this.track(page.track(name));
   }
 
   // categorized pages
   if (category && opts.trackCategorizedPages) {
-    this.track('Viewed ' + category + ' Page', properties);
+    this.track(page.track(category));
   }
 };
 
@@ -5359,13 +5481,12 @@ Keen.prototype.page = function (category, name, properties, options) {
  *
  * TODO: migrate from old `userId` to simpler `id`
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Keen.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
+Keen.prototype.identify = function (identify) {
+  var traits = identify.traits();
+  var id = identify.userId();
   var user = {};
   if (id) user.userId = id;
   if (traits) user.traits = traits;
@@ -5378,14 +5499,13 @@ Keen.prototype.identify = function (id, traits, options) {
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Keen.prototype.track = function (event, properties, options) {
-  window.Keen.addEvent(event, properties);
+Keen.prototype.track = function (track) {
+  window.Keen.addEvent(track.event(), track.properties());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/kissmetrics.js", function(exports, require, module){
 
@@ -5474,19 +5594,19 @@ KISSmetrics.prototype.load = function (callback) {
  * @param {Object} options (optional)
  */
 
-KISSmetrics.prototype.page = function (category, name, properties, options) {
-  properties = properties || {};
+KISSmetrics.prototype.page = function (page) {
+  var category = page.category();
+  var name = page.fullName();
   var opts = this.options;
 
   // named pages
   if (name && opts.trackNamedPages) {
-    if (name && category) name = category + ' ' + name;
-    this.track('Viewed ' + name + ' Page', properties);
+    this.track(page.track(name));
   }
 
   // categorized pages
   if (category && opts.trackCategorizedPages) {
-    this.track('Viewed ' + category + ' Page', properties);
+    this.track(page.track(category));
   }
 };
 
@@ -5494,13 +5614,12 @@ KISSmetrics.prototype.page = function (category, name, properties, options) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-KISSmetrics.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
+KISSmetrics.prototype.identify = function (identify) {
+  var traits = identify.traits();
+  var id = identify.userId();
   if (id) push('identify', id);
   if (traits) push('set', traits);
 };
@@ -5509,28 +5628,25 @@ KISSmetrics.prototype.identify = function (id, traits, options) {
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-KISSmetrics.prototype.track = function (event, properties, options) {
-  properties = properties || {};
-  properties = alias(properties, { revenue: 'Billing Amount' });
-  push('record', event, properties);
+KISSmetrics.prototype.track = function (track) {
+  var props = track.properties({ revenue: 'Billing Amount' });
+  push('record', track.event(), props);
 };
 
 
 /**
  * Alias.
  *
- * @param {String} to
- * @param {String} from (optional)
+ * @param {Alias} to
  */
 
-KISSmetrics.prototype.alias = function (to, from) {
-  push('alias', to, from);
+KISSmetrics.prototype.alias = function (alias) {
+  push('alias', alias.to(), alias.from());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/klaviyo.js", function(exports, require, module){
 
@@ -5614,16 +5730,12 @@ var aliases = {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Klaviyo.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-  if (!id && !traits.email) return;
-  if (id) traits.id = id;
-  traits = alias(traits, aliases);
+Klaviyo.prototype.identify = function (identify) {
+  var traits = identify.traits(aliases);
+  if (!traits.$id && !traits.$email) return;
   push('identify', traits);
 };
 
@@ -5631,29 +5743,26 @@ Klaviyo.prototype.identify = function (id, traits, options) {
 /**
  * Group.
  *
- * @param {String} id
- * @param {Object} properties (optional)
+ * @param {Group} group
  */
 
-Klaviyo.prototype.group = function (id, properties) {
-  properties = properties || {};
-  if (!properties.name) return;
-  push('identify', { $organization: properties.name });
+Klaviyo.prototype.group = function (group) {
+  var props = group.properties();
+  if (!props.name) return;
+  push('identify', { $organization: props.name });
 };
 
 
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Klaviyo.prototype.track = function (event, properties, options) {
-  properties = properties || {};
-  push('track', event, properties);
+Klaviyo.prototype.track = function (track) {
+  push('track', track.event(), track.properties());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/leadlander.js", function(exports, require, module){
 
@@ -5752,6 +5861,7 @@ var LiveChat = exports.Integration = integration('LiveChat')
 
 LiveChat.prototype.initialize = function (page) {
   window.__lc = { license: this.options.license };
+  this.isLoaded = false;
   this.load();
 };
 
@@ -5763,7 +5873,7 @@ LiveChat.prototype.initialize = function (page) {
  */
 
 LiveChat.prototype.loaded = function () {
-  return !! window.LC_API;
+  return this.isLoaded;
 };
 
 
@@ -5774,21 +5884,23 @@ LiveChat.prototype.loaded = function () {
  */
 
 LiveChat.prototype.load = function (callback) {
-  load('//cdn.livechatinc.com/tracking.js', callback);
+  var self = this;
+  load('//cdn.livechatinc.com/tracking.js', function(err){
+    if (err) return callback(err);
+    self.isLoaded = true;
+    callback();
+  });
 };
 
 
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-LiveChat.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-  if (id) traits['User ID'] = id;
+LiveChat.prototype.identify = function (identify) {
+  var traits = identify.traits({ userId: 'User ID' });
   window.LC_API.set_custom_variables(convert(traits));
 };
 
@@ -5807,12 +5919,19 @@ function convert (traits) {
   });
   return arr;
 }
+
 });
 require.register("segmentio-analytics.js-integrations/lib/lucky-orange.js", function(exports, require, module){
 
+var Identify = require('facade').Identify;
 var integration = require('integration');
 var load = require('load-script');
 
+/**
+ * User ref
+ */
+
+var user;
 
 /**
  * Expose plugin.
@@ -5820,6 +5939,7 @@ var load = require('load-script');
 
 module.exports = exports = function (analytics) {
   analytics.addIntegration(LuckyOrange);
+  user = analytics.user();
 };
 
 
@@ -5831,8 +5951,10 @@ var LuckyOrange = exports.Integration = integration('Lucky Orange')
   .assumesPageview()
   .readyOnLoad()
   .global('_loq')
+  .global('__wtw_watcher_added')
   .global('__wtw_lucky_site_id')
   .global('__wtw_lucky_is_segment_io')
+  .global('__wtw_custom_user_data')
   .option('siteId', null);
 
 
@@ -5845,6 +5967,10 @@ var LuckyOrange = exports.Integration = integration('Lucky Orange')
 LuckyOrange.prototype.initialize = function (page) {
   window._loq || (window._loq = []);
   window.__wtw_lucky_site_id = this.options.siteId;
+  this.identify(new Identify({
+    traits: user.traits(),
+    userId: user.id()
+  }));
   this.load();
 };
 
@@ -5856,7 +5982,7 @@ LuckyOrange.prototype.initialize = function (page) {
  */
 
 LuckyOrange.prototype.loaded = function () {
-  return (window._loq && window._loq.push !== Array.prototype.push);
+  return !! window.__wtw_watcher_added;
 };
 
 
@@ -5878,15 +6004,17 @@ LuckyOrange.prototype.load = function (callback) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-LuckyOrange.prototype.identify = function (id, traits, options) {
-  if (id) window._loq.push(['identify', id]);
-  if (traits) window._loq.push(['set', traits]);
+LuckyOrange.prototype.identify = function (identify) {
+  var traits = window.__wtw_custom_user_data = identify.traits();
+  var email = identify.email();
+  var name = identify.name();
+  if (name) traits.name = name;
+  if (email) traits.email = email;
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/lytics.js", function(exports, require, module){
 
@@ -5969,29 +6097,22 @@ Lytics.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-Lytics.prototype.page = function (category, name, properties, optional) {
-  properties = properties || {};
-  window.jstag.send(properties);
+Lytics.prototype.page = function (page) {
+  window.jstag.send(page.properties());
 };
 
 
 /**
  * Idenfity.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Lytics.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-  if (id) traits._uid = id;
+Lytics.prototype.identify = function (identify) {
+  var traits = identify.traits({ userId: '_uid' });
   window.jstag.send(traits);
 };
 
@@ -6004,11 +6125,12 @@ Lytics.prototype.identify = function (id, traits, options) {
  * @param {Object} options (optional)
  */
 
-Lytics.prototype.track = function (event, properties, options) {
-  properties = properties || {};
-  properties._e = event;
-  window.jstag.send(properties);
+Lytics.prototype.track = function (track) {
+  var props = track.properties();
+  props._e = track.event();
+  window.jstag.send(props);
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/mixpanel.js", function(exports, require, module){
 
@@ -6103,23 +6225,24 @@ Mixpanel.prototype.load = function (callback) {
  * @param {Object} options (optional)
  */
 
-Mixpanel.prototype.page = function (category, name, properties, options) {
+Mixpanel.prototype.page = function (page) {
+  var category = page.category();
+  var name = page.fullName();
   var opts = this.options;
 
   // all pages
   if (opts.trackAllPages) {
-    this.track('Loaded a Page', properties);
+    this.track(page.track());
   }
 
   // categorized pages
   if (category && opts.trackCategorizedPages) {
-    this.track('Viewed ' + category + ' Page', properties);
+    this.track(page.track(category));
   }
 
   // named pages
   if (name && opts.trackNamedPages) {
-    if (name && category) name = category + ' ' + name;
-    this.track('Viewed ' + name + ' Page', properties);
+    this.track(page.track(name));
   }
 };
 
@@ -6147,23 +6270,23 @@ var traitAliases = {
  * https://mixpanel.com/help/reference/javascript#user-identity
  * https://mixpanel.com/help/reference/javascript#storing-user-profiles
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Mixpanel.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
+Mixpanel.prototype.identify = function (identify) {
+  var username = identify.username();
+  var email = identify.email();
+  var id = identify.userId();
 
   // id
   if (id) window.mixpanel.identify(id);
 
   // name tag
-  var nametag = traits.email || traits.username || id;
+  var nametag = email || username || id;
   if (nametag) window.mixpanel.name_tag(nametag);
 
   // traits
-  traits = alias(traits, traitAliases);
+  traits = identify.traits(traitAliases);
   window.mixpanel.register(traits);
   if (this.options.people) window.mixpanel.people.set(traits);
 };
@@ -6175,17 +6298,16 @@ Mixpanel.prototype.identify = function (id, traits, options) {
  * https://mixpanel.com/help/reference/javascript#sending-events
  * https://mixpanel.com/help/reference/javascript#tracking-revenue
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Mixpanel.prototype.track = function (event, properties, options) {
-  properties = properties || {};
-  properties = dates(properties, iso);
-  window.mixpanel.track(event, properties);
-  if (properties.revenue && this.options.people) {
-    window.mixpanel.people.track_charge(properties.revenue);
+Mixpanel.prototype.track = function (track) {
+  var props = track.properties();
+  var revenue = track.revenue();
+  props = dates(props, iso);
+  window.mixpanel.track(track.event(), props);
+  if (revenue && this.options.people) {
+    window.mixpanel.people.track_charge(revenue);
   }
 };
 
@@ -6196,18 +6318,19 @@ Mixpanel.prototype.track = function (event, properties, options) {
  * https://mixpanel.com/help/reference/javascript#user-identity
  * https://mixpanel.com/help/reference/javascript-full-api-reference#mixpanel.alias
  *
- * @param {String} to
- * @param {String} from (optional)
+ * @param {Alias} alias
  */
 
-Mixpanel.prototype.alias = function (to, from) {
+Mixpanel.prototype.alias = function (alias) {
   var mp = window.mixpanel;
+  var to = alias.to();
   if (mp.get_distinct_id && mp.get_distinct_id() === to) return;
   // HACK: internal mixpanel API to ensure we don't overwrite
   if (mp.get_property && mp.get_property('$people_distinct_id') === to) return;
   // although undocumented, mixpanel takes an optional original id
-  mp.alias(to, from);
+  mp.alias(to, alias.from());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/mousestats.js", function(exports, require, module){
 
@@ -6283,17 +6406,15 @@ MouseStats.prototype.load = function (callback) {
  *
  * http://www.mousestats.com/docs/wiki/7/how-to-add-custom-data-to-visitor-playbacks
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-MouseStats.prototype.identify = function (id, traits, options) {
-  if (id) traits.id = id;
-  each(traits, function (key, value) {
+MouseStats.prototype.identify = function (identify) {
+  each(identify.traits(), function (key, value) {
     window.MouseStatsVisitorPlaybacks.customVariable(key, value);
   });
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/olark.js", function(exports, require, module){
 
@@ -6347,19 +6468,17 @@ Olark.prototype.initialize = function (page) {
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-Olark.prototype.page = function (category, name, properties, options) {
+Olark.prototype.page = function (page) {
   if (!this.options.page || !this._open) return;
-  properties = properties || {};
-  if (!name && !properties.url) return;
+  var props = page.properties();
+  var name = page.fullName();
 
-  if (name && category) name = category + ' ' + name;
-  var msg = name ? name.toLowerCase() + ' page' : properties.url;
+  if (!name && !props.url) return;
+
+  var msg = name ? name.toLowerCase() + ' page' : props.url;
 
   chat('sendNotificationToOperator', {
     body: 'looking at ' + msg // lowercase since olark does
@@ -6375,25 +6494,27 @@ Olark.prototype.page = function (category, name, properties, options) {
  * @param {Object} options (optional)
  */
 
-Olark.prototype.identify = function (id, traits, options) {
+Olark.prototype.identify = function (identify) {
   if (!this.options.identify) return;
 
-  traits || (traits = {});
-  if (id) traits.id = id;
+  var username = identify.username();
+  var traits = identify.traits();
+  var id = identify.userId();
+  var email = identify.email();
+  var phone = identify.phone();
+  var name = identify.name()
+    || identify.firstName();
 
   visitor('updateCustomFields', traits);
-  if (traits.email) visitor('updateEmailAddress', { emailAddress: traits.email });
-  if (traits.phone) visitor('updatePhoneNumber', { phoneNumber: traits.phone });
+  if (email) visitor('updateEmailAddress', { emailAddress: email });
+  if (phone) visitor('updatePhoneNumber', { phoneNumber: phone });
 
   // figure out best name
-  var name = traits.firstName;
-  if (traits.lastName) name += ' ' + traits.lastName;
-  if (traits.name) name = traits.name;
   if (name) visitor('updateFullName', { fullName: name });
 
   // figure out best nickname
-  var nickname = name || traits.email || traits.username || id;
-  if (name && traits.email) nickname += ' (' + traits.email + ')';
+  var nickname = name || email || username || id;
+  if (name && email) nickname += ' (' + email + ')';
   if (nickname) chat('updateVisitorNickname', { snippet: nickname });
 };
 
@@ -6406,10 +6527,10 @@ Olark.prototype.identify = function (id, traits, options) {
  * @param {Object} options (optional)
  */
 
-Olark.prototype.track = function (event, properties, options) {
+Olark.prototype.track = function (track) {
   if (!this.options.track || !this._open) return;
   chat('sendNotificationToOperator', {
-    body: 'visitor triggered "' + event + '"' // lowercase since olark does
+    body: 'visitor triggered "' + track.event() + '"' // lowercase since olark does
   });
 };
 
@@ -6448,6 +6569,7 @@ function visitor (action, value) {
 function chat (action, value) {
   window.olark('api.chat.' + action, value);
 }
+
 });
 require.register("segmentio-analytics.js-integrations/lib/optimizely.js", function(exports, require, module){
 
@@ -6503,15 +6625,13 @@ Optimizely.prototype.initialize = function () {
  *
  * https://www.optimizely.com/docs/api#track-event
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Optimizely.prototype.track = function (event, properties, options) {
-  properties || (properties = {});
-  if (properties.revenue) properties.revenue = properties.revenue * 100;
-  push('trackEvent', event, properties);
+Optimizely.prototype.track = function (track) {
+  var props = track.properties();
+  if (props.revenue) props.revenue *= 100;
+  push('trackEvent', track.event(), props);
 };
 
 
@@ -6520,24 +6640,22 @@ Optimizely.prototype.track = function (event, properties, options) {
  *
  * https://www.optimizely.com/docs/api#track-event
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-Optimizely.prototype.page = function (category, name, properties, options) {
+Optimizely.prototype.page = function (page) {
+  var category = page.category();
+  var name = page.fullName();
   var opts = this.options;
 
   // categorized pages
   if (category && opts.trackCategorizedPages) {
-    this.track('Viewed ' + category + ' Page', properties);
+    this.track(page.track(category));
   }
 
   // named pages
   if (name && opts.trackNamedPages) {
-    if (name && category) name = category + ' ' + name;
-    this.track('Viewed ' + name + ' Page', properties);
+    this.track(page.track(name));
   }
 };
 
@@ -6565,6 +6683,7 @@ Optimizely.prototype.replay = function () {
 
   analytics.identify(traits);
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/perfect-audience.js", function(exports, require, module){
 
@@ -6632,14 +6751,13 @@ PerfectAudience.prototype.load = function (callback) {
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} event
  */
 
-PerfectAudience.prototype.track = function (event, properties, options) {
-  window._pa.track(event, properties);
+PerfectAudience.prototype.track = function (track) {
+  window._pa.track(track.event(), track.properties());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/pingdom.js", function(exports, require, module){
 
@@ -6774,20 +6892,17 @@ Preact.prototype.load = function (callback) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Preact.prototype.identify = function (id, traits, options) {
-  if (!id) return;
-  traits = traits || {};
+Preact.prototype.identify = function (identify) {
+  if (!identify.userId()) return;
+  var traits = identify.traits({ created: 'created_at' });
   traits = convertDates(traits, convertDate);
-  traits = alias(traits, { created: 'created_at' });
   push('_setPersonData', {
-    name: traits.name,
-    email: traits.email,
-    uid: id,
+    name: identify.name(),
+    email: identify.email(),
+    uid: identify.userId(),
     properties: traits
   });
 };
@@ -6801,35 +6916,35 @@ Preact.prototype.identify = function (id, traits, options) {
  * @param {Object} options (optional)
  */
 
-Preact.prototype.group = function (id, properties, options) {
-  if (!id) return;
-  properties || ( properties = {});
-  properties.id = id;
-  push('_setAccount', properties);
+Preact.prototype.group = function (group) {
+  if (!group.groupId()) return;
+  push('_setAccount', group.traits());
 };
 
 
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Preact.prototype.track = function (event, properties, options) {
-  properties || (properties = {});
-  var special = {};
-  special.name = event;
-  if (properties.revenue) {
-    special.revenue = properties.revenue * 100;
-    delete properties.revenue;
+Preact.prototype.track = function (track) {
+  var props = track.properties();
+  var revenue = track.revenue();
+  var event = track.event();
+  var special = { name: event };
+
+  if (revenue) {
+    special.revenue = revenue * 100;
+    delete props.revenue;
   }
-  if (properties.note) {
-    special.note = properties.note;
-    delete properties.note;
+
+  if (props.note) {
+    special.note = props.note;
+    delete props.note;
   }
-  push('_logEvent', special, properties);
+
+  push('_logEvent', special, props);
 };
 
 
@@ -6843,6 +6958,7 @@ Preact.prototype.track = function (event, properties, options) {
 function convertDate (date) {
   return Math.floor(date / 1000);
 }
+
 });
 require.register("segmentio-analytics.js-integrations/lib/qualaroo.js", function(exports, require, module){
 
@@ -6850,6 +6966,8 @@ var callback = require('callback');
 var integration = require('integration');
 var load = require('load-script');
 var push = require('global-queue')('_kiq');
+var Facade = require('facade');
+var Identify = Facade.Identify;
 
 
 /**
@@ -6916,14 +7034,14 @@ Qualaroo.prototype.load = function (callback) {
  * http://help.qualaroo.com/customer/portal/articles/731085-identify-survey-nudge-takers
  * http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Qualaroo.prototype.identify = function (id, traits, options) {
-  traits || (traits = {});
-  if (traits.email) id = traits.email;
+Qualaroo.prototype.identify = function (identify) {
+  var traits = identify.traits();
+  var id = identify.userId();
+  var email = identify.email();
+  if (email) id = email;
   if (id) push('identify', id);
   if (traits) push('set', traits);
 };
@@ -6937,12 +7055,14 @@ Qualaroo.prototype.identify = function (id, traits, options) {
  * @param {Object} options (optional)
  */
 
-Qualaroo.prototype.track = function (event, properties, options) {
+Qualaroo.prototype.track = function (track) {
   if (!this.options.track) return;
+  var event = track.event();
   var traits = {};
   traits['Triggered: ' + event] = true;
-  this.identify(null, traits);
+  this.identify(new Identify({ traits: traits }));
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/quantcast.js", function(exports, require, module){
 
@@ -7033,13 +7153,10 @@ Quantcast.prototype.load = function (callback) {
  *
  * https://cloudup.com/cBRRFAfq6mf
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-Quantcast.prototype.page = function (category, name, properties, options) {
+Quantcast.prototype.page = function (page) {
   var settings = {
     event: 'refresh',
     qacct: this.options.pCode,
@@ -7055,12 +7172,11 @@ Quantcast.prototype.page = function (category, name, properties, options) {
  * https://www.quantcast.com/help/cross-platform-audience-measurement-guide/
  *
  * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
  */
 
-Quantcast.prototype.identify = function (id, traits, options) {
+Quantcast.prototype.identify = function (identify) {
   // edit the initial quantcast settings
+  var id = identify.userId();
   if (id) window._qevents[0].uid = id;
 };
 
@@ -7070,12 +7186,10 @@ Quantcast.prototype.identify = function (id, traits, options) {
  *
  * https://cloudup.com/cBRRFAfq6mf
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Quantcast.prototype.track = function (event, properties, options) {
+Quantcast.prototype.track = function (track) {
   var settings = {
     event: 'click',
     qacct: this.options.pCode
@@ -7083,6 +7197,7 @@ Quantcast.prototype.track = function (event, properties, options) {
   if (user.id()) settings.uid = user.id();
   push(settings);
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/rollbar.js", function(exports, require, module){
 
@@ -7156,21 +7271,18 @@ Rollbar.prototype.load = function (callback) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Rollbar.prototype.identify = function (id, traits, options) {
+Rollbar.prototype.identify = function (identify) {
   if (!this.options.identify) return;
-  traits || (traits = {});
-  if (id) traits.id = id;
 
-  // rollbar keeps extra params as the second item in their array until loaded
+  var traits = identify.traits();
   var rollbar = window._rollbar;
   var params = rollbar.shift
     ? rollbar[1] = rollbar[1] || {}
     : rollbar.extraParams = rollbar.extraParams || {};
+
   params.person = params.person || {};
   extend(params.person, traits);
 };
@@ -7243,16 +7355,13 @@ Sentry.prototype.load = function (callback) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Sentry.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-  if (id) traits.id = id;
-  window.Raven.setUser(traits);
+Sentry.prototype.identify = function (identify) {
+  window.Raven.setUser(identify.traits());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/snapengage.js", function(exports, require, module){
 
@@ -7321,16 +7430,15 @@ SnapEngage.prototype.load = function (callback) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-SnapEngage.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-  if (!traits.email) return;
-  window.SnapABug.setUserEmail(traits.email);
+SnapEngage.prototype.identify = function (identify) {
+  var email = identify.email();
+  if (!email) return;
+  window.SnapABug.setUserEmail(email);
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/spinnakr.js", function(exports, require, module){
 
@@ -7462,29 +7570,27 @@ Tapstream.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-Tapstream.prototype.page = function (category, name, properties, options) {
+Tapstream.prototype.page = function (page) {
+  var category = page.category();
   var opts = this.options;
+  var name = page.fullName();
 
   // all pages
   if (opts.trackAllPages) {
-    this.track('Loaded a Page', properties);
+    this.track(page.track());
   }
 
   // named pages
   if (name && opts.trackNamedPages) {
-    if (name && category) name = category + ' ' + name;
-    this.track('Viewed ' + name + ' Page', properties);
+    this.track(page.track(name));
   }
 
   // categorized pages
   if (category && opts.trackCategorizedPages) {
-    this.track('Viewed ' + category + ' Page', properties);
+    this.track(page.track(category));
   }
 };
 
@@ -7492,15 +7598,14 @@ Tapstream.prototype.page = function (category, name, properties, options) {
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Tapstream.prototype.track = function (event, properties, options) {
-  properties = properties || {};
-  push('fireHit', slug(event), [properties.url]); // needs events as slugs
+Tapstream.prototype.track = function (track) {
+  var props = track.properties();
+  push('fireHit', slug(track.event()), [props.url]); // needs events as slugs
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/trakio.js", function(exports, require, module){
 
@@ -7586,26 +7691,24 @@ Trakio.prototype.load = function (callback) {
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-Trakio.prototype.page = function (category, name, properties, options) {
-  properties = properties || {};
-  if (name && category) name = category + ' ' + name;
+Trakio.prototype.page = function (page) {
+  var category = page.category();
+  var props = page.properties();
+  var name = page.fullName();
 
-  window.trak.io.page_view(properties.path, name || properties.title);
+  window.trak.io.page_view(props.path, name || props.title);
 
   // named pages
   if (name && this.options.trackNamedPages) {
-    this.track('Viewed ' + name + ' Page', properties);
+    this.track(page.track(name));
   }
 
   // categorized pages
   if (category && this.options.trackCategorizedPages) {
-    this.track('Viewed ' + category + ' Page', properties);
+    this.track(page.track(category));
   }
 };
 
@@ -7626,14 +7729,13 @@ var traitAliases = {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Trakio.prototype.identify = function (id, traits, options) {
-  traits || (traits = {});
-  traits = alias(traits, traitAliases);
+Trakio.prototype.identify = function (identify) {
+  var traits = identify.traits(traitAliases);
+  var id = identify.userId();
+
   if (id) {
     window.trak.io.identify(id, traits);
   } else {
@@ -7657,32 +7759,34 @@ Trakio.prototype.identify = function (id, traits, options) {
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Trakio.prototype.track = function (event, properties, options) {
-  window.trak.io.track(event, properties);
+Trakio.prototype.track = function (track) {
+  window.trak.io.track(track.event(), track.properties());
 };
 
 
 /**
  * Alias.
  *
- * @param {String} to
- * @param {String} from (optional)
+ * @param {Alias} alias
  */
 
-Trakio.prototype.alias = function (to, from) {
+Trakio.prototype.alias = function (alias) {
   if (!window.trak.io.distinct_id) return;
+  var from = alias.from();
+  var to = alias.to();
+
   if (to === window.trak.io.distinct_id()) return;
+
   if (from) {
     window.trak.io.alias(from, to);
   } else {
     window.trak.io.alias(to);
   }
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/usercycle.js", function(exports, require, module){
 
@@ -7751,12 +7855,12 @@ Usercycle.prototype.load = function (callback) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Usercycle.prototype.identify = function (id, traits, options) {
+Usercycle.prototype.identify = function (identify) {
+  var traits = identify.traits();
+  var id = identify.userId();
   if (id) push('uid', id);
   // there's a special `came_back` event used for retention and traits
   push('action', 'came_back', traits);
@@ -7766,14 +7870,13 @@ Usercycle.prototype.identify = function (id, traits, options) {
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Usercycle.prototype.track = function (event, properties, options) {
-  push('action', event, properties);
+Usercycle.prototype.track = function (track) {
+  push('action', track.event(), track.properties());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/userfox.js", function(exports, require, module){
 
@@ -7846,23 +7949,22 @@ Userfox.prototype.load = function (callback) {
  *
  * https://www.userfox.com/docs/#custom-data
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Userfox.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-  if (!traits.email) return;
+Userfox.prototype.identify = function (identify) {
+  var traits = identify.traits({ created: 'signup_date' });
+  var email = identify.email();
+
+  if (!email) return;
 
   // initialize the library with the email now that we have it
   push('init', {
     clientId: this.options.clientId,
-    email: traits.email
+    email: email
   });
 
   traits = convertDates(traits, formatDate);
-  traits = alias(traits, { created: 'signup_date' });
   push('track', traits);
 };
 
@@ -7877,6 +7979,7 @@ Userfox.prototype.identify = function (id, traits, options) {
 function formatDate (date) {
   return Math.round(date.getTime() / 1000).toString();
 }
+
 });
 require.register("segmentio-analytics.js-integrations/lib/uservoice.js", function(exports, require, module){
 
@@ -7991,16 +8094,12 @@ UserVoice.prototype.load = function (callback) {
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-UserVoice.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-  if (id) traits.id = id;
+UserVoice.prototype.identify = function (identify) {
+  var traits = identify.traits({ created: 'created_at' });
   traits = convertDates(traits, unix);
-  traits = alias(traits, { created: 'created_at' });
   push('identify', traits);
 };
 
@@ -8008,17 +8107,13 @@ UserVoice.prototype.identify = function (id, traits, options) {
 /**
  * Group.
  *
- * @param {String} id (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Group} group
  */
 
-UserVoice.prototype.group = function (id, properties, options) {
-  properties = properties || {};
-  if (id) properties.id = id;
-  properties = convertDates(properties, unix);
-  properties = alias(properties, { created: 'created_at' });
-  push('identify', { account: properties });
+UserVoice.prototype.group = function (group) {
+  var traits = group.traits({ created: 'created_at' });
+  traits = convertDates(traits, unix);
+  push('identify', { account: traits });
 };
 
 
@@ -8040,15 +8135,11 @@ UserVoice.prototype.initializeClassic = function () {
 /**
  * Identify (classic).
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-UserVoice.prototype.identifyClassic = function (id, traits, options) {
-  traits = traits || {};
-  if (id) traits.id = id;
-  push('setCustomFields', traits);
+UserVoice.prototype.identifyClassic = function (identify) {
+  push('setCustomFields', identify.traits());
 };
 
 
@@ -8105,6 +8196,7 @@ function showClassicWidget (type, options) {
   type = type || 'showLightbox';
   push(type, 'classic_widget', options);
 }
+
 });
 require.register("segmentio-analytics.js-integrations/lib/vero.js", function(exports, require, module){
 
@@ -8175,15 +8267,14 @@ Vero.prototype.load = function (callback) {
  *
  * https://github.com/getvero/vero-api/blob/master/sections/js.md#user-identification
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Vero.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-  if (!id || !traits.email) return; // both required
-  if (id) traits.id = id;
+Vero.prototype.identify = function (identify) {
+  var traits = identify.traits();
+  var email = identify.email();
+  var id = identify.userId();
+  if (!id || !email) return; // both required
   push('user', traits);
 };
 
@@ -8193,14 +8284,13 @@ Vero.prototype.identify = function (id, traits, options) {
  *
  * https://github.com/getvero/vero-api/blob/master/sections/js.md#tracking-events
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Vero.prototype.track = function (event, properties, options) {
-  push('track', event, properties);
+Vero.prototype.track = function (track) {
+  push('track', track.event(), track.properties());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/visual-website-optimizer.js", function(exports, require, module){
 
@@ -8447,45 +8537,37 @@ Woopra.prototype.load = function (callback) {
  * Page.
  *
  * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
  */
 
-Woopra.prototype.page = function (category, name, properties, options) {
-  properties = properties || {};
-  if (name && category) name = category + ' ' + name;
-  if (name) properties.title = name;
-  window.woopra.track('pv', properties);
+Woopra.prototype.page = function (page) {
+  var props = page.properties();
+  var name = page.fullName();
+  if (name) props.title = name;
+  window.woopra.track('pv', props);
 };
 
 
 /**
  * Identify.
  *
- * @param {String} id (optional)
- * @param {Object} traits (optional)
- * @param {Object} options (optional)
+ * @param {Identify} identify
  */
 
-Woopra.prototype.identify = function (id, traits, options) {
-  traits = traits || {};
-  if (id) traits.id = id;
-  window.woopra.identify(traits).push(); // `push` sends it off async
+Woopra.prototype.identify = function (identify) {
+  window.woopra.identify(identify.traits()).push(); // `push` sends it off async
 };
 
 
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Track} track
  */
 
-Woopra.prototype.track = function (event, properties, options) {
-  window.woopra.track(event, properties);
+Woopra.prototype.track = function (track) {
+  window.woopra.track(track.event(), track.properties());
 };
+
 });
 require.register("segmentio-analytics.js-integrations/lib/yandex-metrica.js", function(exports, require, module){
 
@@ -11313,7 +11395,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.2.0';
+exports.VERSION = '1.2.2';
 
 
 /**
@@ -11323,6 +11405,7 @@ exports.VERSION = '1.2.0';
 each(Integrations, function (name, Integration) {
   analytics.use(Integration);
 });
+
 });
 require.register("analytics/lib/analytics.js", function(exports, require, module){
 
@@ -11853,6 +11936,18 @@ Analytics.prototype._invoke = function (method, facade) {
   return this;
 };
 
+/**
+ * Push `args`.
+ *
+ * @param {Array} args
+ * @api private
+ */
+
+Analytics.prototype.push = function(args){
+  var method = args.shift();
+  if (!this[method]) return;
+  this[method].apply(this, args);
+};
 
 /**
  * Parse the query string for callable methods.
@@ -12492,6 +12587,8 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-emitter/index.js", "analytics/deps/emitter/index.js");
@@ -12590,6 +12687,7 @@ require.alias("segmentio-analytics.js-integrations/lib/foxmetrics.js", "analytic
 require.alias("segmentio-analytics.js-integrations/lib/gauges.js", "analytics/deps/integrations/lib/gauges.js");
 require.alias("segmentio-analytics.js-integrations/lib/get-satisfaction.js", "analytics/deps/integrations/lib/get-satisfaction.js");
 require.alias("segmentio-analytics.js-integrations/lib/google-analytics.js", "analytics/deps/integrations/lib/google-analytics.js");
+require.alias("segmentio-analytics.js-integrations/lib/google-tag-manager.js", "analytics/deps/integrations/lib/google-tag-manager.js");
 require.alias("segmentio-analytics.js-integrations/lib/gosquared.js", "analytics/deps/integrations/lib/gosquared.js");
 require.alias("segmentio-analytics.js-integrations/lib/heap.js", "analytics/deps/integrations/lib/heap.js");
 require.alias("segmentio-analytics.js-integrations/lib/hittail.js", "analytics/deps/integrations/lib/hittail.js");
@@ -12634,6 +12732,8 @@ require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 require.alias("component-domify/index.js", "segmentio-analytics.js-integrations/deps/domify/index.js");
 
 require.alias("component-each/index.js", "segmentio-analytics.js-integrations/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-once/index.js", "segmentio-analytics.js-integrations/deps/once/index.js");
@@ -12710,6 +12810,64 @@ require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-emp
 
 require.alias("segmentio-extend/index.js", "segmentio-analytics.js-integrations/deps/extend/index.js");
 
+require.alias("segmentio-facade/lib/index.js", "segmentio-analytics.js-integrations/deps/facade/lib/index.js");
+require.alias("segmentio-facade/lib/alias.js", "segmentio-analytics.js-integrations/deps/facade/lib/alias.js");
+require.alias("segmentio-facade/lib/facade.js", "segmentio-analytics.js-integrations/deps/facade/lib/facade.js");
+require.alias("segmentio-facade/lib/group.js", "segmentio-analytics.js-integrations/deps/facade/lib/group.js");
+require.alias("segmentio-facade/lib/page.js", "segmentio-analytics.js-integrations/deps/facade/lib/page.js");
+require.alias("segmentio-facade/lib/identify.js", "segmentio-analytics.js-integrations/deps/facade/lib/identify.js");
+require.alias("segmentio-facade/lib/is-enabled.js", "segmentio-analytics.js-integrations/deps/facade/lib/is-enabled.js");
+require.alias("segmentio-facade/lib/track.js", "segmentio-analytics.js-integrations/deps/facade/lib/track.js");
+require.alias("segmentio-facade/lib/index.js", "segmentio-analytics.js-integrations/deps/facade/index.js");
+require.alias("CamShaft-require-component/index.js", "segmentio-facade/deps/require-component/index.js");
+
+require.alias("segmentio-isodate-traverse/index.js", "segmentio-facade/deps/isodate-traverse/index.js");
+require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone/index.js");
+require.alias("component-type/index.js", "component-clone/deps/type/index.js");
+
+require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
+require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
+require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
+
+require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
+
+require.alias("segmentio-isodate/index.js", "segmentio-isodate-traverse/deps/isodate/index.js");
+
+require.alias("component-clone/index.js", "segmentio-facade/deps/clone/index.js");
+require.alias("component-type/index.js", "component-clone/deps/type/index.js");
+
+require.alias("component-inherit/index.js", "segmentio-facade/deps/inherit/index.js");
+
+require.alias("component-trim/index.js", "segmentio-facade/deps/trim/index.js");
+
+require.alias("component-user-agent-parser/src/ua-parser.js", "segmentio-facade/deps/user-agent-parser/src/ua-parser.js");
+require.alias("component-user-agent-parser/src/ua-parser.js", "segmentio-facade/deps/user-agent-parser/index.js");
+require.alias("component-user-agent-parser/src/ua-parser.js", "component-user-agent-parser/index.js");
+require.alias("segmentio-is-email/index.js", "segmentio-facade/deps/is-email/index.js");
+
+require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/lib/index.js");
+require.alias("segmentio-new-date/lib/milliseconds.js", "segmentio-facade/deps/new-date/lib/milliseconds.js");
+require.alias("segmentio-new-date/lib/seconds.js", "segmentio-facade/deps/new-date/lib/seconds.js");
+require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/index.js");
+require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
+require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
+
+require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
+
+require.alias("segmentio-isodate/index.js", "segmentio-new-date/deps/isodate/index.js");
+
+require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
+require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
+require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
+require.alias("yields-case/dist/Case.js", "segmentio-obj-case/deps/case/dist/Case.js");
+require.alias("yields-case/dist/Case.js", "segmentio-obj-case/deps/case/index.js");
+require.alias("yields-case/dist/Case.js", "yields-case/index.js");
+require.alias("segmentio-obj-case/index.js", "segmentio-obj-case/index.js");
+require.alias("segmentio-facade/lib/index.js", "segmentio-facade/index.js");
 require.alias("segmentio-global-queue/index.js", "segmentio-analytics.js-integrations/deps/global-queue/index.js");
 
 require.alias("segmentio-is-email/index.js", "segmentio-analytics.js-integrations/deps/is-email/index.js");
@@ -12721,6 +12879,8 @@ require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.
 
 require.alias("segmentio-on-body/index.js", "segmentio-analytics.js-integrations/deps/on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-on-error/index.js", "segmentio-analytics.js-integrations/deps/on-error/index.js");
@@ -12760,6 +12920,8 @@ require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
@@ -12820,6 +12982,8 @@ require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");

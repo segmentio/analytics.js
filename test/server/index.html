@@ -20,7 +20,7 @@
       mochaPhantomJS.run();
       require('debug').disable();
     } else {
-      mocha.run();
+      require('gravy')(mocha.run());
       require('debug').enable('*');
     }
   </script>

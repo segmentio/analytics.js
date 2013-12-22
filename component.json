@@ -48,7 +48,8 @@
     "jkroso/equals": "*",
     "segmentio/protocol": "*",
     "segmentio/when": "*",
-    "timoxley/next-tick": "*"
+    "timoxley/next-tick": "*",
+    "yields/gravy": "*"
   },
   "scripts": [
     "lib/index.js",

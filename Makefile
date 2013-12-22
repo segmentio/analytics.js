@@ -1,4 +1,5 @@
 
+BROWSERS ?= 'ie6..11, chrome, iphone, safari, opera, firefox'
 test = http://localhost:4200
 component = node_modules/component/bin/component
 uglifyjs = node_modules/uglify-js/bin/uglifyjs
@@ -29,7 +30,7 @@ node_modules: package.json
 release: analytics.js test
 
 server: node_modules kill
-	@node test/server/index.js &
+	@node test/server/index.js &> /dev/null &
 
 test: node_modules build/build.js server
 	@sleep 1
@@ -44,4 +45,8 @@ coverage: node_modules build/build.js server
 	@sleep 1
 	@open $(test)/coverage
 
-.PHONY: clean kill release server test test-browser
+test-sauce: node_modules build/build.js server
+	@sleep 1
+	@BROWSERS=$(BROWSERS) node_modules/.bin/gravy --url $(test)
+
+.PHONY: clean kill release server test test-browser test-sauce

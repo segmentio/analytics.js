@@ -428,121 +428,13 @@ function parse(str) {
 }
 
 });
-require.register("component-to-function/index.js", function(exports, require, module){
-
-/**
- * Expose `toFunction()`.
- */
-
-module.exports = toFunction;
-
-/**
- * Convert `obj` to a `Function`.
- *
- * @param {Mixed} obj
- * @return {Function}
- * @api private
- */
-
-function toFunction(obj) {
-  switch ({}.toString.call(obj)) {
-    case '[object Object]':
-      return objectToFunction(obj);
-    case '[object Function]':
-      return obj;
-    case '[object String]':
-      return stringToFunction(obj);
-    case '[object RegExp]':
-      return regexpToFunction(obj);
-    default:
-      return defaultToFunction(obj);
-  }
-}
-
-/**
- * Default to strict equality.
- *
- * @param {Mixed} val
- * @return {Function}
- * @api private
- */
-
-function defaultToFunction(val) {
-  return function(obj){
-    return val === obj;
-  }
-}
-
-/**
- * Convert `re` to a function.
- *
- * @param {RegExp} re
- * @return {Function}
- * @api private
- */
-
-function regexpToFunction(re) {
-  return function(obj){
-    return re.test(obj);
-  }
-}
-
-/**
- * Convert property `str` to a function.
- *
- * @param {String} str
- * @return {Function}
- * @api private
- */
-
-function stringToFunction(str) {
-  // immediate such as "> 20"
-  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
-
-  // properties such as "name.first" or "age > 18"
-  return new Function('_', 'return _.' + str);
-}
-
-/**
- * Convert `object` to a function.
- *
- * @param {Object} object
- * @return {Function}
- * @api private
- */
-
-function objectToFunction(obj) {
-  var match = {}
-  for (var key in obj) {
-    match[key] = typeof obj[key] === 'string'
-      ? defaultToFunction(obj[key])
-      : toFunction(obj[key])
-  }
-  return function(val){
-    if (typeof val !== 'object') return false;
-    for (var key in match) {
-      if (!(key in val)) return false;
-      if (!match[key](val[key])) return false;
-    }
-    return true;
-  }
-}
-
-});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
  * Module dependencies.
  */
 
-var toFunction = require('to-function');
-var type;
-
-try {
-  type = require('type-component');
-} catch (e) {
-  type = require('type');
-}
+var type = require('type');
 
 /**
  * HOP reference.
@@ -559,7 +451,6 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 module.exports = function(obj, fn){
-  fn = toFunction(fn);
   switch (type(obj)) {
     case 'array':
       return array(obj, fn);
@@ -614,7 +505,6 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
-
 });
 require.register("component-indexof/index.js", function(exports, require, module){
 module.exports = function(arr, obj){
@@ -5367,6 +5257,15 @@ Intercom.prototype.group = function (group) {
   window.Intercom('update', { company: props });
 };
 
+/**
+ * Track.
+ *
+ * @param {Track} track
+ */
+
+Intercom.prototype.track = function(track){
+  window.Intercom('trackEvent', track.event());
+};
 
 /**
  * Format a date to Intercom's liking.
@@ -9201,122 +9100,613 @@ require.register("component-user-agent-parser/src/ua-parser.js", function(export
 })(this);
 
 });
-require.register("yields-case/dist/Case.js", function(exports, require, module){
-/*! Case - v1.0.3 - 2013-08-23
-* Copyright (c) 2013 Nathan Bubna; Licensed MIT, GPL */
-(function() {
-    "use strict";
-    var re = {
-        capitalize: /(^|\W|_)([a-z])/g,
-        squish: /(^|[\W_])+([a-zA-Z])/g,
-        fill: /[\W_]+(.|$)/g,
-        sentence: /(^\s*|[\?\!\.]+"?\s+"?|,\s+")([a-z])/g,
-        improper: /\b(A|An|And|As|At|But|By|En|For|If|In|Of|On|Or|The|To|Vs?\.?|Via)\b/g,
-        relax: /([^A-Z])([A-Z]*)([A-Z])(?=[a-z]|$)/g,
-        upper: /^[^a-z]+$/,
-        hole: /\s/,
-        room: /[\W_]/
-    },
-    _ = {
-        re: re,
-        types: [],
-        up: String.prototype.toUpperCase,
-        low: String.prototype.toLowerCase,
-        cap: function(s) {
-            return _.up.call(s.charAt(0))+s.slice(1);
-        },
-        decap: function(s) {
-            return _.low.call(s.charAt(0))+s.slice(1);
-        },
-        fill: function(s, fill) {
-            return !s || fill == null ? s : s.replace(re.fill, function(m, next) {
-                return next ? fill + next : '';
-            });
-        },
-        prep: function(s, fill, squish, upper) {
-            if (!s){ return s || ''; }
-            if (!upper && re.upper.test(s)) {
-                s = _.low.call(s);
-            }
-            if (!fill && !re.hole.test(s)) {
-                s = _.fill(s, ' ');
-            }
-            if (!squish && !re.room.test(s)) {
-                s = s.replace(re.relax, _.relax);
-            }
-            return s;
-        },
-        relax: function(m, before, acronym, caps) {
-            return before + ' ' + (acronym ? acronym+' ' : '') + caps;
-        }
-    },
-    Case = {
-        _: _,
-        of: function(s) {
-            for (var i=0,m=_.types.length; i<m; i++) {
-                if (Case[_.types[i]](s) === s){ return _.types[i]; }
-            }
-        },
-        flip: function(s) {
-            return s.replace(/\w/g, function(l) {
-                return l == _.up.call(l) ? _.low.call(l) : _.up.call(l);
-            });
-        },
-        type: function(type, fn) {
-            Case[type] = fn;
-            _.types.push(type);
-        }
-    },
-    types = {
-        snake: function(s){ return Case.lower(s, '_'); },
-        constant: function(s){ return Case.upper(s, '_'); },
-        camel: function(s){ return _.decap(Case.squish(s)); },
-        lower: function(s, fill) {
-            return _.fill(_.low.call(_.prep(s, fill)), fill);
-        },
-        upper: function(s, fill) {
-            return _.fill(_.up.call(_.prep(s, fill, false, true)), fill);
-        },
-        capital: function(s, fill) {
-            return _.fill(_.prep(s).replace(re.capitalize, function(m, border, letter) {
-                return border+_.up.call(letter);
-            }), fill);
-        },
-        squish: function(s) {
-            return _.fill(_.prep(s, false, true).replace(re.squish, function(m, border, letter) {
-                return _.up.call(letter);
-            }), '');
-        },
-        title: function(s) {
-            return Case.capital(s).replace(re.improper, function(small) {
-                return _.low.call(small);
-            });
-        },
-        sentence: function(s, names) {
-            s = Case.lower(s).replace(re.sentence, function(m, prelude, letter) {
-                return prelude + _.up.call(letter);
-            });
-            if (names) {
-                names.forEach(function(name) {
-                    s = s.replace(new RegExp('\\b'+Case.lower(name)+'\\b', "g"), _.cap);
-                });
-            }
-            return s;
-        }
-    };
+require.register("ianstormtaylor-to-camel-case/index.js", function(exports, require, module){
 
-    for (var type in types) {
-        Case.type(type, types[type]);
-    }
-    if (typeof define === 'function' && define.amd) {
-        define(function(){ return Case; });
-    } else if (typeof module !== 'undefined' && module.exports) {
-        module.exports = Case;
-    } else {
-        this.Case = Case;
-    }
-}).call(this);
+var toSpace = require('to-space-case');
 
+
+/**
+ * Expose `toCamelCase`.
+ */
+
+module.exports = toCamelCase;
+
+
+/**
+ * Convert a `string` to camel case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toCamelCase (string) {
+  return toSpace(string).replace(/\s(\w)/g, function (matches, letter) {
+    return letter.toUpperCase();
+  });
+}
+});
+require.register("ianstormtaylor-to-capital-case/index.js", function(exports, require, module){
+
+var clean = require('to-no-case');
+
+
+/**
+ * Expose `toCapitalCase`.
+ */
+
+module.exports = toCapitalCase;
+
+
+/**
+ * Convert a `string` to capital case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toCapitalCase (string) {
+  return clean(string).replace(/(^|\s)(\w)/g, function (matches, previous, letter) {
+    return previous + letter.toUpperCase();
+  });
+}
+});
+require.register("ianstormtaylor-to-constant-case/index.js", function(exports, require, module){
+
+var snake = require('to-snake-case');
+
+
+/**
+ * Expose `toConstantCase`.
+ */
+
+module.exports = toConstantCase;
+
+
+/**
+ * Convert a `string` to constant case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toConstantCase (string) {
+  return snake(string).toUpperCase();
+}
+});
+require.register("ianstormtaylor-to-dot-case/index.js", function(exports, require, module){
+
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toDotCase`.
+ */
+
+module.exports = toDotCase;
+
+
+/**
+ * Convert a `string` to slug case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toDotCase (string) {
+  return toSpace(string).replace(/\s/g, '.');
+}
+});
+require.register("ianstormtaylor-to-no-case/index.js", function(exports, require, module){
+
+/**
+ * Expose `toNoCase`.
+ */
+
+module.exports = toNoCase;
+
+
+/**
+ * Test whether a string is camel-case.
+ */
+
+var hasSpace = /\s/;
+var hasCamel = /[a-z][A-Z]/;
+var hasSeparator = /[\W_]/;
+
+
+/**
+ * Remove any starting case from a `string`, like camel or snake, but keep
+ * spaces and punctuation that may be important otherwise.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function toNoCase (string) {
+  if (hasSpace.test(string)) return string.toLowerCase();
+
+  if (hasSeparator.test(string)) string = unseparate(string);
+  if (hasCamel.test(string)) string = uncamelize(string);
+  return string.toLowerCase();
+}
+
+
+/**
+ * Separator splitter.
+ */
+
+var separatorSplitter = /[\W_]+(.|$)/g;
+
+
+/**
+ * Un-separate a `string`.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function unseparate (string) {
+  return string.replace(separatorSplitter, function (m, next) {
+    return next ? ' ' + next : '';
+  });
+}
+
+
+/**
+ * Camelcase splitter.
+ */
+
+var camelSplitter = /(.)([A-Z]+)/g;
+
+
+/**
+ * Un-camelcase a `string`.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function uncamelize (string) {
+  return string.replace(camelSplitter, function (m, previous, uppers) {
+    return previous + ' ' + uppers.toLowerCase().split('').join(' ');
+  });
+}
+});
+require.register("ianstormtaylor-to-pascal-case/index.js", function(exports, require, module){
+
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toPascalCase`.
+ */
+
+module.exports = toPascalCase;
+
+
+/**
+ * Convert a `string` to pascal case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toPascalCase (string) {
+  return toSpace(string).replace(/(?:^|\s)(\w)/g, function (matches, letter) {
+    return letter.toUpperCase();
+  });
+}
+});
+require.register("ianstormtaylor-to-sentence-case/index.js", function(exports, require, module){
+
+var clean = require('to-no-case');
+
+
+/**
+ * Expose `toSentenceCase`.
+ */
+
+module.exports = toSentenceCase;
+
+
+/**
+ * Convert a `string` to camel case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSentenceCase (string) {
+  return clean(string).replace(/[a-z]/i, function (letter) {
+    return letter.toUpperCase();
+  });
+}
+});
+require.register("ianstormtaylor-to-slug-case/index.js", function(exports, require, module){
+
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toSlugCase`.
+ */
+
+module.exports = toSlugCase;
+
+
+/**
+ * Convert a `string` to slug case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSlugCase (string) {
+  return toSpace(string).replace(/\s/g, '-');
+}
+});
+require.register("ianstormtaylor-to-snake-case/index.js", function(exports, require, module){
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toSnakeCase`.
+ */
+
+module.exports = toSnakeCase;
+
+
+/**
+ * Convert a `string` to snake case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSnakeCase (string) {
+  return toSpace(string).replace(/\s/g, '_');
+}
+
+});
+require.register("ianstormtaylor-to-space-case/index.js", function(exports, require, module){
+
+var clean = require('to-no-case');
+
+
+/**
+ * Expose `toSpaceCase`.
+ */
+
+module.exports = toSpaceCase;
+
+
+/**
+ * Convert a `string` to space case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSpaceCase (string) {
+  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
+    return match ? ' ' + match : '';
+  });
+}
+});
+require.register("component-escape-regexp/index.js", function(exports, require, module){
+
+/**
+ * Escape regexp special characters in `str`.
+ *
+ * @param {String} str
+ * @return {String}
+ * @api public
+ */
+
+module.exports = function(str){
+  return String(str).replace(/([.*+?=^!:${}()|[\]\/\\])/g, '\\$1');
+};
+});
+require.register("ianstormtaylor-map/index.js", function(exports, require, module){
+
+var each = require('each');
+
+
+/**
+ * Map an array or object.
+ *
+ * @param {Array|Object} obj
+ * @param {Function} iterator
+ * @return {Mixed}
+ */
+
+module.exports = function map (obj, iterator) {
+  var arr = [];
+  each(obj, function (o) {
+    arr.push(iterator.apply(null, arguments));
+  });
+  return arr;
+};
+});
+require.register("ianstormtaylor-title-case-minors/index.js", function(exports, require, module){
+
+module.exports = [
+  'a',
+  'an',
+  'and',
+  'as',
+  'at',
+  'but',
+  'by',
+  'en',
+  'for',
+  'from',
+  'how',
+  'if',
+  'in',
+  'neither',
+  'nor',
+  'of',
+  'on',
+  'only',
+  'onto',
+  'out',
+  'or',
+  'per',
+  'so',
+  'than',
+  'that',
+  'the',
+  'to',
+  'until',
+  'up',
+  'upon',
+  'v',
+  'v.',
+  'versus',
+  'vs',
+  'vs.',
+  'via',
+  'when',
+  'with',
+  'without',
+  'yet'
+];
+});
+require.register("ianstormtaylor-to-title-case/index.js", function(exports, require, module){
+
+var capital = require('to-capital-case')
+  , escape = require('escape-regexp')
+  , map = require('map')
+  , minors = require('title-case-minors');
+
+
+/**
+ * Expose `toTitleCase`.
+ */
+
+module.exports = toTitleCase;
+
+
+/**
+ * Minors.
+ */
+
+var escaped = map(minors, escape);
+var minorMatcher = new RegExp('[^^]\\b(' + escaped.join('|') + ')\\b', 'ig');
+var colonMatcher = /:\s*(\w)/g;
+
+
+/**
+ * Convert a `string` to camel case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toTitleCase (string) {
+  return capital(string)
+    .replace(minorMatcher, function (minor) {
+      return minor.toLowerCase();
+    })
+    .replace(colonMatcher, function (letter) {
+      return letter.toUpperCase();
+    });
+}
+});
+require.register("ianstormtaylor-case/lib/index.js", function(exports, require, module){
+
+var cases = require('./cases');
+
+
+/**
+ * Expose `determineCase`.
+ */
+
+module.exports = exports = determineCase;
+
+
+/**
+ * Determine the case of a `string`.
+ *
+ * @param {String} string
+ * @return {String|Null}
+ */
+
+function determineCase (string) {
+  for (var key in cases) {
+    if (key == 'none') continue;
+    var convert = cases[key];
+    if (convert(string) == string) return key;
+  }
+  return null;
+}
+
+
+/**
+ * Define a case by `name` with a `convert` function.
+ *
+ * @param {String} name
+ * @param {Object} convert
+ */
+
+exports.add = function (name, convert) {
+  exports[name] = cases[name] = convert;
+};
+
+
+/**
+ * Add all the `cases`.
+ */
+
+for (var key in cases) {
+  exports.add(key, cases[key]);
+}
+});
+require.register("ianstormtaylor-case/lib/cases.js", function(exports, require, module){
+
+var camel = require('to-camel-case')
+  , capital = require('to-capital-case')
+  , constant = require('to-constant-case')
+  , dot = require('to-dot-case')
+  , none = require('to-no-case')
+  , pascal = require('to-pascal-case')
+  , sentence = require('to-sentence-case')
+  , slug = require('to-slug-case')
+  , snake = require('to-snake-case')
+  , space = require('to-space-case')
+  , title = require('to-title-case');
+
+
+/**
+ * Camel.
+ */
+
+exports.camel = camel;
+
+
+/**
+ * Pascal.
+ */
+
+exports.pascal = pascal;
+
+
+/**
+ * Dot. Should precede lowercase.
+ */
+
+exports.dot = dot;
+
+
+/**
+ * Slug. Should precede lowercase.
+ */
+
+exports.slug = slug;
+
+
+/**
+ * Snake. Should precede lowercase.
+ */
+
+exports.snake = snake;
+
+
+/**
+ * Space. Should precede lowercase.
+ */
+
+exports.space = space;
+
+
+/**
+ * Constant. Should precede uppercase.
+ */
+
+exports.constant = constant;
+
+
+/**
+ * Capital. Should precede sentence and title.
+ */
+
+exports.capital = capital;
+
+
+/**
+ * Title.
+ */
+
+exports.title = title;
+
+
+/**
+ * Sentence.
+ */
+
+exports.sentence = sentence;
+
+
+/**
+ * Convert a `string` to lower case from camel, slug, etc. Different that the
+ * usual `toLowerCase` in that it will try to break apart the input first.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+exports.lower = function (string) {
+  return none(string).toLowerCase();
+};
+
+
+/**
+ * Convert a `string` to upper case from camel, slug, etc. Different that the
+ * usual `toUpperCase` in that it will try to break apart the input first.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+exports.upper = function (string) {
+  return none(string).toUpperCase();
+};
+
+
+/**
+ * Invert each character in a `string` from upper to lower and vice versa.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+exports.inverse = function (string) {
+  for (var i = 0, char; char = string[i]; i++) {
+    if (!/[a-z]/i.test(char)) continue;
+    var upper = char.toUpperCase();
+    var lower = char.toLowerCase();
+    string[i] = char == upper ? lower : upper;
+  }
+  return string;
+};
+
+
+/**
+ * None.
+ */
+
+exports.none = none;
 });
 require.register("segmentio-obj-case/index.js", function(exports, require, module){
 
@@ -9327,7 +9717,7 @@ var cases = [
   Case.upper,
   Case.lower,
   Case.snake,
-  Case.squish,
+  Case.pascal,
   Case.camel,
   Case.constant,
   Case.title,
@@ -9427,6 +9817,7 @@ function replace (obj, key, val) {
   }
   return obj;
 }
+
 });
 require.register("segmentio-facade/lib/index.js", function(exports, require, module){
 
@@ -10938,9 +11329,12 @@ module.exports = 'undefined' == typeof JSON
   : JSON;
 
 });
-require.register("segmentio-new-date/index.js", function(exports, require, module){
+require.register("segmentio-new-date/lib/index.js", function(exports, require, module){
 
 var is = require('is');
+var isodate = require('isodate');
+var milliseconds = require('./milliseconds');
+var seconds = require('./seconds');
 
 
 /**
@@ -10951,19 +11345,16 @@ var is = require('is');
  */
 
 module.exports = function newDate (val) {
+  if (is.date(val)) return val;
   if (is.number(val)) return new Date(toMs(val));
-  if (is.date(val)) return new Date(val.getTime()); // construtor woulda floored
 
-  // default to letting the Date constructor parse it
-  var date = new Date(val);
+  // date strings
+  if (isodate.is(val)) return isodate.parse(val);
+  if (milliseconds.is(val)) return milliseconds.parse(val);
+  if (seconds.is(val)) return seconds.parse(val);
 
-  // couldn't parse, but we have a string, assume it was a second/milli string
-  if (is.nan(date.getTime()) && is.string(val)) {
-    var millis = toMs(parseInt(val, 10));
-    date = new Date(millis);
-  }
-
-  return date;
+  // fallback to Date.parse
+  return new Date(val);
 };
 
 
@@ -10978,6 +11369,72 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
+});
+require.register("segmentio-new-date/lib/milliseconds.js", function(exports, require, module){
+
+/**
+ * Matcher.
+ */
+
+var matcher = /\d{13}/;
+
+
+/**
+ * Check whether a string is a millisecond date string.
+ *
+ * @param {String} string
+ * @return {Boolean}
+ */
+
+exports.is = function (string) {
+  return matcher.test(string);
+};
+
+
+/**
+ * Convert a millisecond string to a date.
+ *
+ * @param {String} millis
+ * @return {Date}
+ */
+
+exports.parse = function (millis) {
+  millis = parseInt(millis, 10);
+  return new Date(millis);
+};
+});
+require.register("segmentio-new-date/lib/seconds.js", function(exports, require, module){
+
+/**
+ * Matcher.
+ */
+
+var matcher = /\d{10}/;
+
+
+/**
+ * Check whether a string is a second date string.
+ *
+ * @param {String} string
+ * @return {Boolean}
+ */
+
+exports.is = function (string) {
+  return matcher.test(string);
+};
+
+
+/**
+ * Convert a second string to a date.
+ *
+ * @param {String} seconds
+ * @return {Date}
+ */
+
+exports.parse = function (seconds) {
+  var millis = parseInt(seconds, 10) * 1000;
+  return new Date(millis);
+};
 });
 require.register("segmentio-store.js/store.js", function(exports, require, module){
 ;(function(win){
@@ -11344,7 +11801,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.2.3';
+exports.VERSION = '1.2.4';
 
 
 /**
@@ -12524,6 +12981,18 @@ module.exports.User = User;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -12536,8 +13005,6 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-emitter/index.js", "analytics/deps/emitter/index.js");
@@ -12681,8 +13148,6 @@ require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 require.alias("component-domify/index.js", "segmentio-analytics.js-integrations/deps/domify/index.js");
 
 require.alias("component-each/index.js", "segmentio-analytics.js-integrations/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("component-once/index.js", "segmentio-analytics.js-integrations/deps/once/index.js");
@@ -12775,8 +13240,6 @@ require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
@@ -12798,17 +13261,72 @@ require.alias("component-user-agent-parser/src/ua-parser.js", "segmentio-facade/
 require.alias("component-user-agent-parser/src/ua-parser.js", "component-user-agent-parser/index.js");
 require.alias("segmentio-is-email/index.js", "segmentio-facade/deps/is-email/index.js");
 
-require.alias("segmentio-new-date/index.js", "segmentio-facade/deps/new-date/index.js");
+require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/lib/index.js");
+require.alias("segmentio-new-date/lib/milliseconds.js", "segmentio-facade/deps/new-date/lib/milliseconds.js");
+require.alias("segmentio-new-date/lib/seconds.js", "segmentio-facade/deps/new-date/lib/seconds.js");
+require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/index.js");
 require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
+require.alias("segmentio-isodate/index.js", "segmentio-new-date/deps/isodate/index.js");
+
+require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
-require.alias("yields-case/dist/Case.js", "segmentio-obj-case/deps/case/dist/Case.js");
-require.alias("yields-case/dist/Case.js", "segmentio-obj-case/deps/case/index.js");
-require.alias("yields-case/dist/Case.js", "yields-case/index.js");
+require.alias("ianstormtaylor-case/lib/index.js", "segmentio-obj-case/deps/case/lib/index.js");
+require.alias("ianstormtaylor-case/lib/cases.js", "segmentio-obj-case/deps/case/lib/cases.js");
+require.alias("ianstormtaylor-case/lib/index.js", "segmentio-obj-case/deps/case/index.js");
+require.alias("ianstormtaylor-to-camel-case/index.js", "ianstormtaylor-case/deps/to-camel-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-camel-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-capital-case/index.js", "ianstormtaylor-case/deps/to-capital-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-capital-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-constant-case/index.js", "ianstormtaylor-case/deps/to-constant-case/index.js");
+require.alias("ianstormtaylor-to-snake-case/index.js", "ianstormtaylor-to-constant-case/deps/to-snake-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-snake-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-dot-case/index.js", "ianstormtaylor-case/deps/to-dot-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-dot-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-pascal-case/index.js", "ianstormtaylor-case/deps/to-pascal-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-pascal-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-sentence-case/index.js", "ianstormtaylor-case/deps/to-sentence-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-sentence-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-slug-case/index.js", "ianstormtaylor-case/deps/to-slug-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-slug-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-snake-case/index.js", "ianstormtaylor-case/deps/to-snake-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-snake-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-title-case/index.js", "ianstormtaylor-case/deps/to-title-case/index.js");
+require.alias("component-escape-regexp/index.js", "ianstormtaylor-to-title-case/deps/escape-regexp/index.js");
+
+require.alias("ianstormtaylor-map/index.js", "ianstormtaylor-to-title-case/deps/map/index.js");
+require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
+require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("ianstormtaylor-title-case-minors/index.js", "ianstormtaylor-to-title-case/deps/title-case-minors/index.js");
+
+require.alias("ianstormtaylor-to-capital-case/index.js", "ianstormtaylor-to-title-case/deps/to-capital-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-capital-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-case/lib/index.js", "ianstormtaylor-case/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-obj-case/index.js");
 require.alias("segmentio-facade/lib/index.js", "segmentio-facade/index.js");
 require.alias("segmentio-global-queue/index.js", "segmentio-analytics.js-integrations/deps/global-queue/index.js");
@@ -12822,8 +13340,6 @@ require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.
 
 require.alias("segmentio-on-body/index.js", "segmentio-analytics.js-integrations/deps/on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("segmentio-on-error/index.js", "segmentio-analytics.js-integrations/deps/on-error/index.js");
@@ -12868,8 +13384,6 @@ require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
@@ -12891,17 +13405,72 @@ require.alias("component-user-agent-parser/src/ua-parser.js", "segmentio-facade/
 require.alias("component-user-agent-parser/src/ua-parser.js", "component-user-agent-parser/index.js");
 require.alias("segmentio-is-email/index.js", "segmentio-facade/deps/is-email/index.js");
 
-require.alias("segmentio-new-date/index.js", "segmentio-facade/deps/new-date/index.js");
+require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/lib/index.js");
+require.alias("segmentio-new-date/lib/milliseconds.js", "segmentio-facade/deps/new-date/lib/milliseconds.js");
+require.alias("segmentio-new-date/lib/seconds.js", "segmentio-facade/deps/new-date/lib/seconds.js");
+require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/index.js");
 require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
+require.alias("segmentio-isodate/index.js", "segmentio-new-date/deps/isodate/index.js");
+
+require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
-require.alias("yields-case/dist/Case.js", "segmentio-obj-case/deps/case/dist/Case.js");
-require.alias("yields-case/dist/Case.js", "segmentio-obj-case/deps/case/index.js");
-require.alias("yields-case/dist/Case.js", "yields-case/index.js");
+require.alias("ianstormtaylor-case/lib/index.js", "segmentio-obj-case/deps/case/lib/index.js");
+require.alias("ianstormtaylor-case/lib/cases.js", "segmentio-obj-case/deps/case/lib/cases.js");
+require.alias("ianstormtaylor-case/lib/index.js", "segmentio-obj-case/deps/case/index.js");
+require.alias("ianstormtaylor-to-camel-case/index.js", "ianstormtaylor-case/deps/to-camel-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-camel-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-capital-case/index.js", "ianstormtaylor-case/deps/to-capital-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-capital-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-constant-case/index.js", "ianstormtaylor-case/deps/to-constant-case/index.js");
+require.alias("ianstormtaylor-to-snake-case/index.js", "ianstormtaylor-to-constant-case/deps/to-snake-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-snake-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-dot-case/index.js", "ianstormtaylor-case/deps/to-dot-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-dot-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-pascal-case/index.js", "ianstormtaylor-case/deps/to-pascal-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-pascal-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-sentence-case/index.js", "ianstormtaylor-case/deps/to-sentence-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-sentence-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-slug-case/index.js", "ianstormtaylor-case/deps/to-slug-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-slug-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-snake-case/index.js", "ianstormtaylor-case/deps/to-snake-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-snake-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-to-title-case/index.js", "ianstormtaylor-case/deps/to-title-case/index.js");
+require.alias("component-escape-regexp/index.js", "ianstormtaylor-to-title-case/deps/escape-regexp/index.js");
+
+require.alias("ianstormtaylor-map/index.js", "ianstormtaylor-to-title-case/deps/map/index.js");
+require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
+require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("ianstormtaylor-title-case-minors/index.js", "ianstormtaylor-to-title-case/deps/title-case-minors/index.js");
+
+require.alias("ianstormtaylor-to-capital-case/index.js", "ianstormtaylor-to-title-case/deps/to-capital-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-capital-case/deps/to-no-case/index.js");
+
+require.alias("ianstormtaylor-case/lib/index.js", "ianstormtaylor-case/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-obj-case/index.js");
 require.alias("segmentio-facade/lib/index.js", "segmentio-facade/index.js");
 require.alias("segmentio-is-email/index.js", "analytics/deps/is-email/index.js");
@@ -12916,8 +13485,6 @@ require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
@@ -12931,13 +13498,19 @@ require.alias("segmentio-json/index.js", "analytics/deps/json/index.js");
 require.alias("segmentio-json/index.js", "json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
-require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
-require.alias("segmentio-new-date/index.js", "new-date/index.js");
+require.alias("segmentio-new-date/lib/index.js", "analytics/deps/new-date/lib/index.js");
+require.alias("segmentio-new-date/lib/milliseconds.js", "analytics/deps/new-date/lib/milliseconds.js");
+require.alias("segmentio-new-date/lib/seconds.js", "analytics/deps/new-date/lib/seconds.js");
+require.alias("segmentio-new-date/lib/index.js", "analytics/deps/new-date/index.js");
+require.alias("segmentio-new-date/lib/index.js", "new-date/index.js");
 require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
+require.alias("segmentio-isodate/index.js", "segmentio-new-date/deps/isodate/index.js");
+
+require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/index.js");
 require.alias("segmentio-store.js/store.js", "store/index.js");

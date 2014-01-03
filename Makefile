@@ -5,7 +5,7 @@ component = node_modules/component/bin/component
 uglifyjs = node_modules/uglify-js/bin/uglifyjs
 phantomjs = node_modules/.bin/mocha-phantomjs --setting web-security=false --setting local-to-remote-url-access=true
 
-default build: build/build.js
+default build: build/build.js analytics.js
 
 analytics.js: node_modules components $(shell find lib)
 	@$(component) build --standalone analytics --out . --name analytics
@@ -15,7 +15,7 @@ build/build.js: node_modules components $(shell find lib)
 	@$(component) build --dev
 
 clean:
-	@rm -rf components build node_modules
+	@rm -rf components build node_modules analytics.js analytics.min.js
 
 components: component.json
 	@$(component) install --dev

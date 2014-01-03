@@ -1,3 +1,7 @@
+1.2.4 - January 2, 2014
+-------------------------
+* upgrade `analytics.js-integrations` to `0.3.4`
+
 1.2.3 - December 18, 2013
 -------------------------
 * fix `facade` dependency

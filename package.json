@@ -9,7 +9,7 @@
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {
-    "component": "0.17.0",
+    "component": "component/component#83e8792",
     "express": "~3.1.0",
     "hbs": "~2.3.0",
     "mocha-phantomjs": "3.1.2",

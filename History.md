@@ -1,3 +1,7 @@
+1.2.6 - January 3, 2014
+-----------------------
+* upgrade `component(1)` for json support
+
 1.2.5 - January 3, 2014
 -----------------------
 * upgrade `analytics.js-integrations` to `0.3.5`

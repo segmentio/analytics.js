@@ -27,10 +27,14 @@ function require(path, parent, orig) {
   // perform real require()
   // by invoking the module's
   // registered function
-  if (!module.exports) {
-    module.exports = {};
-    module.client = module.component = true;
-    module.call(this, module.exports, require.relative(resolved), module);
+  if (!module._resolving && !module.exports) {
+    var mod = {};
+    mod.exports = {};
+    mod.client = mod.component = true;
+    module._resolving = true;
+    module.call(this, mod.exports, require.relative(resolved), mod);
+    delete module._resolving;
+    module.exports = mod.exports;
   }
 
   return module.exports;
@@ -11670,7 +11674,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.2.5';
+exports.VERSION = '1.2.6';
 
 
 /**
@@ -12807,6 +12811,123 @@ module.exports = bind.all(new User());
 module.exports.User = User;
 
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+require.register("segmentio-analytics.js-integrations/lib/slugs.json", function(exports, require, module){
+module.exports = [
+  "adroll",
+  "amplitude",
+  "awesm",
+  "awesomatic",
+  "bugherd",
+  "bugsnag",
+  "chartbeat",
+  "clicktale",
+  "clicky",
+  "comscore",
+  "crazy-egg",
+  "customerio",
+  "drip",
+  "evergage",
+  "errorception",
+  "foxmetrics",
+  "gauges",
+  "get-satisfaction",
+  "google-analytics",
+  "google-tag-manager",
+  "gosquared",
+  "heap",
+  "hittail",
+  "hubspot",
+  "improvely",
+  "inspectlet",
+  "intercom",
+  "keen-io",
+  "kissmetrics",
+  "klaviyo",
+  "leadlander",
+  "livechat",
+  "lucky-orange",
+  "lytics",
+  "mixpanel",
+  "mousestats",
+  "olark",
+  "optimizely",
+  "perfect-audience",
+  "pingdom",
+  "preact",
+  "qualaroo",
+  "quantcast",
+  "rollbar",
+  "sentry",
+  "snapengage",
+  "spinnakr",
+  "tapstream",
+  "trakio",
+  "usercycle",
+  "userfox",
+  "uservoice",
+  "vero",
+  "visual-website-optimizer",
+  "webengage",
+  "woopra",
+  "yandex-metrica"
+]
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

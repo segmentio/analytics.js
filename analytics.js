@@ -11329,12 +11329,9 @@ module.exports = 'undefined' == typeof JSON
   : JSON;
 
 });
-require.register("segmentio-new-date/lib/index.js", function(exports, require, module){
+require.register("segmentio-new-date/index.js", function(exports, require, module){
 
 var is = require('is');
-var isodate = require('isodate');
-var milliseconds = require('./milliseconds');
-var seconds = require('./seconds');
 
 
 /**
@@ -11345,16 +11342,19 @@ var seconds = require('./seconds');
  */
 
 module.exports = function newDate (val) {
-  if (is.date(val)) return val;
   if (is.number(val)) return new Date(toMs(val));
+  if (is.date(val)) return new Date(val.getTime()); // construtor woulda floored
 
-  // date strings
-  if (isodate.is(val)) return isodate.parse(val);
-  if (milliseconds.is(val)) return milliseconds.parse(val);
-  if (seconds.is(val)) return seconds.parse(val);
+  // default to letting the Date constructor parse it
+  var date = new Date(val);
 
-  // fallback to Date.parse
-  return new Date(val);
+  // couldn't parse, but we have a string, assume it was a second/milli string
+  if (is.nan(date.getTime()) && is.string(val)) {
+    var millis = toMs(parseInt(val, 10));
+    date = new Date(millis);
+  }
+
+  return date;
 };
 
 
@@ -11369,72 +11369,6 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
-});
-require.register("segmentio-new-date/lib/milliseconds.js", function(exports, require, module){
-
-/**
- * Matcher.
- */
-
-var matcher = /\d{13}/;
-
-
-/**
- * Check whether a string is a millisecond date string.
- *
- * @param {String} string
- * @return {Boolean}
- */
-
-exports.is = function (string) {
-  return matcher.test(string);
-};
-
-
-/**
- * Convert a millisecond string to a date.
- *
- * @param {String} millis
- * @return {Date}
- */
-
-exports.parse = function (millis) {
-  millis = parseInt(millis, 10);
-  return new Date(millis);
-};
-});
-require.register("segmentio-new-date/lib/seconds.js", function(exports, require, module){
-
-/**
- * Matcher.
- */
-
-var matcher = /\d{10}/;
-
-
-/**
- * Check whether a string is a second date string.
- *
- * @param {String} string
- * @return {Boolean}
- */
-
-exports.is = function (string) {
-  return matcher.test(string);
-};
-
-
-/**
- * Convert a second string to a date.
- *
- * @param {String} seconds
- * @return {Date}
- */
-
-exports.parse = function (seconds) {
-  var millis = parseInt(seconds, 10) * 1000;
-  return new Date(millis);
-};
 });
 require.register("segmentio-store.js/store.js", function(exports, require, module){
 ;(function(win){
@@ -11801,7 +11735,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.2.4';
+exports.VERSION = '1.2.5';
 
 
 /**
@@ -13261,18 +13195,12 @@ require.alias("component-user-agent-parser/src/ua-parser.js", "segmentio-facade/
 require.alias("component-user-agent-parser/src/ua-parser.js", "component-user-agent-parser/index.js");
 require.alias("segmentio-is-email/index.js", "segmentio-facade/deps/is-email/index.js");
 
-require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/lib/index.js");
-require.alias("segmentio-new-date/lib/milliseconds.js", "segmentio-facade/deps/new-date/lib/milliseconds.js");
-require.alias("segmentio-new-date/lib/seconds.js", "segmentio-facade/deps/new-date/lib/seconds.js");
-require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/index.js");
+require.alias("segmentio-new-date/index.js", "segmentio-facade/deps/new-date/index.js");
 require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
-require.alias("segmentio-isodate/index.js", "segmentio-new-date/deps/isodate/index.js");
-
-require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
 require.alias("ianstormtaylor-case/lib/index.js", "segmentio-obj-case/deps/case/lib/index.js");
@@ -13405,18 +13333,12 @@ require.alias("component-user-agent-parser/src/ua-parser.js", "segmentio-facade/
 require.alias("component-user-agent-parser/src/ua-parser.js", "component-user-agent-parser/index.js");
 require.alias("segmentio-is-email/index.js", "segmentio-facade/deps/is-email/index.js");
 
-require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/lib/index.js");
-require.alias("segmentio-new-date/lib/milliseconds.js", "segmentio-facade/deps/new-date/lib/milliseconds.js");
-require.alias("segmentio-new-date/lib/seconds.js", "segmentio-facade/deps/new-date/lib/seconds.js");
-require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/index.js");
+require.alias("segmentio-new-date/index.js", "segmentio-facade/deps/new-date/index.js");
 require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
-require.alias("segmentio-isodate/index.js", "segmentio-new-date/deps/isodate/index.js");
-
-require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
 require.alias("ianstormtaylor-case/lib/index.js", "segmentio-obj-case/deps/case/lib/index.js");
@@ -13498,19 +13420,13 @@ require.alias("segmentio-json/index.js", "analytics/deps/json/index.js");
 require.alias("segmentio-json/index.js", "json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
-require.alias("segmentio-new-date/lib/index.js", "analytics/deps/new-date/lib/index.js");
-require.alias("segmentio-new-date/lib/milliseconds.js", "analytics/deps/new-date/lib/milliseconds.js");
-require.alias("segmentio-new-date/lib/seconds.js", "analytics/deps/new-date/lib/seconds.js");
-require.alias("segmentio-new-date/lib/index.js", "analytics/deps/new-date/index.js");
-require.alias("segmentio-new-date/lib/index.js", "new-date/index.js");
+require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
+require.alias("segmentio-new-date/index.js", "new-date/index.js");
 require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
-require.alias("segmentio-isodate/index.js", "segmentio-new-date/deps/isodate/index.js");
-
-require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/index.js");
 require.alias("segmentio-store.js/store.js", "store/index.js");

@@ -1,4 +1,12 @@
 language: node_js
+script: make test-sauce
 node_js:
-  - "0.10"
-
+- '0.10'
+env:
+  global:
+  - secure: KAgR4ep51GqR8SRy/VrCotHtoLFD0WAhJVYnu1t0EimtcGQKfId0SyVDXiJQc6XR8uoLX9wersjTn1qGR3uTKZW2DWSW672YUiWOABl9BhrQhkwdfTkxUJ8oLkg8XqWABS639zqUuo7INtv1FOhsBfj1qkxwb36Ey0NMEOsY+NY=
+  - secure: J/u6wkOC5xD8bEPVxM07rUGMXirrNIVB3wjXBysjzleYpIL5Xt7SiPEFOz1gC0kOIDiBBCn0jyKNQRNc9n+zXQ1fN3uOd3vVxJsp/MIu2P9M/HcvZP+uX1rbLZ7j6VHSRx7axUY53u3jSCjJY1orcawsFbsyc2EZB242OtUv9Qs=
+  matrix:
+  - BROWSER='chrome'
+  - BROWSER='safari'
+  - BROWSER='ie10'

@@ -1,5 +1,5 @@
 
-BROWSERS ?= 'ie6..11, chrome, iphone, safari, opera, firefox'
+BROWSERS ?= 'chrome, safari, firefox'
 test = http://localhost:4200
 component = node_modules/component/bin/component
 uglifyjs = node_modules/uglify-js/bin/uglifyjs

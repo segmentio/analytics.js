@@ -1,6 +1,6 @@
 {
   "name": "analytics",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

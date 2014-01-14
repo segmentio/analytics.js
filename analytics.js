@@ -2425,6 +2425,69 @@ AdRoll.prototype.load = function (callback) {
   }, callback);
 };
 });
+require.register("segmentio-analytics.js-integrations/lib/adwords.js", function(exports, require, module){
+
+var integration = require('integration');
+
+/**
+ * Expose plugin
+ */
+
+module.exports = exports = function(analytics){
+  analytics.addIntegration(AdWords);
+};
+
+/**
+ * HOP
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Expose `AdWords`
+ */
+
+var AdWords = exports.Integration = integration('AdWords')
+  .readyOnInitialize()
+  .option('events', {});
+
+/**
+ * Track.
+ *
+ * @param {Track}
+ */
+
+AdWords.prototype.track = function(track){
+  var events = this.options.events;
+  var event = track.event();
+  if (!has.call(events, event)) return;
+  var id = events[event];
+  exports.load(id, track.revenue() || 0, event);
+};
+
+/**
+ * Load conversion.
+ *
+ * @param {Mixed} id
+ * @param {Number} revenue
+ * @param {String} event
+ * @return {Image}
+ * @api private
+ */
+
+exports.load = function(id, revenue, event){
+  var img = new Image;
+  img.src = '//www.googleadservices.com/pagead'
+    + '/conversion/' + id
+    + '?value=' + revenue
+    + '&label=' + event
+    + '&script=0';
+  img.width = 1;
+  img.height = 1;
+  return img;
+};
+
+});
 require.register("segmentio-analytics.js-integrations/lib/amplitude.js", function(exports, require, module){
 
 var callback = require('callback');
@@ -3765,6 +3828,71 @@ Errorception.prototype.identify = function (identify) {
 };
 
 });
+require.register("segmentio-analytics.js-integrations/lib/facebook.js", function(exports, require, module){
+
+var integration = require('integration');
+
+/**
+ * Expose plugin
+ */
+
+module.exports = exports = function(analytics){
+  analytics.addIntegration(Facebook);
+};
+
+/**
+ * HOP
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Expose `Facebook`
+ */
+
+var Facebook = exports.Integration = integration('Facebook')
+  .readyOnInitialize()
+  .option('currency', 'USD')
+  .option('events', {});
+
+/**
+ * Track.
+ *
+ * @param {Track} track
+ */
+
+Facebook.prototype.track = function(track){
+  var events = this.options.events;
+  var traits = track.traits();
+  var event = track.event();
+  if (!has.call(events, event)) return;
+  var currency = this.options.currency;
+  var pixel = events[event];
+  return exports.load(pixel, track.revenue() || 0, currency);
+};
+
+/**
+ * Load conversion.
+ *
+ * @param {Mixed} id
+ * @param {Number} revenue
+ * @param {String} currency
+ * @return {Image}
+ * @api private
+ */
+
+exports.load = function(id, revenue, currency){
+  var img = new Image;
+  img.src = '//www.facebook.com/offsite_event.php'
+    + '?currency=' + currency
+    + '&value=' + revenue
+    + '&id=' + id;
+  img.width = 1;
+  img.height = 1;
+  return img;
+};
+
+});
 require.register("segmentio-analytics.js-integrations/lib/foxmetrics.js", function(exports, require, module){
 
 var callback = require('callback');
@@ -4478,6 +4606,7 @@ var callback = require('callback');
 var integration = require('integration');
 var load = require('load-script');
 var onBody = require('on-body');
+var each = require('each');
 
 
 /**
@@ -4504,16 +4633,20 @@ module.exports = exports = function (analytics) {
 var GoSquared = exports.Integration = integration('GoSquared')
   .assumesPageview()
   .readyOnLoad()
-  .global('GoSquared')
   .global('_gs')
-  .global('_gstc_lt')
-  .option('siteToken', '');
-
+  .option('siteToken', '')
+  .option('anonymizeIP', false)
+  .option('cookieDomain', null)
+  .option('useCookies', true)
+  .option('trackHash', false)
+  .option('trackLocal', false)
+  .option('trackParams', true);
 
 /**
  * Initialize.
  *
- * http://www.gosquared.com/support
+ * https://www.gosquared.com/developer/tracker
+ * Options: https://www.gosquared.com/developer/tracker/configuration
  *
  * @param {Object} page
  */
@@ -4521,31 +4654,31 @@ var GoSquared = exports.Integration = integration('GoSquared')
 GoSquared.prototype.initialize = function (page) {
   var self = this;
   var options = this.options;
+  push(options.siteToken);
 
-  // gosquared assumes a body in their script, so we need this wrapper
-  onBody(function () {
-    window.GoSquared = {};
-    window.GoSquared.acct = options.siteToken;
-    window.GoSquared.q = [];
-    window._gstc_lt = new Date().getTime(); // time from `load`
-
-    self.identify(new Identify({
-      traits: user.traits(),
-      userId: user.id()
-    }));
-    self.load();
+  each(options, function(name, value){
+    if ('siteToken' == name) return;
+    if (null == value) return;
+    push('set', name, value);
   });
+
+  self.identify(new Identify({
+    traits: user.traits(),
+    userId: user.id()
+  }));
+
+  self.load();
 };
 
 
 /**
- * Loaded?
+ * Loaded? (checks if the tracker version is set)
  *
  * @return {Boolean}
  */
 
 GoSquared.prototype.loaded = function () {
-  return !! window._gs;
+  return !! (window._gs && window._gs.v);
 };
 
 
@@ -4563,7 +4696,7 @@ GoSquared.prototype.load = function (callback) {
 /**
  * Page.
  *
- * https://www.gosquared.com/customer/portal/articles/612063-tracker-functions
+ * https://www.gosquared.com/developer/tracker/pageviews
  *
  * @param {Page} page
  */
@@ -4571,14 +4704,14 @@ GoSquared.prototype.load = function (callback) {
 GoSquared.prototype.page = function (page) {
   var props = page.properties();
   var name = page.fullName();
-  push('TrackView', props.path, name || props.title);
+  push('track', props.path, name || props.title)
 };
 
 
 /**
  * Identify.
  *
- * https://www.gosquared.com/customer/portal/articles/612063-tracker-functions
+ * https://www.gosquared.com/developer/tracker/tagging
  *
  * @param {Identify} identify
  */
@@ -4588,35 +4721,37 @@ GoSquared.prototype.identify = function (identify) {
   var username = identify.username();
   var email = identify.email();
   var id = identify.userId();
-  var name = email || username || id;
-  if (id || username) window.GoSquared.UserName = id || username;
-  if (name) window.GoSquared.VisitorName = name;
-  window.GoSquared.Visitor = traits;
+  if (id) push('set', 'visitorID', id);
+  var name =  email || username || id;
+  if (name) push('set', 'visitorName', name);
+  push('set', 'visitor', traits);
 };
 
 
 /**
  * Track.
  *
- * https://www.gosquared.com/customer/portal/articles/609683-event-tracking
+ * https://www.gosquared.com/developer/tracker/events
  *
  * @param {Track} track
  */
 
 GoSquared.prototype.track = function (track) {
-  push('TrackEvent', track.event(), track.properties());
+  push('event', track.event(), track.properties());
 };
 
-
 /**
- * Helper to push onto the GoSquared queue.
+ * Push to `_gs.q`.
  *
- * @param {Mixed} args...
+ * @param {...} args
+ * @api private
  */
 
-function push (args) {
-  args = [].slice.call(arguments);
-  window.GoSquared.q.push(args);
+function push(){
+  var _gs = window._gs = window._gs || function(){
+    (_gs.q = _gs.q || []).push(arguments);
+  };
+  _gs.apply(null, arguments);
 }
 
 });
@@ -6197,6 +6332,118 @@ Mixpanel.prototype.alias = function (alias) {
 };
 
 });
+require.register("segmentio-analytics.js-integrations/lib/mouseflow.js", function(exports, require, module){
+
+var push = require('global-queue')('_mfq');
+var integration = require('integration');
+var load = require('load-script');
+var each = require('each');
+
+/**
+ * Expose plugin
+ */
+
+module.exports = exports = function(analytics){
+  analytics.addIntegration(Mouseflow);
+};
+
+/**
+ * Expose `Mouseflow`
+ */
+
+var Mouseflow = exports.Integration = integration('Mouseflow')
+  .assumesPageview()
+  .readyOnLoad()
+  .global('mouseflow')
+  .global('_mfq')
+  .option('apiKey', '')
+  .option('mouseflowHtmlDelay', 0);
+
+/**
+ * Iniitalize
+ *
+ * @param {Object} page
+ */
+
+Mouseflow.prototype.initialize = function(page){
+  this.load();
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Mouseflow.prototype.loaded = function(){
+  return !! (window._mfq && [].push != window._mfq.push);
+};
+
+/**
+ * Load mouseflow.
+ *
+ * @param {Function} fn
+ */
+
+Mouseflow.prototype.load = function(fn){
+  var apiKey = this.options.apiKey;
+  window.mouseflowHtmlDelay = this.options.mouseflowHtmlDelay;
+  load('//cdn.mouseflow.com/projects/' + apiKey + '.js', fn);
+};
+
+/**
+ * Page.
+ *
+ * //mouseflow.zendesk.com/entries/22528817-Single-page-websites
+ *
+ * @param {Page} page
+ */
+
+Mouseflow.prototype.page = function(page){
+  if (!window.mouseflow) return;
+  if ('function' != typeof mouseflow.newPageView) return;
+  mouseflow.newPageView();
+};
+
+/**
+ * Identify.
+ *
+ * //mouseflow.zendesk.com/entries/24643603-Custom-Variables-Tagging
+ *
+ * @param {Identify} identify
+ */
+
+Mouseflow.prototype.identify = function(identify){
+  set(identify.traits());
+};
+
+/**
+ * Track.
+ *
+ * //mouseflow.zendesk.com/entries/24643603-Custom-Variables-Tagging
+ *
+ * @param {Track} track
+ */
+
+Mouseflow.prototype.track = function(track){
+  var props = track.properties();
+  props.event = track.event();
+  set(props);
+};
+
+/**
+ * Push the given `hash`.
+ *
+ * @param {Object} hash
+ */
+
+function set(hash){
+  each(hash, function(k, v){
+    push('setVariable', k, v);
+  });
+}
+
+});
 require.register("segmentio-analytics.js-integrations/lib/mousestats.js", function(exports, require, module){
 
 var each = require('each');
@@ -7739,7 +7986,9 @@ Usercycle.prototype.identify = function (identify) {
  */
 
 Usercycle.prototype.track = function (track) {
-  push('action', track.event(), track.properties());
+  push('action', track.event(), track.properties({
+    revenue: 'revenue_amount'
+  }));
 };
 
 });
@@ -9469,8 +9718,7 @@ Facade.prototype.options = function (integration) {
   var options = clone(this.obj.options || this.obj.context) || {};
   if (!integration) return clone(options);
   if (!this.enabled(integration)) return;
-
-  options = options[integration] || {};
+  options = options[integration] || objCase(options, integration) || {};
   return typeof options === 'boolean' ? {} : clone(options);
 };
 
@@ -9874,7 +10122,7 @@ Identify.prototype.companyCreated = function(){
 
 Identify.prototype.name = function () {
   var name = this.proxy('traits.name');
-  if (name) return trim(name);
+  if (typeof name === 'string') return trim(name);
 
   var firstName = this.firstName();
   var lastName = this.lastName();
@@ -9890,10 +10138,10 @@ Identify.prototype.name = function () {
 
 Identify.prototype.firstName = function () {
   var firstName = this.proxy('traits.firstName');
-  if (firstName) return trim(firstName);
+  if (typeof firstName === 'string') return trim(firstName);
 
   var name = this.proxy('traits.name');
-  if (name) return trim(name).split(' ')[0];
+  if (typeof name === 'string') return trim(name).split(' ')[0];
 };
 
 /**
@@ -9905,10 +10153,10 @@ Identify.prototype.firstName = function () {
 
 Identify.prototype.lastName = function () {
   var lastName = this.proxy('traits.lastName');
-  if (lastName) return trim(lastName);
+  if (typeof lastName === 'string') return trim(lastName);
 
   var name = this.proxy('traits.name');
-  if (!name) return;
+  if (typeof name !== 'string') return;
 
   var space = trim(name).indexOf(' ');
   if (space === -1) return;
@@ -10797,9 +11045,12 @@ module.exports = 'undefined' == typeof JSON
   : JSON;
 
 });
-require.register("segmentio-new-date/index.js", function(exports, require, module){
+require.register("segmentio-new-date/lib/index.js", function(exports, require, module){
 
 var is = require('is');
+var isodate = require('isodate');
+var milliseconds = require('./milliseconds');
+var seconds = require('./seconds');
 
 
 /**
@@ -10810,19 +11061,16 @@ var is = require('is');
  */
 
 module.exports = function newDate (val) {
+  if (is.date(val)) return val;
   if (is.number(val)) return new Date(toMs(val));
-  if (is.date(val)) return new Date(val.getTime()); // construtor woulda floored
 
-  // default to letting the Date constructor parse it
-  var date = new Date(val);
+  // date strings
+  if (isodate.is(val)) return isodate.parse(val);
+  if (milliseconds.is(val)) return milliseconds.parse(val);
+  if (seconds.is(val)) return seconds.parse(val);
 
-  // couldn't parse, but we have a string, assume it was a second/milli string
-  if (is.nan(date.getTime()) && is.string(val)) {
-    var millis = toMs(parseInt(val, 10));
-    date = new Date(millis);
-  }
-
-  return date;
+  // fallback to Date.parse
+  return new Date(val);
 };
 
 
@@ -10837,6 +11085,72 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
+});
+require.register("segmentio-new-date/lib/milliseconds.js", function(exports, require, module){
+
+/**
+ * Matcher.
+ */
+
+var matcher = /\d{13}/;
+
+
+/**
+ * Check whether a string is a millisecond date string.
+ *
+ * @param {String} string
+ * @return {Boolean}
+ */
+
+exports.is = function (string) {
+  return matcher.test(string);
+};
+
+
+/**
+ * Convert a millisecond string to a date.
+ *
+ * @param {String} millis
+ * @return {Date}
+ */
+
+exports.parse = function (millis) {
+  millis = parseInt(millis, 10);
+  return new Date(millis);
+};
+});
+require.register("segmentio-new-date/lib/seconds.js", function(exports, require, module){
+
+/**
+ * Matcher.
+ */
+
+var matcher = /\d{10}/;
+
+
+/**
+ * Check whether a string is a second date string.
+ *
+ * @param {String} string
+ * @return {Boolean}
+ */
+
+exports.is = function (string) {
+  return matcher.test(string);
+};
+
+
+/**
+ * Convert a second string to a date.
+ *
+ * @param {String} seconds
+ * @return {Date}
+ */
+
+exports.parse = function (seconds) {
+  var millis = parseInt(seconds, 10) * 1000;
+  return new Date(millis);
+};
 });
 require.register("segmentio-store.js/store.js", function(exports, require, module){
 ;(function(win){
@@ -11204,7 +11518,7 @@ var analytics = module.exports = exports = new Analytics();
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.2.7';
+exports.VERSION = '1.2.8';
 
 
 /**
@@ -12373,6 +12687,7 @@ module.exports.User = User;
 require.register("segmentio-analytics.js-integrations/lib/slugs.json", function(exports, require, module){
 module.exports = [
   "adroll",
+  "adwords",
   "amplitude",
   "awesm",
   "awesomatic",
@@ -12387,6 +12702,7 @@ module.exports = [
   "drip",
   "evergage",
   "errorception",
+  "facebook",
   "foxmetrics",
   "gauges",
   "get-satisfaction",
@@ -12407,6 +12723,7 @@ module.exports = [
   "lucky-orange",
   "lytics",
   "mixpanel",
+  "mouseflow",
   "mousestats",
   "olark",
   "optimizely",
@@ -12603,6 +12920,7 @@ require.alias("visionmedia-debug/debug.js", "segmentio-analytics.js-integration/
 require.alias("segmentio-analytics.js-integration/lib/index.js", "segmentio-analytics.js-integration/index.js");
 require.alias("segmentio-analytics.js-integrations/index.js", "analytics/deps/integrations/index.js");
 require.alias("segmentio-analytics.js-integrations/lib/adroll.js", "analytics/deps/integrations/lib/adroll.js");
+require.alias("segmentio-analytics.js-integrations/lib/adwords.js", "analytics/deps/integrations/lib/adwords.js");
 require.alias("segmentio-analytics.js-integrations/lib/amplitude.js", "analytics/deps/integrations/lib/amplitude.js");
 require.alias("segmentio-analytics.js-integrations/lib/awesm.js", "analytics/deps/integrations/lib/awesm.js");
 require.alias("segmentio-analytics.js-integrations/lib/awesomatic.js", "analytics/deps/integrations/lib/awesomatic.js");
@@ -12617,6 +12935,7 @@ require.alias("segmentio-analytics.js-integrations/lib/customerio.js", "analytic
 require.alias("segmentio-analytics.js-integrations/lib/drip.js", "analytics/deps/integrations/lib/drip.js");
 require.alias("segmentio-analytics.js-integrations/lib/evergage.js", "analytics/deps/integrations/lib/evergage.js");
 require.alias("segmentio-analytics.js-integrations/lib/errorception.js", "analytics/deps/integrations/lib/errorception.js");
+require.alias("segmentio-analytics.js-integrations/lib/facebook.js", "analytics/deps/integrations/lib/facebook.js");
 require.alias("segmentio-analytics.js-integrations/lib/foxmetrics.js", "analytics/deps/integrations/lib/foxmetrics.js");
 require.alias("segmentio-analytics.js-integrations/lib/gauges.js", "analytics/deps/integrations/lib/gauges.js");
 require.alias("segmentio-analytics.js-integrations/lib/get-satisfaction.js", "analytics/deps/integrations/lib/get-satisfaction.js");
@@ -12637,6 +12956,7 @@ require.alias("segmentio-analytics.js-integrations/lib/livechat.js", "analytics/
 require.alias("segmentio-analytics.js-integrations/lib/lucky-orange.js", "analytics/deps/integrations/lib/lucky-orange.js");
 require.alias("segmentio-analytics.js-integrations/lib/lytics.js", "analytics/deps/integrations/lib/lytics.js");
 require.alias("segmentio-analytics.js-integrations/lib/mixpanel.js", "analytics/deps/integrations/lib/mixpanel.js");
+require.alias("segmentio-analytics.js-integrations/lib/mouseflow.js", "analytics/deps/integrations/lib/mouseflow.js");
 require.alias("segmentio-analytics.js-integrations/lib/mousestats.js", "analytics/deps/integrations/lib/mousestats.js");
 require.alias("segmentio-analytics.js-integrations/lib/olark.js", "analytics/deps/integrations/lib/olark.js");
 require.alias("segmentio-analytics.js-integrations/lib/optimizely.js", "analytics/deps/integrations/lib/optimizely.js");
@@ -12776,12 +13096,18 @@ require.alias("component-trim/index.js", "segmentio-facade/deps/trim/index.js");
 
 require.alias("segmentio-is-email/index.js", "segmentio-facade/deps/is-email/index.js");
 
-require.alias("segmentio-new-date/index.js", "segmentio-facade/deps/new-date/index.js");
+require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/lib/index.js");
+require.alias("segmentio-new-date/lib/milliseconds.js", "segmentio-facade/deps/new-date/lib/milliseconds.js");
+require.alias("segmentio-new-date/lib/seconds.js", "segmentio-facade/deps/new-date/lib/seconds.js");
+require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/index.js");
 require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
+require.alias("segmentio-isodate/index.js", "segmentio-new-date/deps/isodate/index.js");
+
+require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
 require.alias("ianstormtaylor-case/lib/index.js", "segmentio-obj-case/deps/case/lib/index.js");
@@ -12911,12 +13237,18 @@ require.alias("component-trim/index.js", "segmentio-facade/deps/trim/index.js");
 
 require.alias("segmentio-is-email/index.js", "segmentio-facade/deps/is-email/index.js");
 
-require.alias("segmentio-new-date/index.js", "segmentio-facade/deps/new-date/index.js");
+require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/lib/index.js");
+require.alias("segmentio-new-date/lib/milliseconds.js", "segmentio-facade/deps/new-date/lib/milliseconds.js");
+require.alias("segmentio-new-date/lib/seconds.js", "segmentio-facade/deps/new-date/lib/seconds.js");
+require.alias("segmentio-new-date/lib/index.js", "segmentio-facade/deps/new-date/index.js");
 require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
+require.alias("segmentio-isodate/index.js", "segmentio-new-date/deps/isodate/index.js");
+
+require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-facade/deps/obj-case/index.js");
 require.alias("ianstormtaylor-case/lib/index.js", "segmentio-obj-case/deps/case/lib/index.js");
@@ -12998,13 +13330,19 @@ require.alias("segmentio-json/index.js", "analytics/deps/json/index.js");
 require.alias("segmentio-json/index.js", "json/index.js");
 require.alias("component-json-fallback/index.js", "segmentio-json/deps/json-fallback/index.js");
 
-require.alias("segmentio-new-date/index.js", "analytics/deps/new-date/index.js");
-require.alias("segmentio-new-date/index.js", "new-date/index.js");
+require.alias("segmentio-new-date/lib/index.js", "analytics/deps/new-date/lib/index.js");
+require.alias("segmentio-new-date/lib/milliseconds.js", "analytics/deps/new-date/lib/milliseconds.js");
+require.alias("segmentio-new-date/lib/seconds.js", "analytics/deps/new-date/lib/seconds.js");
+require.alias("segmentio-new-date/lib/index.js", "analytics/deps/new-date/index.js");
+require.alias("segmentio-new-date/lib/index.js", "new-date/index.js");
 require.alias("ianstormtaylor-is/index.js", "segmentio-new-date/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
 
+require.alias("segmentio-isodate/index.js", "segmentio-new-date/deps/isodate/index.js");
+
+require.alias("segmentio-new-date/lib/index.js", "segmentio-new-date/index.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/store.js");
 require.alias("segmentio-store.js/store.js", "analytics/deps/store/index.js");
 require.alias("segmentio-store.js/store.js", "store/index.js");

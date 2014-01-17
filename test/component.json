@@ -1,0 +1,17 @@
+{
+  "name": "dev",
+  "main": "dev.js",
+  "scripts": ["dev.js"],
+  "dependencies": {
+    "yields/coverage": "*",
+    "component/jquery": "*",
+    "component/assert": "*",
+    "ianstormtaylor/sinon": "*",
+    "ianstormtaylor/trigger-event": "*",
+    "jkroso/equals": "*",
+    "segmentio/protocol": "*",
+    "segmentio/when": "*",
+    "timoxley/next-tick": "*",
+    "yields/gravy": "*"
+  }
+}

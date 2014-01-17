@@ -1,9 +1,11 @@
 
 describe('cookie', function () {
 
-  var assert = require('assert');
-  var cookie = require('analytics/lib/cookie.js');
-  var equal = require('equals');
+  var analytics = window.analytics;
+  var require = analytics.require;
+  var assert = dev('assert');
+  var cookie = require('./cookie.js');
+  var equal = dev('equals');
 
   afterEach(function () {
     cookie.options({}); // reset to defaults

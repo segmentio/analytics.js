@@ -1,52 +1,34 @@
 
 BROWSERS ?= 'chrome, safari, firefox'
-test = http://localhost:4200
-component = node_modules/component/bin/component
-uglifyjs = node_modules/uglify-js/bin/uglifyjs
-phantomjs = node_modules/.bin/mocha-phantomjs --setting web-security=false --setting local-to-remote-url-access=true
+BINS= node_modules/.bin
+C= $(BINS)/component
+MINIFY = $(BINS)/uglifyjs
 
-default build: build/build.js analytics.js
-
-analytics.js: node_modules components $(shell find lib)
-	@$(component) build --standalone analytics --out . --name analytics
-	@$(uglifyjs) analytics.js --output analytics.min.js
-
-build/build.js: node_modules components $(shell find lib)
-	@$(component) build --dev
-
-clean:
-	@rm -rf components build node_modules analytics.js analytics.min.js
+analytics.js: node_modules components $(SRC)
+	@$(C) build --standalone analytics --out . --name analytics
+	@$(MINIFY) analytics.js --output analytics.min.js
 
 components: component.json
-	@$(component) install --dev
-
-kill:
-	-@test ! -s test/server/pid.txt || kill `cat test/server/pid.txt`
-	@rm -f test/server/pid.txt
+	@$(C) install
 
 node_modules: package.json
 	@npm install
 
-release: analytics.js test
+test: analytics.js
+	cd test && make $@
 
-server: node_modules kill
-	@node test/server/index.js &> /dev/null &
+test-browser: analytics.js
+	cd test && make $@
 
-test: node_modules build/build.js server
-	@sleep 1
-	-@$(phantomjs) $(test)
-	@make kill
+test-coverage: analytics.js
+	cd test && make $@
 
-test-browser: node_modules build/build.js server
-	@sleep 1
-	@open $(test)
+test-sauce: analytics.js
+	cd test && make $@
 
-coverage: node_modules build/build.js server
-	@sleep 1
-	@open $(test)/coverage
+clean:
+	rm -rf components analytics.js analytics.min.js
+	cd test && make $@
 
-test-sauce: node_modules build/build.js server
-	@sleep 1
-	@BROWSERS=$(BROWSERS) node_modules/.bin/gravy --url $(test)
-
-.PHONY: clean kill release server test test-browser test-sauce
+.PHONY: clean test test-browser
+.PHONY: test-sauce test-coverage

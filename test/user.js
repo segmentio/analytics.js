@@ -1,12 +1,14 @@
 
 describe('user', function () {
 
-  var assert = require('assert');
-  var cookie = require('analytics/lib/cookie');
-  var equal = require('equals');
-  var json = require('segmentio-json');
-  var store = require('analytics/lib/store');
-  var user = require('analytics/lib/user');
+  var analytics = window.analytics;
+  var require = analytics.require;
+  var assert = dev('assert');
+  var cookie = require('./cookie');
+  var equal = dev('equals');
+  var json = require('json');
+  var store = require('./store');
+  var user = require('./user');
 
   var cookieKey = user._options.cookie.key;
   var localStorageKey = user._options.localStorage.key;

@@ -1,12 +1,14 @@
 
 describe('group', function () {
 
-  var assert = require('assert');
-  var cookie = require('analytics/lib/cookie');
-  var equal = require('equals');
-  var json = require('segmentio-json');
-  var store = require('analytics/lib/store');
-  var group = require('analytics/lib/group');
+  var analytics = window.analytics;
+  var require = analytics.require;
+  var assert = dev('assert');
+  var cookie = require('./cookie');
+  var equal = dev('equals');
+  var json = require('json');
+  var store = require('./store');
+  var group = require('./group');
 
   var cookieKey = group._options.cookie.key;
   var localStorageKey = group._options.localStorage.key;

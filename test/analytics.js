@@ -1,20 +1,22 @@
 
 describe('Analytics', function () {
 
-  var Analytics = require('analytics/lib/analytics');
-  var assert = require('assert');
+  var analytics = window.analytics;
+  var require = analytics.require;
+  var Analytics = require('./analytics');
+  var assert = dev('assert');
   var bind = require('event').bind;
-  var cookie = require('analytics/lib/cookie');
-  var equal = require('equals');
-  var group = require('analytics/lib/group');
+  var cookie = require('./cookie');
+  var equal = dev('equals');
+  var group = require('./group');
   var is = require('is');
-  var jQuery = require('jquery');
+  var jQuery = dev('jquery');
   var createIntegration = require('integration');
-  var sinon = require('sinon');
-  var store = require('analytics/lib/store');
-  var tick = require('next-tick');
-  var trigger = require('trigger-event');
-  var user = require('analytics/lib/user');
+  var sinon = dev('sinon');
+  var store = require('./store');
+  var tick = dev('next-tick');
+  var trigger = dev('trigger-event');
+  var user = require('./user');
   var Facade = require('facade');
   var Identify = Facade.Identify;
   var Group = Facade.Group;

@@ -5,7 +5,8 @@
   <link rel="stylesheet" href="test/server/mocha.css">
   <script src="test/server/mocha.js"></script>
   <script>mocha.setup({ ui: 'bdd' })</script>
-  <script src="build/build.js"></script>
+  <script src="analytics.js"></script>
+  <script src='test/build/build.js'></script>
   <script src="test/index.js"></script>
   <script src="test/analytics.js"></script>
   <script src="test/cookie.js"></script>
@@ -18,10 +19,10 @@
   <script>
     if (window.mochaPhantomJS) {
       mochaPhantomJS.run();
-      require('debug').disable();
+      analytics.require('debug').disable();
     } else {
-      require('gravy')(mocha.run());
-      require('debug').enable('*');
+      dev('gravy')(mocha.run());
+      analytics.require('debug').enable('*');
     }
   </script>
 </body>

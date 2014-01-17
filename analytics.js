@@ -10511,7 +10511,6 @@ require.register("segmentio-isodate-traverse/index.js", function(exports, requir
 
 var is = require('is');
 var isodate = require('isodate');
-
 var clone;
 var each;
 
@@ -10529,25 +10528,57 @@ try {
 
 module.exports = traverse;
 
-
 /**
- * Traverse an object, parsing all ISO strings into dates and returning a clone.
+ * Traverse an object or array, and return a clone with all ISO strings parsed
+ * into Date objects.
  *
  * @param {Object} obj
  * @return {Object}
  */
 
-function traverse (obj, strict) {
-  obj = clone(obj);
+function traverse (input, strict) {
   if (strict === undefined) strict = true;
+  input = clone(input);
+
+  if (is.object(input)) {
+    return object(input, strict);
+  } else if (is.array(input)) {
+    return array(input, strict);
+  }
+}
+
+/**
+ * Object traverser.
+ *
+ * @param {Object} obj
+ * @param {Boolean} strict
+ * @return {Object}
+ */
+
+function object (obj, strict) {
   each(obj, function (key, val) {
     if (isodate.is(val, strict)) {
       obj[key] = isodate.parse(val);
-    } else if (is.object(val)) {
-      obj[key] = traverse(val);
+    } else if (is.object(val) || is.array(val)) {
+      obj[key] = traverse(val, strict);
     }
   });
   return obj;
+}
+
+/**
+ * Array traverser.
+ *
+ * @param {Array} arr
+ * @param {Boolean} strict
+ * @return {Array}
+ */
+
+function array (arr, strict) {
+  each(arr, function (val, x) {
+    arr[x] = traverse(val, strict);
+  });
+  return arr;
 }
 });
 require.register("component-json-fallback/index.js", function(exports, require, module){
@@ -11513,6 +11544,11 @@ var Integrations = require('integrations');
 
 var analytics = module.exports = exports = new Analytics();
 
+/**
+ * Expose require
+ */
+
+analytics.require = require;
 
 /**
  * Expose `VERSION`.

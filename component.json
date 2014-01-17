@@ -39,18 +39,6 @@
     "visionmedia/debug": "0.7.4",
     "yields/prevent": "0.0.2"
   },
-  "development": {
-    "yields/coverage": "*",
-    "component/jquery": "*",
-    "ianstormtaylor/assert": "*",
-    "ianstormtaylor/sinon": "*",
-    "ianstormtaylor/trigger-event": "*",
-    "jkroso/equals": "*",
-    "segmentio/protocol": "*",
-    "segmentio/when": "*",
-    "timoxley/next-tick": "*",
-    "yields/gravy": "*"
-  },
   "scripts": [
     "lib/index.js",
     "lib/analytics.js",

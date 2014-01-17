@@ -1,9 +1,11 @@
 
 describe('store', function () {
 
-  var assert = require('assert');
-  var equal = require('equals');
-  var store = require('analytics/lib/store');
+  var analytics = window.analytics;
+  var require = analytics.require;
+  var assert = dev('assert');
+  var equal = dev('equals');
+  var store = require('./store');
 
   afterEach(function () {
     store.options({}); // reset to defaults

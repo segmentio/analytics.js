@@ -9,4 +9,3 @@ env:
   matrix:
   - BROWSER='chrome'
   - BROWSER='safari'
-  - BROWSER='ie10'

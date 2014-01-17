@@ -3,6 +3,10 @@ BROWSERS ?= 'chrome, safari, firefox'
 BINS= node_modules/.bin
 C= $(BINS)/component
 MINIFY = $(BINS)/uglifyjs
+DELEGATE= test \
+	test-coverage \
+	test-browser \
+	test-sauce
 
 analytics.js: node_modules components $(SRC)
 	@$(C) build --standalone analytics --out . --name analytics
@@ -14,16 +18,7 @@ components: component.json
 node_modules: package.json
 	@npm install
 
-test: analytics.js
-	cd test && make $@
-
-test-browser: analytics.js
-	cd test && make $@
-
-test-coverage: analytics.js
-	cd test && make $@
-
-test-sauce: analytics.js
+$(DELEGATE): analytics.js
 	cd test && make $@
 
 clean:

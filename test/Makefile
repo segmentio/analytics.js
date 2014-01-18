@@ -31,12 +31,13 @@ test-coverage: build server
 test-sauce: build server
 	@BROWSERS=$(BROWSERS) $(GRAVY) --url $(TEST)
 
-clean:
-	rm -rf components build kill
+clean: kill
+	rm -rf components build
 
 kill:
-	-@test ! -s server/pid.txt || kill `cat server/pid.txt`
-	rm -f server/pid.txt
+	-@test -e server/pid.txt \
+		&& kill `cat server/pid.txt` \
+		&& rm -f server/pid.txt
 
 .PHONY: test-sauce test-coverage
 .PHONY: test-browser test clean

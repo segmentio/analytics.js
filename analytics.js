@@ -911,15 +911,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -931,7 +931,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -943,7 +945,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -956,29 +958,10 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
-
-/**
- * Return default port for `protocol`.
- *
- * @param  {String} protocol
- * @return {String}
- * @api private
- */
-function port (protocol){
-  switch (protocol) {
-    case 'http:':
-      return 80;
-    case 'https:':
-      return 443;
-    default:
-      return location.port;
-  }
-}
-
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1026,13 +1009,8 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-try {
-  var bind = require('bind');
-} catch (e) {
-  var bind = require('bind-component');
-}
-
-var bindAll = require('bind-all');
+var bind = require('bind')
+  , bindAll = require('bind-all');
 
 
 /**
@@ -3845,7 +3823,7 @@ Errorception.prototype.identify = function (identify) {
 };
 
 });
-require.register("segmentio-analytics.js-integrations/lib/facebook.js", function(exports, require, module){
+require.register("segmentio-analytics.js-integrations/lib/facebook-ads.js", function(exports, require, module){
 
 var integration = require('integration');
 
@@ -3867,7 +3845,7 @@ var has = Object.prototype.hasOwnProperty;
  * Expose `Facebook`
  */
 
-var Facebook = exports.Integration = integration('Facebook')
+var Facebook = exports.Integration = integration('Facebook Ads')
   .readyOnInitialize()
   .option('currency', 'USD')
   .option('events', {});
@@ -8806,7 +8784,7 @@ module.exports = function extend (object) {
     return object;
 };
 });
-require.register("CamShaft-require-component/index.js", function(exports, require, module){
+require.register("camshaft-require-component/index.js", function(exports, require, module){
 /**
  * Require a module with a fallback
  */
@@ -11571,7 +11549,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.2.8';
+exports.VERSION = '1.2.9';
 
 
 /**
@@ -12755,7 +12733,7 @@ module.exports = [
   "drip",
   "evergage",
   "errorception",
-  "facebook",
+  "facebook-ads",
   "foxmetrics",
   "gauges",
   "get-satisfaction",
@@ -12988,7 +12966,7 @@ require.alias("segmentio-analytics.js-integrations/lib/customerio.js", "analytic
 require.alias("segmentio-analytics.js-integrations/lib/drip.js", "analytics/deps/integrations/lib/drip.js");
 require.alias("segmentio-analytics.js-integrations/lib/evergage.js", "analytics/deps/integrations/lib/evergage.js");
 require.alias("segmentio-analytics.js-integrations/lib/errorception.js", "analytics/deps/integrations/lib/errorception.js");
-require.alias("segmentio-analytics.js-integrations/lib/facebook.js", "analytics/deps/integrations/lib/facebook.js");
+require.alias("segmentio-analytics.js-integrations/lib/facebook-ads.js", "analytics/deps/integrations/lib/facebook-ads.js");
 require.alias("segmentio-analytics.js-integrations/lib/foxmetrics.js", "analytics/deps/integrations/lib/foxmetrics.js");
 require.alias("segmentio-analytics.js-integrations/lib/gauges.js", "analytics/deps/integrations/lib/gauges.js");
 require.alias("segmentio-analytics.js-integrations/lib/get-satisfaction.js", "analytics/deps/integrations/lib/get-satisfaction.js");
@@ -13124,7 +13102,7 @@ require.alias("segmentio-facade/lib/identify.js", "segmentio-analytics.js-integr
 require.alias("segmentio-facade/lib/is-enabled.js", "segmentio-analytics.js-integrations/deps/facade/lib/is-enabled.js");
 require.alias("segmentio-facade/lib/track.js", "segmentio-analytics.js-integrations/deps/facade/lib/track.js");
 require.alias("segmentio-facade/lib/index.js", "segmentio-analytics.js-integrations/deps/facade/index.js");
-require.alias("CamShaft-require-component/index.js", "segmentio-facade/deps/require-component/index.js");
+require.alias("camshaft-require-component/index.js", "segmentio-facade/deps/require-component/index.js");
 
 require.alias("segmentio-isodate-traverse/index.js", "segmentio-facade/deps/isodate-traverse/index.js");
 require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone/index.js");
@@ -13265,7 +13243,7 @@ require.alias("segmentio-facade/lib/is-enabled.js", "analytics/deps/facade/lib/i
 require.alias("segmentio-facade/lib/track.js", "analytics/deps/facade/lib/track.js");
 require.alias("segmentio-facade/lib/index.js", "analytics/deps/facade/index.js");
 require.alias("segmentio-facade/lib/index.js", "facade/index.js");
-require.alias("CamShaft-require-component/index.js", "segmentio-facade/deps/require-component/index.js");
+require.alias("camshaft-require-component/index.js", "segmentio-facade/deps/require-component/index.js");
 
 require.alias("segmentio-isodate-traverse/index.js", "segmentio-facade/deps/isodate-traverse/index.js");
 require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone/index.js");
@@ -13416,7 +13394,7 @@ require.alias("yields-prevent/index.js", "prevent/index.js");
 require.alias("analytics/lib/index.js", "analytics/index.js");if (typeof exports == "object") {
   module.exports = require("analytics");
 } else if (typeof define == "function" && define.amd) {
-  define(function(){ return require("analytics"); });
+  define([], function(){ return require("analytics"); });
 } else {
   this["analytics"] = require("analytics");
 }})();

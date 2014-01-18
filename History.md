@@ -1,11 +1,17 @@
 
-1.2.8 / 2014-01-15 
+1.2.9 / 2014-01-18
+==================
+
+* update `analytics.js-integrations` to `0.3.8`
+* expose `require()`
+
+1.2.8 / 2014-01-15
 ==================
 
 * update `analytics.js-integrations` to `0.3.7`
 * upgrade `facade` to `0.2.3`
 
-1.2.7 / 2014-01-10 
+1.2.7 / 2014-01-10
 ==================
 
  * update `analytics.js-integrations` to `0.3.6`

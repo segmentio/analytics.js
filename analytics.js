@@ -230,7 +230,6 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
-
 /**
  * toString ref.
  */
@@ -247,20 +246,19 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
-    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object String]': return 'string';
+    case '[object Error]': return 'error';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
+  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
-  if (val === Object(val)) return 'object';
 
-  return typeof val;
+  return typeof val.valueOf();
 };
 
 });
@@ -1009,8 +1007,13 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-var bind = require('bind')
-  , bindAll = require('bind-all');
+try {
+  var bind = require('bind');
+} catch (e) {
+  var bind = require('bind-component');
+}
+
+var bindAll = require('bind-all');
 
 
 /**
@@ -10650,6 +10653,7 @@ require.register("segmentio-isodate-traverse/index.js", function(exports, requir
 
 var is = require('is');
 var isodate = require('isodate');
+
 var clone;
 var each;
 
@@ -10667,57 +10671,25 @@ try {
 
 module.exports = traverse;
 
+
 /**
- * Traverse an object or array, and return a clone with all ISO strings parsed
- * into Date objects.
+ * Traverse an object, parsing all ISO strings into dates and returning a clone.
  *
  * @param {Object} obj
  * @return {Object}
  */
 
-function traverse (input, strict) {
+function traverse (obj, strict) {
+  obj = clone(obj);
   if (strict === undefined) strict = true;
-  input = clone(input);
-
-  if (is.object(input)) {
-    return object(input, strict);
-  } else if (is.array(input)) {
-    return array(input, strict);
-  }
-}
-
-/**
- * Object traverser.
- *
- * @param {Object} obj
- * @param {Boolean} strict
- * @return {Object}
- */
-
-function object (obj, strict) {
   each(obj, function (key, val) {
     if (isodate.is(val, strict)) {
       obj[key] = isodate.parse(val);
-    } else if (is.object(val) || is.array(val)) {
-      obj[key] = traverse(val, strict);
+    } else if (is.object(val)) {
+      obj[key] = traverse(val);
     }
   });
   return obj;
-}
-
-/**
- * Array traverser.
- *
- * @param {Array} arr
- * @param {Boolean} strict
- * @return {Array}
- */
-
-function array (arr, strict) {
-  each(arr, function (val, x) {
-    arr[x] = traverse(val, strict);
-  });
-  return arr;
 }
 });
 require.register("component-json-fallback/index.js", function(exports, require, module){
@@ -11693,7 +11665,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.2.9';
+exports.VERSION = '1.3.0';
 
 
 /**

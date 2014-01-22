@@ -2776,6 +2776,88 @@ Awesomatic.prototype.load = function (callback) {
   load(url, callback);
 };
 });
+require.register("segmentio-analytics.js-integrations/lib/bronto.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('integration');
+var load = require('load-script');
+
+/**
+ * Expose plugin.
+ */
+
+module.exports = exports = function(analytics){
+  analytics.addIntegration(Bronto);
+};
+
+
+/**
+ * Expose `Bronto` integration.
+ */
+
+var Bronto = exports.Integration = integration('Bronto')
+  .readyOnLoad()
+  .global('__bta')
+  .option('siteId', '')
+  .option('host', '');
+
+/**
+ * Initialize.
+ *
+ * http://bronto.com/product-blog/features/using-conversion-tracking-private-domain#.Ut_Vk2T8KqB
+ * http://bronto.com/product-blog/features/javascript-conversion-tracking-setup-and-reporting#.Ut_VhmT8KqB
+ *
+ * @param {Object} page
+ */
+
+Bronto.prototype.initialize = function(page){
+  this.load();
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Bronto.prototype.loaded = function(){
+  return this.bta;
+};
+
+/**
+ * Load the Bronto library.
+ *
+ * @param {Function} fn
+ */
+
+Bronto.prototype.load = function(fn){
+  var self = this;
+  load('//p.bm23.com/bta.js', function(err){
+    if (err) return fn(err);
+    var opts = self.options;
+    self.bta = new window.__bta(opts.siteId);
+    if (opts.host) self.bta.setHost(opts.host);
+    fn();
+  });
+};
+
+/**
+ * Track.
+ *
+ * @param {Track} event
+ */
+
+Bronto.prototype.track = function(track){
+  var revenue = track.revenue();
+  var event = track.event();
+  var type = 'number' == typeof revenue ? '$' : 't';
+  this.bta.addConversionLegacy(type, event, revenue);
+};
+
+});
 require.register("segmentio-analytics.js-integrations/lib/bugherd.js", function(exports, require, module){
 
 var integration = require('integration');
@@ -3509,6 +3591,68 @@ function convertDate (date) {
 }
 
 });
+require.register("segmentio-analytics.js-integrations/lib/curebit.js", function(exports, require, module){
+
+var push = require('global-queue')('_curebitq');
+var integration = require('integration');
+var load = require('load-script');
+var clone = require('clone');
+
+/**
+ * Expose plugin
+ */
+
+module.exports = exports = function(analytics){
+  analytics.addIntegration(Curebit);
+};
+
+/**
+ * Expose `Curebit` integration
+ */
+
+var Curebit = exports.Integration = integration('Curebit')
+  .readyOnInitialize()
+  .global('_curebitq')
+  .global('curebit')
+  .option('siteId', '')
+  .option('server', '');
+
+/**
+ * Initialize
+ *
+ * @param {Object} page
+ */
+
+Curebit.prototype.initialize = function(){
+  push('init', {
+    site_id: this.options.siteId,
+    server: this.options.server
+  });
+  this.load();
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Curebit.prototype.loaded = function(){
+  return !! window.curebit;
+};
+
+/**
+ * Load
+ *
+ * @param {Function} fn
+ * @api private
+ */
+
+Curebit.prototype.load = function(fn){
+  load('//d2jjzw81hqbuqv.cloudfront.net/assets/api/all-0.6.js', fn);
+};
+
+});
 require.register("segmentio-analytics.js-integrations/lib/drip.js", function(exports, require, module){
 
 var alias = require('alias');
@@ -3589,6 +3733,91 @@ Drip.prototype.track = function (track) {
   if (cents) props.value = cents;
   delete props.revenue;
   push('track', props);
+};
+
+});
+require.register("segmentio-analytics.js-integrations/lib/errorception.js", function(exports, require, module){
+
+var callback = require('callback');
+var extend = require('extend');
+var integration = require('integration');
+var load = require('load-script');
+var onError = require('on-error');
+var push = require('global-queue')('_errs');
+
+
+/**
+ * Expose plugin.
+ */
+
+module.exports = exports = function (analytics) {
+  analytics.addIntegration(Errorception);
+};
+
+
+/**
+ * Expose `Errorception` integration.
+ */
+
+var Errorception = exports.Integration = integration('Errorception')
+  .assumesPageview()
+  .readyOnInitialize()
+  .global('_errs')
+  .option('projectId', '')
+  .option('meta', true);
+
+
+/**
+ * Initialize.
+ *
+ * https://github.com/amplitude/Errorception-Javascript
+ *
+ * @param {Object} page
+ */
+
+Errorception.prototype.initialize = function (page) {
+  window._errs = window._errs || [this.options.projectId];
+  onError(push);
+  this.load();
+};
+
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Errorception.prototype.loaded = function () {
+  return !! (window._errs && window._errs.push !== Array.prototype.push);
+};
+
+
+/**
+ * Load the Errorception library.
+ *
+ * @param {Function} callback
+ */
+
+Errorception.prototype.load = function (callback) {
+  load('//beacon.errorception.com/' + this.options.projectId + '.js', callback);
+};
+
+
+/**
+ * Identify.
+ *
+ * http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html
+ *
+ * @param {Object} identify
+ */
+
+Errorception.prototype.identify = function (identify) {
+  if (!this.options.meta) return;
+  var traits = identify.traits();
+  window._errs = window._errs || [];
+  window._errs.meta = window._errs.meta || {};
+  extend(window._errs.meta, traits);
 };
 
 });
@@ -3735,91 +3964,6 @@ Evergage.prototype.group = function (group) {
 
 Evergage.prototype.track = function (track) {
   push('trackAction', track.event(), track.properties());
-};
-
-});
-require.register("segmentio-analytics.js-integrations/lib/errorception.js", function(exports, require, module){
-
-var callback = require('callback');
-var extend = require('extend');
-var integration = require('integration');
-var load = require('load-script');
-var onError = require('on-error');
-var push = require('global-queue')('_errs');
-
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function (analytics) {
-  analytics.addIntegration(Errorception);
-};
-
-
-/**
- * Expose `Errorception` integration.
- */
-
-var Errorception = exports.Integration = integration('Errorception')
-  .assumesPageview()
-  .readyOnInitialize()
-  .global('_errs')
-  .option('projectId', '')
-  .option('meta', true);
-
-
-/**
- * Initialize.
- *
- * https://github.com/amplitude/Errorception-Javascript
- *
- * @param {Object} page
- */
-
-Errorception.prototype.initialize = function (page) {
-  window._errs = window._errs || [this.options.projectId];
-  onError(push);
-  this.load();
-};
-
-
-/**
- * Loaded?
- *
- * @return {Boolean}
- */
-
-Errorception.prototype.loaded = function () {
-  return !! (window._errs && window._errs.push !== Array.prototype.push);
-};
-
-
-/**
- * Load the Errorception library.
- *
- * @param {Function} callback
- */
-
-Errorception.prototype.load = function (callback) {
-  load('//beacon.errorception.com/' + this.options.projectId + '.js', callback);
-};
-
-
-/**
- * Identify.
- *
- * http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html
- *
- * @param {Object} identify
- */
-
-Errorception.prototype.identify = function (identify) {
-  if (!this.options.meta) return;
-  var traits = identify.traits();
-  window._errs = window._errs || [];
-  window._errs.meta = window._errs.meta || {};
-  extend(window._errs.meta, traits);
 };
 
 });
@@ -12722,6 +12866,7 @@ module.exports = [
   "amplitude",
   "awesm",
   "awesomatic",
+  "bronto",
   "bugherd",
   "bugsnag",
   "chartbeat",
@@ -12730,9 +12875,10 @@ module.exports = [
   "comscore",
   "crazy-egg",
   "customerio",
+  "curebit",
   "drip",
-  "evergage",
   "errorception",
+  "evergage",
   "facebook-ads",
   "foxmetrics",
   "gauges",
@@ -12955,6 +13101,7 @@ require.alias("segmentio-analytics.js-integrations/lib/adwords.js", "analytics/d
 require.alias("segmentio-analytics.js-integrations/lib/amplitude.js", "analytics/deps/integrations/lib/amplitude.js");
 require.alias("segmentio-analytics.js-integrations/lib/awesm.js", "analytics/deps/integrations/lib/awesm.js");
 require.alias("segmentio-analytics.js-integrations/lib/awesomatic.js", "analytics/deps/integrations/lib/awesomatic.js");
+require.alias("segmentio-analytics.js-integrations/lib/bronto.js", "analytics/deps/integrations/lib/bronto.js");
 require.alias("segmentio-analytics.js-integrations/lib/bugherd.js", "analytics/deps/integrations/lib/bugherd.js");
 require.alias("segmentio-analytics.js-integrations/lib/bugsnag.js", "analytics/deps/integrations/lib/bugsnag.js");
 require.alias("segmentio-analytics.js-integrations/lib/chartbeat.js", "analytics/deps/integrations/lib/chartbeat.js");
@@ -12963,9 +13110,10 @@ require.alias("segmentio-analytics.js-integrations/lib/clicky.js", "analytics/de
 require.alias("segmentio-analytics.js-integrations/lib/comscore.js", "analytics/deps/integrations/lib/comscore.js");
 require.alias("segmentio-analytics.js-integrations/lib/crazy-egg.js", "analytics/deps/integrations/lib/crazy-egg.js");
 require.alias("segmentio-analytics.js-integrations/lib/customerio.js", "analytics/deps/integrations/lib/customerio.js");
+require.alias("segmentio-analytics.js-integrations/lib/curebit.js", "analytics/deps/integrations/lib/curebit.js");
 require.alias("segmentio-analytics.js-integrations/lib/drip.js", "analytics/deps/integrations/lib/drip.js");
-require.alias("segmentio-analytics.js-integrations/lib/evergage.js", "analytics/deps/integrations/lib/evergage.js");
 require.alias("segmentio-analytics.js-integrations/lib/errorception.js", "analytics/deps/integrations/lib/errorception.js");
+require.alias("segmentio-analytics.js-integrations/lib/evergage.js", "analytics/deps/integrations/lib/evergage.js");
 require.alias("segmentio-analytics.js-integrations/lib/facebook-ads.js", "analytics/deps/integrations/lib/facebook-ads.js");
 require.alias("segmentio-analytics.js-integrations/lib/foxmetrics.js", "analytics/deps/integrations/lib/foxmetrics.js");
 require.alias("segmentio-analytics.js-integrations/lib/gauges.js", "analytics/deps/integrations/lib/gauges.js");

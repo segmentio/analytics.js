@@ -230,6 +230,7 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
+
 /**
  * toString ref.
  */
@@ -246,19 +247,20 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
+    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object Error]': return 'error';
+    case '[object String]': return 'string';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
-  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
+  if (val === Object(val)) return 'object';
 
-  return typeof val.valueOf();
+  return typeof val;
 };
 
 });
@@ -1323,6 +1325,7 @@ function createIntegration (name) {
     this._wrapInitialize();
     this._wrapLoad();
     this._wrapPage();
+    this._wrapTrack();
   }
 
   Integration.prototype.defaults = {};
@@ -1332,6 +1335,7 @@ function createIntegration (name) {
   for (var key in protos) Integration.prototype[key] = protos[key];
   return Integration;
 }
+
 });
 require.register("segmentio-analytics.js-integration/lib/protos.js", function(exports, require, module){
 
@@ -1339,6 +1343,7 @@ var after = require('after');
 var callback = require('callback');
 var Emitter = require('emitter');
 var tick = require('next-tick');
+var events = require('./events');
 
 
 /**
@@ -1346,7 +1351,6 @@ var tick = require('next-tick');
  */
 
 Emitter(exports);
-
 
 /**
  * Initialize.
@@ -1383,14 +1387,18 @@ exports.load = function (cb) {
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-exports.page = function (category, name, properties, options) {};
+exports.page = function(page){};
 
+/**
+ * Track.
+ *
+ * @param {Track} track
+ */
+
+exports.track = function(track){};
 
 /**
  * Invoke a `method` that may or may not exist on the prototype with `args`,
@@ -1538,6 +1546,47 @@ exports._wrapPage = function () {
     page.apply(this, arguments);
   };
 };
+
+/**
+ * Wrap the track method to call other ecommerce methods if
+ * available depending on the `track.event()`.
+ *
+ * @api private
+ */
+
+exports._wrapTrack = function(){
+  var t = this.track;
+  this.track = function(track){
+    var event = track.event();
+    var called;
+
+    for (var method in events) {
+      var regexp = events[method];
+      if (!this[method]) continue;
+      if (!regexp.test(event)) continue;
+      this[method].apply(this, arguments);
+      called = true;
+      break;
+    }
+
+    if (!called) t.apply(this, arguments);
+  };
+};
+
+});
+require.register("segmentio-analytics.js-integration/lib/events.js", function(exports, require, module){
+
+/**
+ * Expose `events`
+ */
+
+module.exports = {
+  removedProduct: /removed product/i,
+  viewedProduct: /viewed product/i,
+  addedProduct: /added product/i,
+  checkedOut: /checked out/i
+};
+
 });
 require.register("segmentio-analytics.js-integration/lib/statics.js", function(exports, require, module){
 
@@ -5971,6 +6020,7 @@ require.register("segmentio-analytics.js-integrations/lib/livechat.js", function
 var each = require('each');
 var integration = require('integration');
 var load = require('load-script');
+var clone = require('clone');
 
 
 /**
@@ -5990,6 +6040,7 @@ var LiveChat = exports.Integration = integration('LiveChat')
   .assumesPageview()
   .readyOnLoad()
   .global('__lc')
+  .option('group', 0)
   .option('license', '');
 
 
@@ -6002,7 +6053,7 @@ var LiveChat = exports.Integration = integration('LiveChat')
  */
 
 LiveChat.prototype.initialize = function (page) {
-  window.__lc = { license: this.options.license };
+  window.__lc = clone(this.options);
   this.isLoaded = false;
   this.load();
 };
@@ -10653,15 +10704,11 @@ require.register("segmentio-isodate-traverse/index.js", function(exports, requir
 
 var is = require('is');
 var isodate = require('isodate');
-
-var clone;
 var each;
 
 try {
-  clone = require('clone');
   each = require('each');
 } catch (err) {
-  clone = require('clone-component');
   each = require('each-component');
 }
 
@@ -10671,26 +10718,62 @@ try {
 
 module.exports = traverse;
 
-
 /**
- * Traverse an object, parsing all ISO strings into dates and returning a clone.
+ * Traverse an object or array, and return a clone with all ISO strings parsed
+ * into Date objects.
  *
  * @param {Object} obj
  * @return {Object}
  */
 
-function traverse (obj, strict) {
-  obj = clone(obj);
+function traverse (input, strict) {
   if (strict === undefined) strict = true;
+
+  if (is.object(input)) {
+    return object(input, strict);
+  } else if (is.array(input)) {
+    return array(input, strict);
+  }
+}
+
+/**
+ * Object traverser.
+ *
+ * @param {Object} obj
+ * @param {Boolean} strict
+ * @return {Object}
+ */
+
+function object (obj, strict) {
   each(obj, function (key, val) {
     if (isodate.is(val, strict)) {
       obj[key] = isodate.parse(val);
-    } else if (is.object(val)) {
-      obj[key] = traverse(val);
+    } else if (is.object(val) || is.array(val)) {
+      traverse(val, strict);
     }
   });
   return obj;
 }
+
+/**
+ * Array traverser.
+ *
+ * @param {Array} arr
+ * @param {Boolean} strict
+ * @return {Array}
+ */
+
+function array (arr, strict) {
+  each(arr, function (val, x) {
+    if (is.object(val)) {
+      traverse(val, strict);
+    } else if (isodate.is(val, strict)) {
+      arr[x] = isodate.parse(val);
+    }
+  });
+  return arr;
+}
+
 });
 require.register("component-json-fallback/index.js", function(exports, require, module){
 /*
@@ -11665,7 +11748,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.3.0';
+exports.VERSION = '1.3.1';
 
 
 /**
@@ -13035,6 +13118,7 @@ require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-analytics.js-integration/lib/index.js", "analytics/deps/integration/lib/index.js");
 require.alias("segmentio-analytics.js-integration/lib/protos.js", "analytics/deps/integration/lib/protos.js");
+require.alias("segmentio-analytics.js-integration/lib/events.js", "analytics/deps/integration/lib/events.js");
 require.alias("segmentio-analytics.js-integration/lib/statics.js", "analytics/deps/integration/lib/statics.js");
 require.alias("segmentio-analytics.js-integration/lib/index.js", "analytics/deps/integration/index.js");
 require.alias("segmentio-analytics.js-integration/lib/index.js", "integration/index.js");
@@ -13169,6 +13253,7 @@ require.alias("component-type/index.js", "segmentio-alias/deps/type/index.js");
 
 require.alias("segmentio-analytics.js-integration/lib/index.js", "segmentio-analytics.js-integrations/deps/integration/lib/index.js");
 require.alias("segmentio-analytics.js-integration/lib/protos.js", "segmentio-analytics.js-integrations/deps/integration/lib/protos.js");
+require.alias("segmentio-analytics.js-integration/lib/events.js", "segmentio-analytics.js-integrations/deps/integration/lib/events.js");
 require.alias("segmentio-analytics.js-integration/lib/statics.js", "segmentio-analytics.js-integrations/deps/integration/lib/statics.js");
 require.alias("segmentio-analytics.js-integration/lib/index.js", "segmentio-analytics.js-integrations/deps/integration/index.js");
 require.alias("avetisk-defaults/index.js", "segmentio-analytics.js-integration/deps/defaults/index.js");
@@ -13225,9 +13310,6 @@ require.alias("segmentio-facade/lib/index.js", "segmentio-analytics.js-integrati
 require.alias("camshaft-require-component/index.js", "segmentio-facade/deps/require-component/index.js");
 
 require.alias("segmentio-isodate-traverse/index.js", "segmentio-facade/deps/isodate-traverse/index.js");
-require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone/index.js");
-require.alias("component-type/index.js", "component-clone/deps/type/index.js");
-
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
@@ -13366,9 +13448,6 @@ require.alias("segmentio-facade/lib/index.js", "facade/index.js");
 require.alias("camshaft-require-component/index.js", "segmentio-facade/deps/require-component/index.js");
 
 require.alias("segmentio-isodate-traverse/index.js", "segmentio-facade/deps/isodate-traverse/index.js");
-require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone/index.js");
-require.alias("component-type/index.js", "component-clone/deps/type/index.js");
-
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
@@ -13464,9 +13543,6 @@ require.alias("segmentio-is-meta/index.js", "is-meta/index.js");
 
 require.alias("segmentio-isodate-traverse/index.js", "analytics/deps/isodate-traverse/index.js");
 require.alias("segmentio-isodate-traverse/index.js", "isodate-traverse/index.js");
-require.alias("component-clone/index.js", "segmentio-isodate-traverse/deps/clone/index.js");
-require.alias("component-type/index.js", "component-clone/deps/type/index.js");
-
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 

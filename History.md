@@ -1,4 +1,11 @@
 
+1.3.1 / 2014-01-30
+==================
+
+ * upgrade isodate-traverse to `0.3.0`
+ * upgrade facade to `0.2.4`
+ * upgrade analytics.js-integrations to `0.3.10`
+
 1.3.0 / 2014-01-23
 ==================
 

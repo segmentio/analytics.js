@@ -911,15 +911,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -931,9 +931,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -945,7 +943,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -958,10 +956,29 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
+
+/**
+ * Return default port for `protocol`.
+ *
+ * @param  {String} protocol
+ * @return {String}
+ * @api private
+ */
+function port (protocol){
+  switch (protocol) {
+    case 'http:':
+      return 80;
+    case 'https:':
+      return 443;
+    default:
+      return location.port;
+  }
+}
+
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1009,13 +1026,8 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-try {
-  var bind = require('bind');
-} catch (e) {
-  var bind = require('bind-component');
-}
-
-var bindAll = require('bind-all');
+var bind = require('bind')
+  , bindAll = require('bind-all');
 
 
 /**
@@ -1167,13 +1179,8 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty');
-
-try {
-  var typeOf = require('type');
-} catch (e) {
-  var typeOf = require('component-type');
-}
+var isEmpty = require('is-empty')
+  , typeOf = require('type');
 
 
 /**
@@ -12128,7 +12135,7 @@ Analytics.prototype.page = function (category, name, properties, options, fn) {
     path: canonicalPath(),
     referrer: document.referrer,
     title: document.title,
-    url: location.href,
+    url: canonicalUrl(),
     search: location.search
   };
 
@@ -12331,6 +12338,19 @@ function canonicalPath () {
   return parsed.pathname;
 }
 
+/**
+ * Return the canonical URL for the page, without the hash.
+ *
+ * @return {String}
+ */
+
+function canonicalUrl () {
+  var canon = canonical();
+  if (canon) return canon;
+  var url = window.location.href;
+  var i = url.indexOf('#');
+  return -1 == i ? url : url.slice(0, i);
+}
 });
 require.register("analytics/lib/cookie.js", function(exports, require, module){
 

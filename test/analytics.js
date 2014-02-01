@@ -417,7 +417,7 @@ describe('Analytics', function () {
       defaults.property = true;
       analytics.page({ property: true });
       var page = analytics._invoke.args[0][1];
-      assert(true == page.properties().property);
+      assert.deepEqual(defaults, page.properties());
     });
 
     it('should emit page', function (done) {

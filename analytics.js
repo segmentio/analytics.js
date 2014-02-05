@@ -911,15 +911,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -931,7 +931,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -943,7 +945,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -956,29 +958,10 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
-
-/**
- * Return default port for `protocol`.
- *
- * @param  {String} protocol
- * @return {String}
- * @api private
- */
-function port (protocol){
-  switch (protocol) {
-    case 'http:':
-      return 80;
-    case 'https:':
-      return 443;
-    default:
-      return location.port;
-  }
-}
-
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1026,8 +1009,13 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-var bind = require('bind')
-  , bindAll = require('bind-all');
+try {
+  var bind = require('bind');
+} catch (e) {
+  var bind = require('bind-component');
+}
+
+var bindAll = require('bind-all');
 
 
 /**
@@ -1179,8 +1167,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -1332,7 +1325,6 @@ function createIntegration (name) {
     this._wrapInitialize();
     this._wrapLoad();
     this._wrapPage();
-    this._wrapTrack();
   }
 
   Integration.prototype.defaults = {};
@@ -1342,7 +1334,6 @@ function createIntegration (name) {
   for (var key in protos) Integration.prototype[key] = protos[key];
   return Integration;
 }
-
 });
 require.register("segmentio-analytics.js-integration/lib/protos.js", function(exports, require, module){
 
@@ -1350,7 +1341,6 @@ var after = require('after');
 var callback = require('callback');
 var Emitter = require('emitter');
 var tick = require('next-tick');
-var events = require('./events');
 
 
 /**
@@ -1358,6 +1348,7 @@ var events = require('./events');
  */
 
 Emitter(exports);
+
 
 /**
  * Initialize.
@@ -1394,18 +1385,14 @@ exports.load = function (cb) {
 /**
  * Page.
  *
- * @param {Page} page
+ * @param {String} category (optional)
+ * @param {String} name (optional)
+ * @param {Object} properties (optional)
+ * @param {Object} options (optional)
  */
 
-exports.page = function(page){};
+exports.page = function (category, name, properties, options) {};
 
-/**
- * Track.
- *
- * @param {Track} track
- */
-
-exports.track = function(track){};
 
 /**
  * Invoke a `method` that may or may not exist on the prototype with `args`,
@@ -1553,47 +1540,6 @@ exports._wrapPage = function () {
     page.apply(this, arguments);
   };
 };
-
-/**
- * Wrap the track method to call other ecommerce methods if
- * available depending on the `track.event()`.
- *
- * @api private
- */
-
-exports._wrapTrack = function(){
-  var t = this.track;
-  this.track = function(track){
-    var event = track.event();
-    var called;
-
-    for (var method in events) {
-      var regexp = events[method];
-      if (!this[method]) continue;
-      if (!regexp.test(event)) continue;
-      this[method].apply(this, arguments);
-      called = true;
-      break;
-    }
-
-    if (!called) t.apply(this, arguments);
-  };
-};
-
-});
-require.register("segmentio-analytics.js-integration/lib/events.js", function(exports, require, module){
-
-/**
- * Expose `events`
- */
-
-module.exports = {
-  removedProduct: /removed product/i,
-  viewedProduct: /viewed product/i,
-  addedProduct: /added product/i,
-  checkedOut: /checked out/i
-};
-
 });
 require.register("segmentio-analytics.js-integration/lib/statics.js", function(exports, require, module){
 
@@ -10785,7 +10731,7 @@ function array (arr, strict) {
 require.register("component-json-fallback/index.js", function(exports, require, module){
 /*
     json2.js
-    2011-10-19
+    2014-02-04
 
     Public Domain.
 
@@ -10944,7 +10890,9 @@ require.register("component-json-fallback/index.js", function(exports, require, 
 // Create a JSON object only if one does not already exist. We create the
 // methods in a closure to avoid creating global variables.
 
-var JSON = {};
+if (typeof JSON !== 'object') {
+    JSON = {};
+}
 
 (function () {
     'use strict';
@@ -10956,7 +10904,7 @@ var JSON = {};
 
     if (typeof Date.prototype.toJSON !== 'function') {
 
-        Date.prototype.toJSON = function (key) {
+        Date.prototype.toJSON = function () {
 
             return isFinite(this.valueOf())
                 ? this.getUTCFullYear()     + '-' +
@@ -10970,24 +10918,16 @@ var JSON = {};
 
         String.prototype.toJSON      =
             Number.prototype.toJSON  =
-            Boolean.prototype.toJSON = function (key) {
+            Boolean.prototype.toJSON = function () {
                 return this.valueOf();
             };
     }
 
-    var cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
-        escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+    var cx,
+        escapable,
         gap,
         indent,
-        meta = {    // table of character substitutions
-            '\b': '\\b',
-            '\t': '\\t',
-            '\n': '\\n',
-            '\f': '\\f',
-            '\r': '\\r',
-            '"' : '\\"',
-            '\\': '\\\\'
-        },
+        meta,
         rep;
 
 
@@ -11139,6 +11079,16 @@ var JSON = {};
 // If the JSON object does not yet have a stringify method, give it one.
 
     if (typeof JSON.stringify !== 'function') {
+        escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+        meta = {    // table of character substitutions
+            '\b': '\\b',
+            '\t': '\\t',
+            '\n': '\\n',
+            '\f': '\\f',
+            '\r': '\\r',
+            '"' : '\\"',
+            '\\': '\\\\'
+        };
         JSON.stringify = function (value, replacer, space) {
 
 // The stringify method takes a value and an optional replacer, and an optional
@@ -11186,6 +11136,7 @@ var JSON = {};
 // If the JSON object does not yet have a parse method, give it one.
 
     if (typeof JSON.parse !== 'function') {
+        cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
         JSON.parse = function (text, reviver) {
 
 // The parse method takes a text and an optional reviver function, and returns
@@ -11268,7 +11219,8 @@ var JSON = {};
     }
 }());
 
-module.exports = JSON
+module.exports = JSON;
+
 });
 require.register("segmentio-json/index.js", function(exports, require, module){
 
@@ -13138,7 +13090,6 @@ require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-analytics.js-integration/lib/index.js", "analytics/deps/integration/lib/index.js");
 require.alias("segmentio-analytics.js-integration/lib/protos.js", "analytics/deps/integration/lib/protos.js");
-require.alias("segmentio-analytics.js-integration/lib/events.js", "analytics/deps/integration/lib/events.js");
 require.alias("segmentio-analytics.js-integration/lib/statics.js", "analytics/deps/integration/lib/statics.js");
 require.alias("segmentio-analytics.js-integration/lib/index.js", "analytics/deps/integration/index.js");
 require.alias("segmentio-analytics.js-integration/lib/index.js", "integration/index.js");
@@ -13273,7 +13224,6 @@ require.alias("component-type/index.js", "segmentio-alias/deps/type/index.js");
 
 require.alias("segmentio-analytics.js-integration/lib/index.js", "segmentio-analytics.js-integrations/deps/integration/lib/index.js");
 require.alias("segmentio-analytics.js-integration/lib/protos.js", "segmentio-analytics.js-integrations/deps/integration/lib/protos.js");
-require.alias("segmentio-analytics.js-integration/lib/events.js", "segmentio-analytics.js-integrations/deps/integration/lib/events.js");
 require.alias("segmentio-analytics.js-integration/lib/statics.js", "segmentio-analytics.js-integrations/deps/integration/lib/statics.js");
 require.alias("segmentio-analytics.js-integration/lib/index.js", "segmentio-analytics.js-integrations/deps/integration/index.js");
 require.alias("avetisk-defaults/index.js", "segmentio-analytics.js-integration/deps/defaults/index.js");

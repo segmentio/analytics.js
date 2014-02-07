@@ -1009,13 +1009,8 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-try {
-  var bind = require('bind');
-} catch (e) {
-  var bind = require('bind-component');
-}
-
-var bindAll = require('bind-all');
+var bind = require('bind')
+  , bindAll = require('bind-all');
 
 
 /**
@@ -1167,13 +1162,8 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty');
-
-try {
-  var typeOf = require('type');
-} catch (e) {
-  var typeOf = require('component-type');
-}
+var isEmpty = require('is-empty')
+  , typeOf = require('type');
 
 
 /**
@@ -1325,6 +1315,7 @@ function createIntegration (name) {
     this._wrapInitialize();
     this._wrapLoad();
     this._wrapPage();
+    this._wrapTrack();
   }
 
   Integration.prototype.defaults = {};
@@ -1334,6 +1325,7 @@ function createIntegration (name) {
   for (var key in protos) Integration.prototype[key] = protos[key];
   return Integration;
 }
+
 });
 require.register("segmentio-analytics.js-integration/lib/protos.js", function(exports, require, module){
 
@@ -1341,6 +1333,7 @@ var after = require('after');
 var callback = require('callback');
 var Emitter = require('emitter');
 var tick = require('next-tick');
+var events = require('./events');
 
 
 /**
@@ -1348,7 +1341,6 @@ var tick = require('next-tick');
  */
 
 Emitter(exports);
-
 
 /**
  * Initialize.
@@ -1385,14 +1377,18 @@ exports.load = function (cb) {
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-exports.page = function (category, name, properties, options) {};
+exports.page = function(page){};
 
+/**
+ * Track.
+ *
+ * @param {Track} track
+ */
+
+exports.track = function(track){};
 
 /**
  * Invoke a `method` that may or may not exist on the prototype with `args`,
@@ -1540,6 +1536,47 @@ exports._wrapPage = function () {
     page.apply(this, arguments);
   };
 };
+
+/**
+ * Wrap the track method to call other ecommerce methods if
+ * available depending on the `track.event()`.
+ *
+ * @api private
+ */
+
+exports._wrapTrack = function(){
+  var t = this.track;
+  this.track = function(track){
+    var event = track.event();
+    var called;
+
+    for (var method in events) {
+      var regexp = events[method];
+      if (!this[method]) continue;
+      if (!regexp.test(event)) continue;
+      this[method].apply(this, arguments);
+      called = true;
+      break;
+    }
+
+    if (!called) t.apply(this, arguments);
+  };
+};
+
+});
+require.register("segmentio-analytics.js-integration/lib/events.js", function(exports, require, module){
+
+/**
+ * Expose `events`
+ */
+
+module.exports = {
+  removedProduct: /removed product/i,
+  viewedProduct: /viewed product/i,
+  addedProduct: /added product/i,
+  checkedOut: /checked out/i
+};
+
 });
 require.register("segmentio-analytics.js-integration/lib/statics.js", function(exports, require, module){
 
@@ -2328,6 +2365,91 @@ Batch.prototype.end = function(cb){
 };
 
 });
+require.register("segmentio-substitute/index.js", function(exports, require, module){
+
+/**
+ * Expose `substitute`
+ */
+
+module.exports = substitute;
+
+/**
+ * Substitute `:prop` with the given `obj` in `str`
+ *
+ * @param {String} str
+ * @param {Object} obj
+ * @param {RegExp} expr
+ * @return {String}
+ * @api public
+ */
+
+function substitute(str, obj, expr){
+  if (!obj) throw new TypeError('expected an object');
+  expr = expr || /:(\w+)/g;
+  return str.replace(expr, function(_, prop){
+    return null != obj[prop]
+      ? obj[prop]
+      : _;
+  });
+}
+
+});
+require.register("segmentio-load-pixel/index.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var stringify = require('querystring').stringify;
+var sub = require('substitute');
+
+/**
+ * Factory function to create a pixel loader.
+ *
+ * @param {String} path
+ * @return {Function}
+ * @api public
+ */
+
+module.exports = function(path){
+  return function(query, obj, fn){
+    if ('function' == typeof obj) fn = obj, obj = {};
+    obj = obj || {};
+    fn = fn || function(){};
+    var url = sub(path, obj);
+    var img = new Image;
+    img.onerror = error(fn, 'failed to load pixel', img);
+    img.onload = function(){ fn(); };
+    query = stringify(query);
+    if (query) query = '?' + query;
+    img.src = url + query;
+    img.width = 1;
+    img.height = 1;
+    return img;
+  };
+};
+
+/**
+ * Create an error handler.
+ *
+ * @param {Fucntion} fn
+ * @param {String} message
+ * @param {Image} img
+ * @return {Function}
+ * @api private
+ */
+
+function error(fn, message, img){
+  return function(e){
+    e = e || window.event;
+    var err = new Error(message);
+    err.event = e;
+    err.source = img;
+    fn(err);
+  };
+}
+
+});
 require.register("segmentio-analytics.js-integrations/index.js", function(exports, require, module){
 
 var integrations = require('./lib/slugs');
@@ -2427,6 +2549,7 @@ AdRoll.prototype.load = function (callback) {
 });
 require.register("segmentio-analytics.js-integrations/lib/adwords.js", function(exports, require, module){
 
+var load = require('load-pixel')('//www.googleadservices.com/pagead/conversion/:id');
 var integration = require('integration');
 
 /**
@@ -2436,6 +2559,12 @@ var integration = require('integration');
 module.exports = exports = function(analytics){
   analytics.addIntegration(AdWords);
 };
+
+/**
+ * Expose `load`.
+ */
+
+exports.load = load;
 
 /**
  * HOP
@@ -2449,6 +2578,7 @@ var has = Object.prototype.hasOwnProperty;
 
 var AdWords = exports.Integration = integration('AdWords')
   .readyOnInitialize()
+  .option('conversionId', '')
   .option('events', {});
 
 /**
@@ -2458,33 +2588,15 @@ var AdWords = exports.Integration = integration('AdWords')
  */
 
 AdWords.prototype.track = function(track){
+  var id = this.options.conversionId;
   var events = this.options.events;
   var event = track.event();
   if (!has.call(events, event)) return;
-  var id = events[event];
-  exports.load(id, track.revenue() || 0, event);
-};
-
-/**
- * Load conversion.
- *
- * @param {Mixed} id
- * @param {Number} revenue
- * @param {String} event
- * @return {Image}
- * @api private
- */
-
-exports.load = function(id, revenue, event){
-  var img = new Image;
-  img.src = '//www.googleadservices.com/pagead'
-    + '/conversion/' + id
-    + '?value=' + revenue
-    + '&label=' + event
-    + '&script=0';
-  img.width = 1;
-  img.height = 1;
-  return img;
+  return exports.load({
+    value: track.revenue() || 0,
+    label: events[event],
+    script: 0
+  }, { id: id });
 };
 
 });
@@ -2781,6 +2893,75 @@ Awesomatic.prototype.load = function (callback) {
   load(url, callback);
 };
 });
+require.register("segmentio-analytics.js-integrations/lib/bing-ads.js", function(exports, require, module){
+
+
+var integration = require('integration');
+
+/**
+ * Expose plugin
+ */
+
+module.exports = exports = function(analytics){
+  analytics.addIntegration(Bing);
+};
+
+/**
+ * HOP
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Expose `Bing`
+ */
+
+var Bing = exports.Integration = integration('Bing Ads')
+  .readyOnInitialize()
+  .option('siteId', '')
+  .option('domainId', '')
+  .option('goals', {});
+
+/**
+ * Track.
+ *
+ * @param {Track} track
+ */
+
+Bing.prototype.track = function(track){
+  var goals = this.options.goals;
+  var traits = track.traits();
+  var event = track.event();
+  if (!has.call(goals, event)) return;
+  var goal = goals[event];
+  return exports.load(goal, track.revenue(), this.options);
+};
+
+/**
+ * Load conversion.
+ *
+ * @param {Mixed} goal
+ * @param {Number} revenue
+ * @param {String} currency
+ * @return {IFrame}
+ * @api private
+ */
+
+exports.load = function(goal, revenue, options){
+  var iframe = document.createElement('iframe');
+  iframe.src = '//flex.msn.com/mstag/tag/' + options.siteId
+    + '/analytics.html'
+    + '?domainId=' + options.domainId
+    + '&revenue=' + revenue || 0
+    + '&actionid=' + goal;
+    + '&dedup=1'
+    + '&type=1'
+  iframe.width = 1;
+  iframe.height = 1;
+  return iframe;
+};
+
+});
 require.register("segmentio-analytics.js-integrations/lib/bronto.js", function(exports, require, module){
 
 /**
@@ -2788,7 +2969,9 @@ require.register("segmentio-analytics.js-integrations/lib/bronto.js", function(e
  */
 
 var integration = require('integration');
+var Track = require('facade').Track;
 var load = require('load-script');
+var each = require('each');
 
 /**
  * Expose plugin.
@@ -2860,6 +3043,37 @@ Bronto.prototype.track = function(track){
   var event = track.event();
   var type = 'number' == typeof revenue ? '$' : 't';
   this.bta.addConversionLegacy(type, event, revenue);
+};
+
+/**
+ * Checked out.
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+Bronto.prototype.checkedOut = function(track){
+  var products = track.products();
+  var props = track.properties();
+  var items = [];
+
+  // items
+  each(products, function(product){
+    var track = new Track({ properties: product });
+    items.push({
+      item_id: track.id() || track.sku(),
+      desc: product.description || track.name(),
+      quantity: track.quantity(),
+      amount: track.price(),
+    });
+  });
+
+  // add conversion
+  this.bta.addConversion({
+    order_id: track.transactionId(),
+    date: props.date || new Date,
+    items: items
+  });
 };
 
 });
@@ -3088,6 +3302,103 @@ Chartbeat.prototype.page = function (page) {
   var props = page.properties();
   var name = page.fullName();
   window.pSUPERFLY.virtualPage(props.path, name || props.title);
+};
+
+});
+require.register("segmentio-analytics.js-integrations/lib/churnbee.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var push = require('global-queue')('_cbq');
+var integration = require('integration');
+var load = require('load-script');
+
+/**
+ * HOP
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Supported events
+ */
+
+var supported = [
+  'activation',
+  'changePlan',
+  'register',
+  'refund',
+  'charge',
+  'cancel',
+  'login',
+];
+
+/**
+ * Expose plugin.
+ */
+
+module.exports = exports = function(analytics){
+  analytics.addIntegration(ChurnBee);
+};
+
+/**
+ * Expose `ChurnBee` integration.
+ */
+
+var ChurnBee = exports.Integration = integration('ChurnBee')
+  .readyOnInitialize()
+  .global('_cbq')
+  .global('ChurnBee')
+  .option('events', {})
+  .option('apiKey', '');
+
+/**
+ * Initialize.
+ *
+ * https://churnbee.com/docs
+ *
+ * @param {Object} page
+ */
+
+ChurnBee.prototype.initialize = function(page){
+  push('_setApiKey', this.options.apiKey);
+  this.load();
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+ChurnBee.prototype.loaded = function(){
+  return !! window.ChurnBee;
+};
+
+/**
+ * Load the ChurnBee library.
+ *
+ * @param {Function} fn
+ */
+
+ChurnBee.prototype.load = function(fn){
+  load('//api.churnbee.com/cb.js', fn);
+};
+
+/**
+ * Track.
+ *
+ * @param {Track} event
+ */
+
+ChurnBee.prototype.track = function(track){
+  var events = this.options.events;
+  var event = track.event();
+  if (has.call(events, event)) event = events[event];
+  if (!~supported.indexOf(event)) return;
+  push(event, track.properties({ revenue: 'amount' }));
 };
 
 });
@@ -3456,6 +3767,127 @@ CrazyEgg.prototype.load = function (callback) {
   load(url, callback);
 };
 });
+require.register("segmentio-analytics.js-integrations/lib/curebit.js", function(exports, require, module){
+
+var push = require('global-queue')('_curebitq');
+var Identify = require('facade').Identify;
+var integration = require('integration');
+var Track = require('facade').Track;
+var iso = require('to-iso-string');
+var load = require('load-script');
+var clone = require('clone');
+var each = require('each');
+
+/**
+ * User reference
+ */
+
+var user;
+
+/**
+ * Expose plugin
+ */
+
+module.exports = exports = function(analytics){
+  analytics.addIntegration(Curebit);
+  user = analytics.user();
+};
+
+/**
+ * Expose `Curebit` integration
+ */
+
+var Curebit = exports.Integration = integration('Curebit')
+  .readyOnInitialize()
+  .global('_curebitq')
+  .global('curebit')
+  .option('siteId', '')
+  .option('server', '');
+
+/**
+ * Initialize
+ *
+ * @param {Object} page
+ */
+
+Curebit.prototype.initialize = function(){
+  push('init', {
+    site_id: this.options.siteId,
+    server: this.options.server
+  });
+  this.load();
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Curebit.prototype.loaded = function(){
+  return !! window.curebit;
+};
+
+/**
+ * Load
+ *
+ * @param {Function} fn
+ * @api private
+ */
+
+Curebit.prototype.load = function(fn){
+  load('//d2jjzw81hqbuqv.cloudfront.net/assets/api/all-0.6.js', fn);
+};
+
+/**
+ * Checked out
+ *
+ * https://www.curebit.com/docs/ecommerce/custom
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+Curebit.prototype.checkedOut = function(track){
+  var transactionId = track.transactionId();
+  var products = track.products();
+  var props = track.properties();
+  var items = [];
+
+  // identify
+  var identify = new Identify({
+    traits: user.traits(),
+    userId: user.id()
+  });
+
+  // items
+  each(products, function(product){
+    var track = new Track({ properties: product });
+    items.push({
+      product_id: track.id() || track.sku(),
+      quantity: track.quantity(),
+      image_url: product.image,
+      price: track.price(),
+      title: track.name(),
+      url: product.url,
+    });
+  });
+
+  // transaction
+  push('register_purchase', {
+    order_date: iso(props.date || new Date),
+    order_number: transactionId,
+    coupon_code: track.coupon(),
+    subtotal: track.total(),
+    customer_id: identify.userId(),
+    first_name: identify.firstName(),
+    last_name: identify.lastName(),
+    email: identify.email(),
+    items: items
+  });
+};
+
+});
 require.register("segmentio-analytics.js-integrations/lib/customerio.js", function(exports, require, module){
 
 var alias = require('alias');
@@ -3594,68 +4026,6 @@ Customerio.prototype.track = function (track) {
 function convertDate (date) {
   return Math.floor(date.getTime() / 1000);
 }
-
-});
-require.register("segmentio-analytics.js-integrations/lib/curebit.js", function(exports, require, module){
-
-var push = require('global-queue')('_curebitq');
-var integration = require('integration');
-var load = require('load-script');
-var clone = require('clone');
-
-/**
- * Expose plugin
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Curebit);
-};
-
-/**
- * Expose `Curebit` integration
- */
-
-var Curebit = exports.Integration = integration('Curebit')
-  .readyOnInitialize()
-  .global('_curebitq')
-  .global('curebit')
-  .option('siteId', '')
-  .option('server', '');
-
-/**
- * Initialize
- *
- * @param {Object} page
- */
-
-Curebit.prototype.initialize = function(){
-  push('init', {
-    site_id: this.options.siteId,
-    server: this.options.server
-  });
-  this.load();
-};
-
-/**
- * Loaded?
- *
- * @return {Boolean}
- */
-
-Curebit.prototype.loaded = function(){
-  return !! window.curebit;
-};
-
-/**
- * Load
- *
- * @param {Function} fn
- * @api private
- */
-
-Curebit.prototype.load = function(fn){
-  load('//d2jjzw81hqbuqv.cloudfront.net/assets/api/all-0.6.js', fn);
-};
 
 });
 require.register("segmentio-analytics.js-integrations/lib/drip.js", function(exports, require, module){
@@ -3974,6 +4344,7 @@ Evergage.prototype.track = function (track) {
 });
 require.register("segmentio-analytics.js-integrations/lib/facebook-ads.js", function(exports, require, module){
 
+var load = require('load-pixel')('//www.facebook.com/offsite_event.php');
 var integration = require('integration');
 
 /**
@@ -3983,6 +4354,12 @@ var integration = require('integration');
 module.exports = exports = function(analytics){
   analytics.addIntegration(Facebook);
 };
+
+/**
+ * Expose `load`.
+ */
+
+exports.load = load;
 
 /**
  * HOP
@@ -4010,30 +4387,11 @@ Facebook.prototype.track = function(track){
   var traits = track.traits();
   var event = track.event();
   if (!has.call(events, event)) return;
-  var currency = this.options.currency;
-  var pixel = events[event];
-  return exports.load(pixel, track.revenue() || 0, currency);
-};
-
-/**
- * Load conversion.
- *
- * @param {Mixed} id
- * @param {Number} revenue
- * @param {String} currency
- * @return {Image}
- * @api private
- */
-
-exports.load = function(id, revenue, currency){
-  var img = new Image;
-  img.src = '//www.facebook.com/offsite_event.php'
-    + '?currency=' + currency
-    + '&value=' + revenue
-    + '&id=' + id;
-  img.width = 1;
-  img.height = 1;
-  return img;
+  return exports.load({
+    currency: this.options.currency,
+    value: track.revenue() || 0,
+    id: events[event]
+  });
 };
 
 });
@@ -4073,7 +4431,7 @@ var FoxMetrics = exports.Integration = integration('FoxMetrics')
  * @param {Object} page
  */
 
-FoxMetrics.prototype.initialize = function (page) {
+FoxMetrics.prototype.initialize = function(page){
   window._fxm = window._fxm || [];
   this.load();
 };
@@ -4085,7 +4443,7 @@ FoxMetrics.prototype.initialize = function (page) {
  * @return {Boolean}
  */
 
-FoxMetrics.prototype.loaded = function () {
+FoxMetrics.prototype.loaded = function(){
   return !! (window._fxm && window._fxm.appId);
 };
 
@@ -4096,7 +4454,7 @@ FoxMetrics.prototype.loaded = function () {
  * @param {Function} callback
  */
 
-FoxMetrics.prototype.load = function (callback) {
+FoxMetrics.prototype.load = function(callback){
   var id = this.options.appId;
   load('//d35tca7vmefkrc.cloudfront.net/scripts/' + id + '.js', callback);
 };
@@ -4108,7 +4466,7 @@ FoxMetrics.prototype.load = function (callback) {
  * @param {Page} page
  */
 
-FoxMetrics.prototype.page = function (page) {
+FoxMetrics.prototype.page = function(page){
   var properties = page.proxy('properties');
   var category = page.category();
   var name = page.name();
@@ -4131,7 +4489,7 @@ FoxMetrics.prototype.page = function (page) {
  * @param {Identify} identify
  */
 
-FoxMetrics.prototype.identify = function (identify) {
+FoxMetrics.prototype.identify = function(identify){
   var id = identify.userId();
 
   if (!id) return;
@@ -4156,11 +4514,98 @@ FoxMetrics.prototype.identify = function (identify) {
  * @param {Track} track
  */
 
-FoxMetrics.prototype.track = function (track) {
+FoxMetrics.prototype.track = function(track){
   var props = track.properties();
   var category = this._category || props.category;
   push(track.event(), category, props);
 };
+
+/**
+ * Viewed product.
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+FoxMetrics.prototype.viewedProduct = function(track){
+  ecommerce('productview', track);
+};
+
+/**
+ * Removed product.
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+FoxMetrics.prototype.removedProduct = function(track){
+  ecommerce('removecartitem', track);
+};
+
+/**
+ * Added product.
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+FoxMetrics.prototype.addedProduct = function(track){
+  ecommerce('cartitem', track);
+};
+
+/**
+ * Checked out.
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+FoxMetrics.prototype.checkedOut = function(track){
+  var transactionId = track.transactionId();
+
+  // transaction
+  push('_fxm.ecommerce.order'
+    , transactionId
+    , track.subtotal()
+    , track.shipping()
+    , track.tax()
+    , track.city()
+    , track.state()
+    , track.zip()
+    , track.quantity());
+
+  // items
+  each(track.products(), function(product){
+    var track = new Track({ properties: product });
+    ecommerce('purchaseitem', track, [
+      track.quantity(),
+      track.price(),
+      transactionId
+    ]);
+  });
+};
+
+/**
+ * Track ecommerce `event` with `track`
+ * with optional `arr` to append.
+ *
+ * @param {String} event
+ * @param {Track} track
+ * @param {Array} arr
+ * @api private
+ */
+
+function ecommerce(event, track, arr){
+  push.apply(null, [
+    '_fxm.ecommerce.' + event,
+    track.id() || track.sku(),
+    track.name(),
+    track.category()
+  ].concat(arr || []));
+};
+
+
+
 
 });
 require.register("segmentio-analytics.js-integrations/lib/gauges.js", function(exports, require, module){
@@ -4319,6 +4764,7 @@ var integration = require('integration');
 var is = require('is');
 var load = require('load-script');
 var push = require('global-queue')('_gaq');
+var Track = require('facade').Track;
 var type = require('type');
 var url = require('url');
 
@@ -4370,6 +4816,7 @@ GA.on('construct', function (integration) {
   integration.loaded = integration.loadedClassic;
   integration.page = integration.pageClassic;
   integration.track = integration.trackClassic;
+  integration.checkedOut = integration.checkedOutClassic;
 });
 
 
@@ -4445,7 +4892,7 @@ GA.prototype.page = function (page) {
   window.ga('send', 'pageview', {
     page: path(props, this.options),
     title: name || props.title,
-    url: props.url
+    location: props.url
   });
 
   // categorized pages
@@ -4486,6 +4933,54 @@ GA.prototype.track = function (track, options) {
   });
 };
 
+/**
+ * Checked out.
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/ecommerce
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+GA.prototype.checkedOut = function(track){
+  var transactionId = track.transactionId();
+  var products = track.products();
+  var props = track.properties();
+
+  // transactionId is required.
+  if (!transactionId) return;
+
+  // require ecommerce
+  if (!this.ecommerce) {
+    window.ga('require', 'ecommerce', 'ecommerce.js');
+    this.ecommerce = true;
+  }
+
+  // add transaction
+  window.ga('ecommerce:addTransaction', {
+    affiliation: props.affiliation,
+    shipping: track.shipping(),
+    revenue: track.total(),
+    id: transactionId,
+    tax: track.tax()
+  });
+
+  // add products
+  each(products, function(product){
+    var track = new Track({ properties: product });
+    window.ga('ecommerce:addItem', {
+      category: track.category(),
+      quantity: track.quantity(),
+      price: track.price(),
+      name: track.name(),
+      id: transactionId,
+      sku: track.sku(),
+    });
+  });
+
+  // send
+  window.ga('ecommerce:send');
+};
 
 /**
  * Initialize (classic).
@@ -4607,6 +5102,49 @@ GA.prototype.trackClassic = function (track, options) {
   push('_trackEvent', category, event, label, value, noninteraction);
 };
 
+/**
+ * Checked out.
+ *
+ * https://developers.google.com/analytics/devguides/collection/gajs/gaTrackingEcommerce
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+GA.prototype.checkedOutClassic = function(track){
+  var transactionId = track.transactionId();
+  var products = track.products() || [];
+  var props = track.properties();
+
+  // required
+  if (!transactionId) return;
+
+  // add transaction
+  push('_addTrans'
+    , transactionId
+    , props.affiliation
+    , track.total()
+    , track.tax()
+    , track.shipping()
+    , track.city()
+    , track.state()
+    , track.country());
+
+  // add items
+  each(products, function(product){
+    var track = new Track({ properties: product });
+    push('_addItem'
+      , transactionId
+      , track.sku()
+      , track.name()
+      , track.category()
+      , track.price()
+      , track.quantity());
+  })
+
+  // send
+  push('_trackTrans');
+};
 
 /**
  * Return the path based on `properties` and `options`.
@@ -4746,6 +5284,7 @@ GTM.prototype.track = function(track){
 require.register("segmentio-analytics.js-integrations/lib/gosquared.js", function(exports, require, module){
 
 var Identify = require('facade').Identify;
+var Track = require('facade').Track;
 var callback = require('callback');
 var integration = require('integration');
 var load = require('load-script');
@@ -4882,6 +5421,33 @@ GoSquared.prototype.identify = function (identify) {
 
 GoSquared.prototype.track = function (track) {
   push('event', track.event(), track.properties());
+};
+
+/**
+ * Checked out.
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+GoSquared.prototype.checkedOut = function(track){
+  var products = track.products();
+  var items = [];
+
+  each(products, function(product){
+    var track = new Track({ properties: product });
+    items.push({
+      category: track.category(),
+      quantity: track.quantity(),
+      price: track.price(),
+      name: track.name(),
+    });
+  })
+
+  push('transaction', track.transactionId(), {
+    revenue: track.total(),
+    track: true
+  }, items);
 };
 
 /**
@@ -5660,7 +6226,8 @@ var integration = require('integration');
 var is = require('is');
 var load = require('load-script');
 var push = require('global-queue')('_kmq');
-
+var Track = require('facade').Track;
+var each = require('each');
 
 /**
  * Expose plugin.
@@ -5790,6 +6357,76 @@ KISSmetrics.prototype.track = function (track) {
 KISSmetrics.prototype.alias = function (alias) {
   push('alias', alias.to(), alias.from());
 };
+
+/**
+ * Viewed product.
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+KISSmetrics.prototype.viewedProduct = function(track){
+  push('record', 'Product Viewed', toProduct(track));
+};
+
+/**
+ * Product added.
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+KISSmetrics.prototype.addedProduct = function(track){
+  push('record', 'Product Added', toProduct(track));
+};
+
+/**
+ * Checked out.
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+KISSmetrics.prototype.checkedOut = function(track){
+  var transactionId = track.transactionId();
+  var products = track.products();
+
+  // transaction
+  push('record', 'Purchased', {
+    'Order ID': track.transactionId(),
+    'Order Total': track.total()
+  });
+
+  // items
+  window._kmq.push(function(){
+    var km = window.KM;
+    each(products, function(product, i){
+      var track = new Track({ properties: product });
+      var item = toProduct(track);
+      item['Order ID'] = transactionId;
+      item._t = km.ts() + i;
+      item._d = 1;
+      km.set(item);
+    });
+  });
+};
+
+/**
+ * Get a product from the given `track`.
+ *
+ * @param {Track} track
+ * @return {Object}
+ * @api private
+ */
+
+function toProduct(track){
+  return {
+    Quantity: track.quantity(),
+    Price: track.price(),
+    Name: track.name(),
+    SKU: track.sku()
+  };
+}
 
 });
 require.register("segmentio-analytics.js-integrations/lib/klaviyo.js", function(exports, require, module){
@@ -7546,8 +8183,92 @@ Rollbar.prototype.identify = function (identify) {
 };
 
 });
-require.register("segmentio-analytics.js-integrations/lib/sentry.js", function(exports, require, module){
+require.register("segmentio-analytics.js-integrations/lib/saasquatch.js", function(exports, require, module){
 
+/**
+ * Module dependencies.
+ */
+
+var integration = require('integration');
+var load = require('load-script');
+
+/**
+ * Expose plugin.
+ */
+
+module.exports = exports = function(analytics){
+  analytics.addIntegration(SaaSquatch);
+};
+
+
+/**
+ * Expose `SaaSquatch` integration.
+ */
+
+var SaaSquatch = exports.Integration = integration('SaaSquatch')
+  .readyOnInitialize()
+  .option('tenantAlias', '')
+  .option('accountId', '')
+  .global('_sqh');
+
+/**
+ * Initialize
+ *
+ * @param {Page} page
+ */
+
+SaaSquatch.prototype.initialize = function(page){};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+SaaSquatch.prototype.loaded = function(){
+  return window._sqh && window._sqh.push != [].push;
+};
+
+/**
+ * Load the SaaSquatch library.
+ *
+ * @param {Function} fn
+ */
+
+SaaSquatch.prototype.load = function(fn){
+  load('//d2rcp9ak152ke1.cloudfront.net/assets/javascripts/squatch.min.js', fn);
+};
+
+/**
+ * Identify.
+ *
+ * @param {Facade} identify
+ */
+
+SaaSquatch.prototype.identify = function(identify){
+  var sqh = window._sqh = window._sqh || [];
+  var id = identify.userId();
+  var email = identify.email();
+
+  if (!(id || email)) return;
+  if (this.called) return;
+
+  sqh.push(['init', {
+    tenant_alias: this.options.tenantAlias,
+    account_id: this.options.accountId,
+    user_id: identify.userId(),
+    email: identify.email(),
+    first_name: identify.firstName(),
+    last_name: identify.lastName(),
+    user_image: identify.avatar()
+  }]);
+
+  this.called = true;
+  this.load();
+};
+
+});
+require.register("segmentio-analytics.js-integrations/lib/sentry.js", function(exports, require, module){
 var integration = require('integration');
 var is = require('is');
 var load = require('load-script');
@@ -7606,7 +8327,7 @@ Sentry.prototype.loaded = function () {
  */
 
 Sentry.prototype.load = function (callback) {
-  load('//d3nslu0hdya83q.cloudfront.net/dist/1.0/raven.min.js', callback);
+  load('//cdn.ravenjs.com/1.1.9/native/raven.min.js', callback);
 };
 
 
@@ -8043,6 +8764,56 @@ Trakio.prototype.alias = function (alias) {
   } else {
     window.trak.io.alias(to);
   }
+};
+
+});
+require.register("segmentio-analytics.js-integrations/lib/twitter-ads.js", function(exports, require, module){
+
+var pixel = require('load-pixel')('//analytics.twitter.com/i/adsct');
+var integration = require('integration');
+
+/**
+ * Expose plugin
+ */
+
+module.exports = exports = function(analytics){
+  analytics.addIntegration(TwitterAds);
+};
+
+/**
+ * Expose `load`
+ */
+
+exports.load = pixel;
+
+/**
+ * HOP
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Expose `TwitterAds`
+ */
+
+var TwitterAds = exports.Integration = integration('Twitter Ads')
+  .readyOnInitialize()
+  .option('events', {});
+
+/**
+ * Track.
+ *
+ * @param {Track} track
+ */
+
+TwitterAds.prototype.track = function(track){
+  var events = this.options.events;
+  var event = track.event();
+  if (!has.call(events, event)) return;
+  return exports.load({
+    txn_id: events[event],
+    p_id: 'Twitter'
+  });
 };
 
 });
@@ -10422,6 +11193,82 @@ Track.prototype.userId = Facade.field('userId');
 Track.prototype.sessionId = Facade.field('sessionId');
 Track.prototype.event = Facade.field('event');
 Track.prototype.value = Facade.proxy('properties.value');
+
+/**
+ * Misc
+ */
+
+Track.prototype.category = Facade.proxy('properties.category');
+Track.prototype.country = Facade.proxy('properties.country');
+Track.prototype.state = Facade.proxy('properties.state');
+Track.prototype.city = Facade.proxy('properties.city');
+Track.prototype.zip = Facade.proxy('properties.zip');
+
+/**
+ * Ecommerce
+ */
+
+Track.prototype.id = Facade.proxy('properties.id');
+Track.prototype.sku = Facade.proxy('properties.sku');
+Track.prototype.tax = Facade.proxy('properties.tax');
+Track.prototype.name = Facade.proxy('properties.name');
+Track.prototype.price = Facade.proxy('properties.price');
+Track.prototype.total = Facade.proxy('properties.total');
+Track.prototype.coupon = Facade.proxy('properties.coupon');
+Track.prototype.shipping = Facade.proxy('properties.shipping');
+Track.prototype.transactionId = Facade.proxy('properties.transactionId');
+
+/**
+ * Get subtotal.
+ *
+ * @return {Number}
+ */
+
+Track.prototype.subtotal = function(){
+  var subtotal = this.obj.properties.subtotal;
+  var total = this.total();
+  var n;
+
+  if (subtotal) return subtotal;
+  if (!total) return 0;
+  if (n = this.tax()) total -= n;
+  if (n = this.shipping()) total -= n;
+
+  return total;
+};
+
+/**
+ * Get products.
+ *
+ * @return {Array}
+ */
+
+Track.prototype.products = function(){
+  var props = this.obj.properties || {};
+  return props.products || [];
+};
+
+/**
+ * Get quantity.
+ *
+ * @return {Number}
+ */
+
+Track.prototype.quantity = function(){
+  var props = this.obj.properties || {};
+  return props.quantity || 1;
+};
+
+/**
+ * Get currency.
+ *
+ * @return {String}
+ */
+
+Track.prototype.currency = function(){
+  var props = this.obj.properties || {};
+  return props.currency || 'USD';
+};
 
 /**
  * BACKWARDS COMPATIBILITY: should probably re-examine where these come from.
@@ -12886,6 +13733,7 @@ module.exports.User = User;
 
 
 
+
 require.register("segmentio-analytics.js-integrations/lib/slugs.json", function(exports, require, module){
 module.exports = [
   "adroll",
@@ -12893,16 +13741,18 @@ module.exports = [
   "amplitude",
   "awesm",
   "awesomatic",
+  "bing-ads",
   "bronto",
   "bugherd",
   "bugsnag",
   "chartbeat",
+  "churnbee",
   "clicktale",
   "clicky",
   "comscore",
   "crazy-egg",
-  "customerio",
   "curebit",
+  "customerio",
   "drip",
   "errorception",
   "evergage",
@@ -12937,11 +13787,13 @@ module.exports = [
   "qualaroo",
   "quantcast",
   "rollbar",
+  "saasquatch",
   "sentry",
   "snapengage",
   "spinnakr",
   "tapstream",
   "trakio",
+  "twitter-ads",
   "usercycle",
   "userfox",
   "uservoice",
@@ -12951,8 +13803,8 @@ module.exports = [
   "woopra",
   "yandex-metrica"
 ]
-
 });
+
 
 
 
@@ -13090,6 +13942,7 @@ require.alias("segmentio-after/index.js", "after/index.js");
 
 require.alias("segmentio-analytics.js-integration/lib/index.js", "analytics/deps/integration/lib/index.js");
 require.alias("segmentio-analytics.js-integration/lib/protos.js", "analytics/deps/integration/lib/protos.js");
+require.alias("segmentio-analytics.js-integration/lib/events.js", "analytics/deps/integration/lib/events.js");
 require.alias("segmentio-analytics.js-integration/lib/statics.js", "analytics/deps/integration/lib/statics.js");
 require.alias("segmentio-analytics.js-integration/lib/index.js", "analytics/deps/integration/index.js");
 require.alias("segmentio-analytics.js-integration/lib/index.js", "integration/index.js");
@@ -13128,16 +13981,18 @@ require.alias("segmentio-analytics.js-integrations/lib/adwords.js", "analytics/d
 require.alias("segmentio-analytics.js-integrations/lib/amplitude.js", "analytics/deps/integrations/lib/amplitude.js");
 require.alias("segmentio-analytics.js-integrations/lib/awesm.js", "analytics/deps/integrations/lib/awesm.js");
 require.alias("segmentio-analytics.js-integrations/lib/awesomatic.js", "analytics/deps/integrations/lib/awesomatic.js");
+require.alias("segmentio-analytics.js-integrations/lib/bing-ads.js", "analytics/deps/integrations/lib/bing-ads.js");
 require.alias("segmentio-analytics.js-integrations/lib/bronto.js", "analytics/deps/integrations/lib/bronto.js");
 require.alias("segmentio-analytics.js-integrations/lib/bugherd.js", "analytics/deps/integrations/lib/bugherd.js");
 require.alias("segmentio-analytics.js-integrations/lib/bugsnag.js", "analytics/deps/integrations/lib/bugsnag.js");
 require.alias("segmentio-analytics.js-integrations/lib/chartbeat.js", "analytics/deps/integrations/lib/chartbeat.js");
+require.alias("segmentio-analytics.js-integrations/lib/churnbee.js", "analytics/deps/integrations/lib/churnbee.js");
 require.alias("segmentio-analytics.js-integrations/lib/clicktale.js", "analytics/deps/integrations/lib/clicktale.js");
 require.alias("segmentio-analytics.js-integrations/lib/clicky.js", "analytics/deps/integrations/lib/clicky.js");
 require.alias("segmentio-analytics.js-integrations/lib/comscore.js", "analytics/deps/integrations/lib/comscore.js");
 require.alias("segmentio-analytics.js-integrations/lib/crazy-egg.js", "analytics/deps/integrations/lib/crazy-egg.js");
-require.alias("segmentio-analytics.js-integrations/lib/customerio.js", "analytics/deps/integrations/lib/customerio.js");
 require.alias("segmentio-analytics.js-integrations/lib/curebit.js", "analytics/deps/integrations/lib/curebit.js");
+require.alias("segmentio-analytics.js-integrations/lib/customerio.js", "analytics/deps/integrations/lib/customerio.js");
 require.alias("segmentio-analytics.js-integrations/lib/drip.js", "analytics/deps/integrations/lib/drip.js");
 require.alias("segmentio-analytics.js-integrations/lib/errorception.js", "analytics/deps/integrations/lib/errorception.js");
 require.alias("segmentio-analytics.js-integrations/lib/evergage.js", "analytics/deps/integrations/lib/evergage.js");
@@ -13172,11 +14027,13 @@ require.alias("segmentio-analytics.js-integrations/lib/preact.js", "analytics/de
 require.alias("segmentio-analytics.js-integrations/lib/qualaroo.js", "analytics/deps/integrations/lib/qualaroo.js");
 require.alias("segmentio-analytics.js-integrations/lib/quantcast.js", "analytics/deps/integrations/lib/quantcast.js");
 require.alias("segmentio-analytics.js-integrations/lib/rollbar.js", "analytics/deps/integrations/lib/rollbar.js");
+require.alias("segmentio-analytics.js-integrations/lib/saasquatch.js", "analytics/deps/integrations/lib/saasquatch.js");
 require.alias("segmentio-analytics.js-integrations/lib/sentry.js", "analytics/deps/integrations/lib/sentry.js");
 require.alias("segmentio-analytics.js-integrations/lib/snapengage.js", "analytics/deps/integrations/lib/snapengage.js");
 require.alias("segmentio-analytics.js-integrations/lib/spinnakr.js", "analytics/deps/integrations/lib/spinnakr.js");
 require.alias("segmentio-analytics.js-integrations/lib/tapstream.js", "analytics/deps/integrations/lib/tapstream.js");
 require.alias("segmentio-analytics.js-integrations/lib/trakio.js", "analytics/deps/integrations/lib/trakio.js");
+require.alias("segmentio-analytics.js-integrations/lib/twitter-ads.js", "analytics/deps/integrations/lib/twitter-ads.js");
 require.alias("segmentio-analytics.js-integrations/lib/usercycle.js", "analytics/deps/integrations/lib/usercycle.js");
 require.alias("segmentio-analytics.js-integrations/lib/userfox.js", "analytics/deps/integrations/lib/userfox.js");
 require.alias("segmentio-analytics.js-integrations/lib/uservoice.js", "analytics/deps/integrations/lib/uservoice.js");
@@ -13224,6 +14081,7 @@ require.alias("component-type/index.js", "segmentio-alias/deps/type/index.js");
 
 require.alias("segmentio-analytics.js-integration/lib/index.js", "segmentio-analytics.js-integrations/deps/integration/lib/index.js");
 require.alias("segmentio-analytics.js-integration/lib/protos.js", "segmentio-analytics.js-integrations/deps/integration/lib/protos.js");
+require.alias("segmentio-analytics.js-integration/lib/events.js", "segmentio-analytics.js-integrations/deps/integration/lib/events.js");
 require.alias("segmentio-analytics.js-integration/lib/statics.js", "segmentio-analytics.js-integrations/deps/integration/lib/statics.js");
 require.alias("segmentio-analytics.js-integration/lib/index.js", "segmentio-analytics.js-integrations/deps/integration/index.js");
 require.alias("avetisk-defaults/index.js", "segmentio-analytics.js-integration/deps/defaults/index.js");
@@ -13399,6 +14257,15 @@ require.alias("component-indexof/index.js", "component-emitter/deps/indexof/inde
 require.alias("visionmedia-debug/index.js", "segmentio-analytics.js-integrations/deps/debug/index.js");
 require.alias("visionmedia-debug/debug.js", "segmentio-analytics.js-integrations/deps/debug/debug.js");
 
+require.alias("segmentio-load-pixel/index.js", "segmentio-analytics.js-integrations/deps/load-pixel/index.js");
+require.alias("segmentio-load-pixel/index.js", "segmentio-analytics.js-integrations/deps/load-pixel/index.js");
+require.alias("component-querystring/index.js", "segmentio-load-pixel/deps/querystring/index.js");
+require.alias("component-trim/index.js", "component-querystring/deps/trim/index.js");
+
+require.alias("segmentio-substitute/index.js", "segmentio-load-pixel/deps/substitute/index.js");
+require.alias("segmentio-substitute/index.js", "segmentio-load-pixel/deps/substitute/index.js");
+require.alias("segmentio-substitute/index.js", "segmentio-substitute/index.js");
+require.alias("segmentio-load-pixel/index.js", "segmentio-load-pixel/index.js");
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 require.alias("segmentio-canonical/index.js", "canonical/index.js");
 

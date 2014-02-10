@@ -1167,8 +1167,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -1579,7 +1584,7 @@ module.exports = {
   removedProduct: /removed product/i,
   viewedProduct: /viewed product/i,
   addedProduct: /added product/i,
-  checkedOut: /checked out/i
+  completedOrder: /completed order/i
 };
 
 });
@@ -3051,13 +3056,13 @@ Bronto.prototype.track = function(track){
 };
 
 /**
- * Checked out.
+ * Completed order.
  *
  * @param {Track} track
  * @api private
  */
 
-Bronto.prototype.checkedOut = function(track){
+Bronto.prototype.completedOrder = function(track){
   var products = track.products();
   var props = track.properties();
   var items = [];
@@ -3075,7 +3080,7 @@ Bronto.prototype.checkedOut = function(track){
 
   // add conversion
   this.bta.addConversion({
-    order_id: track.transactionId(),
+    order_id: track.orderId(),
     date: props.date || new Date,
     items: items
   });
@@ -3204,7 +3209,7 @@ Bugsnag.prototype.loaded = function () {
  */
 
 Bugsnag.prototype.load = function (callback) {
-  var script = load('//d2wy8f7a9ursnm.cloudfront.net/bugsnag-1.0.9.min.js', callback);
+  var script = load('//d2wy8f7a9ursnm.cloudfront.net/bugsnag-1.0.10.min.js', callback);
   script.setAttribute('data-apikey', this.options.apiKey);
 };
 
@@ -3845,7 +3850,7 @@ Curebit.prototype.load = function(fn){
 };
 
 /**
- * Checked out
+ * Completed order
  *
  * https://www.curebit.com/docs/ecommerce/custom
  *
@@ -3853,8 +3858,8 @@ Curebit.prototype.load = function(fn){
  * @api private
  */
 
-Curebit.prototype.checkedOut = function(track){
-  var transactionId = track.transactionId();
+Curebit.prototype.completedOrder = function(track){
+  var orderId = track.orderId();
   var products = track.products();
   var props = track.properties();
   var items = [];
@@ -3881,7 +3886,7 @@ Curebit.prototype.checkedOut = function(track){
   // transaction
   push('register_purchase', {
     order_date: iso(props.date || new Date),
-    order_number: transactionId,
+    order_number: orderId,
     coupon_code: track.coupon(),
     subtotal: track.total(),
     customer_id: identify.userId(),
@@ -4402,10 +4407,12 @@ Facebook.prototype.track = function(track){
 });
 require.register("segmentio-analytics.js-integrations/lib/foxmetrics.js", function(exports, require, module){
 
-var callback = require('callback');
-var integration = require('integration');
-var load = require('load-script');
 var push = require('global-queue')('_fxm');
+var integration = require('integration');
+var Track = require('facade').Track;
+var callback = require('callback');
+var load = require('load-script');
+var each = require('each');
 
 
 /**
@@ -4559,18 +4566,18 @@ FoxMetrics.prototype.addedProduct = function(track){
 };
 
 /**
- * Checked out.
+ * Completed Order.
  *
  * @param {Track} track
  * @api private
  */
 
-FoxMetrics.prototype.checkedOut = function(track){
-  var transactionId = track.transactionId();
+FoxMetrics.prototype.completedOrder = function(track){
+  var orderId = track.orderId();
 
   // transaction
   push('_fxm.ecommerce.order'
-    , transactionId
+    , orderId
     , track.subtotal()
     , track.shipping()
     , track.tax()
@@ -4585,7 +4592,7 @@ FoxMetrics.prototype.checkedOut = function(track){
     ecommerce('purchaseitem', track, [
       track.quantity(),
       track.price(),
-      transactionId
+      orderId
     ]);
   });
 };
@@ -4821,7 +4828,7 @@ GA.on('construct', function (integration) {
   integration.loaded = integration.loadedClassic;
   integration.page = integration.pageClassic;
   integration.track = integration.trackClassic;
-  integration.checkedOut = integration.checkedOutClassic;
+  integration.completedOrder = integration.completedOrderClassic;
 });
 
 
@@ -4939,7 +4946,7 @@ GA.prototype.track = function (track, options) {
 };
 
 /**
- * Checked out.
+ * Completed order.
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/ecommerce
  *
@@ -4947,13 +4954,13 @@ GA.prototype.track = function (track, options) {
  * @api private
  */
 
-GA.prototype.checkedOut = function(track){
-  var transactionId = track.transactionId();
+GA.prototype.completedOrder = function(track){
+  var orderId = track.orderId();
   var products = track.products();
   var props = track.properties();
 
-  // transactionId is required.
-  if (!transactionId) return;
+  // orderId is required.
+  if (!orderId) return;
 
   // require ecommerce
   if (!this.ecommerce) {
@@ -4966,8 +4973,8 @@ GA.prototype.checkedOut = function(track){
     affiliation: props.affiliation,
     shipping: track.shipping(),
     revenue: track.total(),
-    id: transactionId,
-    tax: track.tax()
+    tax: track.tax(),
+    id: orderId
   });
 
   // add products
@@ -4978,8 +4985,8 @@ GA.prototype.checkedOut = function(track){
       quantity: track.quantity(),
       price: track.price(),
       name: track.name(),
-      id: transactionId,
       sku: track.sku(),
+      id: orderId
     });
   });
 
@@ -5108,7 +5115,7 @@ GA.prototype.trackClassic = function (track, options) {
 };
 
 /**
- * Checked out.
+ * Completed order.
  *
  * https://developers.google.com/analytics/devguides/collection/gajs/gaTrackingEcommerce
  *
@@ -5116,17 +5123,17 @@ GA.prototype.trackClassic = function (track, options) {
  * @api private
  */
 
-GA.prototype.checkedOutClassic = function(track){
-  var transactionId = track.transactionId();
+GA.prototype.completedOrderClassic = function(track){
+  var orderId = track.orderId();
   var products = track.products() || [];
   var props = track.properties();
 
   // required
-  if (!transactionId) return;
+  if (!orderId) return;
 
   // add transaction
   push('_addTrans'
-    , transactionId
+    , orderId
     , props.affiliation
     , track.total()
     , track.tax()
@@ -5139,7 +5146,7 @@ GA.prototype.checkedOutClassic = function(track){
   each(products, function(product){
     var track = new Track({ properties: product });
     push('_addItem'
-      , transactionId
+      , orderId
       , track.sku()
       , track.name()
       , track.category()
@@ -5435,7 +5442,7 @@ GoSquared.prototype.track = function (track) {
  * @api private
  */
 
-GoSquared.prototype.checkedOut = function(track){
+GoSquared.prototype.completedOrder = function(track){
   var products = track.products();
   var items = [];
 
@@ -5449,7 +5456,7 @@ GoSquared.prototype.checkedOut = function(track){
     });
   })
 
-  push('transaction', track.transactionId(), {
+  push('transaction', track.orderId(), {
     revenue: track.total(),
     track: true
   }, items);
@@ -6386,19 +6393,19 @@ KISSmetrics.prototype.addedProduct = function(track){
 };
 
 /**
- * Checked out.
+ * Completed order.
  *
  * @param {Track} track
  * @api private
  */
 
-KISSmetrics.prototype.checkedOut = function(track){
-  var transactionId = track.transactionId();
+KISSmetrics.prototype.completedOrder = function(track){
+  var orderId = track.orderId();
   var products = track.products();
 
   // transaction
   push('record', 'Purchased', {
-    'Order ID': track.transactionId(),
+    'Order ID': track.orderId(),
     'Order Total': track.total()
   });
 
@@ -6408,7 +6415,7 @@ KISSmetrics.prototype.checkedOut = function(track){
     each(products, function(product, i){
       var track = new Track({ properties: product });
       var item = toProduct(track);
-      item['Order ID'] = transactionId;
+      item['Order ID'] = orderId;
       item._t = km.ts() + i;
       item._d = 1;
       km.set(item);
@@ -7117,6 +7124,99 @@ Mixpanel.prototype.alias = function (alias) {
   if (mp.get_property && mp.get_property('$people_distinct_id') === to) return;
   // although undocumented, mixpanel takes an optional original id
   mp.alias(to, alias.from());
+};
+
+});
+require.register("segmentio-analytics.js-integrations/lib/mojn.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('integration');
+var load = require('load-script');
+var is = require('is');
+
+/**
+ * Expose plugin.
+ */
+
+module.exports = exports = function (analytics) {
+  analytics.addIntegration(Mojn);
+};
+
+/**
+ * Expose `Mojn`
+ */
+
+
+var Mojn = exports.Integration = integration('Mojn')
+  .option('customerCode', '')
+  .global('_agTrack')
+  .readyOnInitialize();
+
+/**
+ * Initialize.
+ *
+ * @param {Object} page
+ */
+
+Mojn.prototype.initialize = function(){
+  window._agTrack = window._agTrack || [];
+  window._agTrack.push({ cid: this.options.customerCode });
+  this.load();
+};
+
+/**
+ * Load the Mojn script.
+ *
+ * @param {Function} fn
+ */
+
+Mojn.prototype.load = function(fn) {
+  load('https://track.idtargeting.com/' + this.options.customerCode + '/track.js', fn);
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Mojn.prototype.loaded = function () {
+  return is.object(window._agTrack);
+};
+
+/**
+ * Identify.
+ *
+ * @param {Identify} identify
+ */
+
+Mojn.prototype.identify = function(identify) {
+  var email = identify.email();
+  if (!email) return;
+  var img = new Image();
+  img.src = '//matcher.idtargeting.com/analytics.gif?cid=' + this.options.customerCode + '&_mjnctid='+email;
+  img.width = 1;
+  img.height = 1;
+  return img;
+};
+
+/**
+ * Track.
+ *
+ * @param {Track} event
+ */
+
+Mojn.prototype.track = function(track) {
+  var properties = track.properties();
+  var revenue = properties.revenue;
+  var currency = properties.currency || '';
+  var conv = currency + revenue;
+  if (!revenue) return;
+  window._agTrack.push({ conv: conv });
+  return conv;
 };
 
 });
@@ -8332,7 +8432,7 @@ Sentry.prototype.loaded = function () {
  */
 
 Sentry.prototype.load = function (callback) {
-  load('//cdn.ravenjs.com/1.1.9/native/raven.min.js', callback);
+  load('//cdn.ravenjs.com/1.1.10/native/raven.min.js', callback);
 };
 
 
@@ -11220,8 +11320,8 @@ Track.prototype.name = Facade.proxy('properties.name');
 Track.prototype.price = Facade.proxy('properties.price');
 Track.prototype.total = Facade.proxy('properties.total');
 Track.prototype.coupon = Facade.proxy('properties.coupon');
+Track.prototype.orderId = Facade.proxy('properties.orderId');
 Track.prototype.shipping = Facade.proxy('properties.shipping');
-Track.prototype.transactionId = Facade.proxy('properties.transactionId');
 
 /**
  * Get subtotal.
@@ -13782,6 +13882,7 @@ module.exports = [
   "lucky-orange",
   "lytics",
   "mixpanel",
+  "mojn",
   "mouseflow",
   "mousestats",
   "olark",
@@ -13808,6 +13909,7 @@ module.exports = [
   "woopra",
   "yandex-metrica"
 ]
+
 });
 
 
@@ -14022,6 +14124,7 @@ require.alias("segmentio-analytics.js-integrations/lib/livechat.js", "analytics/
 require.alias("segmentio-analytics.js-integrations/lib/lucky-orange.js", "analytics/deps/integrations/lib/lucky-orange.js");
 require.alias("segmentio-analytics.js-integrations/lib/lytics.js", "analytics/deps/integrations/lib/lytics.js");
 require.alias("segmentio-analytics.js-integrations/lib/mixpanel.js", "analytics/deps/integrations/lib/mixpanel.js");
+require.alias("segmentio-analytics.js-integrations/lib/mojn.js", "analytics/deps/integrations/lib/mojn.js");
 require.alias("segmentio-analytics.js-integrations/lib/mouseflow.js", "analytics/deps/integrations/lib/mouseflow.js");
 require.alias("segmentio-analytics.js-integrations/lib/mousestats.js", "analytics/deps/integrations/lib/mousestats.js");
 require.alias("segmentio-analytics.js-integrations/lib/olark.js", "analytics/deps/integrations/lib/olark.js");

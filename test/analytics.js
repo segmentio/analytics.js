@@ -244,6 +244,34 @@ describe('Analytics', function () {
       analytics._invoke('identify', facade);
       assert(!Test.prototype.invoke.called);
     });
+
+    it('shouldnt call a method when the active option is false', function(){
+      var opts = { Test: true, active: false };
+      var facade = new Facade({ options: opts });
+      analytics._invoke('identify', facade);
+      assert(!Test.prototype.invoke.called);
+    })
+
+    it('should call a method when active is null', function(){
+      var opts = { Test: true, active: null };
+      var facade = new Facade({ options: opts });
+      analytics._invoke('identify', facade);
+      assert(Test.prototype.invoke.called);
+    })
+
+    it('should call a method when active is missing', function(){
+      var opts = { Test: true };
+      var facade = new Facade({ options: opts });
+      analytics._invoke('identify', facade);
+      assert(Test.prototype.invoke.called);
+    })
+
+    it('should call a method when active is true', function(){
+      var opts = { Test: true, active: true };
+      var facade = new Facade({ options: opts });
+      analytics._invoke('identify', facade);
+      assert(Test.prototype.invoke.called);
+    })
   });
 
   describe('#_options', function () {

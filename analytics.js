@@ -865,6 +865,7 @@ exports.parse = function(str){
 
   str = trim(str);
   if ('' == str) return {};
+  if ('?' == str.charAt(0)) str = str.slice(1);
 
   var obj = {};
   var pairs = str.split('&');
@@ -13190,7 +13191,7 @@ Analytics.prototype._callback = function (fn) {
  */
 
 Analytics.prototype._invoke = function (method, facade) {
-  var options = facade.options();
+  if (!facade.active()) return;
 
   each(this._integrations, function (name, integration) {
     if (!facade.enabled(name)) return;
@@ -13255,6 +13256,7 @@ function canonicalUrl () {
   var i = url.indexOf('#');
   return -1 == i ? url : url.slice(0, i);
 }
+
 });
 require.register("analytics/lib/cookie.js", function(exports, require, module){
 

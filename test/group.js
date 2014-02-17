@@ -9,6 +9,7 @@ describe('group', function () {
   var json = require('json');
   var store = require('./store');
   var group = require('./group');
+  var Group = group.Group;
 
   var cookieKey = group._options.cookie.key;
   var localStorageKey = group._options.localStorage.key;
@@ -22,6 +23,19 @@ describe('group', function () {
     cookie.remove(cookieKey);
     store.remove(localStorageKey);
   });
+
+  describe('()', function(){
+    beforeEach(function(){
+      cookie.set(cookieKey, 'gid');
+      store.set(localStorageKey, { trait: true });
+    })
+
+    it('should not reset group id and traits', function(){
+      var group = new Group;
+      assert('gid' == group.id());
+      assert(true == group.traits().trait);
+    })
+  })
 
   describe('#id', function () {
     it('should get an id from the cookie', function () {

@@ -9,6 +9,7 @@ describe('user', function () {
   var json = require('json');
   var store = require('./store');
   var user = require('./user');
+  var User = user.User;
 
   var cookieKey = user._options.cookie.key;
   var localStorageKey = user._options.localStorage.key;
@@ -22,6 +23,19 @@ describe('user', function () {
     cookie.remove(cookieKey);
     store.remove(localStorageKey);
   });
+
+  describe('()', function(){
+    beforeEach(function(){
+      cookie.set(cookieKey, 'my id');
+      store.set(localStorageKey, { trait: true });
+    })
+
+    it('should not reset user id and traits', function(){
+      var user = new User;
+      assert('my id' == user.id());
+      assert(true == user.traits().trait);
+    })
+  })
 
   describe('#id', function () {
     it('should get an id from the cookie', function () {

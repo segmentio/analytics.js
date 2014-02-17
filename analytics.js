@@ -865,6 +865,7 @@ exports.parse = function(str){
 
   str = trim(str);
   if ('' == str) return {};
+  if ('?' == str.charAt(0)) str = str.slice(1);
 
   var obj = {};
   var pairs = str.split('&');
@@ -13399,8 +13400,6 @@ module.exports = Entity;
 
 function Entity(options){
   this.options(options);
-  this.id(null);
-  this.traits({});
 }
 
 

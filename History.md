@@ -1,4 +1,10 @@
 
+1.3.3 / 2014-02-18
+==================
+
+ * upgrade analytics.js-integrations to 0.4.1
+ * dont reset ids and traits
+
 1.3.2 / 2014-02-07
 ==================
 

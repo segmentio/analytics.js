@@ -865,7 +865,6 @@ exports.parse = function(str){
 
   str = trim(str);
   if ('' == str) return {};
-  if ('?' == str.charAt(0)) str = str.slice(1);
 
   var obj = {};
   var pairs = str.split('&');
@@ -1010,13 +1009,8 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-try {
-  var bind = require('bind');
-} catch (e) {
-  var bind = require('bind-component');
-}
-
-var bindAll = require('bind-all');
+var bind = require('bind')
+  , bindAll = require('bind-all');
 
 
 /**
@@ -6084,7 +6078,7 @@ Intercom.prototype.group = function (group) {
  */
 
 Intercom.prototype.track = function(track){
-  window.Intercom('trackEvent', track.event());
+  window.Intercom('trackUserEvent', track.event(), track.traits());
 };
 
 /**
@@ -6834,12 +6828,11 @@ module.exports = exports = function (analytics) {
  */
 
 var Lytics = exports.Integration = integration('Lytics')
-  .assumesPageview()
   .readyOnInitialize()
   .global('jstag')
   .option('cid', '')
   .option('cookie', 'seerid')
-  .option('delay', 200)
+  .option('delay', 2000)
   .option('sessionTimeout', 1800)
   .option('url', '//c.lytics.io');
 
@@ -8314,7 +8307,6 @@ module.exports = exports = function(analytics){
 var SaaSquatch = exports.Integration = integration('SaaSquatch')
   .readyOnInitialize()
   .option('tenantAlias', '')
-  .option('accountId', '')
   .global('_sqh');
 
 /**
@@ -8353,22 +8345,29 @@ SaaSquatch.prototype.load = function(fn){
 
 SaaSquatch.prototype.identify = function(identify){
   var sqh = window._sqh = window._sqh || [];
+  var accountId = identify.proxy('traits.accountId');
+  var image = identify.proxy('traits.referralImage');
+  var opts = identify.options(this.name);
   var id = identify.userId();
   var email = identify.email();
 
   if (!(id || email)) return;
   if (this.called) return;
 
-  sqh.push(['init', {
+  var init = {
     tenant_alias: this.options.tenantAlias,
-    account_id: this.options.accountId,
-    user_id: identify.userId(),
-    email: identify.email(),
     first_name: identify.firstName(),
     last_name: identify.lastName(),
-    user_image: identify.avatar()
-  }]);
+    user_image: identify.avatar(),
+    email: email,
+    user_id: id,
+  };
 
+  if (accountId) init.account_id = accountId;
+  if (opts.checksum) init.checksum = opts.checksum;
+  if (image) init.fb_share_image = image;
+
+  sqh.push(['init', init]);
   this.called = true;
   this.load();
 };
@@ -12660,7 +12659,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.3.2';
+exports.VERSION = '1.3.3';
 
 
 /**

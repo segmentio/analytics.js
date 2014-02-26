@@ -230,6 +230,7 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
+
 /**
  * toString ref.
  */
@@ -246,19 +247,20 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
+    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object Error]': return 'error';
+    case '[object String]': return 'string';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
-  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
+  if (val === Object(val)) return 'object';
 
-  return typeof val.valueOf();
+  return typeof val;
 };
 
 });
@@ -1165,8 +1167,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -4808,7 +4815,8 @@ var GA = exports.Integration = integration('Google Analytics')
   .option('siteSpeedSampleRate', null)
   .option('trackingId', '')
   .option('trackNamedPages', true)
-  .option('trackCategorizedPages', true);
+  .option('trackCategorizedPages', true)
+  .option('sendUserId', false);
 
 
 /**
@@ -4850,8 +4858,10 @@ GA.prototype.initialize = function () {
     allowLinker: true
   });
 
-  // set global id
-  if (user.id()) window.ga('set', '&uid', user.id());
+  // send global id
+  if (this.options.sendUserId && user.id()) {
+    window.ga('set', '&uid', user.id());
+  }
 
   // anonymize after initializing, otherwise a warning is shown
   // in google analytics debugger

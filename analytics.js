@@ -3330,15 +3330,15 @@ var has = Object.prototype.hasOwnProperty;
  * Supported events
  */
 
-var supported = [
-  'activation',
-  'changePlan',
-  'register',
-  'refund',
-  'charge',
-  'cancel',
-  'login',
-];
+var supported = {
+  activation: true,
+  changePlan: true,
+  register: true,
+  refund: true,
+  charge: true,
+  cancel: true,
+  login: true,
+};
 
 /**
  * Expose plugin.
@@ -3402,7 +3402,7 @@ ChurnBee.prototype.track = function(track){
   var events = this.options.events;
   var event = track.event();
   if (has.call(events, event)) event = events[event];
-  if (!~supported.indexOf(event)) return;
+  if (true != supported[event]) return;
   push(event, track.properties({ revenue: 'amount' }));
 };
 
@@ -4774,6 +4774,7 @@ var push = require('global-queue')('_gaq');
 var Track = require('facade').Track;
 var type = require('type');
 var url = require('url');
+var user;
 
 
 /**
@@ -4782,6 +4783,7 @@ var url = require('url');
 
 module.exports = exports = function (analytics) {
   analytics.addIntegration(GA);
+  user = analytics.user();
 };
 
 
@@ -4849,6 +4851,9 @@ GA.prototype.initialize = function () {
     siteSpeedSampleRate: opts.siteSpeedSampleRate,
     allowLinker: true
   });
+
+  // set global id
+  if (user.id()) window.ga('set', '&uid', user.id());
 
   // anonymize after initializing, otherwise a warning is shown
   // in google analytics debugger
@@ -5961,7 +5966,6 @@ var Intercom = exports.Integration = integration('Intercom')
   .global('Intercom')
   .option('activator', '#IntercomDefaultWidget')
   .option('appId', '')
-  .option('counter', true)
   .option('inbox', false);
 
 
@@ -6046,8 +6050,7 @@ Intercom.prototype.identify = function (identify) {
   if (opts.user_hash) traits.user_hash = opts.user_hash;
   if (this.options.inbox) {
     traits.widget = {
-      activator: this.options.activator,
-      use_counter: this.options.counter
+      activator: this.options.activator
     };
   }
 

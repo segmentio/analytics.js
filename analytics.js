@@ -911,15 +911,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -931,7 +931,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -943,7 +945,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -956,29 +958,10 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
-
-/**
- * Return default port for `protocol`.
- *
- * @param  {String} protocol
- * @return {String}
- * @api private
- */
-function port (protocol){
-  switch (protocol) {
-    case 'http:':
-      return 80;
-    case 'https:':
-      return 443;
-    default:
-      return location.port;
-  }
-}
-
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1026,8 +1009,13 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-var bind = require('bind')
-  , bindAll = require('bind-all');
+try {
+  var bind = require('bind');
+} catch (e) {
+  var bind = require('bind-component');
+}
+
+var bindAll = require('bind-all');
 
 
 /**
@@ -1179,8 +1167,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -3216,8 +3209,12 @@ Bugsnag.prototype.loaded = function () {
  */
 
 Bugsnag.prototype.load = function (callback) {
-  var script = load('//d2wy8f7a9ursnm.cloudfront.net/bugsnag-1.0.10.min.js', callback);
-  script.setAttribute('data-apikey', this.options.apiKey);
+  var apiKey = this.options.apiKey;
+  load('//d2wy8f7a9ursnm.cloudfront.net/bugsnag-2.min.js', function(err){
+    if (err) return callback(err);
+    window.Bugsnag.apiKey = apiKey;
+    callback();
+  });
 };
 
 
@@ -3792,6 +3789,7 @@ var integration = require('integration');
 var Track = require('facade').Track;
 var iso = require('to-iso-string');
 var load = require('load-script');
+var extend = require('extend');
 var clone = require('clone');
 var each = require('each');
 
@@ -3819,7 +3817,13 @@ var Curebit = exports.Integration = integration('Curebit')
   .global('_curebitq')
   .global('curebit')
   .option('siteId', '')
-  .option('server', '');
+  .option('iframeWidth', 0)
+  .option('iframeHeight', 0)
+  .option('iframeBorder', 0)
+  .option('iframeId', '')
+  .option('responsive', true)
+  .option('device', '')
+  .option('server', 'https://www.curebit.com');
 
 /**
  * Initialize
@@ -3854,6 +3858,34 @@ Curebit.prototype.loaded = function(){
 
 Curebit.prototype.load = function(fn){
   load('//d2jjzw81hqbuqv.cloudfront.net/assets/api/all-0.6.js', fn);
+};
+
+/**
+ * Identify.
+ *
+ * http://www.curebit.com/docs/affiliate/registration
+ *
+ * @param {Identify} identify
+ * @api public
+ */
+
+Curebit.prototype.identify = function(identify){
+  push('register_affiliate', {
+    responsive: this.options.responsive,
+    device: this.options.device,
+    iframe: {
+      width: this.options.iframeWidth,
+      height: this.options.iframeHeight,
+      id: this.options.iframeId,
+      frameborder: this.options.iframeBorder
+    },
+    affiliate_member: {
+      email: identify.email(),
+      first_name: identify.firstName(),
+      last_name: identify.lastName(),
+      customer_id: identify.userId()
+    },
+  });
 };
 
 /**
@@ -6043,8 +6075,6 @@ Intercom.prototype.identify = function (identify) {
 
   // name
   if (name) traits.name = name;
-  delete traits.firstName;
-  delete traits.lastName;
 
   // handle dates
   if (companyCreated) traits.company.created = companyCreated;

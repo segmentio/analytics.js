@@ -1167,13 +1167,8 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty');
-
-try {
-  var typeOf = require('type');
-} catch (e) {
-  var typeOf = require('component-type');
-}
+var isEmpty = require('is-empty')
+  , typeOf = require('type');
 
 
 /**
@@ -10851,6 +10846,8 @@ Facade.prototype.active = function () {
  * Setup some basic proxies.
  */
 
+Facade.prototype.userId = Facade.field('userId');
+Facade.prototype.sessionId = Facade.field('sessionId');
 Facade.prototype.channel = Facade.field('channel');
 Facade.prototype.timestamp = Facade.field('timestamp');
 Facade.prototype.ip = Facade.proxy('options.ip');
@@ -10902,7 +10899,6 @@ Group.prototype.action = function () {
  */
 
 Group.prototype.groupId = Facade.field('groupId');
-Group.prototype.userId  = Facade.field('userId');
 
 /**
  * Get created or createdAt.
@@ -11110,13 +11106,6 @@ inherit(Identify, Facade);
 Identify.prototype.action = function () {
   return 'identify';
 };
-
-/**
- * Setup some basic proxies.
- */
-
-Identify.prototype.userId = Facade.field('userId');
-Identify.prototype.sessionId = Facade.field('sessionId');
 
 /**
  * Get the user's traits.
@@ -11342,8 +11331,6 @@ Track.prototype.action = function () {
  * Setup some basic proxies.
  */
 
-Track.prototype.userId = Facade.field('userId');
-Track.prototype.sessionId = Facade.field('sessionId');
 Track.prototype.event = Facade.field('event');
 Track.prototype.value = Facade.proxy('properties.value');
 
@@ -11370,6 +11357,18 @@ Track.prototype.total = Facade.proxy('properties.total');
 Track.prototype.coupon = Facade.proxy('properties.coupon');
 Track.prototype.orderId = Facade.proxy('properties.orderId');
 Track.prototype.shipping = Facade.proxy('properties.shipping');
+
+/**
+ * Order id.
+ *
+ * @return {String}
+ * @api public
+ */
+
+Track.prototype.orderId = function(){
+  return this.proxy('properties.id')
+    || this.proxy('properties.orderId');
+};
 
 /**
  * Get subtotal.

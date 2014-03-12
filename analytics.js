@@ -911,15 +911,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -931,7 +931,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -943,7 +945,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -956,29 +958,10 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
-
-/**
- * Return default port for `protocol`.
- *
- * @param  {String} protocol
- * @return {String}
- * @api private
- */
-function port (protocol){
-  switch (protocol) {
-    case 'http:':
-      return 80;
-    case 'https:':
-      return 443;
-    default:
-      return location.port;
-  }
-}
-
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -2576,8 +2559,10 @@ AdRoll.prototype.load = function (callback) {
 });
 require.register("segmentio-analytics.js-integrations/lib/adwords.js", function(exports, require, module){
 
-var load = require('load-pixel')('//www.googleadservices.com/pagead/conversion/:id');
+var onbody = require('on-body');
 var integration = require('integration');
+var load = require('load-script');
+var domify = require('domify');
 
 /**
  * Expose plugin
@@ -2586,12 +2571,6 @@ var integration = require('integration');
 module.exports = exports = function(analytics){
   analytics.addIntegration(AdWords);
 };
-
-/**
- * Expose `load`.
- */
-
-exports.load = load;
 
 /**
  * HOP
@@ -2604,14 +2583,37 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 var AdWords = exports.Integration = integration('AdWords')
-  .readyOnInitialize()
+  .readyOnLoad()
   .option('conversionId', '')
   .option('events', {});
+
+/**
+ * Load
+ *
+ * @param {Function} fn
+ * @api public
+ */
+
+AdWords.prototype.load = function(fn){
+  onbody(fn);
+};
+
+/**
+ * Loaded.
+ *
+ * @return {Boolean}
+ * @api public
+ */
+
+AdWords.prototype.loaded = function(){
+  return !! document.body;
+};
 
 /**
  * Track.
  *
  * @param {Track}
+ * @api public
  */
 
 AdWords.prototype.track = function(track){
@@ -2619,11 +2621,61 @@ AdWords.prototype.track = function(track){
   var events = this.options.events;
   var event = track.event();
   if (!has.call(events, event)) return;
-  return exports.load({
+  return this.conversion({
     value: track.revenue() || 0,
     label: events[event],
-    script: 0
-  }, { id: id });
+    conversionId: id,
+  });
+};
+
+/**
+ * Report AdWords conversion.
+ *
+ * @param {Object} globals
+ * @api private
+ */
+
+AdWords.prototype.conversion = function(obj, fn){
+  if (this.reporting) return this.wait(obj);
+  this.reporting = true;
+  this.debug('sending %o', obj);
+  var self = this;
+  var write = document.write;
+  document.write = append;
+  window.google_conversion_id = obj.conversionId;
+  window.google_conversion_language = 'en';
+  window.google_conversion_format = '3';
+  window.google_conversion_color = 'ffffff';
+  window.google_conversion_label = obj.label;
+  window.google_conversion_value = obj.value;
+  window.google_remarketing_only = false;
+  load('//www.googleadservices.com/pagead/conversion.js', fn);
+
+  function append(str){
+    var el = domify(str);
+    if (!el.src) return write(str);
+    if (!/googleadservices/.test(el.src)) return write(str);
+    self.debug('append %o', el);
+    document.body.appendChild(el);
+    document.write = write;
+    self.reporting = null;
+  }
+};
+
+/**
+ * Wait until a conversion is sent with `obj`.
+ *
+ * @param {Object} obj
+ * @param {Function} fn
+ * @api private
+ */
+
+AdWords.prototype.wait = function(obj){
+  var self = this;
+  var id = setTimeout(function(){
+    clearTimeout(id);
+    self.conversion(obj);
+  }, 50);
 };
 
 });
@@ -3901,7 +3953,7 @@ Curebit.prototype.identify = function(identify){
       first_name: identify.firstName(),
       last_name: identify.lastName(),
       customer_id: identify.userId()
-    },
+    }
   });
 };
 

@@ -1009,13 +1009,8 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-try {
-  var bind = require('bind');
-} catch (e) {
-  var bind = require('bind-component');
-}
-
-var bindAll = require('bind-all');
+var bind = require('bind')
+  , bindAll = require('bind-all');
 
 
 /**
@@ -1167,8 +1162,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -1998,6 +1998,57 @@ module.exports = function loadScript (options, callback) {
     // give it an ID or attributes.
     return script;
 };
+
+});
+require.register("segmentio-script-onload/index.js", function(exports, require, module){
+
+// https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
+
+/**
+ * Invoke `fn(err)` when the given `el` script loads.
+ *
+ * @param {Element} el
+ * @param {Function} fn
+ * @api public
+ */
+
+module.exports = function(el, fn){
+  return el.addEventListener
+    ? add(el, fn)
+    : attach(el, fn);
+};
+
+/**
+ * Add event listener to `el`, `fn()`.
+ *
+ * @param {Element} el
+ * @param {Function} fn
+ * @api private
+ */
+
+function add(el, fn){
+  el.addEventListener('load', function(_, e){ fn(null, e); }, false);
+  el.addEventListener('error', function(e){
+    var err = new Error('failed to load the script "' + el.src + '"');
+    err.event = e;
+    fn(err);
+  }, false);
+}
+
+/**
+ * Attach evnet.
+ *
+ * @param {Element} el
+ * @param {Function} fn
+ * @api private
+ */
+
+function attach(el, fn){
+  el.attachEvent('onreadystatechange', function(e){
+    if (!/complete|loaded/.test(el.readyState)) return;
+    fn(null, e);
+  });
+}
 
 });
 require.register("segmentio-on-body/index.js", function(exports, require, module){
@@ -3852,10 +3903,11 @@ var Identify = require('facade').Identify;
 var integration = require('integration');
 var Track = require('facade').Track;
 var iso = require('to-iso-string');
-var load = require('load-script');
+var onload = require('script-onload');
 var extend = require('extend');
 var clone = require('clone');
 var each = require('each');
+var type = require('type');
 
 /**
  * User reference
@@ -3873,6 +3925,12 @@ module.exports = exports = function(analytics){
 };
 
 /**
+ * HOP
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
  * Expose `Curebit` integration
  */
 
@@ -3881,12 +3939,14 @@ var Curebit = exports.Integration = integration('Curebit')
   .global('_curebitq')
   .global('curebit')
   .option('siteId', '')
-  .option('iframeWidth', 0)
-  .option('iframeHeight', 0)
+  .option('iframeWidth', '100%')
+  .option('iframeHeight', '480')
   .option('iframeBorder', 0)
   .option('iframeId', '')
   .option('responsive', true)
   .option('device', '')
+  .option('insertIntoId', '')
+  .option('campaigns', {})
   .option('server', 'https://www.curebit.com');
 
 /**
@@ -3901,6 +3961,7 @@ Curebit.prototype.initialize = function(){
     server: this.options.server
   });
   this.load();
+  this.registerAffiliate();
 };
 
 /**
@@ -3916,25 +3977,50 @@ Curebit.prototype.loaded = function(){
 /**
  * Load
  *
+ * Custom load script because Curebit's javascript needs to be injected
+ * right next to where the iframe will appear.
+ *
  * @param {Function} fn
  * @api private
  */
 
 Curebit.prototype.load = function(fn){
-  load('//d2jjzw81hqbuqv.cloudfront.net/assets/api/all-0.6.js', fn);
+  var script = document.createElement('script');
+  script.src = '//d2jjzw81hqbuqv.cloudfront.net/assets/api/all-0.6.js';
+  var el = document.getElementById(this.options.insertIntoId);
+  if (!el) el = document.body;
+  el.appendChild(script);
+  onload(script, fn);
 };
 
 /**
- * Identify.
+ * Campaign tags.
+ *
+ * @api private
+ */
+
+Curebit.prototype.campaignTags = function(){
+  var campaigns = this.options.campaigns;
+  var path = window.location.pathname;
+  if (!has.call(campaigns, path)) return;
+  return campaigns[path];
+};
+
+/**
+ * Register affiliate.
  *
  * http://www.curebit.com/docs/affiliate/registration
  *
- * @param {Identify} identify
- * @api public
+ * @api private
  */
 
-Curebit.prototype.identify = function(identify){
-  push('register_affiliate', {
+Curebit.prototype.registerAffiliate = function(){
+  // Get the campaign tags for this url.
+  var tags = this.campaignTags();
+  if (!tags) return;
+
+  // Set up the basic iframe rendering.
+  var data = {
     responsive: this.options.responsive,
     device: this.options.device,
     iframe: {
@@ -3943,13 +4029,24 @@ Curebit.prototype.identify = function(identify){
       id: this.options.iframeId,
       frameborder: this.options.iframeBorder
     },
-    affiliate_member: {
+    campaign_tags: tags
+  };
+
+  // Add affiliate member info if available.
+  var identify = new Identify({
+    userId: user.id(),
+    traits: user.traits()
+  });
+  if (identify.email()) {
+    data.affiliate_member = {
       email: identify.email(),
       first_name: identify.firstName(),
       last_name: identify.lastName(),
       customer_id: identify.userId()
-    }
-  });
+    };
+  }
+
+  push('register_affiliate', data);
 };
 
 /**
@@ -13953,6 +14050,7 @@ module.exports.User = User;
 
 
 
+
 require.register("segmentio-analytics.js-integrations/lib/slugs.json", function(exports, require, module){
 module.exports = [
   "adroll",
@@ -14025,6 +14123,7 @@ module.exports = [
 ]
 
 });
+
 
 
 
@@ -14456,6 +14555,9 @@ require.alias("segmentio-load-date/index.js", "segmentio-analytics.js-integratio
 require.alias("segmentio-load-script/index.js", "segmentio-analytics.js-integrations/deps/load-script/index.js");
 require.alias("component-type/index.js", "segmentio-load-script/deps/type/index.js");
 
+require.alias("segmentio-script-onload/index.js", "segmentio-analytics.js-integrations/deps/script-onload/index.js");
+require.alias("segmentio-script-onload/index.js", "segmentio-analytics.js-integrations/deps/script-onload/index.js");
+require.alias("segmentio-script-onload/index.js", "segmentio-script-onload/index.js");
 require.alias("segmentio-on-body/index.js", "segmentio-analytics.js-integrations/deps/on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");

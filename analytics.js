@@ -1167,8 +1167,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -2258,6 +2263,36 @@ function check () {
     location.protocol == 'https:' ||
     location.protocol == 'chrome-extension:'
   );
+}
+});
+require.register("segmentio-when/index.js", function(exports, require, module){
+
+var callback = require('callback');
+
+
+/**
+ * Expose `when`.
+ */
+
+module.exports = when;
+
+
+/**
+ * Loop on a short interval until `condition()` is true, then call `fn`.
+ *
+ * @param {Function} condition
+ * @param {Function} fn
+ * @param {Number} interval (optional)
+ */
+
+function when (condition, fn, interval) {
+  if (condition()) return callback.async(fn);
+
+  var ref = setInterval(function () {
+    if (!condition()) return;
+    callback(fn);
+    clearInterval(ref);
+  }, interval || 10);
 }
 });
 require.register("visionmedia-batch/index.js", function(exports, require, module){
@@ -3933,6 +3968,8 @@ var extend = require('extend');
 var clone = require('clone');
 var each = require('each');
 var type = require('type');
+var when = require('when');
+var load = require('load-script');
 
 
 /**
@@ -4012,12 +4049,36 @@ Curebit.prototype.loaded = function(){
  */
 
 Curebit.prototype.load = function(fn){
-  var script = document.createElement('script');
-  script.src = '//d2jjzw81hqbuqv.cloudfront.net/assets/api/all-0.6.js';
-  var el = document.getElementById(this.options.insertIntoId);
-  if (!el) el = document.body;
-  el.appendChild(script);
-  onload(script, fn);
+  var url = '//d2jjzw81hqbuqv.cloudfront.net/assets/api/all-0.6.js';
+  var tags = this.campaignTags();
+  if (!tags.length) {
+    load(url, fn);
+  } else {
+    this.injectIntoId(url, this.options.insertIntoId, fn);
+  }
+};
+
+/**
+ * Insert script into element with ID.
+ *
+ * If we *are* loading a campaign, we need to wait for this element to exist.
+ *
+ * @param {String} url
+ * @param {String} id
+ * @param {Function} fn
+ * @api private
+ */
+
+Curebit.prototype.injectIntoId = function(url, id, fn) {
+  when(function () {
+    return document.getElementById(id);
+  }, function () {
+    var script = document.createElement('script');
+    script.src = url;
+    var el = document.getElementById(id);
+    el.appendChild(script);
+    onload(script, fn);
+  });
 };
 
 /**
@@ -4045,7 +4106,7 @@ Curebit.prototype.campaignTags = function(){
 Curebit.prototype.registerAffiliate = function(){
   // Get the campaign tags for this url.
   var tags = this.campaignTags();
-  if (!tags) return;
+  if (!tags.length) return;
 
   // Set up the basic iframe rendering.
   var data = {
@@ -12900,7 +12961,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.3.9';
+exports.VERSION = '1.3.12';
 
 
 /**
@@ -14080,6 +14141,7 @@ module.exports.User = User;
 
 
 
+
 require.register("segmentio-analytics.js-integrations/lib/slugs.json", function(exports, require, module){
 module.exports = [
   "adroll",
@@ -14152,6 +14214,7 @@ module.exports = [
 ]
 
 });
+
 
 
 
@@ -14599,6 +14662,10 @@ require.alias("segmentio-to-iso-string/index.js", "segmentio-analytics.js-integr
 require.alias("segmentio-to-unix-timestamp/index.js", "segmentio-analytics.js-integrations/deps/to-unix-timestamp/index.js");
 
 require.alias("segmentio-use-https/index.js", "segmentio-analytics.js-integrations/deps/use-https/index.js");
+
+require.alias("segmentio-when/index.js", "segmentio-analytics.js-integrations/deps/when/index.js");
+require.alias("ianstormtaylor-callback/index.js", "segmentio-when/deps/callback/index.js");
+require.alias("timoxley-next-tick/index.js", "ianstormtaylor-callback/deps/next-tick/index.js");
 
 require.alias("timoxley-next-tick/index.js", "segmentio-analytics.js-integrations/deps/next-tick/index.js");
 

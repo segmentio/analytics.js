@@ -1167,8 +1167,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -4088,13 +4093,14 @@ Curebit.prototype.load = function(fn){
  */
 
 Curebit.prototype.injectIntoId = function(url, id, fn) {
+  var server = this.options.server;
   when(function () {
     return document.getElementById(id);
   }, function () {
     var script = document.createElement('script');
     script.src = url;
     var parent = document.getElementById(id);
-    replace(this.options.server, parent);
+    replace(server, parent);
     parent.appendChild(script);
     onload(script, fn);
   });
@@ -12990,7 +12996,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.3.14';
+exports.VERSION = '1.3.15';
 
 
 /**

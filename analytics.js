@@ -1167,8 +1167,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -2543,21 +2548,44 @@ var domify = require('domify');
  * Replace document.write until a url is written matching the url fragment
  *
  * @param {String} match
+ * @param {Element} parent to appendChild onto
  * @param {Function} fn optional callback function
  */
 
-module.exports = function(match, fn){
+module.exports = function(match, parent, fn){
   var write = document.write;
   document.write = append;
+  if (typeof parent === 'function') fn = parent, parent = null;
+  if (!parent) parent = document.body;
 
   function append(str){
     var el = domify(str)
-    if (!el.src) return write(str);
+    var src = el.src || '';
     if (el.src.indexOf(match) === -1) return write(str);
-    document.body.appendChild(el);
+    if ('SCRIPT' == el.tagName) el = recreate(el);
+    parent.appendChild(el);
     document.write = write;
     fn && fn();
   }
+};
+
+/**
+ * Re-create the given `script`.
+ *
+ * domify() actually adds the script to he dom
+ * and then immediately removes it so the script
+ * will never be loaded :/
+ *
+ * @param {Element} script
+ * @api public
+ */
+
+function recreate(script){
+  var ret = document.createElement('script');
+  ret.src = script.src;
+  ret.async = script.async;
+  ret.defer = script.defer;
+  return ret;
 }
 });
 require.register("segmentio-analytics.js-integrations/index.js", function(exports, require, module){
@@ -4018,7 +4046,6 @@ Curebit.prototype.initialize = function(){
     site_id: this.options.siteId,
     server: this.options.server
   });
-  replace(this.options.server);
   this.load();
   this.registerAffiliate();
 };
@@ -4047,6 +4074,7 @@ Curebit.prototype.load = function(fn){
   var url = '//d2jjzw81hqbuqv.cloudfront.net/assets/api/all-0.6.js';
   var tags = this.campaignTags();
   if (!tags.length) {
+    replace(this.options.server);
     load(url, fn);
   } else {
     this.injectIntoId(url, this.options.insertIntoId, fn);
@@ -4070,8 +4098,9 @@ Curebit.prototype.injectIntoId = function(url, id, fn) {
   }, function () {
     var script = document.createElement('script');
     script.src = url;
-    var el = document.getElementById(id);
-    el.appendChild(script);
+    var parent = document.getElementById(id);
+    replace(this.options.server, parent);
+    parent.appendChild(script);
     onload(script, fn);
   });
 };
@@ -9649,7 +9678,6 @@ module.exports = exports = function (analytics) {
  */
 
 var Vero = exports.Integration = integration('Vero')
-  .assumesPageview()
   .readyOnInitialize()
   .global('_veroq')
   .option('apiKey', '');
@@ -9690,6 +9718,17 @@ Vero.prototype.load = function (callback) {
   load('//d3qxef4rp70elm.cloudfront.net/m.js', callback);
 };
 
+/**
+ * Page.
+ *
+ * https://www.getvero.com/knowledge-base#/questions/71768-Does-Vero-track-pageviews
+ *
+ * @param {Page} page
+ */
+
+Vero.prototype.page = function(page){
+  push('trackPageview');
+};
 
 /**
  * Identify.

@@ -230,7 +230,6 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
-
 /**
  * toString ref.
  */
@@ -247,20 +246,19 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
-    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object String]': return 'string';
+    case '[object Error]': return 'error';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
+  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
-  if (val === Object(val)) return 'object';
 
-  return typeof val;
+  return typeof val.valueOf();
 };
 
 });
@@ -1167,13 +1165,8 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty');
-
-try {
-  var typeOf = require('type');
-} catch (e) {
-  var typeOf = require('component-type');
-}
+var isEmpty = require('is-empty')
+  , typeOf = require('type');
 
 
 /**
@@ -2804,6 +2797,71 @@ AdWords.prototype.wait = function(obj){
     clearTimeout(id);
     self.conversion(obj);
   }, 50);
+};
+
+});
+require.register("segmentio-analytics.js-integrations/lib/alexa.js", function(exports, require, module){
+
+var integration = require('integration');
+var load = require('load-script');
+
+/**
+ * Expose plugin.
+ */
+
+module.exports = exports = function (analytics) {
+  analytics.addIntegration(Alexa);
+};
+
+/**
+ * Expose Alexa integration.
+ */
+
+var Alexa = exports.Integration = integration('Alexa')
+  .assumesPageview()
+  .readyOnLoad()
+  .global('_atrk_opts')
+  .option('atrk_acct', null)
+  .option('domain', '')
+  .option('dynamic', true);
+
+/**
+ * Initialize.
+ *
+ * @param {Object} page
+ */
+
+Alexa.prototype.initialize = function (page) {
+  window._atrk_opts = {
+    atrk_acct: this.options.atrk_acct,
+    domain: this.options.domain,
+    dynamic: this.options.dynamic
+  };
+  this.load();
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Alexa.prototype.loaded = function () {
+  return !! window.atrk;
+};
+
+/**
+ * Load the Alexa library.
+ *
+ * @param {Function} callback
+ */
+
+Alexa.prototype.load = function (callback) {
+  load('//d31qbv1cthcecs.cloudfront.net/atrk.js', function(err){
+    if (err) return callback(err);
+    window.atrk();
+    callback();
+  });
 };
 
 });
@@ -5897,6 +5955,70 @@ Heap.prototype.track = function (track) {
 };
 
 });
+require.register("segmentio-analytics.js-integrations/lib/hellobar.js", function(exports, require, module){
+
+var integration = require('integration');
+var load = require('load-script');
+
+/**
+ * Expose plugin.
+ */
+
+module.exports = exports = function (analytics) {
+  analytics.addIntegration(Hellobar);
+};
+
+
+/**
+ * Expose `hellobar.com` integration.
+ */
+
+var Hellobar = exports.Integration = integration('Hellobar')
+  .assumesPageview()
+  .readyOnInitialize()
+  .global('_hbq')
+  .option('apiKey', '');
+
+
+/**
+ * Initialize.
+ *
+ * https://s3.amazonaws.com/scripts.hellobar.com/bb900665a3090a79ee1db98c3af21ea174bbc09f.js
+ *
+ * @param {Object} page
+ */
+
+Hellobar.prototype.initialize = function(page) {
+  window._hbq = window._hbq || [];
+  this.load();
+};
+
+
+/**
+ * Load.
+ *
+ * @param {Function} callback
+ */
+
+Hellobar.prototype.load = function (callback) {
+  var url = '//s3.amazonaws.com/scripts.hellobar.com/' + this.options.apiKey + '.js';
+  load(url, callback);
+};
+
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Hellobar.prototype.loaded = function () {
+  return !! (window._hbq && window._hbq.push !== Array.prototype.push);
+};
+
+
+
+});
 require.register("segmentio-analytics.js-integrations/lib/hittail.js", function(exports, require, module){
 
 var integration = require('integration');
@@ -7398,7 +7520,7 @@ Mixpanel.prototype.identify = function (identify) {
   if (nametag) window.mixpanel.name_tag(nametag);
 
   // traits
-  traits = identify.traits(traitAliases);
+  var traits = identify.traits(traitAliases);
   window.mixpanel.register(traits);
   if (this.options.people) window.mixpanel.people.set(traits);
 };
@@ -14207,6 +14329,7 @@ module.exports = [
   "google-tag-manager",
   "gosquared",
   "heap",
+  "hellobar",
   "hittail",
   "hubspot",
   "improvely",
@@ -14426,6 +14549,7 @@ require.alias("segmentio-analytics.js-integration/lib/index.js", "segmentio-anal
 require.alias("segmentio-analytics.js-integrations/index.js", "analytics/deps/integrations/index.js");
 require.alias("segmentio-analytics.js-integrations/lib/adroll.js", "analytics/deps/integrations/lib/adroll.js");
 require.alias("segmentio-analytics.js-integrations/lib/adwords.js", "analytics/deps/integrations/lib/adwords.js");
+require.alias("segmentio-analytics.js-integrations/lib/alexa.js", "analytics/deps/integrations/lib/alexa.js");
 require.alias("segmentio-analytics.js-integrations/lib/amplitude.js", "analytics/deps/integrations/lib/amplitude.js");
 require.alias("segmentio-analytics.js-integrations/lib/awesm.js", "analytics/deps/integrations/lib/awesm.js");
 require.alias("segmentio-analytics.js-integrations/lib/awesomatic.js", "analytics/deps/integrations/lib/awesomatic.js");
@@ -14452,6 +14576,7 @@ require.alias("segmentio-analytics.js-integrations/lib/google-analytics.js", "an
 require.alias("segmentio-analytics.js-integrations/lib/google-tag-manager.js", "analytics/deps/integrations/lib/google-tag-manager.js");
 require.alias("segmentio-analytics.js-integrations/lib/gosquared.js", "analytics/deps/integrations/lib/gosquared.js");
 require.alias("segmentio-analytics.js-integrations/lib/heap.js", "analytics/deps/integrations/lib/heap.js");
+require.alias("segmentio-analytics.js-integrations/lib/hellobar.js", "analytics/deps/integrations/lib/hellobar.js");
 require.alias("segmentio-analytics.js-integrations/lib/hittail.js", "analytics/deps/integrations/lib/hittail.js");
 require.alias("segmentio-analytics.js-integrations/lib/hubspot.js", "analytics/deps/integrations/lib/hubspot.js");
 require.alias("segmentio-analytics.js-integrations/lib/improvely.js", "analytics/deps/integrations/lib/improvely.js");

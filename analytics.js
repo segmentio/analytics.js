@@ -230,6 +230,7 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
+
 /**
  * toString ref.
  */
@@ -246,19 +247,20 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
+    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object Error]': return 'error';
+    case '[object String]': return 'string';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
-  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
+  if (val === Object(val)) return 'object';
 
-  return typeof val.valueOf();
+  return typeof val;
 };
 
 });
@@ -1165,8 +1167,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -13118,7 +13125,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.3.15';
+exports.VERSION = '1.3.16';
 
 
 /**

@@ -13756,7 +13756,7 @@ Cookie.prototype.options = function (options) {
   var domain = '.' + topDomain(window.location.href);
 
   // localhost cookies are special: http://curl.haxx.se/rfc/cookie_spec.html
-  if (domain === '.localhost') domain = '';
+  if (domain === '.localhost' || domain === '.0.0.0.0') domain = '';
 
   defaults(options, {
     maxage: 31536000000, // default to a year

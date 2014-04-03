@@ -326,6 +326,35 @@ describe('Analytics', function () {
       assert(page instanceof Page);
     })
 
+    it('should default .url to .location.href', function(){
+      analytics.page();
+      var page = analytics._invoke.args[0][1];
+      var href = window.location.href;
+      assert(href == page.properties().url);
+    });
+
+    it('should respect canonical', function(){
+      var el = document.createElement('link');
+      el.rel = 'canonical';
+      el.href = 'baz.com';
+      document.head.appendChild(el);
+      analytics.page();
+      var page = analytics._invoke.args[0][1];
+      assert('baz.com' == page.properties().url);
+      el.parentNode.removeChild(el);
+    });
+
+    it('should append querystring to canonical url', function(){
+      var el = document.createElement('link');
+      el.rel = 'canonical';
+      el.href = 'baz.com';
+      document.head.appendChild(el);
+      analytics.page({ search: '?querystring' });
+      var page = analytics._invoke.args[0][1];
+      assert('baz.com?querystring' == page.properties().url);
+      el.parentNode.removeChild(el);
+    })
+
     it('should accept (category, name, properties, options, callback)', function (done) {
       defaults.category = 'category';
       defaults.name = 'name';

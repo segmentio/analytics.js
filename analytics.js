@@ -13500,7 +13500,6 @@ Analytics.prototype.page = function (category, name, properties, options, fn) {
     path: canonicalPath(),
     referrer: document.referrer,
     title: document.title,
-    url: canonicalUrl(),
     search: location.search
   };
 
@@ -13509,6 +13508,7 @@ Analytics.prototype.page = function (category, name, properties, options, fn) {
 
   properties = clone(properties) || {};
   defaults(properties, defs);
+  properties.url = properties.url || canonicalUrl(properties.search);
 
   this._invoke('page', new Page({
     properties: properties,
@@ -13704,14 +13704,16 @@ function canonicalPath () {
 }
 
 /**
- * Return the canonical URL for the page, without the hash.
+ * Return the canonical URL for the page concat the given `search`
+ * and strip the hash.
  *
+ * @param {String} search
  * @return {String}
  */
 
-function canonicalUrl () {
+function canonicalUrl (search) {
   var canon = canonical();
-  if (canon) return canon;
+  if (canon) return ~canon.indexOf('?') ? canon : canon + search;
   var url = window.location.href;
   var i = url.indexOf('#');
   return -1 == i ? url : url.slice(0, i);
@@ -14305,6 +14307,7 @@ require.register("segmentio-analytics.js-integrations/lib/slugs.json", function(
 module.exports = [
   "adroll",
   "adwords",
+  "alexa",
   "amplitude",
   "awesm",
   "awesomatic",

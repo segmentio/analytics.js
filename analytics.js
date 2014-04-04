@@ -1168,13 +1168,8 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty');
-
-try {
-  var typeOf = require('type');
-} catch (e) {
-  var typeOf = require('component-type');
-}
+var isEmpty = require('is-empty')
+  , typeOf = require('type');
 
 
 /**
@@ -13416,7 +13411,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.3.18';
+exports.VERSION = '1.3.19';
 
 
 /**

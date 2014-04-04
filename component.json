@@ -18,7 +18,7 @@
     "component/event": "0.1.1",
     "component/inherit": "0.0.2",
     "component/object": "0.0.3",
-    "component/querystring": "1.1.0",
+    "component/querystring": "1.2.0",
     "component/url": "0.1.0",
     "ianstormtaylor/bind": "0.0.2",
     "ianstormtaylor/callback": "0.0.1",

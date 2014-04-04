@@ -1,4 +1,11 @@
 
+1.3.17 / 2014-04-04
+==================
+
+ * upgrade integrations to 0.5.0
+ * fix: add .search to .url when url is pulled from canonical tag
+ * tests: upgrade gravy to 0.2.0
+
 1.3.16 / 2014-04-01
 ==================
 

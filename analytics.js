@@ -1009,13 +1009,8 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-try {
-  var bind = require('bind');
-} catch (e) {
-  var bind = require('bind-component');
-}
-
-var bindAll = require('bind-all');
+var bind = require('bind')
+  , bindAll = require('bind-all');
 
 
 /**
@@ -6461,6 +6456,7 @@ Intercom.prototype.load = function (callback) {
 
 Intercom.prototype.identify = function (identify) {
   var traits = identify.traits({ userId: 'user_id' });
+  var activator = this.options.activator;
   var opts = identify.options(this.name);
   var companyCreated = identify.companyCreated();
   var created = identify.created();
@@ -6492,10 +6488,13 @@ Intercom.prototype.identify = function (identify) {
   if (opts.increments) traits.increments = opts.increments;
   if (opts.userHash) traits.user_hash = opts.userHash;
   if (opts.user_hash) traits.user_hash = opts.user_hash;
-  if (this.options.inbox) {
-    traits.widget = {
-      activator: this.options.activator
-    };
+
+  // Intercom, will force the widget to appear
+  // if the selector is #IntercomDefaultWidget
+  // so no need to check inbox, just need to check
+  // that the selector isn't #IntercomDefaultWidget.
+  if ('#IntercomDefaultWidget' != activator) {
+    traits.widget = { activator: activator };
   }
 
   var method = this._id !== id ? 'boot': 'update';

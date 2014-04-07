@@ -1,6 +1,6 @@
 
 BINS= ../node_modules/.bin
-BROWSERS ?= 'chrome, safari'
+BROWSERS ?= 'chrome, safari, firefox'
 TEST= http://localhost:4200
 C= $(BINS)/component
 GRAVY=$(BINS)/gravy

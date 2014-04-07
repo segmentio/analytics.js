@@ -1,5 +1,4 @@
 
-BROWSERS ?= 'chrome, safari, firefox'
 BINS= node_modules/.bin
 C= $(BINS)/component
 MINIFY = $(BINS)/uglifyjs

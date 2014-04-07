@@ -230,7 +230,6 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
-
 /**
  * toString ref.
  */
@@ -247,20 +246,19 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
-    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object String]': return 'string';
+    case '[object Error]': return 'error';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
+  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
-  if (val === Object(val)) return 'object';
 
-  return typeof val;
+  return typeof val.valueOf();
 };
 
 });
@@ -2824,7 +2822,7 @@ var Alexa = exports.Integration = integration('Alexa')
   .assumesPageview()
   .readyOnLoad()
   .global('_atrk_opts')
-  .option('atrk_acct', null)
+  .option('account', null)
   .option('domain', '')
   .option('dynamic', true);
 
@@ -2836,7 +2834,7 @@ var Alexa = exports.Integration = integration('Alexa')
 
 Alexa.prototype.initialize = function (page) {
   window._atrk_opts = {
-    atrk_acct: this.options.atrk_acct,
+    atrk_acct: this.options.account,
     domain: this.options.domain,
     dynamic: this.options.dynamic
   };
@@ -4134,12 +4132,10 @@ Curebit.prototype.loaded = function(){
 Curebit.prototype.load = function(fn){
   var url = '//d2jjzw81hqbuqv.cloudfront.net/assets/api/all-0.6.js';
   var tags = this.campaignTags();
-  if (!tags.length) {
-    replace(this.options.server);
+  if (!tags.length)
     load(url, fn);
-  } else {
+  else
     this.injectIntoId(url, this.options.insertIntoId, fn);
-  }
 };
 
 /**
@@ -4161,7 +4157,6 @@ Curebit.prototype.injectIntoId = function(url, id, fn) {
     var script = document.createElement('script');
     script.src = url;
     var parent = document.getElementById(id);
-    replace(server, parent);
     parent.appendChild(script);
     onload(script, fn);
   });
@@ -4202,7 +4197,8 @@ Curebit.prototype.registerAffiliate = function(){
       width: this.options.iframeWidth,
       height: this.options.iframeHeight,
       id: this.options.iframeId,
-      frameborder: this.options.iframeBorder
+      frameborder: this.options.iframeBorder,
+      container: this.options.insertIntoId
     },
     campaign_tags: tags
   };
@@ -5976,7 +5972,7 @@ module.exports = exports = function (analytics) {
  * Expose `hellobar.com` integration.
  */
 
-var Hellobar = exports.Integration = integration('Hellobar')
+var Hellobar = exports.Integration = integration('Hello Bar')
   .assumesPageview()
   .readyOnInitialize()
   .global('_hbq')
@@ -8049,8 +8045,8 @@ var Navilytics = exports.Integration = integration('Navilytics')
   .assumesPageview()
   .readyOnLoad()
   .global('__nls')
-  .option('mid', '')
-  .option('pid', '');
+  .option('memberId', '')
+  .option('projectId', '');
 
 /**
  * Initialize.
@@ -8081,8 +8077,8 @@ Navilytics.prototype.loaded = function () {
  */
 
 Navilytics.prototype.load = function (callback) {
-  var mid = this.options.mid;
-  var pid = this.options.pid;
+  var mid = this.options.memberId;
+  var pid = this.options.projectId;
   var url = '//www.navilytics.com/nls.js?mid=' + mid + '&pid=' + pid;
   load(url, callback);
 };

@@ -1163,13 +1163,8 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty');
-
-try {
-  var typeOf = require('type');
-} catch (e) {
-  var typeOf = require('component-type');
-}
+var isEmpty = require('is-empty')
+  , typeOf = require('type');
 
 
 /**
@@ -13942,6 +13937,8 @@ Analytics.prototype._callback = function (fn) {
 Analytics.prototype._invoke = function (method, facade) {
   var options = facade.options();
 
+  this.emit('invoke', facade);
+
   each(this._integrations, function (name, integration) {
     if (!facade.enabled(name)) return;
     integration.invoke.call(integration, method, facade);
@@ -14007,6 +14004,7 @@ function canonicalUrl (search) {
   var i = url.indexOf('#');
   return -1 == i ? url : url.slice(0, i);
 }
+
 });
 require.register("analytics/lib/cookie.js", function(exports, require, module){
 

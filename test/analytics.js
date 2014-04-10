@@ -244,6 +244,17 @@ describe('Analytics', function () {
       analytics._invoke('identify', facade);
       assert(!Test.prototype.invoke.called);
     });
+
+    it('should emit "invoke" with facade', function(done){
+      var opts = { All: false };
+      var identify = new Identify({ options: opts });
+      analytics.on('invoke', function(msg){
+        assert(identify == msg);
+        assert('identify' == msg.action());
+        done();
+      });
+      analytics._invoke('identify', identify);
+    })
   });
 
   describe('#_options', function () {

@@ -1010,13 +1010,8 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-try {
-  var bind = require('bind');
-} catch (e) {
-  var bind = require('bind-component');
-}
-
-var bindAll = require('bind-all');
+var bind = require('bind')
+  , bindAll = require('bind-all');
 
 
 /**
@@ -1168,8 +1163,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -2748,7 +2748,7 @@ AdWords.prototype.track = function(track){
   return this.conversion({
     value: track.revenue() || 0,
     label: events[event],
-    conversionId: id,
+    conversionId: id
   });
 };
 
@@ -3604,7 +3604,7 @@ var supported = {
   refund: true,
   charge: true,
   cancel: true,
-  login: true,
+  login: true
 };
 
 /**
@@ -4132,7 +4132,7 @@ Curebit.prototype.loaded = function(){
  */
 
 Curebit.prototype.load = function(fn){
-  var url = '//d2jjzw81hqbuqv.cloudfront.net/assets/api/all-0.6.js';
+  var url = '//d2jjzw81hqbuqv.cloudfront.net/integration/curebit-1.0.min.js';
   var tags = this.campaignTags();
   if (!tags.length)
     load(url, fn);
@@ -5231,8 +5231,13 @@ GA.prototype.initialize = function () {
     allowLinker: true
   });
 
+  // display advertising
+  if (opts.doubleClick) {
+    window.ga('require', 'displayfeatures');
+  }
+
   // send global id
-  if (this.options.sendUserId && user.id()) {
+  if (opts.sendUserId && user.id()) {
     window.ga('set', '&uid', user.id());
   }
 
@@ -6688,7 +6693,6 @@ module.exports = exports = function (analytics) {
   analytics.addIntegration(Kenshoo);
 };
 
-
 /**
  * Expose `Kenshoo` integration.
  */
@@ -6700,8 +6704,6 @@ var Kenshoo = exports.Integration = integration('Kenshoo')
   .option('subdomain', '')
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true);
-
-
 
 /**
  * Initialize.
@@ -6715,7 +6717,6 @@ Kenshoo.prototype.initialize = function(page) {
   this.load();
 };
 
-
 /**
  * Loaded? (checks if the tracking function is set)
  *
@@ -6723,9 +6724,8 @@ Kenshoo.prototype.initialize = function(page) {
  */
 
 Kenshoo.prototype.loaded = function() {
-  return is.function(window.k_trackevent);
+  return is.fn(window.k_trackevent);
 };
-
 
 /**
  * Load Kenshoo script.
@@ -6734,26 +6734,22 @@ Kenshoo.prototype.loaded = function() {
  */
 
 Kenshoo.prototype.load = function(callback) {
-  var url = "//" + this.options.subdomain +
-    ".xg4ken.com/media/getpx.php?cid=" + this.options.cid;
+  var url = '//' + this.options.subdomain + '.xg4ken.com/media/getpx.php?cid=' + this.options.cid;
   load(url, callback);
 };
-
 
 /**
  * Completed order.
  *
  * https://github.com/jorgegorka/the_tracker/blob/master/lib/the_tracker/trackers/kenshoo.rb
  *
- *
  * @param {Track} track
  * @api private
  */
 
 Kenshoo.prototype.completedOrder = function(track) {
-  this._track(track, {val: track.total()});
+  this._track(track, { val: track.total() });
 };
-
 
 /**
  * Page.
@@ -6790,7 +6786,6 @@ Kenshoo.prototype.page = function(page) {
   this._track(track);
 };
 
-
 /**
  * Track.
  *
@@ -6802,8 +6797,6 @@ Kenshoo.prototype.page = function(page) {
 Kenshoo.prototype.track = function(track) {
   this._track(track);
 };
-
-
 
 /**
  * Track a Kenshoo event.
@@ -6819,18 +6812,19 @@ Kenshoo.prototype._track = function(track, options) {
   options = options || { val: track.revenue() };
 
   var params = [
-    "id=" + this.options.cid,
-    "type=" + track.event(),
-    "val=" + (options.val || '0.0'),
-    "orderId=" + (track.orderId() || ''),
-    "promoCode=" + (track.coupon() || ''),
-    "valueCurrency=" + (track.currency() || ''),
+    'id=' + this.options.cid,
+    'type=' + track.event(),
+    'val=' + (options.val || '0.0'),
+    'orderId=' + (track.orderId() || ''),
+    'promoCode=' + (track.coupon() || ''),
+    'valueCurrency=' + (track.currency() || ''),
 
     // Live tracking fields. Ignored for now (until we get documentation).
-    "GCID=",
-    "kw=",
-    "product="
+    'GCID=',
+    'kw=',
+    'product='
   ];
+
   window.k_trackevent(params, this.options.subdomain);
 };
 
@@ -7757,7 +7751,7 @@ module.exports = exports = function (analytics) {
 
 var Mojn = exports.Integration = integration('Mojn')
   .option('customerCode', '')
-  .global('_agTrack')
+  .global('_mojnTrack')
   .readyOnInitialize();
 
 /**
@@ -7767,8 +7761,8 @@ var Mojn = exports.Integration = integration('Mojn')
  */
 
 Mojn.prototype.initialize = function(){
-  window._agTrack = window._agTrack || [];
-  window._agTrack.push({ cid: this.options.customerCode });
+  window._mojnTrack = window._mojnTrack || [];
+  window._mojnTrack.push({ cid: this.options.customerCode });
   this.load();
 };
 
@@ -7789,7 +7783,7 @@ Mojn.prototype.load = function(fn) {
  */
 
 Mojn.prototype.loaded = function () {
-  return is.object(window._agTrack);
+  return is.object(window._mojnTrack);
 };
 
 /**
@@ -7820,7 +7814,7 @@ Mojn.prototype.track = function(track) {
   var currency = properties.currency || '';
   var conv = currency + revenue;
   if (!revenue) return;
-  window._agTrack.push({ conv: conv });
+  window._mojnTrack.push({ conv: conv });
   return conv;
 };
 
@@ -8503,6 +8497,75 @@ Pingdom.prototype.loaded = function () {
 Pingdom.prototype.load = function (callback) {
   load('//rum-static.pingdom.net/prum.min.js', callback);
 };
+});
+require.register("segmentio-analytics.js-integrations/lib/piwik.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('integration');
+var load = require('load-script');
+var push = require('global-queue')('_paq');
+
+/**
+ * Expose plugin
+ */
+module.exports = exports = function (analytics) {
+  analytics.addIntegration(Piwik);
+};
+
+/**
+ * Expose `Piwik` integration.
+ */
+
+var Piwik = exports.Integration = integration('Piwik')
+  .global('_paq')
+  .option('url', null)
+  .option('id', '')
+  .assumesPageview()
+  .readyOnInitialize();
+
+/**
+ * Initialize.
+ *
+ * http://piwik.org/docs/javascript-tracking/#toc-asynchronous-tracking
+ */
+
+Piwik.prototype.initialize = function () {
+  window._paq = window._paq || [];
+  push('setSiteId', this.options.id);
+  push('setTrackerUrl', this.options.url + '/piwik.php');
+  push('enableLinkTracking');
+  this.load();
+};
+
+/**
+ * Load the Piwik Analytics library.
+ */
+
+Piwik.prototype.load = function (callback) {
+  load(this.options.url + "/piwik.js", callback);
+};
+
+/**
+ * Check if Piwik is loaded
+ */
+
+Piwik.prototype.loaded = function () {
+  return !! (window._paq && window._paq.push != [].push);
+};
+
+/**
+ * Page
+ *
+ * @param {Page} page
+ */
+
+Piwik.prototype.page = function (page) {
+  push('trackPageView');
+};
+
 });
 require.register("segmentio-analytics.js-integrations/lib/preact.js", function(exports, require, module){
 
@@ -14649,6 +14712,7 @@ module.exports = [
   "optimizely",
   "perfect-audience",
   "pingdom",
+  "piwik",
   "preact",
   "qualaroo",
   "quantcast",
@@ -14898,6 +14962,7 @@ require.alias("segmentio-analytics.js-integrations/lib/olark.js", "analytics/dep
 require.alias("segmentio-analytics.js-integrations/lib/optimizely.js", "analytics/deps/integrations/lib/optimizely.js");
 require.alias("segmentio-analytics.js-integrations/lib/perfect-audience.js", "analytics/deps/integrations/lib/perfect-audience.js");
 require.alias("segmentio-analytics.js-integrations/lib/pingdom.js", "analytics/deps/integrations/lib/pingdom.js");
+require.alias("segmentio-analytics.js-integrations/lib/piwik.js", "analytics/deps/integrations/lib/piwik.js");
 require.alias("segmentio-analytics.js-integrations/lib/preact.js", "analytics/deps/integrations/lib/preact.js");
 require.alias("segmentio-analytics.js-integrations/lib/qualaroo.js", "analytics/deps/integrations/lib/qualaroo.js");
 require.alias("segmentio-analytics.js-integrations/lib/quantcast.js", "analytics/deps/integrations/lib/quantcast.js");

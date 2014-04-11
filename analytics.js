@@ -1010,8 +1010,13 @@ module.exports = function (obj) {
 });
 require.register("ianstormtaylor-bind/index.js", function(exports, require, module){
 
-var bind = require('bind')
-  , bindAll = require('bind-all');
+try {
+  var bind = require('bind');
+} catch (e) {
+  var bind = require('bind-component');
+}
+
+var bindAll = require('bind-all');
 
 
 /**
@@ -13472,7 +13477,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.3.21';
+exports.VERSION = '1.3.22';
 
 
 /**

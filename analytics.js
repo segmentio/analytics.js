@@ -7557,7 +7557,7 @@ var dates = require('convert-dates');
 var integration = require('integration');
 var iso = require('to-iso-string');
 var load = require('load-script');
-
+var indexof = require('indexof');
 
 /**
  * Expose plugin.
@@ -7575,6 +7575,7 @@ module.exports = exports = function (analytics) {
 var Mixpanel = exports.Integration = integration('Mixpanel')
   .readyOnLoad()
   .global('mixpanel')
+  .option('increments', [])
   .option('cookieName', '')
   .option('nameTag', true)
   .option('pageview', false)
@@ -7603,6 +7604,7 @@ var optionsAliases = {
 
 Mixpanel.prototype.initialize = function () {
   (function (c, a) {window.mixpanel = a; var b, d, h, e; a._i = []; a.init = function (b, c, f) {function d(a, b) {var c = b.split('.'); 2 == c.length && (a = a[c[0]], b = c[1]); a[b] = function () {a.push([b].concat(Array.prototype.slice.call(arguments, 0))); }; } var g = a; 'undefined' !== typeof f ? g = a[f] = [] : f = 'mixpanel'; g.people = g.people || []; h = ['disable', 'track', 'track_pageview', 'track_links', 'track_forms', 'register', 'register_once', 'unregister', 'identify', 'alias', 'name_tag', 'set_config', 'people.set', 'people.increment', 'people.track_charge', 'people.append']; for (e = 0; e < h.length; e++) d(g, h[e]); a._i.push([b, c, f]); }; a.__SV = 1.2; })(document, window.mixpanel || []);
+  this.options.increments = lowercase(this.options.increments);
   var options = alias(this.options, optionsAliases);
   window.mixpanel.init(options.token, options);
   this.load();
@@ -7719,11 +7721,21 @@ Mixpanel.prototype.identify = function (identify) {
  */
 
 Mixpanel.prototype.track = function (track) {
+  var increments = this.options.increments;
+  var increment = track.event().toLowerCase();
+  var people = this.options.people;
   var props = track.properties();
   var revenue = track.revenue();
+
+  if (people && ~indexof(increments, increment)) {
+    window.mixpanel.people.increment(track.event());
+    window.mixpanel.people.set('Last ' + track.event(), new Date);
+  }
+
   props = dates(props, iso);
   window.mixpanel.track(track.event(), props);
-  if (revenue && this.options.people) {
+
+  if (revenue && people) {
     window.mixpanel.people.track_charge(revenue);
   }
 };
@@ -7747,6 +7759,24 @@ Mixpanel.prototype.alias = function (alias) {
   // although undocumented, mixpanel takes an optional original id
   mp.alias(to, alias.from());
 };
+
+/**
+ * Lowercase the given `arr`.
+ * 
+ * @param {Array} arr
+ * @return {Array}
+ * @api private
+ */
+
+function lowercase(arr){
+  var ret = new Array(arr.length);
+
+  for (var i = 0; i < arr.length; ++i) {
+    ret[i] = String(arr[i]).toLowerCase();
+  }
+
+  return ret;
+}
 
 });
 require.register("segmentio-analytics.js-integrations/lib/mojn.js", function(exports, require, module){
@@ -8545,7 +8575,7 @@ module.exports = exports = function (analytics) {
 var Piwik = exports.Integration = integration('Piwik')
   .global('_paq')
   .option('url', null)
-  .option('id', '')
+  .option('siteId', '')
   .assumesPageview()
   .readyOnInitialize();
 
@@ -8557,7 +8587,7 @@ var Piwik = exports.Integration = integration('Piwik')
 
 Piwik.prototype.initialize = function () {
   window._paq = window._paq || [];
-  push('setSiteId', this.options.id);
+  push('setSiteId', this.options.siteId);
   push('setTrackerUrl', this.options.url + '/piwik.php');
   push('enableLinkTracking');
   this.load();
@@ -8866,7 +8896,7 @@ var Quantcast = exports.Integration = integration('Quantcast')
   .global('_qevents')
   .global('__qc')
   .option('pCode', null)
-  .option('labelPages', false);
+  .option('advertise', false);
 
 
 /**
@@ -8929,7 +8959,7 @@ Quantcast.prototype.page = function (page) {
   var name = page.name();
   var settings = {
     event: 'refresh',
-    labels: labels('Page', category, name),
+    labels: this.labels('page', category, name),
     qacct: this.options.pCode,
   };
   if (user.id()) settings.uid = user.id();
@@ -8965,7 +8995,7 @@ Quantcast.prototype.track = function (track) {
   var revenue = track.revenue();
   var settings = {
     event: 'click',
-    labels: labels('Event', name),
+    labels: this.labels('event', name),
     qacct: this.options.pCode
   };
   if (revenue !== null) settings.revenue = (revenue+''); // convert to string
@@ -8984,9 +9014,16 @@ Quantcast.prototype.track = function (track) {
 Quantcast.prototype.completedOrder = function(track){
   var name = track.event();
   var revenue = track.total();
+  var labels = this.labels('event', name);
+  var category = track.category();
+
+  if (this.options.advertise && category) {
+    labels += ',' + this.labels('pcat', category);
+  }
+
   var settings = {
     event: 'refresh', // the example Quantcast sent has completed order send refresh not click
-    labels: labels('Event', name),
+    labels: labels,
     revenue: (revenue+''), // convert to string
     orderid: track.orderId(),
     qacct: this.options.pCode
@@ -8995,25 +9032,40 @@ Quantcast.prototype.completedOrder = function(track){
 };
 
 /**
- * Generate a period-separated label string in Quantcast's style.
- *
- * @param {String} label
- * @param {String} label2
- * ....
+ * Generate quantcast labels.
+ * 
+ * Example:
+ * 
+ *    options.advertise = false;
+ *    labels('event', 'my event');
+ *    // => "event.my event"
+ * 
+ *    options.advertise = true;
+ *    labels('event', 'my event');
+ *    // => "_fp.event.my event"
+ * 
+ * @param {String} type
+ * @param {String} ...
+ * @return {String}
+ * @api private
  */
 
-function labels(){
-  var args = [];
+Quantcast.prototype.labels = function(type){
+  var args = [].slice.call(arguments, 1);
+  var advertise = this.options.advertise;
+  var ret = [];
 
-  for (var i = 0; i < arguments.length; ++i) {
-    if (!arguments[i]) continue;
-    var val = String(arguments[i]);
-    args.push(val.replace(/,/g, ';'));
+  if (advertise && 'page' == type) type = 'event';
+  if (advertise) type = '_fp.' + type;
+
+  for (var i = 0; i < args.length; ++i) {
+    if (null == args[i]) continue;
+    var value = String(args[i]);
+    ret.push(value.replace(/,/g, ';'));
   }
 
-  var basic = args.join('.');
-  return [basic, ['_fp', basic].join('.')].join(',');
-}
+  return [type, ret.join('.')].join('.');
+};
 
 });
 require.register("segmentio-analytics.js-integrations/lib/rollbar.js", function(exports, require, module){
@@ -15245,6 +15297,8 @@ require.alias("segmentio-replace-document-write/index.js", "segmentio-analytics.
 require.alias("component-domify/index.js", "segmentio-replace-document-write/deps/domify/index.js");
 
 require.alias("segmentio-replace-document-write/index.js", "segmentio-replace-document-write/index.js");
+require.alias("component-indexof/index.js", "segmentio-analytics.js-integrations/deps/indexof/index.js");
+
 require.alias("segmentio-canonical/index.js", "analytics/deps/canonical/index.js");
 require.alias("segmentio-canonical/index.js", "canonical/index.js");
 

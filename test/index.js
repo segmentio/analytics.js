@@ -4,7 +4,7 @@ describe('analytics', function () {
   var analytics = window.analytics;
   var require = analytics.require;
   var assert = dev('assert');
-  var createIntegration = require('integration');
+  var createIntegration = dev('integration');
   var each = require('each');
   var Integrations = require('integrations');
   var is = require('is');

@@ -11,7 +11,7 @@ describe('Analytics', function () {
   var group = require('./group');
   var is = require('is');
   var jQuery = dev('jquery');
-  var createIntegration = require('integration');
+  var createIntegration = dev('integration');
   var sinon = dev('sinon');
   var store = require('./store');
   var tick = dev('next-tick');

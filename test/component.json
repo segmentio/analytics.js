@@ -8,6 +8,7 @@
     "component/assert": "*",
     "ianstormtaylor/sinon": "*",
     "ianstormtaylor/trigger-event": "*",
+    "segmentio/analytics.js-integration": "*",
     "jkroso/equals": "*",
     "segmentio/protocol": "*",
     "segmentio/when": "*",

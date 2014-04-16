@@ -230,6 +230,7 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
+
 /**
  * toString ref.
  */
@@ -246,19 +247,20 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
+    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object Error]': return 'error';
+    case '[object String]': return 'string';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
-  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
+  if (val === Object(val)) return 'object';
 
-  return typeof val.valueOf();
+  return typeof val;
 };
 
 });
@@ -1602,13 +1604,16 @@ exports.invoke = function (method) {
   if (!this[method]) return;
   var args = [].slice.call(arguments, 1);
   if (!this._ready) return this.queue(method, args);
+  var ret;
 
   try {
     this.debug('%s with %o', method, args);
-    this[method].apply(this, args);
+    ret = this[method].apply(this, args);
   } catch (e) {
     this.debug('error %o calling %s with %o', e, method, args);
   }
+
+  return ret;
 };
 
 
@@ -1666,7 +1671,7 @@ exports._wrapInitialize = function () {
   this.initialize = function () {
     this.debug('initialize');
     this._initialized = true;
-    initialize.apply(this, arguments);
+    var ret = initialize.apply(this, arguments);
     this.emit('initialize');
 
     var self = this;
@@ -1675,6 +1680,8 @@ exports._wrapInitialize = function () {
         self.emit('ready');
       });
     }
+    
+    return ret;
   };
 
   if (this._assumesPageview) this.initialize = after(2, this.initialize);
@@ -1703,7 +1710,7 @@ exports._wrapLoad = function () {
       return;
     }
 
-    load.call(this, function (err, e) {
+    return load.call(this, function (err, e) {
       self.debug('loaded');
       self.emit('load');
       if (self._readyOnLoad) self.emit('ready');
@@ -1724,14 +1731,10 @@ exports._wrapPage = function () {
   var page = this.page;
   this.page = function () {
     if (this._assumesPageview && !this._initialized) {
-      return this.initialize({
-        category: arguments[0],
-        name: arguments[1],
-        properties: arguments[2],
-        options: arguments[3]
-      });
+      return this.initialize.apply(this, arguments);
     }
-    page.apply(this, arguments);
+    
+    return page.apply(this, arguments);
   };
 };
 
@@ -1747,17 +1750,19 @@ exports._wrapTrack = function(){
   this.track = function(track){
     var event = track.event();
     var called;
+    var ret;
 
     for (var method in events) {
       var regexp = events[method];
       if (!this[method]) continue;
       if (!regexp.test(event)) continue;
-      this[method].apply(this, arguments);
+      ret = this[method].apply(this, arguments);
       called = true;
       break;
     }
 
-    if (!called) t.apply(this, arguments);
+    if (!called) ret = t.apply(this, arguments);
+    return ret;
   };
 };
 
@@ -2634,6 +2639,11 @@ var load = require('load-script');
 
 var user;
 
+/**
+ * HOP
+ */
+
+var has = Object.prototype.hasOwnProperty;
 
 /**
  * Expose plugin.
@@ -2656,6 +2666,7 @@ var AdRoll = exports.Integration = integration('AdRoll')
   .global('adroll_adv_id')
   .global('adroll_pix_id')
   .global('adroll_custom_data')
+  .option('events', {})
   .option('advId', '')
   .option('pixId', '');
 
@@ -2701,6 +2712,25 @@ AdRoll.prototype.load = function (callback) {
     https: 'https://s.adroll.com/j/roundtrip.js'
   }, callback);
 };
+
+/**
+ * Track.
+ * 
+ * @param {Track} track
+ */
+
+AdRoll.prototype.track = function(track){
+  var events = this.options.events;
+  var total = track.revenue() || track.total();
+  var event = track.event();
+  if (has.call(events, event)) event = events[event];
+  window.__adroll.record_user({
+    adroll_conversion_value_in_dollars: total || 0,
+    order_id: track.orderId() || 0,
+    adroll_segments: event
+  });
+};
+
 });
 require.register("segmentio-analytics.js-integrations/lib/adwords.js", function(exports, require, module){
 
@@ -8903,17 +8933,18 @@ var Quantcast = exports.Integration = integration('Quantcast')
  * https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/
  * https://www.quantcast.com/help/cross-platform-audience-measurement-guide/
  *
- * @param {Object} page
+ * @param {Page} page
  */
 
 Quantcast.prototype.initialize = function (page) {
-  page = page || {};
   window._qevents = window._qevents || [];
 
   var opts = this.options;
   var settings = { qacct: opts.pCode };
   if (user.id()) settings.uid = user.id();
   push(settings);
+
+  if (page) this.page(page);
 
   this.load();
 };

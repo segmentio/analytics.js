@@ -13575,7 +13575,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.3.24';
+exports.VERSION = '1.3.25';
 
 
 /**

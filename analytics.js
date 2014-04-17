@@ -2958,7 +2958,7 @@ var Amplitude = exports.Integration = integration('Amplitude')
  */
 
 Amplitude.prototype.initialize = function (page) {
-  (function(e,t){var r=e.amplitude||{}; r._q=[];function i(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)));};} var s=["init","logEvent","setUserId","setGlobalUserProperties","setVersionName", "setDomain"]; for(var c=0;c<s.length;c++){i(s[c]);}e.amplitude=r;})(window,document);
+  (function(e,t){var r=e.amplitude||{}; r._q=[];function i(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)));};} var s=["init","logEvent","setUserId","setGlobalUserProperties","setVersionName","setDomain"]; for(var c=0;c<s.length;c++){i(s[c]);}e.amplitude=r;})(window,document);
   window.amplitude.init(this.options.apiKey);
   this.load();
 };

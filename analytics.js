@@ -935,15 +935,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -955,7 +955,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -967,7 +969,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -980,29 +982,10 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
-
-/**
- * Return default port for `protocol`.
- *
- * @param  {String} protocol
- * @return {String}
- * @api private
- */
-function port (protocol){
-  switch (protocol) {
-    case 'http:':
-      return 80;
-    case 'https:':
-      return 443;
-    default:
-      return location.port;
-  }
-}
-
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1208,8 +1191,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -12779,12 +12767,10 @@ require.register("component-json-fallback/index.js", function(exports, require, 
 // Create a JSON object only if one does not already exist. We create the
 // methods in a closure to avoid creating global variables.
 
-if (typeof JSON !== 'object') {
-    JSON = {};
-}
-
 (function () {
     'use strict';
+
+    var JSON = module.exports = {};
 
     function f(n) {
         // Format integers to have at least two digits.
@@ -13108,14 +13094,16 @@ if (typeof JSON !== 'object') {
     }
 }());
 
-module.exports = JSON;
-
 });
 require.register("segmentio-json/index.js", function(exports, require, module){
 
-module.exports = 'undefined' == typeof JSON
-  ? require('json-fallback')
-  : JSON;
+var json = window.JSON || {};
+var stringify = json.stringify;
+var parse = json.parse;
+
+module.exports = parse && stringify
+  ? JSON
+  : require('json-fallback');
 
 });
 require.register("segmentio-new-date/lib/index.js", function(exports, require, module){

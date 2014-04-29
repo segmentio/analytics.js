@@ -1,4 +1,10 @@
 
+1.3.28 / 2014-04-29 
+==================
+
+ * upgrade integrations to 0.5.10 for navilytics fix and mixpanel fix
+ * component: upgrade to 0.19.6 and add githubusercontent to remotes
+
 1.3.26 / 2014-04-17 
 ==================
 

@@ -518,6 +518,7 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
+
 });
 require.register("component-emitter/index.js", function(exports, require, module){
 
@@ -823,6 +824,7 @@ exports.length = function(obj){
 exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
+
 });
 require.register("component-trim/index.js", function(exports, require, module){
 
@@ -935,15 +937,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -955,9 +957,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -969,7 +969,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -982,10 +982,29 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
+
+/**
+ * Return default port for `protocol`.
+ *
+ * @param  {String} protocol
+ * @return {String}
+ * @api private
+ */
+function port (protocol){
+  switch (protocol) {
+    case 'http:':
+      return 80;
+    case 'https:':
+      return 443;
+    default:
+      return location.port;
+  }
+}
+
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1077,6 +1096,7 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
+
 });
 require.register("timoxley-next-tick/index.js", function(exports, require, module){
 "use strict"
@@ -1188,6 +1208,7 @@ function isEmpty (val) {
   for (var key in val) if (has.call(val, key)) return false;
   return true;
 }
+
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
@@ -1784,6 +1805,7 @@ module.exports = {
   addedProduct: /added product/i,
   completedOrder: /completed order/i
 };
+
 
 });
 require.register("segmentio-analytics.js-integration/lib/statics.js", function(exports, require, module){
@@ -2614,6 +2636,7 @@ function recreate(script){
   ret.defer = script.defer;
   return ret;
 }
+
 });
 require.register("segmentio-analytics.js-integrations/index.js", function(exports, require, module){
 
@@ -4466,6 +4489,7 @@ function convertDate (date) {
   return Math.floor(date.getTime() / 1000);
 }
 
+
 });
 require.register("segmentio-analytics.js-integrations/lib/drip.js", function(exports, require, module){
 
@@ -4633,6 +4657,7 @@ Errorception.prototype.identify = function (identify) {
   window._errs.meta = window._errs.meta || {};
   extend(window._errs.meta, traits);
 };
+
 
 });
 require.register("segmentio-analytics.js-integrations/lib/evergage.js", function(exports, require, module){
@@ -5351,6 +5376,7 @@ Gauges.prototype.load = function (callback) {
 Gauges.prototype.page = function (page) {
   push('track');
 };
+
 
 });
 require.register("segmentio-analytics.js-integrations/lib/get-satisfaction.js", function(exports, require, module){
@@ -8750,6 +8776,7 @@ PerfectAudience.prototype.track = function (track) {
   window._pa.track(track.event(), track.properties());
 };
 
+
 });
 require.register("segmentio-analytics.js-integrations/lib/pingdom.js", function(exports, require, module){
 
@@ -9512,6 +9539,7 @@ SaaSquatch.prototype.identify = function(identify){
   this.called = true;
   this.load();
 };
+
 
 });
 require.register("segmentio-analytics.js-integrations/lib/sentry.js", function(exports, require, module){
@@ -10944,6 +10972,7 @@ module.exports = function canonical () {
     if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
   }
 };
+
 });
 require.register("segmentio-extend/index.js", function(exports, require, module){
 
@@ -11217,6 +11246,7 @@ function toSentenceCase (string) {
     return letter.toUpperCase();
   });
 }
+
 });
 require.register("ianstormtaylor-to-slug-case/index.js", function(exports, require, module){
 
@@ -11305,6 +11335,7 @@ require.register("component-escape-regexp/index.js", function(exports, require, 
 module.exports = function(str){
   return String(str).replace(/([.*+?=^!:${}()|[\]\/\\])/g, '\\$1');
 };
+
 });
 require.register("ianstormtaylor-map/index.js", function(exports, require, module){
 
@@ -11462,6 +11493,7 @@ exports.add = function (name, convert) {
 for (var key in cases) {
   exports.add(key, cases[key]);
 }
+
 });
 require.register("ianstormtaylor-case/lib/cases.js", function(exports, require, module){
 
@@ -12673,6 +12705,7 @@ var matcher = /.+\@.+\..+/;
 function isEmail (string) {
   return matcher.test(string);
 }
+
 });
 require.register("segmentio-is-meta/index.js", function(exports, require, module){
 module.exports = function isMeta (e) {
@@ -13376,6 +13409,7 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
+
 });
 require.register("segmentio-new-date/lib/milliseconds.js", function(exports, require, module){
 
@@ -13442,6 +13476,7 @@ exports.parse = function (seconds) {
   var millis = parseInt(seconds, 10) * 1000;
   return new Date(millis);
 };
+
 });
 require.register("segmentio-store.js/store.js", function(exports, require, module){
 ;(function(win){
@@ -13612,6 +13647,7 @@ module.exports = function (urlStr) {
 
   return topLevel ? topLevel[0] : host;
 };
+
 });
 require.register("visionmedia-debug/index.js", function(exports, require, module){
 if ('undefined' == typeof window) {
@@ -13619,6 +13655,7 @@ if ('undefined' == typeof window) {
 } else {
   module.exports = require('./debug');
 }
+
 
 });
 require.register("visionmedia-debug/debug.js", function(exports, require, module){
@@ -13782,6 +13819,7 @@ module.exports = function(e){
     ? e.preventDefault()
     : e.returnValue = false;
 };
+
 
 });
 require.register("analytics/lib/index.js", function(exports, require, module){

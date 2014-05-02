@@ -230,7 +230,6 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
-
 /**
  * toString ref.
  */
@@ -247,20 +246,19 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
-    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object String]': return 'string';
+    case '[object Error]': return 'error';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
+  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
-  if (val === Object(val)) return 'object';
 
-  return typeof val;
+  return typeof val.valueOf();
 };
 
 });
@@ -518,7 +516,6 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-
 });
 require.register("component-emitter/index.js", function(exports, require, module){
 
@@ -824,7 +821,6 @@ exports.length = function(obj){
 exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
-
 });
 require.register("component-trim/index.js", function(exports, require, module){
 
@@ -937,15 +933,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -957,7 +953,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -969,7 +967,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -982,29 +980,10 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
-
-/**
- * Return default port for `protocol`.
- *
- * @param  {String} protocol
- * @return {String}
- * @api private
- */
-function port (protocol){
-  switch (protocol) {
-    case 'http:':
-      return 80;
-    case 'https:':
-      return 443;
-    default:
-      return location.port;
-  }
-}
-
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1096,7 +1075,6 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-
 });
 require.register("timoxley-next-tick/index.js", function(exports, require, module){
 "use strict"
@@ -1208,17 +1186,11 @@ function isEmpty (val) {
   for (var key in val) if (has.call(val, key)) return false;
   return true;
 }
-
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty');
-
-try {
-  var typeOf = require('type');
-} catch (e) {
-  var typeOf = require('component-type');
-}
+var isEmpty = require('is-empty')
+  , typeOf = require('type');
 
 
 /**
@@ -1512,6 +1484,7 @@ module.exports = toNoCase;
  */
 
 var hasSpace = /\s/;
+var hasCamel = /[a-z][A-Z]/;
 var hasSeparator = /[\W_]/;
 
 
@@ -1525,8 +1498,10 @@ var hasSeparator = /[\W_]/;
 
 function toNoCase (string) {
   if (hasSpace.test(string)) return string.toLowerCase();
-  if (hasSeparator.test(string)) return unseparate(string).toLowerCase();
-  return uncamelize(string).toLowerCase();
+
+  if (hasSeparator.test(string)) string = unseparate(string);
+  if (hasCamel.test(string)) string = uncamelize(string);
+  return string.toLowerCase();
 }
 
 
@@ -1938,7 +1913,6 @@ module.exports = {
   addedProduct: /added product/i,
   completedOrder: /completed order/i
 };
-
 
 });
 require.register("segmentio-analytics.js-integration/lib/statics.js", function(exports, require, module){
@@ -2769,7 +2743,6 @@ function recreate(script){
   ret.defer = script.defer;
   return ret;
 }
-
 });
 require.register("ianstormtaylor-to-camel-case/index.js", function(exports, require, module){
 
@@ -2922,7 +2895,6 @@ function toSentenceCase (string) {
     return letter.toUpperCase();
   });
 }
-
 });
 require.register("ianstormtaylor-to-slug-case/index.js", function(exports, require, module){
 
@@ -3011,7 +2983,6 @@ require.register("component-escape-regexp/index.js", function(exports, require, 
 module.exports = function(str){
   return String(str).replace(/([.*+?=^!:${}()|[\]\/\\])/g, '\\$1');
 };
-
 });
 require.register("ianstormtaylor-map/index.js", function(exports, require, module){
 
@@ -3169,7 +3140,6 @@ exports.add = function (name, convert) {
 for (var key in cases) {
   exports.add(key, cases[key]);
 }
-
 });
 require.register("ianstormtaylor-case/lib/cases.js", function(exports, require, module){
 
@@ -4899,20 +4869,14 @@ CrazyEgg.prototype.load = function (callback) {
 });
 require.register("segmentio-analytics.js-integrations/lib/curebit.js", function(exports, require, module){
 
-var push = require('global-queue')('_curebitq');
-var replace = require('replace-document-write');
-var Identify = require('facade').Identify;
-var integration = require('integration');
-var Track = require('facade').Track;
-var iso = require('to-iso-string');
-var onload = require('script-onload');
-var extend = require('extend');
 var clone = require('clone');
 var each = require('each');
-var type = require('type');
-var when = require('when');
+var Identify = require('facade').Identify;
+var integration = require('integration');
+var iso = require('to-iso-string');
 var load = require('load-script');
-
+var push = require('global-queue')('_curebitq');
+var Track = require('facade').Track;
 
 /**
  * User reference
@@ -4928,12 +4892,6 @@ module.exports = exports = function(analytics){
   analytics.addIntegration(Curebit);
   user = analytics.user();
 };
-
-/**
- * HOP
- */
-
-var has = Object.prototype.hasOwnProperty;
 
 /**
  * Expose `Curebit` integration
@@ -4955,18 +4913,17 @@ var Curebit = exports.Integration = integration('Curebit')
   .option('server', 'https://www.curebit.com');
 
 /**
- * Initialize
+ * Initialize.
  *
  * @param {Object} page
  */
 
-Curebit.prototype.initialize = function(){
+Curebit.prototype.initialize = function(page){
   push('init', {
     site_id: this.options.siteId,
     server: this.options.server
   });
   this.load();
-  this.registerAffiliate();
 };
 
 /**
@@ -4980,96 +4937,57 @@ Curebit.prototype.loaded = function(){
 };
 
 /**
- * Load
- *
- * Custom load script because Curebit's javascript needs to be injected
- * right next to where the iframe will appear.
+ * Load Curebit's Javascript library.
  *
  * @param {Function} fn
- * @api private
  */
 
 Curebit.prototype.load = function(fn){
   var url = '//d2jjzw81hqbuqv.cloudfront.net/integration/curebit-1.0.min.js';
-  var tags = this.campaignTags();
-  if (!tags.length)
-    load(url, fn);
-  else
-    this.injectIntoId(url, this.options.insertIntoId, fn);
+  load(url, fn);
 };
 
 /**
- * Insert script into element with ID.
+ * Page.
  *
- * If we *are* loading a campaign, we need to wait for this element to exist.
- *
- * @param {String} url
- * @param {String} id
- * @param {Function} fn
- * @api private
- */
-
-Curebit.prototype.injectIntoId = function(url, id, fn) {
-  var server = this.options.server;
-  when(function () {
-    return document.getElementById(id);
-  }, function () {
-    var script = document.createElement('script');
-    script.src = url;
-    var parent = document.getElementById(id);
-    parent.appendChild(script);
-    onload(script, fn);
-  });
-};
-
-/**
- * Campaign tags.
- *
- * @api private
- */
-
-Curebit.prototype.campaignTags = function(){
-  var campaigns = this.options.campaigns;
-  var path = window.location.pathname;
-  if (!has.call(campaigns, path)) return [];
-  var str = campaigns[path] || '';
-  return str.split(',');
-};
-
-/**
- * Register affiliate.
+ * Call the `register_affiliate` method of the Curebit API that will load a
+ * custom iframe onto the page, only if this page's path is marked as a
+ * campaign.
  *
  * http://www.curebit.com/docs/affiliate/registration
  *
- * @api private
+ * @param {Page} page
  */
 
-Curebit.prototype.registerAffiliate = function(){
-  // Get the campaign tags for this url.
-  var tags = this.campaignTags();
+Curebit.prototype.page = function(page){
+  var campaigns = this.options.campaigns;
+  var path = window.location.pathname;
+  if (!campaigns[path]) return;
+
+  var tags = (campaigns[path] || '').split(',');
   if (!tags.length) return;
 
-  // Set up the basic iframe rendering.
-  var data = {
+  var settings = {
     responsive: this.options.responsive,
     device: this.options.device,
+    campaign_tags: tags,
     iframe: {
       width: this.options.iframeWidth,
       height: this.options.iframeHeight,
       id: this.options.iframeId,
       frameborder: this.options.iframeBorder,
       container: this.options.insertIntoId
-    },
-    campaign_tags: tags
+    }
   };
 
-  // Add affiliate member info if available.
   var identify = new Identify({
     userId: user.id(),
     traits: user.traits()
   });
+
+  // if we have an email, add any information about the user
   if (identify.email()) {
-    data.affiliate_member = {
+    settings.affiliate_member = {
       email: identify.email(),
       first_name: identify.firstName(),
       last_name: identify.lastName(),
@@ -5077,16 +4995,17 @@ Curebit.prototype.registerAffiliate = function(){
     };
   }
 
-  push('register_affiliate', data);
+  push('register_affiliate', settings);
 };
 
 /**
- * Completed order
+ * Completed order.
+ *
+ * Fire the Curebit `register_purchase` with the order details and items.
  *
  * https://www.curebit.com/docs/ecommerce/custom
  *
  * @param {Track} track
- * @api private
  */
 
 Curebit.prototype.completedOrder = function(track){
@@ -5094,14 +5013,11 @@ Curebit.prototype.completedOrder = function(track){
   var products = track.products();
   var props = track.properties();
   var items = [];
-
-  // identify
   var identify = new Identify({
     traits: user.traits(),
     userId: user.id()
   });
 
-  // items
   each(products, function(product){
     var track = new Track({ properties: product });
     items.push({
@@ -5114,7 +5030,6 @@ Curebit.prototype.completedOrder = function(track){
     });
   });
 
-  // transaction
   push('register_purchase', {
     order_date: iso(props.date || new Date),
     order_number: orderId,
@@ -5267,7 +5182,6 @@ Customerio.prototype.track = function (track) {
 function convertDate (date) {
   return Math.floor(date.getTime() / 1000);
 }
-
 
 });
 require.register("segmentio-analytics.js-integrations/lib/drip.js", function(exports, require, module){
@@ -5436,7 +5350,6 @@ Errorception.prototype.identify = function (identify) {
   window._errs.meta = window._errs.meta || {};
   extend(window._errs.meta, traits);
 };
-
 
 });
 require.register("segmentio-analytics.js-integrations/lib/evergage.js", function(exports, require, module){
@@ -6155,7 +6068,6 @@ Gauges.prototype.load = function (callback) {
 Gauges.prototype.page = function (page) {
   push('track');
 };
-
 
 });
 require.register("segmentio-analytics.js-integrations/lib/get-satisfaction.js", function(exports, require, module){
@@ -7482,6 +7394,12 @@ var each = require('each');
 var is = require('is');
 var isEmail = require('is-email');
 var load = require('load-script');
+var defaults = require('defaults');
+var empty = require('is-empty');
+
+
+/* Group reference. */
+var group;
 
 
 /**
@@ -7490,6 +7408,7 @@ var load = require('load-script');
 
 module.exports = exports = function (analytics) {
   analytics.addIntegration(Intercom);
+  group = analytics.group();
 };
 
 
@@ -7541,6 +7460,16 @@ Intercom.prototype.load = function (callback) {
   load('https://static.intercomcdn.com/intercom.v1.js', callback);
 };
 
+/**
+ * Page.
+ *
+ * @param {Page} page
+ */
+
+Intercom.prototype.page = function(page){
+  window.Intercom('update');
+};
+
 
 /**
  * Identify.
@@ -7563,6 +7492,12 @@ Intercom.prototype.identify = function (identify) {
   if (!id && !traits.email) return; // one is required
 
   traits.app_id = this.options.appId;
+
+  // Make sure company traits are carried over (fixes #120).
+  if (!empty(group.traits())) {
+    traits.company = traits.company || {};
+    defaults(traits.company, group.traits());
+  }
 
   // name
   if (name) traits.name = name;
@@ -8240,7 +8175,9 @@ Klaviyo.prototype.group = function (group) {
  */
 
 Klaviyo.prototype.track = function (track) {
-  push('track', track.event(), track.properties());
+  push('track', track.event(), track.properties({
+    revenue: '$value'
+  }));
 };
 
 });
@@ -9558,7 +9495,6 @@ PerfectAudience.prototype.track = function (track) {
   window._pa.track(track.event(), track.properties());
 };
 
-
 });
 require.register("segmentio-analytics.js-integrations/lib/pingdom.js", function(exports, require, module){
 
@@ -10321,7 +10257,6 @@ SaaSquatch.prototype.identify = function(identify){
   this.called = true;
   this.load();
 };
-
 
 });
 require.register("segmentio-analytics.js-integrations/lib/sentry.js", function(exports, require, module){
@@ -11754,7 +11689,6 @@ module.exports = function canonical () {
     if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
   }
 };
-
 });
 require.register("segmentio-extend/index.js", function(exports, require, module){
 
@@ -12765,7 +12699,6 @@ var matcher = /.+\@.+\..+/;
 function isEmail (string) {
   return matcher.test(string);
 }
-
 });
 require.register("segmentio-is-meta/index.js", function(exports, require, module){
 module.exports = function isMeta (e) {
@@ -13469,7 +13402,6 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
-
 });
 require.register("segmentio-new-date/lib/milliseconds.js", function(exports, require, module){
 
@@ -13536,7 +13468,6 @@ exports.parse = function (seconds) {
   var millis = parseInt(seconds, 10) * 1000;
   return new Date(millis);
 };
-
 });
 require.register("segmentio-store.js/store.js", function(exports, require, module){
 ;(function(win){
@@ -13707,7 +13638,6 @@ module.exports = function (urlStr) {
 
   return topLevel ? topLevel[0] : host;
 };
-
 });
 require.register("visionmedia-debug/index.js", function(exports, require, module){
 if ('undefined' == typeof window) {
@@ -13715,7 +13645,6 @@ if ('undefined' == typeof window) {
 } else {
   module.exports = require('./debug');
 }
-
 
 });
 require.register("visionmedia-debug/debug.js", function(exports, require, module){
@@ -13880,7 +13809,6 @@ module.exports = function(e){
     : e.returnValue = false;
 };
 
-
 });
 require.register("analytics/lib/index.js", function(exports, require, module){
 
@@ -13911,7 +13839,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.3.28';
+exports.VERSION = '1.3.29';
 
 
 /**
@@ -15391,6 +15319,8 @@ require.alias("segmentio-analytics.js-integrations/lib/webengage.js", "analytics
 require.alias("segmentio-analytics.js-integrations/lib/woopra.js", "analytics/deps/integrations/lib/woopra.js");
 require.alias("segmentio-analytics.js-integrations/lib/yandex-metrica.js", "analytics/deps/integrations/lib/yandex-metrica.js");
 require.alias("segmentio-analytics.js-integrations/index.js", "integrations/index.js");
+require.alias("avetisk-defaults/index.js", "segmentio-analytics.js-integrations/deps/defaults/index.js");
+
 require.alias("component-clone/index.js", "segmentio-analytics.js-integrations/deps/clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
@@ -15420,6 +15350,8 @@ require.alias("ianstormtaylor-is/index.js", "segmentio-analytics.js-integrations
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
 require.alias("ianstormtaylor-is-empty/index.js", "ianstormtaylor-is/deps/is-empty/index.js");
+
+require.alias("ianstormtaylor-is-empty/index.js", "segmentio-analytics.js-integrations/deps/is-empty/index.js");
 
 require.alias("segmentio-alias/index.js", "segmentio-analytics.js-integrations/deps/alias/index.js");
 require.alias("component-clone/index.js", "segmentio-alias/deps/clone/index.js");

@@ -1,4 +1,9 @@
 
+1.3.30 / 2014-05-07 
+==================
+
+ * upgrade integrations to 0.6.1 for google analytics custom dimensions and metrics
+
 1.3.28 / 2014-04-29 
 ==================
 

@@ -230,6 +230,7 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
+
 /**
  * toString ref.
  */
@@ -246,19 +247,20 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
+    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object Error]': return 'error';
+    case '[object String]': return 'string';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
-  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
+  if (val === Object(val)) return 'object';
 
-  return typeof val.valueOf();
+  return typeof val;
 };
 
 });
@@ -1189,8 +1191,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -6149,8 +6156,12 @@ var is = require('is');
 var load = require('load-script');
 var push = require('global-queue')('_gaq');
 var Track = require('facade').Track;
+var length = require('object').length;
+var keys = require('object').keys;
+var dot = require('obj-case');
 var type = require('type');
 var url = require('url');
+var group;
 var user;
 
 
@@ -6160,6 +6171,7 @@ var user;
 
 module.exports = exports = function (analytics) {
   analytics.addIntegration(GA);
+  group = analytics.group();
   user = analytics.user();
 };
 
@@ -6188,7 +6200,9 @@ var GA = exports.Integration = integration('Google Analytics')
   .option('trackingId', '')
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true)
-  .option('sendUserId', false);
+  .option('sendUserId', false)
+  .option('metrics', {})
+  .option('dimensions', {});
 
 
 /**
@@ -6215,6 +6229,9 @@ GA.on('construct', function (integration) {
 
 GA.prototype.initialize = function () {
   var opts = this.options;
+  var gMetrics = metrics(group.traits(), opts);
+  var uMetrics = metrics(user.traits(), opts);
+  var custom;
 
   // setup the tracker globals
   window.GoogleAnalyticsObject = 'ga';
@@ -6238,11 +6255,15 @@ GA.prototype.initialize = function () {
   // send global id
   if (opts.sendUserId && user.id()) {
     window.ga('set', '&uid', user.id());
-  }
+  }  
 
   // anonymize after initializing, otherwise a warning is shown
   // in google analytics debugger
   if (opts.anonymizeIp) window.ga('set', 'anonymizeIp', true);
+
+  // custom dimensions & metrics
+  if (length(gMetrics)) window.ga('set', gMetrics);
+  if (length(uMetrics)) window.ga('set', uMetrics);
 
   this.load();
 };
@@ -6282,15 +6303,19 @@ GA.prototype.page = function (page) {
   var category = page.category();
   var props = page.properties();
   var name = page.fullName();
+  var pageview = {};
   var track;
 
   this._category = category; // store for later
 
-  window.ga('send', 'pageview', {
-    page: path(props, this.options),
-    title: name || props.title,
-    location: props.url
-  });
+  // add metrics and dimensions
+  var hit = metrics(page.properties(), this.options);
+  hit.page = path(props, this.options);
+  hit.title = name || props.title;
+  hit.location = props.url;
+
+  // send
+  window.ga('send', 'pageview', hit);
 
   // categorized pages
   if (category && this.options.trackCategorizedPages) {
@@ -6318,16 +6343,19 @@ GA.prototype.page = function (page) {
 GA.prototype.track = function (track, options) {
   var opts = options || track.options(this.name);
   var props = track.properties();
-  var revenue = track.revenue();
-  var event = track.event();
 
-  window.ga('send', 'event', {
-    eventAction: event,
-    eventCategory: this._category || props.category || 'All',
-    eventLabel: props.label,
-    eventValue: formatValue(props.value || revenue),
-    nonInteraction: props.noninteraction || opts.noninteraction
-  });
+  // metrics & dimensions
+  var event = metrics(props, this.options);
+
+  // event
+  event.eventAction = track.event();
+  event.eventCategory = this._category || props.category || 'All';
+  event.eventLabel = props.label;
+  event.eventValue = formatValue(props.value || track.revenue());
+  event.nonInteraction = props.noninteraction || opts.noninteraction;
+
+  // send
+  window.ga('send', 'event', event);
 };
 
 /**
@@ -6568,6 +6596,39 @@ function path (properties, options) {
 function formatValue (value) {
   if (!value || value < 0) return 0;
   return Math.round(value);
+}
+
+/**
+ * Map google's custom dimensions & metrics with `obj`.
+ * 
+ * Example:
+ * 
+ *      metrics({ revenue: 1.9 }, { { metrics : { metric8: 'revenue' } });
+ *      // => { metric8: 1.9 }
+ * 
+ *      metrics({ revenue: 1.9 }, {});
+ *      // => {}
+ * 
+ * @param {Object} obj
+ * @param {Object} data
+ * @return {Object|null}
+ * @api private
+ */
+
+function metrics(obj, data){
+  var dimensions = data.dimensions;
+  var metrics = data.metrics;
+  var names = keys(metrics).concat(keys(dimensions));
+  var ret = {};
+
+  for (var i = 0; i < names.length; ++i) {
+    var name = metrics[names[i]] || dimensions[names[i]];
+    var value = dot(obj, name);
+    if (null == value) continue;
+    ret[names[i]] = value;
+  }
+
+  return ret;
 }
 
 });
@@ -15565,6 +15626,8 @@ require.alias("component-domify/index.js", "segmentio-replace-document-write/dep
 
 require.alias("segmentio-replace-document-write/index.js", "segmentio-replace-document-write/index.js");
 require.alias("component-indexof/index.js", "segmentio-analytics.js-integrations/deps/indexof/index.js");
+
+require.alias("component-object/index.js", "segmentio-analytics.js-integrations/deps/object/index.js");
 
 require.alias("segmentio-obj-case/index.js", "segmentio-analytics.js-integrations/deps/obj-case/index.js");
 require.alias("segmentio-obj-case/index.js", "segmentio-analytics.js-integrations/deps/obj-case/index.js");

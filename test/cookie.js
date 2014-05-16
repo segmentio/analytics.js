@@ -50,6 +50,11 @@ describe('cookie', function () {
       assert(equal(cookie.options().path, '/xyz'));
       assert(equal(cookie.options().maxage, 31536000000));
     });
-  });
 
+    // TODO: unskip once we don't use `window`, instead mock it :/
+    it.skip('should set domain localhost to `""`', function(){
+      cookie.options({});
+      assert('' == cookie.options().domain);
+    })
+  });
 });

@@ -50,6 +50,11 @@ describe('cookie', function () {
       assert(equal(cookie.options().path, '/xyz'));
       assert(equal(cookie.options().maxage, 31536000000));
     });
+
+    it('should set domain localhost to `""`', function(){
+      cookie.options({});
+      assert('' == cookie.options().domain);
+    })
   });
 
 });

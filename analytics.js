@@ -201,32 +201,20 @@ require.relative = function(parent) {
   return localRequire;
 };
 require.register("avetisk-defaults/index.js", function(exports, require, module){
-'use strict';
-
 /**
- * Merge default values.
- *
- * @param {Object} dest
- * @param {Object} defaults
- * @return {Object}
- * @api public
+ * Expose `defaults`.
  */
-var defaults = function (dest, src, recursive) {
-  for (var prop in src) {
-    if (recursive && dest[prop] instanceof Object && src[prop] instanceof Object) {
-      dest[prop] = defaults(dest[prop], src[prop], true);
-    } else if (! (prop in dest)) {
-      dest[prop] = src[prop];
+module.exports = defaults;
+
+function defaults (dest, defaults) {
+  for (var prop in defaults) {
+    if (! (prop in dest)) {
+      dest[prop] = defaults[prop];
     }
   }
 
   return dest;
 };
-
-/**
- * Expose `defaults`.
- */
-module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
@@ -13931,7 +13919,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.3.30';
+exports.VERSION = '1.3.31';
 
 
 /**

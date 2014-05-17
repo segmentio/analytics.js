@@ -27,7 +27,7 @@
     "segmentio/analytics.js-integrations": "0.6.1",
     "segmentio/canonical": "0.0.1",
     "segmentio/extend": "0.0.1",
-    "segmentio/facade": "0.2.11",
+    "segmentio/facade": "0.3.10",
     "segmentio/is-email": "0.1.1",
     "segmentio/is-meta": "0.0.1",
     "segmentio/isodate-traverse": "0.3.0",

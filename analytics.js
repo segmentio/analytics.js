@@ -201,20 +201,32 @@ require.relative = function(parent) {
   return localRequire;
 };
 require.register("avetisk-defaults/index.js", function(exports, require, module){
-/**
- * Expose `defaults`.
- */
-module.exports = defaults;
+'use strict';
 
-function defaults (dest, defaults) {
-  for (var prop in defaults) {
-    if (! (prop in dest)) {
-      dest[prop] = defaults[prop];
+/**
+ * Merge default values.
+ *
+ * @param {Object} dest
+ * @param {Object} defaults
+ * @return {Object}
+ * @api public
+ */
+var defaults = function (dest, src, recursive) {
+  for (var prop in src) {
+    if (recursive && dest[prop] instanceof Object && src[prop] instanceof Object) {
+      dest[prop] = defaults(dest[prop], src[prop], true);
+    } else if (! (prop in dest)) {
+      dest[prop] = src[prop];
     }
   }
 
   return dest;
 };
+
+/**
+ * Expose `defaults`.
+ */
+module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
@@ -1179,13 +1191,8 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty');
-
-try {
-  var typeOf = require('type');
-} catch (e) {
-  var typeOf = require('component-type');
-}
+var isEmpty = require('is-empty')
+  , typeOf = require('type');
 
 
 /**
@@ -1479,7 +1486,6 @@ module.exports = toNoCase;
  */
 
 var hasSpace = /\s/;
-var hasCamel = /[a-z][A-Z]/;
 var hasSeparator = /[\W_]/;
 
 
@@ -1493,10 +1499,8 @@ var hasSeparator = /[\W_]/;
 
 function toNoCase (string) {
   if (hasSpace.test(string)) return string.toLowerCase();
-
-  if (hasSeparator.test(string)) string = unseparate(string);
-  if (hasCamel.test(string)) string = uncamelize(string);
-  return string.toLowerCase();
+  if (hasSeparator.test(string)) return unseparate(string).toLowerCase();
+  return uncamelize(string).toLowerCase();
 }
 
 
@@ -3493,7 +3497,7 @@ AdRoll.prototype.load = function (callback) {
 
 AdRoll.prototype.track = function(track){
   var events = this.options.events;
-  var total = track.revenue() || track.total();
+  var total = track.revenue();
   var event = track.event();
   if (has.call(events, event)) event = events[event];
   window.__adroll.record_user({
@@ -6182,7 +6186,7 @@ var GA = exports.Integration = integration('Google Analytics')
   .option('domain', 'none')
   .option('doubleClick', false)
   .option('enhancedLinkAttribution', false)
-  .option('ignoreReferrer', null)
+  .option('ignoredReferrers', null)
   .option('includeSearch', false)
   .option('siteSpeedSampleRate', null)
   .option('trackingId', '')
@@ -6407,7 +6411,7 @@ GA.prototype.initializeClassic = function () {
   var db = opts.doubleClick;
   var domain = opts.domain;
   var enhanced = opts.enhancedLinkAttribution;
-  var ignore = opts.ignoreReferrer;
+  var ignore = opts.ignoredReferrers;
   var sample = opts.siteSpeedSampleRate;
 
   window._gaq = window._gaq || [];
@@ -7422,6 +7426,20 @@ Inspectlet.prototype.load = function (callback) {
 
 
 /**
+ * Identify.
+ *
+ * http://www.inspectlet.com/docs#tagging
+ *
+ * @param {Identify} identify
+ */
+
+Inspectlet.prototype.identify = function (identify) {
+  var traits = identify.traits({ id: 'userid' });
+  push('tagSession', traits);
+};
+
+
+/**
  * Track.
  *
  * http://www.inspectlet.com/docs/tags
@@ -7432,7 +7450,6 @@ Inspectlet.prototype.load = function (callback) {
 Inspectlet.prototype.track = function (track) {
   push('tagSession', track.event());
 };
-
 });
 require.register("segmentio-analytics.js-integrations/lib/intercom.js", function(exports, require, module){
 

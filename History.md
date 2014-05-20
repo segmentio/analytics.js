@@ -1,58 +1,63 @@
 
-1.4.0 / 2014-05-17 
+1.5.0 / 2014-05-19
+==================
+
+ * updating analytics.js-integrations to 0.8.0 for KISSmetrics fixes
+
+1.4.0 / 2014-05-17
 ==================
 
  * upgrade integrations to 0.7.0
  * upgrade facade to 0.3.10
 
-1.3.31 / 2014-05-17 
+1.3.31 / 2014-05-17
 ==================
 
  * handle dev envs correctly, closes #359
 
-1.3.30 / 2014-05-07 
+1.3.30 / 2014-05-07
 ==================
 
  * upgrade integrations to 0.6.1 for google analytics custom dimensions and metrics
 
-1.3.28 / 2014-04-29 
+1.3.28 / 2014-04-29
 ==================
 
  * upgrade integrations to 0.5.10 for navilytics fix and mixpanel fix
  * component: upgrade to 0.19.6 and add githubusercontent to remotes
 
-1.3.26 / 2014-04-17 
+1.3.26 / 2014-04-17
 ==================
 
  * upgrade integrations to 0.5.8
 
-1.3.25 / 2014-04-16 
+1.3.25 / 2014-04-16
 ==================
 
  * upgrade integrations to 0.5.6
 
-1.3.24 / 2014-04-15 
+1.3.24 / 2014-04-15
 ==================
 
  * move analytics.js-integration to dev deps
 
-1.3.23 / 2014-04-14 
+1.3.23 / 2014-04-14
 ==================
 
  * upgrade integrations to 0.5.5
  * update querystring to 1.3.0
 
-1.3.22 / 2014-04-11 
+1.3.22 / 2014-04-11
 ==================
 
  * upgrade integrations to 0.5.4
 
-1.3.21 / 2014-04-10 
+1.3.21 / 2014-04-10
 ==================
 
  * add "invoke" event
 
-1.3.20 / 2014-04-07 
+1.3.20 / 2014-04-07
 ==================
 
  * upgrade integrations to 0.5.3

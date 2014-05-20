@@ -230,7 +230,6 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
-
 /**
  * toString ref.
  */
@@ -247,18 +246,21 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
-    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object String]': return 'string';
+    case '[object Error]': return 'error';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
+  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
-  if (val === Object(val)) return 'object';
+
+  val = val.valueOf
+    ? val.valueOf()
+    : Object.prototype.valueOf.apply(val)
 
   return typeof val;
 };
@@ -1682,16 +1684,16 @@ exports.track = function(track){};
  * 
  * Examples:
  * 
- *    { my_event: 'a4991b88' }
- *    .track('My Event');
+ *    events = { my_event: 'a4991b88' }
+ *    .map(events, 'My Event');
  *    // => ["a4991b88"]
- *    .track('whatever');
+ *    .map(events, 'whatever');
  *    // => []
  * 
- *    [{ key: 'my event', value: '9b5eb1fa' }]
- *    .track('my_event');
+ *    events = [{ key: 'my event', value: '9b5eb1fa' }]
+ *    .map(events, 'my_event');
  *    // => ["9b5eb1fa"]
- *    .track('whatever');
+ *    .map(events, 'whatever');
  *    // => []
  * 
  * @param {String} str
@@ -1699,30 +1701,29 @@ exports.track = function(track){};
  * @api public
  */
 
-exports.events = function(str){
-  var events = this.options.events;
+exports.map = function(obj, str){
   var a = normalize(str);
   var ret = [];
 
-  // no events
-  if (!events) return ret;
+  // noop
+  if (!obj) return ret;
 
   // object
-  if ('object' == type(events)) {
-    for (var k in events) {
-      var item = events[k];
+  if ('object' == type(obj)) {
+    for (var k in obj) {
+      var item = obj[k];
       var b = normalize(k);
       if (b == a) ret.push(item);
     }
   }
 
   // array
-  if ('array' == type(events)) {
-    if (!events.length) return ret;
-    if (!events[0].key) return ret;
+  if ('array' == type(obj)) {
+    if (!obj.length) return ret;
+    if (!obj[0].key) return ret;
 
-    for (var i = 0; i < events.length; ++i) {
-      var item = events[i];
+    for (var i = 0; i < obj.length; ++i) {
+      var item = obj[i];
       var b = normalize(item.key);
       if (b == a) ret.push(item.value);
     }
@@ -1915,10 +1916,10 @@ require.register("segmentio-analytics.js-integration/lib/events.js", function(ex
  */
 
 module.exports = {
-  removedProduct: /removed product/i,
-  viewedProduct: /viewed product/i,
-  addedProduct: /added product/i,
-  completedOrder: /completed order/i
+  removedProduct: /removed[ _]?product/i,
+  viewedProduct: /viewed[ _]?product/i,
+  addedProduct: /added[ _]?product/i,
+  completedOrder: /completed[ _]?order/i
 };
 
 });
@@ -1948,6 +1949,36 @@ exports.option = function (key, value) {
   return this;
 };
 
+/**
+ * Add a new mapping option.
+ * 
+ * the method will create a method `name` that will return a mapping
+ * for you to use.
+ * 
+ * Example:
+ * 
+ *    Integration('My Integration')
+ *      .mapping('events');
+ * 
+ *    new MyIntegration().track('My Event');
+ * 
+ *    .track = function(track){
+  *      var events = this.events(track.event());
+  *      each(events, send);
+ *     };
+ * 
+ * @param {String} name
+ * @return {Integration}
+ * @api public
+ */
+
+exports.mapping = function(name){
+  this.option(name, []);
+  this.prototype[name] = function(str){
+    return this.map(this.options[name], str);
+  };
+  return this;
+};
 
 /**
  * Register a new global variable `key` owned by the integration, which will be
@@ -1998,6 +2029,7 @@ exports.readyOnInitialize = function () {
   this.prototype._readyOnInitialize = true;
   return this;
 };
+
 });
 require.register("segmentio-convert-dates/index.js", function(exports, require, module){
 
@@ -7957,8 +7989,8 @@ var KISSmetrics = exports.Integration = integration('KISSmetrics')
   .global('KM')
   .global('_kmil')
   .option('apiKey', '')
-  .option('trackNamedPages', true)
-  .option('trackCategorizedPages', true);
+  .option('trackPages', true)
+  .option('prefixProperties', true);
 
 
 /**
@@ -8014,18 +8046,13 @@ KISSmetrics.prototype.load = function (callback) {
  */
 
 KISSmetrics.prototype.page = function (page) {
-  var category = page.category();
   var name = page.fullName();
   var opts = this.options;
 
   // named pages
-  if (name && opts.trackNamedPages) {
-    this.track(page.track(name));
-  }
-
-  // categorized pages
-  if (category && opts.trackCategorizedPages) {
-    this.track(page.track(category));
+  if (name && opts.trackPages) {
+    var track = page.track(name);
+    this.track(track);
   }
 };
 
@@ -8051,8 +8078,11 @@ KISSmetrics.prototype.identify = function (identify) {
  */
 
 KISSmetrics.prototype.track = function (track) {
-  var props = track.properties({ revenue: 'Billing Amount' });
-  push('record', track.event(), props);
+  var mapping = { revenue: 'Billing Amount' };
+  var event = track.event();
+  var properties = track.properties(mapping);
+  if (this.options.prefixProperties) properties = prefix(event, properties);
+  push('record', event, properties);
 };
 
 
@@ -8067,28 +8097,6 @@ KISSmetrics.prototype.alias = function (alias) {
 };
 
 /**
- * Viewed product.
- *
- * @param {Track} track
- * @api private
- */
-
-KISSmetrics.prototype.viewedProduct = function(track){
-  push('record', 'Product Viewed', toProduct(track));
-};
-
-/**
- * Product added.
- *
- * @param {Track} track
- * @api private
- */
-
-KISSmetrics.prototype.addedProduct = function(track){
-  push('record', 'Product Added', toProduct(track));
-};
-
-/**
  * Completed order.
  *
  * @param {Track} track
@@ -8096,22 +8104,18 @@ KISSmetrics.prototype.addedProduct = function(track){
  */
 
 KISSmetrics.prototype.completedOrder = function(track){
-  var orderId = track.orderId();
   var products = track.products();
+  var event = track.event();
 
   // transaction
-  push('record', 'Purchased', {
-    'Order ID': track.orderId(),
-    'Order Total': track.total()
-  });
+  push('record', event, prefix(event, track.properties()));
 
   // items
   window._kmq.push(function(){
     var km = window.KM;
     each(products, function(product, i){
-      var track = new Track({ properties: product });
-      var item = toProduct(track);
-      item['Order ID'] = orderId;
+      var temp = new Track({ event: event, properties: product });
+      var item = prefix(event, product);
       item._t = km.ts() + i;
       item._d = 1;
       km.set(item);
@@ -8120,20 +8124,24 @@ KISSmetrics.prototype.completedOrder = function(track){
 };
 
 /**
- * Get a product from the given `track`.
+ * Prefix properties with the event name.
  *
- * @param {Track} track
- * @return {Object}
+ * @param {String} event
+ * @param {Object} properties
+ * @return {Object} prefixed
  * @api private
  */
 
-function toProduct(track){
-  return {
-    Quantity: track.quantity(),
-    Price: track.price(),
-    Name: track.name(),
-    SKU: track.sku()
-  };
+function prefix(event, properties){
+  var prefixed = {};
+  each(properties, function(key, val){
+    if (key === 'Billing Amount') {
+      prefixed[key] = val;
+    } else {
+      prefixed[event + ' - ' + key] = val;
+    }
+  });
+  return prefixed;
 }
 
 });
@@ -14128,7 +14136,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.4.0';
+exports.VERSION = '1.5.0';
 
 /**
  * Add integrations.

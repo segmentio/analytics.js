@@ -937,15 +937,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -957,9 +957,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -971,7 +969,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -984,10 +982,29 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
+
+/**
+ * Return default port for `protocol`.
+ *
+ * @param  {String} protocol
+ * @return {String}
+ * @api private
+ */
+function port (protocol){
+  switch (protocol) {
+    case 'http:':
+      return 80;
+    case 'https:':
+      return 443;
+    default:
+      return location.port;
+  }
+}
+
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1493,7 +1510,6 @@ module.exports = toNoCase;
  */
 
 var hasSpace = /\s/;
-var hasCamel = /[a-z][A-Z]/;
 var hasSeparator = /[\W_]/;
 
 
@@ -1507,10 +1523,8 @@ var hasSeparator = /[\W_]/;
 
 function toNoCase (string) {
   if (hasSpace.test(string)) return string.toLowerCase();
-
-  if (hasSeparator.test(string)) string = unseparate(string);
-  if (hasCamel.test(string)) string = uncamelize(string);
-  return string.toLowerCase();
+  if (hasSeparator.test(string)) return unseparate(string).toLowerCase();
+  return uncamelize(string).toLowerCase();
 }
 
 
@@ -4541,124 +4555,6 @@ ChurnBee.prototype.track = function(track){
 };
 
 });
-require.register("segmentio-analytics.js-integrations/lib/clicktale.js", function(exports, require, module){
-
-var date = require('load-date');
-var domify = require('domify');
-var each = require('each');
-var integration = require('integration');
-var is = require('is');
-var useHttps = require('use-https');
-var load = require('load-script');
-var onBody = require('on-body');
-
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function (analytics) {
-  analytics.addIntegration(ClickTale);
-};
-
-
-/**
- * Expose `ClickTale` integration.
- */
-
-var ClickTale = exports.Integration = integration('ClickTale')
-  .assumesPageview()
-  .readyOnLoad()
-  .global('WRInitTime')
-  .global('ClickTale')
-  .global('ClickTaleSetUID')
-  .global('ClickTaleField')
-  .global('ClickTaleEvent')
-  .option('httpCdnUrl', 'http://s.clicktale.net/WRe0.js')
-  .option('httpsCdnUrl', '')
-  .option('projectId', '')
-  .option('recordingRatio', 0.01)
-  .option('partitionId', '');
-
-
-/**
- * Initialize.
- *
- * http://wiki.clicktale.com/Article/JavaScript_API
- *
- * @param {Object} page
- */
-
-ClickTale.prototype.initialize = function (page) {
-  var options = this.options;
-  window.WRInitTime = date.getTime();
-
-  onBody(function (body) {
-    body.appendChild(domify('<div id="ClickTaleDiv" style="display: none;">'));
-  });
-
-  this.load(function () {
-    window.ClickTale(options.projectId, options.recordingRatio, options.partitionId);
-  });
-};
-
-
-/**
- * Loaded?
- *
- * @return {Boolean}
- */
-
-ClickTale.prototype.loaded = function () {
-  return is.fn(window.ClickTale);
-};
-
-
-/**
- * Load the ClickTale library.
- *
- * @param {Function} callback
- */
-
-ClickTale.prototype.load = function (callback) {
-  var http = this.options.httpCdnUrl;
-  var https = this.options.httpsCdnUrl;
-  if (useHttps() && !https) return this.debug('https option required');
-  load({ http: http, https: https }, callback);
-};
-
-
-/**
- * Identify.
- *
- * http://wiki.clicktale.com/Article/ClickTaleTag#ClickTaleSetUID
- * http://wiki.clicktale.com/Article/ClickTaleTag#ClickTaleField
- *
- * @param {Identify} identify
- */
-
-ClickTale.prototype.identify = function (identify) {
-  var id = identify.userId();
-  window.ClickTaleSetUID(id);
-  each(identify.traits(), function (key, value) {
-    window.ClickTaleField(key, value);
-  });
-};
-
-
-/**
- * Track.
- *
- * http://wiki.clicktale.com/Article/ClickTaleTag#ClickTaleEvent
- *
- * @param {Track} track
- */
-
-ClickTale.prototype.track = function (track) {
-  window.ClickTaleEvent(track.event());
-};
-
-});
 require.register("segmentio-analytics.js-integrations/lib/clicky.js", function(exports, require, module){
 
 var Identify = require('facade').Identify;
@@ -7502,6 +7398,7 @@ var isEmail = require('is-email');
 var load = require('load-script');
 var defaults = require('defaults');
 var empty = require('is-empty');
+var when = require('when');
 
 
 /* Group reference. */
@@ -7558,12 +7455,21 @@ Intercom.prototype.loaded = function () {
 
 /**
  * Load the Intercom library.
+ * 
+ * TODO: remove `when()` when integration `.loaded()`
+ * behavior is fixed.
  *
  * @param {Function} callback
  */
 
 Intercom.prototype.load = function (callback) {
-  load('https://static.intercomcdn.com/intercom.v1.js', callback);
+  var self = this;
+  load('https://static.intercomcdn.com/intercom.v1.js', function(err){
+    if (err) return callback(err);
+    when(function(){
+      return self.loaded();
+    }, callback);
+  });
 };
 
 /**
@@ -7989,7 +7895,8 @@ var KISSmetrics = exports.Integration = integration('KISSmetrics')
   .global('KM')
   .global('_kmil')
   .option('apiKey', '')
-  .option('trackPages', true)
+  .option('trackNamedPages', true)
+  .option('trackCategorizedPages', true)
   .option('prefixProperties', true);
 
 
@@ -8046,13 +7953,18 @@ KISSmetrics.prototype.load = function (callback) {
  */
 
 KISSmetrics.prototype.page = function (page) {
+  var category = page.category();
   var name = page.fullName();
   var opts = this.options;
 
   // named pages
-  if (name && opts.trackPages) {
-    var track = page.track(name);
-    this.track(track);
+  if (name && opts.trackNamedPages) {
+    this.track(page.track(name));
+  }
+
+  // categorized pages
+  if (category && opts.trackCategorizedPages) {
+    this.track(page.track(category));
   }
 };
 
@@ -9098,6 +9010,7 @@ var MouseStats = exports.Integration = integration('MouseStats')
   .assumesPageview()
   .readyOnLoad()
   .global('msaa')
+  .global('MouseStatsVisitorPlaybacks')
   .option('accountNumber', '');
 
 
@@ -9121,7 +9034,7 @@ MouseStats.prototype.initialize = function (page) {
  */
 
 MouseStats.prototype.loaded = function () {
-  return is.fn(window.msaa);
+  return is.array(window.MouseStatsVisitorPlaybacks);
 };
 
 
@@ -14136,7 +14049,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.5.0';
+exports.VERSION = '1.5.1';
 
 /**
  * Add integrations.
@@ -15349,7 +15262,6 @@ module.exports = [
   "bugsnag",
   "chartbeat",
   "churnbee",
-  "clicktale",
   "clicky",
   "comscore",
   "crazy-egg",
@@ -15554,7 +15466,6 @@ require.alias("segmentio-analytics.js-integrations/lib/bugherd.js", "analytics/d
 require.alias("segmentio-analytics.js-integrations/lib/bugsnag.js", "analytics/deps/integrations/lib/bugsnag.js");
 require.alias("segmentio-analytics.js-integrations/lib/chartbeat.js", "analytics/deps/integrations/lib/chartbeat.js");
 require.alias("segmentio-analytics.js-integrations/lib/churnbee.js", "analytics/deps/integrations/lib/churnbee.js");
-require.alias("segmentio-analytics.js-integrations/lib/clicktale.js", "analytics/deps/integrations/lib/clicktale.js");
 require.alias("segmentio-analytics.js-integrations/lib/clicky.js", "analytics/deps/integrations/lib/clicky.js");
 require.alias("segmentio-analytics.js-integrations/lib/comscore.js", "analytics/deps/integrations/lib/comscore.js");
 require.alias("segmentio-analytics.js-integrations/lib/crazy-egg.js", "analytics/deps/integrations/lib/crazy-egg.js");

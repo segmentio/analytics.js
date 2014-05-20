@@ -1,4 +1,9 @@
 
+1.5.1 / 2014-05-20
+==================
+
+ * update analytics.js-integrations dep for reverting KISSmetrics fixes
+
 1.5.0 / 2014-05-19
 ==================
 

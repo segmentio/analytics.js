@@ -1210,13 +1210,8 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty');
-
-try {
-  var typeOf = require('type');
-} catch (e) {
-  var typeOf = require('component-type');
-}
+var isEmpty = require('is-empty')
+  , typeOf = require('type');
 
 
 /**
@@ -6296,6 +6291,7 @@ GA.prototype.track = function (track, options) {
  */
 
 GA.prototype.completedOrder = function(track){
+  var total = track.total() || track.revenue() || 0;
   var orderId = track.orderId();
   var products = track.products();
   var props = track.properties();
@@ -6313,7 +6309,7 @@ GA.prototype.completedOrder = function(track){
   window.ga('ecommerce:addTransaction', {
     affiliation: props.affiliation,
     shipping: track.shipping(),
-    revenue: track.total(),
+    revenue: total,
     tax: track.tax(),
     id: orderId
   });
@@ -6465,6 +6461,7 @@ GA.prototype.trackClassic = function (track, options) {
  */
 
 GA.prototype.completedOrderClassic = function(track){
+  var total = track.total() || track.revenue() || 0;
   var orderId = track.orderId();
   var products = track.products() || [];
   var props = track.properties();
@@ -6476,7 +6473,7 @@ GA.prototype.completedOrderClassic = function(track){
   push('_addTrans'
     , orderId
     , props.affiliation
-    , track.total()
+    , total
     , track.tax()
     , track.shipping()
     , track.city()
@@ -14049,7 +14046,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.5.1';
+exports.VERSION = '1.5.2';
 
 /**
  * Add integrations.

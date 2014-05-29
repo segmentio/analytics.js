@@ -937,15 +937,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -957,7 +957,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -969,7 +971,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -982,29 +984,10 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
-
-/**
- * Return default port for `protocol`.
- *
- * @param  {String} protocol
- * @return {String}
- * @api private
- */
-function port (protocol){
-  switch (protocol) {
-    case 'http:':
-      return 80;
-    case 'https:':
-      return 443;
-    default:
-      return location.port;
-  }
-}
-
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1210,8 +1193,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -1427,6 +1415,132 @@ module.exports = function(fn) {
 };
 
 });
+require.register("ianstormtaylor-to-no-case/index.js", function(exports, require, module){
+
+/**
+ * Expose `toNoCase`.
+ */
+
+module.exports = toNoCase;
+
+
+/**
+ * Test whether a string is camel-case.
+ */
+
+var hasSpace = /\s/;
+var hasCamel = /[a-z][A-Z]/;
+var hasSeparator = /[\W_]/;
+
+
+/**
+ * Remove any starting case from a `string`, like camel or snake, but keep
+ * spaces and punctuation that may be important otherwise.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function toNoCase (string) {
+  if (hasSpace.test(string)) return string.toLowerCase();
+
+  if (hasSeparator.test(string)) string = unseparate(string);
+  if (hasCamel.test(string)) string = uncamelize(string);
+  return string.toLowerCase();
+}
+
+
+/**
+ * Separator splitter.
+ */
+
+var separatorSplitter = /[\W_]+(.|$)/g;
+
+
+/**
+ * Un-separate a `string`.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function unseparate (string) {
+  return string.replace(separatorSplitter, function (m, next) {
+    return next ? ' ' + next : '';
+  });
+}
+
+
+/**
+ * Camelcase splitter.
+ */
+
+var camelSplitter = /(.)([A-Z]+)/g;
+
+
+/**
+ * Un-camelcase a `string`.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function uncamelize (string) {
+  return string.replace(camelSplitter, function (m, previous, uppers) {
+    return previous + ' ' + uppers.toLowerCase().split('').join(' ');
+  });
+}
+});
+require.register("ianstormtaylor-to-space-case/index.js", function(exports, require, module){
+
+var clean = require('to-no-case');
+
+
+/**
+ * Expose `toSpaceCase`.
+ */
+
+module.exports = toSpaceCase;
+
+
+/**
+ * Convert a `string` to space case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSpaceCase (string) {
+  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
+    return match ? ' ' + match : '';
+  });
+}
+});
+require.register("ianstormtaylor-to-snake-case/index.js", function(exports, require, module){
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toSnakeCase`.
+ */
+
+module.exports = toSnakeCase;
+
+
+/**
+ * Convert a `string` to snake case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSnakeCase (string) {
+  return toSpace(string).replace(/\s/g, '_');
+}
+
+});
 require.register("segmentio-alias/index.js", function(exports, require, module){
 
 var type = require('type');
@@ -1489,79 +1603,6 @@ function aliasByFunction (obj, convert) {
   var output = {};
   for (var key in obj) output[convert(key)] = obj[key];
   return output;
-}
-});
-require.register("ianstormtaylor-to-no-case/index.js", function(exports, require, module){
-
-/**
- * Expose `toNoCase`.
- */
-
-module.exports = toNoCase;
-
-
-/**
- * Test whether a string is camel-case.
- */
-
-var hasSpace = /\s/;
-var hasSeparator = /[\W_]/;
-
-
-/**
- * Remove any starting case from a `string`, like camel or snake, but keep
- * spaces and punctuation that may be important otherwise.
- *
- * @param {String} string
- * @return {String}
- */
-
-function toNoCase (string) {
-  if (hasSpace.test(string)) return string.toLowerCase();
-  if (hasSeparator.test(string)) return unseparate(string).toLowerCase();
-  return uncamelize(string).toLowerCase();
-}
-
-
-/**
- * Separator splitter.
- */
-
-var separatorSplitter = /[\W_]+(.|$)/g;
-
-
-/**
- * Un-separate a `string`.
- *
- * @param {String} string
- * @return {String}
- */
-
-function unseparate (string) {
-  return string.replace(separatorSplitter, function (m, next) {
-    return next ? ' ' + next : '';
-  });
-}
-
-
-/**
- * Camelcase splitter.
- */
-
-var camelSplitter = /(.)([A-Z]+)/g;
-
-
-/**
- * Un-camelcase a `string`.
- *
- * @param {String} string
- * @return {String}
- */
-
-function uncamelize (string) {
-  return string.replace(camelSplitter, function (m, previous, uppers) {
-    return previous + ' ' + uppers.toLowerCase().split('').join(' ');
-  });
 }
 });
 require.register("segmentio-analytics.js-integration/lib/index.js", function(exports, require, module){
@@ -2966,56 +3007,6 @@ module.exports = toSlugCase;
 
 function toSlugCase (string) {
   return toSpace(string).replace(/\s/g, '-');
-}
-});
-require.register("ianstormtaylor-to-snake-case/index.js", function(exports, require, module){
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toSnakeCase`.
- */
-
-module.exports = toSnakeCase;
-
-
-/**
- * Convert a `string` to snake case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSnakeCase (string) {
-  return toSpace(string).replace(/\s/g, '_');
-}
-
-});
-require.register("ianstormtaylor-to-space-case/index.js", function(exports, require, module){
-
-var clean = require('to-no-case');
-
-
-/**
- * Expose `toSpaceCase`.
- */
-
-module.exports = toSpaceCase;
-
-
-/**
- * Convert a `string` to space case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSpaceCase (string) {
-  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
-    return match ? ' ' + match : '';
-  });
 }
 });
 require.register("component-escape-regexp/index.js", function(exports, require, module){
@@ -6119,7 +6110,7 @@ var GA = exports.Integration = integration('Google Analytics')
   .option('enhancedLinkAttribution', false)
   .option('ignoredReferrers', null)
   .option('includeSearch', false)
-  .option('siteSpeedSampleRate', null)
+  .option('siteSpeedSampleRate', 1)
   .option('trackingId', '')
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true)
@@ -6272,7 +6263,7 @@ GA.prototype.track = function (track, options) {
 
   // event
   event.eventAction = track.event();
-  event.eventCategory = this._category || props.category || 'All';
+  event.eventCategory = props.category || this._category || 'All';
   event.eventLabel = props.label;
   event.eventValue = formatValue(props.value || track.revenue());
   event.nonInteraction = props.noninteraction || opts.noninteraction;
@@ -7896,6 +7887,18 @@ var KISSmetrics = exports.Integration = integration('KISSmetrics')
   .option('trackCategorizedPages', true)
   .option('prefixProperties', true);
 
+/**
+ * Check if browser is mobile, for kissmetrics.
+ *
+ * http://support.kissmetrics.com/how-tos/browser-detection.html#mobile-vs-non-mobile
+ */
+
+exports.isMobile = navigator.userAgent.match(/Android/i)
+  || navigator.userAgent.match(/BlackBerry/i)
+  || navigator.userAgent.match(/iPhone|iPod/i)
+  || navigator.userAgent.match(/iPad/i)
+  || navigator.userAgent.match(/Opera Mini/i)
+  || navigator.userAgent.match(/IEMobile/i);
 
 /**
  * Initialize.
@@ -7907,6 +7910,7 @@ var KISSmetrics = exports.Integration = integration('KISSmetrics')
 
 KISSmetrics.prototype.initialize = function (page) {
   window._kmq = [];
+  if (exports.isMobile) push('set', { 'Mobile Session': 'Yes' });
   this.load();
 };
 
@@ -8052,7 +8056,6 @@ function prefix(event, properties){
   });
   return prefixed;
 }
-
 });
 require.register("segmentio-analytics.js-integrations/lib/klaviyo.js", function(exports, require, module){
 
@@ -9560,6 +9563,7 @@ require.register("segmentio-analytics.js-integrations/lib/piwik.js", function(ex
 var integration = require('integration');
 var load = require('load-script');
 var push = require('global-queue')('_paq');
+var each = require('each');
 
 /**
  * Expose plugin
@@ -9576,8 +9580,8 @@ var Piwik = exports.Integration = integration('Piwik')
   .global('_paq')
   .option('url', null)
   .option('siteId', '')
-  .assumesPageview()
-  .readyOnInitialize();
+  .readyOnInitialize()
+  .mapping('goals');
 
 /**
  * Initialize.
@@ -9617,6 +9621,20 @@ Piwik.prototype.loaded = function () {
 
 Piwik.prototype.page = function (page) {
   push('trackPageView');
+};
+
+/**
+ * Track.
+ * 
+ * @param {Track} track
+ */
+
+Piwik.prototype.track = function(track){
+  var goals = this.goals(track.event());
+  var revenue = track.revenue() || 0;
+  each(goals, function(goal){
+    push('trackGoal', goal, revenue);
+  });
 };
 
 });
@@ -11493,11 +11511,16 @@ WebEngage.prototype.load = function(fn){
 });
 require.register("segmentio-analytics.js-integrations/lib/woopra.js", function(exports, require, module){
 
-var each = require('each');
-var extend = require('extend');
+/**
+ * Module dependencies.
+ */
+
 var integration = require('integration');
-var isEmail = require('is-email');
+var snake = require('to-snake-case');
 var load = require('load-script');
+var isEmail = require('is-email');
+var extend = require('extend');
+var each = require('each');
 var type = require('type');
 
 
@@ -11517,7 +11540,20 @@ module.exports = exports = function (analytics) {
 var Woopra = exports.Integration = integration('Woopra')
   .readyOnLoad()
   .global('woopra')
-  .option('domain', '');
+  .option('domain', '')
+  .option('cookieName', 'wooTracker')
+  .option('cookieDomain', null)
+  .option('cookiePath', '/')
+  .option('ping', true)
+  .option('pingInterval', 12000)
+  .option('idleTimeout', 300000)
+  .option('downloadTracking', true)
+  .option('outgoingTracking', true)
+  .option('outgoingIgnoreSubdomain', true)
+  .option('downloadPause', 200)
+  .option('outgoingPause', 400)
+  .option('ignoreQueryUrl', true)
+  .option('hideCampaign', false);
 
 
 /**
@@ -11530,8 +11566,13 @@ var Woopra = exports.Integration = integration('Woopra')
 
 Woopra.prototype.initialize = function (page) {
   (function () {var i, s, z, w = window, d = document, a = arguments, q = 'script', f = ['config', 'track', 'identify', 'visit', 'push', 'call'], c = function () {var i, self = this; self._e = []; for (i = 0; i < f.length; i++) {(function (f) {self[f] = function () {self._e.push([f].concat(Array.prototype.slice.call(arguments, 0))); return self; }; })(f[i]); } }; w._w = w._w || {}; for (i = 0; i < a.length; i++) { w._w[a[i]] = w[a[i]] = w[a[i]] || new c(); } })('woopra');
-  window.woopra.config({ domain: this.options.domain });
   this.load();
+  each(this.options, function(key, value){
+    key = snake(key);
+    if (null == value) return;
+    if ('' == value) return;
+    window.woopra.config(key, value);
+  });
 };
 
 
@@ -15244,7 +15285,6 @@ module.exports.User = User;
 
 
 
-
 require.register("segmentio-analytics.js-integrations/lib/slugs.json", function(exports, require, module){
 module.exports = [
   "adroll",
@@ -15322,7 +15362,6 @@ module.exports = [
 ]
 
 });
-
 
 
 
@@ -15542,6 +15581,10 @@ require.alias("component-url/index.js", "segmentio-analytics.js-integrations/dep
 
 require.alias("ianstormtaylor-callback/index.js", "segmentio-analytics.js-integrations/deps/callback/index.js");
 require.alias("timoxley-next-tick/index.js", "ianstormtaylor-callback/deps/next-tick/index.js");
+
+require.alias("ianstormtaylor-to-snake-case/index.js", "segmentio-analytics.js-integrations/deps/to-snake-case/index.js");
+require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-snake-case/deps/to-space-case/index.js");
+require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
 
 require.alias("ianstormtaylor-bind/index.js", "segmentio-analytics.js-integrations/deps/bind/index.js");
 require.alias("component-bind/index.js", "ianstormtaylor-bind/deps/bind/index.js");

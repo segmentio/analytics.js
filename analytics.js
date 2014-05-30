@@ -935,15 +935,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -955,9 +955,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -969,7 +967,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -982,10 +980,29 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
+
+/**
+ * Return default port for `protocol`.
+ *
+ * @param  {String} protocol
+ * @return {String}
+ * @api private
+ */
+function port (protocol){
+  switch (protocol) {
+    case 'http:':
+      return 80;
+    case 'https:':
+      return 443;
+    default:
+      return location.port;
+  }
+}
+
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1115,6 +1132,7 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
+
 var next = require('next-tick');
 
 
@@ -1427,7 +1445,6 @@ module.exports = toNoCase;
  */
 
 var hasSpace = /\s/;
-var hasCamel = /[a-z][A-Z]/;
 var hasSeparator = /[\W_]/;
 
 
@@ -1441,10 +1458,8 @@ var hasSeparator = /[\W_]/;
 
 function toNoCase (string) {
   if (hasSpace.test(string)) return string.toLowerCase();
-
-  if (hasSeparator.test(string)) string = unseparate(string);
-  if (hasCamel.test(string)) string = uncamelize(string);
-  return string.toLowerCase();
+  if (hasSeparator.test(string)) return unseparate(string).toLowerCase();
+  return uncamelize(string).toLowerCase();
 }
 
 
@@ -3497,7 +3512,6 @@ var AdRoll = exports.Integration = integration('AdRoll')
 AdRoll.prototype.initialize = function (page) {
   window.adroll_adv_id = this.options.advId;
   window.adroll_pix_id = this.options.pixId;
-  if (user.id()) window.adroll_custom_data = { USER_ID: user.id() };
   window.__adroll_loaded = true;
   this.load();
 };
@@ -3538,11 +3552,13 @@ AdRoll.prototype.track = function(track){
   var total = track.revenue();
   var event = track.event();
   if (has.call(events, event)) event = events[event];
-  window.__adroll.record_user({
+  var data = {
     adroll_conversion_value_in_dollars: total || 0,
     order_id: track.orderId() || 0,
     adroll_segments: event
-  });
+  };
+  if (user.id()) data.user_id = user.id();
+  window.__adroll.record_user(data);
 };
 
 });
@@ -14085,7 +14101,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.5.3';
+exports.VERSION = '1.5.4';
 
 /**
  * Add integrations.

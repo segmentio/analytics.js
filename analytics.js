@@ -935,15 +935,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -955,7 +955,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -967,7 +969,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -980,29 +982,10 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
-
-/**
- * Return default port for `protocol`.
- *
- * @param  {String} protocol
- * @return {String}
- * @api private
- */
-function port (protocol){
-  switch (protocol) {
-    case 'http:':
-      return 80;
-    case 'https:':
-      return 443;
-    default:
-      return location.port;
-  }
-}
-
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1132,7 +1115,6 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 
 });
 require.register("ianstormtaylor-callback/index.js", function(exports, require, module){
-
 var next = require('next-tick');
 
 
@@ -1209,13 +1191,8 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty');
-
-try {
-  var typeOf = require('type');
-} catch (e) {
-  var typeOf = require('component-type');
-}
+var isEmpty = require('is-empty')
+  , typeOf = require('type');
 
 
 /**
@@ -4840,10 +4817,10 @@ var Curebit = exports.Integration = integration('Curebit')
   .option('iframeWidth', '100%')
   .option('iframeHeight', '480')
   .option('iframeBorder', 0)
-  .option('iframeId', '')
+  .option('iframeId', 'curebit_integration')
   .option('responsive', true)
   .option('device', '')
-  .option('insertIntoId', 'curebit-frame')
+  .option('insertIntoId', '')
   .option('campaigns', {})
   .option('server', 'https://www.curebit.com');
 
@@ -4928,6 +4905,14 @@ Curebit.prototype.page = function(page){
       last_name: identify.lastName(),
       customer_id: identify.userId()
     };
+  }
+
+  // remove iframe if exists.
+  var iframe = document.getElementById(this.options.iframeId);
+  if (iframe) {
+    this.debug('Warning: Curebit iframe may have been added twice. '
+        + 'Double check `analytics.page()` is only being called once.');
+    iframe.parentNode.removeChild(iframe);
   }
 
   push('register_affiliate', settings);
@@ -5435,8 +5420,9 @@ Evergage.prototype.track = function (track) {
 });
 require.register("segmentio-analytics.js-integrations/lib/facebook-ads.js", function(exports, require, module){
 
-var load = require('load-pixel')('//www.facebook.com/offsite_event.php');
+var load = require('load-script');
 var integration = require('integration');
+var push = require('global-queue')('_fbq');
 
 /**
  * Expose plugin
@@ -5445,12 +5431,6 @@ var integration = require('integration');
 module.exports = exports = function(analytics){
   analytics.addIntegration(Facebook);
 };
-
-/**
- * Expose `load`.
- */
-
-exports.load = load;
 
 /**
  * HOP
@@ -5464,8 +5444,43 @@ var has = Object.prototype.hasOwnProperty;
 
 var Facebook = exports.Integration = integration('Facebook Ads')
   .readyOnInitialize()
+  .global('_fbq')
   .option('currency', 'USD')
   .option('events', {});
+
+/**
+ * Initialize Facebook Ads.
+ *
+ * https://developers.facebook.com/docs/ads-for-websites/conversion-pixel-code-migration
+ *
+ * @param {Object} page
+ */
+
+Facebook.prototype.initialize = function(page){
+  window._fbq = window._fbq || [];
+  this.load();
+  window._fbq.loaded = true;
+};
+
+/**
+ * Load the Facebook Ads library.
+ *
+ * @param {Function} fn
+ */
+
+Facebook.prototype.load = function(fn){
+  load('//connect.facebook.net/en_US/fbds.js', fn);
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Facebook.prototype.loaded = function(){
+  return !!window._fbq;
+};
 
 /**
  * Track.
@@ -5477,11 +5492,11 @@ Facebook.prototype.track = function(track){
   var events = this.options.events;
   var traits = track.traits();
   var event = track.event();
+  var revenue = track.revenue() || 0;
   if (!has.call(events, event)) return;
-  return exports.load({
-    currency: this.options.currency,
-    value: track.revenue() || 0,
-    id: events[event]
+  push('track', events[event], {
+    value: String(revenue.toFixed(2)),
+    currency: this.options.currency
   });
 };
 
@@ -14101,7 +14116,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.5.4';
+exports.VERSION = '1.5.5';
 
 /**
  * Add integrations.

@@ -230,6 +230,7 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
+
 /**
  * toString ref.
  */
@@ -246,21 +247,18 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
+    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object Error]': return 'error';
+    case '[object String]': return 'string';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
-  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
-
-  val = val.valueOf
-    ? val.valueOf()
-    : Object.prototype.valueOf.apply(val)
+  if (val === Object(val)) return 'object';
 
   return typeof val;
 };
@@ -5464,7 +5462,6 @@ var Facebook = exports.Integration = integration('Facebook Ads')
 Facebook.prototype.initialize = function(page){
   window._fbq = window._fbq || [];
   this.load();
-  window._fbq.loaded = true;
 };
 
 /**
@@ -5475,6 +5472,7 @@ Facebook.prototype.initialize = function(page){
 
 Facebook.prototype.load = function(fn){
   load('//connect.facebook.net/en_US/fbds.js', fn);
+  window._fbq.loaded = true;
 };
 
 /**
@@ -5484,7 +5482,7 @@ Facebook.prototype.load = function(fn){
  */
 
 Facebook.prototype.loaded = function(){
-  return !!window._fbq;
+  return !!window._fbq.loaded;
 };
 
 /**
@@ -14121,7 +14119,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.5.6';
+exports.VERSION = '1.5.7';
 
 /**
  * Add integrations.

@@ -230,7 +230,6 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
-
 /**
  * toString ref.
  */
@@ -247,18 +246,21 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
-    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object String]': return 'string';
+    case '[object Error]': return 'error';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
+  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
-  if (val === Object(val)) return 'object';
+
+  val = val.valueOf
+    ? val.valueOf()
+    : Object.prototype.valueOf.apply(val)
 
   return typeof val;
 };
@@ -1208,8 +1210,13 @@ function isEmpty (val) {
 });
 require.register("ianstormtaylor-is/index.js", function(exports, require, module){
 
-var isEmpty = require('is-empty')
-  , typeOf = require('type');
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
 
 
 /**
@@ -1600,6 +1607,7 @@ module.exports = toNoCase;
  */
 
 var hasSpace = /\s/;
+var hasCamel = /[a-z][A-Z]/;
 var hasSeparator = /[\W_]/;
 
 
@@ -1613,8 +1621,10 @@ var hasSeparator = /[\W_]/;
 
 function toNoCase (string) {
   if (hasSpace.test(string)) return string.toLowerCase();
-  if (hasSeparator.test(string)) return unseparate(string).toLowerCase();
-  return uncamelize(string).toLowerCase();
+
+  if (hasSeparator.test(string)) string = unseparate(string);
+  if (hasCamel.test(string)) string = uncamelize(string);
+  return string.toLowerCase();
 }
 
 
@@ -3823,7 +3833,7 @@ AdWords.prototype.track = function(track){
  */
 
 AdWords.prototype.conversion = function(obj, fn){
-  this.queue({
+  this.enqueue({
     google_conversion_id: obj.conversionId,
     google_conversion_language: 'en',
     google_conversion_format: '3',
@@ -3842,7 +3852,7 @@ AdWords.prototype.conversion = function(obj, fn){
  */
 
 AdWords.prototype.remarketing = function(id){
-  this.queue({
+  this.enqueue({
     google_conversion_id: id,
     google_remarketing_only: true
   });
@@ -3855,7 +3865,7 @@ AdWords.prototype.remarketing = function(id){
  * @param {Function} [fn]
  */
 
-AdWords.prototype.queue = function(obj, fn){
+AdWords.prototype.enqueue = function(obj, fn){
   this.debug('sending %o', obj);
   var self = this;
 
@@ -14449,7 +14459,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.5.9';
+exports.VERSION = '1.5.10';
 
 /**
  * Add integrations.

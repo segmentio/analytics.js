@@ -230,6 +230,7 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
+
 /**
  * toString ref.
  */
@@ -246,21 +247,18 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
+    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object Error]': return 'error';
+    case '[object String]': return 'string';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
-  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
-
-  val = val.valueOf
-    ? val.valueOf()
-    : Object.prototype.valueOf.apply(val)
+  if (val === Object(val)) return 'object';
 
   return typeof val;
 };
@@ -434,249 +432,6 @@ function parse(str) {
 }
 
 });
-require.register("component-props/index.js", function(exports, require, module){
-/**
- * Global Names
- */
-
-var globals = /\b(this|Array|Date|Object|Math|JSON)\b/g;
-
-/**
- * Return immediate identifiers parsed from `str`.
- *
- * @param {String} str
- * @param {String|Function} map function or prefix
- * @return {Array}
- * @api public
- */
-
-module.exports = function(str, fn){
-  var p = unique(props(str));
-  if (fn && 'string' == typeof fn) fn = prefixed(fn);
-  if (fn) return map(str, p, fn);
-  return p;
-};
-
-/**
- * Return immediate identifiers in `str`.
- *
- * @param {String} str
- * @return {Array}
- * @api private
- */
-
-function props(str) {
-  return str
-    .replace(/\.\w+|\w+ *\(|"[^"]*"|'[^']*'|\/([^/]+)\//g, '')
-    .replace(globals, '')
-    .match(/[$a-zA-Z_]\w*/g)
-    || [];
-}
-
-/**
- * Return `str` with `props` mapped with `fn`.
- *
- * @param {String} str
- * @param {Array} props
- * @param {Function} fn
- * @return {String}
- * @api private
- */
-
-function map(str, props, fn) {
-  var re = /\.\w+|\w+ *\(|"[^"]*"|'[^']*'|\/([^/]+)\/|[a-zA-Z_]\w*/g;
-  return str.replace(re, function(_){
-    if ('(' == _[_.length - 1]) return fn(_);
-    if (!~props.indexOf(_)) return _;
-    return fn(_);
-  });
-}
-
-/**
- * Return unique array.
- *
- * @param {Array} arr
- * @return {Array}
- * @api private
- */
-
-function unique(arr) {
-  var ret = [];
-
-  for (var i = 0; i < arr.length; i++) {
-    if (~ret.indexOf(arr[i])) continue;
-    ret.push(arr[i]);
-  }
-
-  return ret;
-}
-
-/**
- * Map with prefix `str`.
- */
-
-function prefixed(str) {
-  return function(_){
-    return str + _;
-  };
-}
-
-});
-require.register("component-to-function/index.js", function(exports, require, module){
-
-/**
- * Module Dependencies
- */
-
-var expr;
-try {
-  expr = require('props');
-} catch(e) {
-  expr = require('component-props');
-}
-
-/**
- * Expose `toFunction()`.
- */
-
-module.exports = toFunction;
-
-/**
- * Convert `obj` to a `Function`.
- *
- * @param {Mixed} obj
- * @return {Function}
- * @api private
- */
-
-function toFunction(obj) {
-  switch ({}.toString.call(obj)) {
-    case '[object Object]':
-      return objectToFunction(obj);
-    case '[object Function]':
-      return obj;
-    case '[object String]':
-      return stringToFunction(obj);
-    case '[object RegExp]':
-      return regexpToFunction(obj);
-    default:
-      return defaultToFunction(obj);
-  }
-}
-
-/**
- * Default to strict equality.
- *
- * @param {Mixed} val
- * @return {Function}
- * @api private
- */
-
-function defaultToFunction(val) {
-  return function(obj){
-    return val === obj;
-  };
-}
-
-/**
- * Convert `re` to a function.
- *
- * @param {RegExp} re
- * @return {Function}
- * @api private
- */
-
-function regexpToFunction(re) {
-  return function(obj){
-    return re.test(obj);
-  };
-}
-
-/**
- * Convert property `str` to a function.
- *
- * @param {String} str
- * @return {Function}
- * @api private
- */
-
-function stringToFunction(str) {
-  // immediate such as "> 20"
-  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
-
-  // properties such as "name.first" or "age > 18" or "age > 18 && age < 36"
-  return new Function('_', 'return ' + get(str));
-}
-
-/**
- * Convert `object` to a function.
- *
- * @param {Object} object
- * @return {Function}
- * @api private
- */
-
-function objectToFunction(obj) {
-  var match = {};
-  for (var key in obj) {
-    match[key] = typeof obj[key] === 'string'
-      ? defaultToFunction(obj[key])
-      : toFunction(obj[key]);
-  }
-  return function(val){
-    if (typeof val !== 'object') return false;
-    for (var key in match) {
-      if (!(key in val)) return false;
-      if (!match[key](val[key])) return false;
-    }
-    return true;
-  };
-}
-
-/**
- * Built the getter function. Supports getter style functions
- *
- * @param {String} str
- * @return {String}
- * @api private
- */
-
-function get(str) {
-  var props = expr(str);
-  if (!props.length) return '_.' + str;
-
-  var val, i, prop;
-  for (i = 0; i < props.length; i++) {
-    prop = props[i];
-    val = '_.' + prop;
-    val = "('function' == typeof " + val + " ? " + val + "() : " + val + ")";
-
-    // mimic negative lookbehind to avoid problems with nested properties
-    str = stripNested(prop, str, val);
-  }
-
-  return str;
-}
-
-/**
- * Mimic negative lookbehind to avoid problems with nested properties.
- *
- * See: http://blog.stevenlevithan.com/archives/mimic-lookbehind-javascript
- *
- * @param {String} prop
- * @param {String} str
- * @param {String} val
- * @return {String}
- * @api private
- */
-
-function stripNested (prop, str, val) {
-  return str.replace(new RegExp('(\\.)?' + prop, 'g'), function($0, $1) {
-    return $1 ? $0 : val;
-  });
-}
-
-});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
@@ -684,7 +439,6 @@ require.register("component-each/index.js", function(exports, require, module){
  */
 
 var type = require('type');
-var toFunction = require('to-function');
 
 /**
  * HOP reference.
@@ -693,26 +447,22 @@ var toFunction = require('to-function');
 var has = Object.prototype.hasOwnProperty;
 
 /**
- * Iterate the given `obj` and invoke `fn(val, i)`
- * in optional context `ctx`.
+ * Iterate the given `obj` and invoke `fn(val, i)`.
  *
  * @param {String|Array|Object} obj
  * @param {Function} fn
- * @param {Object} [ctx]
  * @api public
  */
 
-module.exports = function(obj, fn, ctx){
-  fn = toFunction(fn);
-  ctx = ctx || this;
+module.exports = function(obj, fn){
   switch (type(obj)) {
     case 'array':
-      return array(obj, fn, ctx);
+      return array(obj, fn);
     case 'object':
-      if ('number' == typeof obj.length) return array(obj, fn, ctx);
-      return object(obj, fn, ctx);
+      if ('number' == typeof obj.length) return array(obj, fn);
+      return object(obj, fn);
     case 'string':
-      return string(obj, fn, ctx);
+      return string(obj, fn);
   }
 };
 
@@ -721,13 +471,12 @@ module.exports = function(obj, fn, ctx){
  *
  * @param {String} obj
  * @param {Function} fn
- * @param {Object} ctx
  * @api private
  */
 
-function string(obj, fn, ctx) {
+function string(obj, fn) {
   for (var i = 0; i < obj.length; ++i) {
-    fn.call(ctx, obj.charAt(i), i);
+    fn(obj.charAt(i), i);
   }
 }
 
@@ -736,14 +485,13 @@ function string(obj, fn, ctx) {
  *
  * @param {Object} obj
  * @param {Function} fn
- * @param {Object} ctx
  * @api private
  */
 
-function object(obj, fn, ctx) {
+function object(obj, fn) {
   for (var key in obj) {
     if (has.call(obj, key)) {
-      fn.call(ctx, key, obj[key]);
+      fn(key, obj[key]);
     }
   }
 }
@@ -753,16 +501,14 @@ function object(obj, fn, ctx) {
  *
  * @param {Array|Object} obj
  * @param {Function} fn
- * @param {Object} ctx
  * @api private
  */
 
-function array(obj, fn, ctx) {
+function array(obj, fn) {
   for (var i = 0; i < obj.length; ++i) {
-    fn.call(ctx, obj[i], i);
+    fn(obj[i], i);
   }
 }
-
 });
 require.register("component-indexof/index.js", function(exports, require, module){
 module.exports = function(arr, obj){
@@ -1189,15 +935,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host,
-    port: a.port,
+    host: a.host || location.host,
+    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
     hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
+    hostname: a.hostname || location.hostname,
+    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
+    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  }
+  };
 };
 
 /**
@@ -1209,9 +955,7 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
+  return 0 == url.indexOf('//') || !!~url.indexOf('://');
 };
 
 /**
@@ -1223,7 +967,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
+  return !exports.isAbsolute(url);
 };
 
 /**
@@ -1236,10 +980,29 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
+  return url.hostname !== location.hostname
+    || url.port !== location.port
+    || url.protocol !== location.protocol;
 };
+
+/**
+ * Return default port for `protocol`.
+ *
+ * @param  {String} protocol
+ * @return {String}
+ * @api private
+ */
+function port (protocol){
+  switch (protocol) {
+    case 'http:':
+      return 80;
+    case 'https:':
+      return 443;
+    default:
+      return location.port;
+  }
+}
+
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -1837,7 +1600,6 @@ module.exports = toNoCase;
  */
 
 var hasSpace = /\s/;
-var hasCamel = /[a-z][A-Z]/;
 var hasSeparator = /[\W_]/;
 
 
@@ -1851,10 +1613,8 @@ var hasSeparator = /[\W_]/;
 
 function toNoCase (string) {
   if (hasSpace.test(string)) return string.toLowerCase();
-
-  if (hasSeparator.test(string)) string = unseparate(string);
-  if (hasCamel.test(string)) string = uncamelize(string);
-  return string.toLowerCase();
+  if (hasSeparator.test(string)) return unseparate(string).toLowerCase();
+  return uncamelize(string).toLowerCase();
 }
 
 
@@ -14689,7 +14449,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.5.8';
+exports.VERSION = '1.5.9';
 
 /**
  * Add integrations.
@@ -16052,9 +15812,6 @@ require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
-
 require.alias("component-emitter/index.js", "analytics/deps/emitter/index.js");
 require.alias("component-emitter/index.js", "emitter/index.js");
 require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
@@ -16186,9 +15943,6 @@ require.alias("component-domify/index.js", "segmentio-analytics.js-integrations/
 require.alias("component-each/index.js", "segmentio-analytics.js-integrations/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
-
 require.alias("component-once/index.js", "segmentio-analytics.js-integrations/deps/once/index.js");
 
 require.alias("component-throttle/index.js", "segmentio-analytics.js-integrations/deps/throttle/index.js");
@@ -16298,9 +16052,6 @@ require.alias("segmentio-isodate-traverse/index.js", "segmentio-facade/deps/isod
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
-
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
@@ -16377,9 +16128,6 @@ require.alias("ianstormtaylor-map/index.js", "ianstormtaylor-to-title-case/deps/
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
-
 require.alias("ianstormtaylor-title-case-minors/index.js", "ianstormtaylor-to-title-case/deps/title-case-minors/index.js");
 
 require.alias("ianstormtaylor-to-capital-case/index.js", "ianstormtaylor-to-title-case/deps/to-capital-case/index.js");
@@ -16403,9 +16151,6 @@ require.alias("segmentio-script-onload/index.js", "segmentio-script-onload/index
 require.alias("segmentio-on-body/index.js", "segmentio-analytics.js-integrations/deps/on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
-
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
 
 require.alias("segmentio-on-error/index.js", "segmentio-analytics.js-integrations/deps/on-error/index.js");
 
@@ -16498,9 +16243,6 @@ require.alias("ianstormtaylor-map/index.js", "ianstormtaylor-to-title-case/deps/
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
-
 require.alias("ianstormtaylor-title-case-minors/index.js", "ianstormtaylor-to-title-case/deps/title-case-minors/index.js");
 
 require.alias("ianstormtaylor-to-capital-case/index.js", "ianstormtaylor-to-title-case/deps/to-capital-case/index.js");
@@ -16530,9 +16272,6 @@ require.alias("camshaft-require-component/index.js", "segmentio-facade/deps/requ
 require.alias("segmentio-isodate-traverse/index.js", "segmentio-facade/deps/isodate-traverse/index.js");
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
-
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
 
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
@@ -16610,9 +16349,6 @@ require.alias("ianstormtaylor-map/index.js", "ianstormtaylor-to-title-case/deps/
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
-
 require.alias("ianstormtaylor-title-case-minors/index.js", "ianstormtaylor-to-title-case/deps/title-case-minors/index.js");
 
 require.alias("ianstormtaylor-to-capital-case/index.js", "ianstormtaylor-to-title-case/deps/to-capital-case/index.js");
@@ -16631,9 +16367,6 @@ require.alias("segmentio-isodate-traverse/index.js", "analytics/deps/isodate-tra
 require.alias("segmentio-isodate-traverse/index.js", "isodate-traverse/index.js");
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
-
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
 
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");

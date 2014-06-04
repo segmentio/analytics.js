@@ -230,7 +230,6 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
-
 /**
  * toString ref.
  */
@@ -247,18 +246,21 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
-    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object String]': return 'string';
+    case '[object Error]': return 'error';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
+  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
-  if (val === Object(val)) return 'object';
+
+  val = val.valueOf
+    ? val.valueOf()
+    : Object.prototype.valueOf.apply(val)
 
   return typeof val;
 };
@@ -432,6 +434,249 @@ function parse(str) {
 }
 
 });
+require.register("component-props/index.js", function(exports, require, module){
+/**
+ * Global Names
+ */
+
+var globals = /\b(this|Array|Date|Object|Math|JSON)\b/g;
+
+/**
+ * Return immediate identifiers parsed from `str`.
+ *
+ * @param {String} str
+ * @param {String|Function} map function or prefix
+ * @return {Array}
+ * @api public
+ */
+
+module.exports = function(str, fn){
+  var p = unique(props(str));
+  if (fn && 'string' == typeof fn) fn = prefixed(fn);
+  if (fn) return map(str, p, fn);
+  return p;
+};
+
+/**
+ * Return immediate identifiers in `str`.
+ *
+ * @param {String} str
+ * @return {Array}
+ * @api private
+ */
+
+function props(str) {
+  return str
+    .replace(/\.\w+|\w+ *\(|"[^"]*"|'[^']*'|\/([^/]+)\//g, '')
+    .replace(globals, '')
+    .match(/[$a-zA-Z_]\w*/g)
+    || [];
+}
+
+/**
+ * Return `str` with `props` mapped with `fn`.
+ *
+ * @param {String} str
+ * @param {Array} props
+ * @param {Function} fn
+ * @return {String}
+ * @api private
+ */
+
+function map(str, props, fn) {
+  var re = /\.\w+|\w+ *\(|"[^"]*"|'[^']*'|\/([^/]+)\/|[a-zA-Z_]\w*/g;
+  return str.replace(re, function(_){
+    if ('(' == _[_.length - 1]) return fn(_);
+    if (!~props.indexOf(_)) return _;
+    return fn(_);
+  });
+}
+
+/**
+ * Return unique array.
+ *
+ * @param {Array} arr
+ * @return {Array}
+ * @api private
+ */
+
+function unique(arr) {
+  var ret = [];
+
+  for (var i = 0; i < arr.length; i++) {
+    if (~ret.indexOf(arr[i])) continue;
+    ret.push(arr[i]);
+  }
+
+  return ret;
+}
+
+/**
+ * Map with prefix `str`.
+ */
+
+function prefixed(str) {
+  return function(_){
+    return str + _;
+  };
+}
+
+});
+require.register("component-to-function/index.js", function(exports, require, module){
+
+/**
+ * Module Dependencies
+ */
+
+var expr;
+try {
+  expr = require('props');
+} catch(e) {
+  expr = require('component-props');
+}
+
+/**
+ * Expose `toFunction()`.
+ */
+
+module.exports = toFunction;
+
+/**
+ * Convert `obj` to a `Function`.
+ *
+ * @param {Mixed} obj
+ * @return {Function}
+ * @api private
+ */
+
+function toFunction(obj) {
+  switch ({}.toString.call(obj)) {
+    case '[object Object]':
+      return objectToFunction(obj);
+    case '[object Function]':
+      return obj;
+    case '[object String]':
+      return stringToFunction(obj);
+    case '[object RegExp]':
+      return regexpToFunction(obj);
+    default:
+      return defaultToFunction(obj);
+  }
+}
+
+/**
+ * Default to strict equality.
+ *
+ * @param {Mixed} val
+ * @return {Function}
+ * @api private
+ */
+
+function defaultToFunction(val) {
+  return function(obj){
+    return val === obj;
+  };
+}
+
+/**
+ * Convert `re` to a function.
+ *
+ * @param {RegExp} re
+ * @return {Function}
+ * @api private
+ */
+
+function regexpToFunction(re) {
+  return function(obj){
+    return re.test(obj);
+  };
+}
+
+/**
+ * Convert property `str` to a function.
+ *
+ * @param {String} str
+ * @return {Function}
+ * @api private
+ */
+
+function stringToFunction(str) {
+  // immediate such as "> 20"
+  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
+
+  // properties such as "name.first" or "age > 18" or "age > 18 && age < 36"
+  return new Function('_', 'return ' + get(str));
+}
+
+/**
+ * Convert `object` to a function.
+ *
+ * @param {Object} object
+ * @return {Function}
+ * @api private
+ */
+
+function objectToFunction(obj) {
+  var match = {};
+  for (var key in obj) {
+    match[key] = typeof obj[key] === 'string'
+      ? defaultToFunction(obj[key])
+      : toFunction(obj[key]);
+  }
+  return function(val){
+    if (typeof val !== 'object') return false;
+    for (var key in match) {
+      if (!(key in val)) return false;
+      if (!match[key](val[key])) return false;
+    }
+    return true;
+  };
+}
+
+/**
+ * Built the getter function. Supports getter style functions
+ *
+ * @param {String} str
+ * @return {String}
+ * @api private
+ */
+
+function get(str) {
+  var props = expr(str);
+  if (!props.length) return '_.' + str;
+
+  var val, i, prop;
+  for (i = 0; i < props.length; i++) {
+    prop = props[i];
+    val = '_.' + prop;
+    val = "('function' == typeof " + val + " ? " + val + "() : " + val + ")";
+
+    // mimic negative lookbehind to avoid problems with nested properties
+    str = stripNested(prop, str, val);
+  }
+
+  return str;
+}
+
+/**
+ * Mimic negative lookbehind to avoid problems with nested properties.
+ *
+ * See: http://blog.stevenlevithan.com/archives/mimic-lookbehind-javascript
+ *
+ * @param {String} prop
+ * @param {String} str
+ * @param {String} val
+ * @return {String}
+ * @api private
+ */
+
+function stripNested (prop, str, val) {
+  return str.replace(new RegExp('(\\.)?' + prop, 'g'), function($0, $1) {
+    return $1 ? $0 : val;
+  });
+}
+
+});
 require.register("component-each/index.js", function(exports, require, module){
 
 /**
@@ -439,6 +684,7 @@ require.register("component-each/index.js", function(exports, require, module){
  */
 
 var type = require('type');
+var toFunction = require('to-function');
 
 /**
  * HOP reference.
@@ -447,22 +693,26 @@ var type = require('type');
 var has = Object.prototype.hasOwnProperty;
 
 /**
- * Iterate the given `obj` and invoke `fn(val, i)`.
+ * Iterate the given `obj` and invoke `fn(val, i)`
+ * in optional context `ctx`.
  *
  * @param {String|Array|Object} obj
  * @param {Function} fn
+ * @param {Object} [ctx]
  * @api public
  */
 
-module.exports = function(obj, fn){
+module.exports = function(obj, fn, ctx){
+  fn = toFunction(fn);
+  ctx = ctx || this;
   switch (type(obj)) {
     case 'array':
-      return array(obj, fn);
+      return array(obj, fn, ctx);
     case 'object':
-      if ('number' == typeof obj.length) return array(obj, fn);
-      return object(obj, fn);
+      if ('number' == typeof obj.length) return array(obj, fn, ctx);
+      return object(obj, fn, ctx);
     case 'string':
-      return string(obj, fn);
+      return string(obj, fn, ctx);
   }
 };
 
@@ -471,12 +721,13 @@ module.exports = function(obj, fn){
  *
  * @param {String} obj
  * @param {Function} fn
+ * @param {Object} ctx
  * @api private
  */
 
-function string(obj, fn) {
+function string(obj, fn, ctx) {
   for (var i = 0; i < obj.length; ++i) {
-    fn(obj.charAt(i), i);
+    fn.call(ctx, obj.charAt(i), i);
   }
 }
 
@@ -485,13 +736,14 @@ function string(obj, fn) {
  *
  * @param {Object} obj
  * @param {Function} fn
+ * @param {Object} ctx
  * @api private
  */
 
-function object(obj, fn) {
+function object(obj, fn, ctx) {
   for (var key in obj) {
     if (has.call(obj, key)) {
-      fn(key, obj[key]);
+      fn.call(ctx, key, obj[key]);
     }
   }
 }
@@ -501,14 +753,16 @@ function object(obj, fn) {
  *
  * @param {Array|Object} obj
  * @param {Function} fn
+ * @param {Object} ctx
  * @api private
  */
 
-function array(obj, fn) {
+function array(obj, fn, ctx) {
   for (var i = 0; i < obj.length; ++i) {
-    fn(obj[i], i);
+    fn.call(ctx, obj[i], i);
   }
 }
+
 });
 require.register("component-indexof/index.js", function(exports, require, module){
 module.exports = function(arr, obj){
@@ -1406,6 +1660,167 @@ module.exports = function(fn) {
 
   return once;
 };
+
+});
+require.register("component-throttle/index.js", function(exports, require, module){
+
+/**
+ * Module exports.
+ */
+
+module.exports = throttle;
+
+/**
+ * Returns a new function that, when invoked, invokes `func` at most one time per
+ * `wait` milliseconds.
+ *
+ * @param {Function} func The `Function` instance to wrap.
+ * @param {Number} wait The minimum number of milliseconds that must elapse in between `func` invokations.
+ * @return {Function} A new function that wraps the `func` function passed in.
+ * @api public
+ */
+
+function throttle (func, wait) {
+  var rtn; // return value
+  var last = 0; // last invokation timestamp
+  return function throttled () {
+    var now = new Date().getTime();
+    var delta = now - last;
+    if (delta >= wait) {
+      rtn = func.apply(this, arguments);
+      last = now;
+    }
+    return rtn;
+  };
+}
+
+});
+require.register("component-queue/index.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var Emitter = require('emitter');
+
+/**
+ * Expose `Queue`.
+ */
+
+module.exports = Queue;
+
+/**
+ * Initialize a `Queue` with the given options:
+ *
+ *  - `concurrency` [1]
+ *  - `timeout` [0]
+ *
+ * @param {Object} options
+ * @api public
+ */
+
+function Queue(options) {
+  options = options || {};
+  this.timeout = options.timeout || 0;
+  this.concurrency = options.concurrency || 1;
+  this.pending = 0;
+  this.jobs = [];
+}
+
+/**
+ * Mixin emitter.
+ */
+
+Emitter(Queue.prototype);
+
+/**
+ * Return queue length.
+ *
+ * @return {Number}
+ * @api public
+ */
+
+Queue.prototype.length = function(){
+  return this.pending + this.jobs.length;
+};
+
+/**
+ * Queue `fn` for execution.
+ *
+ * @param {Function} fn
+ * @param {Function} [cb]
+ * @api public
+ */
+
+Queue.prototype.push = function(fn, cb){
+  this.jobs.push([fn, cb]);
+  setTimeout(this.run.bind(this), 0);
+};
+
+/**
+ * Run jobs at the specified concurrency.
+ *
+ * @api private
+ */
+
+Queue.prototype.run = function(){
+  while (this.pending < this.concurrency) {
+    var job = this.jobs.shift();
+    if (!job) break;
+    this.exec(job);
+  }
+};
+
+/**
+ * Execute `job`.
+ *
+ * @param {Array} job
+ * @api private
+ */
+
+Queue.prototype.exec = function(job){
+  var self = this;
+  var ms = this.timeout;
+
+  var fn = job[0];
+  var cb = job[1];
+  if (ms) fn = timeout(fn, ms);
+
+  this.pending++;
+  fn(function(err, res){
+    cb && cb(err, res);
+    self.pending--;
+    self.run();
+  });
+};
+
+/**
+ * Decorate `fn` with a timeout of `ms`.
+ *
+ * @param {Function} fn
+ * @param {Function} ms
+ * @return {Function}
+ * @api private
+ */
+
+function timeout(fn, ms) {
+  return function(cb){
+    var done;
+
+    var id = setTimeout(function(){
+      done = true;
+      var err = new Error('Timeout of ' + ms + 'ms exceeded');
+      err.timeout = timeout;
+      cb(err);
+    }, ms);
+
+    fn(function(err, res){
+      if (done) return;
+      clearTimeout(id);
+      cb(err, res);
+    });
+  }
+}
 
 });
 require.register("ianstormtaylor-to-no-case/index.js", function(exports, require, module){
@@ -3544,10 +3959,15 @@ AdRoll.prototype.track = function(track){
 });
 require.register("segmentio-analytics.js-integrations/lib/adwords.js", function(exports, require, module){
 
+/**
+ * Module dependencies.
+ */
+
 var onbody = require('on-body');
 var integration = require('integration');
 var load = require('load-script');
 var domify = require('domify');
+var Queue = require('queue');
 
 /**
  * Expose plugin
@@ -3564,12 +3984,19 @@ module.exports = exports = function(analytics){
 var has = Object.prototype.hasOwnProperty;
 
 /**
+ * Script loader queue.
+ */
+
+var q = new Queue({ concurrency: 1, timeout: 2000 });
+
+/**
  * Expose `AdWords`
  */
 
 var AdWords = exports.Integration = integration('AdWords')
   .readyOnLoad()
   .option('conversionId', '')
+  .option('remarketing', false)
   .option('events', {});
 
 /**
@@ -3595,6 +4022,20 @@ AdWords.prototype.loaded = function(){
 };
 
 /**
+ * Page.
+ *
+ * https://support.google.com/adwords/answer/3111920#standard_parameters
+ *
+ * @param {Page} page
+ */
+
+AdWords.prototype.page = function(page){
+  var remarketing = this.options.remarketing;
+  var id = this.options.conversionId;
+  if (remarketing) this.remarketing(id);
+};
+
+/**
  * Track.
  *
  * @param {Track}
@@ -3616,25 +4057,83 @@ AdWords.prototype.track = function(track){
 /**
  * Report AdWords conversion.
  *
- * @param {Object} globals
+ * @param {Object} obj
+ * @param {Function} [fn]
  * @api private
  */
 
 AdWords.prototype.conversion = function(obj, fn){
-  if (this.reporting) return this.wait(obj);
-  this.reporting = true;
+  this.queue({
+    google_conversion_id: obj.conversionId,
+    google_conversion_language: 'en',
+    google_conversion_format: '3',
+    google_conversion_color: 'ffffff',
+    google_conversion_label: obj.label,
+    google_conversion_value: obj.value,
+    google_remarketing_only: false
+  }, fn);
+};
+
+/**
+ * Add remarketing.
+ *
+ * @param {String} id Conversion ID
+ * @api private
+ */
+
+AdWords.prototype.remarketing = function(id){
+  this.queue({
+    google_conversion_id: id,
+    google_remarketing_only: true
+  });
+};
+
+/**
+ * Queue external call.
+ *
+ * @param {Object} obj
+ * @param {Function} [fn]
+ */
+
+AdWords.prototype.queue = function(obj, fn){
   this.debug('sending %o', obj);
+  var self = this;
+
+  q.push(function(next){
+    self.globalize(obj);
+    self.shim();
+
+    load('//www.googleadservices.com/pagead/conversion.js', function(){
+      if (fn) fn();
+      next();
+    });
+  });
+};
+
+/**
+ * Set global variables.
+ *
+ * @param {Object} obj
+ */
+
+AdWords.prototype.globalize = function(obj){
+  for (var name in obj) {
+    if (obj.hasOwnProperty(name)) {
+      window[name] = obj[name];
+    }
+  }
+};
+
+/**
+ * Shim for `document.write`.
+ * 
+ * @api private
+ */
+
+AdWords.prototype.shim = function(){  
   var self = this;
   var write = document.write;
   document.write = append;
-  window.google_conversion_id = obj.conversionId;
-  window.google_conversion_language = 'en';
-  window.google_conversion_format = '3';
-  window.google_conversion_color = 'ffffff';
-  window.google_conversion_label = obj.label;
-  window.google_conversion_value = obj.value;
-  window.google_remarketing_only = false;
-  load('//www.googleadservices.com/pagead/conversion.js', fn);
 
   function append(str){
     var el = domify(str);
@@ -3643,26 +4142,8 @@ AdWords.prototype.conversion = function(obj, fn){
     self.debug('append %o', el);
     document.body.appendChild(el);
     document.write = write;
-    self.reporting = null;
   }
-};
-
-/**
- * Wait until a conversion is sent with `obj`.
- *
- * @param {Object} obj
- * @param {Function} fn
- * @api private
- */
-
-AdWords.prototype.wait = function(obj){
-  var self = this;
-  var id = setTimeout(function(){
-    clearTimeout(id);
-    self.conversion(obj);
-  }, 50);
-};
-
+}
 });
 require.register("segmentio-analytics.js-integrations/lib/alexa.js", function(exports, require, module){
 
@@ -3849,6 +4330,88 @@ Amplitude.prototype.track = function (track) {
   var props = track.properties();
   var event = track.event();
   window.amplitude.logEvent(event, props);
+};
+
+});
+require.register("segmentio-analytics.js-integrations/lib/appcues.js", function(exports, require, module){
+var integration = require('integration');
+var is = require('is');
+var load = require('load-script');
+
+
+/**
+ * Expose plugin.
+ */
+
+module.exports = exports = function (analytics) {
+  analytics.addIntegration(Appcues);
+};
+
+
+/**
+ * Expose `Appcues` integration.
+ */
+
+var Appcues = exports.Integration = integration('Appcues')
+  .assumesPageview()
+  .readyOnLoad()
+  .global('Appcues')
+  .global('AppcuesIdentity')
+  .option('appcuesId', '')
+  .option('userId', '')
+  .option('userEmail', '');
+
+
+/**
+ * Initialize.
+ *
+ * http://appcues.com/docs/
+ *
+ * @param {Object}
+ */
+
+Appcues.prototype.initialize = function () {
+  this.load(function() {
+    window.Appcues.init();
+  });
+};
+
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Appcues.prototype.loaded = function () {
+  return is.object(window.Appcues);
+};
+
+
+/**
+ * Load the Appcues library.
+ *
+ * @param {Function} callback
+ */
+
+Appcues.prototype.load = function (callback) {
+  var script = load('//d2dubfq97s02eu.cloudfront.net/appcues-bundle.min.js', callback);
+  script.setAttribute('data-appcues-id', this.options.appcuesId);
+  script.setAttribute('data-user-id', this.options.userId);
+  script.setAttribute('data-user-email', this.options.userEmail);
+};
+
+
+/**
+ * Identify.
+ *
+ * http://appcues.com/docs#identify
+ *
+ * @param {Identify} identify
+ */
+
+Appcues.prototype.identify = function (identify) {
+  window.Appcues.identify(identify.traits());
 };
 
 });
@@ -4784,23 +5347,29 @@ CrazyEgg.prototype.load = function (callback) {
 });
 require.register("segmentio-analytics.js-integrations/lib/curebit.js", function(exports, require, module){
 
-var clone = require('clone');
-var each = require('each');
-var Identify = require('facade').Identify;
+/**
+ * Module dependencies.
+ */
+
+var push = require('global-queue')('_curebitq');
 var integration = require('integration');
+var Identify = require('facade').Identify;
+var throttle = require('throttle');
+var Track = require('facade').Track;
 var iso = require('to-iso-string');
 var load = require('load-script');
-var push = require('global-queue')('_curebitq');
-var Track = require('facade').Track;
+var clone = require('clone');
+var each = require('each');
+var bind = require('bind');
 
 /**
- * User reference
+ * User reference.
  */
 
 var user;
 
 /**
- * Expose plugin
+ * Expose plugin.
  */
 
 module.exports = exports = function(analytics){
@@ -4809,7 +5378,7 @@ module.exports = exports = function(analytics){
 };
 
 /**
- * Expose `Curebit` integration
+ * Expose `Curebit` integration.
  */
 
 var Curebit = exports.Integration = integration('Curebit')
@@ -4834,10 +5403,14 @@ var Curebit = exports.Integration = integration('Curebit')
  */
 
 Curebit.prototype.initialize = function(page){
-  push('init', {
+  // throttle the call to `.page()`.
+  this.page = throttle(bind(this, this.page), 250);
+
+  var data = {
     site_id: this.options.siteId,
     server: this.options.server
-  });
+  };
+  push('init', data);
   this.load();
 };
 
@@ -4848,7 +5421,7 @@ Curebit.prototype.initialize = function(page){
  */
 
 Curebit.prototype.loaded = function(){
-  return !! window.curebit;
+  return !!window.curebit;
 };
 
 /**
@@ -4870,6 +5443,9 @@ Curebit.prototype.load = function(fn){
  * campaign.
  *
  * http://www.curebit.com/docs/affiliate/registration
+ * 
+ * This is throttled to prevent accidentally drawing the iframe multiple times,
+ * from multiple `.page()` calls. The `250` is from the curebit script.
  *
  * @param {Page} page
  */
@@ -4908,14 +5484,6 @@ Curebit.prototype.page = function(page){
       last_name: identify.lastName(),
       customer_id: identify.userId()
     };
-  }
-
-  // remove iframe if exists.
-  var iframe = document.getElementById(this.options.iframeId);
-  if (iframe) {
-    this.debug('Warning: Curebit iframe may have been added twice. '
-        + 'Double check `analytics.page()` is only being called once.');
-    iframe.parentNode.removeChild(iframe);
   }
 
   push('register_affiliate', settings);
@@ -4965,7 +5533,6 @@ Curebit.prototype.completedOrder = function(track){
     items: items
   });
 };
-
 });
 require.register("segmentio-analytics.js-integrations/lib/customerio.js", function(exports, require, module){
 
@@ -6175,9 +6742,6 @@ GA.on('construct', function (integration) {
 
 GA.prototype.initialize = function () {
   var opts = this.options;
-  var gMetrics = metrics(group.traits(), opts);
-  var uMetrics = metrics(user.traits(), opts);
-  var custom;
 
   // setup the tracker globals
   window.GoogleAnalyticsObject = 'ga';
@@ -6201,15 +6765,15 @@ GA.prototype.initialize = function () {
   // send global id
   if (opts.sendUserId && user.id()) {
     window.ga('set', '&uid', user.id());
-  }  
+  }
 
   // anonymize after initializing, otherwise a warning is shown
   // in google analytics debugger
   if (opts.anonymizeIp) window.ga('set', 'anonymizeIp', true);
 
   // custom dimensions & metrics
-  if (length(gMetrics)) window.ga('set', gMetrics);
-  if (length(uMetrics)) window.ga('set', uMetrics);
+  var custom = metrics(user.traits(), opts);
+  if (length(custom)) window.ga('set', custom);
 
   this.load();
 };
@@ -6254,14 +6818,12 @@ GA.prototype.page = function (page) {
 
   this._category = category; // store for later
 
-  // add metrics and dimensions
-  var hit = metrics(page.properties(), this.options);
-  hit.page = path(props, this.options);
-  hit.title = name || props.title;
-  hit.location = props.url;
-
   // send
-  window.ga('send', 'pageview', hit);
+  window.ga('send', 'pageview', {
+    page: path(props, this.options),
+    title: name || props.title,
+    location: props.url
+  });
 
   // categorized pages
   if (category && this.options.trackCategorizedPages) {
@@ -6290,18 +6852,13 @@ GA.prototype.track = function (track, options) {
   var opts = options || track.options(this.name);
   var props = track.properties();
 
-  // metrics & dimensions
-  var event = metrics(props, this.options);
-
-  // event
-  event.eventAction = track.event();
-  event.eventCategory = props.category || this._category || 'All';
-  event.eventLabel = props.label;
-  event.eventValue = formatValue(props.value || track.revenue());
-  event.nonInteraction = props.noninteraction || opts.noninteraction;
-
-  // send
-  window.ga('send', 'event', event);
+  window.ga('send', 'event', {
+    eventAction: track.event(),
+    eventCategory: props.category || this._category || 'All',
+    eventLabel: props.label,
+    eventValue: formatValue(props.value || track.revenue()),
+    nonInteraction: props.noninteraction || opts.noninteraction
+  });
 };
 
 /**
@@ -6548,15 +7105,15 @@ function formatValue (value) {
 
 /**
  * Map google's custom dimensions & metrics with `obj`.
- * 
+ *
  * Example:
- * 
- *      metrics({ revenue: 1.9 }, { { metrics : { metric8: 'revenue' } });
+ *
+ *      metrics({ revenue: 1.9 }, { { metrics : { revenue: 'metric8' } });
  *      // => { metric8: 1.9 }
- * 
+ *
  *      metrics({ revenue: 1.9 }, {});
  *      // => {}
- * 
+ *
  * @param {Object} obj
  * @param {Object} data
  * @return {Object|null}
@@ -6570,10 +7127,11 @@ function metrics(obj, data){
   var ret = {};
 
   for (var i = 0; i < names.length; ++i) {
-    var name = metrics[names[i]] || dimensions[names[i]];
+    var name = names[i];
+    var key = metrics[name] || dimensions[name];
     var value = dot(obj, name);
     if (null == value) continue;
-    ret[names[i]] = value;
+    ret[key] = value;
   }
 
   return ret;
@@ -7735,6 +8293,10 @@ Keen.prototype.track = function (track) {
 });
 require.register("segmentio-analytics.js-integrations/lib/kenshoo.js", function(exports, require, module){
 
+/**
+ * Module dependencies.
+ */
+
 var integration = require('integration');
 var load = require('load-script');
 var is = require('is');
@@ -7743,7 +8305,7 @@ var is = require('is');
  * Expose plugin.
  */
 
-module.exports = exports = function (analytics) {
+module.exports = exports = function(analytics){
   analytics.addIntegration(Kenshoo);
 };
 
@@ -7767,7 +8329,7 @@ var Kenshoo = exports.Integration = integration('Kenshoo')
  * @param {Object} page
  */
 
-Kenshoo.prototype.initialize = function(page) {
+Kenshoo.prototype.initialize = function(page){
   this.load();
 };
 
@@ -7777,7 +8339,7 @@ Kenshoo.prototype.initialize = function(page) {
  * @return {Boolean}
  */
 
-Kenshoo.prototype.loaded = function() {
+Kenshoo.prototype.loaded = function(){
   return is.fn(window.k_trackevent);
 };
 
@@ -7787,7 +8349,7 @@ Kenshoo.prototype.loaded = function() {
  * @param {Function} callback
  */
 
-Kenshoo.prototype.load = function(callback) {
+Kenshoo.prototype.load = function(callback){
   var url = '//' + this.options.subdomain + '.xg4ken.com/media/getpx.php?cid=' + this.options.cid;
   load(url, callback);
 };
@@ -7801,7 +8363,7 @@ Kenshoo.prototype.load = function(callback) {
  * @api private
  */
 
-Kenshoo.prototype.completedOrder = function(track) {
+Kenshoo.prototype.completedOrder = function(track){
   this._track(track, { val: track.total() });
 };
 
@@ -7811,7 +8373,7 @@ Kenshoo.prototype.completedOrder = function(track) {
  * @param {Page} page
  */
 
-Kenshoo.prototype.page = function(page) {
+Kenshoo.prototype.page = function(page){
   var category = page.category();
   var name = page.name();
   var fullName = page.fullName();
@@ -7848,7 +8410,7 @@ Kenshoo.prototype.page = function(page) {
  * @param {Track} event
  */
 
-Kenshoo.prototype.track = function(track) {
+Kenshoo.prototype.track = function(track){
   this._track(track);
 };
 
@@ -7862,7 +8424,7 @@ Kenshoo.prototype.track = function(track) {
  * @param {options} object
  */
 
-Kenshoo.prototype._track = function(track, options) {
+Kenshoo.prototype._track = function(track, options){
   options = options || { val: track.revenue() };
 
   var params = [
@@ -7885,24 +8447,27 @@ Kenshoo.prototype._track = function(track, options) {
 });
 require.register("segmentio-analytics.js-integrations/lib/kissmetrics.js", function(exports, require, module){
 
+/**
+ * Module dependencies.
+ */
+
+var push = require('global-queue')('_kmq');
+var integration = require('integration');
+var Track = require('facade').Track;
+var callback = require('callback');
+var load = require('load-script');
 var alias = require('alias');
 var Batch = require('batch');
-var callback = require('callback');
-var integration = require('integration');
-var is = require('is');
-var load = require('load-script');
-var push = require('global-queue')('_kmq');
-var Track = require('facade').Track;
 var each = require('each');
+var is = require('is');
 
 /**
  * Expose plugin.
  */
 
-module.exports = exports = function (analytics) {
+module.exports = exports = function(analytics){
   analytics.addIntegration(KISSmetrics);
 };
-
 
 /**
  * Expose `KISSmetrics` integration.
@@ -7910,7 +8475,7 @@ module.exports = exports = function (analytics) {
 
 var KISSmetrics = exports.Integration = integration('KISSmetrics')
   .assumesPageview()
-  .readyOnInitialize()
+  .readyOnLoad()
   .global('_kmq')
   .global('KM')
   .global('_kmil')
@@ -7940,12 +8505,14 @@ exports.isMobile = navigator.userAgent.match(/Android/i)
  * @param {Object} page
  */
 
-KISSmetrics.prototype.initialize = function (page) {
+KISSmetrics.prototype.initialize = function(page){
+  var self = this;
   window._kmq = [];
   if (exports.isMobile) push('set', { 'Mobile Session': 'Yes' });
-  this.load();
+  this.load(function(){
+    self.trackPage(page);
+  });
 };
-
 
 /**
  * Loaded?
@@ -7953,10 +8520,9 @@ KISSmetrics.prototype.initialize = function (page) {
  * @return {Boolean}
  */
 
-KISSmetrics.prototype.loaded = function () {
+KISSmetrics.prototype.loaded = function(){
   return is.object(window.KM);
 };
-
 
 /**
  * Load.
@@ -7964,7 +8530,7 @@ KISSmetrics.prototype.loaded = function () {
  * @param {Function} callback
  */
 
-KISSmetrics.prototype.load = function (callback) {
+KISSmetrics.prototype.load = function(callback){
   var key = this.options.apiKey;
   var useless = '//i.kissmetrics.com/i.js';
   var library = '//doug1izaerwt3.cloudfront.net/' + key + '.1.js';
@@ -7975,17 +8541,24 @@ KISSmetrics.prototype.load = function (callback) {
     .end(callback);
 };
 
-
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @param {Page} page
  */
 
-KISSmetrics.prototype.page = function (page) {
+KISSmetrics.prototype.page = function(page){
+  if (!window.KM_SKIP_PAGE_VIEW) window.KM.pageView();
+  this.trackPage(page);
+};
+
+/**
+ * Track page.
+ *
+ * @param {Page} page
+ */
+
+KISSmetrics.prototype.trackPage = function(page){
   var category = page.category();
   var name = page.fullName();
   var opts = this.options;
@@ -8001,20 +8574,18 @@ KISSmetrics.prototype.page = function (page) {
   }
 };
 
-
 /**
  * Identify.
  *
  * @param {Identify} identify
  */
 
-KISSmetrics.prototype.identify = function (identify) {
+KISSmetrics.prototype.identify = function(identify){
   var traits = identify.traits();
   var id = identify.userId();
   if (id) push('identify', id);
   if (traits) push('set', traits);
 };
-
 
 /**
  * Track.
@@ -8022,7 +8593,7 @@ KISSmetrics.prototype.identify = function (identify) {
  * @param {Track} track
  */
 
-KISSmetrics.prototype.track = function (track) {
+KISSmetrics.prototype.track = function(track){
   var mapping = { revenue: 'Billing Amount' };
   var event = track.event();
   var properties = track.properties(mapping);
@@ -8030,14 +8601,13 @@ KISSmetrics.prototype.track = function (track) {
   push('record', event, properties);
 };
 
-
 /**
  * Alias.
  *
  * @param {Alias} to
  */
 
-KISSmetrics.prototype.alias = function (alias) {
+KISSmetrics.prototype.alias = function(alias){
   push('alias', alias.to(), alias.from());
 };
 
@@ -11602,7 +12172,7 @@ Woopra.prototype.initialize = function (page) {
   each(this.options, function(key, value){
     key = snake(key);
     if (null == value) return;
-    if ('' == value) return;
+    if ('' === value) return;
     window.woopra.config(key, value);
   });
 };
@@ -14119,7 +14689,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.5.7';
+exports.VERSION = '1.5.8';
 
 /**
  * Add integrations.
@@ -15317,12 +15887,15 @@ module.exports.User = User;
 
 
 
+
+
 require.register("segmentio-analytics.js-integrations/lib/slugs.json", function(exports, require, module){
 module.exports = [
   "adroll",
   "adwords",
   "alexa",
   "amplitude",
+  "appcues",
   "awesm",
   "awesomatic",
   "bing-ads",
@@ -15463,6 +16036,8 @@ module.exports = [
 
 
 
+
+
 require.alias("avetisk-defaults/index.js", "analytics/deps/defaults/index.js");
 require.alias("avetisk-defaults/index.js", "defaults/index.js");
 
@@ -15476,6 +16051,9 @@ require.alias("component-cookie/index.js", "cookie/index.js");
 require.alias("component-each/index.js", "analytics/deps/each/index.js");
 require.alias("component-each/index.js", "each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
 
 require.alias("component-emitter/index.js", "analytics/deps/emitter/index.js");
 require.alias("component-emitter/index.js", "emitter/index.js");
@@ -15526,6 +16104,7 @@ require.alias("segmentio-analytics.js-integrations/lib/adroll.js", "analytics/de
 require.alias("segmentio-analytics.js-integrations/lib/adwords.js", "analytics/deps/integrations/lib/adwords.js");
 require.alias("segmentio-analytics.js-integrations/lib/alexa.js", "analytics/deps/integrations/lib/alexa.js");
 require.alias("segmentio-analytics.js-integrations/lib/amplitude.js", "analytics/deps/integrations/lib/amplitude.js");
+require.alias("segmentio-analytics.js-integrations/lib/appcues.js", "analytics/deps/integrations/lib/appcues.js");
 require.alias("segmentio-analytics.js-integrations/lib/awesm.js", "analytics/deps/integrations/lib/awesm.js");
 require.alias("segmentio-analytics.js-integrations/lib/awesomatic.js", "analytics/deps/integrations/lib/awesomatic.js");
 require.alias("segmentio-analytics.js-integrations/lib/bing-ads.js", "analytics/deps/integrations/lib/bing-ads.js");
@@ -15597,6 +16176,8 @@ require.alias("segmentio-analytics.js-integrations/lib/yandex-metrica.js", "anal
 require.alias("segmentio-analytics.js-integrations/index.js", "integrations/index.js");
 require.alias("avetisk-defaults/index.js", "segmentio-analytics.js-integrations/deps/defaults/index.js");
 
+require.alias("component-bind/index.js", "segmentio-analytics.js-integrations/deps/bind/index.js");
+
 require.alias("component-clone/index.js", "segmentio-analytics.js-integrations/deps/clone/index.js");
 require.alias("component-type/index.js", "component-clone/deps/type/index.js");
 
@@ -15605,12 +16186,23 @@ require.alias("component-domify/index.js", "segmentio-analytics.js-integrations/
 require.alias("component-each/index.js", "segmentio-analytics.js-integrations/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
+
 require.alias("component-once/index.js", "segmentio-analytics.js-integrations/deps/once/index.js");
+
+require.alias("component-throttle/index.js", "segmentio-analytics.js-integrations/deps/throttle/index.js");
 
 require.alias("component-type/index.js", "segmentio-analytics.js-integrations/deps/type/index.js");
 
 require.alias("component-url/index.js", "segmentio-analytics.js-integrations/deps/url/index.js");
 
+require.alias("component-queue/index.js", "segmentio-analytics.js-integrations/deps/queue/index.js");
+require.alias("component-queue/index.js", "segmentio-analytics.js-integrations/deps/queue/index.js");
+require.alias("component-emitter/index.js", "component-queue/deps/emitter/index.js");
+require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
+
+require.alias("component-queue/index.js", "component-queue/index.js");
 require.alias("ianstormtaylor-callback/index.js", "segmentio-analytics.js-integrations/deps/callback/index.js");
 require.alias("timoxley-next-tick/index.js", "ianstormtaylor-callback/deps/next-tick/index.js");
 
@@ -15706,6 +16298,9 @@ require.alias("segmentio-isodate-traverse/index.js", "segmentio-facade/deps/isod
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
+
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
 
@@ -15782,6 +16377,9 @@ require.alias("ianstormtaylor-map/index.js", "ianstormtaylor-to-title-case/deps/
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
+
 require.alias("ianstormtaylor-title-case-minors/index.js", "ianstormtaylor-to-title-case/deps/title-case-minors/index.js");
 
 require.alias("ianstormtaylor-to-capital-case/index.js", "ianstormtaylor-to-title-case/deps/to-capital-case/index.js");
@@ -15805,6 +16403,9 @@ require.alias("segmentio-script-onload/index.js", "segmentio-script-onload/index
 require.alias("segmentio-on-body/index.js", "segmentio-analytics.js-integrations/deps/on-body/index.js");
 require.alias("component-each/index.js", "segmentio-on-body/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
 
 require.alias("segmentio-on-error/index.js", "segmentio-analytics.js-integrations/deps/on-error/index.js");
 
@@ -15897,6 +16498,9 @@ require.alias("ianstormtaylor-map/index.js", "ianstormtaylor-to-title-case/deps/
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
+
 require.alias("ianstormtaylor-title-case-minors/index.js", "ianstormtaylor-to-title-case/deps/title-case-minors/index.js");
 
 require.alias("ianstormtaylor-to-capital-case/index.js", "ianstormtaylor-to-title-case/deps/to-capital-case/index.js");
@@ -15926,6 +16530,9 @@ require.alias("camshaft-require-component/index.js", "segmentio-facade/deps/requ
 require.alias("segmentio-isodate-traverse/index.js", "segmentio-facade/deps/isodate-traverse/index.js");
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
 
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");
@@ -16003,6 +16610,9 @@ require.alias("ianstormtaylor-map/index.js", "ianstormtaylor-to-title-case/deps/
 require.alias("component-each/index.js", "ianstormtaylor-map/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
+
 require.alias("ianstormtaylor-title-case-minors/index.js", "ianstormtaylor-to-title-case/deps/title-case-minors/index.js");
 
 require.alias("ianstormtaylor-to-capital-case/index.js", "ianstormtaylor-to-title-case/deps/to-capital-case/index.js");
@@ -16021,6 +16631,9 @@ require.alias("segmentio-isodate-traverse/index.js", "analytics/deps/isodate-tra
 require.alias("segmentio-isodate-traverse/index.js", "isodate-traverse/index.js");
 require.alias("component-each/index.js", "segmentio-isodate-traverse/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
+
+require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
+require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
 
 require.alias("ianstormtaylor-is/index.js", "segmentio-isodate-traverse/deps/is/index.js");
 require.alias("component-type/index.js", "ianstormtaylor-is/deps/type/index.js");

@@ -14459,7 +14459,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.5.10';
+exports.VERSION = '1.5.11';
 
 /**
  * Add integrations.

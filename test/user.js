@@ -2,13 +2,13 @@
 describe('user', function () {
 
   var analytics = window.analytics;
-  var require = analytics.require;
-  var assert = dev('assert');
-  var cookie = require('./cookie');
-  var equal = dev('equals');
+  var Analytics = analytics.constructor;
+  var assert = require('assert');
+  var cookie = Analytics.cookie;
+  var equal = require('equals');
   var json = require('json');
-  var store = require('./store');
-  var user = require('./user');
+  var store = Analytics.store;
+  var user = analytics.user();
   var User = user.User;
 
   var cookieKey = user._options.cookie.key;

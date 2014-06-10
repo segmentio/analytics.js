@@ -2,10 +2,10 @@
 describe('store', function () {
 
   var analytics = window.analytics;
-  var require = analytics.require;
-  var assert = dev('assert');
-  var equal = dev('equals');
-  var store = require('./store');
+  var Analytics = analytics.constructor;
+  var assert = require('assert');
+  var equal = require('equals');
+  var store = Analytics.store;
 
   afterEach(function () {
     store.options({}); // reset to defaults

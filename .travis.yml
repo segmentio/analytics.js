@@ -1,12 +1,8 @@
 language: node_js
-script: make test-sauce
+script: make test
 node_js:
-- '0.10'
+- '0.11'
 env:
   global:
-  - secure: KAgR4ep51GqR8SRy/VrCotHtoLFD0WAhJVYnu1t0EimtcGQKfId0SyVDXiJQc6XR8uoLX9wersjTn1qGR3uTKZW2DWSW672YUiWOABl9BhrQhkwdfTkxUJ8oLkg8XqWABS639zqUuo7INtv1FOhsBfj1qkxwb36Ey0NMEOsY+NY=
-  - secure: J/u6wkOC5xD8bEPVxM07rUGMXirrNIVB3wjXBysjzleYpIL5Xt7SiPEFOz1gC0kOIDiBBCn0jyKNQRNc9n+zXQ1fN3uOd3vVxJsp/MIu2P9M/HcvZP+uX1rbLZ7j6VHSRx7axUY53u3jSCjJY1orcawsFbsyc2EZB242OtUv9Qs=
-  matrix:
-  - BROWSER='chrome'
-  - BROWSER='safari'
-  - BROWSER='firefox'
+  - secure: ixFsGpkqQty4f8kTOZFq+BF3nmkMCHqQKCaXdgtOEADJXpRoqWtGnAgM1EXF0fDsmf825E+gxwJbBk7lBgCykOnToVmXsoNoPyLA8c/rjWVwFBwFcrRidaR7qbAbWQr1qGxEWwveP5ijj8neEXs9cslwv1y31WCBjXaz/ZHvEnI=
+  - secure: F5GN7Ph+7qcM/QPekFuaOZzzRA4+NpfdmVxdQPJZuEy4GTAdM3USzPBuYebxji6DQjplGXM0szUIZPuwWJowHVzUvbY4OuwYHGbIJm0Sc9ZR78DFCPIMIZ577rliqybvpKWjl9eXGacre8sa5UzQdL7z0CI8xDzdrmHnr23hkeY=

@@ -1,22 +1,21 @@
 
 describe('Analytics', function () {
 
+  var createIntegration = require('analytics.js-integration');
   var analytics = window.analytics;
-  var require = analytics.require;
-  var Analytics = require('./analytics');
-  var assert = dev('assert');
+  var Analytics = analytics.constructor;
+  var assert = require('assert');
   var bind = require('event').bind;
-  var cookie = require('./cookie');
-  var equal = dev('equals');
-  var group = require('./group');
+  var cookie = Analytics.cookie;
+  var equal = require('equals');
+  var group = analytics.group();
   var is = require('is');
-  var jQuery = dev('jquery');
-  var createIntegration = dev('integration');
-  var sinon = dev('sinon');
-  var store = require('./store');
-  var tick = dev('next-tick');
-  var trigger = dev('trigger-event');
-  var user = require('./user');
+  var jQuery = require('jquery');
+  var sinon = require('sinon');
+  var store = Analytics.store;
+  var tick = require('next-tick');
+  var trigger = require('trigger-event');
+  var user = analytics.user();
   var Facade = require('facade');
   var Identify = Facade.Identify;
   var Group = Facade.Group;
@@ -334,7 +333,7 @@ describe('Analytics', function () {
     it('should call #_invoke with Page instance', function(){
       analytics.page();
       var page = analytics._invoke.args[0][1];
-      assert(page instanceof Page);
+      assert('page' == page.action());
     })
 
     it('should default .url to .location.href', function(){
@@ -503,7 +502,7 @@ describe('Analytics', function () {
     it('should call #_invoke with Identify', function(){
       analytics.identify();
       var identify = analytics._invoke.getCall(0).args[1];
-      assert(identify instanceof Identify);
+      assert('identify' == identify.action());
     })
 
     it('should accept (id, traits, options, callback)', function (done) {
@@ -528,7 +527,7 @@ describe('Analytics', function () {
     it('should accept (id, callback)', function (done) {
       analytics.identify('id', function () {
         var identify = analytics._invoke.getCall(0).args[1];
-        assert(identify instanceof Identify);
+        assert('identify' == identify.action());
         assert('id' == identify.userId());
         done();
       });
@@ -665,7 +664,7 @@ describe('Analytics', function () {
     it('should call #_invoke with group facade instance', function(){
       analytics.group('id');
       var group = analytics._invoke.args[0][1];
-      assert(group instanceof Group);
+      assert('group' == group.action());
     })
 
     it('should accept (id, properties, options, callback)', function (done) {
@@ -782,7 +781,7 @@ describe('Analytics', function () {
     it('should transform arguments into Track', function(){
       analytics.track();
       var track = analytics._invoke.getCall(0).args[1];
-      assert(track instanceof Track);
+      assert('track' == track.action());
     })
 
     it('should accept (event, properties, options, callback)', function (done) {
@@ -1010,7 +1009,7 @@ describe('Analytics', function () {
     it('should call #_invoke with instanceof Alias', function(){
       analytics.alias();
       var alias = analytics._invoke.args[0][1];
-      assert(alias instanceof Alias);
+      assert('alias' == alias.action());
     })
 
     it('should accept (new, old, options, callback)', function (done) {

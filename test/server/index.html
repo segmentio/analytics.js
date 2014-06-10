@@ -5,24 +5,16 @@
   <link rel="stylesheet" href="test/server/mocha.css">
   <script src="test/server/mocha.js"></script>
   <script>mocha.setup({ ui: 'bdd' })</script>
-  <script src="analytics.js"></script>
-  <script src='test/build/build.js'></script>
-  <script src="test/index.js"></script>
-  <script src="test/analytics.js"></script>
-  <script src="test/cookie.js"></script>
-  <script src="test/store.js"></script>
-  <script src="test/user.js"></script>
-  <script src="test/group.js"></script>
+  <script src="/analytics.js"></script>
+  <script src="/build/build.js"></script>
 </head>
 <body>
   <div id="mocha"></div>
   <script>
     if (window.mochaPhantomJS) {
       mochaPhantomJS.run();
-      analytics.require('debug').disable();
     } else {
-      dev('gravy')(mocha.run());
-      analytics.require('debug').enable('*');
+      mocha.run();
     }
   </script>
 </body>

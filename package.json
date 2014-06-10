@@ -9,9 +9,8 @@
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {
-    "component": "0.19.6",
+    "duo": "0.x",
     "express": "~3.1.0",
-    "hbs": "~2.3.0",
     "mocha-phantomjs": "3.1.2",
     "uglify-js": ">= 1.3.4",
     "underscore": "~1.4.3",

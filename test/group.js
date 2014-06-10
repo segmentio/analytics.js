@@ -2,13 +2,13 @@
 describe('group', function () {
 
   var analytics = window.analytics;
-  var require = analytics.require;
-  var assert = dev('assert');
-  var cookie = require('./cookie');
-  var equal = dev('equals');
+  var Analytics = analytics.constructor;
+  var assert = require('assert');
+  var cookie = Analytics.cookie;
+  var equal = require('equals');
   var json = require('json');
-  var store = require('./store');
-  var group = require('./group');
+  var store = Analytics.store;
+  var group = analytics.group();
   var Group = group.Group;
 
   var cookieKey = group._options.cookie.key;

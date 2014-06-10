@@ -2,10 +2,10 @@
 describe('cookie', function () {
 
   var analytics = window.analytics;
-  var require = analytics.require;
-  var assert = dev('assert');
-  var cookie = require('./cookie.js');
-  var equal = dev('equals');
+  var Analytics = analytics.constructor;
+  var assert = require('assert');
+  var cookie = Analytics.cookie;
+  var equal = require('equals');
 
   afterEach(function () {
     cookie.options({}); // reset to defaults

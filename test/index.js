@@ -1,12 +1,11 @@
 
 describe('analytics', function () {
 
+  var Integrations = require('analytics.js-integrations');
+  var createIntegration = require('analytics.js-integration');
   var analytics = window.analytics;
-  var require = analytics.require;
-  var assert = dev('assert');
-  var createIntegration = dev('integration');
+  var assert = require('assert');
   var each = require('each');
-  var Integrations = require('integrations');
   var is = require('is');
 
   it('should expose a .VERSION', function () {
@@ -15,7 +14,10 @@ describe('analytics', function () {
 
   it('should add integrations', function () {
     each(Integrations, function (name, plugin) {
-      assert(analytics.Integrations[name] === plugin.Integration);
+      var a = analytics.Integrations[name].prototype;
+      var b = plugin.Integration.prototype;
+      assert(a.name && b.name);
+      assert(a.name == b.name);
     });
   });
 

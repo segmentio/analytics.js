@@ -230,6 +230,7 @@ module.exports = defaults;
 
 });
 require.register("component-type/index.js", function(exports, require, module){
+
 /**
  * toString ref.
  */
@@ -246,21 +247,18 @@ var toString = Object.prototype.toString;
 
 module.exports = function(val){
   switch (toString.call(val)) {
+    case '[object Function]': return 'function';
     case '[object Date]': return 'date';
     case '[object RegExp]': return 'regexp';
     case '[object Arguments]': return 'arguments';
     case '[object Array]': return 'array';
-    case '[object Error]': return 'error';
+    case '[object String]': return 'string';
   }
 
   if (val === null) return 'null';
   if (val === undefined) return 'undefined';
-  if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
-
-  val = val.valueOf
-    ? val.valueOf()
-    : Object.prototype.valueOf.apply(val)
+  if (val === Object(val)) return 'object';
 
   return typeof val;
 };
@@ -937,15 +935,15 @@ exports.parse = function(url){
   a.href = url;
   return {
     href: a.href,
-    host: a.host || location.host,
-    port: ('0' === a.port || '' === a.port) ? port(a.protocol) : a.port,
+    host: a.host,
+    port: a.port,
     hash: a.hash,
-    hostname: a.hostname || location.hostname,
-    pathname: a.pathname.charAt(0) != '/' ? '/' + a.pathname : a.pathname,
-    protocol: !a.protocol || ':' == a.protocol ? location.protocol : a.protocol,
+    hostname: a.hostname,
+    pathname: a.pathname,
+    protocol: a.protocol,
     search: a.search,
     query: a.search.slice(1)
-  };
+  }
 };
 
 /**
@@ -957,7 +955,9 @@ exports.parse = function(url){
  */
 
 exports.isAbsolute = function(url){
-  return 0 == url.indexOf('//') || !!~url.indexOf('://');
+  if (0 == url.indexOf('//')) return true;
+  if (~url.indexOf('://')) return true;
+  return false;
 };
 
 /**
@@ -969,7 +969,7 @@ exports.isAbsolute = function(url){
  */
 
 exports.isRelative = function(url){
-  return !exports.isAbsolute(url);
+  return ! exports.isAbsolute(url);
 };
 
 /**
@@ -982,29 +982,10 @@ exports.isRelative = function(url){
 
 exports.isCrossDomain = function(url){
   url = exports.parse(url);
-  return url.hostname !== location.hostname
-    || url.port !== location.port
-    || url.protocol !== location.protocol;
+  return url.hostname != location.hostname
+    || url.port != location.port
+    || url.protocol != location.protocol;
 };
-
-/**
- * Return default port for `protocol`.
- *
- * @param  {String} protocol
- * @return {String}
- * @api private
- */
-function port (protocol){
-  switch (protocol) {
-    case 'http:':
-      return 80;
-    case 'https:':
-      return 443;
-    default:
-      return location.port;
-  }
-}
-
 });
 require.register("component-bind/index.js", function(exports, require, module){
 /**
@@ -3622,10 +3603,13 @@ each(integrations, function (slug) {
 });
 require.register("segmentio-analytics.js-integrations/lib/adroll.js", function(exports, require, module){
 
-var integration = require('integration');
-var is = require('is');
-var load = require('load-script');
+/**
+ * Module dependencies.
+ */
 
+var integration = require('integration');
+var load = require('load-script');
+var is = require('is');
 
 /**
  * User reference.
@@ -3643,11 +3627,10 @@ var has = Object.prototype.hasOwnProperty;
  * Expose plugin.
  */
 
-module.exports = exports = function (analytics) {
+module.exports = exports = function(analytics){
   analytics.addIntegration(AdRoll);
   user = analytics.user(); // store for later
 };
-
 
 /**
  * Expose `AdRoll` integration.
@@ -3664,7 +3647,6 @@ var AdRoll = exports.Integration = integration('AdRoll')
   .option('advId', '')
   .option('pixId', '');
 
-
 /**
  * Initialize.
  *
@@ -3674,13 +3656,12 @@ var AdRoll = exports.Integration = integration('AdRoll')
  * @param {Object} page
  */
 
-AdRoll.prototype.initialize = function (page) {
+AdRoll.prototype.initialize = function(page){
   window.adroll_adv_id = this.options.advId;
   window.adroll_pix_id = this.options.pixId;
   window.__adroll_loaded = true;
   this.load();
 };
-
 
 /**
  * Loaded?
@@ -3688,22 +3669,34 @@ AdRoll.prototype.initialize = function (page) {
  * @return {Boolean}
  */
 
-AdRoll.prototype.loaded = function () {
+AdRoll.prototype.loaded = function(){
   return window.__adroll;
 };
-
 
 /**
  * Load the AdRoll library.
  *
- * @param {Function} callback
+ * @param {Function} fn
  */
 
-AdRoll.prototype.load = function (callback) {
+AdRoll.prototype.load = function(fn){
   load({
     http: 'http://a.adroll.com/j/roundtrip.js',
     https: 'https://s.adroll.com/j/roundtrip.js'
-  }, callback);
+  }, fn);
+};
+
+/**
+ * Page.
+ *
+ * http://support.adroll.com/segmenting-clicks/
+ *
+ * @param {Page} page
+ */
+
+AdRoll.prototype.page = function(page){
+  var name = page.fullName();
+  this.track(page.track(name));
 };
 
 /**
@@ -3714,18 +3707,22 @@ AdRoll.prototype.load = function (callback) {
 
 AdRoll.prototype.track = function(track){
   var events = this.options.events;
-  var total = track.revenue();
   var event = track.event();
-  if (has.call(events, event)) event = events[event];
-  var data = {
-    adroll_conversion_value_in_dollars: total || 0,
-    order_id: track.orderId() || 0,
-    adroll_segments: event
-  };
+  var data = {};
   if (user.id()) data.user_id = user.id();
+
+  if (has.call(events, event)) {
+    event = events[event];
+    var total = track.revenue() || track.total() || 0;
+    var orderId = track.orderId() || 0;
+    data.adroll_conversion_value_in_dollars = total;
+    data.order_id = orderId;
+  }
+
+  data.adroll_segments = event;
+
   window.__adroll.record_user(data);
 };
-
 });
 require.register("segmentio-analytics.js-integrations/lib/adwords.js", function(exports, require, module){
 
@@ -4684,19 +4681,22 @@ Bugsnag.prototype.identify = function (identify) {
 });
 require.register("segmentio-analytics.js-integrations/lib/chartbeat.js", function(exports, require, module){
 
-var integration = require('integration');
-var onBody = require('on-body');
-var load = require('load-script');
+/**
+ * Module dependencies.
+ */
 
+var integration = require('integration');
+var defaults = require('defaults');
+var load = require('load-script');
+var onBody = require('on-body');
 
 /**
  * Expose plugin.
  */
 
-module.exports = exports = function (analytics) {
+module.exports = exports = function(analytics){
   analytics.addIntegration(Chartbeat);
 };
-
 
 /**
  * Expose `Chartbeat` integration.
@@ -4711,7 +4711,6 @@ var Chartbeat = exports.Integration = integration('Chartbeat')
   .option('domain', '')
   .option('uid', null);
 
-
 /**
  * Initialize.
  *
@@ -4720,14 +4719,20 @@ var Chartbeat = exports.Integration = integration('Chartbeat')
  * @param {Object} page
  */
 
-Chartbeat.prototype.initialize = function (page) {
-  window._sf_async_config = this.options;
-  onBody(function () {
-    window._sf_endpt = new Date().getTime();
-  });
-  this.load();
-};
+Chartbeat.prototype.initialize = function(page){
+  var self = this;
 
+  window._sf_async_config = window._sf_async_config || {};
+  window._sf_async_config.useCanonical = true;
+  defaults(window._sf_async_config, this.options);
+
+  onBody(function(){
+    window._sf_endpt = new Date().getTime();
+    // Note: Chartbeat depends on document.body existing so the script does
+    // not load until that is confirmed. Otherwise it may trigger errors.
+    self.load();
+  });
+};
 
 /**
  * Loaded?
@@ -4735,26 +4740,21 @@ Chartbeat.prototype.initialize = function (page) {
  * @return {Boolean}
  */
 
-Chartbeat.prototype.loaded = function () {
+Chartbeat.prototype.loaded = function(){
   return !! window.pSUPERFLY;
 };
-
 
 /**
  * Load the Chartbeat library.
  *
  * http://chartbeat.com/docs/adding_the_code/
  *
- * @param {Function} callback
+ * @param {Function} fn
  */
 
-Chartbeat.prototype.load = function (callback) {
-  load({
-    https: 'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/js/chartbeat.js',
-    http: 'http://static.chartbeat.com/js/chartbeat.js'
-  }, callback);
+Chartbeat.prototype.load = function(fn){
+  load('//static.chartbeat.com/js/chartbeat.js', fn);
 };
-
 
 /**
  * Page.
@@ -4764,7 +4764,7 @@ Chartbeat.prototype.load = function (callback) {
  * @param {Page} page
  */
 
-Chartbeat.prototype.page = function (page) {
+Chartbeat.prototype.page = function(page){
   var props = page.properties();
   var name = page.fullName();
   window.pSUPERFLY.virtualPage(props.path, name || props.title);
@@ -5760,9 +5760,13 @@ Evergage.prototype.track = function (track) {
 });
 require.register("segmentio-analytics.js-integrations/lib/facebook-ads.js", function(exports, require, module){
 
-var load = require('load-script');
-var integration = require('integration');
+/**
+ * Module dependencies.
+ */
+
 var push = require('global-queue')('_fbq');
+var integration = require('integration');
+var load = require('load-script');
 
 /**
  * Expose plugin
@@ -5825,6 +5829,8 @@ Facebook.prototype.loaded = function(){
 /**
  * Track.
  *
+ * https://developers.facebook.com/docs/reference/ads-api/custom-audience-website-faq/#fbpixel
+ *
  * @param {Track} track
  */
 
@@ -5833,13 +5839,17 @@ Facebook.prototype.track = function(track){
   var traits = track.traits();
   var event = track.event();
   var revenue = track.revenue() || 0;
-  if (!has.call(events, event)) return;
-  push('track', events[event], {
-    value: String(revenue.toFixed(2)),
-    currency: this.options.currency
-  });
+  var data = track.properties();
+  if (has.call(events, event)) {
+    // conversion flow
+    event = events[event];
+    data = {
+      value: String(revenue.toFixed(2)),
+      currency: this.options.currency
+    };
+  }
+  push('track', event, data);
 };
-
 });
 require.register("segmentio-analytics.js-integrations/lib/foxmetrics.js", function(exports, require, module){
 
@@ -7803,7 +7813,7 @@ Intercom.prototype.loaded = function () {
 
 /**
  * Load the Intercom library.
- * 
+ *
  * TODO: remove `when()` when integration `.loaded()`
  * behavior is fixed.
  *
@@ -7853,27 +7863,22 @@ Intercom.prototype.identify = function (identify) {
 
   traits.app_id = this.options.appId;
 
-  // Make sure company traits are carried over (fixes #120).
-  if (!empty(group.traits())) {
-    traits.company = traits.company || {};
-    defaults(traits.company, group.traits());
-  }
+  // intercom requires `company` to be an object. default it with group traits
+  // so that we guarantee an `id` is there, since they require it
+  if (null != traits.company && !is.object(traits.company)) delete traits.company;
+  if (traits.company) defaults(traits.company, group.traits());
 
   // name
   if (name) traits.name = name;
 
   // handle dates
-  if (companyCreated) traits.company.created = companyCreated;
+  if (traits.company && companyCreated) traits.company.created = companyCreated;
   if (created) traits.created = created;
 
   // convert dates
   traits = convertDates(traits, formatDate);
   traits = alias(traits, { created: 'created_at'});
-
-  // company
-  if (traits.company) {
-    traits.company = alias(traits.company, { created: 'created_at' });
-  }
+  if (traits.company) traits.company = alias(traits.company, { created: 'created_at' });
 
   // handle options
   if (opts.increments) traits.increments = opts.increments;
@@ -8069,6 +8074,7 @@ require.register("segmentio-analytics.js-integrations/lib/kenshoo.js", function(
 
 var integration = require('integration');
 var load = require('load-script');
+var indexof = require('indexof');
 var is = require('is');
 
 /**
@@ -8088,8 +8094,7 @@ var Kenshoo = exports.Integration = integration('Kenshoo')
   .global('k_trackevent')
   .option('cid', '')
   .option('subdomain', '')
-  .option('trackNamedPages', true)
-  .option('trackCategorizedPages', true);
+  .option('events', []);
 
 /**
  * Initialize.
@@ -8125,55 +8130,10 @@ Kenshoo.prototype.load = function(callback){
 };
 
 /**
- * Completed order.
- *
- * https://github.com/jorgegorka/the_tracker/blob/master/lib/the_tracker/trackers/kenshoo.rb
- *
- * @param {Track} track
- * @api private
- */
-
-Kenshoo.prototype.completedOrder = function(track){
-  this._track(track, { val: track.total() });
-};
-
-/**
- * Page.
- *
- * @param {Page} page
- */
-
-Kenshoo.prototype.page = function(page){
-  var category = page.category();
-  var name = page.name();
-  var fullName = page.fullName();
-  var isNamed = (name && this.options.trackNamedPages);
-  var isCategorized = (category && this.options.trackCategorizedPages);
-  var track;
-
-  if (name && ! this.options.trackNamedPages) {
-    return;
-  }
-
-  if (category && ! this.options.trackCategorizedPages) {
-    return;
-  }
-
-  if (isNamed && isCategorized) {
-    track = page.track(fullName);
-  } else if (isNamed) {
-    track = page.track(name);
-  } else if (isCategorized) {
-    track = page.track(category);
-  } else {
-    track = page.track();
-  }
-
-  this._track(track);
-};
-
-/**
  * Track.
+ *
+ * Only tracks events if they are listed in the events array option.
+ * We've asked for docs a few times but no go :/
  *
  * https://github.com/jorgegorka/the_tracker/blob/master/lib/the_tracker/trackers/kenshoo.rb
  *
@@ -8181,29 +8141,19 @@ Kenshoo.prototype.page = function(page){
  */
 
 Kenshoo.prototype.track = function(track){
-  this._track(track);
-};
-
-/**
- * Track a Kenshoo event.
- *
- * Private method for sending an event. We use it because `completedOrder`
- * can't call track directly (would result in an infinite loop).
- *
- * @param {track} event
- * @param {options} object
- */
-
-Kenshoo.prototype._track = function(track, options){
-  options = options || { val: track.revenue() };
+  var events = this.options.events;
+  var traits = track.traits();
+  var event = track.event();
+  var revenue = track.revenue() || 0;
+  if (!~indexof(events, event)) return;
 
   var params = [
     'id=' + this.options.cid,
-    'type=' + track.event(),
-    'val=' + (options.val || '0.0'),
-    'orderId=' + (track.orderId() || ''),
-    'promoCode=' + (track.coupon() || ''),
-    'valueCurrency=' + (track.currency() || ''),
+    'type=conv',
+    'val=' + revenue,
+    'orderId=' + track.orderId(),
+    'promoCode=' + track.coupon(),
+    'valueCurrency=' + track.currency(),
 
     // Live tracking fields. Ignored for now (until we get documentation).
     'GCID=',
@@ -8213,7 +8163,6 @@ Kenshoo.prototype._track = function(track, options){
 
   window.k_trackevent(params, this.options.subdomain);
 };
-
 });
 require.register("segmentio-analytics.js-integrations/lib/kissmetrics.js", function(exports, require, module){
 
@@ -9100,14 +9049,24 @@ Mixpanel.prototype.track = function (track) {
   var props = track.properties();
   var revenue = track.revenue();
 
+  // delete mixpanel's reserved properties, so they don't conflict
+  delete props.distinct_id;
+  delete props.ip;
+  delete props.mp_name_tag;
+  delete props.mp_note;
+  delete props.token;
+
+  // increment properties in mixpanel people
   if (people && ~indexof(increments, increment)) {
     window.mixpanel.people.increment(track.event());
     window.mixpanel.people.set('Last ' + track.event(), new Date);
   }
 
+  // track the event
   props = dates(props, iso);
   window.mixpanel.track(track.event(), props);
 
+  // track revenue specifically
   if (revenue && people) {
     window.mixpanel.people.track_charge(revenue);
   }
@@ -9135,7 +9094,7 @@ Mixpanel.prototype.alias = function (alias) {
 
 /**
  * Lowercase the given `arr`.
- * 
+ *
  * @param {Array} arr
  * @return {Array}
  * @api private
@@ -10254,10 +10213,13 @@ Qualaroo.prototype.track = function (track) {
 });
 require.register("segmentio-analytics.js-integrations/lib/quantcast.js", function(exports, require, module){
 
+/**
+ * Module dependencies.
+ */
+
 var integration = require('integration');
 var load = require('load-script');
 var push = require('global-queue')('_qevents', { wrap: false });
-
 
 /**
  * User reference.
@@ -10265,16 +10227,14 @@ var push = require('global-queue')('_qevents', { wrap: false });
 
 var user;
 
-
 /**
  * Expose plugin.
  */
 
-module.exports = exports = function (analytics) {
+module.exports = exports = function(analytics){
   analytics.addIntegration(Quantcast);
   user = analytics.user(); // store for later
 };
-
 
 /**
  * Expose `Quantcast` integration.
@@ -10298,7 +10258,7 @@ var Quantcast = exports.Integration = integration('Quantcast')
  * @param {Page} page
  */
 
-Quantcast.prototype.initialize = function (page) {
+Quantcast.prototype.initialize = function(page){
   window._qevents = window._qevents || [];
 
   var opts = this.options;
@@ -10313,31 +10273,28 @@ Quantcast.prototype.initialize = function (page) {
   this.load();
 };
 
-
 /**
  * Loaded?
  *
  * @return {Boolean}
  */
 
-Quantcast.prototype.loaded = function () {
+Quantcast.prototype.loaded = function(){
   return !! window.__qc;
 };
-
 
 /**
  * Load.
  *
- * @param {Function} callback
+ * @param {Function} fn
  */
 
-Quantcast.prototype.load = function (callback) {
+Quantcast.prototype.load = function(fn){
   load({
     http: 'http://edge.quantserve.com/quant.js',
     https: 'https://secure.quantserve.com/quant.js'
-  }, callback);
+  }, fn);
 };
-
 
 /**
  * Page.
@@ -10347,7 +10304,7 @@ Quantcast.prototype.load = function (callback) {
  * @param {Page} page
  */
 
-Quantcast.prototype.page = function (page) {
+Quantcast.prototype.page = function(page){
   var category = page.category();
   var name = page.name();
   var settings = {
@@ -10359,7 +10316,6 @@ Quantcast.prototype.page = function (page) {
   push(settings);
 };
 
-
 /**
  * Identify.
  *
@@ -10368,12 +10324,11 @@ Quantcast.prototype.page = function (page) {
  * @param {String} id (optional)
  */
 
-Quantcast.prototype.identify = function (identify) {
+Quantcast.prototype.identify = function(identify){
   // edit the initial quantcast settings
   var id = identify.userId();
-  if (id) window._qevents[0].uid = id;
+  if (id && !!window._qevents[0]) window._qevents[0].uid = id;
 };
-
 
 /**
  * Track.
@@ -10383,7 +10338,7 @@ Quantcast.prototype.identify = function (identify) {
  * @param {Track} track
  */
 
-Quantcast.prototype.track = function (track) {
+Quantcast.prototype.track = function(track){
   var name = track.event();
   var revenue = track.revenue();
   var settings = {
@@ -10395,7 +10350,6 @@ Quantcast.prototype.track = function (track) {
   if (user.id()) settings.uid = user.id();
   push(settings);
 };
-
 
 /**
  * Completed Order.
@@ -14459,7 +14413,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '1.5.11';
+exports.VERSION = '1.5.12';
 
 /**
  * Add integrations.
@@ -15953,6 +15907,8 @@ require.alias("component-domify/index.js", "segmentio-analytics.js-integrations/
 require.alias("component-each/index.js", "segmentio-analytics.js-integrations/deps/each/index.js");
 require.alias("component-type/index.js", "component-each/deps/type/index.js");
 
+require.alias("component-indexof/index.js", "segmentio-analytics.js-integrations/deps/indexof/index.js");
+
 require.alias("component-once/index.js", "segmentio-analytics.js-integrations/deps/once/index.js");
 
 require.alias("component-throttle/index.js", "segmentio-analytics.js-integrations/deps/throttle/index.js");
@@ -16201,8 +16157,6 @@ require.alias("segmentio-replace-document-write/index.js", "segmentio-analytics.
 require.alias("component-domify/index.js", "segmentio-replace-document-write/deps/domify/index.js");
 
 require.alias("segmentio-replace-document-write/index.js", "segmentio-replace-document-write/index.js");
-require.alias("component-indexof/index.js", "segmentio-analytics.js-integrations/deps/indexof/index.js");
-
 require.alias("component-object/index.js", "segmentio-analytics.js-integrations/deps/object/index.js");
 
 require.alias("segmentio-obj-case/index.js", "segmentio-analytics.js-integrations/deps/obj-case/index.js");

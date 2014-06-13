@@ -112,7 +112,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = '2.0.0';
+exports.VERSION = '2.0.1';
 
 /**
  * Add integrations.
@@ -1872,7 +1872,7 @@ Bronto.prototype.completedOrder = function(track){
   });
 };
 
-}, {"analytics.js-integration":103,"facade":108,"load-script":104,"each":4}],
+}, {"analytics.js-integration":103,"facade":26,"load-script":104,"each":4}],
 
 38: [function(require, module, exports) {
 
@@ -2009,7 +2009,7 @@ Bugsnag.prototype.identify = function(identify){
   extend(window.Bugsnag.metaData, identify.traits());
 };
 
-}, {"analytics.js-integration":103,"is":17,"extend":109,"load-script":104,"on-error":110}],
+}, {"analytics.js-integration":103,"is":17,"extend":108,"load-script":104,"on-error":109}],
 
 40: [function(require, module, exports) {
 
@@ -2103,7 +2103,7 @@ Chartbeat.prototype.page = function(page){
   window.pSUPERFLY.virtualPage(props.path, name || props.title);
 };
 
-}, {"analytics.js-integration":103,"defaults":111,"load-script":104,"on-body":105}],
+}, {"analytics.js-integration":103,"defaults":110,"load-script":104,"on-body":105}],
 
 41: [function(require, module, exports) {
 
@@ -2202,7 +2202,7 @@ ChurnBee.prototype.track = function(track){
   push(event, track.properties({ revenue: 'amount' }));
 };
 
-}, {"global-queue":112,"analytics.js-integration":103,"load-script":104}],
+}, {"global-queue":111,"analytics.js-integration":103,"load-script":104}],
 
 42: [function(require, module, exports) {
 
@@ -2315,7 +2315,7 @@ ClickTale.prototype.track = function(track){
   window.ClickTaleEvent(track.event());
 };
 
-}, {"load-date":113,"domify":106,"each":4,"analytics.js-integration":103,"is":17,"use-https":114,"load-script":104,"on-body":105}],
+}, {"load-date":112,"domify":106,"each":4,"analytics.js-integration":103,"is":17,"use-https":113,"load-script":104,"on-body":105}],
 
 43: [function(require, module, exports) {
 
@@ -2429,7 +2429,7 @@ Clicky.prototype.track = function(track){
   window.clicky.goal(track.event(), track.revenue());
 };
 
-}, {"facade":108,"extend":109,"analytics.js-integration":103,"is":17,"load-script":104}],
+}, {"facade":26,"extend":108,"analytics.js-integration":103,"is":17,"load-script":104}],
 
 44: [function(require, module, exports) {
 
@@ -2764,7 +2764,7 @@ Curebit.prototype.completedOrder = function(track){
   });
 };
 
-}, {"analytics.js-integration":103,"global-queue":112,"facade":108,"throttle":115,"to-iso-string":116,"load-script":104,"clone":117,"each":4,"bind":118}],
+}, {"analytics.js-integration":103,"global-queue":111,"facade":26,"throttle":114,"to-iso-string":115,"load-script":104,"clone":116,"each":4,"bind":117}],
 
 47: [function(require, module, exports) {
 
@@ -2896,7 +2896,7 @@ function convertDate(date){
   return Math.floor(date.getTime() / 1000);
 }
 
-}, {"alias":119,"callback":11,"convert-dates":120,"facade":108,"analytics.js-integration":103,"load-script":104}],
+}, {"alias":118,"callback":11,"convert-dates":119,"facade":26,"analytics.js-integration":103,"load-script":104}],
 
 48: [function(require, module, exports) {
 
@@ -2975,7 +2975,7 @@ Drip.prototype.track = function(track){
   push('track', props);
 };
 
-}, {"alias":119,"analytics.js-integration":103,"is":17,"load-script":104,"global-queue":112}],
+}, {"alias":118,"analytics.js-integration":103,"is":17,"load-script":104,"global-queue":111}],
 
 49: [function(require, module, exports) {
 
@@ -3056,7 +3056,7 @@ Errorception.prototype.identify = function(identify){
   extend(window._errs.meta, traits);
 };
 
-}, {"callback":11,"extend":109,"analytics.js-integration":103,"load-script":104,"on-error":110,"global-queue":112}],
+}, {"callback":11,"extend":108,"analytics.js-integration":103,"load-script":104,"on-error":109,"global-queue":111}],
 
 50: [function(require, module, exports) {
 
@@ -3193,7 +3193,7 @@ Evergage.prototype.track = function(track){
   push('trackAction', track.event(), track.properties());
 };
 
-}, {"each":4,"analytics.js-integration":103,"load-script":104,"global-queue":112}],
+}, {"each":4,"analytics.js-integration":103,"load-script":104,"global-queue":111}],
 
 51: [function(require, module, exports) {
 
@@ -3289,7 +3289,7 @@ Facebook.prototype.track = function(track){
   push('track', event, data);
 };
 
-}, {"analytics.js-integration":103,"global-queue":112,"load-script":104}],
+}, {"analytics.js-integration":103,"global-queue":111,"load-script":104}],
 
 52: [function(require, module, exports) {
 
@@ -3497,7 +3497,7 @@ function ecommerce(event, track, arr){
   ].concat(arr || []));
 }
 
-}, {"global-queue":112,"analytics.js-integration":103,"facade":108,"callback":11,"load-script":104,"each":4}],
+}, {"global-queue":111,"analytics.js-integration":103,"facade":26,"callback":11,"load-script":104,"each":4}],
 
 53: [function(require, module, exports) {
 
@@ -3784,7 +3784,7 @@ Gauges.prototype.page = function(page){
   push('track');
 };
 
-}, {"callback":11,"analytics.js-integration":103,"load-script":104,"global-queue":112}],
+}, {"callback":11,"analytics.js-integration":103,"load-script":104,"global-queue":111}],
 
 55: [function(require, module, exports) {
 
@@ -4332,7 +4332,7 @@ function metrics(obj, data){
   return ret;
 }
 
-}, {"callback":11,"canonical":12,"each":4,"analytics.js-integration":103,"is":17,"load-script":104,"global-queue":112,"facade":108,"object":24,"obj-case":121,"type":28,"url":25}],
+}, {"callback":11,"canonical":12,"each":4,"analytics.js-integration":103,"is":17,"load-script":104,"global-queue":111,"facade":26,"object":24,"obj-case":120,"type":28,"url":25}],
 
 57: [function(require, module, exports) {
 
@@ -4441,7 +4441,7 @@ GTM.prototype.track = function(track){
   push(props);
 };
 
-}, {"global-queue":112,"analytics.js-integration":103,"load-script":104}],
+}, {"global-queue":111,"analytics.js-integration":103,"load-script":104}],
 
 58: [function(require, module, exports) {
 
@@ -4619,7 +4619,7 @@ function push(){
   _gs.apply(null, arguments);
 }
 
-}, {"facade":108,"callback":11,"analytics.js-integration":103,"load-script":104,"on-body":105,"each":4}],
+}, {"facade":26,"callback":11,"analytics.js-integration":103,"load-script":104,"on-body":105,"each":4}],
 
 59: [function(require, module, exports) {
 
@@ -4712,7 +4712,7 @@ Heap.prototype.track = function(track){
   window.heap.track(track.event(), track.properties());
 };
 
-}, {"alias":119,"callback":11,"analytics.js-integration":103,"load-script":104}],
+}, {"alias":118,"callback":11,"analytics.js-integration":103,"load-script":104}],
 
 60: [function(require, module, exports) {
 
@@ -4943,7 +4943,7 @@ function convertDates(properties){
   return convert(properties, function(date){ return date.getTime(); });
 }
 
-}, {"callback":11,"convert-dates":120,"analytics.js-integration":103,"load-script":104,"global-queue":112}],
+}, {"callback":11,"convert-dates":119,"analytics.js-integration":103,"load-script":104,"global-queue":111}],
 
 63: [function(require, module, exports) {
 
@@ -5039,7 +5039,7 @@ Improvely.prototype.track = function(track){
   window.improvely.goal(props);
 };
 
-}, {"alias":119,"callback":11,"analytics.js-integration":103,"load-script":104}],
+}, {"alias":118,"callback":11,"analytics.js-integration":103,"load-script":104}],
 
 64: [function(require, module, exports) {
 
@@ -5128,7 +5128,7 @@ Inspectlet.prototype.track = function(track){
   push('tagSession', track.event());
 };
 
-}, {"analytics.js-integration":103,"alias":119,"clone":117,"load-script":104,"global-queue":112}],
+}, {"analytics.js-integration":103,"alias":118,"clone":116,"load-script":104,"global-queue":111}],
 
 65: [function(require, module, exports) {
 
@@ -5320,7 +5320,7 @@ function formatDate (date) {
   return Math.floor(date / 1000);
 }
 
-}, {"alias":119,"convert-dates":120,"analytics.js-integration":103,"each":4,"is":17,"is-email":18,"load-script":104,"defaults":111,"is-empty":122,"when":123}],
+}, {"alias":118,"convert-dates":119,"analytics.js-integration":103,"each":4,"is":17,"is-email":18,"load-script":104,"defaults":110,"is-empty":121,"when":122}],
 
 66: [function(require, module, exports) {
 
@@ -5546,7 +5546,7 @@ Kenshoo.prototype.track = function(track){
   window.k_trackevent(params, this.options.subdomain);
 };
 
-}, {"analytics.js-integration":103,"load-script":104,"indexof":124,"is":17}],
+}, {"analytics.js-integration":103,"load-script":104,"indexof":123,"is":17}],
 
 68: [function(require, module, exports) {
 
@@ -5763,7 +5763,7 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"analytics.js-integration":103,"global-queue":112,"facade":108,"callback":11,"load-script":104,"alias":119,"batch":125,"each":4,"is":17}],
+}, {"analytics.js-integration":103,"global-queue":111,"facade":26,"callback":11,"load-script":104,"alias":118,"batch":124,"each":4,"is":17}],
 
 69: [function(require, module, exports) {
 
@@ -5874,7 +5874,7 @@ Klaviyo.prototype.track = function(track){
   }));
 };
 
-}, {"alias":119,"callback":11,"analytics.js-integration":103,"load-script":104,"global-queue":112}],
+}, {"alias":118,"callback":11,"analytics.js-integration":103,"load-script":104,"global-queue":111}],
 
 70: [function(require, module, exports) {
 
@@ -6030,7 +6030,7 @@ function convert(traits){
   return arr;
 }
 
-}, {"each":4,"analytics.js-integration":103,"load-script":104,"clone":117,"when":123}],
+}, {"each":4,"analytics.js-integration":103,"load-script":104,"clone":116,"when":122}],
 
 72: [function(require, module, exports) {
 
@@ -6122,7 +6122,7 @@ LuckyOrange.prototype.identify = function(identify){
   if (email) traits.email = email;
 };
 
-}, {"facade":108,"analytics.js-integration":103,"load-script":104}],
+}, {"facade":26,"analytics.js-integration":103,"load-script":104}],
 
 73: [function(require, module, exports) {
 
@@ -6230,7 +6230,7 @@ Lytics.prototype.track = function(track){
   window.jstag.send(props);
 };
 
-}, {"alias":119,"callback":11,"analytics.js-integration":103,"load-script":104}],
+}, {"alias":118,"callback":11,"analytics.js-integration":103,"load-script":104}],
 
 74: [function(require, module, exports) {
 
@@ -6464,7 +6464,7 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":119,"clone":117,"convert-dates":120,"analytics.js-integration":103,"to-iso-string":116,"load-script":104,"indexof":124,"obj-case":121}],
+}, {"alias":118,"clone":116,"convert-dates":119,"analytics.js-integration":103,"to-iso-string":115,"load-script":104,"indexof":123,"obj-case":120}],
 
 75: [function(require, module, exports) {
 
@@ -6672,7 +6672,7 @@ function set(hash){
   });
 }
 
-}, {"global-queue":112,"analytics.js-integration":103,"load-script":104,"each":4}],
+}, {"global-queue":111,"analytics.js-integration":103,"load-script":104,"each":4}],
 
 77: [function(require, module, exports) {
 
@@ -6839,7 +6839,7 @@ Navilytics.prototype.track = function(track){
   push('tagRecording', track.event());
 };
 
-}, {"analytics.js-integration":103,"load-script":104,"global-queue":112}],
+}, {"analytics.js-integration":103,"load-script":104,"global-queue":111}],
 
 79: [function(require, module, exports) {
 
@@ -6987,7 +6987,7 @@ function chat(action, value){
   window.olark('api.chat.' + action, value);
 }
 
-}, {"callback":11,"analytics.js-integration":103,"use-https":114}],
+}, {"callback":11,"analytics.js-integration":103,"use-https":113}],
 
 80: [function(require, module, exports) {
 
@@ -7096,7 +7096,7 @@ Optimizely.prototype.replay = function(){
   analytics.identify(traits);
 };
 
-}, {"bind":118,"callback":11,"each":4,"analytics.js-integration":103,"global-queue":112,"next-tick":126}],
+}, {"bind":117,"callback":11,"each":4,"analytics.js-integration":103,"global-queue":111,"next-tick":125}],
 
 81: [function(require, module, exports) {
 
@@ -7227,7 +7227,7 @@ Pingdom.prototype.load = function(callback){
   load('//rum-static.pingdom.net/prum.min.js', callback);
 };
 
-}, {"load-date":113,"analytics.js-integration":103,"load-script":104,"global-queue":112}],
+}, {"load-date":112,"analytics.js-integration":103,"load-script":104,"global-queue":111}],
 
 83: [function(require, module, exports) {
 
@@ -7313,7 +7313,7 @@ Piwik.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":103,"load-script":104,"global-queue":112,"each":4}],
+}, {"analytics.js-integration":103,"load-script":104,"global-queue":111,"each":4}],
 
 84: [function(require, module, exports) {
 
@@ -7444,7 +7444,7 @@ function convertDate(date){
   return Math.floor(date / 1000);
 }
 
-}, {"alias":119,"callback":11,"convert-dates":120,"analytics.js-integration":103,"load-script":104,"global-queue":112}],
+}, {"alias":118,"callback":11,"convert-dates":119,"analytics.js-integration":103,"load-script":104,"global-queue":111}],
 
 85: [function(require, module, exports) {
 
@@ -7543,7 +7543,7 @@ Qualaroo.prototype.track = function(track){
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"callback":11,"analytics.js-integration":103,"load-script":104,"global-queue":112,"facade":108}],
+}, {"callback":11,"analytics.js-integration":103,"load-script":104,"global-queue":111,"facade":26}],
 
 86: [function(require, module, exports) {
 
@@ -7750,7 +7750,7 @@ Quantcast.prototype.labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"global-queue":112,"analytics.js-integration":103,"load-script":104}],
+}, {"global-queue":111,"analytics.js-integration":103,"load-script":104}],
 
 87: [function(require, module, exports) {
 
@@ -7836,7 +7836,7 @@ RollbarIntegration.prototype.identify = function(identify){
   rollbar.configure({ payload: { person: person }});
 };
 
-}, {"analytics.js-integration":103,"is":17,"extend":109}],
+}, {"analytics.js-integration":103,"is":17,"extend":108}],
 
 88: [function(require, module, exports) {
 
@@ -8231,7 +8231,7 @@ Tapstream.prototype.track = function(track){
   push('fireHit', slug(track.event()), [props.url]); // needs events as slugs
 };
 
-}, {"callback":11,"analytics.js-integration":103,"load-script":104,"slug":127,"global-queue":112}],
+}, {"callback":11,"analytics.js-integration":103,"load-script":104,"slug":126,"global-queue":111}],
 
 93: [function(require, module, exports) {
 
@@ -8402,7 +8402,7 @@ Trakio.prototype.alias = function(alias){
   }
 };
 
-}, {"alias":119,"callback":11,"clone":117,"analytics.js-integration":103,"load-script":104}],
+}, {"alias":118,"callback":11,"clone":116,"analytics.js-integration":103,"load-script":104}],
 
 94: [function(require, module, exports) {
 
@@ -8454,7 +8454,7 @@ TwitterAds.prototype.track = function(track){
   });
 };
 
-}, {"load-pixel":128,"analytics.js-integration":103}],
+}, {"load-pixel":127,"analytics.js-integration":103}],
 
 95: [function(require, module, exports) {
 
@@ -8541,7 +8541,7 @@ Usercycle.prototype.track = function(track){
   }));
 };
 
-}, {"callback":11,"analytics.js-integration":103,"load-script":104,"global-queue":112}],
+}, {"callback":11,"analytics.js-integration":103,"load-script":104,"global-queue":111}],
 
 96: [function(require, module, exports) {
 
@@ -8639,7 +8639,7 @@ function formatDate(date){
   return Math.round(date.getTime() / 1000).toString();
 }
 
-}, {"alias":119,"callback":11,"convert-dates":120,"analytics.js-integration":103,"load-script":104,"global-queue":112}],
+}, {"alias":118,"callback":11,"convert-dates":119,"analytics.js-integration":103,"load-script":104,"global-queue":111}],
 
 97: [function(require, module, exports) {
 
@@ -8845,7 +8845,7 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"alias":119,"callback":11,"clone":117,"convert-dates":120,"analytics.js-integration":103,"load-script":104,"global-queue":112,"to-unix-timestamp":129}],
+}, {"alias":118,"callback":11,"clone":116,"convert-dates":119,"analytics.js-integration":103,"load-script":104,"global-queue":111,"to-unix-timestamp":128}],
 
 98: [function(require, module, exports) {
 
@@ -8945,7 +8945,7 @@ Vero.prototype.track = function(track){
   push('track', track.event(), track.properties());
 };
 
-}, {"callback":11,"analytics.js-integration":103,"load-script":104,"global-queue":112}],
+}, {"callback":11,"analytics.js-integration":103,"load-script":104,"global-queue":111}],
 
 99: [function(require, module, exports) {
 
@@ -9052,7 +9052,7 @@ function variation(id){
   return variationId ? experiment.comb_n[variationId] : null;
 }
 
-}, {"callback":11,"each":4,"analytics.js-integration":103,"next-tick":126}],
+}, {"callback":11,"each":4,"analytics.js-integration":103,"next-tick":125}],
 
 100: [function(require, module, exports) {
 
@@ -9244,7 +9244,7 @@ Woopra.prototype.track = function (track) {
   window.woopra.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":103,"to-snake-case":130,"load-script":104,"is-email":18,"extend":109,"each":4,"type":28}],
+}, {"analytics.js-integration":103,"to-snake-case":129,"load-script":104,"is-email":18,"extend":108,"each":4,"type":28}],
 
 102: [function(require, module, exports) {
 
@@ -9379,7 +9379,7 @@ function createIntegration (name) {
   return Integration;
 }
 
-}, {"./protos":131,"./statics":132,"bind":133,"callback":11,"clone":13,"debug":134,"defaults":15,"slug":127}],
+}, {"./protos":130,"./statics":131,"bind":132,"callback":11,"clone":13,"debug":133,"defaults":15,"slug":126}],
 
 104: [function(require, module, exports) {
 
@@ -9441,7 +9441,7 @@ module.exports = function loadScript(options, fn){
   return script;
 };
 
-}, {"script-onload":135,"type":28}],
+}, {"script-onload":134,"type":28}],
 
 17: [function(require, module, exports) {
 
@@ -9520,7 +9520,7 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":122,"type":28}],
+}, {"is-empty":121,"type":28}],
 
 105: [function(require, module, exports) {
 
@@ -9577,7 +9577,7 @@ var interval = setInterval(function () {
 function call (callback) {
   callback(document.body);
 }
-}, {"each":136}],
+}, {"each":135}],
 
 106: [function(require, module, exports) {
 
@@ -9798,7 +9798,7 @@ function timeout(fn, ms) {
   }
 }
 
-}, {"emitter":137}],
+}, {"emitter":136}],
 
 11: [function(require, module, exports) {
 
@@ -9844,9 +9844,9 @@ callback.async = function (fn, wait) {
 
 callback.sync = callback;
 
-}, {"next-tick":126}],
+}, {"next-tick":125}],
 
-108: [function(require, module, exports) {
+26: [function(require, module, exports) {
 
 
 var Facade = require('./facade');
@@ -9868,9 +9868,9 @@ Facade.Track = require('./track');
 Facade.Page = require('./page');
 Facade.Screen = require('./screen');
 
-}, {"./facade":138,"./alias":139,"./group":140,"./identify":141,"./track":142,"./page":143,"./screen":144}],
+}, {"./facade":137,"./alias":138,"./group":139,"./identify":140,"./track":141,"./page":142,"./screen":143}],
 
-109: [function(require, module, exports) {
+108: [function(require, module, exports) {
 
 
 module.exports = function extend (object) {
@@ -9889,7 +9889,7 @@ module.exports = function extend (object) {
 };
 }, {}],
 
-110: [function(require, module, exports) {
+109: [function(require, module, exports) {
 
 
 /**
@@ -9944,7 +9944,7 @@ function onError (fn) {
 }
 }, {}],
 
-111: [function(require, module, exports) {
+110: [function(require, module, exports) {
 
 /**
  * Expose `defaults`.
@@ -9963,7 +9963,7 @@ function defaults (dest, defaults) {
 
 }, {}],
 
-112: [function(require, module, exports) {
+111: [function(require, module, exports) {
 
 
 /**
@@ -9995,7 +9995,7 @@ function generate (name, options) {
 }
 }, {}],
 
-113: [function(require, module, exports) {
+112: [function(require, module, exports) {
 
 
 
@@ -10015,7 +10015,7 @@ if (perf && perf.timing && perf.timing.responseEnd) {
 module.exports = time;
 }, {}],
 
-114: [function(require, module, exports) {
+113: [function(require, module, exports) {
 
 
 /**
@@ -10056,7 +10056,7 @@ function check () {
 }
 }, {}],
 
-115: [function(require, module, exports) {
+114: [function(require, module, exports) {
 
 
 /**
@@ -10091,7 +10091,7 @@ function throttle (func, wait) {
 
 }, {}],
 
-116: [function(require, module, exports) {
+115: [function(require, module, exports) {
 
 
 /**
@@ -10135,7 +10135,7 @@ function pad (number) {
 }
 }, {}],
 
-117: [function(require, module, exports) {
+116: [function(require, module, exports) {
 
 
 /**
@@ -10199,7 +10199,7 @@ function clone(obj){
 
 }, {"type":28}],
 
-118: [function(require, module, exports) {
+117: [function(require, module, exports) {
 
 /**
  * Slice reference.
@@ -10227,7 +10227,7 @@ module.exports = function(obj, fn){
 
 }, {}],
 
-119: [function(require, module, exports) {
+118: [function(require, module, exports) {
 
 
 var type = require('type');
@@ -10291,9 +10291,9 @@ function aliasByFunction (obj, convert) {
   for (var key in obj) output[convert(key)] = obj[key];
   return output;
 }
-}, {"type":28,"clone":145}],
+}, {"type":28,"clone":144}],
 
-120: [function(require, module, exports) {
+119: [function(require, module, exports) {
 
 
 var is = require('is');
@@ -10429,13 +10429,19 @@ exports.isEmpty = function(obj){
 };
 }, {}],
 
-121: [function(require, module, exports) {
+120: [function(require, module, exports) {
 
 
 var Case = require('case');
+var identity = function(_){ return _; };
 
+
+/**
+ * Cases
+ */
 
 var cases = [
+  identity,
   Case.upper,
   Case.lower,
   Case.snake,
@@ -10540,7 +10546,7 @@ function replace (obj, key, val) {
   return obj;
 }
 
-}, {"case":146}],
+}, {"case":145}],
 
 25: [function(require, module, exports) {
 
@@ -10640,7 +10646,7 @@ function isEmail (string) {
 }
 }, {}],
 
-122: [function(require, module, exports) {
+121: [function(require, module, exports) {
 
 
 /**
@@ -10673,7 +10679,7 @@ function isEmpty (val) {
 }
 }, {}],
 
-123: [function(require, module, exports) {
+122: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -10705,7 +10711,7 @@ function when (condition, fn, interval) {
 }
 }, {"callback":11}],
 
-124: [function(require, module, exports) {
+123: [function(require, module, exports) {
 
 module.exports = function(arr, obj){
   if (arr.indexOf) return arr.indexOf(obj);
@@ -10716,7 +10722,7 @@ module.exports = function(arr, obj){
 };
 }, {}],
 
-125: [function(require, module, exports) {
+124: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -10877,9 +10883,9 @@ Batch.prototype.end = function(cb){
   return this;
 };
 
-}, {"emitter":137}],
+}, {"emitter":136}],
 
-126: [function(require, module, exports) {
+125: [function(require, module, exports) {
 
 "use strict"
 
@@ -10917,7 +10923,7 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 
 }, {}],
 
-127: [function(require, module, exports) {
+126: [function(require, module, exports) {
 
 
 /**
@@ -10945,7 +10951,7 @@ module.exports = function (str, options) {
 
 }, {}],
 
-128: [function(require, module, exports) {
+127: [function(require, module, exports) {
 
 
 /**
@@ -11001,9 +11007,9 @@ function error(fn, message, img){
   };
 }
 
-}, {"querystring":147,"substitute":148}],
+}, {"querystring":146,"substitute":147}],
 
-129: [function(require, module, exports) {
+128: [function(require, module, exports) {
 
 
 /**
@@ -11025,7 +11031,7 @@ function toUnixTimestamp (date) {
 }
 }, {}],
 
-130: [function(require, module, exports) {
+129: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
 
@@ -11049,9 +11055,9 @@ function toSnakeCase (string) {
   return toSpace(string).replace(/\s/g, '_');
 }
 
-}, {"to-space-case":149}],
+}, {"to-space-case":148}],
 
-131: [function(require, module, exports) {
+130: [function(require, module, exports) {
 
 
 /**
@@ -11350,9 +11356,9 @@ exports._wrapTrack = function(){
   };
 };
 
-}, {"./events":150,"to-no-case":151,"after":9,"callback":11,"emitter":16,"next-tick":126,"type":28}],
+}, {"./events":149,"to-no-case":150,"after":9,"callback":11,"emitter":16,"next-tick":125,"type":28}],
 
-132: [function(require, module, exports) {
+131: [function(require, module, exports) {
 
 
 var after = require('after');
@@ -11462,7 +11468,7 @@ exports.readyOnInitialize = function () {
 
 }, {"after":9,"emitter":16}],
 
-133: [function(require, module, exports) {
+132: [function(require, module, exports) {
 
 
 var bind = require('bind')
@@ -11504,7 +11510,7 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":118,"bind-all":152}],
+}, {"bind":117,"bind-all":151}],
 
 13: [function(require, module, exports) {
 
@@ -11570,7 +11576,7 @@ function clone(obj){
 
 }, {"type":28}],
 
-134: [function(require, module, exports) {
+133: [function(require, module, exports) {
 
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
@@ -11578,7 +11584,7 @@ if ('undefined' == typeof window) {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":153,"./debug":154}],
+}, {"./lib/debug":152,"./debug":153}],
 
 15: [function(require, module, exports) {
 
@@ -11611,7 +11617,7 @@ module.exports = defaults;
 
 }, {}],
 
-135: [function(require, module, exports) {
+134: [function(require, module, exports) {
 
 
 // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
@@ -11664,7 +11670,7 @@ function attach(el, fn){
 
 }, {}],
 
-136: [function(require, module, exports) {
+135: [function(require, module, exports) {
 
 
 /**
@@ -11751,9 +11757,9 @@ function array(obj, fn, ctx) {
   }
 }
 
-}, {"type":28,"to-function":155}],
+}, {"type":28,"to-function":154}],
 
-137: [function(require, module, exports) {
+136: [function(require, module, exports) {
 
 
 /**
@@ -11922,7 +11928,7 @@ Emitter.prototype.hasListeners = function(event){
 
 }, {}],
 
-138: [function(require, module, exports) {
+137: [function(require, module, exports) {
 
 
 var clone = require('./utils').clone;
@@ -12021,7 +12027,9 @@ Facade.field = function (field) {
  */
 
 Facade.prototype.json = function () {
-  return clone(this.obj);
+  var ret = clone(this.obj);
+  if (this.type) ret.type = this.type();
+  return ret;
 };
 
 /**
@@ -12153,9 +12161,9 @@ function transform(obj){
   return cloned;
 }
 
-}, {"./utils":156,"./is-enabled":157,"obj-case":158,"isodate-traverse":159}],
+}, {"./utils":155,"./is-enabled":156,"obj-case":120,"isodate-traverse":157}],
 
-139: [function(require, module, exports) {
+138: [function(require, module, exports) {
 
 
 /**
@@ -12227,9 +12235,9 @@ Alias.prototype.userId = function(){
     || this.field('to');
 };
 
-}, {"./utils":156,"./facade":138}],
+}, {"./utils":155,"./facade":137}],
 
-140: [function(require, module, exports) {
+139: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -12332,9 +12340,9 @@ Group.prototype.properties = function(){
     || {};
 };
 
-}, {"./utils":156,"./facade":138,"new-date":20}],
+}, {"./utils":155,"./facade":137,"new-date":20}],
 
-141: [function(require, module, exports) {
+140: [function(require, module, exports) {
 
 
 var Facade = require('./facade');
@@ -12529,9 +12537,9 @@ Identify.prototype.phone = Facade.proxy('traits.phone');
 Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.avatar = Facade.proxy('traits.avatar');
 
-}, {"./facade":138,"./utils":156,"is-email":18,"new-date":20,"trim":160}],
+}, {"./facade":137,"./utils":155,"is-email":18,"new-date":20,"trim":158}],
 
-142: [function(require, module, exports) {
+141: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -12818,9 +12826,9 @@ function currency(val) {
   if (!isNaN(val)) return val;
 }
 
-}, {"./utils":156,"./facade":138,"./identify":141,"is-email":18}],
+}, {"./utils":155,"./facade":137,"./identify":140,"is-email":18}],
 
-143: [function(require, module, exports) {
+142: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -12927,9 +12935,9 @@ Page.prototype.track = function(name){
   });
 };
 
-}, {"./utils":156,"./facade":138,"./track":142}],
+}, {"./utils":155,"./facade":137,"./track":141}],
 
-144: [function(require, module, exports) {
+143: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -13004,9 +13012,9 @@ Screen.prototype.track = function(name){
   });
 };
 
-}, {"./utils":156,"./page":143,"./track":142}],
+}, {"./utils":155,"./page":142,"./track":141}],
 
-145: [function(require, module, exports) {
+144: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13068,7 +13076,7 @@ function clone(obj){
 
 }, {"type":28}],
 
-146: [function(require, module, exports) {
+145: [function(require, module, exports) {
 
 
 var cases = require('./cases');
@@ -13117,9 +13125,9 @@ exports.add = function (name, convert) {
 for (var key in cases) {
   exports.add(key, cases[key]);
 }
-}, {"./cases":161}],
+}, {"./cases":159}],
 
-147: [function(require, module, exports) {
+146: [function(require, module, exports) {
 
 
 /**
@@ -13195,9 +13203,9 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":160,"type":28}],
+}, {"trim":158,"type":28}],
 
-148: [function(require, module, exports) {
+147: [function(require, module, exports) {
 
 
 /**
@@ -13228,7 +13236,7 @@ function substitute(str, obj, expr){
 
 }, {}],
 
-149: [function(require, module, exports) {
+148: [function(require, module, exports) {
 
 
 var clean = require('to-no-case');
@@ -13254,9 +13262,9 @@ function toSpaceCase (string) {
     return match ? ' ' + match : '';
   });
 }
-}, {"to-no-case":162}],
+}, {"to-no-case":160}],
 
-150: [function(require, module, exports) {
+149: [function(require, module, exports) {
 
 
 /**
@@ -13272,7 +13280,7 @@ module.exports = {
 
 }, {}],
 
-151: [function(require, module, exports) {
+150: [function(require, module, exports) {
 
 
 /**
@@ -13530,9 +13538,9 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-}, {"indexof":124}],
+}, {"indexof":123}],
 
-152: [function(require, module, exports) {
+151: [function(require, module, exports) {
 
 
 try {
@@ -13550,9 +13558,9 @@ module.exports = function (obj) {
   }
   return obj;
 };
-}, {"bind":118,"type":28}],
+}, {"bind":117,"type":28}],
 
-153: [function(require, module, exports) {
+152: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13704,7 +13712,7 @@ function coerce(val) {
 
 }, {}],
 
-154: [function(require, module, exports) {
+153: [function(require, module, exports) {
 
 
 /**
@@ -13846,7 +13854,7 @@ try {
 
 }, {}],
 
-155: [function(require, module, exports) {
+154: [function(require, module, exports) {
 
 
 /**
@@ -14001,9 +14009,9 @@ function stripNested (prop, str, val) {
   });
 }
 
-}, {"props":163}],
+}, {"props":161}],
 
-156: [function(require, module, exports) {
+155: [function(require, module, exports) {
 
 
 /**
@@ -14018,9 +14026,9 @@ try {
   exports.clone = require('clone-component');
 }
 
-}, {"inherit":164,"clone":145}],
+}, {"inherit":162,"clone":144}],
 
-157: [function(require, module, exports) {
+156: [function(require, module, exports) {
 
 
 /**
@@ -14045,126 +14053,7 @@ module.exports = function (integration) {
 };
 }, {}],
 
-158: [function(require, module, exports) {
-
-
-var Case = require('case');
-var identity = function(_){ return _; };
-
-
-/**
- * Cases
- */
-
-var cases = [
-  identity,
-  Case.upper,
-  Case.lower,
-  Case.snake,
-  Case.pascal,
-  Case.camel,
-  Case.constant,
-  Case.title,
-  Case.capital,
-  Case.sentence
-];
-
-
-/**
- * Module exports, export
- */
-
-module.exports = module.exports.find = multiple(find);
-
-
-/**
- * Export the replacement function, return the modified object
- */
-
-module.exports.replace = function (obj, key, val) {
-  multiple(replace).apply(this, arguments);
-  return obj;
-};
-
-
-/**
- * Export the delete function, return the modified object
- */
-
-module.exports.del = function (obj, key) {
-  multiple(del).apply(this, arguments);
-  return obj;
-};
-
-
-/**
- * Compose applying the function to a nested key
- */
-
-function multiple (fn) {
-  return function (obj, key, val) {
-    var keys = key.split('.');
-    if (keys.length === 0) return;
-
-    while (keys.length > 1) {
-      key = keys.shift();
-      obj = find(obj, key);
-
-      if (obj === null || obj === undefined) return;
-    }
-
-    key = keys.shift();
-    return fn(obj, key, val);
-  };
-}
-
-
-/**
- * Find an object by its key
- *
- * find({ first_name : 'Calvin' }, 'firstName')
- */
-
-function find (obj, key) {
-  for (var i = 0; i < cases.length; i++) {
-    var cased = cases[i](key);
-    if (obj.hasOwnProperty(cased)) return obj[cased];
-  }
-}
-
-
-/**
- * Delete a value for a given key
- *
- * del({ a : 'b', x : 'y' }, 'X' }) -> { a : 'b' }
- */
-
-function del (obj, key) {
-  for (var i = 0; i < cases.length; i++) {
-    var cased = cases[i](key);
-    if (obj.hasOwnProperty(cased)) delete obj[cased];
-  }
-  return obj;
-}
-
-
-/**
- * Replace an objects existing value with a new one
- *
- * replace({ a : 'b' }, 'a', 'c') -> { a : 'c' }
- */
-
-function replace (obj, key, val) {
-  for (var i = 0; i < cases.length; i++) {
-    var cased = cases[i](key);
-    if (obj.hasOwnProperty(cased)) obj[cased] = val;
-  }
-  return obj;
-}
-
-}, {"case":146}],
-
-159: [function(require, module, exports) {
+157: [function(require, module, exports) {
 
 
 var is = require('is');
@@ -14237,7 +14126,7 @@ function array (arr, strict) {
   return arr;
 }
 
-}, {"is":165,"isodate":166,"each":4}],
+}, {"is":163,"isodate":164,"each":4}],
 
 20: [function(require, module, exports) {
 
@@ -14280,9 +14169,9 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
-}, {"./milliseconds":167,"./seconds":168,"is":169,"isodate":166}],
+}, {"./milliseconds":165,"./seconds":166,"is":167,"isodate":164}],
 
-160: [function(require, module, exports) {
+158: [function(require, module, exports) {
 
 
 exports = module.exports = trim;
@@ -14304,7 +14193,7 @@ exports.right = function(str){
 
 }, {}],
 
-161: [function(require, module, exports) {
+159: [function(require, module, exports) {
 
 
 var camel = require('to-camel-case')
@@ -14439,9 +14328,9 @@ exports.inverse = function (string) {
  */
 
 exports.none = none;
-}, {"to-camel-case":170,"to-capital-case":171,"to-constant-case":172,"to-dot-case":173,"to-no-case":162,"to-pascal-case":174,"to-sentence-case":175,"to-slug-case":176,"to-snake-case":177,"to-space-case":178,"to-title-case":179}],
+}, {"to-camel-case":168,"to-capital-case":169,"to-constant-case":170,"to-dot-case":171,"to-no-case":160,"to-pascal-case":172,"to-sentence-case":173,"to-slug-case":174,"to-snake-case":175,"to-space-case":176,"to-title-case":177}],
 
-162: [function(require, module, exports) {
+160: [function(require, module, exports) {
 
 
 /**
@@ -14519,7 +14408,7 @@ function uncamelize (string) {
 }
 }, {}],
 
-163: [function(require, module, exports) {
+161: [function(require, module, exports) {
 
 /**
  * Global Names
@@ -14609,7 +14498,7 @@ function prefixed(str) {
 
 }, {}],
 
-164: [function(require, module, exports) {
+162: [function(require, module, exports) {
 
 
 module.exports = function(a, b){
@@ -14620,7 +14509,7 @@ module.exports = function(a, b){
 };
 }, {}],
 
-165: [function(require, module, exports) {
+163: [function(require, module, exports) {
 
 
 var isEmpty = require('is-empty');
@@ -14697,9 +14586,9 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":122,"type":28}],
+}, {"is-empty":121,"type":28}],
 
-166: [function(require, module, exports) {
+164: [function(require, module, exports) {
 
 
 /**
@@ -14771,7 +14660,7 @@ exports.is = function (string, strict) {
 };
 }, {}],
 
-167: [function(require, module, exports) {
+165: [function(require, module, exports) {
 
 
 /**
@@ -14806,7 +14695,7 @@ exports.parse = function (millis) {
 };
 }, {}],
 
-168: [function(require, module, exports) {
+166: [function(require, module, exports) {
 
 
 /**
@@ -14841,7 +14730,7 @@ exports.parse = function (seconds) {
 };
 }, {}],
 
-169: [function(require, module, exports) {
+167: [function(require, module, exports) {
 
 
 var isEmpty = require('is-empty')
@@ -14913,9 +14802,9 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":122,"type":28}],
+}, {"is-empty":121,"type":28}],
 
-170: [function(require, module, exports) {
+168: [function(require, module, exports) {
 
 
 var toSpace = require('to-space-case');
@@ -14941,9 +14830,9 @@ function toCamelCase (string) {
     return letter.toUpperCase();
   });
 }
-}, {"to-space-case":178}],
+}, {"to-space-case":176}],
 
-171: [function(require, module, exports) {
+169: [function(require, module, exports) {
 
 
 var clean = require('to-no-case');
@@ -14969,9 +14858,9 @@ function toCapitalCase (string) {
     return previous + letter.toUpperCase();
   });
 }
-}, {"to-no-case":162}],
+}, {"to-no-case":160}],
 
-172: [function(require, module, exports) {
+170: [function(require, module, exports) {
 
 
 var snake = require('to-snake-case');
@@ -14995,9 +14884,9 @@ module.exports = toConstantCase;
 function toConstantCase (string) {
   return snake(string).toUpperCase();
 }
-}, {"to-snake-case":177}],
+}, {"to-snake-case":175}],
 
-173: [function(require, module, exports) {
+171: [function(require, module, exports) {
 
 
 var toSpace = require('to-space-case');
@@ -15021,9 +14910,9 @@ module.exports = toDotCase;
 function toDotCase (string) {
   return toSpace(string).replace(/\s/g, '.');
 }
-}, {"to-space-case":178}],
+}, {"to-space-case":176}],
 
-174: [function(require, module, exports) {
+172: [function(require, module, exports) {
 
 
 var toSpace = require('to-space-case');
@@ -15049,9 +14938,9 @@ function toPascalCase (string) {
     return letter.toUpperCase();
   });
 }
-}, {"to-space-case":178}],
+}, {"to-space-case":176}],
 
-175: [function(require, module, exports) {
+173: [function(require, module, exports) {
 
 
 var clean = require('to-no-case');
@@ -15077,9 +14966,9 @@ function toSentenceCase (string) {
     return letter.toUpperCase();
   });
 }
-}, {"to-no-case":162}],
+}, {"to-no-case":160}],
 
-176: [function(require, module, exports) {
+174: [function(require, module, exports) {
 
 
 var toSpace = require('to-space-case');
@@ -15103,9 +14992,9 @@ module.exports = toSlugCase;
 function toSlugCase (string) {
   return toSpace(string).replace(/\s/g, '-');
 }
-}, {"to-space-case":178}],
+}, {"to-space-case":176}],
 
-177: [function(require, module, exports) {
+175: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
 
@@ -15129,9 +15018,9 @@ function toSnakeCase (string) {
   return toSpace(string).replace(/\s/g, '_');
 }
 
-}, {"to-space-case":178}],
+}, {"to-space-case":176}],
 
-178: [function(require, module, exports) {
+176: [function(require, module, exports) {
 
 
 var clean = require('to-no-case');
@@ -15157,9 +15046,9 @@ function toSpaceCase (string) {
     return match ? ' ' + match : '';
   });
 }
-}, {"to-no-case":162}],
+}, {"to-no-case":160}],
 
-179: [function(require, module, exports) {
+177: [function(require, module, exports) {
 
 
 var capital = require('to-capital-case')
@@ -15201,9 +15090,9 @@ function toTitleCase (string) {
       return letter.toUpperCase();
     });
 }
-}, {"to-capital-case":171,"escape-regexp":180,"map":181,"title-case-minors":182}],
+}, {"to-capital-case":169,"escape-regexp":178,"map":179,"title-case-minors":180}],
 
-180: [function(require, module, exports) {
+178: [function(require, module, exports) {
 
 
 /**
@@ -15219,7 +15108,7 @@ module.exports = function(str){
 };
 }, {}],
 
-181: [function(require, module, exports) {
+179: [function(require, module, exports) {
 
 
 var each = require('each');
@@ -15240,9 +15129,9 @@ module.exports = function map (obj, iterator) {
   });
   return arr;
 };
-}, {"each":136}],
+}, {"each":135}],
 
-182: [function(require, module, exports) {
+180: [function(require, module, exports) {
 
 
 module.exports = [
@@ -15408,7 +15297,7 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"bind":10,"cookie":183,"clone":13,"defaults":15,"json":184,"top-domain":185}],
+}, {"bind":10,"cookie":181,"clone":13,"defaults":15,"json":182,"top-domain":183}],
 
 6: [function(require, module, exports) {
 
@@ -15467,7 +15356,7 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"./entity":186,"debug":14,"inherit":187,"bind":10}],
+}, {"./entity":184,"debug":14,"inherit":185,"bind":10}],
 
 7: [function(require, module, exports) {
 
@@ -15557,7 +15446,7 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":10,"defaults":15,"store.js":188}],
+}, {"bind":10,"defaults":15,"store.js":186}],
 
 8: [function(require, module, exports) {
 
@@ -15646,7 +15535,7 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"./entity":186,"./cookie":5,"debug":14,"inherit":187,"bind":10}],
+}, {"./entity":184,"./cookie":5,"debug":14,"inherit":185,"bind":10}],
 
 10: [function(require, module, exports) {
 
@@ -15695,7 +15584,7 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":118,"bind-all":152}],
+}, {"bind":117,"bind-all":151}],
 
 14: [function(require, module, exports) {
 
@@ -15705,7 +15594,7 @@ if ('undefined' == typeof window) {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":189,"./debug":190}],
+}, {"./lib/debug":187,"./debug":188}],
 
 19: [function(require, module, exports) {
 
@@ -15871,1161 +15760,9 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":160,"type":28}],
+}, {"trim":158,"type":28}],
 
-26: [function(require, module, exports) {
-
-
-var Facade = require('./facade');
-
-/**
- * Expose `Facade` facade.
- */
-
-module.exports = Facade;
-
-/**
- * Expose specific-method facades.
- */
-
-Facade.Alias = require('./alias');
-Facade.Group = require('./group');
-Facade.Identify = require('./identify');
-Facade.Track = require('./track');
-Facade.Page = require('./page');
-Facade.Screen = require('./screen');
-
-}, {"./facade":191,"./alias":192,"./group":193,"./identify":194,"./track":195,"./page":196,"./screen":197}],
-
-191: [function(require, module, exports) {
-
-
-var clone = require('./utils').clone;
-var isEnabled = require('./is-enabled');
-var objCase = require('obj-case');
-var traverse = require('isodate-traverse');
-
-/**
- * Expose `Facade`.
- */
-
-module.exports = Facade;
-
-/**
- * Initialize a new `Facade` with an `obj` of arguments.
- *
- * @param {Object} obj
- */
-
-function Facade (obj) {
-  if (!obj.hasOwnProperty('timestamp')) obj.timestamp = new Date();
-  else obj.timestamp = new Date(obj.timestamp);
-  this.obj = obj;
-}
-
-/**
- * Return a proxy function for a `field` that will attempt to first use methods,
- * and fallback to accessing the underlying object directly. You can specify
- * deeply nested fields too like:
- *
- *   this.proxy('options.Librato');
- *
- * @param {String} field
- */
-
-Facade.prototype.proxy = function (field) {
-  var fields = field.split('.');
-  field = fields.shift();
-
-  // Call a function at the beginning to take advantage of facaded fields
-  var obj = this[field] || this.field(field);
-  if (!obj) return obj;
-  if (typeof obj === 'function') obj = obj.call(this) || {};
-  if (fields.length === 0) return transform(obj);
-
-  obj = objCase(obj, fields.join('.'));
-  return transform(obj);
-};
-
-/**
- * Directly access a specific `field` from the underlying object, returning a
- * clone so outsiders don't mess with stuff.
- *
- * @param {String} field
- * @return {Mixed}
- */
-
-Facade.prototype.field = function (field) {
-  var obj = this.obj[field];
-  return transform(obj);
-};
-
-/**
- * Utility method to always proxy a particular `field`. You can specify deeply
- * nested fields too like:
- *
- *   Facade.proxy('options.Librato');
- *
- * @param {String} field
- * @return {Function}
- */
-
-Facade.proxy = function (field) {
-  return function () {
-    return this.proxy(field);
-  };
-};
-
-/**
- * Utility method to directly access a `field`.
- *
- * @param {String} field
- * @return {Function}
- */
-
-Facade.field = function (field) {
-  return function () {
-    return this.field(field);
-  };
-};
-
-/**
- * Get the basic json object of this facade.
- *
- * @return {Object}
- */
-
-Facade.prototype.json = function () {
-  var ret = clone(this.obj);
-  if (this.type) ret.type = this.type();
-  return ret;
-};
-
-/**
- * Get the options of a call (formerly called "context"). If you pass an
- * integration name, it will get the options for that specific integration, or
- * undefined if the integration is not enabled.
- *
- * @param {String} integration (optional)
- * @return {Object or Null}
- */
-
-Facade.prototype.context =
-Facade.prototype.options = function (integration) {
-  var options = clone(this.obj.options || this.obj.context) || {};
-  if (!integration) return clone(options);
-  if (!this.enabled(integration)) return;
-  var integrations = this.integrations();
-  var value = integrations[integration] || objCase(integrations, integration);
-  if ('boolean' == typeof value) value = {};
-  return value || {};
-};
-
-/**
- * Check whether an integration is enabled.
- *
- * @param {String} integration
- * @return {Boolean}
- */
-
-Facade.prototype.enabled = function (integration) {
-  var allEnabled = this.proxy('options.providers.all');
-  if (typeof allEnabled !== 'boolean') allEnabled = this.proxy('options.all');
-  if (typeof allEnabled !== 'boolean') allEnabled = this.proxy('integrations.all');
-  if (typeof allEnabled !== 'boolean') allEnabled = true;
-
-  var enabled = allEnabled && isEnabled(integration);
-  var options = this.integrations();
-
-  // If the integration is explicitly enabled or disabled, use that
-  // First, check options.providers for backwards compatibility
-  if (options.providers && options.providers.hasOwnProperty(integration)) {
-    enabled = options.providers[integration];
-  }
-
-  // Next, check for the integration's existence in 'options' to enable it.
-  // If the settings are a boolean, use that, otherwise it should be enabled.
-  if (options.hasOwnProperty(integration)) {
-    var settings = options[integration];
-    if (typeof settings === 'boolean') {
-      enabled = settings;
-    } else {
-      enabled = true;
-    }
-  }
-
-  return enabled ? true : false;
-};
-
-/**
- * Get all `integration` options.
- *
- * @param {String} integration
- * @return {Object}
- * @api private
- */
-
-Facade.prototype.integrations = function(){
-  return this.obj.integrations
-    || this.proxy('options.providers')
-    || this.options();
-};
-
-/**
- * Check whether the user is active.
- *
- * @return {Boolean}
- */
-
-Facade.prototype.active = function () {
-  var active = this.proxy('options.active');
-  if (active === null || active === undefined) active = true;
-  return active;
-};
-
-/**
- * Get `sessionId / anonymousId`.
- *
- * @return {Mixed}
- * @api public
- */
-
-Facade.prototype.sessionId =
-Facade.prototype.anonymousId = function(){
-  return this.field('anonymousId')
-    || this.field('sessionId');
-};
-
-/**
- * Add a convenient way to get the library name and version
- */
-
-Facade.prototype.library = function(){
-  var library = this.proxy('options.library');
-  if (!library) return { name: 'unknown', version: null };
-  if (typeof library === 'string') return { name: library, version: null };
-  return library;
-};
-
-/**
- * Setup some basic proxies.
- */
-
-Facade.prototype.userId = Facade.field('userId');
-Facade.prototype.channel = Facade.field('channel');
-Facade.prototype.timestamp = Facade.field('timestamp');
-Facade.prototype.userAgent = Facade.proxy('options.userAgent');
-Facade.prototype.ip = Facade.proxy('options.ip');
-
-/**
- * Return the cloned and traversed object
- *
- * @param {Mixed} obj
- * @return {Mixed}
- */
-
-function transform(obj){
-  var cloned = clone(obj);
-  traverse(cloned);
-  return cloned;
-}
-
-}, {"./utils":198,"./is-enabled":199,"obj-case":158,"isodate-traverse":159}],
-
-192: [function(require, module, exports) {
-
-
-/**
- * Module dependencies.
- */
-
-var inherit = require('./utils').inherit;
-var Facade = require('./facade');
-
-/**
- * Expose `Alias` facade.
- */
-
-module.exports = Alias;
-
-/**
- * Initialize a new `Alias` facade with a `dictionary` of arguments.
- *
- * @param {Object} dictionary
- *   @property {String} from
- *   @property {String} to
- *   @property {Object} options
- */
-
-function Alias (dictionary) {
-  Facade.call(this, dictionary);
-}
-
-/**
- * Inherit from `Facade`.
- */
-
-inherit(Alias, Facade);
-
-/**
- * Return type of facade.
- *
- * @return {String}
- */
-
-Alias.prototype.type =
-Alias.prototype.action = function () {
-  return 'alias';
-};
-
-/**
- * Get `previousId`.
- *
- * @return {Mixed}
- * @api public
- */
-
-Alias.prototype.from =
-Alias.prototype.previousId = function(){
-  return this.field('previousId')
-    || this.field('from');
-};
-
-/**
- * Get `userId`.
- *
- * @return {String}
- * @api public
- */
-
-Alias.prototype.to =
-Alias.prototype.userId = function(){
-  return this.field('userId')
-    || this.field('to');
-};
-
-}, {"./utils":198,"./facade":191}],
-
-193: [function(require, module, exports) {
-
-
-var inherit = require('./utils').inherit;
-var Facade = require('./facade');
-var newDate = require('new-date');
-
-/**
- * Expose `Group` facade.
- */
-
-module.exports = Group;
-
-/**
- * Initialize a new `Group` facade with a `dictionary` of arguments.
- *
- * @param {Object} dictionary
- *   @param {String} userId
- *   @param {String} groupId
- *   @param {Object} properties
- *   @param {Object} options
- */
-
-function Group (dictionary) {
-  Facade.call(this, dictionary);
-}
-
-/**
- * Inherit from `Facade`
- */
-
-inherit(Group, Facade);
-
-/**
- * Get the facade's action.
- */
-
-Group.prototype.type =
-Group.prototype.action = function () {
-  return 'group';
-};
-
-/**
- * Setup some basic proxies.
- */
-
-Group.prototype.groupId = Facade.field('groupId');
-
-/**
- * Get created or createdAt.
- *
- * @return {Date}
- */
-
-Group.prototype.created = function(){
-  var created = this.proxy('traits.createdAt')
-    || this.proxy('traits.created')
-    || this.proxy('properties.createdAt')
-    || this.proxy('properties.created');
-
-  if (created) return newDate(created);
-};
-
-/**
- * Get the group's traits.
- *
- * @param {Object} aliases
- * @return {Object}
- */
-
-Group.prototype.traits = function (aliases) {
-  var ret = this.properties();
-  var id = this.groupId();
-  aliases = aliases || {};
-
-  if (id) ret.id = id;
-
-  for (var alias in aliases) {
-    var value = null == this[alias]
-      ? this.proxy('traits.' + alias)
-      : this[alias]();
-    if (null == value) continue;
-    ret[aliases[alias]] = value;
-    delete ret[alias];
-  }
-
-  return ret;
-};
-
-/**
- * Get traits or properties.
- *
- * TODO: remove me
- *
- * @return {Object}
- */
-
-Group.prototype.properties = function(){
-  return this.field('traits')
-    || this.field('properties')
-    || {};
-};
-
-}, {"./utils":198,"./facade":191,"new-date":20}],
-
-194: [function(require, module, exports) {
-
-
-var Facade = require('./facade');
-var isEmail = require('is-email');
-var newDate = require('new-date');
-var utils = require('./utils');
-var trim = require('trim');
-var inherit = utils.inherit;
-var clone = utils.clone;
-
-/**
- * Expose `Idenfity` facade.
- */
-
-module.exports = Identify;
-
-/**
- * Initialize a new `Identify` facade with a `dictionary` of arguments.
- *
- * @param {Object} dictionary
- *   @param {String} userId
- *   @param {String} sessionId
- *   @param {Object} traits
- *   @param {Object} options
- */
-
-function Identify (dictionary) {
-  Facade.call(this, dictionary);
-}
-
-/**
- * Inherit from `Facade`.
- */
-
-inherit(Identify, Facade);
-
-/**
- * Get the facade's action.
- */
-
-Identify.prototype.type =
-Identify.prototype.action = function () {
-  return 'identify';
-};
-
-/**
- * Get the user's traits.
- *
- * @param {Object} aliases
- * @return {Object}
- */
-
-Identify.prototype.traits = function (aliases) {
-  var ret = this.field('traits') || {};
-  var id = this.userId();
-  aliases = aliases || {};
-
-  if (id) ret.id = id;
-
-  for (var alias in aliases) {
-    var value = null == this[alias]
-      ? this.proxy('traits.' + alias)
-      : this[alias]();
-    if (null == value) continue;
-    ret[aliases[alias]] = value;
-    delete ret[alias];
-  }
-
-  return ret;
-};
-
-/**
- * Get the user's email, falling back to their user ID if it's a valid email.
- *
- * @return {String}
- */
-
-Identify.prototype.email = function () {
-  var email = this.proxy('traits.email');
-  if (email) return email;
-
-  var userId = this.userId();
-  if (isEmail(userId)) return userId;
-};
-
-/**
- * Get the user's created date, optionally looking for `createdAt` since lots of
- * people do that instead.
- *
- * @return {Date or Undefined}
- */
-
-Identify.prototype.created = function () {
-  var created = this.proxy('traits.created') || this.proxy('traits.createdAt');
-  if (created) return newDate(created);
-};
-
-/**
- * Get the company created date.
- *
- * @return {Date or undefined}
- */
-
-Identify.prototype.companyCreated = function(){
-  var created = this.proxy('traits.company.created')
-    || this.proxy('traits.company.createdAt');
-
-  if (created) return newDate(created);
-};
-
-/**
- * Get the user's name, optionally combining a first and last name if that's all
- * that was provided.
- *
- * @return {String or Undefined}
- */
-
-Identify.prototype.name = function () {
-  var name = this.proxy('traits.name');
-  if (typeof name === 'string') return trim(name);
-
-  var firstName = this.firstName();
-  var lastName = this.lastName();
-  if (firstName && lastName) return trim(firstName + ' ' + lastName);
-};
-
-/**
- * Get the user's first name, optionally splitting it out of a single name if
- * that's all that was provided.
- *
- * @return {String or Undefined}
- */
-
-Identify.prototype.firstName = function () {
-  var firstName = this.proxy('traits.firstName');
-  if (typeof firstName === 'string') return trim(firstName);
-
-  var name = this.proxy('traits.name');
-  if (typeof name === 'string') return trim(name).split(' ')[0];
-};
-
-/**
- * Get the user's last name, optionally splitting it out of a single name if
- * that's all that was provided.
- *
- * @return {String or Undefined}
- */
-
-Identify.prototype.lastName = function () {
-  var lastName = this.proxy('traits.lastName');
-  if (typeof lastName === 'string') return trim(lastName);
-
-  var name = this.proxy('traits.name');
-  if (typeof name !== 'string') return;
-
-  var space = trim(name).indexOf(' ');
-  if (space === -1) return;
-
-  return trim(name.substr(space + 1));
-};
-
-/**
- * Get the user's unique id.
- *
- * @return {String or undefined}
- */
-
-Identify.prototype.uid = function(){
-  return this.userId()
-    || this.username()
-    || this.email();
-};
-
-/**
- * Get description.
- *
- * @return {String}
- */
-
-Identify.prototype.description = function(){
-  return this.proxy('traits.description')
-    || this.proxy('traits.background');
-};
-
-/**
- * Setup sme basic "special" trait proxies.
- */
-
-Identify.prototype.username = Facade.proxy('traits.username');
-Identify.prototype.website = Facade.proxy('traits.website');
-Identify.prototype.phone = Facade.proxy('traits.phone');
-Identify.prototype.address = Facade.proxy('traits.address');
-Identify.prototype.avatar = Facade.proxy('traits.avatar');
-
-}, {"./facade":191,"./utils":198,"is-email":18,"new-date":20,"trim":160}],
-
-195: [function(require, module, exports) {
-
-
-var inherit = require('./utils').inherit;
-var clone = require('./utils').clone;
-var Facade = require('./facade');
-var Identify = require('./identify');
-var isEmail = require('is-email');
-
-/**
- * Expose `Track` facade.
- */
-
-module.exports = Track;
-
-/**
- * Initialize a new `Track` facade with a `dictionary` of arguments.
- *
- * @param {object} dictionary
- *   @property {String} event
- *   @property {String} userId
- *   @property {String} sessionId
- *   @property {Object} properties
- *   @property {Object} options
- */
-
-function Track (dictionary) {
-  Facade.call(this, dictionary);
-}
-
-/**
- * Inherit from `Facade`.
- */
-
-inherit(Track, Facade);
-
-/**
- * Return the facade's action.
- *
- * @return {String}
- */
-
-Track.prototype.type =
-Track.prototype.action = function () {
-  return 'track';
-};
-
-/**
- * Setup some basic proxies.
- */
-
-Track.prototype.event = Facade.field('event');
-Track.prototype.value = Facade.proxy('properties.value');
-
-/**
- * Misc
- */
-
-Track.prototype.category = Facade.proxy('properties.category');
-Track.prototype.country = Facade.proxy('properties.country');
-Track.prototype.state = Facade.proxy('properties.state');
-Track.prototype.city = Facade.proxy('properties.city');
-Track.prototype.zip = Facade.proxy('properties.zip');
-
-/**
- * Ecommerce
- */
-
-Track.prototype.id = Facade.proxy('properties.id');
-Track.prototype.sku = Facade.proxy('properties.sku');
-Track.prototype.tax = Facade.proxy('properties.tax');
-Track.prototype.name = Facade.proxy('properties.name');
-Track.prototype.price = Facade.proxy('properties.price');
-Track.prototype.total = Facade.proxy('properties.total');
-Track.prototype.coupon = Facade.proxy('properties.coupon');
-Track.prototype.shipping = Facade.proxy('properties.shipping');
-
-/**
- * Order id.
- *
- * @return {String}
- * @api public
- */
-
-Track.prototype.orderId = function(){
-  return this.proxy('properties.id')
-    || this.proxy('properties.orderId');
-};
-
-/**
- * Get subtotal.
- *
- * @return {Number}
- */
-
-Track.prototype.subtotal = function(){
-  var subtotal = this.obj.properties.subtotal;
-  var total = this.total();
-  var n;
-
-  if (subtotal) return subtotal;
-  if (!total) return 0;
-  if (n = this.tax()) total -= n;
-  if (n = this.shipping()) total -= n;
-
-  return total;
-};
-
-/**
- * Get products.
- *
- * @return {Array}
- */
-
-Track.prototype.products = function(){
-  var props = this.obj.properties || {};
-  return props.products || [];
-};
-
-/**
- * Get quantity.
- *
- * @return {Number}
- */
-
-Track.prototype.quantity = function(){
-  var props = this.obj.properties || {};
-  return props.quantity || 1;
-};
-
-/**
- * Get currency.
- *
- * @return {String}
- */
-
-Track.prototype.currency = function(){
-  var props = this.obj.properties || {};
-  return props.currency || 'USD';
-};
-
-/**
- * BACKWARDS COMPATIBILITY: should probably re-examine where these come from.
- */
-
-Track.prototype.referrer = Facade.proxy('properties.referrer');
-Track.prototype.query = Facade.proxy('options.query');
-
-/**
- * Get the call's properties.
- *
- * @param {Object} aliases
- * @return {Object}
- */
-
-Track.prototype.properties = function (aliases) {
-  var ret = this.field('properties') || {};
-  aliases = aliases || {};
-
-  for (var alias in aliases) {
-    var value = null == this[alias]
-      ? this.proxy('properties.' + alias)
-      : this[alias]();
-    if (null == value) continue;
-    ret[aliases[alias]] = value;
-    delete ret[alias];
-  }
-
-  return ret;
-};
-
-/**
- * Get the call's "super properties" which are just traits that have been
- * passed in as if from an identify call.
- *
- * @return {Object}
- */
-
-Track.prototype.traits = function () {
-  return this.proxy('options.traits') || {};
-};
-
-/**
- * Get the call's username.
- *
- * @return {String or Undefined}
- */
-
-Track.prototype.username = function () {
-  return this.proxy('traits.username') ||
-         this.proxy('properties.username') ||
-         this.userId() ||
-         this.sessionId();
-};
-
-/**
- * Get the call's email, using an the user ID if it's a valid email.
- *
- * @return {String or Undefined}
- */
-
-Track.prototype.email = function () {
-  var email = this.proxy('traits.email');
-  email = email || this.proxy('properties.email');
-  if (email) return email;
-
-  var userId = this.userId();
-  if (isEmail(userId)) return userId;
-};
-
-/**
- * Get the call's revenue, parsing it from a string with an optional leading
- * dollar sign.
- *
- * For products/services that don't have shipping and are not directly taxed,
- * they only care about tracking `revenue`. These are things like
- * SaaS companies, who sell monthly subscriptions. The subscriptions aren't
- * taxed directly, and since it's a digital product, it has no shipping.
- *
- * The only case where there's a difference between `revenue` and `total`
- * (in the context of analytics) is on ecommerce platforms, where they want
- * the `revenue` function to actually return the `total` (which includes
- * tax and shipping, total = subtotal + tax + shipping). This is probably
- * because on their backend they assume tax and shipping has been applied to
- * the value, and so can get the revenue on their own.
- *
- * @return {Number}
- */
-
-Track.prototype.revenue = function () {
-  var revenue = this.proxy('properties.revenue');
-  var event = this.event();
-
-  // it's always revenue, unless it's called during an order completion.
-  if (!revenue && event && event.match(/completed ?order/i)) {
-    revenue = this.proxy('properties.total');
-  }
-
-  return currency(revenue);
-};
-
-/**
- * Get cents.
- *
- * @return {Number}
- */
-
-Track.prototype.cents = function(){
-  var revenue = this.revenue();
-  return 'number' != typeof revenue
-    ? this.value() || 0
-    : revenue * 100;
-};
-
-/**
- * A utility to turn the pieces of a track call into an identify. Used for
- * integrations with super properties or rate limits.
- *
- * TODO: remove me.
- *
- * @return {Facade}
- */
-
-Track.prototype.identify = function () {
-  var json = this.json();
-  json.traits = this.traits();
-  return new Identify(json);
-};
-
-/**
- * Get float from currency value.
- *
- * @param {Mixed} val
- * @return {Number}
- */
-
-function currency(val) {
-  if (!val) return;
-  if (typeof val === 'number') return val;
-  if (typeof val !== 'string') return;
-
-  val = val.replace(/\$/g, '');
-  val = parseFloat(val);
-
-  if (!isNaN(val)) return val;
-}
-
-}, {"./utils":198,"./facade":191,"./identify":194,"is-email":18}],
-
-196: [function(require, module, exports) {
-
-
-var inherit = require('./utils').inherit;
-var Facade = require('./facade');
-var Track = require('./track');
-
-/**
- * Expose `Page` facade
- */
-
-module.exports = Page;
-
-/**
- * Initialize new `Page` facade with `dictionary`.
- *
- * @param {Object} dictionary
- *   @param {String} category
- *   @param {String} name
- *   @param {Object} traits
- *   @param {Object} options
- */
-
-function Page(dictionary){
-  Facade.call(this, dictionary);
-}
-
-/**
- * Inherit from `Facade`
- */
-
-inherit(Page, Facade);
-
-/**
- * Get the facade's action.
- *
- * @return {String}
- */
-
-Page.prototype.type =
-Page.prototype.action = function(){
-  return 'page';
-};
-
-/**
- * Proxies
- */
-
-Page.prototype.category = Facade.field('category');
-Page.prototype.name = Facade.field('name');
-
-/**
- * Get the page properties mixing `category` and `name`.
- *
- * @return {Object}
- */
-
-Page.prototype.properties = function(){
-  var props = this.field('properties') || {};
-  var category = this.category();
-  var name = this.name();
-  if (category) props.category = category;
-  if (name) props.name = name;
-  return props;
-};
-
-/**
- * Get the page fullName.
- *
- * @return {String}
- */
-
-Page.prototype.fullName = function(){
-  var category = this.category();
-  var name = this.name();
-  return name && category
-    ? category + ' ' + name
-    : name;
-};
-
-/**
- * Get event with `name`.
- *
- * @return {String}
- */
-
-Page.prototype.event = function(name){
-  return name
-    ? 'Viewed ' + name + ' Page'
-    : 'Loaded a Page';
-};
-
-/**
- * Convert this Page to a Track facade with `name`.
- *
- * @param {String} name
- * @return {Track}
- */
-
-Page.prototype.track = function(name){
-  var props = this.properties();
-  return new Track({
-    event: this.event(name),
-    properties: props
-  });
-};
-
-}, {"./utils":198,"./facade":191,"./track":195}],
-
-197: [function(require, module, exports) {
-
-
-var inherit = require('./utils').inherit;
-var Page = require('./page');
-var Track = require('./track');
-
-/**
- * Expose `Screen` facade
- */
-
-module.exports = Screen;
-
-/**
- * Initialize new `Screen` facade with `dictionary`.
- *
- * @param {Object} dictionary
- *   @param {String} category
- *   @param {String} name
- *   @param {Object} traits
- *   @param {Object} options
- */
-
-function Screen(dictionary){
-  Page.call(this, dictionary);
-}
-
-/**
- * Inherit from `Page`
- */
-
-inherit(Screen, Page);
-
-/**
- * Get the facade's action.
- *
- * @return {String}
- * @api public
- */
-
-Screen.prototype.type =
-Screen.prototype.action = function(){
-  return 'screen';
-};
-
-/**
- * Get event with `name`.
- *
- * @param {String} name
- * @return {String}
- * @api public
- */
-
-Screen.prototype.event = function(name){
-  return name
-    ? 'Viewed ' + name + ' Screen'
-    : 'Loaded a Screen';
-};
-
-/**
- * Convert this Screen.
- *
- * @param {String} name
- * @return {Track}
- * @api public
- */
-
-Screen.prototype.track = function(name){
-  var props = this.properties();
-  return new Track({
-    event: this.event(name),
-    properties: props
-  });
-};
-
-}, {"./utils":198,"./page":196,"./track":195}],
-
-198: [function(require, module, exports) {
-
-
-/**
- * TODO: use component symlink, everywhere ?
- */
-
-try {
-  exports.inherit = require('inherit');
-  exports.clone = require('clone');
-} catch (e) {
-  exports.inherit = require('inherit-component');
-  exports.clone = require('clone-component');
-}
-
-}, {"inherit":164,"clone":145}],
-
-199: [function(require, module, exports) {
-
-
-/**
- * A few integrations are disabled by default. They must be explicitly
- * enabled by setting options[Provider] = true.
- */
-
-var disabled = {
-  Salesforce: true,
-  Marketo: true
-};
-
-/**
- * Check whether an integration should be enabled by default.
- *
- * @param {String} integration
- * @return {Boolean}
- */
-
-module.exports = function (integration) {
-  return ! disabled[integration];
-};
-}, {}],
-
-189: [function(require, module, exports) {
+187: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17177,7 +15914,7 @@ function coerce(val) {
 
 }, {}],
 
-190: [function(require, module, exports) {
+188: [function(require, module, exports) {
 
 
 /**
@@ -17319,7 +16056,7 @@ try {
 
 }, {}],
 
-186: [function(require, module, exports) {
+184: [function(require, module, exports) {
 
 
 var traverse = require('isodate-traverse');
@@ -17521,9 +16258,9 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"./cookie":5,"./store":7,"isodate-traverse":200,"defaults":15,"extend":109,"clone":13}],
+}, {"./cookie":5,"./store":7,"isodate-traverse":189,"defaults":15,"extend":108,"clone":13}],
 
-187: [function(require, module, exports) {
+185: [function(require, module, exports) {
 
 
 module.exports = function(a, b){
@@ -17534,7 +16271,162 @@ module.exports = function(a, b){
 };
 }, {}],
 
-183: [function(require, module, exports) {
+186: [function(require, module, exports) {
+
+var json             = require('json')
+  , store            = {}
+  , win              = window
+	,	doc              = win.document
+	,	localStorageName = 'localStorage'
+	,	namespace        = '__storejs__'
+	,	storage;
+
+store.disabled = false
+store.set = function(key, value) {}
+store.get = function(key) {}
+store.remove = function(key) {}
+store.clear = function() {}
+store.transact = function(key, defaultVal, transactionFn) {
+	var val = store.get(key)
+	if (transactionFn == null) {
+		transactionFn = defaultVal
+		defaultVal = null
+	}
+	if (typeof val == 'undefined') { val = defaultVal || {} }
+	transactionFn(val)
+	store.set(key, val)
+}
+store.getAll = function() {}
+
+store.serialize = function(value) {
+	return json.stringify(value)
+}
+store.deserialize = function(value) {
+	if (typeof value != 'string') { return undefined }
+	try { return json.parse(value) }
+	catch(e) { return value || undefined }
+}
+
+// Functions to encapsulate questionable FireFox 3.6.13 behavior
+// when about.config::dom.storage.enabled === false
+// See https://github.com/marcuswestin/store.js/issues#issue/13
+function isLocalStorageNameSupported() {
+	try { return (localStorageName in win && win[localStorageName]) }
+	catch(err) { return false }
+}
+
+if (isLocalStorageNameSupported()) {
+	storage = win[localStorageName]
+	store.set = function(key, val) {
+		if (val === undefined) { return store.remove(key) }
+		storage.setItem(key, store.serialize(val))
+		return val
+	}
+	store.get = function(key) { return store.deserialize(storage.getItem(key)) }
+	store.remove = function(key) { storage.removeItem(key) }
+	store.clear = function() { storage.clear() }
+	store.getAll = function() {
+		var ret = {}
+		for (var i=0; i<storage.length; ++i) {
+			var key = storage.key(i)
+			ret[key] = store.get(key)
+		}
+		return ret
+	}
+} else if (doc.documentElement.addBehavior) {
+	var storageOwner,
+		storageContainer
+	// Since #userData storage applies only to specific paths, we need to
+	// somehow link our data to a specific path.  We choose /favicon.ico
+	// as a pretty safe option, since all browsers already make a request to
+	// this URL anyway and being a 404 will not hurt us here.  We wrap an
+	// iframe pointing to the favicon in an ActiveXObject(htmlfile) object
+	// (see: http://msdn.microsoft.com/en-us/library/aa752574(v=VS.85).aspx)
+	// since the iframe access rules appear to allow direct access and
+	// manipulation of the document element, even for a 404 page.  This
+	// document can be used instead of the current document (which would
+	// have been limited to the current path) to perform #userData storage.
+	try {
+		storageContainer = new ActiveXObject('htmlfile')
+		storageContainer.open()
+		storageContainer.write('<s' + 'cript>document.w=window</s' + 'cript><iframe src="/favicon.ico"></iframe>')
+		storageContainer.close()
+		storageOwner = storageContainer.w.frames[0].document
+		storage = storageOwner.createElement('div')
+	} catch(e) {
+		// somehow ActiveXObject instantiation failed (perhaps some special
+		// security settings or otherwse), fall back to per-path storage
+		storage = doc.createElement('div')
+		storageOwner = doc.body
+	}
+	function withIEStorage(storeFunction) {
+		return function() {
+			var args = Array.prototype.slice.call(arguments, 0)
+			args.unshift(storage)
+			// See http://msdn.microsoft.com/en-us/library/ms531081(v=VS.85).aspx
+			// and http://msdn.microsoft.com/en-us/library/ms531424(v=VS.85).aspx
+			storageOwner.appendChild(storage)
+			storage.addBehavior('#default#userData')
+			storage.load(localStorageName)
+			var result = storeFunction.apply(store, args)
+			storageOwner.removeChild(storage)
+			return result
+		}
+	}
+
+	// In IE7, keys may not contain special chars. See all of https://github.com/marcuswestin/store.js/issues/40
+	var forbiddenCharsRegex = new RegExp("[!\"#$%&'()*+,/\\\\:;<=>?@[\\]^`{|}~]", "g")
+	function ieKeyFix(key) {
+		return key.replace(forbiddenCharsRegex, '___')
+	}
+	store.set = withIEStorage(function(storage, key, val) {
+		key = ieKeyFix(key)
+		if (val === undefined) { return store.remove(key) }
+		storage.setAttribute(key, store.serialize(val))
+		storage.save(localStorageName)
+		return val
+	})
+	store.get = withIEStorage(function(storage, key) {
+		key = ieKeyFix(key)
+		return store.deserialize(storage.getAttribute(key))
+	})
+	store.remove = withIEStorage(function(storage, key) {
+		key = ieKeyFix(key)
+		storage.removeAttribute(key)
+		storage.save(localStorageName)
+	})
+	store.clear = withIEStorage(function(storage) {
+		var attributes = storage.XMLDocument.documentElement.attributes
+		storage.load(localStorageName)
+		for (var i=0, attr; attr=attributes[i]; i++) {
+			storage.removeAttribute(attr.name)
+		}
+		storage.save(localStorageName)
+	})
+	store.getAll = withIEStorage(function(storage) {
+		var attributes = storage.XMLDocument.documentElement.attributes
+		var ret = {}
+		for (var i=0, attr; attr=attributes[i]; ++i) {
+			var key = ieKeyFix(attr.name)
+			ret[attr.name] = store.deserialize(storage.getAttribute(key))
+		}
+		return ret
+	})
+}
+
+try {
+	store.set(namespace, namespace)
+	if (store.get(namespace) != namespace) { store.disabled = true }
+	store.remove(namespace)
+} catch(e) {
+	store.disabled = true
+}
+store.enabled = !store.disabled
+
+module.exports = store;
+}, {"json":182}],
+
+181: [function(require, module, exports) {
 
 /**
  * Encode.
@@ -17642,7 +16534,7 @@ function parse(str) {
 
 }, {}],
 
-184: [function(require, module, exports) {
+182: [function(require, module, exports) {
 
 
 var json = window.JSON || {};
@@ -17653,9 +16545,9 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":201}],
+}, {"json-fallback":190}],
 
-185: [function(require, module, exports) {
+183: [function(require, module, exports) {
 
 
 /**
@@ -17706,7 +16598,7 @@ function domain(url){
 
 }, {"url":25}],
 
-201: [function(require, module, exports) {
+190: [function(require, module, exports) {
 
 /*
     json2.js
@@ -18198,164 +17090,7 @@ function domain(url){
 
 }, {}],
 
-188: [function(require, module, exports) {
-
-;(function(win){
-	var store = {},
-		doc = win.document,
-		localStorageName = 'localStorage',
-		namespace = '__storejs__',
-		storage
-
-	store.disabled = false
-	store.set = function(key, value) {}
-	store.get = function(key) {}
-	store.remove = function(key) {}
-	store.clear = function() {}
-	store.transact = function(key, defaultVal, transactionFn) {
-		var val = store.get(key)
-		if (transactionFn == null) {
-			transactionFn = defaultVal
-			defaultVal = null
-		}
-		if (typeof val == 'undefined') { val = defaultVal || {} }
-		transactionFn(val)
-		store.set(key, val)
-	}
-	store.getAll = function() {}
-
-	store.serialize = function(value) {
-		return JSON.stringify(value)
-	}
-	store.deserialize = function(value) {
-		if (typeof value != 'string') { return undefined }
-		try { return JSON.parse(value) }
-		catch(e) { return value || undefined }
-	}
-
-	// Functions to encapsulate questionable FireFox 3.6.13 behavior
-	// when about.config::dom.storage.enabled === false
-	// See https://github.com/marcuswestin/store.js/issues#issue/13
-	function isLocalStorageNameSupported() {
-		try { return (localStorageName in win && win[localStorageName]) }
-		catch(err) { return false }
-	}
-
-	if (isLocalStorageNameSupported()) {
-		storage = win[localStorageName]
-		store.set = function(key, val) {
-			if (val === undefined) { return store.remove(key) }
-			storage.setItem(key, store.serialize(val))
-			return val
-		}
-		store.get = function(key) { return store.deserialize(storage.getItem(key)) }
-		store.remove = function(key) { storage.removeItem(key) }
-		store.clear = function() { storage.clear() }
-		store.getAll = function() {
-			var ret = {}
-			for (var i=0; i<storage.length; ++i) {
-				var key = storage.key(i)
-				ret[key] = store.get(key)
-			}
-			return ret
-		}
-	} else if (doc.documentElement.addBehavior) {
-		var storageOwner,
-			storageContainer
-		// Since #userData storage applies only to specific paths, we need to
-		// somehow link our data to a specific path.  We choose /favicon.ico
-		// as a pretty safe option, since all browsers already make a request to
-		// this URL anyway and being a 404 will not hurt us here.  We wrap an
-		// iframe pointing to the favicon in an ActiveXObject(htmlfile) object
-		// (see: http://msdn.microsoft.com/en-us/library/aa752574(v=VS.85).aspx)
-		// since the iframe access rules appear to allow direct access and
-		// manipulation of the document element, even for a 404 page.  This
-		// document can be used instead of the current document (which would
-		// have been limited to the current path) to perform #userData storage.
-		try {
-			storageContainer = new ActiveXObject('htmlfile')
-			storageContainer.open()
-			storageContainer.write('<s' + 'cript>document.w=window</s' + 'cript><iframe src="/favicon.ico"></iframe>')
-			storageContainer.close()
-			storageOwner = storageContainer.w.frames[0].document
-			storage = storageOwner.createElement('div')
-		} catch(e) {
-			// somehow ActiveXObject instantiation failed (perhaps some special
-			// security settings or otherwse), fall back to per-path storage
-			storage = doc.createElement('div')
-			storageOwner = doc.body
-		}
-		function withIEStorage(storeFunction) {
-			return function() {
-				var args = Array.prototype.slice.call(arguments, 0)
-				args.unshift(storage)
-				// See http://msdn.microsoft.com/en-us/library/ms531081(v=VS.85).aspx
-				// and http://msdn.microsoft.com/en-us/library/ms531424(v=VS.85).aspx
-				storageOwner.appendChild(storage)
-				storage.addBehavior('#default#userData')
-				storage.load(localStorageName)
-				var result = storeFunction.apply(store, args)
-				storageOwner.removeChild(storage)
-				return result
-			}
-		}
-
-		// In IE7, keys may not contain special chars. See all of https://github.com/marcuswestin/store.js/issues/40
-		var forbiddenCharsRegex = new RegExp("[!\"#$%&'()*+,/\\\\:;<=>?@[\\]^`{|}~]", "g")
-		function ieKeyFix(key) {
-			return key.replace(forbiddenCharsRegex, '___')
-		}
-		store.set = withIEStorage(function(storage, key, val) {
-			key = ieKeyFix(key)
-			if (val === undefined) { return store.remove(key) }
-			storage.setAttribute(key, store.serialize(val))
-			storage.save(localStorageName)
-			return val
-		})
-		store.get = withIEStorage(function(storage, key) {
-			key = ieKeyFix(key)
-			return store.deserialize(storage.getAttribute(key))
-		})
-		store.remove = withIEStorage(function(storage, key) {
-			key = ieKeyFix(key)
-			storage.removeAttribute(key)
-			storage.save(localStorageName)
-		})
-		store.clear = withIEStorage(function(storage) {
-			var attributes = storage.XMLDocument.documentElement.attributes
-			storage.load(localStorageName)
-			for (var i=0, attr; attr=attributes[i]; i++) {
-				storage.removeAttribute(attr.name)
-			}
-			storage.save(localStorageName)
-		})
-		store.getAll = withIEStorage(function(storage) {
-			var attributes = storage.XMLDocument.documentElement.attributes
-			var ret = {}
-			for (var i=0, attr; attr=attributes[i]; ++i) {
-				var key = ieKeyFix(attr.name)
-				ret[attr.name] = store.deserialize(storage.getAttribute(key))
-			}
-			return ret
-		})
-	}
-
-	try {
-		store.set(namespace, namespace)
-		if (store.get(namespace) != namespace) { store.disabled = true }
-		store.remove(namespace)
-	} catch(e) {
-		store.disabled = true
-	}
-	store.enabled = !store.disabled
-	if (typeof module != 'undefined' && module.exports) { module.exports = store }
-	else if (typeof define === 'function' && define.amd) { define(store) }
-	else { win.store = store }
-})(this.window || global);
-
-}, {}],
-
-200: [function(require, module, exports) {
+189: [function(require, module, exports) {
 
 
 var is = require('is');
@@ -18430,4 +17165,4 @@ function array (arr, strict) {
   return arr;
 }
 
-}, {"is":169,"isodate":166,"each":4}]}, {}, {"1":"analytics"})
+}, {"is":167,"isodate":164,"each":4}]}, {}, {"1":"analytics"})

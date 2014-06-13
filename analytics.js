@@ -913,8 +913,8 @@ module.exports = [
  */
 
 var integration = require('analytics.js-integration');
-var is = require('is');
 var load = require('load-script');
+var is = require('is');
 
 /**
  * User reference.
@@ -981,14 +981,27 @@ AdRoll.prototype.loaded = function(){
 /**
  * Load the AdRoll library.
  *
- * @param {Function} callback
+ * @param {Function} fn
  */
 
-AdRoll.prototype.load = function(callback){
+AdRoll.prototype.load = function(fn){
   load({
     http: 'http://a.adroll.com/j/roundtrip.js',
     https: 'https://s.adroll.com/j/roundtrip.js'
-  }, callback);
+  }, fn);
+};
+
+/**
+ * Page.
+ *
+ * http://support.adroll.com/segmenting-clicks/
+ *
+ * @param {Page} page
+ */
+
+AdRoll.prototype.page = function(page){
+  var name = page.fullName();
+  this.track(page.track(name));
 };
 
 /**
@@ -999,19 +1012,24 @@ AdRoll.prototype.load = function(callback){
 
 AdRoll.prototype.track = function(track){
   var events = this.options.events;
-  var total = track.revenue();
   var event = track.event();
-  if (has.call(events, event)) event = events[event];
-  var data = {
-    adroll_conversion_value_in_dollars: total || 0,
-    order_id: track.orderId() || 0,
-    adroll_segments: event
-  };
+  var data = {};
   if (user.id()) data.user_id = user.id();
+
+  if (has.call(events, event)) {
+    event = events[event];
+    var total = track.revenue() || track.total() || 0;
+    var orderId = track.orderId() || 0;
+    data.adroll_conversion_value_in_dollars = total;
+    data.order_id = orderId;
+  }
+
+  data.adroll_segments = event;
+
   window.__adroll.record_user(data);
 };
 
-}, {"analytics.js-integration":103,"is":17,"load-script":104}],
+}, {"analytics.js-integration":103,"load-script":104,"is":17}],
 
 30: [function(require, module, exports) {
 
@@ -3212,6 +3230,8 @@ Facebook.prototype.loaded = function(){
 /**
  * Track.
  *
+ * https://developers.facebook.com/docs/reference/ads-api/custom-audience-website-faq/#fbpixel
+ *
  * @param {Track} track
  */
 
@@ -3220,11 +3240,16 @@ Facebook.prototype.track = function(track){
   var traits = track.traits();
   var event = track.event();
   var revenue = track.revenue() || 0;
-  if (!has.call(events, event)) return;
-  push('track', events[event], {
-    value: String(revenue.toFixed(2)),
-    currency: this.options.currency
-  });
+  var data = track.properties();
+  if (has.call(events, event)) {
+    // conversion flow
+    event = events[event];
+    data = {
+      value: String(revenue.toFixed(2)),
+      currency: this.options.currency
+    };
+  }
+  push('track', event, data);
 };
 
 }, {"analytics.js-integration":103,"global-queue":111,"load-script":104}],
@@ -6779,43 +6804,6 @@ Navilytics.prototype.track = function(track){
 
 }, {"analytics.js-integration":103,"load-script":104,"global-queue":111}],
 
-28: [function(require, module, exports) {
-
-
-/**
- * toString ref.
- */
-
-var toString = Object.prototype.toString;
-
-/**
- * Return the type of `val`.
- *
- * @param {Mixed} val
- * @return {String}
- * @api public
- */
-
-module.exports = function(val){
-  switch (toString.call(val)) {
-    case '[object Function]': return 'function';
-    case '[object Date]': return 'date';
-    case '[object RegExp]': return 'regexp';
-    case '[object Arguments]': return 'arguments';
-    case '[object Array]': return 'array';
-    case '[object String]': return 'string';
-  }
-
-  if (val === null) return 'null';
-  if (val === undefined) return 'undefined';
-  if (val && val.nodeType === 1) return 'element';
-  if (val === Object(val)) return 'object';
-
-  return typeof val;
-};
-
-}, {}],
-
 103: [function(require, module, exports) {
 
 
@@ -6875,64 +6863,65 @@ function createIntegration (name) {
 
 104: [function(require, module, exports) {
 
+
+/**
+ * Module dependencies.
+ */
+
+var onload = require('script-onload');
 var type = require('type');
 
+/**
+ * Expose `loadScript`.
+ *
+ * @param {Object} options
+ * @param {Function} fn
+ * @api public
+ */
 
-module.exports = function loadScript (options, callback) {
-    if (!options) throw new Error('Cant load nothing...');
+module.exports = function loadScript(options, fn){
+  if (!options) throw new Error('Cant load nothing...');
 
-    // Allow for the simplest case, just passing a `src` string.
-    if (type(options) === 'string') options = { src : options };
+  // Allow for the simplest case, just passing a `src` string.
+  if ('string' == type(options)) options = { src : options };
 
-    var https = document.location.protocol === 'https:' ||
-                document.location.protocol === 'chrome-extension:';
+  var https = document.location.protocol === 'https:' ||
+              document.location.protocol === 'chrome-extension:';
 
-    // If you use protocol relative URLs, third-party scripts like Google
-    // Analytics break when testing with `file:` so this fixes that.
-    if (options.src && options.src.indexOf('//') === 0) {
-        options.src = https ? 'https:' + options.src : 'http:' + options.src;
-    }
+  // If you use protocol relative URLs, third-party scripts like Google
+  // Analytics break when testing with `file:` so this fixes that.
+  if (options.src && options.src.indexOf('//') === 0) {
+    options.src = https ? 'https:' + options.src : 'http:' + options.src;
+  }
 
-    // Allow them to pass in different URLs depending on the protocol.
-    if (https && options.https) options.src = options.https;
-    else if (!https && options.http) options.src = options.http;
+  // Allow them to pass in different URLs depending on the protocol.
+  if (https && options.https) options.src = options.https;
+  else if (!https && options.http) options.src = options.http;
 
-    // Make the `<script>` element and insert it before the first script on the
-    // page, which is guaranteed to exist since this Javascript is running.
-    var script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.async = true;
-    script.src = options.src;
+  // Make the `<script>` element and insert it before the first script on the
+  // page, which is guaranteed to exist since this Javascript is running.
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.async = true;
+  script.src = options.src;
 
-    var firstScript = document.getElementsByTagName('script')[0];
-    firstScript.parentNode.insertBefore(script, firstScript);
+  // If we have a fn, attach event handlers, even in IE. Based off of
+  // the Third-Party Javascript script loading example:
+  // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
+  if ('function' == type(fn)) {
+    onload(script, fn);
+  }
 
-    // If we have a callback, attach event handlers, even in IE. Based off of
-    // the Third-Party Javascript script loading example:
-    // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
-    if (callback && type(callback) === 'function') {
-        if (script.addEventListener) {
-            script.addEventListener('load', function (event) {
-                callback(null, event);
-            }, false);
-            script.addEventListener('error', function (event) {
-                callback(new Error('Failed to load the script.'), event);
-            }, false);
-        } else if (script.attachEvent) {
-            script.attachEvent('onreadystatechange', function (event) {
-                if (/complete|loaded/.test(script.readyState)) {
-                    callback(null, event);
-                }
-            });
-        }
-    }
+  // Append after event listeners are attached for IE.
+  var firstScript = document.getElementsByTagName('script')[0];
+  firstScript.parentNode.insertBefore(script, firstScript);
 
-    // Return the script element in case they want to do anything special, like
-    // give it an ID or attributes.
-    return script;
+  // Return the script element in case they want to do anything special, like
+  // give it an ID or attributes.
+  return script;
 };
 
-}, {"type":28}],
+}, {"script-onload":130,"type":28}],
 
 11: [function(require, module, exports) {
 
@@ -6978,7 +6967,7 @@ callback.async = function (fn, wait) {
 
 callback.sync = callback;
 
-}, {"next-tick":130}],
+}, {"next-tick":131}],
 
 111: [function(require, module, exports) {
 
@@ -7067,7 +7056,7 @@ var interval = setInterval(function () {
 function call (callback) {
   callback(document.body);
 }
-}, {"each":131}],
+}, {"each":132}],
 
 110: [function(require, module, exports) {
 
@@ -7152,7 +7141,7 @@ function aliasByFunction (obj, convert) {
   for (var key in obj) output[convert(key)] = obj[key];
   return output;
 }
-}, {"type":28,"clone":132}],
+}, {"type":28,"clone":133}],
 
 106: [function(require, module, exports) {
 
@@ -7373,7 +7362,7 @@ function timeout(fn, ms) {
   }
 }
 
-}, {"emitter":133}],
+}, {"emitter":134}],
 
 119: [function(require, module, exports) {
 
@@ -7764,7 +7753,7 @@ Optimizely.prototype.replay = function(){
   analytics.identify(traits);
 };
 
-}, {"bind":117,"callback":11,"each":4,"analytics.js-integration":103,"global-queue":111,"next-tick":130}],
+}, {"bind":117,"callback":11,"each":4,"analytics.js-integration":103,"global-queue":111,"next-tick":131}],
 
 81: [function(require, module, exports) {
 
@@ -9312,7 +9301,7 @@ function replace (obj, key, val) {
   return obj;
 }
 
-}, {"case":134}],
+}, {"case":135}],
 
 94: [function(require, module, exports) {
 
@@ -9364,7 +9353,7 @@ TwitterAds.prototype.track = function(track){
   });
 };
 
-}, {"load-pixel":135,"analytics.js-integration":103}],
+}, {"load-pixel":136,"analytics.js-integration":103}],
 
 95: [function(require, module, exports) {
 
@@ -9755,7 +9744,48 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"alias":118,"callback":11,"clone":116,"convert-dates":119,"analytics.js-integration":103,"load-script":104,"global-queue":111,"to-unix-timestamp":136}],
+}, {"alias":118,"callback":11,"clone":116,"convert-dates":119,"analytics.js-integration":103,"load-script":104,"global-queue":111,"to-unix-timestamp":137}],
+
+113: [function(require, module, exports) {
+
+
+/**
+ * Protocol.
+ */
+
+module.exports = function (url) {
+  switch (arguments.length) {
+    case 0: return check();
+    case 1: return transform(url);
+  }
+};
+
+
+/**
+ * Transform a protocol-relative `url` to the use the proper protocol.
+ *
+ * @param {String} url
+ * @return {String}
+ */
+
+function transform (url) {
+  return check() ? 'https:' + url : 'http:' + url;
+}
+
+
+/**
+ * Check whether `https:` be used for loading scripts.
+ *
+ * @return {Boolean}
+ */
+
+function check () {
+  return (
+    location.protocol == 'https:' ||
+    location.protocol == 'chrome-extension:'
+  );
+}
+}, {}],
 
 98: [function(require, module, exports) {
 
@@ -9857,45 +9887,24 @@ Vero.prototype.track = function(track){
 
 }, {"callback":11,"analytics.js-integration":103,"load-script":104,"global-queue":111}],
 
-113: [function(require, module, exports) {
+112: [function(require, module, exports) {
 
 
-/**
- * Protocol.
- */
 
-module.exports = function (url) {
-  switch (arguments.length) {
-    case 0: return check();
-    case 1: return transform(url);
-  }
-};
-
-
-/**
- * Transform a protocol-relative `url` to the use the proper protocol.
+/*
+ * Load date.
  *
- * @param {String} url
- * @return {String}
+ * For reference: http://www.html5rocks.com/en/tutorials/webperformance/basics/
  */
 
-function transform (url) {
-  return check() ? 'https:' + url : 'http:' + url;
+var time = new Date()
+  , perf = window.performance;
+
+if (perf && perf.timing && perf.timing.responseEnd) {
+  time = new Date(perf.timing.responseEnd);
 }
 
-
-/**
- * Check whether `https:` be used for loading scripts.
- *
- * @return {Boolean}
- */
-
-function check () {
-  return (
-    location.protocol == 'https:' ||
-    location.protocol == 'chrome-extension:'
-  );
-}
+module.exports = time;
 }, {}],
 
 99: [function(require, module, exports) {
@@ -10003,27 +10012,7 @@ function variation(id){
   return variationId ? experiment.comb_n[variationId] : null;
 }
 
-}, {"callback":11,"each":4,"analytics.js-integration":103,"next-tick":130}],
-
-112: [function(require, module, exports) {
-
-
-
-/*
- * Load date.
- *
- * For reference: http://www.html5rocks.com/en/tutorials/webperformance/basics/
- */
-
-var time = new Date()
-  , perf = window.performance;
-
-if (perf && perf.timing && perf.timing.responseEnd) {
-  time = new Date(perf.timing.responseEnd);
-}
-
-module.exports = time;
-}, {}],
+}, {"callback":11,"each":4,"analytics.js-integration":103,"next-tick":131}],
 
 100: [function(require, module, exports) {
 
@@ -10215,7 +10204,7 @@ Woopra.prototype.track = function (track) {
   window.woopra.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":103,"to-snake-case":137,"load-script":104,"is-email":18,"extend":108,"each":4,"type":28}],
+}, {"analytics.js-integration":103,"to-snake-case":138,"load-script":104,"is-email":18,"extend":108,"each":4,"type":28}],
 
 102: [function(require, module, exports) {
 
@@ -10295,7 +10284,7 @@ function push(callback){
 
 }, {"callback":11,"analytics.js-integration":103,"load-script":104}],
 
-130: [function(require, module, exports) {
+131: [function(require, module, exports) {
 
 "use strict"
 
@@ -10361,7 +10350,7 @@ module.exports = function(obj, fn){
 
 }, {}],
 
-135: [function(require, module, exports) {
+136: [function(require, module, exports) {
 
 
 /**
@@ -10417,7 +10406,7 @@ function error(fn, message, img){
   };
 }
 
-}, {"querystring":138,"substitute":139}],
+}, {"querystring":139,"substitute":140}],
 
 17: [function(require, module, exports) {
 
@@ -10951,7 +10940,7 @@ exports._wrapTrack = function(){
   };
 };
 
-}, {"./events":140,"to-no-case":141,"after":9,"callback":11,"emitter":16,"next-tick":130,"type":28}],
+}, {"./events":141,"to-no-case":142,"after":9,"callback":11,"emitter":16,"next-tick":131,"type":28}],
 
 126: [function(require, module, exports) {
 
@@ -11105,7 +11094,7 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":117,"bind-all":142}],
+}, {"bind":117,"bind-all":143}],
 
 128: [function(require, module, exports) {
 
@@ -11115,7 +11104,7 @@ if ('undefined' == typeof window) {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":143,"./debug":144}],
+}, {"./lib/debug":144,"./debug":145}],
 
 15: [function(require, module, exports) {
 
@@ -11148,7 +11137,7 @@ module.exports = defaults;
 
 }, {}],
 
-143: [function(require, module, exports) {
+144: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11300,7 +11289,7 @@ function coerce(val) {
 
 }, {}],
 
-144: [function(require, module, exports) {
+145: [function(require, module, exports) {
 
 
 /**
@@ -11627,7 +11616,7 @@ Emitter.prototype.hasListeners = function(event){
 
 }, {"indexof":123}],
 
-136: [function(require, module, exports) {
+137: [function(require, module, exports) {
 
 
 /**
@@ -11649,7 +11638,7 @@ function toUnixTimestamp (date) {
 }
 }, {}],
 
-134: [function(require, module, exports) {
+135: [function(require, module, exports) {
 
 
 var cases = require('./cases');
@@ -11698,9 +11687,9 @@ exports.add = function (name, convert) {
 for (var key in cases) {
   exports.add(key, cases[key]);
 }
-}, {"./cases":145}],
+}, {"./cases":146}],
 
-145: [function(require, module, exports) {
+146: [function(require, module, exports) {
 
 
 var camel = require('to-camel-case')
@@ -11835,9 +11824,9 @@ exports.inverse = function (string) {
  */
 
 exports.none = none;
-}, {"to-camel-case":146,"to-capital-case":147,"to-constant-case":148,"to-dot-case":149,"to-no-case":150,"to-pascal-case":151,"to-sentence-case":152,"to-slug-case":153,"to-snake-case":154,"to-space-case":155,"to-title-case":156}],
+}, {"to-camel-case":147,"to-capital-case":148,"to-constant-case":149,"to-dot-case":150,"to-no-case":151,"to-pascal-case":152,"to-sentence-case":153,"to-slug-case":154,"to-snake-case":155,"to-space-case":156,"to-title-case":157}],
 
-137: [function(require, module, exports) {
+138: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
 
@@ -11861,7 +11850,846 @@ function toSnakeCase (string) {
   return toSpace(string).replace(/\s/g, '_');
 }
 
-}, {"to-space-case":157}],
+}, {"to-space-case":158}],
+
+28: [function(require, module, exports) {
+
+
+/**
+ * toString ref.
+ */
+
+var toString = Object.prototype.toString;
+
+/**
+ * Return the type of `val`.
+ *
+ * @param {Mixed} val
+ * @return {String}
+ * @api public
+ */
+
+module.exports = function(val){
+  switch (toString.call(val)) {
+    case '[object Function]': return 'function';
+    case '[object Date]': return 'date';
+    case '[object RegExp]': return 'regexp';
+    case '[object Arguments]': return 'arguments';
+    case '[object Array]': return 'array';
+    case '[object String]': return 'string';
+  }
+
+  if (val === null) return 'null';
+  if (val === undefined) return 'undefined';
+  if (val && val.nodeType === 1) return 'element';
+  if (val === Object(val)) return 'object';
+
+  return typeof val;
+};
+
+}, {}],
+
+141: [function(require, module, exports) {
+
+
+/**
+ * Expose `events`
+ */
+
+module.exports = {
+  removedProduct: /removed[ _]?product/i,
+  viewedProduct: /viewed[ _]?product/i,
+  addedProduct: /added[ _]?product/i,
+  completedOrder: /completed[ _]?order/i
+};
+
+}, {}],
+
+142: [function(require, module, exports) {
+
+
+/**
+ * Expose `toNoCase`.
+ */
+
+module.exports = toNoCase;
+
+
+/**
+ * Test whether a string is camel-case.
+ */
+
+var hasSpace = /\s/;
+var hasSeparator = /[\W_]/;
+
+
+/**
+ * Remove any starting case from a `string`, like camel or snake, but keep
+ * spaces and punctuation that may be important otherwise.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function toNoCase (string) {
+  if (hasSpace.test(string)) return string.toLowerCase();
+  if (hasSeparator.test(string)) return unseparate(string).toLowerCase();
+  return uncamelize(string).toLowerCase();
+}
+
+
+/**
+ * Separator splitter.
+ */
+
+var separatorSplitter = /[\W_]+(.|$)/g;
+
+
+/**
+ * Un-separate a `string`.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function unseparate (string) {
+  return string.replace(separatorSplitter, function (m, next) {
+    return next ? ' ' + next : '';
+  });
+}
+
+
+/**
+ * Camelcase splitter.
+ */
+
+var camelSplitter = /(.)([A-Z]+)/g;
+
+
+/**
+ * Un-camelcase a `string`.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function uncamelize (string) {
+  return string.replace(camelSplitter, function (m, previous, uppers) {
+    return previous + ' ' + uppers.toLowerCase().split('').join(' ');
+  });
+}
+}, {}],
+
+158: [function(require, module, exports) {
+
+
+var clean = require('to-no-case');
+
+
+/**
+ * Expose `toSpaceCase`.
+ */
+
+module.exports = toSpaceCase;
+
+
+/**
+ * Convert a `string` to space case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSpaceCase (string) {
+  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
+    return match ? ' ' + match : '';
+  });
+}
+}, {"to-no-case":151}],
+
+147: [function(require, module, exports) {
+
+
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toCamelCase`.
+ */
+
+module.exports = toCamelCase;
+
+
+/**
+ * Convert a `string` to camel case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toCamelCase (string) {
+  return toSpace(string).replace(/\s(\w)/g, function (matches, letter) {
+    return letter.toUpperCase();
+  });
+}
+}, {"to-space-case":156}],
+
+148: [function(require, module, exports) {
+
+
+var clean = require('to-no-case');
+
+
+/**
+ * Expose `toCapitalCase`.
+ */
+
+module.exports = toCapitalCase;
+
+
+/**
+ * Convert a `string` to capital case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toCapitalCase (string) {
+  return clean(string).replace(/(^|\s)(\w)/g, function (matches, previous, letter) {
+    return previous + letter.toUpperCase();
+  });
+}
+}, {"to-no-case":151}],
+
+149: [function(require, module, exports) {
+
+
+var snake = require('to-snake-case');
+
+
+/**
+ * Expose `toConstantCase`.
+ */
+
+module.exports = toConstantCase;
+
+
+/**
+ * Convert a `string` to constant case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toConstantCase (string) {
+  return snake(string).toUpperCase();
+}
+}, {"to-snake-case":155}],
+
+150: [function(require, module, exports) {
+
+
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toDotCase`.
+ */
+
+module.exports = toDotCase;
+
+
+/**
+ * Convert a `string` to slug case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toDotCase (string) {
+  return toSpace(string).replace(/\s/g, '.');
+}
+}, {"to-space-case":156}],
+
+151: [function(require, module, exports) {
+
+
+/**
+ * Expose `toNoCase`.
+ */
+
+module.exports = toNoCase;
+
+
+/**
+ * Test whether a string is camel-case.
+ */
+
+var hasSpace = /\s/;
+var hasCamel = /[a-z][A-Z]/;
+var hasSeparator = /[\W_]/;
+
+
+/**
+ * Remove any starting case from a `string`, like camel or snake, but keep
+ * spaces and punctuation that may be important otherwise.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function toNoCase (string) {
+  if (hasSpace.test(string)) return string.toLowerCase();
+
+  if (hasSeparator.test(string)) string = unseparate(string);
+  if (hasCamel.test(string)) string = uncamelize(string);
+  return string.toLowerCase();
+}
+
+
+/**
+ * Separator splitter.
+ */
+
+var separatorSplitter = /[\W_]+(.|$)/g;
+
+
+/**
+ * Un-separate a `string`.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function unseparate (string) {
+  return string.replace(separatorSplitter, function (m, next) {
+    return next ? ' ' + next : '';
+  });
+}
+
+
+/**
+ * Camelcase splitter.
+ */
+
+var camelSplitter = /(.)([A-Z]+)/g;
+
+
+/**
+ * Un-camelcase a `string`.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function uncamelize (string) {
+  return string.replace(camelSplitter, function (m, previous, uppers) {
+    return previous + ' ' + uppers.toLowerCase().split('').join(' ');
+  });
+}
+}, {}],
+
+152: [function(require, module, exports) {
+
+
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toPascalCase`.
+ */
+
+module.exports = toPascalCase;
+
+
+/**
+ * Convert a `string` to pascal case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toPascalCase (string) {
+  return toSpace(string).replace(/(?:^|\s)(\w)/g, function (matches, letter) {
+    return letter.toUpperCase();
+  });
+}
+}, {"to-space-case":156}],
+
+153: [function(require, module, exports) {
+
+
+var clean = require('to-no-case');
+
+
+/**
+ * Expose `toSentenceCase`.
+ */
+
+module.exports = toSentenceCase;
+
+
+/**
+ * Convert a `string` to camel case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSentenceCase (string) {
+  return clean(string).replace(/[a-z]/i, function (letter) {
+    return letter.toUpperCase();
+  });
+}
+}, {"to-no-case":151}],
+
+154: [function(require, module, exports) {
+
+
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toSlugCase`.
+ */
+
+module.exports = toSlugCase;
+
+
+/**
+ * Convert a `string` to slug case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSlugCase (string) {
+  return toSpace(string).replace(/\s/g, '-');
+}
+}, {"to-space-case":156}],
+
+155: [function(require, module, exports) {
+
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toSnakeCase`.
+ */
+
+module.exports = toSnakeCase;
+
+
+/**
+ * Convert a `string` to snake case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSnakeCase (string) {
+  return toSpace(string).replace(/\s/g, '_');
+}
+
+}, {"to-space-case":156}],
+
+156: [function(require, module, exports) {
+
+
+var clean = require('to-no-case');
+
+
+/**
+ * Expose `toSpaceCase`.
+ */
+
+module.exports = toSpaceCase;
+
+
+/**
+ * Convert a `string` to space case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSpaceCase (string) {
+  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
+    return match ? ' ' + match : '';
+  });
+}
+}, {"to-no-case":151}],
+
+157: [function(require, module, exports) {
+
+
+var capital = require('to-capital-case')
+  , escape = require('escape-regexp')
+  , map = require('map')
+  , minors = require('title-case-minors');
+
+
+/**
+ * Expose `toTitleCase`.
+ */
+
+module.exports = toTitleCase;
+
+
+/**
+ * Minors.
+ */
+
+var escaped = map(minors, escape);
+var minorMatcher = new RegExp('[^^]\\b(' + escaped.join('|') + ')\\b', 'ig');
+var colonMatcher = /:\s*(\w)/g;
+
+
+/**
+ * Convert a `string` to camel case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toTitleCase (string) {
+  return capital(string)
+    .replace(minorMatcher, function (minor) {
+      return minor.toLowerCase();
+    })
+    .replace(colonMatcher, function (letter) {
+      return letter.toUpperCase();
+    });
+}
+}, {"to-capital-case":148,"escape-regexp":159,"map":160,"title-case-minors":161}],
+
+159: [function(require, module, exports) {
+
+
+/**
+ * Escape regexp special characters in `str`.
+ *
+ * @param {String} str
+ * @return {String}
+ * @api public
+ */
+
+module.exports = function(str){
+  return String(str).replace(/([.*+?=^!:${}()|[\]\/\\])/g, '\\$1');
+};
+}, {}],
+
+160: [function(require, module, exports) {
+
+
+var each = require('each');
+
+
+/**
+ * Map an array or object.
+ *
+ * @param {Array|Object} obj
+ * @param {Function} iterator
+ * @return {Mixed}
+ */
+
+module.exports = function map (obj, iterator) {
+  var arr = [];
+  each(obj, function (o) {
+    arr.push(iterator.apply(null, arguments));
+  });
+  return arr;
+};
+}, {"each":132}],
+
+161: [function(require, module, exports) {
+
+
+module.exports = [
+  'a',
+  'an',
+  'and',
+  'as',
+  'at',
+  'but',
+  'by',
+  'en',
+  'for',
+  'from',
+  'how',
+  'if',
+  'in',
+  'neither',
+  'nor',
+  'of',
+  'on',
+  'only',
+  'onto',
+  'out',
+  'or',
+  'per',
+  'so',
+  'than',
+  'that',
+  'the',
+  'to',
+  'until',
+  'up',
+  'upon',
+  'v',
+  'v.',
+  'versus',
+  'vs',
+  'vs.',
+  'via',
+  'when',
+  'with',
+  'without',
+  'yet'
+];
+}, {}],
+
+133: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var type;
+try {
+  type = require('component-type');
+} catch (_) {
+  type = require('type');
+}
+
+/**
+ * Module exports.
+ */
+
+module.exports = clone;
+
+/**
+ * Clones objects.
+ *
+ * @param {Mixed} any object
+ * @api public
+ */
+
+function clone(obj){
+  switch (type(obj)) {
+    case 'object':
+      var copy = {};
+      for (var key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          copy[key] = clone(obj[key]);
+        }
+      }
+      return copy;
+
+    case 'array':
+      var copy = new Array(obj.length);
+      for (var i = 0, l = obj.length; i < l; i++) {
+        copy[i] = clone(obj[i]);
+      }
+      return copy;
+
+    case 'regexp':
+      // from millermedeiros/amd-utils - MIT
+      var flags = '';
+      flags += obj.multiline ? 'm' : '';
+      flags += obj.global ? 'g' : '';
+      flags += obj.ignoreCase ? 'i' : '';
+      return new RegExp(obj.source, flags);
+
+    case 'date':
+      return new Date(obj.getTime());
+
+    default: // string, number, boolean, …
+      return obj;
+  }
+}
+
+}, {"type":28}],
+
+134: [function(require, module, exports) {
+
+
+/**
+ * Expose `Emitter`.
+ */
+
+module.exports = Emitter;
+
+/**
+ * Initialize a new `Emitter`.
+ *
+ * @api public
+ */
+
+function Emitter(obj) {
+  if (obj) return mixin(obj);
+};
+
+/**
+ * Mixin the emitter properties.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function mixin(obj) {
+  for (var key in Emitter.prototype) {
+    obj[key] = Emitter.prototype[key];
+  }
+  return obj;
+}
+
+/**
+ * Listen on the given `event` with `fn`.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.on =
+Emitter.prototype.addEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+  (this._callbacks[event] = this._callbacks[event] || [])
+    .push(fn);
+  return this;
+};
+
+/**
+ * Adds an `event` listener that will be invoked a single
+ * time then automatically removed.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.once = function(event, fn){
+  var self = this;
+  this._callbacks = this._callbacks || {};
+
+  function on() {
+    self.off(event, on);
+    fn.apply(this, arguments);
+  }
+
+  on.fn = fn;
+  this.on(event, on);
+  return this;
+};
+
+/**
+ * Remove the given callback for `event` or all
+ * registered callbacks.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.off =
+Emitter.prototype.removeListener =
+Emitter.prototype.removeAllListeners =
+Emitter.prototype.removeEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+
+  // all
+  if (0 == arguments.length) {
+    this._callbacks = {};
+    return this;
+  }
+
+  // specific event
+  var callbacks = this._callbacks[event];
+  if (!callbacks) return this;
+
+  // remove all handlers
+  if (1 == arguments.length) {
+    delete this._callbacks[event];
+    return this;
+  }
+
+  // remove specific handler
+  var cb;
+  for (var i = 0; i < callbacks.length; i++) {
+    cb = callbacks[i];
+    if (cb === fn || cb.fn === fn) {
+      callbacks.splice(i, 1);
+      break;
+    }
+  }
+  return this;
+};
+
+/**
+ * Emit `event` with the given args.
+ *
+ * @param {String} event
+ * @param {Mixed} ...
+ * @return {Emitter}
+ */
+
+Emitter.prototype.emit = function(event){
+  this._callbacks = this._callbacks || {};
+  var args = [].slice.call(arguments, 1)
+    , callbacks = this._callbacks[event];
+
+  if (callbacks) {
+    callbacks = callbacks.slice(0);
+    for (var i = 0, len = callbacks.length; i < len; ++i) {
+      callbacks[i].apply(this, args);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Return array of callbacks for `event`.
+ *
+ * @param {String} event
+ * @return {Array}
+ * @api public
+ */
+
+Emitter.prototype.listeners = function(event){
+  this._callbacks = this._callbacks || {};
+  return this._callbacks[event] || [];
+};
+
+/**
+ * Check if this emitter has `event` handlers.
+ *
+ * @param {String} event
+ * @return {Boolean}
+ * @api public
+ */
+
+Emitter.prototype.hasListeners = function(event){
+  return !! this.listeners(event).length;
+};
+
+}, {}],
 
 26: [function(require, module, exports) {
 
@@ -11885,7 +12713,7 @@ Facade.Track = require('./track');
 Facade.Page = require('./page');
 Facade.Screen = require('./screen');
 
-}, {"./facade":158,"./alias":159,"./group":160,"./identify":161,"./track":162,"./page":163,"./screen":164}],
+}, {"./facade":162,"./alias":163,"./group":164,"./identify":165,"./track":166,"./page":167,"./screen":168}],
 
 124: [function(require, module, exports) {
 
@@ -12048,7 +12876,7 @@ Batch.prototype.end = function(cb){
   return this;
 };
 
-}, {"emitter":133}],
+}, {"emitter":134}],
 
 114: [function(require, module, exports) {
 
@@ -12371,7 +13199,7 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"bind":10,"cookie":165,"clone":13,"defaults":15,"json":166,"top-domain":167}],
+}, {"bind":10,"cookie":169,"clone":13,"defaults":15,"json":170,"top-domain":171}],
 
 6: [function(require, module, exports) {
 
@@ -12430,7 +13258,7 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"./entity":168,"debug":14,"inherit":169,"bind":10}],
+}, {"./entity":172,"debug":14,"inherit":173,"bind":10}],
 
 7: [function(require, module, exports) {
 
@@ -12520,7 +13348,7 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":10,"defaults":15,"store.js":170}],
+}, {"bind":10,"defaults":15,"store.js":174}],
 
 8: [function(require, module, exports) {
 
@@ -12609,7 +13437,7 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"./entity":168,"./cookie":5,"debug":14,"inherit":169,"bind":10}],
+}, {"./entity":172,"./cookie":5,"debug":14,"inherit":173,"bind":10}],
 
 10: [function(require, module, exports) {
 
@@ -12658,7 +13486,7 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":117,"bind-all":142}],
+}, {"bind":117,"bind-all":143}],
 
 14: [function(require, module, exports) {
 
@@ -12668,7 +13496,7 @@ if ('undefined' == typeof window) {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":171,"./debug":172}],
+}, {"./lib/debug":175,"./debug":176}],
 
 19: [function(require, module, exports) {
 
@@ -12729,7 +13557,7 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
-}, {"./milliseconds":173,"./seconds":174,"is":175,"isodate":176}],
+}, {"./milliseconds":177,"./seconds":178,"is":179,"isodate":180}],
 
 21: [function(require, module, exports) {
 
@@ -12877,9 +13705,9 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":177,"type":28}],
+}, {"trim":181,"type":28}],
 
-158: [function(require, module, exports) {
+162: [function(require, module, exports) {
 
 
 var clone = require('./utils').clone;
@@ -13110,9 +13938,9 @@ function transform(obj){
   return cloned;
 }
 
-}, {"./utils":178,"./is-enabled":179,"obj-case":180,"isodate-traverse":181}],
+}, {"./utils":182,"./is-enabled":183,"obj-case":184,"isodate-traverse":185}],
 
-159: [function(require, module, exports) {
+163: [function(require, module, exports) {
 
 
 /**
@@ -13184,9 +14012,9 @@ Alias.prototype.userId = function(){
     || this.field('to');
 };
 
-}, {"./utils":178,"./facade":158}],
+}, {"./utils":182,"./facade":162}],
 
-160: [function(require, module, exports) {
+164: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -13289,9 +14117,9 @@ Group.prototype.properties = function(){
     || {};
 };
 
-}, {"./utils":178,"./facade":158,"new-date":20}],
+}, {"./utils":182,"./facade":162,"new-date":20}],
 
-161: [function(require, module, exports) {
+165: [function(require, module, exports) {
 
 
 var Facade = require('./facade');
@@ -13486,9 +14314,9 @@ Identify.prototype.phone = Facade.proxy('traits.phone');
 Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.avatar = Facade.proxy('traits.avatar');
 
-}, {"./facade":158,"./utils":178,"is-email":18,"new-date":20,"trim":177}],
+}, {"./facade":162,"./utils":182,"is-email":18,"new-date":20,"trim":181}],
 
-162: [function(require, module, exports) {
+166: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -13775,9 +14603,9 @@ function currency(val) {
   if (!isNaN(val)) return val;
 }
 
-}, {"./utils":178,"./facade":158,"./identify":161,"is-email":18}],
+}, {"./utils":182,"./facade":162,"./identify":165,"is-email":18}],
 
-163: [function(require, module, exports) {
+167: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -13884,9 +14712,9 @@ Page.prototype.track = function(name){
   });
 };
 
-}, {"./utils":178,"./facade":158,"./track":162}],
+}, {"./utils":182,"./facade":162,"./track":166}],
 
-164: [function(require, module, exports) {
+168: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -13961,9 +14789,9 @@ Screen.prototype.track = function(name){
   });
 };
 
-}, {"./utils":178,"./page":163,"./track":162}],
+}, {"./utils":182,"./page":167,"./track":166}],
 
-171: [function(require, module, exports) {
+175: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14115,7 +14943,7 @@ function coerce(val) {
 
 }, {}],
 
-172: [function(require, module, exports) {
+176: [function(require, module, exports) {
 
 
 /**
@@ -14257,7 +15085,7 @@ try {
 
 }, {}],
 
-178: [function(require, module, exports) {
+182: [function(require, module, exports) {
 
 
 /**
@@ -14272,160 +15100,9 @@ try {
   exports.clone = require('clone-component');
 }
 
-}, {"inherit":182,"clone":132}],
+}, {"inherit":186,"clone":133}],
 
-132: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var type;
-try {
-  type = require('component-type');
-} catch (_) {
-  type = require('type');
-}
-
-/**
- * Module exports.
- */
-
-module.exports = clone;
-
-/**
- * Clones objects.
- *
- * @param {Mixed} any object
- * @api public
- */
-
-function clone(obj){
-  switch (type(obj)) {
-    case 'object':
-      var copy = {};
-      for (var key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          copy[key] = clone(obj[key]);
-        }
-      }
-      return copy;
-
-    case 'array':
-      var copy = new Array(obj.length);
-      for (var i = 0, l = obj.length; i < l; i++) {
-        copy[i] = clone(obj[i]);
-      }
-      return copy;
-
-    case 'regexp':
-      // from millermedeiros/amd-utils - MIT
-      var flags = '';
-      flags += obj.multiline ? 'm' : '';
-      flags += obj.global ? 'g' : '';
-      flags += obj.ignoreCase ? 'i' : '';
-      return new RegExp(obj.source, flags);
-
-    case 'date':
-      return new Date(obj.getTime());
-
-    default: // string, number, boolean, …
-      return obj;
-  }
-}
-
-}, {"type":28}],
-
-131: [function(require, module, exports) {
-
-
-/**
- * Module dependencies.
- */
-
-var type = require('type');
-var toFunction = require('to-function');
-
-/**
- * HOP reference.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
-/**
- * Iterate the given `obj` and invoke `fn(val, i)`
- * in optional context `ctx`.
- *
- * @param {String|Array|Object} obj
- * @param {Function} fn
- * @param {Object} [ctx]
- * @api public
- */
-
-module.exports = function(obj, fn, ctx){
-  fn = toFunction(fn);
-  ctx = ctx || this;
-  switch (type(obj)) {
-    case 'array':
-      return array(obj, fn, ctx);
-    case 'object':
-      if ('number' == typeof obj.length) return array(obj, fn, ctx);
-      return object(obj, fn, ctx);
-    case 'string':
-      return string(obj, fn, ctx);
-  }
-};
-
-/**
- * Iterate string chars.
- *
- * @param {String} obj
- * @param {Function} fn
- * @param {Object} ctx
- * @api private
- */
-
-function string(obj, fn, ctx) {
-  for (var i = 0; i < obj.length; ++i) {
-    fn.call(ctx, obj.charAt(i), i);
-  }
-}
-
-/**
- * Iterate object keys.
- *
- * @param {Object} obj
- * @param {Function} fn
- * @param {Object} ctx
- * @api private
- */
-
-function object(obj, fn, ctx) {
-  for (var key in obj) {
-    if (has.call(obj, key)) {
-      fn.call(ctx, key, obj[key]);
-    }
-  }
-}
-
-/**
- * Iterate array-ish.
- *
- * @param {Array|Object} obj
- * @param {Function} fn
- * @param {Object} ctx
- * @api private
- */
-
-function array(obj, fn, ctx) {
-  for (var i = 0; i < obj.length; ++i) {
-    fn.call(ctx, obj[i], i);
-  }
-}
-
-}, {"type":28,"to-function":183}],
-
-168: [function(require, module, exports) {
+172: [function(require, module, exports) {
 
 
 var traverse = require('isodate-traverse');
@@ -14627,9 +15304,9 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"./cookie":5,"./store":7,"isodate-traverse":184,"defaults":15,"extend":108,"clone":13}],
+}, {"./cookie":5,"./store":7,"isodate-traverse":187,"defaults":15,"extend":108,"clone":13}],
 
-169: [function(require, module, exports) {
+173: [function(require, module, exports) {
 
 
 module.exports = function(a, b){
@@ -14640,287 +15317,7 @@ module.exports = function(a, b){
 };
 }, {}],
 
-133: [function(require, module, exports) {
-
-
-/**
- * Expose `Emitter`.
- */
-
-module.exports = Emitter;
-
-/**
- * Initialize a new `Emitter`.
- *
- * @api public
- */
-
-function Emitter(obj) {
-  if (obj) return mixin(obj);
-};
-
-/**
- * Mixin the emitter properties.
- *
- * @param {Object} obj
- * @return {Object}
- * @api private
- */
-
-function mixin(obj) {
-  for (var key in Emitter.prototype) {
-    obj[key] = Emitter.prototype[key];
-  }
-  return obj;
-}
-
-/**
- * Listen on the given `event` with `fn`.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.on =
-Emitter.prototype.addEventListener = function(event, fn){
-  this._callbacks = this._callbacks || {};
-  (this._callbacks[event] = this._callbacks[event] || [])
-    .push(fn);
-  return this;
-};
-
-/**
- * Adds an `event` listener that will be invoked a single
- * time then automatically removed.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.once = function(event, fn){
-  var self = this;
-  this._callbacks = this._callbacks || {};
-
-  function on() {
-    self.off(event, on);
-    fn.apply(this, arguments);
-  }
-
-  on.fn = fn;
-  this.on(event, on);
-  return this;
-};
-
-/**
- * Remove the given callback for `event` or all
- * registered callbacks.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.off =
-Emitter.prototype.removeListener =
-Emitter.prototype.removeAllListeners =
-Emitter.prototype.removeEventListener = function(event, fn){
-  this._callbacks = this._callbacks || {};
-
-  // all
-  if (0 == arguments.length) {
-    this._callbacks = {};
-    return this;
-  }
-
-  // specific event
-  var callbacks = this._callbacks[event];
-  if (!callbacks) return this;
-
-  // remove all handlers
-  if (1 == arguments.length) {
-    delete this._callbacks[event];
-    return this;
-  }
-
-  // remove specific handler
-  var cb;
-  for (var i = 0; i < callbacks.length; i++) {
-    cb = callbacks[i];
-    if (cb === fn || cb.fn === fn) {
-      callbacks.splice(i, 1);
-      break;
-    }
-  }
-  return this;
-};
-
-/**
- * Emit `event` with the given args.
- *
- * @param {String} event
- * @param {Mixed} ...
- * @return {Emitter}
- */
-
-Emitter.prototype.emit = function(event){
-  this._callbacks = this._callbacks || {};
-  var args = [].slice.call(arguments, 1)
-    , callbacks = this._callbacks[event];
-
-  if (callbacks) {
-    callbacks = callbacks.slice(0);
-    for (var i = 0, len = callbacks.length; i < len; ++i) {
-      callbacks[i].apply(this, args);
-    }
-  }
-
-  return this;
-};
-
-/**
- * Return array of callbacks for `event`.
- *
- * @param {String} event
- * @return {Array}
- * @api public
- */
-
-Emitter.prototype.listeners = function(event){
-  this._callbacks = this._callbacks || {};
-  return this._callbacks[event] || [];
-};
-
-/**
- * Check if this emitter has `event` handlers.
- *
- * @param {String} event
- * @return {Boolean}
- * @api public
- */
-
-Emitter.prototype.hasListeners = function(event){
-  return !! this.listeners(event).length;
-};
-
-}, {}],
-
-142: [function(require, module, exports) {
-
-
-try {
-  var bind = require('bind');
-  var type = require('type');
-} catch (e) {
-  var bind = require('bind-component');
-  var type = require('type-component');
-}
-
-module.exports = function (obj) {
-  for (var key in obj) {
-    var val = obj[key];
-    if (type(val) === 'function') obj[key] = bind(obj, obj[key]);
-  }
-  return obj;
-};
-}, {"bind":117,"type":28}],
-
-140: [function(require, module, exports) {
-
-
-/**
- * Expose `events`
- */
-
-module.exports = {
-  removedProduct: /removed[ _]?product/i,
-  viewedProduct: /viewed[ _]?product/i,
-  addedProduct: /added[ _]?product/i,
-  completedOrder: /completed[ _]?order/i
-};
-
-}, {}],
-
-141: [function(require, module, exports) {
-
-
-/**
- * Expose `toNoCase`.
- */
-
-module.exports = toNoCase;
-
-
-/**
- * Test whether a string is camel-case.
- */
-
-var hasSpace = /\s/;
-var hasSeparator = /[\W_]/;
-
-
-/**
- * Remove any starting case from a `string`, like camel or snake, but keep
- * spaces and punctuation that may be important otherwise.
- *
- * @param {String} string
- * @return {String}
- */
-
-function toNoCase (string) {
-  if (hasSpace.test(string)) return string.toLowerCase();
-  if (hasSeparator.test(string)) return unseparate(string).toLowerCase();
-  return uncamelize(string).toLowerCase();
-}
-
-
-/**
- * Separator splitter.
- */
-
-var separatorSplitter = /[\W_]+(.|$)/g;
-
-
-/**
- * Un-separate a `string`.
- *
- * @param {String} string
- * @return {String}
- */
-
-function unseparate (string) {
-  return string.replace(separatorSplitter, function (m, next) {
-    return next ? ' ' + next : '';
-  });
-}
-
-
-/**
- * Camelcase splitter.
- */
-
-var camelSplitter = /(.)([A-Z]+)/g;
-
-
-/**
- * Un-camelcase a `string`.
- *
- * @param {String} string
- * @return {String}
- */
-
-function uncamelize (string) {
-  return string.replace(camelSplitter, function (m, previous, uppers) {
-    return previous + ' ' + uppers.toLowerCase().split('').join(' ');
-  });
-}
-}, {}],
-
-170: [function(require, module, exports) {
+174: [function(require, module, exports) {
 
 ;(function(win){
 	var store = {},
@@ -15077,580 +15474,7 @@ function uncamelize (string) {
 
 }, {}],
 
-157: [function(require, module, exports) {
-
-
-var clean = require('to-no-case');
-
-
-/**
- * Expose `toSpaceCase`.
- */
-
-module.exports = toSpaceCase;
-
-
-/**
- * Convert a `string` to space case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSpaceCase (string) {
-  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
-    return match ? ' ' + match : '';
-  });
-}
-}, {"to-no-case":150}],
-
-183: [function(require, module, exports) {
-
-
-/**
- * Module Dependencies
- */
-
-var expr;
-try {
-  expr = require('props');
-} catch(e) {
-  expr = require('component-props');
-}
-
-/**
- * Expose `toFunction()`.
- */
-
-module.exports = toFunction;
-
-/**
- * Convert `obj` to a `Function`.
- *
- * @param {Mixed} obj
- * @return {Function}
- * @api private
- */
-
-function toFunction(obj) {
-  switch ({}.toString.call(obj)) {
-    case '[object Object]':
-      return objectToFunction(obj);
-    case '[object Function]':
-      return obj;
-    case '[object String]':
-      return stringToFunction(obj);
-    case '[object RegExp]':
-      return regexpToFunction(obj);
-    default:
-      return defaultToFunction(obj);
-  }
-}
-
-/**
- * Default to strict equality.
- *
- * @param {Mixed} val
- * @return {Function}
- * @api private
- */
-
-function defaultToFunction(val) {
-  return function(obj){
-    return val === obj;
-  };
-}
-
-/**
- * Convert `re` to a function.
- *
- * @param {RegExp} re
- * @return {Function}
- * @api private
- */
-
-function regexpToFunction(re) {
-  return function(obj){
-    return re.test(obj);
-  };
-}
-
-/**
- * Convert property `str` to a function.
- *
- * @param {String} str
- * @return {Function}
- * @api private
- */
-
-function stringToFunction(str) {
-  // immediate such as "> 20"
-  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
-
-  // properties such as "name.first" or "age > 18" or "age > 18 && age < 36"
-  return new Function('_', 'return ' + get(str));
-}
-
-/**
- * Convert `object` to a function.
- *
- * @param {Object} object
- * @return {Function}
- * @api private
- */
-
-function objectToFunction(obj) {
-  var match = {};
-  for (var key in obj) {
-    match[key] = typeof obj[key] === 'string'
-      ? defaultToFunction(obj[key])
-      : toFunction(obj[key]);
-  }
-  return function(val){
-    if (typeof val !== 'object') return false;
-    for (var key in match) {
-      if (!(key in val)) return false;
-      if (!match[key](val[key])) return false;
-    }
-    return true;
-  };
-}
-
-/**
- * Built the getter function. Supports getter style functions
- *
- * @param {String} str
- * @return {String}
- * @api private
- */
-
-function get(str) {
-  var props = expr(str);
-  if (!props.length) return '_.' + str;
-
-  var val, i, prop;
-  for (i = 0; i < props.length; i++) {
-    prop = props[i];
-    val = '_.' + prop;
-    val = "('function' == typeof " + val + " ? " + val + "() : " + val + ")";
-
-    // mimic negative lookbehind to avoid problems with nested properties
-    str = stripNested(prop, str, val);
-  }
-
-  return str;
-}
-
-/**
- * Mimic negative lookbehind to avoid problems with nested properties.
- *
- * See: http://blog.stevenlevithan.com/archives/mimic-lookbehind-javascript
- *
- * @param {String} prop
- * @param {String} str
- * @param {String} val
- * @return {String}
- * @api private
- */
-
-function stripNested (prop, str, val) {
-  return str.replace(new RegExp('(\\.)?' + prop, 'g'), function($0, $1) {
-    return $1 ? $0 : val;
-  });
-}
-
-}, {"props":185}],
-
-146: [function(require, module, exports) {
-
-
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toCamelCase`.
- */
-
-module.exports = toCamelCase;
-
-
-/**
- * Convert a `string` to camel case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toCamelCase (string) {
-  return toSpace(string).replace(/\s(\w)/g, function (matches, letter) {
-    return letter.toUpperCase();
-  });
-}
-}, {"to-space-case":155}],
-
-147: [function(require, module, exports) {
-
-
-var clean = require('to-no-case');
-
-
-/**
- * Expose `toCapitalCase`.
- */
-
-module.exports = toCapitalCase;
-
-
-/**
- * Convert a `string` to capital case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toCapitalCase (string) {
-  return clean(string).replace(/(^|\s)(\w)/g, function (matches, previous, letter) {
-    return previous + letter.toUpperCase();
-  });
-}
-}, {"to-no-case":150}],
-
-148: [function(require, module, exports) {
-
-
-var snake = require('to-snake-case');
-
-
-/**
- * Expose `toConstantCase`.
- */
-
-module.exports = toConstantCase;
-
-
-/**
- * Convert a `string` to constant case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toConstantCase (string) {
-  return snake(string).toUpperCase();
-}
-}, {"to-snake-case":154}],
-
-149: [function(require, module, exports) {
-
-
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toDotCase`.
- */
-
-module.exports = toDotCase;
-
-
-/**
- * Convert a `string` to slug case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toDotCase (string) {
-  return toSpace(string).replace(/\s/g, '.');
-}
-}, {"to-space-case":155}],
-
-150: [function(require, module, exports) {
-
-
-/**
- * Expose `toNoCase`.
- */
-
-module.exports = toNoCase;
-
-
-/**
- * Test whether a string is camel-case.
- */
-
-var hasSpace = /\s/;
-var hasCamel = /[a-z][A-Z]/;
-var hasSeparator = /[\W_]/;
-
-
-/**
- * Remove any starting case from a `string`, like camel or snake, but keep
- * spaces and punctuation that may be important otherwise.
- *
- * @param {String} string
- * @return {String}
- */
-
-function toNoCase (string) {
-  if (hasSpace.test(string)) return string.toLowerCase();
-
-  if (hasSeparator.test(string)) string = unseparate(string);
-  if (hasCamel.test(string)) string = uncamelize(string);
-  return string.toLowerCase();
-}
-
-
-/**
- * Separator splitter.
- */
-
-var separatorSplitter = /[\W_]+(.|$)/g;
-
-
-/**
- * Un-separate a `string`.
- *
- * @param {String} string
- * @return {String}
- */
-
-function unseparate (string) {
-  return string.replace(separatorSplitter, function (m, next) {
-    return next ? ' ' + next : '';
-  });
-}
-
-
-/**
- * Camelcase splitter.
- */
-
-var camelSplitter = /(.)([A-Z]+)/g;
-
-
-/**
- * Un-camelcase a `string`.
- *
- * @param {String} string
- * @return {String}
- */
-
-function uncamelize (string) {
-  return string.replace(camelSplitter, function (m, previous, uppers) {
-    return previous + ' ' + uppers.toLowerCase().split('').join(' ');
-  });
-}
-}, {}],
-
-151: [function(require, module, exports) {
-
-
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toPascalCase`.
- */
-
-module.exports = toPascalCase;
-
-
-/**
- * Convert a `string` to pascal case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toPascalCase (string) {
-  return toSpace(string).replace(/(?:^|\s)(\w)/g, function (matches, letter) {
-    return letter.toUpperCase();
-  });
-}
-}, {"to-space-case":155}],
-
-152: [function(require, module, exports) {
-
-
-var clean = require('to-no-case');
-
-
-/**
- * Expose `toSentenceCase`.
- */
-
-module.exports = toSentenceCase;
-
-
-/**
- * Convert a `string` to camel case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSentenceCase (string) {
-  return clean(string).replace(/[a-z]/i, function (letter) {
-    return letter.toUpperCase();
-  });
-}
-}, {"to-no-case":150}],
-
-153: [function(require, module, exports) {
-
-
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toSlugCase`.
- */
-
-module.exports = toSlugCase;
-
-
-/**
- * Convert a `string` to slug case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSlugCase (string) {
-  return toSpace(string).replace(/\s/g, '-');
-}
-}, {"to-space-case":155}],
-
-154: [function(require, module, exports) {
-
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toSnakeCase`.
- */
-
-module.exports = toSnakeCase;
-
-
-/**
- * Convert a `string` to snake case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSnakeCase (string) {
-  return toSpace(string).replace(/\s/g, '_');
-}
-
-}, {"to-space-case":155}],
-
-155: [function(require, module, exports) {
-
-
-var clean = require('to-no-case');
-
-
-/**
- * Expose `toSpaceCase`.
- */
-
-module.exports = toSpaceCase;
-
-
-/**
- * Convert a `string` to space case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSpaceCase (string) {
-  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
-    return match ? ' ' + match : '';
-  });
-}
-}, {"to-no-case":150}],
-
-156: [function(require, module, exports) {
-
-
-var capital = require('to-capital-case')
-  , escape = require('escape-regexp')
-  , map = require('map')
-  , minors = require('title-case-minors');
-
-
-/**
- * Expose `toTitleCase`.
- */
-
-module.exports = toTitleCase;
-
-
-/**
- * Minors.
- */
-
-var escaped = map(minors, escape);
-var minorMatcher = new RegExp('[^^]\\b(' + escaped.join('|') + ')\\b', 'ig');
-var colonMatcher = /:\s*(\w)/g;
-
-
-/**
- * Convert a `string` to camel case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toTitleCase (string) {
-  return capital(string)
-    .replace(minorMatcher, function (minor) {
-      return minor.toLowerCase();
-    })
-    .replace(colonMatcher, function (letter) {
-      return letter.toUpperCase();
-    });
-}
-}, {"to-capital-case":147,"escape-regexp":186,"map":187,"title-case-minors":188}],
-
-177: [function(require, module, exports) {
-
-
-exports = module.exports = trim;
-
-function trim(str){
-  if (str.trim) return str.trim();
-  return str.replace(/^\s*|\s*$/g, '');
-}
-
-exports.left = function(str){
-  if (str.trimLeft) return str.trimLeft();
-  return str.replace(/^\s*/, '');
-};
-
-exports.right = function(str){
-  if (str.trimRight) return str.trimRight();
-  return str.replace(/\s*$/, '');
-};
-
-}, {}],
-
-165: [function(require, module, exports) {
+169: [function(require, module, exports) {
 
 /**
  * Encode.
@@ -15758,7 +15582,7 @@ function parse(str) {
 
 }, {}],
 
-166: [function(require, module, exports) {
+170: [function(require, module, exports) {
 
 
 var json = window.JSON || {};
@@ -15769,9 +15593,9 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":189}],
+}, {"json-fallback":188}],
 
-167: [function(require, module, exports) {
+171: [function(require, module, exports) {
 
 
 /**
@@ -15822,7 +15646,7 @@ function domain(url){
 
 }, {"url":25}],
 
-173: [function(require, module, exports) {
+177: [function(require, module, exports) {
 
 
 /**
@@ -15857,7 +15681,7 @@ exports.parse = function (millis) {
 };
 }, {}],
 
-174: [function(require, module, exports) {
+178: [function(require, module, exports) {
 
 
 /**
@@ -15892,7 +15716,7 @@ exports.parse = function (seconds) {
 };
 }, {}],
 
-175: [function(require, module, exports) {
+179: [function(require, module, exports) {
 
 
 var isEmpty = require('is-empty')
@@ -15966,7 +15790,7 @@ function generate (type) {
 }
 }, {"is-empty":121,"type":28}],
 
-176: [function(require, module, exports) {
+180: [function(require, module, exports) {
 
 
 /**
@@ -16038,18 +15862,7 @@ exports.is = function (string, strict) {
 };
 }, {}],
 
-182: [function(require, module, exports) {
-
-
-module.exports = function(a, b){
-  var fn = function(){};
-  fn.prototype = b.prototype;
-  a.prototype = new fn;
-  a.prototype.constructor = a;
-};
-}, {}],
-
-189: [function(require, module, exports) {
+188: [function(require, module, exports) {
 
 /*
     json2.js
@@ -16541,7 +16354,7 @@ module.exports = function(a, b){
 
 }, {}],
 
-184: [function(require, module, exports) {
+187: [function(require, module, exports) {
 
 
 var is = require('is');
@@ -16616,9 +16429,560 @@ function array (arr, strict) {
   return arr;
 }
 
-}, {"is":175,"isodate":176,"each":4}],
+}, {"is":179,"isodate":180,"each":4}],
 
-179: [function(require, module, exports) {
+139: [function(require, module, exports) {
+
+
+/**
+ * Module dependencies.
+ */
+
+var encode = encodeURIComponent;
+var decode = decodeURIComponent;
+var trim = require('trim');
+var type = require('type');
+
+/**
+ * Parse the given query `str`.
+ *
+ * @param {String} str
+ * @return {Object}
+ * @api public
+ */
+
+exports.parse = function(str){
+  if ('string' != typeof str) return {};
+
+  str = trim(str);
+  if ('' == str) return {};
+  if ('?' == str.charAt(0)) str = str.slice(1);
+
+  var obj = {};
+  var pairs = str.split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var parts = pairs[i].split('=');
+    var key = decode(parts[0]);
+    var m;
+
+    if (m = /(\w+)\[(\d+)\]/.exec(key)) {
+      obj[m[1]] = obj[m[1]] || [];
+      obj[m[1]][m[2]] = decode(parts[1]);
+      continue;
+    }
+
+    obj[parts[0]] = null == parts[1]
+      ? ''
+      : decode(parts[1]);
+  }
+
+  return obj;
+};
+
+/**
+ * Stringify the given `obj`.
+ *
+ * @param {Object} obj
+ * @return {String}
+ * @api public
+ */
+
+exports.stringify = function(obj){
+  if (!obj) return '';
+  var pairs = [];
+
+  for (var key in obj) {
+    var value = obj[key];
+
+    if ('array' == type(value)) {
+      for (var i = 0; i < value.length; ++i) {
+        pairs.push(encode(key + '[' + i + ']') + '=' + encode(value[i]));
+      }
+      continue;
+    }
+
+    pairs.push(encode(key) + '=' + encode(obj[key]));
+  }
+
+  return pairs.join('&');
+};
+
+}, {"trim":181,"type":28}],
+
+140: [function(require, module, exports) {
+
+
+/**
+ * Expose `substitute`
+ */
+
+module.exports = substitute;
+
+/**
+ * Substitute `:prop` with the given `obj` in `str`
+ *
+ * @param {String} str
+ * @param {Object} obj
+ * @param {RegExp} expr
+ * @return {String}
+ * @api public
+ */
+
+function substitute(str, obj, expr){
+  if (!obj) throw new TypeError('expected an object');
+  expr = expr || /:(\w+)/g;
+  return str.replace(expr, function(_, prop){
+    return null != obj[prop]
+      ? obj[prop]
+      : _;
+  });
+}
+
+}, {}],
+
+143: [function(require, module, exports) {
+
+
+try {
+  var bind = require('bind');
+  var type = require('type');
+} catch (e) {
+  var bind = require('bind-component');
+  var type = require('type-component');
+}
+
+module.exports = function (obj) {
+  for (var key in obj) {
+    var val = obj[key];
+    if (type(val) === 'function') obj[key] = bind(obj, obj[key]);
+  }
+  return obj;
+};
+}, {"bind":117,"type":28}],
+
+181: [function(require, module, exports) {
+
+
+exports = module.exports = trim;
+
+function trim(str){
+  if (str.trim) return str.trim();
+  return str.replace(/^\s*|\s*$/g, '');
+}
+
+exports.left = function(str){
+  if (str.trimLeft) return str.trimLeft();
+  return str.replace(/^\s*/, '');
+};
+
+exports.right = function(str){
+  if (str.trimRight) return str.trimRight();
+  return str.replace(/\s*$/, '');
+};
+
+}, {}],
+
+186: [function(require, module, exports) {
+
+
+module.exports = function(a, b){
+  var fn = function(){};
+  fn.prototype = b.prototype;
+  a.prototype = new fn;
+  a.prototype.constructor = a;
+};
+}, {}],
+
+132: [function(require, module, exports) {
+
+
+/**
+ * Module dependencies.
+ */
+
+var type = require('type');
+var toFunction = require('to-function');
+
+/**
+ * HOP reference.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Iterate the given `obj` and invoke `fn(val, i)`
+ * in optional context `ctx`.
+ *
+ * @param {String|Array|Object} obj
+ * @param {Function} fn
+ * @param {Object} [ctx]
+ * @api public
+ */
+
+module.exports = function(obj, fn, ctx){
+  fn = toFunction(fn);
+  ctx = ctx || this;
+  switch (type(obj)) {
+    case 'array':
+      return array(obj, fn, ctx);
+    case 'object':
+      if ('number' == typeof obj.length) return array(obj, fn, ctx);
+      return object(obj, fn, ctx);
+    case 'string':
+      return string(obj, fn, ctx);
+  }
+};
+
+/**
+ * Iterate string chars.
+ *
+ * @param {String} obj
+ * @param {Function} fn
+ * @param {Object} ctx
+ * @api private
+ */
+
+function string(obj, fn, ctx) {
+  for (var i = 0; i < obj.length; ++i) {
+    fn.call(ctx, obj.charAt(i), i);
+  }
+}
+
+/**
+ * Iterate object keys.
+ *
+ * @param {Object} obj
+ * @param {Function} fn
+ * @param {Object} ctx
+ * @api private
+ */
+
+function object(obj, fn, ctx) {
+  for (var key in obj) {
+    if (has.call(obj, key)) {
+      fn.call(ctx, key, obj[key]);
+    }
+  }
+}
+
+/**
+ * Iterate array-ish.
+ *
+ * @param {Array|Object} obj
+ * @param {Function} fn
+ * @param {Object} ctx
+ * @api private
+ */
+
+function array(obj, fn, ctx) {
+  for (var i = 0; i < obj.length; ++i) {
+    fn.call(ctx, obj[i], i);
+  }
+}
+
+}, {"type":28,"to-function":189}],
+
+189: [function(require, module, exports) {
+
+
+/**
+ * Module Dependencies
+ */
+
+var expr;
+try {
+  expr = require('props');
+} catch(e) {
+  expr = require('component-props');
+}
+
+/**
+ * Expose `toFunction()`.
+ */
+
+module.exports = toFunction;
+
+/**
+ * Convert `obj` to a `Function`.
+ *
+ * @param {Mixed} obj
+ * @return {Function}
+ * @api private
+ */
+
+function toFunction(obj) {
+  switch ({}.toString.call(obj)) {
+    case '[object Object]':
+      return objectToFunction(obj);
+    case '[object Function]':
+      return obj;
+    case '[object String]':
+      return stringToFunction(obj);
+    case '[object RegExp]':
+      return regexpToFunction(obj);
+    default:
+      return defaultToFunction(obj);
+  }
+}
+
+/**
+ * Default to strict equality.
+ *
+ * @param {Mixed} val
+ * @return {Function}
+ * @api private
+ */
+
+function defaultToFunction(val) {
+  return function(obj){
+    return val === obj;
+  };
+}
+
+/**
+ * Convert `re` to a function.
+ *
+ * @param {RegExp} re
+ * @return {Function}
+ * @api private
+ */
+
+function regexpToFunction(re) {
+  return function(obj){
+    return re.test(obj);
+  };
+}
+
+/**
+ * Convert property `str` to a function.
+ *
+ * @param {String} str
+ * @return {Function}
+ * @api private
+ */
+
+function stringToFunction(str) {
+  // immediate such as "> 20"
+  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
+
+  // properties such as "name.first" or "age > 18" or "age > 18 && age < 36"
+  return new Function('_', 'return ' + get(str));
+}
+
+/**
+ * Convert `object` to a function.
+ *
+ * @param {Object} object
+ * @return {Function}
+ * @api private
+ */
+
+function objectToFunction(obj) {
+  var match = {};
+  for (var key in obj) {
+    match[key] = typeof obj[key] === 'string'
+      ? defaultToFunction(obj[key])
+      : toFunction(obj[key]);
+  }
+  return function(val){
+    if (typeof val !== 'object') return false;
+    for (var key in match) {
+      if (!(key in val)) return false;
+      if (!match[key](val[key])) return false;
+    }
+    return true;
+  };
+}
+
+/**
+ * Built the getter function. Supports getter style functions
+ *
+ * @param {String} str
+ * @return {String}
+ * @api private
+ */
+
+function get(str) {
+  var props = expr(str);
+  if (!props.length) return '_.' + str;
+
+  var val, i, prop;
+  for (i = 0; i < props.length; i++) {
+    prop = props[i];
+    val = '_.' + prop;
+    val = "('function' == typeof " + val + " ? " + val + "() : " + val + ")";
+
+    // mimic negative lookbehind to avoid problems with nested properties
+    str = stripNested(prop, str, val);
+  }
+
+  return str;
+}
+
+/**
+ * Mimic negative lookbehind to avoid problems with nested properties.
+ *
+ * See: http://blog.stevenlevithan.com/archives/mimic-lookbehind-javascript
+ *
+ * @param {String} prop
+ * @param {String} str
+ * @param {String} val
+ * @return {String}
+ * @api private
+ */
+
+function stripNested (prop, str, val) {
+  return str.replace(new RegExp('(\\.)?' + prop, 'g'), function($0, $1) {
+    return $1 ? $0 : val;
+  });
+}
+
+}, {"props":190}],
+
+130: [function(require, module, exports) {
+
+
+// https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
+
+/**
+ * Invoke `fn(err)` when the given `el` script loads.
+ *
+ * @param {Element} el
+ * @param {Function} fn
+ * @api public
+ */
+
+module.exports = function(el, fn){
+  return el.addEventListener
+    ? add(el, fn)
+    : attach(el, fn);
+};
+
+/**
+ * Add event listener to `el`, `fn()`.
+ *
+ * @param {Element} el
+ * @param {Function} fn
+ * @api private
+ */
+
+function add(el, fn){
+  el.addEventListener('load', function(_, e){ fn(null, e); }, false);
+  el.addEventListener('error', function(e){
+    var err = new Error('failed to load the script "' + el.src + '"');
+    err.event = e;
+    fn(err);
+  }, false);
+}
+
+/**
+ * Attach evnet.
+ *
+ * @param {Element} el
+ * @param {Function} fn
+ * @api private
+ */
+
+function attach(el, fn){
+  el.attachEvent('onreadystatechange', function(e){
+    if (!/complete|loaded/.test(el.readyState)) return;
+    fn(null, e);
+  });
+}
+
+}, {}],
+
+190: [function(require, module, exports) {
+
+/**
+ * Global Names
+ */
+
+var globals = /\b(this|Array|Date|Object|Math|JSON)\b/g;
+
+/**
+ * Return immediate identifiers parsed from `str`.
+ *
+ * @param {String} str
+ * @param {String|Function} map function or prefix
+ * @return {Array}
+ * @api public
+ */
+
+module.exports = function(str, fn){
+  var p = unique(props(str));
+  if (fn && 'string' == typeof fn) fn = prefixed(fn);
+  if (fn) return map(str, p, fn);
+  return p;
+};
+
+/**
+ * Return immediate identifiers in `str`.
+ *
+ * @param {String} str
+ * @return {Array}
+ * @api private
+ */
+
+function props(str) {
+  return str
+    .replace(/\.\w+|\w+ *\(|"[^"]*"|'[^']*'|\/([^/]+)\//g, '')
+    .replace(globals, '')
+    .match(/[$a-zA-Z_]\w*/g)
+    || [];
+}
+
+/**
+ * Return `str` with `props` mapped with `fn`.
+ *
+ * @param {String} str
+ * @param {Array} props
+ * @param {Function} fn
+ * @return {String}
+ * @api private
+ */
+
+function map(str, props, fn) {
+  var re = /\.\w+|\w+ *\(|"[^"]*"|'[^']*'|\/([^/]+)\/|[a-zA-Z_]\w*/g;
+  return str.replace(re, function(_){
+    if ('(' == _[_.length - 1]) return fn(_);
+    if (!~props.indexOf(_)) return _;
+    return fn(_);
+  });
+}
+
+/**
+ * Return unique array.
+ *
+ * @param {Array} arr
+ * @return {Array}
+ * @api private
+ */
+
+function unique(arr) {
+  var ret = [];
+
+  for (var i = 0; i < arr.length; i++) {
+    if (~ret.indexOf(arr[i])) continue;
+    ret.push(arr[i]);
+  }
+
+  return ret;
+}
+
+/**
+ * Map with prefix `str`.
+ */
+
+function prefixed(str) {
+  return function(_){
+    return str + _;
+  };
+}
+
+}, {}],
+
+183: [function(require, module, exports) {
 
 
 /**
@@ -16643,13 +17007,19 @@ module.exports = function (integration) {
 };
 }, {}],
 
-180: [function(require, module, exports) {
+184: [function(require, module, exports) {
 
 
 var Case = require('case');
+var identity = function(_){ return _; };
 
+
+/**
+ * Cases
+ */
 
 var cases = [
+  identity,
   Case.upper,
   Case.lower,
   Case.snake,
@@ -16754,9 +17124,9 @@ function replace (obj, key, val) {
   return obj;
 }
 
-}, {"case":134}],
+}, {"case":135}],
 
-181: [function(require, module, exports) {
+185: [function(require, module, exports) {
 
 
 var is = require('is');
@@ -16829,95 +17199,9 @@ function array (arr, strict) {
   return arr;
 }
 
-}, {"is":190,"isodate":176,"each":4}],
+}, {"is":191,"isodate":180,"each":4}],
 
-186: [function(require, module, exports) {
-
-
-/**
- * Escape regexp special characters in `str`.
- *
- * @param {String} str
- * @return {String}
- * @api public
- */
-
-module.exports = function(str){
-  return String(str).replace(/([.*+?=^!:${}()|[\]\/\\])/g, '\\$1');
-};
-}, {}],
-
-187: [function(require, module, exports) {
-
-
-var each = require('each');
-
-
-/**
- * Map an array or object.
- *
- * @param {Array|Object} obj
- * @param {Function} iterator
- * @return {Mixed}
- */
-
-module.exports = function map (obj, iterator) {
-  var arr = [];
-  each(obj, function (o) {
-    arr.push(iterator.apply(null, arguments));
-  });
-  return arr;
-};
-}, {"each":131}],
-
-188: [function(require, module, exports) {
-
-
-module.exports = [
-  'a',
-  'an',
-  'and',
-  'as',
-  'at',
-  'but',
-  'by',
-  'en',
-  'for',
-  'from',
-  'how',
-  'if',
-  'in',
-  'neither',
-  'nor',
-  'of',
-  'on',
-  'only',
-  'onto',
-  'out',
-  'or',
-  'per',
-  'so',
-  'than',
-  'that',
-  'the',
-  'to',
-  'until',
-  'up',
-  'upon',
-  'v',
-  'v.',
-  'versus',
-  'vs',
-  'vs.',
-  'via',
-  'when',
-  'with',
-  'without',
-  'yet'
-];
-}, {}],
-
-190: [function(require, module, exports) {
+191: [function(require, module, exports) {
 
 
 var isEmpty = require('is-empty');
@@ -16994,203 +17278,4 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":121,"type":28}],
-
-185: [function(require, module, exports) {
-
-/**
- * Global Names
- */
-
-var globals = /\b(this|Array|Date|Object|Math|JSON)\b/g;
-
-/**
- * Return immediate identifiers parsed from `str`.
- *
- * @param {String} str
- * @param {String|Function} map function or prefix
- * @return {Array}
- * @api public
- */
-
-module.exports = function(str, fn){
-  var p = unique(props(str));
-  if (fn && 'string' == typeof fn) fn = prefixed(fn);
-  if (fn) return map(str, p, fn);
-  return p;
-};
-
-/**
- * Return immediate identifiers in `str`.
- *
- * @param {String} str
- * @return {Array}
- * @api private
- */
-
-function props(str) {
-  return str
-    .replace(/\.\w+|\w+ *\(|"[^"]*"|'[^']*'|\/([^/]+)\//g, '')
-    .replace(globals, '')
-    .match(/[$a-zA-Z_]\w*/g)
-    || [];
-}
-
-/**
- * Return `str` with `props` mapped with `fn`.
- *
- * @param {String} str
- * @param {Array} props
- * @param {Function} fn
- * @return {String}
- * @api private
- */
-
-function map(str, props, fn) {
-  var re = /\.\w+|\w+ *\(|"[^"]*"|'[^']*'|\/([^/]+)\/|[a-zA-Z_]\w*/g;
-  return str.replace(re, function(_){
-    if ('(' == _[_.length - 1]) return fn(_);
-    if (!~props.indexOf(_)) return _;
-    return fn(_);
-  });
-}
-
-/**
- * Return unique array.
- *
- * @param {Array} arr
- * @return {Array}
- * @api private
- */
-
-function unique(arr) {
-  var ret = [];
-
-  for (var i = 0; i < arr.length; i++) {
-    if (~ret.indexOf(arr[i])) continue;
-    ret.push(arr[i]);
-  }
-
-  return ret;
-}
-
-/**
- * Map with prefix `str`.
- */
-
-function prefixed(str) {
-  return function(_){
-    return str + _;
-  };
-}
-
-}, {}],
-
-138: [function(require, module, exports) {
-
-
-/**
- * Module dependencies.
- */
-
-var encode = encodeURIComponent;
-var decode = decodeURIComponent;
-var trim = require('trim');
-var type = require('type');
-
-/**
- * Parse the given query `str`.
- *
- * @param {String} str
- * @return {Object}
- * @api public
- */
-
-exports.parse = function(str){
-  if ('string' != typeof str) return {};
-
-  str = trim(str);
-  if ('' == str) return {};
-  if ('?' == str.charAt(0)) str = str.slice(1);
-
-  var obj = {};
-  var pairs = str.split('&');
-  for (var i = 0; i < pairs.length; i++) {
-    var parts = pairs[i].split('=');
-    var key = decode(parts[0]);
-    var m;
-
-    if (m = /(\w+)\[(\d+)\]/.exec(key)) {
-      obj[m[1]] = obj[m[1]] || [];
-      obj[m[1]][m[2]] = decode(parts[1]);
-      continue;
-    }
-
-    obj[parts[0]] = null == parts[1]
-      ? ''
-      : decode(parts[1]);
-  }
-
-  return obj;
-};
-
-/**
- * Stringify the given `obj`.
- *
- * @param {Object} obj
- * @return {String}
- * @api public
- */
-
-exports.stringify = function(obj){
-  if (!obj) return '';
-  var pairs = [];
-
-  for (var key in obj) {
-    var value = obj[key];
-
-    if ('array' == type(value)) {
-      for (var i = 0; i < value.length; ++i) {
-        pairs.push(encode(key + '[' + i + ']') + '=' + encode(value[i]));
-      }
-      continue;
-    }
-
-    pairs.push(encode(key) + '=' + encode(obj[key]));
-  }
-
-  return pairs.join('&');
-};
-
-}, {"trim":177,"type":28}],
-
-139: [function(require, module, exports) {
-
-
-/**
- * Expose `substitute`
- */
-
-module.exports = substitute;
-
-/**
- * Substitute `:prop` with the given `obj` in `str`
- *
- * @param {String} str
- * @param {Object} obj
- * @param {RegExp} expr
- * @return {String}
- * @api public
- */
-
-function substitute(str, obj, expr){
-  if (!obj) throw new TypeError('expected an object');
-  expr = expr || /:(\w+)/g;
-  return str.replace(expr, function(_, prop){
-    return null != obj[prop]
-      ? obj[prop]
-      : _;
-  });
-}
-
-}, {}]}, {}, {"1":"analytics"})
+}, {"is-empty":121,"type":28}]}, {}, {"1":"analytics"})

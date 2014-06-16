@@ -14,7 +14,8 @@ DUO = $(BINS)/duo
 
 PHANTOM= $(BINS)/mocha-phantomjs \
 	--setting local-to-remote-url-access=true \
-	--setting-web-security=false
+	--setting-web-security=false \
+	--path $(BINS)/phantomjs
 
 #
 # Default target.
@@ -41,9 +42,9 @@ test: $(TESTS) server
 
 #
 # Test in the browser.
-# 
+#
 # On the link press `cmd + doubleclick`.
-# 
+#
 
 test-browser: $(TESTS) server
 	@echo open $(TEST)

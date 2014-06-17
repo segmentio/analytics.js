@@ -3,6 +3,7 @@
 # Task args.
 #
 
+REPORTER ?= spec
 TESTS = $(wildcard test/*.js)
 TEST = http://localhost:4200
 SRC = $(wildcard lib/*.js)
@@ -15,7 +16,8 @@ DUO = $(BINS)/duo
 PHANTOM= $(BINS)/mocha-phantomjs \
 	--setting local-to-remote-url-access=true \
 	--setting-web-security=false \
-	--path $(BINS)/phantomjs
+	--path $(BINS)/phantomjs \
+	--reporter $(REPORTER)
 
 #
 # Default target.

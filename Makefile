@@ -41,6 +41,7 @@ clean: kill
 
 test: $(TESTS) server
 	@$(PHANTOM) $(TEST)
+	@$(MAKE) kill
 
 #
 # Test in the browser.
@@ -64,10 +65,8 @@ server: $(BUILD) kill
 #
 
 kill:
-	@-test -e $(PID) \
-		&& kill `cat $(PID)` \
-		&& rm -f $(PID) \
-		||:
+	@-test -e $(PID) && kill `cat $(PID)`
+	@rm -f $(PID)
 
 #
 # Absolutely make sure the test server is off.

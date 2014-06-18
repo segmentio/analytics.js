@@ -36,6 +36,13 @@ clean: kill
 	@-npm cache clean
 
 #
+# update version
+#
+
+version: component.json
+	@node bin/version
+
+#
 # Test with phantomjs.
 #
 
@@ -92,7 +99,7 @@ kill-all:
 # Target for `analytics.js` file.
 #
 
-analytics.js: node_modules $(SRC)
+analytics.js: node_modules $(SRC) version
 	@$(DUO) --global analytics lib/index.js > analytics.js
 	@$(MINIFY) analytics.js --output analytics.min.js
 

@@ -40,6 +40,10 @@ describe('Analytics', function () {
   afterEach(function () {
     user.reset();
     group.reset();
+    // clear the hash
+    if (window.history && window.history.pushState) { 
+      window.history.pushState('', '', window.location.pathname);
+    }
   });
 
   it('should setup an Integrations object', function () {
@@ -107,10 +111,13 @@ describe('Analytics', function () {
       assert(!analytics._readied);
     });
 
-    it('should empty analytics._integrations', function () {
-      analytics._integrations = { Integration: {} };
+    it('should add integration instance', function(done){
+      Test.readyOnInitialize();
+      analytics.addIntegration(Test);
+      analytics.ready(done);
+      var test = new Test(settings.Test);
+      analytics.add(test);
       analytics.initialize();
-      assert(equal(analytics._integrations, {}));
     });
 
     it('should listen on integration ready events', function (done) {

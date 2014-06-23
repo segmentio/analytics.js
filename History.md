@@ -1,4 +1,13 @@
 
+2.1.0 / 2014-06-23
+==================
+
+ * add `.add` for test-friendliness
+ * make-test: kill the server when done testing
+ * tests: add reporter option
+ * update readme
+ * make-test: make sure we use the correct phantomjs(1)
+
 2.0.1 / 2014-06-13
 ==================
 

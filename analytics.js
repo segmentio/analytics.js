@@ -1060,6 +1060,175 @@ Emitter.prototype.hasListeners = function(event){
 
 
 /**
+ * Expose `Emitter`.
+ */
+
+module.exports = Emitter;
+
+/**
+ * Initialize a new `Emitter`.
+ *
+ * @api public
+ */
+
+function Emitter(obj) {
+  if (obj) return mixin(obj);
+};
+
+/**
+ * Mixin the emitter properties.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function mixin(obj) {
+  for (var key in Emitter.prototype) {
+    obj[key] = Emitter.prototype[key];
+  }
+  return obj;
+}
+
+/**
+ * Listen on the given `event` with `fn`.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.on =
+Emitter.prototype.addEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+  (this._callbacks[event] = this._callbacks[event] || [])
+    .push(fn);
+  return this;
+};
+
+/**
+ * Adds an `event` listener that will be invoked a single
+ * time then automatically removed.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.once = function(event, fn){
+  var self = this;
+  this._callbacks = this._callbacks || {};
+
+  function on() {
+    self.off(event, on);
+    fn.apply(this, arguments);
+  }
+
+  on.fn = fn;
+  this.on(event, on);
+  return this;
+};
+
+/**
+ * Remove the given callback for `event` or all
+ * registered callbacks.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.off =
+Emitter.prototype.removeListener =
+Emitter.prototype.removeAllListeners =
+Emitter.prototype.removeEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+
+  // all
+  if (0 == arguments.length) {
+    this._callbacks = {};
+    return this;
+  }
+
+  // specific event
+  var callbacks = this._callbacks[event];
+  if (!callbacks) return this;
+
+  // remove all handlers
+  if (1 == arguments.length) {
+    delete this._callbacks[event];
+    return this;
+  }
+
+  // remove specific handler
+  var cb;
+  for (var i = 0; i < callbacks.length; i++) {
+    cb = callbacks[i];
+    if (cb === fn || cb.fn === fn) {
+      callbacks.splice(i, 1);
+      break;
+    }
+  }
+  return this;
+};
+
+/**
+ * Emit `event` with the given args.
+ *
+ * @param {String} event
+ * @param {Mixed} ...
+ * @return {Emitter}
+ */
+
+Emitter.prototype.emit = function(event){
+  this._callbacks = this._callbacks || {};
+  var args = [].slice.call(arguments, 1)
+    , callbacks = this._callbacks[event];
+
+  if (callbacks) {
+    callbacks = callbacks.slice(0);
+    for (var i = 0, len = callbacks.length; i < len; ++i) {
+      callbacks[i].apply(this, args);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Return array of callbacks for `event`.
+ *
+ * @param {String} event
+ * @return {Array}
+ * @api public
+ */
+
+Emitter.prototype.listeners = function(event){
+  this._callbacks = this._callbacks || {};
+  return this._callbacks[event] || [];
+};
+
+/**
+ * Check if this emitter has `event` handlers.
+ *
+ * @param {String} event
+ * @return {Boolean}
+ * @api public
+ */
+
+Emitter.prototype.hasListeners = function(event){
+  return !! this.listeners(event).length;
+};
+
+}, {}],
+
+17: [function(require, module, exports) {
+
+
+/**
  * Escape regexp special characters in `str`.
  *
  * @param {String} str
@@ -1072,7 +1241,7 @@ module.exports = function(str){
 };
 }, {}],
 
-17: [function(require, module, exports) {
+18: [function(require, module, exports) {
 
 
 /**
@@ -1128,17 +1297,6 @@ module.exports = function(arr, obj){
 };
 }, {}],
 
-18: [function(require, module, exports) {
-
-
-module.exports = function(a, b){
-  var fn = function(){};
-  fn.prototype = b.prototype;
-  a.prototype = new fn;
-  a.prototype.constructor = a;
-};
-}, {}],
-
 19: [function(require, module, exports) {
 
 
@@ -1151,6 +1309,17 @@ module.exports = function(a, b){
 }, {}],
 
 20: [function(require, module, exports) {
+
+
+module.exports = function(a, b){
+  var fn = function(){};
+  fn.prototype = b.prototype;
+  a.prototype = new fn;
+  a.prototype.constructor = a;
+};
+}, {}],
+
+21: [function(require, module, exports) {
 
 /*
     json2.js
@@ -1642,7 +1811,7 @@ module.exports = function(a, b){
 
 }, {}],
 
-21: [function(require, module, exports) {
+22: [function(require, module, exports) {
 
 
 /**
@@ -1730,7 +1899,7 @@ exports.isEmpty = function(obj){
 };
 }, {}],
 
-22: [function(require, module, exports) {
+23: [function(require, module, exports) {
 
 /**
  * Global Names
@@ -1820,7 +1989,7 @@ function prefixed(str) {
 
 }, {}],
 
-23: [function(require, module, exports) {
+24: [function(require, module, exports) {
 
 
 /**
@@ -1896,85 +2065,7 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":24,"type":5}],
-
-25: [function(require, module, exports) {
-
-
-/**
- * Module dependencies.
- */
-
-var encode = encodeURIComponent;
-var decode = decodeURIComponent;
-var trim = require('trim');
-var type = require('type');
-
-/**
- * Parse the given query `str`.
- *
- * @param {String} str
- * @return {Object}
- * @api public
- */
-
-exports.parse = function(str){
-  if ('string' != typeof str) return {};
-
-  str = trim(str);
-  if ('' == str) return {};
-  if ('?' == str.charAt(0)) str = str.slice(1);
-
-  var obj = {};
-  var pairs = str.split('&');
-  for (var i = 0; i < pairs.length; i++) {
-    var parts = pairs[i].split('=');
-    var key = decode(parts[0]);
-    var m;
-
-    if (m = /(\w+)\[(\d+)\]/.exec(key)) {
-      obj[m[1]] = obj[m[1]] || [];
-      obj[m[1]][m[2]] = decode(parts[1]);
-      continue;
-    }
-
-    obj[parts[0]] = null == parts[1]
-      ? ''
-      : decode(parts[1]);
-  }
-
-  return obj;
-};
-
-/**
- * Stringify the given `obj`.
- *
- * @param {Object} obj
- * @return {String}
- * @api public
- */
-
-exports.stringify = function(obj){
-  if (!obj) return '';
-  var pairs = [];
-
-  for (var key in obj) {
-    var value = obj[key];
-
-    if ('array' == type(value)) {
-      for (var i = 0; i < value.length; ++i) {
-        pairs.push(encode(key + '[' + i + ']') + '=' + encode(value[i]));
-      }
-      continue;
-    }
-
-    pairs.push(encode(key) + '=' + encode(obj[key]));
-  }
-
-  return pairs.join('&');
-};
-
-}, {"trim":24,"type":5}],
+}, {"trim":25,"type":5}],
 
 26: [function(require, module, exports) {
 
@@ -1983,7 +2074,94 @@ exports.stringify = function(obj){
  * Module dependencies.
  */
 
-var Emitter = require('emitter');
+var encode = encodeURIComponent;
+var decode = decodeURIComponent;
+var trim = require('trim');
+var type = require('type');
+
+/**
+ * Parse the given query `str`.
+ *
+ * @param {String} str
+ * @return {Object}
+ * @api public
+ */
+
+exports.parse = function(str){
+  if ('string' != typeof str) return {};
+
+  str = trim(str);
+  if ('' == str) return {};
+  if ('?' == str.charAt(0)) str = str.slice(1);
+
+  var obj = {};
+  var pairs = str.split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var parts = pairs[i].split('=');
+    var key = decode(parts[0]);
+    var m;
+
+    if (m = /(\w+)\[(\d+)\]/.exec(key)) {
+      obj[m[1]] = obj[m[1]] || [];
+      obj[m[1]][m[2]] = decode(parts[1]);
+      continue;
+    }
+
+    obj[parts[0]] = null == parts[1]
+      ? ''
+      : decode(parts[1]);
+  }
+
+  return obj;
+};
+
+/**
+ * Stringify the given `obj`.
+ *
+ * @param {Object} obj
+ * @return {String}
+ * @api public
+ */
+
+exports.stringify = function(obj){
+  if (!obj) return '';
+  var pairs = [];
+
+  for (var key in obj) {
+    var value = obj[key];
+
+    if ('array' == type(value)) {
+      for (var i = 0; i < value.length; ++i) {
+        pairs.push(encode(key + '[' + i + ']') + '=' + encode(value[i]));
+      }
+      continue;
+    }
+
+    pairs.push(encode(key) + '=' + encode(obj[key]));
+  }
+
+  return pairs.join('&');
+};
+
+}, {"trim":25,"type":5}],
+
+27: [function(require, module, exports) {
+
+
+/**
+ * Module dependencies.
+ */
+
+var Emitter;
+var bind;
+
+try {
+  Emitter = require('emitter');
+  bind = require('bind');
+} catch (err) {
+  Emitter = require('component-emitter');
+  bind = require('component-bind');
+}
 
 /**
  * Expose `Queue`.
@@ -2036,7 +2214,7 @@ Queue.prototype.length = function(){
 
 Queue.prototype.push = function(fn, cb){
   this.jobs.push([fn, cb]);
-  setTimeout(this.run.bind(this), 0);
+  setTimeout(bind(this, this.run), 0);
 };
 
 /**
@@ -2104,9 +2282,9 @@ function timeout(fn, ms) {
   }
 }
 
-}, {"emitter":15}],
+}, {"emitter":15,"bind":3,"component-emitter":15,"component-bind":3}],
 
-27: [function(require, module, exports) {
+28: [function(require, module, exports) {
 
 
 /**
@@ -2296,9 +2474,9 @@ function stripNested (prop, str, val) {
   });
 }
 
-}, {"props":22,"component-props":22}],
+}, {"props":23,"component-props":23}],
 
-24: [function(require, module, exports) {
+25: [function(require, module, exports) {
 
 
 exports = module.exports = trim;
@@ -2357,7 +2535,7 @@ module.exports = function(val){
 
 }, {}],
 
-28: [function(require, module, exports) {
+29: [function(require, module, exports) {
 
 
 /**
@@ -2426,7 +2604,7 @@ exports.isCrossDomain = function(url){
 };
 }, {}],
 
-29: [function(require, module, exports) {
+30: [function(require, module, exports) {
 
 
 var bind = require('bind')
@@ -2468,9 +2646,9 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":3,"bind-all":30}],
+}, {"bind":3,"bind-all":31}],
 
-31: [function(require, module, exports) {
+32: [function(require, module, exports) {
 
 
 try {
@@ -2517,9 +2695,9 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":3,"bind-all":30}],
+}, {"bind":3,"bind-all":31}],
 
-32: [function(require, module, exports) {
+33: [function(require, module, exports) {
 
 var next = require('next-tick');
 
@@ -2563,9 +2741,9 @@ callback.async = function (fn, wait) {
 
 callback.sync = callback;
 
-}, {"next-tick":33}],
+}, {"next-tick":34}],
 
-34: [function(require, module, exports) {
+35: [function(require, module, exports) {
 
 
 var camel = require('to-camel-case')
@@ -2700,9 +2878,9 @@ exports.inverse = function (string) {
  */
 
 exports.none = none;
-}, {"to-camel-case":35,"to-capital-case":36,"to-constant-case":37,"to-dot-case":38,"to-no-case":39,"to-pascal-case":40,"to-sentence-case":41,"to-slug-case":42,"to-snake-case":43,"to-space-case":44,"to-title-case":45}],
+}, {"to-camel-case":36,"to-capital-case":37,"to-constant-case":38,"to-dot-case":39,"to-no-case":40,"to-pascal-case":41,"to-sentence-case":42,"to-slug-case":43,"to-snake-case":44,"to-space-case":45,"to-title-case":46}],
 
-46: [function(require, module, exports) {
+47: [function(require, module, exports) {
 
 
 var cases = require('./cases');
@@ -2751,9 +2929,9 @@ exports.add = function (name, convert) {
 for (var key in cases) {
   exports.add(key, cases[key]);
 }
-}, {"./cases":34}],
+}, {"./cases":35}],
 
-47: [function(require, module, exports) {
+48: [function(require, module, exports) {
 
 
 /**
@@ -2786,7 +2964,7 @@ function isEmpty (val) {
 }
 }, {}],
 
-48: [function(require, module, exports) {
+49: [function(require, module, exports) {
 
 
 var isEmpty = require('is-empty')
@@ -2858,86 +3036,7 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":47,"type":5}],
-
-49: [function(require, module, exports) {
-
-
-var isEmpty = require('is-empty');
-
-try {
-  var typeOf = require('type');
-} catch (e) {
-  var typeOf = require('component-type');
-}
-
-
-/**
- * Types.
- */
-
-var types = [
-  'arguments',
-  'array',
-  'boolean',
-  'date',
-  'element',
-  'function',
-  'null',
-  'number',
-  'object',
-  'regexp',
-  'string',
-  'undefined'
-];
-
-
-/**
- * Expose type checkers.
- *
- * @param {Mixed} value
- * @return {Boolean}
- */
-
-for (var i = 0, type; type = types[i]; i++) exports[type] = generate(type);
-
-
-/**
- * Add alias for `function` for old browsers.
- */
-
-exports.fn = exports['function'];
-
-
-/**
- * Expose `empty` check.
- */
-
-exports.empty = isEmpty;
-
-
-/**
- * Expose `nan` check.
- */
-
-exports.nan = function (val) {
-  return exports.number(val) && val != val;
-};
-
-
-/**
- * Generate a type checker.
- *
- * @param {String} type
- * @return {Function}
- */
-
-function generate (type) {
-  return function (value) {
-    return type === typeOf(value);
-  };
-}
-}, {"is-empty":47,"type":5,"component-type":5}],
+}, {"is-empty":48,"type":5}],
 
 50: [function(require, module, exports) {
 
@@ -3016,9 +3115,88 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":47,"type":5,"component-type":5}],
+}, {"is-empty":48,"type":5,"component-type":5}],
 
 51: [function(require, module, exports) {
+
+
+var isEmpty = require('is-empty');
+
+try {
+  var typeOf = require('type');
+} catch (e) {
+  var typeOf = require('component-type');
+}
+
+
+/**
+ * Types.
+ */
+
+var types = [
+  'arguments',
+  'array',
+  'boolean',
+  'date',
+  'element',
+  'function',
+  'null',
+  'number',
+  'object',
+  'regexp',
+  'string',
+  'undefined'
+];
+
+
+/**
+ * Expose type checkers.
+ *
+ * @param {Mixed} value
+ * @return {Boolean}
+ */
+
+for (var i = 0, type; type = types[i]; i++) exports[type] = generate(type);
+
+
+/**
+ * Add alias for `function` for old browsers.
+ */
+
+exports.fn = exports['function'];
+
+
+/**
+ * Expose `empty` check.
+ */
+
+exports.empty = isEmpty;
+
+
+/**
+ * Expose `nan` check.
+ */
+
+exports.nan = function (val) {
+  return exports.number(val) && val != val;
+};
+
+
+/**
+ * Generate a type checker.
+ *
+ * @param {String} type
+ * @return {Function}
+ */
+
+function generate (type) {
+  return function (value) {
+    return type === typeOf(value);
+  };
+}
+}, {"is-empty":48,"type":5,"component-type":5}],
+
+52: [function(require, module, exports) {
 
 
 var each = require('each');
@@ -3041,7 +3219,7 @@ module.exports = function map (obj, iterator) {
 };
 }, {"each":11}],
 
-52: [function(require, module, exports) {
+53: [function(require, module, exports) {
 
 
 module.exports = [
@@ -3088,7 +3266,7 @@ module.exports = [
 ];
 }, {}],
 
-35: [function(require, module, exports) {
+36: [function(require, module, exports) {
 
 
 var toSpace = require('to-space-case');
@@ -3114,9 +3292,9 @@ function toCamelCase (string) {
     return letter.toUpperCase();
   });
 }
-}, {"to-space-case":44}],
+}, {"to-space-case":45}],
 
-36: [function(require, module, exports) {
+37: [function(require, module, exports) {
 
 
 var clean = require('to-no-case');
@@ -3142,9 +3320,9 @@ function toCapitalCase (string) {
     return previous + letter.toUpperCase();
   });
 }
-}, {"to-no-case":39}],
+}, {"to-no-case":40}],
 
-37: [function(require, module, exports) {
+38: [function(require, module, exports) {
 
 
 var snake = require('to-snake-case');
@@ -3168,9 +3346,9 @@ module.exports = toConstantCase;
 function toConstantCase (string) {
   return snake(string).toUpperCase();
 }
-}, {"to-snake-case":43}],
+}, {"to-snake-case":44}],
 
-38: [function(require, module, exports) {
+39: [function(require, module, exports) {
 
 
 var toSpace = require('to-space-case');
@@ -3194,9 +3372,9 @@ module.exports = toDotCase;
 function toDotCase (string) {
   return toSpace(string).replace(/\s/g, '.');
 }
-}, {"to-space-case":44}],
+}, {"to-space-case":45}],
 
-39: [function(require, module, exports) {
+40: [function(require, module, exports) {
 
 
 /**
@@ -3274,7 +3452,7 @@ function uncamelize (string) {
 }
 }, {}],
 
-53: [function(require, module, exports) {
+54: [function(require, module, exports) {
 
 
 /**
@@ -3349,7 +3527,7 @@ function uncamelize (string) {
 }
 }, {}],
 
-40: [function(require, module, exports) {
+41: [function(require, module, exports) {
 
 
 var toSpace = require('to-space-case');
@@ -3375,9 +3553,9 @@ function toPascalCase (string) {
     return letter.toUpperCase();
   });
 }
-}, {"to-space-case":44}],
+}, {"to-space-case":45}],
 
-41: [function(require, module, exports) {
+42: [function(require, module, exports) {
 
 
 var clean = require('to-no-case');
@@ -3403,9 +3581,9 @@ function toSentenceCase (string) {
     return letter.toUpperCase();
   });
 }
-}, {"to-no-case":39}],
+}, {"to-no-case":40}],
 
-42: [function(require, module, exports) {
+43: [function(require, module, exports) {
 
 
 var toSpace = require('to-space-case');
@@ -3429,90 +3607,62 @@ module.exports = toSlugCase;
 function toSlugCase (string) {
   return toSpace(string).replace(/\s/g, '-');
 }
-}, {"to-space-case":44}],
-
-43: [function(require, module, exports) {
-
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toSnakeCase`.
- */
-
-module.exports = toSnakeCase;
-
-
-/**
- * Convert a `string` to snake case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSnakeCase (string) {
-  return toSpace(string).replace(/\s/g, '_');
-}
-
-}, {"to-space-case":44}],
-
-54: [function(require, module, exports) {
-
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toSnakeCase`.
- */
-
-module.exports = toSnakeCase;
-
-
-/**
- * Convert a `string` to snake case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSnakeCase (string) {
-  return toSpace(string).replace(/\s/g, '_');
-}
-
-}, {"to-space-case":55}],
+}, {"to-space-case":45}],
 
 44: [function(require, module, exports) {
 
-
-var clean = require('to-no-case');
+var toSpace = require('to-space-case');
 
 
 /**
- * Expose `toSpaceCase`.
+ * Expose `toSnakeCase`.
  */
 
-module.exports = toSpaceCase;
+module.exports = toSnakeCase;
 
 
 /**
- * Convert a `string` to space case.
+ * Convert a `string` to snake case.
  *
  * @param {String} string
  * @return {String}
  */
 
 
-function toSpaceCase (string) {
-  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
-    return match ? ' ' + match : '';
-  });
+function toSnakeCase (string) {
+  return toSpace(string).replace(/\s/g, '_');
 }
-}, {"to-no-case":39}],
+
+}, {"to-space-case":45}],
 
 55: [function(require, module, exports) {
 
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toSnakeCase`.
+ */
+
+module.exports = toSnakeCase;
+
+
+/**
+ * Convert a `string` to snake case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSnakeCase (string) {
+  return toSpace(string).replace(/\s/g, '_');
+}
+
+}, {"to-space-case":56}],
+
+45: [function(require, module, exports) {
+
 
 var clean = require('to-no-case');
 
@@ -3537,9 +3687,37 @@ function toSpaceCase (string) {
     return match ? ' ' + match : '';
   });
 }
-}, {"to-no-case":39}],
+}, {"to-no-case":40}],
 
-45: [function(require, module, exports) {
+56: [function(require, module, exports) {
+
+
+var clean = require('to-no-case');
+
+
+/**
+ * Expose `toSpaceCase`.
+ */
+
+module.exports = toSpaceCase;
+
+
+/**
+ * Convert a `string` to space case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSpaceCase (string) {
+  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
+    return match ? ' ' + match : '';
+  });
+}
+}, {"to-no-case":40}],
+
+46: [function(require, module, exports) {
 
 
 var capital = require('to-capital-case')
@@ -3581,9 +3759,9 @@ function toTitleCase (string) {
       return letter.toUpperCase();
     });
 }
-}, {"to-capital-case":36,"escape-regexp":16,"map":51,"title-case-minors":52}],
+}, {"to-capital-case":37,"escape-regexp":17,"map":52,"title-case-minors":53}],
 
-56: [function(require, module, exports) {
+57: [function(require, module, exports) {
 
 
 module.exports = function after (times, func) {
@@ -3599,7 +3777,7 @@ module.exports = function after (times, func) {
 };
 }, {}],
 
-57: [function(require, module, exports) {
+58: [function(require, module, exports) {
 
 
 var type = require('type');
@@ -3665,7 +3843,7 @@ function aliasByFunction (obj, convert) {
 }
 }, {"type":5,"clone":7}],
 
-58: [function(require, module, exports) {
+59: [function(require, module, exports) {
 
 
 /**
@@ -3681,7 +3859,7 @@ module.exports = {
 
 }, {}],
 
-59: [function(require, module, exports) {
+60: [function(require, module, exports) {
 
 
 var bind = require('bind');
@@ -3736,9 +3914,9 @@ function createIntegration (name) {
   return Integration;
 }
 
-}, {"./protos":60,"./statics":61,"bind":29,"callback":32,"clone":4,"debug":62,"defaults":2,"slug":63}],
+}, {"./protos":61,"./statics":62,"bind":30,"callback":33,"clone":4,"debug":63,"defaults":2,"slug":64}],
 
-60: [function(require, module, exports) {
+61: [function(require, module, exports) {
 
 
 /**
@@ -4037,9 +4215,9 @@ exports._wrapTrack = function(){
   };
 };
 
-}, {"./events":58,"to-no-case":53,"after":56,"callback":32,"emitter":13,"next-tick":33,"type":5}],
+}, {"./events":59,"to-no-case":54,"after":57,"callback":33,"emitter":13,"next-tick":34,"type":5}],
 
-61: [function(require, module, exports) {
+62: [function(require, module, exports) {
 
 
 var after = require('after');
@@ -4147,9 +4325,9 @@ exports.readyOnInitialize = function () {
   return this;
 };
 
-}, {"after":56,"emitter":13}],
+}, {"after":57,"emitter":13}],
 
-64: [function(require, module, exports) {
+65: [function(require, module, exports) {
 
 
 /**
@@ -4168,9 +4346,9 @@ each(plugin, function(plugin){
   exports[name] = plugin;
 });
 
-}, {"./integrations.js":65,"each":10}],
+}, {"./integrations.js":66,"each":10}],
 
-65: [function(require, module, exports) {
+66: [function(require, module, exports) {
 
 
 module.exports = [
@@ -4250,9 +4428,9 @@ module.exports = [
   require('./lib/yandex-metrica')
 ];
 
-}, {"./lib/adroll":66,"./lib/adwords":67,"./lib/alexa":68,"./lib/amplitude":69,"./lib/appcues":70,"./lib/awesm":71,"./lib/awesomatic":72,"./lib/bing-ads":73,"./lib/bronto":74,"./lib/bugherd":75,"./lib/bugsnag":76,"./lib/chartbeat":77,"./lib/churnbee":78,"./lib/clicktale":79,"./lib/clicky":80,"./lib/comscore":81,"./lib/crazy-egg":82,"./lib/curebit":83,"./lib/customerio":84,"./lib/drip":85,"./lib/errorception":86,"./lib/evergage":87,"./lib/facebook-ads":88,"./lib/foxmetrics":89,"./lib/frontleaf":90,"./lib/gauges":91,"./lib/get-satisfaction":92,"./lib/google-analytics":93,"./lib/google-tag-manager":94,"./lib/gosquared":95,"./lib/heap":96,"./lib/hellobar":97,"./lib/hittail":98,"./lib/hubspot":99,"./lib/improvely":100,"./lib/inspectlet":101,"./lib/intercom":102,"./lib/keen-io":103,"./lib/kenshoo":104,"./lib/kissmetrics":105,"./lib/klaviyo":106,"./lib/leadlander":107,"./lib/livechat":108,"./lib/lucky-orange":109,"./lib/lytics":110,"./lib/mixpanel":111,"./lib/mojn":112,"./lib/mouseflow":113,"./lib/mousestats":114,"./lib/navilytics":115,"./lib/olark":116,"./lib/optimizely":117,"./lib/perfect-audience":118,"./lib/pingdom":119,"./lib/piwik":120,"./lib/preact":121,"./lib/qualaroo":122,"./lib/quantcast":123,"./lib/rollbar":124,"./lib/saasquatch":125,"./lib/sentry":126,"./lib/snapengage":127,"./lib/spinnakr":128,"./lib/tapstream":129,"./lib/trakio":130,"./lib/twitter-ads":131,"./lib/usercycle":132,"./lib/userfox":133,"./lib/uservoice":134,"./lib/vero":135,"./lib/visual-website-optimizer":136,"./lib/webengage":137,"./lib/woopra":138,"./lib/yandex-metrica":139}],
+}, {"./lib/adroll":67,"./lib/adwords":68,"./lib/alexa":69,"./lib/amplitude":70,"./lib/appcues":71,"./lib/awesm":72,"./lib/awesomatic":73,"./lib/bing-ads":74,"./lib/bronto":75,"./lib/bugherd":76,"./lib/bugsnag":77,"./lib/chartbeat":78,"./lib/churnbee":79,"./lib/clicktale":80,"./lib/clicky":81,"./lib/comscore":82,"./lib/crazy-egg":83,"./lib/curebit":84,"./lib/customerio":85,"./lib/drip":86,"./lib/errorception":87,"./lib/evergage":88,"./lib/facebook-ads":89,"./lib/foxmetrics":90,"./lib/frontleaf":91,"./lib/gauges":92,"./lib/get-satisfaction":93,"./lib/google-analytics":94,"./lib/google-tag-manager":95,"./lib/gosquared":96,"./lib/heap":97,"./lib/hellobar":98,"./lib/hittail":99,"./lib/hubspot":100,"./lib/improvely":101,"./lib/inspectlet":102,"./lib/intercom":103,"./lib/keen-io":104,"./lib/kenshoo":105,"./lib/kissmetrics":106,"./lib/klaviyo":107,"./lib/leadlander":108,"./lib/livechat":109,"./lib/lucky-orange":110,"./lib/lytics":111,"./lib/mixpanel":112,"./lib/mojn":113,"./lib/mouseflow":114,"./lib/mousestats":115,"./lib/navilytics":116,"./lib/olark":117,"./lib/optimizely":118,"./lib/perfect-audience":119,"./lib/pingdom":120,"./lib/piwik":121,"./lib/preact":122,"./lib/qualaroo":123,"./lib/quantcast":124,"./lib/rollbar":125,"./lib/saasquatch":126,"./lib/sentry":127,"./lib/snapengage":128,"./lib/spinnakr":129,"./lib/tapstream":130,"./lib/trakio":131,"./lib/twitter-ads":132,"./lib/usercycle":133,"./lib/userfox":134,"./lib/uservoice":135,"./lib/vero":136,"./lib/visual-website-optimizer":137,"./lib/webengage":138,"./lib/woopra":139,"./lib/yandex-metrica":140}],
 
-66: [function(require, module, exports) {
+67: [function(require, module, exports) {
 
 
 /**
@@ -4260,6 +4438,7 @@ module.exports = [
  */
 
 var integration = require('analytics.js-integration');
+var snake = require('to-snake-case');
 var load = require('load-script');
 var is = require('is');
 
@@ -4371,14 +4550,15 @@ AdRoll.prototype.track = function(track){
     data.order_id = orderId;
   }
 
-  data.adroll_segments = event;
+  // the adroll interface only allows for 
+  // segment names which are snake cased.
+  data.adroll_segments = snake(event);
 
   window.__adroll.record_user(data);
 };
+}, {"analytics.js-integration":60,"to-snake-case":55,"load-script":141,"is":50}],
 
-}, {"analytics.js-integration":59,"load-script":140,"is":49}],
-
-67: [function(require, module, exports) {
+68: [function(require, module, exports) {
 
 
 /**
@@ -4567,9 +4747,9 @@ AdWords.prototype.shim = function(){
   }
 }
 
-}, {"analytics.js-integration":59,"on-body":141,"load-script":140,"domify":9,"queue":26}],
+}, {"analytics.js-integration":60,"on-body":142,"load-script":141,"domify":9,"queue":27}],
 
-68: [function(require, module, exports) {
+69: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -4634,9 +4814,9 @@ Alexa.prototype.load = function(callback){
   });
 };
 
-}, {"analytics.js-integration":59,"load-script":140}],
+}, {"analytics.js-integration":60,"load-script":141}],
 
-69: [function(require, module, exports) {
+70: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -4751,9 +4931,9 @@ Amplitude.prototype.track = function(track){
   window.amplitude.logEvent(event, props);
 };
 
-}, {"callback":32,"analytics.js-integration":59,"load-script":140}],
+}, {"callback":33,"analytics.js-integration":60,"load-script":141}],
 
-70: [function(require, module, exports) {
+71: [function(require, module, exports) {
 
 
 /**
@@ -4835,9 +5015,9 @@ Appcues.prototype.identify = function(identify){
   window.Appcues.identify(identify.traits());
 };
 
-}, {"analytics.js-integration":59,"load-script":140,"is":49}],
+}, {"analytics.js-integration":60,"load-script":141,"is":50}],
 
-71: [function(require, module, exports) {
+72: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -4916,9 +5096,9 @@ Awesm.prototype.track = function(track){
   window.AWESM.convert(goal, track.cents(), null, user.id());
 };
 
-}, {"analytics.js-integration":59,"load-script":140}],
+}, {"analytics.js-integration":60,"load-script":141}],
 
-72: [function(require, module, exports) {
+73: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -4996,15 +5176,25 @@ Awesomatic.prototype.load = function(callback){
   load(url, callback);
 };
 
-}, {"analytics.js-integration":59,"is":49,"load-script":140,"on-body":141}],
+}, {"analytics.js-integration":60,"is":50,"load-script":141,"on-body":142}],
 
-73: [function(require, module, exports) {
+74: [function(require, module, exports) {
 
-
-var integration = require('analytics.js-integration');
 
 /**
- * Expose plugin
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
+var load = require('load-script');
+var onbody = require('on-body');
+var domify = require('domify');
+var extend = require('extend');
+var bind = require('bind');
+var when = require('when');
+
+/**
+ * Expose plugin.
  */
 
 module.exports = exports = function(analytics){
@@ -5012,20 +5202,84 @@ module.exports = exports = function(analytics){
 };
 
 /**
- * HOP
+ * HOP.
  */
 
 var has = Object.prototype.hasOwnProperty;
 
 /**
- * Expose `Bing`
+ * 
+ */
+
+var noop = function(){};
+
+/**
+ * Expose `Bing`.
+ *
+ * https://bingads.microsoft.com/campaign/signup
  */
 
 var Bing = exports.Integration = integration('Bing Ads')
-  .readyOnInitialize()
+  .readyOnLoad()
   .option('siteId', '')
   .option('domainId', '')
   .option('goals', {});
+
+/**
+ * Initialize.
+ *
+ * http://msdn.microsoft.com/en-us/library/bing-ads-campaign-management-campaign-analytics-scripts.aspx
+ *
+ * @param {Object} page
+ */
+
+Bing.prototype.initialize = function(page){
+  if (!window.mstag) {
+    window.mstag = {
+      loadTag: noop,
+      time: (new Date()).getTime(),
+      // they use document.write, which doesn't work when loaded async.
+      // they provide a way to override it.
+      // the first time it is called, load the script,
+      // and only when that script is done, is "loading" done.
+      _write: writeToAppend
+    };
+  };
+  var self = this;
+  onbody(function(){
+    self.load();
+  });
+};
+
+/**
+ * Load the Microsoft library.
+ *
+ * @param {Function} fn
+ */
+
+Bing.prototype.load = function(fn){
+  var id = this.options.siteId;
+  var url = '//flex.msn.com/mstag/site/' + id + '/mstag.js';
+  var el = load(url);
+  el.setAttribute('id', 'mstag_tops');
+  var loaded = bind(this, this.loaded);
+
+  // poll until this.loaded() is true.
+  // have to do a weird hack like this because
+  // the first script loads a second script,
+  // and only after the second script is it actually loaded.
+  when(loaded, fn);
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Bing.prototype.loaded = function(){
+  return !! (window.mstag && window.mstag.loadTag !== noop);
+};
 
 /**
  * Track.
@@ -5039,36 +5293,39 @@ Bing.prototype.track = function(track){
   var event = track.event();
   if (!has.call(goals, event)) return;
   var goal = goals[event];
-  return exports.load(goal, track.revenue(), this.options);
+  var revenue = track.revenue() || 0;
+  window.mstag.loadTag('analytics', {
+    domainId: this.options.domainId,
+    revenue: revenue,
+    dedup: '1',
+    type: '1',
+    actionid: goal
+  });
 };
 
 /**
- * Load conversion.
+ * Convert `document.write` to `document.appendChild`.
  *
- * @param {Mixed} goal
- * @param {Number} revenue
- * @param {String} currency
- * @return {IFrame}
- * @api private
+ * TODO: make into a component.
+ *
+ * @param {String} str
  */
 
-exports.load = function(goal, revenue, options){
-  var iframe = document.createElement('iframe');
-  iframe.src = '//flex.msn.com/mstag/tag/' + options.siteId
-    + '/analytics.html'
-    + '?domainId=' + options.domainId
-    + '&revenue=' + revenue || 0
-    + '&actionid=' + goal;
-    + '&dedup=1'
-    + '&type=1';
-  iframe.width = 1;
-  iframe.height = 1;
-  return iframe;
-};
+function writeToAppend(str) {
+  var first = document.getElementsByTagName('script')[0];
+  var el = domify(str);
+  // https://github.com/component/domify/issues/14
+  if ('script' == el.tagName.toLowerCase() && el.getAttribute('src')) {
+    var tmp = document.createElement('script');
+    tmp.src = el.getAttribute('src'); 
+    tmp.async = true;
+    el = tmp;
+  }
+  document.body.appendChild(el);
+}
+}, {"analytics.js-integration":60,"load-script":141,"on-body":142,"domify":9,"extend":143,"bind":3,"when":144}],
 
-}, {"analytics.js-integration":59}],
-
-74: [function(require, module, exports) {
+75: [function(require, module, exports) {
 
 
 /**
@@ -5076,9 +5333,18 @@ exports.load = function(goal, revenue, options){
  */
 
 var integration = require('analytics.js-integration');
+var Identify = require('facade').Identify;
 var Track = require('facade').Track;
+var pixel = require('load-pixel')('http://app.bronto.com/public/');
 var load = require('load-script');
+var qs = require('querystring');
 var each = require('each');
+
+/**
+ * User reference.
+ */
+
+var user;
 
 /**
  * Expose plugin.
@@ -5086,6 +5352,7 @@ var each = require('each');
 
 module.exports = exports = function(analytics){
   analytics.addIntegration(Bronto);
+  user = analytics.user(); // store for later
 };
 
 /**
@@ -5101,6 +5368,7 @@ var Bronto = exports.Integration = integration('Bronto')
 /**
  * Initialize.
  *
+ * http://app.bronto.com/mail/help/help_view/?k=mail:home:api_tracking:tracking_data_store_js#addingjavascriptconversiontrackingtoyoursite
  * http://bronto.com/product-blog/features/using-conversion-tracking-private-domain#.Ut_Vk2T8KqB
  * http://bronto.com/product-blog/features/javascript-conversion-tracking-setup-and-reporting#.Ut_VhmT8KqB
  *
@@ -5108,6 +5376,10 @@ var Bronto = exports.Integration = integration('Bronto')
  */
 
 Bronto.prototype.initialize = function(page){
+  var params = qs.parse(window.location.search);
+  if (!params._bta_tid && !params._bta_c) {
+    this.debug('missing tracking URL parameters `_bta_tid` and `_bta_c`.');
+  }
   this.load();
 };
 
@@ -5141,6 +5413,22 @@ Bronto.prototype.load = function(fn){
 /**
  * Track.
  *
+ * The JS conversion tracking toggles must be on 
+ * in the application in order for you to see the data 
+ * in your account, and for it to function as it should. 
+ * If the toggle is not on the system will ignore 
+ * any requests coming into it.
+ *
+ * To create a test user, create a contact in Bronto, 
+ * send that contact an email, then process through your site 
+ * to place a test order to hit the JS code.
+ *
+ * Provided you have Click Through Link Tracking enabled,
+ * when a contact clicks a link contained in an email you send them via Bronto,
+ * we create a tracking cookie (most commonly used for tracking conversions).
+ *
+ * https://app.bronto.com/mail/help/help_view/?k=mail:home:api_tracking:tracking_url_parameters
+ *
  * @param {Track} event
  */
 
@@ -5154,6 +5442,12 @@ Bronto.prototype.track = function(track){
 /**
  * Completed order.
  *
+ * The cookie is used to link the order being processed back to the delivery, 
+ * message, and contact which makes it a conversion.
+ * Passing in just the email ensures that the order itself 
+ * gets linked to the contact record in Bronto even if the user 
+ * does not have a tracking cookie.
+ *
  * @param {Track} track
  * @api private
  */
@@ -5162,6 +5456,11 @@ Bronto.prototype.completedOrder = function(track){
   var products = track.products();
   var props = track.properties();
   var items = [];
+  var identify = new Identify({
+    userId: user.id(),
+    traits: user.traits()
+  });
+  var email = identify.email();
 
   // items
   each(products, function(product){
@@ -5175,17 +5474,24 @@ Bronto.prototype.completedOrder = function(track){
   });
 
   // add conversion
-  this.bta.addConversion({
+  this.bta.addOrder({
     order_id: track.orderId(),
-    date: props.date || new Date,
+    email: email,
+    // they recommend not putting in a date
+    // because it needs to be formatted correctly
+    // YYYY-MM-DDTHH:MM:SS
     items: items
   });
 };
 
-}, {"analytics.js-integration":59,"facade":142,"load-script":140,"each":10}],
+}, {"analytics.js-integration":60,"facade":145,"load-pixel":146,"load-script":141,"querystring":26,"each":10}],
 
-75: [function(require, module, exports) {
+76: [function(require, module, exports) {
 
+
+/**
+ * Module dependencies.
+ */
 
 var integration = require('analytics.js-integration');
 var load = require('load-script');
@@ -5243,9 +5549,9 @@ BugHerd.prototype.load = function(callback){
   load('//www.bugherd.com/sidebarv2.js?apikey=' + this.options.apiKey, callback);
 };
 
-}, {"analytics.js-integration":59,"load-script":140}],
+}, {"analytics.js-integration":60,"load-script":141}],
 
-76: [function(require, module, exports) {
+77: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -5319,9 +5625,9 @@ Bugsnag.prototype.identify = function(identify){
   extend(window.Bugsnag.metaData, identify.traits());
 };
 
-}, {"analytics.js-integration":59,"is":49,"extend":143,"load-script":140,"on-error":144}],
+}, {"analytics.js-integration":60,"is":50,"extend":143,"load-script":141,"on-error":147}],
 
-77: [function(require, module, exports) {
+78: [function(require, module, exports) {
 
 
 /**
@@ -5413,9 +5719,9 @@ Chartbeat.prototype.page = function(page){
   window.pSUPERFLY.virtualPage(props.path, name || props.title);
 };
 
-}, {"analytics.js-integration":59,"defaults":1,"load-script":140,"on-body":141}],
+}, {"analytics.js-integration":60,"defaults":1,"load-script":141,"on-body":142}],
 
-78: [function(require, module, exports) {
+79: [function(require, module, exports) {
 
 
 /**
@@ -5512,9 +5818,9 @@ ChurnBee.prototype.track = function(track){
   push(event, track.properties({ revenue: 'amount' }));
 };
 
-}, {"global-queue":145,"analytics.js-integration":59,"load-script":140}],
+}, {"global-queue":148,"analytics.js-integration":60,"load-script":141}],
 
-79: [function(require, module, exports) {
+80: [function(require, module, exports) {
 
 
 var date = require('load-date');
@@ -5625,9 +5931,9 @@ ClickTale.prototype.track = function(track){
   window.ClickTaleEvent(track.event());
 };
 
-}, {"load-date":146,"domify":9,"each":10,"analytics.js-integration":59,"is":49,"use-https":147,"load-script":140,"on-body":141}],
+}, {"load-date":149,"domify":9,"each":10,"analytics.js-integration":60,"is":50,"use-https":150,"load-script":141,"on-body":142}],
 
-80: [function(require, module, exports) {
+81: [function(require, module, exports) {
 
 
 var Identify = require('facade').Identify;
@@ -5739,9 +6045,9 @@ Clicky.prototype.track = function(track){
   window.clicky.goal(track.event(), track.revenue());
 };
 
-}, {"facade":142,"extend":143,"analytics.js-integration":59,"is":49,"load-script":140}],
+}, {"facade":145,"extend":143,"analytics.js-integration":60,"is":50,"load-script":141}],
 
-81: [function(require, module, exports) {
+82: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -5801,9 +6107,9 @@ Comscore.prototype.load = function(callback){
   }, callback);
 };
 
-}, {"analytics.js-integration":59,"load-script":140}],
+}, {"analytics.js-integration":60,"load-script":141}],
 
-82: [function(require, module, exports) {
+83: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -5861,9 +6167,9 @@ CrazyEgg.prototype.load = function(callback){
   load(url, callback);
 };
 
-}, {"analytics.js-integration":59,"load-script":140}],
+}, {"analytics.js-integration":60,"load-script":141}],
 
-83: [function(require, module, exports) {
+84: [function(require, module, exports) {
 
 
 /**
@@ -6074,9 +6380,9 @@ Curebit.prototype.completedOrder = function(track){
   });
 };
 
-}, {"analytics.js-integration":59,"global-queue":145,"facade":142,"throttle":27,"to-iso-string":148,"load-script":140,"clone":6,"each":10,"bind":3}],
+}, {"analytics.js-integration":60,"global-queue":148,"facade":145,"throttle":28,"to-iso-string":151,"load-script":141,"clone":6,"each":10,"bind":3}],
 
-84: [function(require, module, exports) {
+85: [function(require, module, exports) {
 
 
 var alias = require('alias');
@@ -6206,9 +6512,9 @@ function convertDate(date){
   return Math.floor(date.getTime() / 1000);
 }
 
-}, {"alias":57,"callback":32,"convert-dates":149,"facade":142,"analytics.js-integration":59,"load-script":140}],
+}, {"alias":58,"callback":33,"convert-dates":152,"facade":145,"analytics.js-integration":60,"load-script":141}],
 
-85: [function(require, module, exports) {
+86: [function(require, module, exports) {
 
 
 var alias = require('alias');
@@ -6285,9 +6591,9 @@ Drip.prototype.track = function(track){
   push('track', props);
 };
 
-}, {"alias":57,"analytics.js-integration":59,"is":49,"load-script":140,"global-queue":145}],
+}, {"alias":58,"analytics.js-integration":60,"is":50,"load-script":141,"global-queue":148}],
 
-86: [function(require, module, exports) {
+87: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -6366,9 +6672,9 @@ Errorception.prototype.identify = function(identify){
   extend(window._errs.meta, traits);
 };
 
-}, {"callback":32,"extend":143,"analytics.js-integration":59,"load-script":140,"on-error":144,"global-queue":145}],
+}, {"callback":33,"extend":143,"analytics.js-integration":60,"load-script":141,"on-error":147,"global-queue":148}],
 
-87: [function(require, module, exports) {
+88: [function(require, module, exports) {
 
 
 var each = require('each');
@@ -6503,9 +6809,9 @@ Evergage.prototype.track = function(track){
   push('trackAction', track.event(), track.properties());
 };
 
-}, {"each":10,"analytics.js-integration":59,"load-script":140,"global-queue":145}],
+}, {"each":10,"analytics.js-integration":60,"load-script":141,"global-queue":148}],
 
-88: [function(require, module, exports) {
+89: [function(require, module, exports) {
 
 
 /**
@@ -6571,7 +6877,7 @@ Facebook.prototype.load = function(fn){
  */
 
 Facebook.prototype.loaded = function(){
-  return !!window._fbq.loaded;
+  return !! (window._fbq && window._fbq.loaded);
 };
 
 /**
@@ -6599,9 +6905,9 @@ Facebook.prototype.track = function(track){
   push('track', event, data);
 };
 
-}, {"analytics.js-integration":59,"global-queue":145,"load-script":140}],
+}, {"analytics.js-integration":60,"global-queue":148,"load-script":141}],
 
-89: [function(require, module, exports) {
+90: [function(require, module, exports) {
 
 
 var push = require('global-queue')('_fxm');
@@ -6807,9 +7113,9 @@ function ecommerce(event, track, arr){
   ].concat(arr || []));
 }
 
-}, {"global-queue":145,"analytics.js-integration":59,"facade":142,"callback":32,"load-script":140,"each":10}],
+}, {"global-queue":148,"analytics.js-integration":60,"facade":145,"callback":33,"load-script":141,"each":10}],
 
-90: [function(require, module, exports) {
+91: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -7020,9 +7326,9 @@ function flatten(source){
   return output;
 }
 
-}, {"callback":32,"analytics.js-integration":59,"is":49,"load-script":140}],
+}, {"callback":33,"analytics.js-integration":60,"is":50,"load-script":141}],
 
-91: [function(require, module, exports) {
+92: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -7094,9 +7400,9 @@ Gauges.prototype.page = function(page){
   push('track');
 };
 
-}, {"callback":32,"analytics.js-integration":59,"load-script":140,"global-queue":145}],
+}, {"callback":33,"analytics.js-integration":60,"load-script":141,"global-queue":148}],
 
-92: [function(require, module, exports) {
+93: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -7161,9 +7467,9 @@ GetSatisfaction.prototype.load = function(callback){
   load('https://loader.engage.gsfn.us/loader.js', callback);
 };
 
-}, {"analytics.js-integration":59,"load-script":140,"on-body":141}],
+}, {"analytics.js-integration":60,"load-script":141,"on-body":142}],
 
-93: [function(require, module, exports) {
+94: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -7642,9 +7948,9 @@ function metrics(obj, data){
   return ret;
 }
 
-}, {"callback":32,"canonical":150,"each":10,"analytics.js-integration":59,"is":49,"load-script":140,"global-queue":145,"facade":142,"object":21,"obj-case":151,"type":5,"url":28}],
+}, {"callback":33,"canonical":153,"each":10,"analytics.js-integration":60,"is":50,"load-script":141,"global-queue":148,"facade":145,"object":22,"obj-case":154,"type":5,"url":29}],
 
-94: [function(require, module, exports) {
+95: [function(require, module, exports) {
 
 
 var push = require('global-queue')('dataLayer', { wrap: false });
@@ -7751,9 +8057,9 @@ GTM.prototype.track = function(track){
   push(props);
 };
 
-}, {"global-queue":145,"analytics.js-integration":59,"load-script":140}],
+}, {"global-queue":148,"analytics.js-integration":60,"load-script":141}],
 
-95: [function(require, module, exports) {
+96: [function(require, module, exports) {
 
 
 var Identify = require('facade').Identify;
@@ -7929,9 +8235,9 @@ function push(){
   _gs.apply(null, arguments);
 }
 
-}, {"facade":142,"callback":32,"analytics.js-integration":59,"load-script":140,"on-body":141,"each":10}],
+}, {"facade":145,"callback":33,"analytics.js-integration":60,"load-script":141,"on-body":142,"each":10}],
 
-96: [function(require, module, exports) {
+97: [function(require, module, exports) {
 
 
 var alias = require('alias');
@@ -8022,9 +8328,9 @@ Heap.prototype.track = function(track){
   window.heap.track(track.event(), track.properties());
 };
 
-}, {"alias":57,"callback":32,"analytics.js-integration":59,"load-script":140}],
+}, {"alias":58,"callback":33,"analytics.js-integration":60,"load-script":141}],
 
-97: [function(require, module, exports) {
+98: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -8082,9 +8388,9 @@ Hellobar.prototype.loaded = function(){
   return !! (window._hbq && window._hbq.push !== Array.prototype.push);
 };
 
-}, {"analytics.js-integration":59,"load-script":140}],
+}, {"analytics.js-integration":60,"load-script":141}],
 
-98: [function(require, module, exports) {
+99: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -8140,9 +8446,9 @@ HitTail.prototype.load = function(callback){
   load('//' + id + '.hittail.com/mlt.js', callback);
 };
 
-}, {"analytics.js-integration":59,"is":49,"load-script":140}],
+}, {"analytics.js-integration":60,"is":50,"load-script":141}],
 
-99: [function(require, module, exports) {
+100: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -8253,9 +8559,9 @@ function convertDates(properties){
   return convert(properties, function(date){ return date.getTime(); });
 }
 
-}, {"callback":32,"convert-dates":149,"analytics.js-integration":59,"load-script":140,"global-queue":145}],
+}, {"callback":33,"convert-dates":152,"analytics.js-integration":60,"load-script":141,"global-queue":148}],
 
-100: [function(require, module, exports) {
+101: [function(require, module, exports) {
 
 
 var alias = require('alias');
@@ -8349,9 +8655,9 @@ Improvely.prototype.track = function(track){
   window.improvely.goal(props);
 };
 
-}, {"alias":57,"callback":32,"analytics.js-integration":59,"load-script":140}],
+}, {"alias":58,"callback":33,"analytics.js-integration":60,"load-script":141}],
 
-101: [function(require, module, exports) {
+102: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -8438,9 +8744,9 @@ Inspectlet.prototype.track = function(track){
   push('tagSession', track.event());
 };
 
-}, {"analytics.js-integration":59,"alias":57,"clone":6,"load-script":140,"global-queue":145}],
+}, {"analytics.js-integration":60,"alias":58,"clone":6,"load-script":141,"global-queue":148}],
 
-102: [function(require, module, exports) {
+103: [function(require, module, exports) {
 
 
 var alias = require('alias');
@@ -8630,9 +8936,9 @@ function formatDate (date) {
   return Math.floor(date / 1000);
 }
 
-}, {"alias":57,"convert-dates":149,"analytics.js-integration":59,"each":10,"is":49,"is-email":152,"load-script":140,"defaults":1,"is-empty":47,"when":153}],
+}, {"alias":58,"convert-dates":152,"analytics.js-integration":60,"each":10,"is":50,"is-email":155,"load-script":141,"defaults":1,"is-empty":48,"when":144}],
 
-103: [function(require, module, exports) {
+104: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -8755,9 +9061,9 @@ Keen.prototype.track = function(track){
   window.Keen.addEvent(track.event(), track.properties());
 };
 
-}, {"callback":32,"analytics.js-integration":59,"load-script":140}],
+}, {"callback":33,"analytics.js-integration":60,"load-script":141}],
 
-104: [function(require, module, exports) {
+105: [function(require, module, exports) {
 
 
 /**
@@ -8856,9 +9162,9 @@ Kenshoo.prototype.track = function(track){
   window.k_trackevent(params, this.options.subdomain);
 };
 
-}, {"analytics.js-integration":59,"load-script":140,"indexof":14,"is":49}],
+}, {"analytics.js-integration":60,"load-script":141,"indexof":14,"is":50}],
 
-105: [function(require, module, exports) {
+106: [function(require, module, exports) {
 
 
 /**
@@ -9073,9 +9379,9 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"analytics.js-integration":59,"global-queue":145,"facade":142,"callback":32,"load-script":140,"alias":57,"batch":154,"each":10,"is":49}],
+}, {"analytics.js-integration":60,"global-queue":148,"facade":145,"callback":33,"load-script":141,"alias":58,"batch":156,"each":10,"is":50}],
 
-106: [function(require, module, exports) {
+107: [function(require, module, exports) {
 
 
 var alias = require('alias');
@@ -9184,9 +9490,9 @@ Klaviyo.prototype.track = function(track){
   }));
 };
 
-}, {"alias":57,"callback":32,"analytics.js-integration":59,"load-script":140,"global-queue":145}],
+}, {"alias":58,"callback":33,"analytics.js-integration":60,"load-script":141,"global-queue":148}],
 
-107: [function(require, module, exports) {
+108: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -9242,9 +9548,9 @@ LeadLander.prototype.load = function(callback){
   load('http://t6.trackalyzer.com/trackalyze-nodoc.js', callback);
 };
 
-}, {"analytics.js-integration":59,"load-script":140}],
+}, {"analytics.js-integration":60,"load-script":141}],
 
-108: [function(require, module, exports) {
+109: [function(require, module, exports) {
 
 
 var each = require('each');
@@ -9340,9 +9646,9 @@ function convert(traits){
   return arr;
 }
 
-}, {"each":10,"analytics.js-integration":59,"load-script":140,"clone":6,"when":153}],
+}, {"each":10,"analytics.js-integration":60,"load-script":141,"clone":6,"when":144}],
 
-109: [function(require, module, exports) {
+110: [function(require, module, exports) {
 
 
 var Identify = require('facade').Identify;
@@ -9432,9 +9738,9 @@ LuckyOrange.prototype.identify = function(identify){
   if (email) traits.email = email;
 };
 
-}, {"facade":142,"analytics.js-integration":59,"load-script":140}],
+}, {"facade":145,"analytics.js-integration":60,"load-script":141}],
 
-110: [function(require, module, exports) {
+111: [function(require, module, exports) {
 
 
 var alias = require('alias');
@@ -9540,9 +9846,9 @@ Lytics.prototype.track = function(track){
   window.jstag.send(props);
 };
 
-}, {"alias":57,"callback":32,"analytics.js-integration":59,"load-script":140}],
+}, {"alias":58,"callback":33,"analytics.js-integration":60,"load-script":141}],
 
-111: [function(require, module, exports) {
+112: [function(require, module, exports) {
 
 
 var alias = require('alias');
@@ -9774,9 +10080,9 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":57,"clone":6,"convert-dates":149,"analytics.js-integration":59,"to-iso-string":148,"load-script":140,"indexof":14,"obj-case":151}],
+}, {"alias":58,"clone":6,"convert-dates":152,"analytics.js-integration":60,"to-iso-string":151,"load-script":141,"indexof":14,"obj-case":154}],
 
-112: [function(require, module, exports) {
+113: [function(require, module, exports) {
 
 
 /**
@@ -9868,9 +10174,9 @@ Mojn.prototype.track = function(track){
   return conv;
 };
 
-}, {"analytics.js-integration":59,"load-script":140,"is":49}],
+}, {"analytics.js-integration":60,"load-script":141,"is":50}],
 
-113: [function(require, module, exports) {
+114: [function(require, module, exports) {
 
 
 var push = require('global-queue')('_mfq');
@@ -9982,9 +10288,9 @@ function set(hash){
   });
 }
 
-}, {"global-queue":145,"analytics.js-integration":59,"load-script":140,"each":10}],
+}, {"global-queue":148,"analytics.js-integration":60,"load-script":141,"each":10}],
 
-114: [function(require, module, exports) {
+115: [function(require, module, exports) {
 
 
 var each = require('each');
@@ -10069,9 +10375,9 @@ MouseStats.prototype.identify = function (identify) {
   });
 };
 
-}, {"each":10,"analytics.js-integration":59,"is":49,"load-script":140}],
+}, {"each":10,"analytics.js-integration":60,"is":50,"load-script":141}],
 
-115: [function(require, module, exports) {
+116: [function(require, module, exports) {
 
 
 /**
@@ -10149,9 +10455,9 @@ Navilytics.prototype.track = function(track){
   push('tagRecording', track.event());
 };
 
-}, {"analytics.js-integration":59,"load-script":140,"global-queue":145}],
+}, {"analytics.js-integration":60,"load-script":141,"global-queue":148}],
 
-116: [function(require, module, exports) {
+117: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -10297,9 +10603,9 @@ function chat(action, value){
   window.olark('api.chat.' + action, value);
 }
 
-}, {"callback":32,"analytics.js-integration":59,"use-https":147}],
+}, {"callback":33,"analytics.js-integration":60,"use-https":150}],
 
-117: [function(require, module, exports) {
+118: [function(require, module, exports) {
 
 
 var bind = require('bind');
@@ -10406,9 +10712,9 @@ Optimizely.prototype.replay = function(){
   analytics.identify(traits);
 };
 
-}, {"bind":3,"callback":32,"each":10,"analytics.js-integration":59,"global-queue":145,"next-tick":33}],
+}, {"bind":3,"callback":33,"each":10,"analytics.js-integration":60,"global-queue":148,"next-tick":34}],
 
-118: [function(require, module, exports) {
+119: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -10476,9 +10782,9 @@ PerfectAudience.prototype.track = function(track){
   window._pa.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":59,"load-script":140}],
+}, {"analytics.js-integration":60,"load-script":141}],
 
-119: [function(require, module, exports) {
+120: [function(require, module, exports) {
 
 
 var date = require('load-date');
@@ -10537,9 +10843,9 @@ Pingdom.prototype.load = function(callback){
   load('//rum-static.pingdom.net/prum.min.js', callback);
 };
 
-}, {"load-date":146,"analytics.js-integration":59,"load-script":140,"global-queue":145}],
+}, {"load-date":149,"analytics.js-integration":60,"load-script":141,"global-queue":148}],
 
-120: [function(require, module, exports) {
+121: [function(require, module, exports) {
 
 
 /**
@@ -10623,9 +10929,9 @@ Piwik.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":59,"load-script":140,"global-queue":145,"each":10}],
+}, {"analytics.js-integration":60,"load-script":141,"global-queue":148,"each":10}],
 
-121: [function(require, module, exports) {
+122: [function(require, module, exports) {
 
 
 var alias = require('alias');
@@ -10754,9 +11060,9 @@ function convertDate(date){
   return Math.floor(date / 1000);
 }
 
-}, {"alias":57,"callback":32,"convert-dates":149,"analytics.js-integration":59,"load-script":140,"global-queue":145}],
+}, {"alias":58,"callback":33,"convert-dates":152,"analytics.js-integration":60,"load-script":141,"global-queue":148}],
 
-122: [function(require, module, exports) {
+123: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -10853,9 +11159,9 @@ Qualaroo.prototype.track = function(track){
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"callback":32,"analytics.js-integration":59,"load-script":140,"global-queue":145,"facade":142}],
+}, {"callback":33,"analytics.js-integration":60,"load-script":141,"global-queue":148,"facade":145}],
 
-123: [function(require, module, exports) {
+124: [function(require, module, exports) {
 
 
 /**
@@ -11060,9 +11366,9 @@ Quantcast.prototype.labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"global-queue":145,"analytics.js-integration":59,"load-script":140}],
+}, {"global-queue":148,"analytics.js-integration":60,"load-script":141}],
 
-124: [function(require, module, exports) {
+125: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -11146,9 +11452,9 @@ RollbarIntegration.prototype.identify = function(identify){
   rollbar.configure({ payload: { person: person }});
 };
 
-}, {"analytics.js-integration":59,"is":49,"extend":143}],
+}, {"analytics.js-integration":60,"is":50,"extend":143}],
 
-125: [function(require, module, exports) {
+126: [function(require, module, exports) {
 
 
 /**
@@ -11238,9 +11544,9 @@ SaaSquatch.prototype.identify = function(identify){
   this.load();
 };
 
-}, {"analytics.js-integration":59,"load-script":140}],
+}, {"analytics.js-integration":60,"load-script":141}],
 
-126: [function(require, module, exports) {
+127: [function(require, module, exports) {
 
 var integration = require('analytics.js-integration');
 var is = require('is');
@@ -11308,9 +11614,9 @@ Sentry.prototype.identify = function(identify){
   window.Raven.setUser(identify.traits());
 };
 
-}, {"analytics.js-integration":59,"is":49,"load-script":140}],
+}, {"analytics.js-integration":60,"is":50,"load-script":141}],
 
-127: [function(require, module, exports) {
+128: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -11381,9 +11687,9 @@ SnapEngage.prototype.identify = function(identify){
   window.SnapABug.setUserEmail(email);
 };
 
-}, {"analytics.js-integration":59,"is":49,"load-script":140}],
+}, {"analytics.js-integration":60,"is":50,"load-script":141}],
 
-128: [function(require, module, exports) {
+129: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -11439,9 +11745,9 @@ Spinnakr.prototype.load = function(callback){
   load('//d3ojzyhbolvoi5.cloudfront.net/js/so.js', callback);
 };
 
-}, {"analytics.js-integration":59,"load-script":140}],
+}, {"analytics.js-integration":60,"load-script":141}],
 
-129: [function(require, module, exports) {
+130: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -11541,9 +11847,9 @@ Tapstream.prototype.track = function(track){
   push('fireHit', slug(track.event()), [props.url]); // needs events as slugs
 };
 
-}, {"callback":32,"analytics.js-integration":59,"load-script":140,"slug":63,"global-queue":145}],
+}, {"callback":33,"analytics.js-integration":60,"load-script":141,"slug":64,"global-queue":148}],
 
-130: [function(require, module, exports) {
+131: [function(require, module, exports) {
 
 
 var alias = require('alias');
@@ -11712,9 +12018,9 @@ Trakio.prototype.alias = function(alias){
   }
 };
 
-}, {"alias":57,"callback":32,"clone":6,"analytics.js-integration":59,"load-script":140}],
+}, {"alias":58,"callback":33,"clone":6,"analytics.js-integration":60,"load-script":141}],
 
-131: [function(require, module, exports) {
+132: [function(require, module, exports) {
 
 
 var pixel = require('load-pixel')('//analytics.twitter.com/i/adsct');
@@ -11764,9 +12070,9 @@ TwitterAds.prototype.track = function(track){
   });
 };
 
-}, {"load-pixel":155,"analytics.js-integration":59}],
+}, {"load-pixel":146,"analytics.js-integration":60}],
 
-132: [function(require, module, exports) {
+133: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -11851,9 +12157,9 @@ Usercycle.prototype.track = function(track){
   }));
 };
 
-}, {"callback":32,"analytics.js-integration":59,"load-script":140,"global-queue":145}],
+}, {"callback":33,"analytics.js-integration":60,"load-script":141,"global-queue":148}],
 
-133: [function(require, module, exports) {
+134: [function(require, module, exports) {
 
 
 var alias = require('alias');
@@ -11949,9 +12255,9 @@ function formatDate(date){
   return Math.round(date.getTime() / 1000).toString();
 }
 
-}, {"alias":57,"callback":32,"convert-dates":149,"analytics.js-integration":59,"load-script":140,"global-queue":145}],
+}, {"alias":58,"callback":33,"convert-dates":152,"analytics.js-integration":60,"load-script":141,"global-queue":148}],
 
-134: [function(require, module, exports) {
+135: [function(require, module, exports) {
 
 
 var alias = require('alias');
@@ -12155,9 +12461,9 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"alias":57,"callback":32,"clone":6,"convert-dates":149,"analytics.js-integration":59,"load-script":140,"global-queue":145,"to-unix-timestamp":156}],
+}, {"alias":58,"callback":33,"clone":6,"convert-dates":152,"analytics.js-integration":60,"load-script":141,"global-queue":148,"to-unix-timestamp":157}],
 
-135: [function(require, module, exports) {
+136: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -12255,9 +12561,9 @@ Vero.prototype.track = function(track){
   push('track', track.event(), track.properties());
 };
 
-}, {"callback":32,"analytics.js-integration":59,"load-script":140,"global-queue":145}],
+}, {"callback":33,"analytics.js-integration":60,"load-script":141,"global-queue":148}],
 
-136: [function(require, module, exports) {
+137: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -12362,9 +12668,9 @@ function variation(id){
   return variationId ? experiment.comb_n[variationId] : null;
 }
 
-}, {"callback":32,"each":10,"analytics.js-integration":59,"next-tick":33}],
+}, {"callback":33,"each":10,"analytics.js-integration":60,"next-tick":34}],
 
-137: [function(require, module, exports) {
+138: [function(require, module, exports) {
 
 
 var integration = require('analytics.js-integration');
@@ -12427,9 +12733,9 @@ WebEngage.prototype.load = function(fn){
   }, fn);
 };
 
-}, {"analytics.js-integration":59,"load-script":140}],
+}, {"analytics.js-integration":60,"load-script":141}],
 
-138: [function(require, module, exports) {
+139: [function(require, module, exports) {
 
 
 /**
@@ -12554,9 +12860,9 @@ Woopra.prototype.track = function (track) {
   window.woopra.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":59,"to-snake-case":54,"load-script":140,"is-email":152,"extend":143,"each":10,"type":5}],
+}, {"analytics.js-integration":60,"to-snake-case":55,"load-script":141,"is-email":155,"extend":143,"each":10,"type":5}],
 
-139: [function(require, module, exports) {
+140: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -12632,9 +12938,9 @@ function push(callback){
   window.yandex_metrika_callbacks.push(callback);
 }
 
-}, {"callback":32,"analytics.js-integration":59,"load-script":140}],
+}, {"callback":33,"analytics.js-integration":60,"load-script":141}],
 
-30: [function(require, module, exports) {
+31: [function(require, module, exports) {
 
 
 try {
@@ -12654,7 +12960,7 @@ module.exports = function (obj) {
 };
 }, {"bind":3,"type":5}],
 
-150: [function(require, module, exports) {
+153: [function(require, module, exports) {
 
 module.exports = function canonical () {
   var tags = document.getElementsByTagName('link');
@@ -12664,7 +12970,7 @@ module.exports = function canonical () {
 };
 }, {}],
 
-149: [function(require, module, exports) {
+152: [function(require, module, exports) {
 
 
 var is = require('is');
@@ -12700,7 +13006,7 @@ function convertDates (obj, convert) {
   }
   return obj;
 }
-}, {"is":49,"clone":4}],
+}, {"is":50,"clone":4}],
 
 143: [function(require, module, exports) {
 
@@ -12721,7 +13027,7 @@ module.exports = function extend (object) {
 };
 }, {}],
 
-157: [function(require, module, exports) {
+158: [function(require, module, exports) {
 
 
 /**
@@ -12793,9 +13099,9 @@ Alias.prototype.userId = function(){
     || this.field('to');
 };
 
-}, {"./utils":158,"./facade":159}],
+}, {"./utils":159,"./facade":160}],
 
-159: [function(require, module, exports) {
+160: [function(require, module, exports) {
 
 
 var clone = require('./utils').clone;
@@ -13028,9 +13334,9 @@ function transform(obj){
   return cloned;
 }
 
-}, {"./utils":158,"./is-enabled":160,"obj-case":151,"isodate-traverse":161}],
+}, {"./utils":159,"./is-enabled":161,"obj-case":154,"isodate-traverse":162}],
 
-162: [function(require, module, exports) {
+163: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -13133,9 +13439,9 @@ Group.prototype.properties = function(){
     || {};
 };
 
-}, {"./utils":158,"./facade":159,"new-date":163}],
+}, {"./utils":159,"./facade":160,"new-date":164}],
 
-164: [function(require, module, exports) {
+165: [function(require, module, exports) {
 
 
 var Facade = require('./facade');
@@ -13330,9 +13636,9 @@ Identify.prototype.phone = Facade.proxy('traits.phone');
 Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.avatar = Facade.proxy('traits.avatar');
 
-}, {"./facade":159,"./utils":158,"is-email":152,"new-date":163,"trim":24}],
+}, {"./facade":160,"./utils":159,"is-email":155,"new-date":164,"trim":25}],
 
-165: [function(require, module, exports) {
+166: [function(require, module, exports) {
 
 
 var Facade = require('./facade');
@@ -13354,9 +13660,9 @@ Facade.Track = require('./track');
 Facade.Page = require('./page');
 Facade.Screen = require('./screen');
 
-}, {"./facade":159,"./alias":157,"./group":162,"./identify":164,"./track":166,"./page":167,"./screen":168}],
+}, {"./facade":160,"./alias":158,"./group":163,"./identify":165,"./track":167,"./page":168,"./screen":169}],
 
-160: [function(require, module, exports) {
+161: [function(require, module, exports) {
 
 
 /**
@@ -13381,7 +13687,7 @@ module.exports = function (integration) {
 };
 }, {}],
 
-167: [function(require, module, exports) {
+168: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -13488,9 +13794,9 @@ Page.prototype.track = function(name){
   });
 };
 
-}, {"./utils":158,"./facade":159,"./track":166}],
+}, {"./utils":159,"./facade":160,"./track":167}],
 
-168: [function(require, module, exports) {
+169: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -13565,9 +13871,9 @@ Screen.prototype.track = function(name){
   });
 };
 
-}, {"./utils":158,"./page":167,"./track":166}],
+}, {"./utils":159,"./page":168,"./track":167}],
 
-166: [function(require, module, exports) {
+167: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -13854,9 +14160,9 @@ function currency(val) {
   if (!isNaN(val)) return val;
 }
 
-}, {"./utils":158,"./facade":159,"./identify":164,"is-email":152}],
+}, {"./utils":159,"./facade":160,"./identify":165,"is-email":155}],
 
-158: [function(require, module, exports) {
+159: [function(require, module, exports) {
 
 
 /**
@@ -13871,9 +14177,9 @@ try {
   exports.clone = require('clone-component');
 }
 
-}, {"inherit":19,"clone":7}],
+}, {"inherit":20,"clone":7}],
 
-169: [function(require, module, exports) {
+170: [function(require, module, exports) {
 
 
 /**
@@ -13945,9 +14251,9 @@ Alias.prototype.userId = function(){
     || this.field('to');
 };
 
-}, {"./utils":170,"./facade":171}],
+}, {"./utils":171,"./facade":172}],
 
-171: [function(require, module, exports) {
+172: [function(require, module, exports) {
 
 
 var clone = require('./utils').clone;
@@ -14156,6 +14462,33 @@ Facade.prototype.anonymousId = function(){
 Facade.prototype.groupId = Facade.proxy('options.groupId');
 
 /**
+ * Get the call's "super properties" which are just traits that have been
+ * passed in as if from an identify call.
+ *
+ * @param {Object} aliases
+ * @return {Object}
+ */
+
+Facade.prototype.traits = function (aliases) {
+  var ret = this.proxy('options.traits') || {};
+  var id = this.userId();
+  aliases = aliases || {};
+
+  if (id) ret.id = id;
+
+  for (var alias in aliases) {
+    var value = null == this[alias]
+      ? this.proxy('options.traits.' + alias)
+      : this[alias]();
+    if (null == value) continue;
+    ret[aliases[alias]] = value;
+    delete ret[alias];
+  }
+
+  return ret;
+};
+
+/**
  * Add a convenient way to get the library name and version
  */
 
@@ -14189,9 +14522,9 @@ function transform(obj){
   return cloned;
 }
 
-}, {"./utils":170,"./is-enabled":172,"obj-case":151,"isodate-traverse":161}],
+}, {"./utils":171,"./is-enabled":173,"obj-case":154,"isodate-traverse":162}],
 
-173: [function(require, module, exports) {
+174: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -14294,9 +14627,9 @@ Group.prototype.properties = function(){
     || {};
 };
 
-}, {"./utils":170,"./facade":171,"new-date":163}],
+}, {"./utils":171,"./facade":172,"new-date":164}],
 
-174: [function(require, module, exports) {
+175: [function(require, module, exports) {
 
 
 var Facade = require('./facade');
@@ -14491,9 +14824,9 @@ Identify.prototype.phone = Facade.proxy('traits.phone');
 Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.avatar = Facade.proxy('traits.avatar');
 
-}, {"./facade":171,"./utils":170,"is-email":152,"new-date":163,"trim":24}],
+}, {"./facade":172,"./utils":171,"is-email":155,"new-date":164,"trim":25}],
 
-142: [function(require, module, exports) {
+145: [function(require, module, exports) {
 
 
 var Facade = require('./facade');
@@ -14515,9 +14848,9 @@ Facade.Track = require('./track');
 Facade.Page = require('./page');
 Facade.Screen = require('./screen');
 
-}, {"./facade":171,"./alias":169,"./group":173,"./identify":174,"./track":175,"./page":176,"./screen":177}],
+}, {"./facade":172,"./alias":170,"./group":174,"./identify":175,"./track":176,"./page":177,"./screen":178}],
 
-172: [function(require, module, exports) {
+173: [function(require, module, exports) {
 
 
 /**
@@ -14542,7 +14875,7 @@ module.exports = function (integration) {
 };
 }, {}],
 
-176: [function(require, module, exports) {
+177: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -14649,9 +14982,9 @@ Page.prototype.track = function(name){
   });
 };
 
-}, {"./utils":170,"./facade":171,"./track":175}],
+}, {"./utils":171,"./facade":172,"./track":176}],
 
-177: [function(require, module, exports) {
+178: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -14726,9 +15059,9 @@ Screen.prototype.track = function(name){
   });
 };
 
-}, {"./utils":170,"./page":176,"./track":175}],
+}, {"./utils":171,"./page":177,"./track":176}],
 
-175: [function(require, module, exports) {
+176: [function(require, module, exports) {
 
 
 var inherit = require('./utils').inherit;
@@ -14900,17 +15233,6 @@ Track.prototype.properties = function (aliases) {
 };
 
 /**
- * Get the call's "super properties" which are just traits that have been
- * passed in as if from an identify call.
- *
- * @return {Object}
- */
-
-Track.prototype.traits = function () {
-  return this.proxy('options.traits') || {};
-};
-
-/**
  * Get the call's username.
  *
  * @return {String or Undefined}
@@ -15015,9 +15337,9 @@ function currency(val) {
   if (!isNaN(val)) return val;
 }
 
-}, {"./utils":170,"./facade":171,"./identify":174,"is-email":152}],
+}, {"./utils":171,"./facade":172,"./identify":175,"is-email":155}],
 
-170: [function(require, module, exports) {
+171: [function(require, module, exports) {
 
 
 /**
@@ -15032,9 +15354,9 @@ try {
   exports.clone = require('clone-component');
 }
 
-}, {"inherit":19,"clone":7}],
+}, {"inherit":20,"clone":7}],
 
-145: [function(require, module, exports) {
+148: [function(require, module, exports) {
 
 
 /**
@@ -15066,7 +15388,7 @@ function generate (name, options) {
 }
 }, {}],
 
-152: [function(require, module, exports) {
+155: [function(require, module, exports) {
 
 
 /**
@@ -15095,7 +15417,7 @@ function isEmail (string) {
 }
 }, {}],
 
-178: [function(require, module, exports) {
+179: [function(require, module, exports) {
 
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
@@ -15113,7 +15435,7 @@ module.exports = function isMeta (e) {
 };
 }, {}],
 
-179: [function(require, module, exports) {
+180: [function(require, module, exports) {
 
 
 var is = require('is');
@@ -15188,9 +15510,9 @@ function array (arr, strict) {
   return arr;
 }
 
-}, {"is":48,"isodate":180,"each":10}],
+}, {"is":49,"isodate":181,"each":10}],
 
-161: [function(require, module, exports) {
+162: [function(require, module, exports) {
 
 
 var is = require('is');
@@ -15263,9 +15585,9 @@ function array (arr, strict) {
   return arr;
 }
 
-}, {"is":50,"isodate":180,"each":10}],
+}, {"is":51,"isodate":181,"each":10}],
 
-180: [function(require, module, exports) {
+181: [function(require, module, exports) {
 
 
 /**
@@ -15337,7 +15659,7 @@ exports.is = function (string, strict) {
 };
 }, {}],
 
-181: [function(require, module, exports) {
+182: [function(require, module, exports) {
 
 
 var json = window.JSON || {};
@@ -15348,9 +15670,9 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":20}],
+}, {"json-fallback":21}],
 
-146: [function(require, module, exports) {
+149: [function(require, module, exports) {
 
 
 
@@ -15370,7 +15692,7 @@ if (perf && perf.timing && perf.timing.responseEnd) {
 module.exports = time;
 }, {}],
 
-155: [function(require, module, exports) {
+146: [function(require, module, exports) {
 
 
 /**
@@ -15426,9 +15748,9 @@ function error(fn, message, img){
   };
 }
 
-}, {"querystring":25,"substitute":182}],
+}, {"querystring":26,"substitute":183}],
 
-140: [function(require, module, exports) {
+141: [function(require, module, exports) {
 
 
 /**
@@ -15436,6 +15758,7 @@ function error(fn, message, img){
  */
 
 var onload = require('script-onload');
+var tick = require('next-tick');
 var type = require('type');
 
 /**
@@ -15479,18 +15802,19 @@ module.exports = function loadScript(options, fn){
     onload(script, fn);
   }
 
-  // Append after event listeners are attached for IE.
-  var firstScript = document.getElementsByTagName('script')[0];
-  firstScript.parentNode.insertBefore(script, firstScript);
+  tick(function(){
+    // Append after event listeners are attached for IE.
+    var firstScript = document.getElementsByTagName('script')[0];
+    firstScript.parentNode.insertBefore(script, firstScript);
+  });
 
   // Return the script element in case they want to do anything special, like
   // give it an ID or attributes.
   return script;
 };
+}, {"script-onload":184,"next-tick":34,"type":5}],
 
-}, {"script-onload":183,"type":5}],
-
-163: [function(require, module, exports) {
+164: [function(require, module, exports) {
 
 
 var is = require('is');
@@ -15531,9 +15855,9 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
-}, {"./milliseconds":184,"./seconds":185,"is":48,"isodate":180}],
+}, {"./milliseconds":185,"./seconds":186,"is":49,"isodate":181}],
 
-184: [function(require, module, exports) {
+185: [function(require, module, exports) {
 
 
 /**
@@ -15568,7 +15892,7 @@ exports.parse = function (millis) {
 };
 }, {}],
 
-185: [function(require, module, exports) {
+186: [function(require, module, exports) {
 
 
 /**
@@ -15603,7 +15927,7 @@ exports.parse = function (seconds) {
 };
 }, {}],
 
-151: [function(require, module, exports) {
+154: [function(require, module, exports) {
 
 
 var Case = require('case');
@@ -15720,9 +16044,9 @@ function replace (obj, key, val) {
   return obj;
 }
 
-}, {"case":46}],
+}, {"case":47}],
 
-141: [function(require, module, exports) {
+142: [function(require, module, exports) {
 
 var each = require('each');
 
@@ -15779,7 +16103,7 @@ function call (callback) {
 }
 }, {"each":11}],
 
-144: [function(require, module, exports) {
+147: [function(require, module, exports) {
 
 
 /**
@@ -15834,7 +16158,7 @@ function onError (fn) {
 }
 }, {}],
 
-183: [function(require, module, exports) {
+184: [function(require, module, exports) {
 
 
 // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
@@ -15887,7 +16211,7 @@ function attach(el, fn){
 
 }, {}],
 
-186: [function(require, module, exports) {
+187: [function(require, module, exports) {
 
 var json             = require('json')
   , store            = {}
@@ -16040,9 +16364,9 @@ try {
 store.enabled = !store.disabled
 
 module.exports = store;
-}, {"json":181}],
+}, {"json":182}],
 
-182: [function(require, module, exports) {
+183: [function(require, module, exports) {
 
 
 /**
@@ -16073,7 +16397,7 @@ function substitute(str, obj, expr){
 
 }, {}],
 
-148: [function(require, module, exports) {
+151: [function(require, module, exports) {
 
 
 /**
@@ -16117,7 +16441,7 @@ function pad (number) {
 }
 }, {}],
 
-156: [function(require, module, exports) {
+157: [function(require, module, exports) {
 
 
 /**
@@ -16139,7 +16463,7 @@ function toUnixTimestamp (date) {
 }
 }, {}],
 
-187: [function(require, module, exports) {
+188: [function(require, module, exports) {
 
 
 /**
@@ -16188,9 +16512,9 @@ function domain(url){
   return match ? match[0] : '';
 };
 
-}, {"url":28}],
+}, {"url":29}],
 
-147: [function(require, module, exports) {
+150: [function(require, module, exports) {
 
 
 /**
@@ -16231,7 +16555,7 @@ function check () {
 }
 }, {}],
 
-153: [function(require, module, exports) {
+144: [function(require, module, exports) {
 
 
 var callback = require('callback');
@@ -16261,9 +16585,9 @@ function when (condition, fn, interval) {
     clearInterval(ref);
   }, interval || 10);
 }
-}, {"callback":32}],
+}, {"callback":33}],
 
-33: [function(require, module, exports) {
+34: [function(require, module, exports) {
 
 "use strict"
 
@@ -16301,7 +16625,7 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 
 }, {}],
 
-154: [function(require, module, exports) {
+156: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16462,9 +16786,9 @@ Batch.prototype.end = function(cb){
   return this;
 };
 
-}, {"emitter":15}],
+}, {"emitter":16}],
 
-188: [function(require, module, exports) {
+189: [function(require, module, exports) {
 
 
 /**
@@ -16606,7 +16930,7 @@ try {
 
 }, {}],
 
-62: [function(require, module, exports) {
+63: [function(require, module, exports) {
 
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
@@ -16614,9 +16938,9 @@ if ('undefined' == typeof window) {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":189,"./debug":188}],
+}, {"./lib/debug":190,"./debug":189}],
 
-189: [function(require, module, exports) {
+190: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16765,162 +17089,162 @@ function coerce(val) {
   if (val instanceof Error) return val.stack || val.message;
   return val;
 }
-
-}, {}],
-
-190: [function(require, module, exports) {
-
-
-/**
- * Expose `debug()` as the module.
- */
-
-module.exports = debug;
-
-/**
- * Create a debugger with the given `name`.
- *
- * @param {String} name
- * @return {Type}
- * @api public
- */
-
-function debug(name) {
-  if (!debug.enabled(name)) return function(){};
-
-  return function(fmt){
-    fmt = coerce(fmt);
-
-    var curr = new Date;
-    var ms = curr - (debug[name] || curr);
-    debug[name] = curr;
-
-    fmt = name
-      + ' '
-      + fmt
-      + ' +' + debug.humanize(ms);
-
-    // This hackery is required for IE8
-    // where `console.log` doesn't have 'apply'
-    window.console
-      && console.log
-      && Function.prototype.apply.call(console.log, console, arguments);
-  }
-}
-
-/**
- * The currently active debug mode names.
- */
-
-debug.names = [];
-debug.skips = [];
-
-/**
- * Enables a debug mode by name. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} name
- * @api public
- */
-
-debug.enable = function(name) {
-  try {
-    localStorage.debug = name;
-  } catch(e){}
-
-  var split = (name || '').split(/[\s,]+/)
-    , len = split.length;
-
-  for (var i = 0; i < len; i++) {
-    name = split[i].replace('*', '.*?');
-    if (name[0] === '-') {
-      debug.skips.push(new RegExp('^' + name.substr(1) + '$'));
-    }
-    else {
-      debug.names.push(new RegExp('^' + name + '$'));
-    }
-  }
-};
-
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-debug.disable = function(){
-  debug.enable('');
-};
-
-/**
- * Humanize the given `ms`.
- *
- * @param {Number} m
- * @return {String}
- * @api private
- */
-
-debug.humanize = function(ms) {
-  var sec = 1000
-    , min = 60 * 1000
-    , hour = 60 * min;
-
-  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
-  if (ms >= min) return (ms / min).toFixed(1) + 'm';
-  if (ms >= sec) return (ms / sec | 0) + 's';
-  return ms + 'ms';
-};
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-debug.enabled = function(name) {
-  for (var i = 0, len = debug.skips.length; i < len; i++) {
-    if (debug.skips[i].test(name)) {
-      return false;
-    }
-  }
-  for (var i = 0, len = debug.names.length; i < len; i++) {
-    if (debug.names[i].test(name)) {
-      return true;
-    }
-  }
-  return false;
-};
-
-/**
- * Coerce `val`.
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-// persist
-
-try {
-  if (window.localStorage) debug.enable(localStorage.debug);
-} catch(e){}
 
 }, {}],
 
 191: [function(require, module, exports) {
 
+
+/**
+ * Expose `debug()` as the module.
+ */
+
+module.exports = debug;
+
+/**
+ * Create a debugger with the given `name`.
+ *
+ * @param {String} name
+ * @return {Type}
+ * @api public
+ */
+
+function debug(name) {
+  if (!debug.enabled(name)) return function(){};
+
+  return function(fmt){
+    fmt = coerce(fmt);
+
+    var curr = new Date;
+    var ms = curr - (debug[name] || curr);
+    debug[name] = curr;
+
+    fmt = name
+      + ' '
+      + fmt
+      + ' +' + debug.humanize(ms);
+
+    // This hackery is required for IE8
+    // where `console.log` doesn't have 'apply'
+    window.console
+      && console.log
+      && Function.prototype.apply.call(console.log, console, arguments);
+  }
+}
+
+/**
+ * The currently active debug mode names.
+ */
+
+debug.names = [];
+debug.skips = [];
+
+/**
+ * Enables a debug mode by name. This can include modes
+ * separated by a colon and wildcards.
+ *
+ * @param {String} name
+ * @api public
+ */
+
+debug.enable = function(name) {
+  try {
+    localStorage.debug = name;
+  } catch(e){}
+
+  var split = (name || '').split(/[\s,]+/)
+    , len = split.length;
+
+  for (var i = 0; i < len; i++) {
+    name = split[i].replace('*', '.*?');
+    if (name[0] === '-') {
+      debug.skips.push(new RegExp('^' + name.substr(1) + '$'));
+    }
+    else {
+      debug.names.push(new RegExp('^' + name + '$'));
+    }
+  }
+};
+
+/**
+ * Disable debug output.
+ *
+ * @api public
+ */
+
+debug.disable = function(){
+  debug.enable('');
+};
+
+/**
+ * Humanize the given `ms`.
+ *
+ * @param {Number} m
+ * @return {String}
+ * @api private
+ */
+
+debug.humanize = function(ms) {
+  var sec = 1000
+    , min = 60 * 1000
+    , hour = 60 * min;
+
+  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
+  if (ms >= min) return (ms / min).toFixed(1) + 'm';
+  if (ms >= sec) return (ms / sec | 0) + 's';
+  return ms + 'ms';
+};
+
+/**
+ * Returns true if the given mode name is enabled, false otherwise.
+ *
+ * @param {String} name
+ * @return {Boolean}
+ * @api public
+ */
+
+debug.enabled = function(name) {
+  for (var i = 0, len = debug.skips.length; i < len; i++) {
+    if (debug.skips[i].test(name)) {
+      return false;
+    }
+  }
+  for (var i = 0, len = debug.names.length; i < len; i++) {
+    if (debug.names[i].test(name)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * Coerce `val`.
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
+// persist
+
+try {
+  if (window.localStorage) debug.enable(localStorage.debug);
+} catch(e){}
+
+}, {}],
+
+192: [function(require, module, exports) {
+
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":192,"./debug":190}],
+}, {"./lib/debug":193,"./debug":191}],
 
-192: [function(require, module, exports) {
+193: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17072,7 +17396,7 @@ function coerce(val) {
 
 }, {}],
 
-193: [function(require, module, exports) {
+194: [function(require, module, exports) {
 
 
 /**
@@ -17097,7 +17421,7 @@ module.exports = function(e){
 
 }, {}],
 
-63: [function(require, module, exports) {
+64: [function(require, module, exports) {
 
 
 /**
@@ -17125,7 +17449,7 @@ module.exports = function (str, options) {
 
 }, {}],
 
-194: [function(require, module, exports) {
+195: [function(require, module, exports) {
 
 
 var after = require('after');
@@ -17737,9 +18061,9 @@ function canonicalUrl (search) {
   return -1 == i ? url : url.slice(0, i);
 }
 
-}, {"./cookie":195,"./group":196,"./store":197,"./user":198,"after":56,"bind":31,"callback":32,"canonical":150,"clone":4,"debug":191,"defaults":2,"each":10,"emitter":13,"is":49,"is-email":152,"is-meta":178,"new-date":163,"event":17,"prevent":193,"querystring":23,"object":21,"url":28,"facade":165}],
+}, {"./cookie":196,"./group":197,"./store":198,"./user":199,"after":57,"bind":32,"callback":33,"canonical":153,"clone":4,"debug":192,"defaults":2,"each":10,"emitter":13,"is":50,"is-email":155,"is-meta":179,"new-date":164,"event":18,"prevent":194,"querystring":24,"object":22,"url":29,"facade":166}],
 
-195: [function(require, module, exports) {
+196: [function(require, module, exports) {
 
 
 var bind = require('bind');
@@ -17858,9 +18182,9 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"bind":31,"cookie":8,"clone":4,"defaults":2,"json":181,"top-domain":187}],
+}, {"bind":32,"cookie":8,"clone":4,"defaults":2,"json":182,"top-domain":188}],
 
-199: [function(require, module, exports) {
+200: [function(require, module, exports) {
 
 
 var traverse = require('isodate-traverse');
@@ -18062,9 +18386,9 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"./cookie":195,"./store":197,"isodate-traverse":179,"defaults":2,"extend":143,"clone":4}],
+}, {"./cookie":196,"./store":198,"isodate-traverse":180,"defaults":2,"extend":143,"clone":4}],
 
-196: [function(require, module, exports) {
+197: [function(require, module, exports) {
 
 
 var debug = require('debug')('analytics:group');
@@ -18121,9 +18445,9 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"./entity":199,"debug":191,"inherit":18,"bind":31}],
+}, {"./entity":200,"debug":192,"inherit":19,"bind":32}],
 
-200: [function(require, module, exports) {
+201: [function(require, module, exports) {
 
 
 /**
@@ -18163,9 +18487,9 @@ each(Integrations, function (name, Integration) {
   analytics.use(Integration);
 });
 
-}, {"./analytics":194,"./version":201,"analytics.js-integrations":64,"each":10}],
+}, {"./analytics":195,"./version":202,"analytics.js-integrations":65,"each":10}],
 
-197: [function(require, module, exports) {
+198: [function(require, module, exports) {
 
 
 var bind = require('bind');
@@ -18253,9 +18577,9 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":31,"defaults":2,"store.js":186}],
+}, {"bind":32,"defaults":2,"store.js":187}],
 
-198: [function(require, module, exports) {
+199: [function(require, module, exports) {
 
 
 var debug = require('debug')('analytics:user');
@@ -18342,11 +18666,11 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"./entity":199,"./cookie":195,"debug":191,"inherit":18,"bind":31}],
+}, {"./entity":200,"./cookie":196,"debug":192,"inherit":19,"bind":32}],
 
-201: [function(require, module, exports) {
+202: [function(require, module, exports) {
 
 
-module.exports = '2.0.1';
+module.exports = '2.2.0';
 
-}, {}]}, {}, {"200":"analytics"})
+}, {}]}, {}, {"201":"analytics"})

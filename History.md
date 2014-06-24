@@ -1,4 +1,9 @@
 
+2.2.0 / 2014-06-24
+==================
+
+* bump analytics.js-integrations with bing/bronto fixes
+
 2.1.0 / 2014-06-23
 ==================
 

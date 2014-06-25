@@ -5223,7 +5223,7 @@ var Bing = exports.Integration = integration('Bing Ads')
   .readyOnLoad()
   .option('siteId', '')
   .option('domainId', '')
-  .option('goals', {});
+  .option('events', {});
 
 /**
  * Initialize.
@@ -5288,11 +5288,11 @@ Bing.prototype.loaded = function(){
  */
 
 Bing.prototype.track = function(track){
-  var goals = this.options.goals;
+  var events = this.options.events;
   var traits = track.traits();
   var event = track.event();
-  if (!has.call(goals, event)) return;
-  var goal = goals[event];
+  if (!has.call(events, event)) return;
+  var goal = events[event];
   var revenue = track.revenue() || 0;
   window.mstag.loadTag('analytics', {
     domainId: this.options.domainId,
@@ -12846,7 +12846,9 @@ Woopra.prototype.page = function (page) {
  */
 
 Woopra.prototype.identify = function (identify) {
-  window.woopra.identify(identify.traits()).push(); // `push` sends it off async
+  var traits = identify.traits();
+  if (identify.name()) traits.name = identify.name();
+  window.woopra.identify(traits).push(); // `push` sends it off async
 };
 
 
@@ -18061,7 +18063,7 @@ function canonicalUrl (search) {
   return -1 == i ? url : url.slice(0, i);
 }
 
-}, {"after":57,"bind":32,"callback":33,"canonical":153,"clone":4,"./cookie":196,"debug":192,"defaults":2,"each":10,"emitter":13,"./group":197,"is":50,"is-email":155,"is-meta":179,"new-date":164,"event":18,"prevent":194,"querystring":24,"object":22,"./store":198,"url":29,"./user":199,"facade":166}],
+}, {"./cookie":196,"./group":197,"./store":198,"./user":199,"after":57,"bind":32,"callback":33,"canonical":153,"clone":4,"debug":192,"defaults":2,"each":10,"emitter":13,"is":50,"is-email":155,"is-meta":179,"new-date":164,"event":18,"prevent":194,"querystring":24,"object":22,"url":29,"facade":166}],
 
 196: [function(require, module, exports) {
 

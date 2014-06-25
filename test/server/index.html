@@ -2,17 +2,20 @@
 <html>
 <head>
   <title>analytics.js tests</title>
-  <link rel="stylesheet" href="test/server/mocha.css">
-  <script src="test/server/mocha.js"></script>
+  <link rel="stylesheet" href="/test/server/mocha.css">
+  <script src="/test/server/mocha.js"></script>
   <script>mocha.setup({ ui: 'bdd' })</script>
   <script src="/analytics.js"></script>
   <script src="/build/build.js"></script>
 </head>
 <body>
   <div id="mocha"></div>
+  <script src="/saucelabs.js"></script>
   <script>
     if (window.mochaPhantomJS) {
       mochaPhantomJS.run();
+    } else if (window.saucelabs) {
+      saucelabs(mocha.run());
     } else {
       mocha.run();
     }

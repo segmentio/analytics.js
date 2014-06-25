@@ -3,21 +3,16 @@
 # Task args.
 #
 
+BROWSER ?= chrome,firefox,safari
 REPORTER ?= spec
 TESTS = $(wildcard test/*.js)
-TEST = http://localhost:4200
+TEST = test/server
 SRC = $(wildcard lib/*.js)
 MINIFY = $(BINS)/uglifyjs
 PID = test/server/pid.txt
 BINS = node_modules/.bin
 BUILD = build/build.js
 DUO = $(BINS)/duo
-
-PHANTOM= $(BINS)/mocha-phantomjs \
-	--setting local-to-remote-url-access=true \
-	--setting-web-security=false \
-	--path $(BINS)/phantomjs \
-	--reporter $(REPORTER)
 
 #
 # Default target.
@@ -46,9 +41,18 @@ version: component.json
 # Test with phantomjs.
 #
 
-test: $(TESTS) server
-	@$(PHANTOM) $(TEST)
-	@$(MAKE) kill
+test: $(BUILD)
+	@$(BINS)/duo-test phantomjs $(TEST)
+
+#
+# Test with saucelabs
+#
+
+test-saucelabs: $(BUILD)
+	@$(BINS)/duo-test saucelabs $(TEST) \
+		--reporter $(REPORTER) \
+		--browser $(BROWSER) \
+		--name analytics.js
 
 #
 # Test in the browser.
@@ -56,31 +60,8 @@ test: $(TESTS) server
 # On the link press `cmd + doubleclick`.
 #
 
-test-browser: $(TESTS) server
-	@echo open $(TEST)
-
-#
-# Start the test server.
-#
-
-server: $(BUILD) kill
-	@node test/server &> /dev/null &
-	@sleep 1
-
-#
-# Kill the test server.
-#
-
-kill:
-	@-test -e $(PID) && kill `cat $(PID)`
-	@rm -f $(PID)
-
-#
-# Absolutely make sure the test server is off.
-#
-
-kill-all:
-	@-kill -9 $(shell pgrep -f "test/server")
+test-browser: $(BUILD)
+	@$(DUOT) --path $(TEST) $(BROWSER)
 
 #
 # Phony targets.

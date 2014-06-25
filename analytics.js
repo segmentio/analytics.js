@@ -17599,7 +17599,8 @@ Analytics.prototype.initialize = function (settings, options) {
 
   // initialize integrations, passing ready
   each(integrations, function (name, integration) {
-    if (options.initialPageview && opts.initialPageview === false) {
+    // TODO: this doesn't make any sense haha
+    if (options.initialPageview && options.initialPageview === false) {
       integration.page = after(2, integration.page);
     }
 
@@ -18061,7 +18062,7 @@ function canonicalUrl (search) {
   return -1 == i ? url : url.slice(0, i);
 }
 
-}, {"./cookie":196,"./group":197,"./store":198,"./user":199,"after":57,"bind":32,"callback":33,"canonical":153,"clone":4,"debug":192,"defaults":2,"each":10,"emitter":13,"is":50,"is-email":155,"is-meta":179,"new-date":164,"event":18,"prevent":194,"querystring":24,"object":22,"url":29,"facade":166}],
+}, {"after":57,"bind":32,"callback":33,"canonical":153,"clone":4,"./cookie":196,"debug":192,"defaults":2,"each":10,"emitter":13,"./group":197,"is":50,"is-email":155,"is-meta":179,"new-date":164,"event":18,"prevent":194,"querystring":24,"object":22,"./store":198,"url":29,"./user":199,"facade":166}],
 
 196: [function(require, module, exports) {
 
@@ -18671,6 +18672,6 @@ module.exports.User = User;
 202: [function(require, module, exports) {
 
 
-module.exports = '2.2.0';
+module.exports = '2.2.1';
 
 }, {}]}, {}, {"201":"analytics"})

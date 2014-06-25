@@ -17599,8 +17599,7 @@ Analytics.prototype.initialize = function (settings, options) {
 
   // initialize integrations, passing ready
   each(integrations, function (name, integration) {
-    // TODO: this doesn't make any sense haha
-    if (options.initialPageview && options.initialPageview === false) {
+    if (options.initialPageview && integration.options.initialPageview === false) {
       integration.page = after(2, integration.page);
     }
 
@@ -18672,6 +18671,6 @@ module.exports.User = User;
 202: [function(require, module, exports) {
 
 
-module.exports = '2.2.1';
+module.exports = '2.2.2';
 
 }, {}]}, {}, {"201":"analytics"})

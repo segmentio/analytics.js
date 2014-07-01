@@ -12,3 +12,13 @@ env:
   - BROWSER=chrome
   - BROWSER=firefox
   - BROWSER=safari
+  - BROWSER=ie11
+  - BROWSER=ie10
+  - BROWSER=ie9
+  # TODO: iphone?
+  # TODO: android?
+  # TODO: opera
+  # TODO: once duo-test supports 8-6
+  # - BROWSER=ie8
+  # - BROWSER=ie7
+  # - BROWSER=ie6

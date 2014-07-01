@@ -13,6 +13,7 @@ PID = test/server/pid.txt
 BINS = node_modules/.bin
 BUILD = build/build.js
 DUO = $(BINS)/duo
+DUOT = $(BINS)/duo-test
 
 #
 # Default target.
@@ -42,14 +43,14 @@ version: component.json
 #
 
 test: $(BUILD)
-	@$(BINS)/duo-test phantomjs $(TEST)
+	@$(DUOT) phantomjs $(TEST)
 
 #
 # Test with saucelabs
 #
 
 test-saucelabs: $(BUILD)
-	@$(BINS)/duo-test saucelabs $(TEST) \
+	@$(DUOT) saucelabs $(TEST) \
 		--reporter $(REPORTER) \
 		--browser $(BROWSER) \
 		--name analytics.js
@@ -61,7 +62,7 @@ test-saucelabs: $(BUILD)
 #
 
 test-browser: $(BUILD)
-	@$(DUOT) --path $(TEST) $(BROWSER)
+	@$(DUOT) browser $(TEST) default
 
 #
 # Phony targets.

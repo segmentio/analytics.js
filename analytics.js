@@ -773,19 +773,19 @@ Cookie.prototype.options = function (options) {
 
   var domain = '.' + topDomain(window.location.href);
 
-  // localhost cookies are special: http://curl.haxx.se/rfc/cookie_spec.html
-  if ('.' == domain) domain = '';
-
   this._options = defaults(options, {
     maxage: 31536000000, // default to a year
     path: '/',
     domain: domain
   });
 
+  // http://curl.haxx.se/rfc/cookie_spec.html
+  // https://publicsuffix.org/list/effective_tld_names.dat
+  //
   // try setting a dummy cookie with the options
   // if the cookie isn't set, it probably means
   // that the domain is on the public suffix list
-  // like myapp.herokuapp.com
+  // like myapp.herokuapp.com or localhost / ip.
   this.set('ajs:test', true);
   if (!this.get('ajs:test')) {
     debug('fallback to domain=null');
@@ -4841,7 +4841,12 @@ module.exports = function map (obj, iterator) {
  * Module dependencies.
  */
 
-var type = require('type');
+try {
+  var type = require('type');
+} catch (err) {
+  var type = require('component-type');
+}
+
 var toFunction = require('to-function');
 
 /**
@@ -4921,7 +4926,7 @@ function array(obj, fn, ctx) {
   }
 }
 
-}, {"type":35,"to-function":80}],
+}, {"type":35,"component-type":35,"to-function":80}],
 80: [function(require, module, exports) {
 
 /**

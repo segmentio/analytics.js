@@ -736,6 +736,7 @@ function canonicalUrl (search) {
 }, {"./cookie":6,"./group":7,"./store":8,"./user":9,"after":10,"bind":11,"callback":12,"canonical":13,"clone":14,"debug":15,"defaults":16,"each":5,"emitter":17,"is":18,"is-email":19,"is-meta":20,"new-date":21,"event":22,"prevent":23,"querystring":24,"object":25,"url":26,"facade":27}],
 6: [function(require, module, exports) {
 
+var debug = require('debug')('analytics.js:cookie');
 var bind = require('bind');
 var cookie = require('cookie');
 var clone = require('clone');
@@ -775,13 +776,22 @@ Cookie.prototype.options = function (options) {
   // localhost cookies are special: http://curl.haxx.se/rfc/cookie_spec.html
   if ('.' == domain) domain = '';
 
-  defaults(options, {
+  this._options = defaults(options, {
     maxage: 31536000000, // default to a year
     path: '/',
     domain: domain
   });
 
-  this._options = options;
+  // try setting a dummy cookie with the options
+  // if the cookie isn't set, it probably means
+  // that the domain is on the public suffix list
+  // like myapp.herokuapp.com
+  this.set('ajs:test', true);
+  if (!this.get('ajs:test')) {
+    debug('fallback to domain=null');
+    this._options.domain = null;
+  }
+  this.remove('ajs:test');
 };
 
 
@@ -852,7 +862,305 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"bind":11,"cookie":28,"clone":14,"defaults":16,"json":29,"top-domain":30}],
+}, {"debug":15,"bind":11,"cookie":28,"clone":14,"defaults":16,"json":29,"top-domain":30}],
+15: [function(require, module, exports) {
+if ('undefined' == typeof window) {
+  module.exports = require('./lib/debug');
+} else {
+  module.exports = require('./debug');
+}
+
+}, {"./lib/debug":31,"./debug":32}],
+31: [function(require, module, exports) {
+/**
+ * Module dependencies.
+ */
+
+var tty = require('tty');
+
+/**
+ * Expose `debug()` as the module.
+ */
+
+module.exports = debug;
+
+/**
+ * Enabled debuggers.
+ */
+
+var names = []
+  , skips = [];
+
+(process.env.DEBUG || '')
+  .split(/[\s,]+/)
+  .forEach(function(name){
+    name = name.replace('*', '.*?');
+    if (name[0] === '-') {
+      skips.push(new RegExp('^' + name.substr(1) + '$'));
+    } else {
+      names.push(new RegExp('^' + name + '$'));
+    }
+  });
+
+/**
+ * Colors.
+ */
+
+var colors = [6, 2, 3, 4, 5, 1];
+
+/**
+ * Previous debug() call.
+ */
+
+var prev = {};
+
+/**
+ * Previously assigned color.
+ */
+
+var prevColor = 0;
+
+/**
+ * Is stdout a TTY? Colored output is disabled when `true`.
+ */
+
+var isatty = tty.isatty(2);
+
+/**
+ * Select a color.
+ *
+ * @return {Number}
+ * @api private
+ */
+
+function color() {
+  return colors[prevColor++ % colors.length];
+}
+
+/**
+ * Humanize the given `ms`.
+ *
+ * @param {Number} m
+ * @return {String}
+ * @api private
+ */
+
+function humanize(ms) {
+  var sec = 1000
+    , min = 60 * 1000
+    , hour = 60 * min;
+
+  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
+  if (ms >= min) return (ms / min).toFixed(1) + 'm';
+  if (ms >= sec) return (ms / sec | 0) + 's';
+  return ms + 'ms';
+}
+
+/**
+ * Create a debugger with the given `name`.
+ *
+ * @param {String} name
+ * @return {Type}
+ * @api public
+ */
+
+function debug(name) {
+  function disabled(){}
+  disabled.enabled = false;
+
+  var match = skips.some(function(re){
+    return re.test(name);
+  });
+
+  if (match) return disabled;
+
+  match = names.some(function(re){
+    return re.test(name);
+  });
+
+  if (!match) return disabled;
+  var c = color();
+
+  function colored(fmt) {
+    fmt = coerce(fmt);
+
+    var curr = new Date;
+    var ms = curr - (prev[name] || curr);
+    prev[name] = curr;
+
+    fmt = '  \u001b[9' + c + 'm' + name + ' '
+      + '\u001b[3' + c + 'm\u001b[90m'
+      + fmt + '\u001b[3' + c + 'm'
+      + ' +' + humanize(ms) + '\u001b[0m';
+
+    console.error.apply(this, arguments);
+  }
+
+  function plain(fmt) {
+    fmt = coerce(fmt);
+
+    fmt = new Date().toUTCString()
+      + ' ' + name + ' ' + fmt;
+    console.error.apply(this, arguments);
+  }
+
+  colored.enabled = plain.enabled = true;
+
+  return isatty || process.env.DEBUG_COLORS
+    ? colored
+    : plain;
+}
+
+/**
+ * Coerce `val`.
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
+}, {}],
+32: [function(require, module, exports) {
+
+/**
+ * Expose `debug()` as the module.
+ */
+
+module.exports = debug;
+
+/**
+ * Create a debugger with the given `name`.
+ *
+ * @param {String} name
+ * @return {Type}
+ * @api public
+ */
+
+function debug(name) {
+  if (!debug.enabled(name)) return function(){};
+
+  return function(fmt){
+    fmt = coerce(fmt);
+
+    var curr = new Date;
+    var ms = curr - (debug[name] || curr);
+    debug[name] = curr;
+
+    fmt = name
+      + ' '
+      + fmt
+      + ' +' + debug.humanize(ms);
+
+    // This hackery is required for IE8
+    // where `console.log` doesn't have 'apply'
+    window.console
+      && console.log
+      && Function.prototype.apply.call(console.log, console, arguments);
+  }
+}
+
+/**
+ * The currently active debug mode names.
+ */
+
+debug.names = [];
+debug.skips = [];
+
+/**
+ * Enables a debug mode by name. This can include modes
+ * separated by a colon and wildcards.
+ *
+ * @param {String} name
+ * @api public
+ */
+
+debug.enable = function(name) {
+  try {
+    localStorage.debug = name;
+  } catch(e){}
+
+  var split = (name || '').split(/[\s,]+/)
+    , len = split.length;
+
+  for (var i = 0; i < len; i++) {
+    name = split[i].replace('*', '.*?');
+    if (name[0] === '-') {
+      debug.skips.push(new RegExp('^' + name.substr(1) + '$'));
+    }
+    else {
+      debug.names.push(new RegExp('^' + name + '$'));
+    }
+  }
+};
+
+/**
+ * Disable debug output.
+ *
+ * @api public
+ */
+
+debug.disable = function(){
+  debug.enable('');
+};
+
+/**
+ * Humanize the given `ms`.
+ *
+ * @param {Number} m
+ * @return {String}
+ * @api private
+ */
+
+debug.humanize = function(ms) {
+  var sec = 1000
+    , min = 60 * 1000
+    , hour = 60 * min;
+
+  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
+  if (ms >= min) return (ms / min).toFixed(1) + 'm';
+  if (ms >= sec) return (ms / sec | 0) + 's';
+  return ms + 'ms';
+};
+
+/**
+ * Returns true if the given mode name is enabled, false otherwise.
+ *
+ * @param {String} name
+ * @return {Boolean}
+ * @api public
+ */
+
+debug.enabled = function(name) {
+  for (var i = 0, len = debug.skips.length; i < len; i++) {
+    if (debug.skips[i].test(name)) {
+      return false;
+    }
+  }
+  for (var i = 0, len = debug.names.length; i < len; i++) {
+    if (debug.names[i].test(name)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * Coerce `val`.
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
+// persist
+
+try {
+  if (window.localStorage) debug.enable(localStorage.debug);
+} catch(e){}
+
+}, {}],
 11: [function(require, module, exports) {
 
 try {
@@ -899,8 +1207,8 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":31,"bind-all":32}],
-31: [function(require, module, exports) {
+}, {"bind":33,"bind-all":34}],
+33: [function(require, module, exports) {
 /**
  * Slice reference.
  */
@@ -926,7 +1234,7 @@ module.exports = function(obj, fn){
 };
 
 }, {}],
-32: [function(require, module, exports) {
+34: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -943,8 +1251,8 @@ module.exports = function (obj) {
   }
   return obj;
 };
-}, {"bind":31,"type":33}],
-33: [function(require, module, exports) {
+}, {"bind":33,"type":35}],
+35: [function(require, module, exports) {
 
 /**
  * toString ref.
@@ -1146,7 +1454,7 @@ function clone(obj){
   }
 }
 
-}, {"type":33}],
+}, {"type":35}],
 16: [function(require, module, exports) {
 'use strict';
 
@@ -1186,8 +1494,8 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":34}],
-34: [function(require, module, exports) {
+}, {"json-fallback":36}],
+36: [function(require, module, exports) {
 /*
     json2.js
     2014-02-04
@@ -1849,8 +2157,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"./entity":35,"debug":15,"inherit":36,"bind":11}],
-35: [function(require, module, exports) {
+}, {"./entity":37,"debug":15,"inherit":38,"bind":11}],
+37: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var defaults = require('defaults');
@@ -2051,7 +2359,7 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"./cookie":6,"./store":8,"isodate-traverse":37,"defaults":16,"extend":38,"clone":14}],
+}, {"./cookie":6,"./store":8,"isodate-traverse":39,"defaults":16,"extend":40,"clone":14}],
 8: [function(require, module, exports) {
 
 var bind = require('bind');
@@ -2139,8 +2447,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":11,"defaults":16,"store.js":39}],
-39: [function(require, module, exports) {
+}, {"bind":11,"defaults":16,"store.js":41}],
+41: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -2293,7 +2601,7 @@ store.enabled = !store.disabled
 
 module.exports = store;
 }, {"json":29}],
-37: [function(require, module, exports) {
+39: [function(require, module, exports) {
 
 var is = require('is');
 var isodate = require('isodate');
@@ -2367,8 +2675,8 @@ function array (arr, strict) {
   return arr;
 }
 
-}, {"is":40,"isodate":41,"each":5}],
-40: [function(require, module, exports) {
+}, {"is":42,"isodate":43,"each":5}],
+42: [function(require, module, exports) {
 
 var isEmpty = require('is-empty')
   , typeOf = require('type');
@@ -2439,8 +2747,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":42,"type":33}],
-42: [function(require, module, exports) {
+}, {"is-empty":44,"type":35}],
+44: [function(require, module, exports) {
 
 /**
  * Expose `isEmpty`.
@@ -2471,7 +2779,7 @@ function isEmpty (val) {
   return true;
 }
 }, {}],
-41: [function(require, module, exports) {
+43: [function(require, module, exports) {
 
 /**
  * Matcher, slightly modified from:
@@ -2618,8 +2926,8 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
-}, {"type":33}],
-38: [function(require, module, exports) {
+}, {"type":35}],
+40: [function(require, module, exports) {
 
 module.exports = function extend (object) {
     // Takes an unlimited number of extenders.
@@ -2636,305 +2944,7 @@ module.exports = function extend (object) {
     return object;
 };
 }, {}],
-15: [function(require, module, exports) {
-if ('undefined' == typeof window) {
-  module.exports = require('./lib/debug');
-} else {
-  module.exports = require('./debug');
-}
-
-}, {"./lib/debug":43,"./debug":44}],
-43: [function(require, module, exports) {
-/**
- * Module dependencies.
- */
-
-var tty = require('tty');
-
-/**
- * Expose `debug()` as the module.
- */
-
-module.exports = debug;
-
-/**
- * Enabled debuggers.
- */
-
-var names = []
-  , skips = [];
-
-(process.env.DEBUG || '')
-  .split(/[\s,]+/)
-  .forEach(function(name){
-    name = name.replace('*', '.*?');
-    if (name[0] === '-') {
-      skips.push(new RegExp('^' + name.substr(1) + '$'));
-    } else {
-      names.push(new RegExp('^' + name + '$'));
-    }
-  });
-
-/**
- * Colors.
- */
-
-var colors = [6, 2, 3, 4, 5, 1];
-
-/**
- * Previous debug() call.
- */
-
-var prev = {};
-
-/**
- * Previously assigned color.
- */
-
-var prevColor = 0;
-
-/**
- * Is stdout a TTY? Colored output is disabled when `true`.
- */
-
-var isatty = tty.isatty(2);
-
-/**
- * Select a color.
- *
- * @return {Number}
- * @api private
- */
-
-function color() {
-  return colors[prevColor++ % colors.length];
-}
-
-/**
- * Humanize the given `ms`.
- *
- * @param {Number} m
- * @return {String}
- * @api private
- */
-
-function humanize(ms) {
-  var sec = 1000
-    , min = 60 * 1000
-    , hour = 60 * min;
-
-  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
-  if (ms >= min) return (ms / min).toFixed(1) + 'm';
-  if (ms >= sec) return (ms / sec | 0) + 's';
-  return ms + 'ms';
-}
-
-/**
- * Create a debugger with the given `name`.
- *
- * @param {String} name
- * @return {Type}
- * @api public
- */
-
-function debug(name) {
-  function disabled(){}
-  disabled.enabled = false;
-
-  var match = skips.some(function(re){
-    return re.test(name);
-  });
-
-  if (match) return disabled;
-
-  match = names.some(function(re){
-    return re.test(name);
-  });
-
-  if (!match) return disabled;
-  var c = color();
-
-  function colored(fmt) {
-    fmt = coerce(fmt);
-
-    var curr = new Date;
-    var ms = curr - (prev[name] || curr);
-    prev[name] = curr;
-
-    fmt = '  \u001b[9' + c + 'm' + name + ' '
-      + '\u001b[3' + c + 'm\u001b[90m'
-      + fmt + '\u001b[3' + c + 'm'
-      + ' +' + humanize(ms) + '\u001b[0m';
-
-    console.error.apply(this, arguments);
-  }
-
-  function plain(fmt) {
-    fmt = coerce(fmt);
-
-    fmt = new Date().toUTCString()
-      + ' ' + name + ' ' + fmt;
-    console.error.apply(this, arguments);
-  }
-
-  colored.enabled = plain.enabled = true;
-
-  return isatty || process.env.DEBUG_COLORS
-    ? colored
-    : plain;
-}
-
-/**
- * Coerce `val`.
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-}, {}],
-44: [function(require, module, exports) {
-
-/**
- * Expose `debug()` as the module.
- */
-
-module.exports = debug;
-
-/**
- * Create a debugger with the given `name`.
- *
- * @param {String} name
- * @return {Type}
- * @api public
- */
-
-function debug(name) {
-  if (!debug.enabled(name)) return function(){};
-
-  return function(fmt){
-    fmt = coerce(fmt);
-
-    var curr = new Date;
-    var ms = curr - (debug[name] || curr);
-    debug[name] = curr;
-
-    fmt = name
-      + ' '
-      + fmt
-      + ' +' + debug.humanize(ms);
-
-    // This hackery is required for IE8
-    // where `console.log` doesn't have 'apply'
-    window.console
-      && console.log
-      && Function.prototype.apply.call(console.log, console, arguments);
-  }
-}
-
-/**
- * The currently active debug mode names.
- */
-
-debug.names = [];
-debug.skips = [];
-
-/**
- * Enables a debug mode by name. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} name
- * @api public
- */
-
-debug.enable = function(name) {
-  try {
-    localStorage.debug = name;
-  } catch(e){}
-
-  var split = (name || '').split(/[\s,]+/)
-    , len = split.length;
-
-  for (var i = 0; i < len; i++) {
-    name = split[i].replace('*', '.*?');
-    if (name[0] === '-') {
-      debug.skips.push(new RegExp('^' + name.substr(1) + '$'));
-    }
-    else {
-      debug.names.push(new RegExp('^' + name + '$'));
-    }
-  }
-};
-
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-debug.disable = function(){
-  debug.enable('');
-};
-
-/**
- * Humanize the given `ms`.
- *
- * @param {Number} m
- * @return {String}
- * @api private
- */
-
-debug.humanize = function(ms) {
-  var sec = 1000
-    , min = 60 * 1000
-    , hour = 60 * min;
-
-  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
-  if (ms >= min) return (ms / min).toFixed(1) + 'm';
-  if (ms >= sec) return (ms / sec | 0) + 's';
-  return ms + 'ms';
-};
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-debug.enabled = function(name) {
-  for (var i = 0, len = debug.skips.length; i < len; i++) {
-    if (debug.skips[i].test(name)) {
-      return false;
-    }
-  }
-  for (var i = 0, len = debug.names.length; i < len; i++) {
-    if (debug.names[i].test(name)) {
-      return true;
-    }
-  }
-  return false;
-};
-
-/**
- * Coerce `val`.
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-// persist
-
-try {
-  if (window.localStorage) debug.enable(localStorage.debug);
-} catch(e){}
-
-}, {}],
-36: [function(require, module, exports) {
+38: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -3029,7 +3039,7 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"./entity":35,"./cookie":6,"debug":15,"inherit":36,"bind":11}],
+}, {"./entity":37,"./cookie":6,"debug":15,"inherit":38,"bind":11}],
 10: [function(require, module, exports) {
 
 module.exports = function after (times, func) {
@@ -3384,7 +3394,7 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":42,"type":33,"component-type":33}],
+}, {"is-empty":44,"type":35,"component-type":35}],
 19: [function(require, module, exports) {
 
 /**
@@ -3468,7 +3478,7 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
-}, {"./milliseconds":47,"./seconds":48,"is":40,"isodate":41}],
+}, {"./milliseconds":47,"./seconds":48,"is":42,"isodate":43}],
 47: [function(require, module, exports) {
 
 /**
@@ -3676,7 +3686,7 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":49,"type":33}],
+}, {"trim":49,"type":35}],
 49: [function(require, module, exports) {
 
 exports = module.exports = trim;
@@ -4121,7 +4131,7 @@ function clone(obj){
   }
 }
 
-}, {"component-type":33,"type":33}],
+}, {"component-type":35,"type":35}],
 58: [function(require, module, exports) {
 
 /**
@@ -4911,7 +4921,7 @@ function array(obj, fn, ctx) {
   }
 }
 
-}, {"type":33,"to-function":80}],
+}, {"type":35,"to-function":80}],
 80: [function(require, module, exports) {
 
 /**
@@ -5349,7 +5359,7 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":42,"type":33,"component-type":33}],
+}, {"is-empty":44,"type":35,"component-type":35}],
 83: [function(require, module, exports) {
 
 /**
@@ -6844,7 +6854,7 @@ exports._wrapTrack = function(){
   };
 };
 
-}, {"./events":167,"to-no-case":168,"after":10,"callback":12,"emitter":17,"next-tick":45,"type":33}],
+}, {"./events":167,"to-no-case":168,"after":10,"callback":12,"emitter":17,"next-tick":45,"type":35}],
 167: [function(require, module, exports) {
 
 /**
@@ -7081,7 +7091,7 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":31,"bind-all":32}],
+}, {"bind":33,"bind-all":34}],
 165: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
@@ -7517,7 +7527,7 @@ module.exports = function loadScript(options, fn){
   // give it an ID or attributes.
   return script;
 };
-}, {"script-onload":172,"next-tick":45,"type":33}],
+}, {"script-onload":172,"next-tick":45,"type":35}],
 172: [function(require, module, exports) {
 
 // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
@@ -8038,7 +8048,7 @@ function timeout(fn, ms) {
   }
 }
 
-}, {"emitter":176,"bind":31,"component-emitter":176,"component-bind":31}],
+}, {"emitter":176,"bind":33,"component-emitter":176,"component-bind":33}],
 176: [function(require, module, exports) {
 
 /**
@@ -8769,7 +8779,7 @@ function writeToAppend(str) {
   }
   document.body.appendChild(el);
 }
-}, {"analytics.js-integration":159,"load-script":161,"on-body":173,"domify":174,"extend":38,"bind":31,"when":177}],
+}, {"analytics.js-integration":159,"load-script":161,"on-body":173,"domify":174,"extend":40,"bind":33,"when":177}],
 177: [function(require, module, exports) {
 
 var callback = require('callback');
@@ -10247,7 +10257,7 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":49,"type":33}],
+}, {"trim":49,"type":35}],
 190: [function(require, module, exports) {
 
 /**
@@ -10413,7 +10423,7 @@ Bugsnag.prototype.identify = function(identify){
   extend(window.Bugsnag.metaData, identify.traits());
 };
 
-}, {"analytics.js-integration":159,"is":18,"extend":38,"load-script":161,"on-error":191}],
+}, {"analytics.js-integration":159,"is":18,"extend":40,"load-script":161,"on-error":191}],
 191: [function(require, module, exports) {
 
 /**
@@ -10982,7 +10992,7 @@ Clicky.prototype.track = function(track){
   window.clicky.goal(track.event(), track.revenue());
 };
 
-}, {"facade":178,"extend":38,"analytics.js-integration":159,"is":18,"load-script":161}],
+}, {"facade":178,"extend":40,"analytics.js-integration":159,"is":18,"load-script":161}],
 100: [function(require, module, exports) {
 
 var integration = require('analytics.js-integration');
@@ -11311,7 +11321,7 @@ Curebit.prototype.completedOrder = function(track){
   });
 };
 
-}, {"analytics.js-integration":159,"global-queue":193,"facade":178,"throttle":196,"to-iso-string":197,"load-script":161,"clone":198,"each":5,"bind":31}],
+}, {"analytics.js-integration":159,"global-queue":193,"facade":178,"throttle":196,"to-iso-string":197,"load-script":161,"clone":198,"each":5,"bind":33}],
 196: [function(require, module, exports) {
 
 /**
@@ -11448,7 +11458,7 @@ function clone(obj){
   }
 }
 
-}, {"type":33}],
+}, {"type":35}],
 103: [function(require, module, exports) {
 
 var alias = require('alias');
@@ -11642,7 +11652,7 @@ function aliasByFunction (obj, convert) {
   for (var key in obj) output[convert(key)] = obj[key];
   return output;
 }
-}, {"type":33,"clone":62}],
+}, {"type":35,"clone":62}],
 200: [function(require, module, exports) {
 
 var is = require('is');
@@ -11834,7 +11844,7 @@ Errorception.prototype.identify = function(identify){
   extend(window._errs.meta, traits);
 };
 
-}, {"callback":12,"extend":38,"analytics.js-integration":159,"load-script":161,"on-error":191,"global-queue":193}],
+}, {"callback":12,"extend":40,"analytics.js-integration":159,"load-script":161,"on-error":191,"global-queue":193}],
 106: [function(require, module, exports) {
 
 var each = require('each');
@@ -13096,7 +13106,7 @@ function metrics(obj, data){
   return ret;
 }
 
-}, {"callback":12,"canonical":13,"each":5,"analytics.js-integration":159,"is":18,"load-script":161,"global-queue":193,"facade":178,"object":25,"obj-case":59,"type":33,"url":26}],
+}, {"callback":12,"canonical":13,"each":5,"analytics.js-integration":159,"is":18,"load-script":161,"global-queue":193,"facade":178,"object":25,"obj-case":59,"type":35,"url":26}],
 113: [function(require, module, exports) {
 
 var push = require('global-queue')('dataLayer', { wrap: false });
@@ -14066,7 +14076,7 @@ function formatDate (date) {
   return Math.floor(date / 1000);
 }
 
-}, {"alias":199,"convert-dates":200,"analytics.js-integration":159,"each":5,"is":18,"is-email":19,"load-script":161,"defaults":192,"is-empty":42,"when":177}],
+}, {"alias":199,"convert-dates":200,"analytics.js-integration":159,"each":5,"is":18,"is-email":19,"load-script":161,"defaults":192,"is-empty":44,"when":177}],
 122: [function(require, module, exports) {
 
 var callback = require('callback');
@@ -16140,7 +16150,7 @@ Optimizely.prototype.replay = function(){
   analytics.identify(traits);
 };
 
-}, {"bind":31,"callback":12,"each":5,"analytics.js-integration":159,"global-queue":193,"next-tick":45}],
+}, {"bind":33,"callback":12,"each":5,"analytics.js-integration":159,"global-queue":193,"next-tick":45}],
 137: [function(require, module, exports) {
 
 var integration = require('analytics.js-integration');
@@ -16866,7 +16876,7 @@ RollbarIntegration.prototype.identify = function(identify){
   rollbar.configure({ payload: { person: person }});
 };
 
-}, {"analytics.js-integration":159,"is":18,"extend":38}],
+}, {"analytics.js-integration":159,"is":18,"extend":40}],
 144: [function(require, module, exports) {
 
 /**
@@ -18268,7 +18278,7 @@ Woopra.prototype.track = function (track) {
   window.woopra.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":159,"to-snake-case":160,"load-script":161,"is-email":19,"extend":38,"each":5,"type":33}],
+}, {"analytics.js-integration":159,"to-snake-case":160,"load-script":161,"is-email":19,"extend":40,"each":5,"type":35}],
 158: [function(require, module, exports) {
 
 var callback = require('callback');

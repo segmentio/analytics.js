@@ -51,6 +51,17 @@ describe('cookie', function () {
       assert(equal(cookie.options().maxage, 31536000000));
     });
 
+    it('should set the domain correctly', function(){
+      cookie.options({ domain: '' });
+      assert.equal('', cookie.options().domain);
+    })
+
+    it('should fallback to `domain=null` when it cant set the test cookie', function(){
+      cookie.options({ domain: 'baz.com' });
+      assert.equal(null, cookie.options().domain);
+      assert.equal(null, cookie.get('ajs:test'));
+    })
+
     // TODO: unskip once we don't use `window`, instead mock it :/
     it.skip('should set domain localhost to `""`', function(){
       cookie.options({});

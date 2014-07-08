@@ -6278,7 +6278,7 @@ Screen.prototype.track = function(name){
 }, {"./utils":57,"./page":55,"./track":54}],
 3: [function(require, module, exports) {
 
-module.exports = '2.2.2';
+module.exports = '2.2.3';
 
 }, {}],
 4: [function(require, module, exports) {
@@ -16592,7 +16592,7 @@ Qualaroo.prototype.track = function(track){
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"callback":12,"analytics.js-integration":159,"load-script":161,"global-queue":193,"facade":178}],
+}, {"callback":12,"analytics.js-integration":159,"load-script":161,"global-queue":193,"facade":27}],
 142: [function(require, module, exports) {
 
 /**

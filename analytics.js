@@ -6278,7 +6278,7 @@ Screen.prototype.track = function(name){
 }, {"./utils":57,"./page":55,"./track":54}],
 3: [function(require, module, exports) {
 
-module.exports = '2.2.3';
+module.exports = '2.2.4';
 
 }, {}],
 4: [function(require, module, exports) {
@@ -13111,7 +13111,7 @@ function metrics(obj, data){
   return ret;
 }
 
-}, {"callback":12,"canonical":13,"each":5,"analytics.js-integration":159,"is":18,"load-script":161,"global-queue":193,"facade":178,"object":25,"obj-case":59,"type":35,"url":26}],
+}, {"callback":12,"canonical":13,"each":5,"analytics.js-integration":159,"is":18,"load-script":161,"global-queue":193,"facade":27,"object":25,"obj-case":59,"type":35,"url":26}],
 113: [function(require, module, exports) {
 
 var push = require('global-queue')('dataLayer', { wrap: false });

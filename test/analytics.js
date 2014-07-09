@@ -41,7 +41,7 @@ describe('Analytics', function () {
     user.reset();
     group.reset();
     // clear the hash
-    if (window.history && window.history.pushState) { 
+    if (window.history && window.history.pushState) {
       window.history.pushState('', '', window.location.pathname);
     }
   });
@@ -476,6 +476,26 @@ describe('Analytics', function () {
       assert.deepEqual(defaults, page.properties());
     });
 
+    it('should accept top level option .timestamp', function(){
+      var date = new Date;
+      analytics.page({ prop: true }, { timestamp: date });
+      var page = analytics._invoke.args[0][1];
+      assert.deepEqual(date, page.timestamp());
+    });
+
+    it('should accept top level option .integrations', function(){
+      analytics.page({ prop: true }, { integrations: { AdRoll: { opt: true } } });
+      var page = analytics._invoke.args[0][1];
+      assert.deepEqual({ opt: true }, page.options('AdRoll'));
+    });
+
+    it('should accept top level option .context', function(){
+      var app = { name: 'segment' };
+      analytics.page({ prop: true }, { context: { app: app } });
+      var page = analytics._invoke.args[0][1];
+      assert.deepEqual(app, page.obj.context.app);
+    });
+
     it('should emit page', function (done) {
       defaults.category = 'category';
       defaults.name = 'name';
@@ -651,6 +671,26 @@ describe('Analytics', function () {
       assert(is.date(created));
       assert(created.getTime() === seconds * 1000);
     });
+
+    it('should accept top level option .timestamp', function(){
+      var date = new Date;
+      analytics.identify(1, { trait: true }, { timestamp: date });
+      var identify = analytics._invoke.args[0][1];
+      assert.deepEqual(date, identify.timestamp());
+    });
+
+    it('should accept top level option .integrations', function(){
+      analytics.identify(1, { trait: true }, { integrations: { AdRoll: { opt: true } } });
+      var identify = analytics._invoke.args[0][1];
+      assert.deepEqual({ opt: true }, identify.options('AdRoll'));
+    });
+
+    it('should accept top level option .context', function(){
+      var app = { name: 'segment' };
+      analytics.identify(1, { trait: true }, { context: { app: app } });
+      var identify = analytics._invoke.args[0][1];
+      assert.deepEqual(app, identify.obj.context.app);
+    });
   });
 
   describe('#user', function () {
@@ -783,6 +823,26 @@ describe('Analytics', function () {
       assert(is.date(created));
       assert(created.getTime() === seconds * 1000);
     });
+
+    it('should accept top level option .timestamp', function(){
+      var date = new Date;
+      analytics.group(1, { trait: true }, { timestamp: date });
+      var group = analytics._invoke.args[0][1];
+      assert.deepEqual(date, group.timestamp());
+    });
+
+    it('should accept top level option .integrations', function(){
+      analytics.group(1, { trait: true }, { integrations: { AdRoll: { opt: true } } });
+      var group = analytics._invoke.args[0][1];
+      assert.deepEqual({ opt: true }, group.options('AdRoll'));
+    });
+
+    it('should accept top level option .context', function(){
+      var app = { name: 'segment' };
+      analytics.group(1, { trait: true }, { context: { app: app } });
+      var group = analytics._invoke.args[0][1];
+      assert.deepEqual(app, group.obj.context.app);
+    });
   });
 
   describe('#track', function () {
@@ -847,6 +907,26 @@ describe('Analytics', function () {
       var track = analytics._invoke.args[0][1];
       assert(track.properties().date.getTime() === date.getTime());
       assert(track.properties().nonDate === '2013');
+    });
+
+    it('should accept top level option .timestamp', function(){
+      var date = new Date;
+      analytics.track('event', { prop: true }, { timestamp: date });
+      var track = analytics._invoke.args[0][1];
+      assert.deepEqual(date, track.timestamp());
+    });
+
+    it('should accept top level option .integrations', function(){
+      analytics.track('event', { prop: true }, { integrations: { AdRoll: { opt: true } } });
+      var track = analytics._invoke.args[0][1];
+      assert.deepEqual({ opt: true }, track.options('AdRoll'));
+    });
+
+    it('should accept top level option .context', function(){
+      var app = { name: 'segment' };
+      analytics.track('event', { prop: true }, { context: { app: app } });
+      var track = analytics._invoke.args[0][1];
+      assert.deepEqual(app, track.obj.context.app);
     });
   });
 

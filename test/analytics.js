@@ -120,6 +120,16 @@ describe('Analytics', function () {
       analytics.initialize();
     });
 
+    it('should set `.analytics` to self on integration', function(done){
+      Test.readyOnInitialize();
+      analytics.addIntegration(Test);
+      analytics.ready(done);
+      var test = new Test(settings.Test);
+      analytics.add(test);
+      analytics.initialize();
+      assert(analytics == test.analytics);
+    });
+
     it('should listen on integration ready events', function (done) {
       Test.readyOnInitialize();
       analytics.addIntegration(Test);

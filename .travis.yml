@@ -1,5 +1,5 @@
 language: node_js
-script: make test-saucelabs
+script: make test-sauce
 node_js:
 - '0.11'
 env:

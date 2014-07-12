@@ -49,7 +49,7 @@ test: $(BUILD)
 # Test with saucelabs
 #
 
-test-saucelabs: $(BUILD)
+test-sauce: $(BUILD)
 	@$(DUOT) saucelabs $(TEST) \
 		--reporter $(REPORTER) \
 		--browser $(BROWSER) \

@@ -15,10 +15,9 @@ describe('analytics', function () {
   it('should add integrations', function () {
     each(Integrations, function (name, plugin) {
       var a = analytics.Integrations[name].prototype;
-      var b = plugin.Integration.prototype;
+      var b = (plugin.Integration || plugin).prototype;
       assert(a.name && b.name);
       assert(a.name == b.name);
     });
   });
-
 });

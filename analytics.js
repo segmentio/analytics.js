@@ -275,6 +275,7 @@ Analytics.prototype.initialize = function (settings, options) {
       integration.page = after(2, integration.page);
     }
 
+    integration.analytics = self;
     integration.once('ready', ready);
     integration.initialize();
   });
@@ -6158,7 +6159,7 @@ Screen.prototype.track = function(name){
 }, {"./utils":58,"./page":56,"./track":55}],
 3: [function(require, module, exports) {
 
-module.exports = '2.2.5';
+module.exports = '2.3.0';
 
 }, {}],
 4: [function(require, module, exports) {
@@ -6175,9 +6176,11 @@ var plugins = require('./integrations.js');
  */
 
 each(plugins, function(plugin){
-  var name = plugin.Integration.prototype.name;
+  var name = (plugin.Integration || plugin).prototype.name;
   exports[name] = plugin;
 });
+
+
 
 }, {"./integrations.js":82,"each":5}],
 82: [function(require, module, exports) {
@@ -6270,16 +6273,10 @@ module.exports = [
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var snake = require('to-snake-case');
-var load = require('load-script');
+var useHttps = require('use-https');
 var is = require('is');
-
-/**
- * User reference.
- */
-
-var user;
 
 /**
  * HOP
@@ -6288,28 +6285,20 @@ var user;
 var has = Object.prototype.hasOwnProperty;
 
 /**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(AdRoll);
-  user = analytics.user(); // store for later
-};
-
-/**
  * Expose `AdRoll` integration.
  */
 
-var AdRoll = exports.Integration = integration('AdRoll')
+var AdRoll = module.exports = integration('AdRoll')
   .assumesPageview()
-  .readyOnLoad()
   .global('__adroll_loaded')
   .global('adroll_adv_id')
   .global('adroll_pix_id')
   .global('adroll_custom_data')
   .option('events', {})
   .option('advId', '')
-  .option('pixId', '');
+  .option('pixId', '')
+  .tag('http', '<script src="http://a.adroll.com/j/roundtrip.js">')
+  .tag('https', '<script src="https://s.adroll.com/j/roundtrip.js">');
 
 /**
  * Initialize.
@@ -6324,7 +6313,8 @@ AdRoll.prototype.initialize = function(page){
   window.adroll_adv_id = this.options.advId;
   window.adroll_pix_id = this.options.pixId;
   window.__adroll_loaded = true;
-  this.load();
+  var name = useHttps() ? 'https' : 'http';
+  this.load(name, this.ready);
 };
 
 /**
@@ -6335,19 +6325,6 @@ AdRoll.prototype.initialize = function(page){
 
 AdRoll.prototype.loaded = function(){
   return window.__adroll;
-};
-
-/**
- * Load the AdRoll library.
- *
- * @param {Function} fn
- */
-
-AdRoll.prototype.load = function(fn){
-  load({
-    http: 'http://a.adroll.com/j/roundtrip.js',
-    https: 'https://s.adroll.com/j/roundtrip.js'
-  }, fn);
 };
 
 /**
@@ -6373,6 +6350,7 @@ AdRoll.prototype.track = function(track){
   var events = this.options.events;
   var event = track.event();
   var data = {};
+  var user = this.analytics.user();
   if (user.id()) data.user_id = user.id();
 
   if (has.call(events, event)) {
@@ -6389,8 +6367,12 @@ AdRoll.prototype.track = function(track){
 
   window.__adroll.record_user(data);
 };
-}, {"analytics.js-integration":157,"to-snake-case":158,"load-script":159,"is":18}],
+}, {"segmentio/analytics.js-integration":157,"to-snake-case":158,"use-https":159,"is":18}],
 157: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
 
 var bind = require('bind');
 var callback = require('callback');
@@ -6401,21 +6383,20 @@ var protos = require('./protos');
 var slug = require('slug');
 var statics = require('./statics');
 
-
 /**
  * Expose `createIntegration`.
  */
 
 module.exports = createIntegration;
 
-
 /**
- * Create a new Integration constructor.
+ * Create a new `Integration` constructor.
  *
  * @param {String} name
+ * @return {Function} Integration
  */
 
-function createIntegration (name) {
+function createIntegration(name){
 
   /**
    * Initialize a new `Integration`.
@@ -6423,21 +6404,26 @@ function createIntegration (name) {
    * @param {Object} options
    */
 
-  function Integration (options) {
+  function Integration(options){
+    if (options && options.addIntegration) {
+      // plugin
+      return options.addIntegration(Integration);
+    }
     this.debug = debug('analytics:integration:' + slug(name));
     this.options = defaults(clone(options) || {}, this.defaults);
     this._queue = [];
     this.once('ready', bind(this, this.flush));
 
     Integration.emit('construct', this);
+    this.ready = bind(this, this.ready);
     this._wrapInitialize();
-    this._wrapLoad();
     this._wrapPage();
     this._wrapTrack();
   }
 
   Integration.prototype.defaults = {};
   Integration.prototype.globals = [];
+  Integration.prototype.templates = {};
   Integration.prototype.name = name;
   for (var key in statics) Integration[key] = statics[key];
   for (var key in protos) Integration.prototype[key] = protos[key];
@@ -6451,13 +6437,17 @@ function createIntegration (name) {
  * Module dependencies.
  */
 
+var loadScript = require('segmentio/load-script');
 var normalize = require('to-no-case');
-var after = require('after');
 var callback = require('callback');
 var Emitter = require('emitter');
-var tick = require('next-tick');
 var events = require('./events');
+var tick = require('next-tick');
+var assert = require('assert');
+var after = require('after');
+var each = require('component/each');
 var type = require('type');
+var fmt = require('yields/fmt');
 
 /**
  * Window defaults.
@@ -6478,10 +6468,10 @@ Emitter(exports);
  * Initialize.
  */
 
-exports.initialize = function () {
-  this.load();
+exports.initialize = function(){
+  var ready = this.ready;
+  tick(ready);
 };
-
 
 /**
  * Loaded?
@@ -6490,10 +6480,9 @@ exports.initialize = function () {
  * @api private
  */
 
-exports.loaded = function () {
+exports.loaded = function(){
   return false;
 };
-
 
 /**
  * Load.
@@ -6501,10 +6490,9 @@ exports.loaded = function () {
  * @param {Function} cb
  */
 
-exports.load = function (cb) {
+exports.load = function(cb){
   callback.async(cb);
 };
-
 
 /**
  * Page.
@@ -6585,7 +6573,7 @@ exports.map = function(obj, str){
  * @api private
  */
 
-exports.invoke = function (method) {
+exports.invoke = function(method){
   if (!this[method]) return;
   var args = [].slice.call(arguments, 1);
   if (!this._ready) return this.queue(method, args);
@@ -6601,7 +6589,6 @@ exports.invoke = function (method) {
   return ret;
 };
 
-
 /**
  * Queue a `method` with `args`. If the integration assumes an initial
  * pageview, then let the first call to `page` pass through.
@@ -6611,7 +6598,7 @@ exports.invoke = function (method) {
  * @api private
  */
 
-exports.queue = function (method, args) {
+exports.queue = function(method, args){
   if ('page' == method && this._assumesPageview && !this._initialized) {
     return this.page.apply(this, args);
   }
@@ -6619,19 +6606,17 @@ exports.queue = function (method, args) {
   this._queue.push({ method: method, args: args });
 };
 
-
 /**
  * Flush the internal queue.
  *
  * @api private
  */
 
-exports.flush = function () {
+exports.flush = function(){
   this._ready = true;
   var call;
   while (call = this._queue.shift()) this[call.method].apply(this, call.args);
 };
-
 
 /**
  * Reset the integration, removing its global variables.
@@ -6639,12 +6624,81 @@ exports.flush = function () {
  * @api private
  */
 
-exports.reset = function () {
+exports.reset = function(){
   for (var i = 0, key; key = this.globals[i]; i++) window[key] = undefined;
   window.setTimeout = setTimeout;
   window.setInterval = setInterval;
   window.onerror = onerror;
   window.onload = onload;
+};
+
+/**
+ * Load a tag by `name`.
+ *
+ * @param {String} name
+ * @param {Function} [fn]
+ */
+
+exports.load = function(name, locals, fn){
+  if ('function' == typeof name) fn = name, locals = null, name = null;
+  if (name && 'object' == typeof name) fn = locals, locals = name, name = null;
+  if ('function' == typeof locals) fn = locals, locals = null;
+  name = name || 'library';
+  locals = locals || {};
+  locals = this.locals(locals);
+  var template = this.templates[name];
+  assert(template, fmt('Template "%s" not defined.', name));
+  var attrs = render(template, locals);
+  var el;
+
+  switch (template.type) {
+    case 'img':
+      attrs.width = 1;
+      attrs.height = 1;
+      el = loadImage(attrs, fn);
+      break;
+    case 'script':
+      el = loadScript(attrs, fn);
+      // TODO: hack until refactoring load-script
+      delete attrs.src;
+      each(attrs, function(key, val){
+        el.setAttribute(key, val);
+      });
+      break;
+    case 'iframe':
+      el = loadIframe(attrs, fn);
+      break;
+  }
+
+  return el;
+};
+
+/**
+ * Locals for tag templates.
+ *
+ * By default it includes a cache buster,
+ * and all of the options.
+ *
+ * @param {Object} [locals]
+ * @return {Object}
+ */
+
+exports.locals = function(locals){
+  locals = locals || {};
+  var cache = Math.floor(new Date().getTime() / 3600000);
+  if (!locals.hasOwnProperty('cache')) locals.cache = cache;
+  each(this.options, function(key, val){
+    if (!locals.hasOwnProperty(key)) locals[key] = val;
+  });
+  return locals;
+};
+
+/**
+ * Simple way to emit ready.
+ */
+
+exports.ready = function(){
+  this.emit('ready');
 };
 
 /**
@@ -6654,59 +6708,18 @@ exports.reset = function () {
  * @api private
  */
 
-exports._wrapInitialize = function () {
+exports._wrapInitialize = function(){
   var initialize = this.initialize;
-  this.initialize = function () {
+  this.initialize = function(){
     this.debug('initialize');
     this._initialized = true;
     var ret = initialize.apply(this, arguments);
     this.emit('initialize');
-
-    var self = this;
-    if (this._readyOnInitialize) {
-      tick(function () {
-        self.emit('ready');
-      });
-    }
-    
     return ret;
   };
 
   if (this._assumesPageview) this.initialize = after(2, this.initialize);
 };
-
-
-/**
- * Wrap the load method in `debug` calls, so every integration gets them
- * automatically.
- *
- * @api private
- */
-
-exports._wrapLoad = function () {
-  var load = this.load;
-  this.load = function (callback) {
-    var self = this;
-    this.debug('loading');
-
-    if (this.loaded()) {
-      this.debug('already loaded');
-      tick(function () {
-        callback && callback();
-        if (self._readyOnLoad) self.emit('ready');
-      });
-      return;
-    }
-
-    return load.call(this, function (err, e) {
-      self.debug('loaded');
-      self.emit('load');
-      callback && callback(err, e);
-      if (self._readyOnLoad) self.emit('ready');
-    });
-  };
-};
-
 
 /**
  * Wrap the page method to call `initialize` instead if the integration assumes
@@ -6715,9 +6728,9 @@ exports._wrapLoad = function () {
  * @api private
  */
 
-exports._wrapPage = function () {
+exports._wrapPage = function(){
   var page = this.page;
-  this.page = function () {
+  this.page = function(){
     if (this._assumesPageview && !this._initialized) {
       return this.initialize.apply(this, arguments);
     }
@@ -6754,11 +6767,49 @@ exports._wrapTrack = function(){
   };
 };
 
-}, {"./events":165,"to-no-case":166,"after":10,"callback":12,"emitter":17,"next-tick":45,"type":35}],
+function loadImage(attrs, fn) {
+  fn = fn || function(){};
+  var img = new Image;
+  img.onerror = error(fn, 'failed to load pixel', img);
+  img.onload = function(){ fn(); };
+  img.src = attrs.src;
+  img.width = 1;
+  img.height = 1;
+  return img;
+}
+
+function error(fn, message, img){
+  return function(e){
+    e = e || window.event;
+    var err = new Error(message);
+    err.event = e;
+    err.source = img;
+    fn(err);
+  };
+}
+
+/**
+ * Render template + locals into an `attrs` object.
+ *
+ * @param {Object} template
+ * @param {Object} locals
+ * @return {Object}
+ */
+
+function render(template, locals) {
+  var attrs = {};
+  each(template.attrs, function(key, val){
+    attrs[key] = val.replace(/\{\{\ *(\w+)\ *\}\}/g, function(_, $1){
+      return locals[$1];
+    });
+  });
+  return attrs;
+}
+}, {"./events":165,"segmentio/load-script":166,"to-no-case":167,"callback":12,"emitter":17,"next-tick":45,"assert":168,"after":10,"component/each":79,"type":35,"yields/fmt":169}],
 165: [function(require, module, exports) {
 
 /**
- * Expose `events`
+ * Expose `events`.
  */
 
 module.exports = {
@@ -6770,6 +6821,119 @@ module.exports = {
 
 }, {}],
 166: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var onload = require('script-onload');
+var tick = require('next-tick');
+var type = require('type');
+
+/**
+ * Expose `loadScript`.
+ *
+ * @param {Object} options
+ * @param {Function} fn
+ * @api public
+ */
+
+module.exports = function loadScript(options, fn){
+  if (!options) throw new Error('Cant load nothing...');
+
+  // Allow for the simplest case, just passing a `src` string.
+  if ('string' == type(options)) options = { src : options };
+
+  var https = document.location.protocol === 'https:' ||
+              document.location.protocol === 'chrome-extension:';
+
+  // If you use protocol relative URLs, third-party scripts like Google
+  // Analytics break when testing with `file:` so this fixes that.
+  if (options.src && options.src.indexOf('//') === 0) {
+    options.src = https ? 'https:' + options.src : 'http:' + options.src;
+  }
+
+  // Allow them to pass in different URLs depending on the protocol.
+  if (https && options.https) options.src = options.https;
+  else if (!https && options.http) options.src = options.http;
+
+  // Make the `<script>` element and insert it before the first script on the
+  // page, which is guaranteed to exist since this Javascript is running.
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.async = true;
+  script.src = options.src;
+
+  // If we have a fn, attach event handlers, even in IE. Based off of
+  // the Third-Party Javascript script loading example:
+  // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
+  if ('function' == type(fn)) {
+    onload(script, fn);
+  }
+
+  tick(function(){
+    // Append after event listeners are attached for IE.
+    var firstScript = document.getElementsByTagName('script')[0];
+    firstScript.parentNode.insertBefore(script, firstScript);
+  });
+
+  // Return the script element in case they want to do anything special, like
+  // give it an ID or attributes.
+  return script;
+};
+}, {"script-onload":170,"next-tick":45,"type":35}],
+170: [function(require, module, exports) {
+
+// https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
+
+/**
+ * Invoke `fn(err)` when the given `el` script loads.
+ *
+ * @param {Element} el
+ * @param {Function} fn
+ * @api public
+ */
+
+module.exports = function(el, fn){
+  return el.addEventListener
+    ? add(el, fn)
+    : attach(el, fn);
+};
+
+/**
+ * Add event listener to `el`, `fn()`.
+ *
+ * @param {Element} el
+ * @param {Function} fn
+ * @api private
+ */
+
+function add(el, fn){
+  el.addEventListener('load', function(_, e){ fn(null, e); }, false);
+  el.addEventListener('error', function(e){
+    var err = new Error('failed to load the script "' + el.src + '"');
+    err.event = e;
+    fn(err);
+  }, false);
+}
+
+/**
+ * Attach evnet.
+ *
+ * @param {Element} el
+ * @param {Function} fn
+ * @api private
+ */
+
+function attach(el, fn){
+  el.attachEvent('onreadystatechange', function(e){
+    if (!/complete|loaded/.test(el.readyState)) return;
+    fn(null, e);
+  });
+}
+
+}, {}],
+167: [function(require, module, exports) {
 
 /**
  * Expose `toNoCase`.
@@ -6842,18 +7006,467 @@ function uncamelize (string) {
   });
 }
 }, {}],
+168: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var equals = require('equals');
+var fmt = require('fmt');
+var stack = require('stack');
+
+/**
+ * Assert `expr` with optional failure `msg`.
+ *
+ * @param {Mixed} expr
+ * @param {String} [msg]
+ * @api public
+ */
+
+module.exports = exports = function (expr, msg) {
+  if (expr) return;
+  throw new Error(msg || message());
+};
+
+/**
+ * Assert `actual` is weak equal to `expected`.
+ *
+ * @param {Mixed} actual
+ * @param {Mixed} expected
+ * @param {String} [msg]
+ * @api public
+ */
+
+exports.equal = function (actual, expected, msg) {
+  if (actual == expected) return;
+  throw new Error(msg || fmt('Expected %o to equal %o.', actual, expected));
+};
+
+/**
+ * Assert `actual` is not weak equal to `expected`.
+ *
+ * @param {Mixed} actual
+ * @param {Mixed} expected
+ * @param {String} [msg]
+ * @api public
+ */
+
+exports.notEqual = function (actual, expected, msg) {
+  if (actual != expected) return;
+  throw new Error(msg || fmt('Expected %o not to equal %o.', actual, expected));
+};
+
+/**
+ * Assert `actual` is deep equal to `expected`.
+ *
+ * @param {Mixed} actual
+ * @param {Mixed} expected
+ * @param {String} [msg]
+ * @api public
+ */
+
+exports.deepEqual = function (actual, expected, msg) {
+  if (equals(actual, expected)) return;
+  throw new Error(msg || fmt('Expected %o to deeply equal %o.', actual, expected));
+};
+
+/**
+ * Assert `actual` is not deep equal to `expected`.
+ *
+ * @param {Mixed} actual
+ * @param {Mixed} expected
+ * @param {String} [msg]
+ * @api public
+ */
+
+exports.notDeepEqual = function (actual, expected, msg) {
+  if (!equals(actual, expected)) return;
+  throw new Error(msg || fmt('Expected %o not to deeply equal %o.', actual, expected));
+};
+
+/**
+ * Assert `actual` is strict equal to `expected`.
+ *
+ * @param {Mixed} actual
+ * @param {Mixed} expected
+ * @param {String} [msg]
+ * @api public
+ */
+
+exports.strictEqual = function (actual, expected, msg) {
+  if (actual === expected) return;
+  throw new Error(msg || fmt('Expected %o to strictly equal %o.', actual, expected));
+};
+
+/**
+ * Assert `actual` is not strict equal to `expected`.
+ *
+ * @param {Mixed} actual
+ * @param {Mixed} expected
+ * @param {String} [msg]
+ * @api public
+ */
+
+exports.notStrictEqual = function (actual, expected, msg) {
+  if (actual !== expected) return;
+  throw new Error(msg || fmt('Expected %o not to strictly equal %o.', actual, expected));
+};
+
+/**
+ * Assert `block` throws an `error`.
+ *
+ * @param {Function} block
+ * @param {Function} [error]
+ * @param {String} [msg]
+ * @api public
+ */
+
+exports.throws = function (block, error, msg) {
+  var err;
+  try {
+    block();
+  } catch (e) {
+    err = e;
+  }
+
+  if (!err) throw new Error(msg || fmt('Expected %s to throw an error.', block.toString()));
+  if (error && !(err instanceof error)) {
+    throw new Error(msg || fmt('Expected %s to throw an %o.', block.toString(), error));
+  }
+};
+
+/**
+ * Assert `block` doesn't throw an `error`.
+ *
+ * @param {Function} block
+ * @param {Function} [error]
+ * @param {String} [msg]
+ * @api public
+ */
+
+exports.doesNotThrow = function (block, error, msg) {
+  var err;
+  try {
+    block();
+  } catch (e) {
+    err = e;
+  }
+
+  if (err) throw new Error(msg || fmt('Expected %s not to throw an error.', block.toString()));
+  if (error && (err instanceof error)) {
+    throw new Error(msg || fmt('Expected %s not to throw an %o.', block.toString(), error));
+  }
+};
+
+/**
+ * Create a message from the call stack.
+ *
+ * @return {String}
+ * @api private
+ */
+
+function message() {
+  if (!Error.captureStackTrace) return 'assertion failed';
+  var callsite = stack()[2];
+  var fn = callsite.getFunctionName();
+  var file = callsite.getFileName();
+  var line = callsite.getLineNumber() - 1;
+  var col = callsite.getColumnNumber() - 1;
+  var src = get(file);
+  line = src.split('\n')[line].slice(col);
+  var m = line.match(/assert\((.*)\)/);
+  return m && m[1].trim();
+}
+
+/**
+ * Load contents of `script`.
+ *
+ * @param {String} script
+ * @return {String}
+ * @api private
+ */
+
+function get(script) {
+  var xhr = new XMLHttpRequest;
+  xhr.open('GET', script, false);
+  xhr.send(null);
+  return xhr.responseText;
+}
+
+}, {"equals":171,"fmt":169,"stack":172}],
+171: [function(require, module, exports) {
+
+var type = require('type')
+
+/**
+ * expose equals
+ */
+
+module.exports = equals
+equals.compare = compare
+
+/**
+ * assert all values are equal
+ *
+ * @param {Any} [...]
+ * @return {Boolean}
+ */
+
+ function equals(){
+  var i = arguments.length - 1
+  while (i > 0) {
+    if (!compare(arguments[i], arguments[--i])) return false
+  }
+  return true
+}
+
+// (any, any, [array]) -> boolean
+function compare(a, b, memos){
+  // All identical values are equivalent
+  if (a === b) return true
+  var fnA = types[type(a)]
+  var fnB = types[type(b)]
+  return fnA && fnA === fnB
+    ? fnA(a, b, memos)
+    : false
+}
+
+var types = {}
+
+// (Number) -> boolean
+types.number = function(a){
+  // NaN check
+  return a !== a
+}
+
+// (function, function, array) -> boolean
+types['function'] = function(a, b, memos){
+  return a.toString() === b.toString()
+    // Functions can act as objects
+    && types.object(a, b, memos)
+    && compare(a.prototype, b.prototype)
+}
+
+// (date, date) -> boolean
+types.date = function(a, b){
+  return +a === +b
+}
+
+// (regexp, regexp) -> boolean
+types.regexp = function(a, b){
+  return a.toString() === b.toString()
+}
+
+// (DOMElement, DOMElement) -> boolean
+types.element = function(a, b){
+  return a.outerHTML === b.outerHTML
+}
+
+// (textnode, textnode) -> boolean
+types.textnode = function(a, b){
+  return a.textContent === b.textContent
+}
+
+// decorate `fn` to prevent it re-checking objects
+// (function) -> function
+function memoGaurd(fn){
+  return function(a, b, memos){
+    if (!memos) return fn(a, b, [])
+    var i = memos.length, memo
+    while (memo = memos[--i]) {
+      if (memo[0] === a && memo[1] === b) return true
+    }
+    return fn(a, b, memos)
+  }
+}
+
+types['arguments'] =
+types.array = memoGaurd(compareArrays)
+
+// (array, array, array) -> boolean
+function compareArrays(a, b, memos){
+  var i = a.length
+  if (i !== b.length) return false
+  memos.push([a, b])
+  while (i--) {
+    if (!compare(a[i], b[i], memos)) return false
+  }
+  return true
+}
+
+types.object = memoGaurd(compareObjects)
+
+// (object, object, array) -> boolean
+function compareObjects(a, b, memos) {
+  var ka = getEnumerableProperties(a)
+  var kb = getEnumerableProperties(b)
+  var i = ka.length
+
+  // same number of properties
+  if (i !== kb.length) return false
+
+  // although not necessarily the same order
+  ka.sort()
+  kb.sort()
+
+  // cheap key test
+  while (i--) if (ka[i] !== kb[i]) return false
+
+  // remember
+  memos.push([a, b])
+
+  // iterate again this time doing a thorough check
+  i = ka.length
+  while (i--) {
+    var key = ka[i]
+    if (!compare(a[key], b[key], memos)) return false
+  }
+
+  return true
+}
+
+// (object) -> array
+function getEnumerableProperties (object) {
+  var result = []
+  for (var k in object) if (k !== 'constructor') {
+    result.push(k)
+  }
+  return result
+}
+
+}, {"type":173}],
+173: [function(require, module, exports) {
+
+var toString = {}.toString
+var DomNode = typeof window != 'undefined'
+  ? window.Node
+  : Function
+
+/**
+ * Return the type of `val`.
+ *
+ * @param {Mixed} val
+ * @return {String}
+ * @api public
+ */
+
+module.exports = exports = function(x){
+  var type = typeof x
+  if (type != 'object') return type
+  type = types[toString.call(x)]
+  if (type) return type
+  if (x instanceof DomNode) switch (x.nodeType) {
+    case 1:  return 'element'
+    case 3:  return 'text-node'
+    case 9:  return 'document'
+    case 11: return 'document-fragment'
+    default: return 'dom-node'
+  }
+}
+
+var types = exports.types = {
+  '[object Function]': 'function',
+  '[object Date]': 'date',
+  '[object RegExp]': 'regexp',
+  '[object Arguments]': 'arguments',
+  '[object Array]': 'array',
+  '[object String]': 'string',
+  '[object Null]': 'null',
+  '[object Undefined]': 'undefined',
+  '[object Number]': 'number',
+  '[object Boolean]': 'boolean',
+  '[object Object]': 'object',
+  '[object Text]': 'text-node',
+  '[object Uint8Array]': 'bit-array',
+  '[object Uint16Array]': 'bit-array',
+  '[object Uint32Array]': 'bit-array',
+  '[object Uint8ClampedArray]': 'bit-array',
+  '[object Error]': 'error',
+  '[object FormData]': 'form-data',
+  '[object File]': 'file',
+  '[object Blob]': 'blob'
+}
+
+}, {}],
+169: [function(require, module, exports) {
+
+/**
+ * Export `fmt`
+ */
+
+module.exports = fmt;
+
+/**
+ * Formatters
+ */
+
+fmt.o = JSON.stringify;
+fmt.s = String;
+fmt.d = parseInt;
+
+/**
+ * Format the given `str`.
+ *
+ * @param {String} str
+ * @param {...} args
+ * @return {String}
+ * @api public
+ */
+
+function fmt(str){
+  var args = [].slice.call(arguments, 1);
+  var j = 0;
+
+  return str.replace(/%([a-z])/gi, function(_, f){
+    return fmt[f]
+      ? fmt[f](args[j++])
+      : _ + f;
+  });
+}
+
+}, {}],
+172: [function(require, module, exports) {
+
+/**
+ * Expose `stack()`.
+ */
+
+module.exports = stack;
+
+/**
+ * Return the stack.
+ *
+ * @return {Array}
+ * @api public
+ */
+
+function stack() {
+  var orig = Error.prepareStackTrace;
+  Error.prepareStackTrace = function(_, stack){ return stack; };
+  var err = new Error;
+  Error.captureStackTrace(err, arguments.callee);
+  var stack = err.stack;
+  Error.prepareStackTrace = orig;
+  return stack;
+}
+}, {}],
 161: [function(require, module, exports) {
 
-var after = require('after');
-var Emitter = require('emitter');
+/**
+ * Module dependencies.
+ */
 
+var after = require('after');
+var domify = require('component/domify');
+var each = require('component/each');
+var Emitter = require('emitter');
 
 /**
  * Mixin emitter.
  */
 
 Emitter(exports);
-
 
 /**
  * Add a new option to the integration by `key` with default `value`.
@@ -6863,7 +7476,7 @@ Emitter(exports);
  * @return {Integration}
  */
 
-exports.option = function (key, value) {
+exports.option = function(key, value){
   this.prototype.defaults[key] = value;
   return this;
 };
@@ -6906,11 +7519,10 @@ exports.mapping = function(name){
  * @return {Integration}
  */
 
-exports.global = function (key) {
+exports.global = function(key){
   this.prototype.globals.push(key);
   return this;
 };
-
 
 /**
  * Mark the integration as assuming an initial pageview, so to defer loading
@@ -6919,11 +7531,10 @@ exports.global = function (key) {
  * @return {Integration}
  */
 
-exports.assumesPageview = function () {
+exports.assumesPageview = function(){
   this.prototype._assumesPageview = true;
   return this;
 };
-
 
 /**
  * Mark the integration as being "ready" once `load` is called.
@@ -6931,11 +7542,10 @@ exports.assumesPageview = function () {
  * @return {Integration}
  */
 
-exports.readyOnLoad = function () {
+exports.readyOnLoad = function(){
   this.prototype._readyOnLoad = true;
   return this;
 };
-
 
 /**
  * Mark the integration as being "ready" once `initialize` is called.
@@ -6943,12 +7553,148 @@ exports.readyOnLoad = function () {
  * @return {Integration}
  */
 
-exports.readyOnInitialize = function () {
+exports.readyOnInitialize = function(){
   this.prototype._readyOnInitialize = true;
   return this;
 };
 
-}, {"after":10,"emitter":17}],
+/**
+ * Define a tag to be loaded.
+ *
+ * @param {String} str DOM tag as string or URL
+ * @return {Integration}
+ */
+
+exports.tag = function(name, str){
+  if (null == str) {
+    str = name;
+    name = 'library';
+  }
+  this.prototype.templates[name] = objectify(str);
+  return this;
+};
+
+/**
+ * Given a string, give back DOM attributes.
+ *
+ * Do it in a way where the browser doesn't load images or iframes.
+ * It turns out, domify will load images/iframes, because
+ * whenever you construct those DOM elements, 
+ * the browser immediately loads them.
+ *
+ * @param {String} str
+ * @return {Object}
+ */
+
+function objectify(str) {
+  // replace `src` with `data-src` to prevent image loading
+  str = str.replace(' src="', ' data-src="');
+  
+  var el = domify(str);
+  var attrs = {};
+  
+  each(el.attributes, function(attr){
+    // then replace it back
+    var name = 'data-src' == attr.name ? 'src' : attr.name;
+    attrs[name] = attr.value;
+  });
+  
+  return {
+    type: el.tagName.toLowerCase(),
+    attrs: attrs
+  };
+}
+}, {"after":10,"component/domify":174,"component/each":79,"emitter":17}],
+174: [function(require, module, exports) {
+
+/**
+ * Expose `parse`.
+ */
+
+module.exports = parse;
+
+/**
+ * Wrap map from jquery.
+ */
+
+var map = {
+  legend: [1, '<fieldset>', '</fieldset>'],
+  tr: [2, '<table><tbody>', '</tbody></table>'],
+  col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
+  _default: [0, '', '']
+};
+
+map.td =
+map.th = [3, '<table><tbody><tr>', '</tr></tbody></table>'];
+
+map.option =
+map.optgroup = [1, '<select multiple="multiple">', '</select>'];
+
+map.thead =
+map.tbody =
+map.colgroup =
+map.caption =
+map.tfoot = [1, '<table>', '</table>'];
+
+map.text =
+map.circle =
+map.ellipse =
+map.line =
+map.path =
+map.polygon =
+map.polyline =
+map.rect = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">','</svg>'];
+
+/**
+ * Parse `html` and return the children.
+ *
+ * @param {String} html
+ * @return {Array}
+ * @api private
+ */
+
+function parse(html) {
+  if ('string' != typeof html) throw new TypeError('String expected');
+  
+  // tag name
+  var m = /<([\w:]+)/.exec(html);
+  if (!m) return document.createTextNode(html);
+
+  html = html.replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
+
+  var tag = m[1];
+
+  // body support
+  if (tag == 'body') {
+    var el = document.createElement('html');
+    el.innerHTML = html;
+    return el.removeChild(el.lastChild);
+  }
+
+  // wrap map
+  var wrap = map[tag] || map._default;
+  var depth = wrap[0];
+  var prefix = wrap[1];
+  var suffix = wrap[2];
+  var el = document.createElement('div');
+  el.innerHTML = prefix + html + suffix;
+  while (depth--) el = el.lastChild;
+
+  // one element
+  if (el.firstChild == el.lastChild) {
+    return el.removeChild(el.firstChild);
+  }
+
+  // several elements
+  var fragment = document.createDocumentFragment();
+  while (el.firstChild) {
+    fragment.appendChild(el.removeChild(el.firstChild));
+  }
+
+  return fragment;
+}
+
+}, {}],
 162: [function(require, module, exports) {
 
 var bind = require('bind')
@@ -6998,8 +7744,8 @@ if ('undefined' == typeof window) {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":167,"./debug":168}],
-167: [function(require, module, exports) {
+}, {"./lib/debug":175,"./debug":176}],
+175: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -7149,7 +7895,7 @@ function coerce(val) {
 }
 
 }, {}],
-168: [function(require, module, exports) {
+176: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -7338,8 +8084,8 @@ function toSnakeCase (string) {
   return toSpace(string).replace(/\s/g, '_');
 }
 
-}, {"to-space-case":169}],
-169: [function(require, module, exports) {
+}, {"to-space-case":177}],
+177: [function(require, module, exports) {
 
 var clean = require('to-no-case');
 
@@ -7368,115 +8114,41 @@ function toSpaceCase (string) {
 159: [function(require, module, exports) {
 
 /**
- * Module dependencies.
+ * Protocol.
  */
 
-var onload = require('script-onload');
-var tick = require('next-tick');
-var type = require('type');
-
-/**
- * Expose `loadScript`.
- *
- * @param {Object} options
- * @param {Function} fn
- * @api public
- */
-
-module.exports = function loadScript(options, fn){
-  if (!options) throw new Error('Cant load nothing...');
-
-  // Allow for the simplest case, just passing a `src` string.
-  if ('string' == type(options)) options = { src : options };
-
-  var https = document.location.protocol === 'https:' ||
-              document.location.protocol === 'chrome-extension:';
-
-  // If you use protocol relative URLs, third-party scripts like Google
-  // Analytics break when testing with `file:` so this fixes that.
-  if (options.src && options.src.indexOf('//') === 0) {
-    options.src = https ? 'https:' + options.src : 'http:' + options.src;
+module.exports = function (url) {
+  switch (arguments.length) {
+    case 0: return check();
+    case 1: return transform(url);
   }
-
-  // Allow them to pass in different URLs depending on the protocol.
-  if (https && options.https) options.src = options.https;
-  else if (!https && options.http) options.src = options.http;
-
-  // Make the `<script>` element and insert it before the first script on the
-  // page, which is guaranteed to exist since this Javascript is running.
-  var script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.async = true;
-  script.src = options.src;
-
-  // If we have a fn, attach event handlers, even in IE. Based off of
-  // the Third-Party Javascript script loading example:
-  // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
-  if ('function' == type(fn)) {
-    onload(script, fn);
-  }
-
-  tick(function(){
-    // Append after event listeners are attached for IE.
-    var firstScript = document.getElementsByTagName('script')[0];
-    firstScript.parentNode.insertBefore(script, firstScript);
-  });
-
-  // Return the script element in case they want to do anything special, like
-  // give it an ID or attributes.
-  return script;
-};
-}, {"script-onload":170,"next-tick":45,"type":35}],
-170: [function(require, module, exports) {
-
-// https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
-
-/**
- * Invoke `fn(err)` when the given `el` script loads.
- *
- * @param {Element} el
- * @param {Function} fn
- * @api public
- */
-
-module.exports = function(el, fn){
-  return el.addEventListener
-    ? add(el, fn)
-    : attach(el, fn);
 };
 
-/**
- * Add event listener to `el`, `fn()`.
- *
- * @param {Element} el
- * @param {Function} fn
- * @api private
- */
-
-function add(el, fn){
-  el.addEventListener('load', function(_, e){ fn(null, e); }, false);
-  el.addEventListener('error', function(e){
-    var err = new Error('failed to load the script "' + el.src + '"');
-    err.event = e;
-    fn(err);
-  }, false);
-}
 
 /**
- * Attach evnet.
+ * Transform a protocol-relative `url` to the use the proper protocol.
  *
- * @param {Element} el
- * @param {Function} fn
- * @api private
+ * @param {String} url
+ * @return {String}
  */
 
-function attach(el, fn){
-  el.attachEvent('onreadystatechange', function(e){
-    if (!/complete|loaded/.test(el.readyState)) return;
-    fn(null, e);
-  });
+function transform (url) {
+  return check() ? 'https:' + url : 'http:' + url;
 }
 
+
+/**
+ * Check whether `https:` be used for loading scripts.
+ *
+ * @return {Boolean}
+ */
+
+function check () {
+  return (
+    location.protocol == 'https:' ||
+    location.protocol == 'chrome-extension:'
+  );
+}
 }, {}],
 84: [function(require, module, exports) {
 
@@ -7484,19 +8156,10 @@ function attach(el, fn){
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var onbody = require('on-body');
-var load = require('load-script');
 var domify = require('domify');
 var Queue = require('queue');
-
-/**
- * Expose plugin
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(AdWords);
-};
 
 /**
  * HOP
@@ -7511,24 +8174,24 @@ var has = Object.prototype.hasOwnProperty;
 var q = new Queue({ concurrency: 1, timeout: 2000 });
 
 /**
- * Expose `AdWords`
+ * Expose `AdWords`.
  */
 
-var AdWords = exports.Integration = integration('AdWords')
-  .readyOnLoad()
+var AdWords = module.exports = integration('AdWords')
   .option('conversionId', '')
   .option('remarketing', false)
-  .option('events', {});
+  .option('events', {})
+  .tag('conversion', '<script src="//www.googleadservices.com/pagead/conversion.js">');
 
 /**
- * Load
+ * Load.
  *
  * @param {Function} fn
  * @api public
  */
 
-AdWords.prototype.load = function(fn){
-  onbody(fn);
+AdWords.prototype.initialize = function(){
+  onbody(this.ready);
 };
 
 /**
@@ -7624,7 +8287,7 @@ AdWords.prototype.enqueue = function(obj, fn){
     self.globalize(obj);
     self.shim();
 
-    load('//www.googleadservices.com/pagead/conversion.js', function(){
+    self.load('conversion', function(){
       if (fn) fn();
       next();
     });
@@ -7666,8 +8329,8 @@ AdWords.prototype.shim = function(){
   }
 }
 
-}, {"analytics.js-integration":157,"on-body":171,"load-script":159,"domify":172,"queue":173}],
-171: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":157,"on-body":178,"domify":179,"queue":180}],
+178: [function(require, module, exports) {
 var each = require('each');
 
 
@@ -7722,7 +8385,7 @@ function call (callback) {
   callback(document.body);
 }
 }, {"each":79}],
-172: [function(require, module, exports) {
+179: [function(require, module, exports) {
 
 /**
  * Expose `parse`.
@@ -7811,7 +8474,7 @@ function parse(html) {
 }
 
 }, {}],
-173: [function(require, module, exports) {
+180: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -7947,8 +8610,8 @@ function timeout(fn, ms) {
   }
 }
 
-}, {"emitter":174,"bind":33,"component-emitter":174,"component-bind":33}],
-174: [function(require, module, exports) {
+}, {"emitter":181,"bind":33,"component-emitter":181,"component-bind":33}],
+181: [function(require, module, exports) {
 
 /**
  * Expose `Emitter`.
@@ -8121,28 +8784,19 @@ Emitter.prototype.hasListeners = function(event){
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Alexa);
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * Expose Alexa integration.
  */
 
-var Alexa = exports.Integration = integration('Alexa')
+var Alexa = module.exports = integration('Alexa')
   .assumesPageview()
-  .readyOnLoad()
   .global('_atrk_opts')
   .option('account', null)
   .option('domain', '')
-  .option('dynamic', true);
+  .option('dynamic', true)
+  .tag('<script src="//d31qbv1cthcecs.cloudfront.net/atrk.js">');
 
 /**
  * Initialize.
@@ -8151,12 +8805,16 @@ var Alexa = exports.Integration = integration('Alexa')
  */
 
 Alexa.prototype.initialize = function(page){
+  var self = this;
   window._atrk_opts = {
     atrk_acct: this.options.account,
     domain: this.options.domain,
     dynamic: this.options.dynamic
   };
-  this.load();
+  this.load(function(){
+    window.atrk();
+    self.ready();
+  });
 };
 
 /**
@@ -8168,52 +8826,27 @@ Alexa.prototype.initialize = function(page){
 Alexa.prototype.loaded = function(){
   return !! window.atrk;
 };
-
-/**
- * Load the Alexa library.
- *
- * @param {Function} callback
- */
-
-Alexa.prototype.load = function(callback){
-  load('//d31qbv1cthcecs.cloudfront.net/atrk.js', function(err){
-    if (err) return callback(err);
-    window.atrk();
-    callback();
-  });
-};
-
-}, {"analytics.js-integration":157,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157}],
 86: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var callback = require('callback');
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Amplitude);
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * Expose `Amplitude` integration.
  */
 
-var Amplitude = exports.Integration = integration('Amplitude')
+var Amplitude = module.exports = integration('Amplitude')
   .assumesPageview()
-  .readyOnLoad()
   .global('amplitude')
   .option('apiKey', '')
   .option('trackAllPages', false)
   .option('trackNamedPages', true)
-  .option('trackCategorizedPages', true);
+  .option('trackCategorizedPages', true)
+  .tag('<script src="https://d24n15hnbwhuhn.cloudfront.net/libs/amplitude-1.1-min.js">');
 
 /**
  * Initialize.
@@ -8226,7 +8859,7 @@ var Amplitude = exports.Integration = integration('Amplitude')
 Amplitude.prototype.initialize = function(page){
   (function(e,t){var r=e.amplitude||{}; r._q=[];function i(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)));};} var s=["init","logEvent","setUserId","setGlobalUserProperties","setVersionName","setDomain"]; for (var c=0;c<s.length;c++){i(s[c]);}e.amplitude=r;})(window,document);
   window.amplitude.init(this.options.apiKey);
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -8237,16 +8870,6 @@ Amplitude.prototype.initialize = function(page){
 
 Amplitude.prototype.loaded = function(){
   return !! (window.amplitude && window.amplitude.options);
-};
-
-/**
- * Load the Amplitude library.
- *
- * @param {Function} callback
- */
-
-Amplitude.prototype.load = function(callback){
-  load('https://d24n15hnbwhuhn.cloudfront.net/libs/amplitude-1.1-min.js', callback);
 };
 
 /**
@@ -8302,14 +8925,14 @@ Amplitude.prototype.track = function(track){
   window.amplitude.logEvent(event, props);
 };
 
-}, {"callback":12,"analytics.js-integration":157,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157}],
 87: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var load = require('load-script');
 var is = require('is');
 
@@ -8327,7 +8950,6 @@ module.exports = exports = function (analytics) {
 
 var Appcues = exports.Integration = integration('Appcues')
   .assumesPageview()
-  .readyOnLoad()
   .global('Appcues')
   .global('AppcuesIdentity')
   .option('appcuesId', '')
@@ -8384,41 +9006,25 @@ Appcues.prototype.identify = function(identify){
   window.Appcues.identify(identify.traits());
 };
 
-}, {"analytics.js-integration":157,"load-script":159,"is":18}],
+}, {"segmentio/analytics.js-integration":157,"load-script":166,"is":18}],
 88: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * User reference.
- */
-
-var user;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Awesm);
-  user = analytics.user(); // store for later
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * Expose `Awesm` integration.
  */
 
-var Awesm = exports.Integration = integration('awe.sm')
+var Awesm = module.exports = integration('awe.sm')
   .assumesPageview()
-  .readyOnLoad()
   .global('AWESM')
   .option('apiKey', '')
-  .option('events', {});
+  .option('events', {})
+  .tag('<script src="//widgets.awe.sm/v3/widgets.js?key={{ apiKey }}&async=true">');
 
 /**
  * Initialize.
@@ -8430,7 +9036,7 @@ var Awesm = exports.Integration = integration('awe.sm')
 
 Awesm.prototype.initialize = function(page){
   window.AWESM = { api_key: this.options.apiKey };
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -8444,17 +9050,6 @@ Awesm.prototype.loaded = function(){
 };
 
 /**
- * Load.
- *
- * @param {Function} callback
- */
-
-Awesm.prototype.load = function(callback){
-  var key = this.options.apiKey;
-  load('//widgets.awe.sm/v3/widgets.js?key=' + key + '&async=true', callback);
-};
-
-/**
  * Track.
  *
  * @param {Track} track
@@ -8464,48 +9059,34 @@ Awesm.prototype.track = function(track){
   var event = track.event();
   var goal = this.options.events[event];
   if (!goal) return;
+  var user = this.analytics.user();
   window.AWESM.convert(goal, track.cents(), null, user.id());
 };
 
-}, {"analytics.js-integration":157,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157}],
 89: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var is = require('is');
-var load = require('load-script');
 var noop = function(){};
 var onBody = require('on-body');
-
-/**
- * User reference.
- */
-
-var user;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Awesomatic);
-  user = analytics.user(); // store for later
-};
 
 /**
  * Expose `Awesomatic` integration.
  */
 
-var Awesomatic = exports.Integration = integration('Awesomatic')
+var Awesomatic = module.exports = integration('Awesomatic')
   .assumesPageview()
   .global('Awesomatic')
   .global('AwesomaticSettings')
   .global('AwsmSetup')
   .global('AwsmTmp')
-  .option('appId', '');
+  .option('appId', '')
+  .tag('<script src="https://1c817b7a15b6941337c0-dff9b5f4adb7ba28259631e99c3f3691.ssl.cf2.rackcdn.com/gen/embed.js">');
 
 /**
  * Initialize.
@@ -8515,6 +9096,7 @@ var Awesomatic = exports.Integration = integration('Awesomatic')
 
 Awesomatic.prototype.initialize = function(page){
   var self = this;
+  var user = this.analytics.user();
   var id = user.id();
   var options = user.traits();
 
@@ -8523,7 +9105,7 @@ Awesomatic.prototype.initialize = function(page){
 
   this.load(function(){
     window.Awesomatic.initialize(options, function(){
-      self.emit('ready'); // need to wait for initialize to callback
+      self.ready(); // need to wait for initialize to callback
     });
   });
 };
@@ -8537,40 +9119,19 @@ Awesomatic.prototype.initialize = function(page){
 Awesomatic.prototype.loaded = function(){
   return is.object(window.Awesomatic);
 };
-
-/**
- * Load the Awesomatic library.
- *
- * @param {Function} callback
- */
-
-Awesomatic.prototype.load = function(callback){
-  var url = 'https://1c817b7a15b6941337c0-dff9b5f4adb7ba28259631e99c3f3691.ssl.cf2.rackcdn.com/gen/embed.js';
-  load(url, callback);
-};
-
-}, {"analytics.js-integration":157,"is":18,"load-script":159,"on-body":171}],
+}, {"segmentio/analytics.js-integration":157,"is":18,"on-body":178}],
 90: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var onbody = require('on-body');
 var domify = require('domify');
 var extend = require('extend');
 var bind = require('bind');
 var when = require('when');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Bing);
-};
 
 /**
  * HOP.
@@ -8590,11 +9151,11 @@ var noop = function(){};
  * https://bingads.microsoft.com/campaign/signup
  */
 
-var Bing = exports.Integration = integration('Bing Ads')
-  .readyOnLoad()
+var Bing = module.exports = integration('Bing Ads')
   .option('siteId', '')
   .option('domainId', '')
-  .option('events', {});
+  .option('events', {})
+  .tag('<script id="mstag_tops" src="//flex.msn.com/mstag/site/{{ siteId }}/mstag.js">');
 
 /**
  * Initialize.
@@ -8618,28 +9179,16 @@ Bing.prototype.initialize = function(page){
   };
   var self = this;
   onbody(function(){
-    self.load();
+    self.load(function(){
+      var loaded = bind(self, self.loaded);
+
+      // poll until this.loaded() is true.
+      // have to do a weird hack like this because
+      // the first script loads a second script,
+      // and only after the second script is it actually loaded.
+      when(loaded, self.ready);
+    });
   });
-};
-
-/**
- * Load the Microsoft library.
- *
- * @param {Function} fn
- */
-
-Bing.prototype.load = function(fn){
-  var id = this.options.siteId;
-  var url = '//flex.msn.com/mstag/site/' + id + '/mstag.js';
-  var el = load(url);
-  el.setAttribute('id', 'mstag_tops');
-  var loaded = bind(this, this.loaded);
-
-  // poll until this.loaded() is true.
-  // have to do a weird hack like this because
-  // the first script loads a second script,
-  // and only after the second script is it actually loaded.
-  when(loaded, fn);
 };
 
 /**
@@ -8694,8 +9243,8 @@ function writeToAppend(str) {
   }
   document.body.appendChild(el);
 }
-}, {"analytics.js-integration":157,"load-script":159,"on-body":171,"domify":172,"extend":40,"bind":33,"when":175}],
-175: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":157,"on-body":178,"domify":179,"extend":40,"bind":33,"when":182}],
+182: [function(require, module, exports) {
 
 var callback = require('callback');
 
@@ -8731,38 +9280,22 @@ function when (condition, fn, interval) {
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var Identify = require('facade').Identify;
 var Track = require('facade').Track;
 var pixel = require('load-pixel')('http://app.bronto.com/public/');
-var load = require('load-script');
 var qs = require('querystring');
 var each = require('each');
-
-/**
- * User reference.
- */
-
-var user;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Bronto);
-  user = analytics.user(); // store for later
-};
 
 /**
  * Expose `Bronto` integration.
  */
 
-var Bronto = exports.Integration = integration('Bronto')
-  .readyOnLoad()
+var Bronto = module.exports = integration('Bronto')
   .global('__bta')
   .option('siteId', '')
-  .option('host', '');
+  .option('host', '')
+  .tag('<script src="//p.bm23.com/bta.js">');
 
 /**
  * Initialize.
@@ -8775,11 +9308,17 @@ var Bronto = exports.Integration = integration('Bronto')
  */
 
 Bronto.prototype.initialize = function(page){
+  var self = this;
   var params = qs.parse(window.location.search);
   if (!params._bta_tid && !params._bta_c) {
     this.debug('missing tracking URL parameters `_bta_tid` and `_bta_c`.');
   }
-  this.load();
+  this.load(function(){
+    var opts = self.options;
+    self.bta = new window.__bta(opts.siteId);
+    if (opts.host) self.bta.setHost(opts.host);
+    self.ready();
+  });
 };
 
 /**
@@ -8790,23 +9329,6 @@ Bronto.prototype.initialize = function(page){
 
 Bronto.prototype.loaded = function(){
   return this.bta;
-};
-
-/**
- * Load the Bronto library.
- *
- * @param {Function} fn
- */
-
-Bronto.prototype.load = function(fn){
-  var self = this;
-  load('//p.bm23.com/bta.js', function(err){
-    if (err) return fn(err);
-    var opts = self.options;
-    self.bta = new window.__bta(opts.siteId);
-    if (opts.host) self.bta.setHost(opts.host);
-    fn();
-  });
 };
 
 /**
@@ -8852,6 +9374,7 @@ Bronto.prototype.track = function(track){
  */
 
 Bronto.prototype.completedOrder = function(track){
+  var user = this.analytics.user();
   var products = track.products();
   var props = track.properties();
   var items = [];
@@ -8883,8 +9406,8 @@ Bronto.prototype.completedOrder = function(track){
   });
 };
 
-}, {"analytics.js-integration":157,"facade":27,"load-pixel":176,"load-script":159,"querystring":177,"each":5}],
-176: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":157,"facade":27,"load-pixel":183,"querystring":184,"each":5}],
+183: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -8939,8 +9462,8 @@ function error(fn, message, img){
   };
 }
 
-}, {"querystring":177,"substitute":178}],
-177: [function(require, module, exports) {
+}, {"querystring":184,"substitute":185}],
+184: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9016,7 +9539,7 @@ exports.stringify = function(obj){
 };
 
 }, {"trim":50,"type":35}],
-178: [function(require, module, exports) {
+185: [function(require, module, exports) {
 
 /**
  * Expose `substitute`
@@ -9051,28 +9574,19 @@ function substitute(str, obj, expr){
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(BugHerd);
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * Expose `BugHerd` integration.
  */
 
-var BugHerd = exports.Integration = integration('BugHerd')
+var BugHerd = module.exports = integration('BugHerd')
   .assumesPageview()
-  .readyOnLoad()
   .global('BugHerdConfig')
   .global('_bugHerd')
   .option('apiKey', '')
-  .option('showFeedbackTab', true);
+  .option('showFeedbackTab', true)
+  .tag('<script src="//www.bugherd.com/sidebarv2.js?apikey={{ apiKey }}">');
 
 /**
  * Initialize.
@@ -9084,7 +9598,7 @@ var BugHerd = exports.Integration = integration('BugHerd')
 
 BugHerd.prototype.initialize = function(page){
   window.BugHerdConfig = { feedback: { hide: !this.options.showFeedbackTab }};
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -9096,46 +9610,26 @@ BugHerd.prototype.initialize = function(page){
 BugHerd.prototype.loaded = function(){
   return !! window._bugHerd;
 };
-
-/**
- * Load the BugHerd library.
- *
- * @param {Function} callback
- */
-
-BugHerd.prototype.load = function(callback){
-  load('//www.bugherd.com/sidebarv2.js?apikey=' + this.options.apiKey, callback);
-};
-
-}, {"analytics.js-integration":157,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157}],
 93: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var is = require('is');
 var extend = require('extend');
-var load = require('load-script');
 var onError = require('on-error');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Bugsnag);
-};
 
 /**
  * Expose `Bugsnag` integration.
  */
 
-var Bugsnag = exports.Integration = integration('Bugsnag')
-  .readyOnLoad()
+var Bugsnag = module.exports = integration('Bugsnag')
   .global('Bugsnag')
-  .option('apiKey', '');
+  .option('apiKey', '')
+  .tag('<script src="//d2wy8f7a9ursnm.cloudfront.net/bugsnag-2.min.js">');
 
 /**
  * Initialize.
@@ -9146,7 +9640,11 @@ var Bugsnag = exports.Integration = integration('Bugsnag')
  */
 
 Bugsnag.prototype.initialize = function(page){
-  this.load();
+  var self = this;
+  this.load(function(){
+    window.Bugsnag.apiKey = self.options.apiKey;
+    self.ready();
+  });
 };
 
 /**
@@ -9160,21 +9658,6 @@ Bugsnag.prototype.loaded = function(){
 };
 
 /**
- * Load.
- *
- * @param {Function} callback (optional)
- */
-
-Bugsnag.prototype.load = function(callback){
-  var apiKey = this.options.apiKey;
-  load('//d2wy8f7a9ursnm.cloudfront.net/bugsnag-2.min.js', function(err){
-    if (err) return callback(err);
-    window.Bugsnag.apiKey = apiKey;
-    callback();
-  });
-};
-
-/**
  * Identify.
  *
  * @param {Identify} identify
@@ -9185,8 +9668,8 @@ Bugsnag.prototype.identify = function(identify){
   extend(window.Bugsnag.metaData, identify.traits());
 };
 
-}, {"analytics.js-integration":157,"is":18,"extend":40,"load-script":159,"on-error":179}],
-179: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":157,"is":18,"extend":40,"on-error":186}],
+186: [function(require, module, exports) {
 
 /**
  * Expose `onError`.
@@ -9245,31 +9728,22 @@ function onError (fn) {
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var defaults = require('defaults');
-var load = require('load-script');
 var onBody = require('on-body');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Chartbeat);
-};
 
 /**
  * Expose `Chartbeat` integration.
  */
 
-var Chartbeat = exports.Integration = integration('Chartbeat')
+var Chartbeat = module.exports = integration('Chartbeat')
   .assumesPageview()
-  .readyOnLoad()
   .global('_sf_async_config')
   .global('_sf_endpt')
   .global('pSUPERFLY')
   .option('domain', '')
-  .option('uid', null);
+  .option('uid', null)
+  .tag('<script src="//static.chartbeat.com/js/chartbeat.js">');
 
 /**
  * Initialize.
@@ -9290,7 +9764,7 @@ Chartbeat.prototype.initialize = function(page){
     window._sf_endpt = new Date().getTime();
     // Note: Chartbeat depends on document.body existing so the script does
     // not load until that is confirmed. Otherwise it may trigger errors.
-    self.load();
+    self.load(self.ready);
   });
 };
 
@@ -9302,18 +9776,6 @@ Chartbeat.prototype.initialize = function(page){
 
 Chartbeat.prototype.loaded = function(){
   return !! window.pSUPERFLY;
-};
-
-/**
- * Load the Chartbeat library.
- *
- * http://chartbeat.com/docs/adding_the_code/
- *
- * @param {Function} fn
- */
-
-Chartbeat.prototype.load = function(fn){
-  load('//static.chartbeat.com/js/chartbeat.js', fn);
 };
 
 /**
@@ -9330,8 +9792,8 @@ Chartbeat.prototype.page = function(page){
   window.pSUPERFLY.virtualPage(props.path, name || props.title);
 };
 
-}, {"analytics.js-integration":157,"defaults":180,"load-script":159,"on-body":171}],
-180: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":157,"defaults":187,"on-body":178}],
+187: [function(require, module, exports) {
 /**
  * Expose `defaults`.
  */
@@ -9355,8 +9817,7 @@ function defaults (dest, defaults) {
  */
 
 var push = require('global-queue')('_cbq');
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * HOP
@@ -9379,23 +9840,15 @@ var supported = {
 };
 
 /**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(ChurnBee);
-};
-
-/**
  * Expose `ChurnBee` integration.
  */
 
-var ChurnBee = exports.Integration = integration('ChurnBee')
-  .readyOnLoad()
+var ChurnBee = module.exports = integration('ChurnBee')
   .global('_cbq')
   .global('ChurnBee')
   .option('events', {})
-  .option('apiKey', '');
+  .option('apiKey', '')
+  .tag('<script src="//api.churnbee.com/cb.js">');
 
 /**
  * Initialize.
@@ -9407,7 +9860,7 @@ var ChurnBee = exports.Integration = integration('ChurnBee')
 
 ChurnBee.prototype.initialize = function(page){
   push('_setApiKey', this.options.apiKey);
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -9418,16 +9871,6 @@ ChurnBee.prototype.initialize = function(page){
 
 ChurnBee.prototype.loaded = function(){
   return !! window.ChurnBee;
-};
-
-/**
- * Load the ChurnBee library.
- *
- * @param {Function} fn
- */
-
-ChurnBee.prototype.load = function(fn){
-  load('//api.churnbee.com/cb.js', fn);
 };
 
 /**
@@ -9444,8 +9887,8 @@ ChurnBee.prototype.track = function(track){
   push(event, track.properties({ revenue: 'amount' }));
 };
 
-}, {"global-queue":181,"analytics.js-integration":157,"load-script":159}],
-181: [function(require, module, exports) {
+}, {"global-queue":188,"segmentio/analytics.js-integration":157}],
+188: [function(require, module, exports) {
 
 /**
  * Expose `generate`.
@@ -9484,27 +9927,17 @@ function generate (name, options) {
 var date = require('load-date');
 var domify = require('domify');
 var each = require('each');
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var is = require('is');
 var useHttps = require('use-https');
-var load = require('load-script');
 var onBody = require('on-body');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(ClickTale);
-};
 
 /**
  * Expose `ClickTale` integration.
  */
 
-var ClickTale = exports.Integration = integration('ClickTale')
+var ClickTale = module.exports = integration('ClickTale')
   .assumesPageview()
-  .readyOnLoad()
   .global('WRInitTime')
   .global('ClickTale')
   .global('ClickTaleSetUID')
@@ -9514,7 +9947,8 @@ var ClickTale = exports.Integration = integration('ClickTale')
   .option('httpsCdnUrl', '')
   .option('projectId', '')
   .option('recordingRatio', 0.01)
-  .option('partitionId', '');
+  .option('partitionId', '')
+  .tag('<script src="{{src}}">');
 
 /**
  * Initialize.
@@ -9525,15 +9959,25 @@ var ClickTale = exports.Integration = integration('ClickTale')
  */
 
 ClickTale.prototype.initialize = function(page){
-  var options = this.options;
+  var self = this;
   window.WRInitTime = date.getTime();
 
   onBody(function(body){
     body.appendChild(domify('<div id="ClickTaleDiv" style="display: none;">'));
   });
 
-  this.load(function(){
-    window.ClickTale(options.projectId, options.recordingRatio, options.partitionId);
+  var http = this.options.httpCdnUrl;
+  var https = this.options.httpsCdnUrl;
+  if (useHttps() && !https) return this.debug('https option required');
+  var src = useHttps() ? https : http;
+
+  this.load({ src: src }, function(){
+    window.ClickTale(
+      self.options.projectId, 
+      self.options.recordingRatio, 
+      self.options.partitionId
+    );
+    self.ready();
   });
 };
 
@@ -9545,19 +9989,6 @@ ClickTale.prototype.initialize = function(page){
 
 ClickTale.prototype.loaded = function(){
   return is.fn(window.ClickTale);
-};
-
-/**
- * Load the ClickTale library.
- *
- * @param {Function} callback
- */
-
-ClickTale.prototype.load = function(callback){
-  var http = this.options.httpCdnUrl;
-  var https = this.options.httpsCdnUrl;
-  if (useHttps() && !https) return this.debug('https option required');
-  load({ http: http, https: https }, callback);
 };
 
 /**
@@ -9589,8 +10020,8 @@ ClickTale.prototype.track = function(track){
   window.ClickTaleEvent(track.event());
 };
 
-}, {"load-date":182,"domify":172,"each":5,"analytics.js-integration":157,"is":18,"use-https":183,"load-script":159,"on-body":171}],
-182: [function(require, module, exports) {
+}, {"load-date":189,"domify":179,"each":5,"segmentio/analytics.js-integration":157,"is":18,"use-https":159,"on-body":178}],
+189: [function(require, module, exports) {
 
 
 /*
@@ -9608,45 +10039,6 @@ if (perf && perf.timing && perf.timing.responseEnd) {
 
 module.exports = time;
 }, {}],
-183: [function(require, module, exports) {
-
-/**
- * Protocol.
- */
-
-module.exports = function (url) {
-  switch (arguments.length) {
-    case 0: return check();
-    case 1: return transform(url);
-  }
-};
-
-
-/**
- * Transform a protocol-relative `url` to the use the proper protocol.
- *
- * @param {String} url
- * @return {String}
- */
-
-function transform (url) {
-  return check() ? 'https:' + url : 'http:' + url;
-}
-
-
-/**
- * Check whether `https:` be used for loading scripts.
- *
- * @return {Boolean}
- */
-
-function check () {
-  return (
-    location.protocol == 'https:' ||
-    location.protocol == 'chrome-extension:'
-  );
-}
-}, {}],
 97: [function(require, module, exports) {
 
 /**
@@ -9655,36 +10047,20 @@ function check () {
 
 var Identify = require('facade').Identify;
 var extend = require('extend');
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var is = require('is');
-var load = require('load-script');
-
-/**
- * User reference.
- */
-
-var user;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Clicky);
-  user = analytics.user(); // store for later
-};
 
 /**
  * Expose `Clicky` integration.
  */
 
-var Clicky = exports.Integration = integration('Clicky')
+var Clicky = module.exports = integration('Clicky')
   .assumesPageview()
-  .readyOnLoad()
   .global('clicky')
   .global('clicky_site_ids')
   .global('clicky_custom')
-  .option('siteId', null);
+  .option('siteId', null)
+  .tag('<script src="//static.getclicky.com/js"></script>');
 
 /**
  * Initialize.
@@ -9695,12 +10071,13 @@ var Clicky = exports.Integration = integration('Clicky')
  */
 
 Clicky.prototype.initialize = function(page){
+  var user = this.analytics.user();
   window.clicky_site_ids = window.clicky_site_ids || [this.options.siteId];
   this.identify(new Identify({
     userId: user.id(),
     traits: user.traits()
   }));
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -9711,16 +10088,6 @@ Clicky.prototype.initialize = function(page){
 
 Clicky.prototype.loaded = function(){
   return is.object(window.clicky);
-};
-
-/**
- * Load the Clicky library.
- *
- * @param {Function} callback
- */
-
-Clicky.prototype.load = function(callback){
-  load('//static.getclicky.com/js', callback);
 };
 
 /**
@@ -9762,35 +10129,28 @@ Clicky.prototype.track = function(track){
   window.clicky.goal(track.event(), track.revenue());
 };
 
-}, {"facade":27,"extend":40,"analytics.js-integration":157,"is":18,"load-script":159}],
+}, {"facade":27,"extend":40,"segmentio/analytics.js-integration":157,"is":18}],
 98: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Comscore);
-};
+var integration = require('segmentio/analytics.js-integration');
+var useHttps = require('use-https');
 
 /**
  * Expose `Comscore` integration.
  */
 
-var Comscore = exports.Integration = integration('comScore')
+var Comscore = module.exports = integration('comScore')
   .assumesPageview()
-  .readyOnLoad()
   .global('_comscore')
   .global('COMSCORE')
   .option('c1', '2')
-  .option('c2', '');
+  .option('c2', '')
+  .tag('http', '<script src="http://b.scorecardresearch.com/beacon.js">')
+  .tag('https', '<script src="https://sb.scorecardresearch.com/beacon.js">');
 
 /**
  * Initialize.
@@ -9800,7 +10160,8 @@ var Comscore = exports.Integration = integration('comScore')
 
 Comscore.prototype.initialize = function(page){
   window._comscore = window._comscore || [this.options];
-  this.load();
+  var name = useHttps() ? 'https' : 'http';
+  this.load(name, this.ready);
 };
 
 /**
@@ -9812,47 +10173,24 @@ Comscore.prototype.initialize = function(page){
 Comscore.prototype.loaded = function(){
   return !! window.COMSCORE;
 };
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-Comscore.prototype.load = function(callback){
-  load({
-    http: 'http://b.scorecardresearch.com/beacon.js',
-    https: 'https://sb.scorecardresearch.com/beacon.js'
-  }, callback);
-};
-
-}, {"analytics.js-integration":157,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157,"use-https":159}],
 99: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(CrazyEgg);
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * Expose `CrazyEgg` integration.
  */
 
-var CrazyEgg = exports.Integration = integration('Crazy Egg')
+var CrazyEgg = module.exports = integration('Crazy Egg')
   .assumesPageview()
-  .readyOnLoad()
   .global('CE2')
-  .option('accountNumber', '');
+  .option('accountNumber', '')
+  .tag('<script src="//dnn506yrbagrg.cloudfront.net/pages/scripts/{{ path }}.js?{{ cache }}">');
 
 /**
  * Initialize.
@@ -9861,7 +10199,10 @@ var CrazyEgg = exports.Integration = integration('Crazy Egg')
  */
 
 CrazyEgg.prototype.initialize = function(page){
-  this.load();
+  var number = this.options.accountNumber;
+  var path = number.slice(0,4) + '/' + number.slice(4);
+  var cache = Math.floor(new Date().getTime() / 3600000);
+  this.load({ path: path, cache: cache }, this.ready);
 };
 
 /**
@@ -9873,60 +10214,28 @@ CrazyEgg.prototype.initialize = function(page){
 CrazyEgg.prototype.loaded = function(){
   return !! window.CE2;
 };
-
-/**
- * Load the Crazy Egg library.
- *
- * @param {Function} callback
- */
-
-CrazyEgg.prototype.load = function(callback){
-  var number = this.options.accountNumber;
-  var path = number.slice(0,4) + '/' + number.slice(4);
-  var cache = Math.floor(new Date().getTime()/3600000);
-  var url = '//dnn506yrbagrg.cloudfront.net/pages/scripts/' + path + '.js?' + cache;
-  load(url, callback);
-};
-
-}, {"analytics.js-integration":157,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157}],
 100: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_curebitq');
 var Identify = require('facade').Identify;
 var throttle = require('throttle');
 var Track = require('facade').Track;
 var iso = require('to-iso-string');
-var load = require('load-script');
 var clone = require('clone');
 var each = require('each');
 var bind = require('bind');
 
 /**
- * User reference.
- */
-
-var user;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Curebit);
-  user = analytics.user();
-};
-
-/**
  * Expose `Curebit` integration.
  */
 
-var Curebit = exports.Integration = integration('Curebit')
-  .readyOnLoad() // so iframes get loaded right away
+var Curebit = module.exports = integration('Curebit')
   .global('_curebitq')
   .global('curebit')
   .option('siteId', '')
@@ -9938,7 +10247,8 @@ var Curebit = exports.Integration = integration('Curebit')
   .option('device', '')
   .option('insertIntoId', '')
   .option('campaigns', {})
-  .option('server', 'https://www.curebit.com');
+  .option('server', 'https://www.curebit.com')
+  .tag('<script src="//d2jjzw81hqbuqv.cloudfront.net/integration/curebit-1.0.min.js">');
 
 /**
  * Initialize.
@@ -9948,7 +10258,7 @@ var Curebit = exports.Integration = integration('Curebit')
 
 Curebit.prototype.initialize = function(page){
   push('init', { site_id: this.options.siteId, server: this.options.server });
-  this.load();
+  this.load(this.ready);
 
   // throttle the call to `page` since curebit needs to append an iframe
   this.page = throttle(bind(this, this.page), 250);
@@ -9962,16 +10272,6 @@ Curebit.prototype.initialize = function(page){
 
 Curebit.prototype.loaded = function(){
   return !!window.curebit;
-};
-
-/**
- * Load Curebit's Javascript library.
- *
- * @param {Function} fn
- */
-
-Curebit.prototype.load = function(fn){
-  load('//d2jjzw81hqbuqv.cloudfront.net/integration/curebit-1.0.min.js', fn);
 };
 
 /**
@@ -10012,6 +10312,7 @@ Curebit.prototype.injectIntoId = function(url, id, fn){
  */
 
 Curebit.prototype.page = function(page){
+  var user = this.analytics.user();
   var campaigns = this.options.campaigns;
   var path = window.location.pathname;
   if (!campaigns[path]) return;
@@ -10061,6 +10362,7 @@ Curebit.prototype.page = function(page){
  */
 
 Curebit.prototype.completedOrder = function(track){
+  var user = this.analytics.user();
   var orderId = track.orderId();
   var products = track.products();
   var props = track.properties();
@@ -10095,8 +10397,8 @@ Curebit.prototype.completedOrder = function(track){
   });
 };
 
-}, {"analytics.js-integration":157,"global-queue":181,"facade":27,"throttle":184,"to-iso-string":185,"load-script":159,"clone":186,"each":5,"bind":33}],
-184: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":157,"global-queue":188,"facade":27,"throttle":190,"to-iso-string":191,"clone":192,"each":5,"bind":33}],
+190: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -10129,7 +10431,7 @@ function throttle (func, wait) {
 }
 
 }, {}],
-185: [function(require, module, exports) {
+191: [function(require, module, exports) {
 
 /**
  * Expose `toIsoString`.
@@ -10171,7 +10473,7 @@ function pad (number) {
   return n.length === 1 ? '0' + n : n;
 }
 }, {}],
-186: [function(require, module, exports) {
+192: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -10240,36 +10542,19 @@ function clone(obj){
  */
 
 var alias = require('alias');
-var callback = require('callback');
 var convertDates = require('convert-dates');
 var Identify = require('facade').Identify;
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * User reference.
- */
-
-var user;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Customerio);
-  user = analytics.user(); // store for later
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * Expose `Customerio` integration.
  */
 
-var Customerio = exports.Integration = integration('Customer.io')
+var Customerio = module.exports = integration('Customer.io')
   .assumesPageview()
-  .readyOnLoad()
   .global('_cio')
-  .option('siteId', '');
+  .option('siteId', '')
+  .tag('<script id="cio-tracker" src="https://assets.customer.io/assets/track.js" data-site-id="{{ siteId }}">');
 
 /**
  * Initialize.
@@ -10282,7 +10567,7 @@ var Customerio = exports.Integration = integration('Customer.io')
 Customerio.prototype.initialize = function(page){
   window._cio = window._cio || [];
   (function(){var a,b,c; a = function(f){return function(){window._cio.push([f].concat(Array.prototype.slice.call(arguments,0))); }; }; b = ['identify', 'track']; for (c = 0; c < b.length; c++) {window._cio[b[c]] = a(b[c]); } })();
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -10293,18 +10578,6 @@ Customerio.prototype.initialize = function(page){
 
 Customerio.prototype.loaded = function(){
   return !! (window._cio && window._cio.pageHasLoaded);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-Customerio.prototype.load = function(callback){
-  var script = load('https://assets.customer.io/assets/track.js', callback);
-  script.id = 'cio-tracker';
-  script.setAttribute('data-site-id', this.options.siteId);
 };
 
 /**
@@ -10330,6 +10603,7 @@ Customerio.prototype.identify = function(identify){
 
 Customerio.prototype.group = function(group){
   var traits = group.traits();
+  var user = this.analytics.user();
 
   traits = alias(traits, function(trait){
     return 'Group ' + trait;
@@ -10366,8 +10640,8 @@ function convertDate(date){
   return Math.floor(date.getTime() / 1000);
 }
 
-}, {"alias":187,"callback":12,"convert-dates":188,"facade":27,"analytics.js-integration":157,"load-script":159}],
-187: [function(require, module, exports) {
+}, {"alias":193,"convert-dates":194,"facade":27,"segmentio/analytics.js-integration":157}],
+193: [function(require, module, exports) {
 
 var type = require('type');
 
@@ -10431,7 +10705,7 @@ function aliasByFunction (obj, convert) {
   return output;
 }
 }, {"type":35,"clone":62}],
-188: [function(require, module, exports) {
+194: [function(require, module, exports) {
 
 var is = require('is');
 
@@ -10474,30 +10748,22 @@ function convertDates (obj, convert) {
  */
 
 var alias = require('alias');
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var is = require('is');
 var load = require('load-script');
 var push = require('global-queue')('_dcq');
 
 /**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Drip);
-};
-
-/**
  * Expose `Drip` integration.
  */
 
-var Drip = exports.Integration = integration('Drip')
+var Drip = module.exports = integration('Drip')
   .assumesPageview()
-  .readyOnLoad()
   .global('dc')
   .global('_dcq')
   .global('_dcs')
-  .option('account', '');
+  .option('account', '')
+  .tag('<script src="//tag.getdrip.com/{{ account }}.js">');
 
 /**
  * Initialize.
@@ -10509,7 +10775,7 @@ Drip.prototype.initialize = function(page){
   window._dcq = window._dcq || [];
   window._dcs = window._dcs || {};
   window._dcs.account = this.options.account;
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -10520,16 +10786,6 @@ Drip.prototype.initialize = function(page){
 
 Drip.prototype.loaded = function(){
   return is.object(window.dc);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-Drip.prototype.load = function(callback){
-  load('//tag.getdrip.com/' + this.options.account + '.js', callback);
 };
 
 /**
@@ -10547,38 +10803,28 @@ Drip.prototype.track = function(track){
   push('track', props);
 };
 
-}, {"alias":187,"analytics.js-integration":157,"is":18,"load-script":159,"global-queue":181}],
+}, {"alias":193,"segmentio/analytics.js-integration":157,"is":18,"load-script":166,"global-queue":188}],
 103: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var callback = require('callback');
 var extend = require('extend');
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var onError = require('on-error');
 var push = require('global-queue')('_errs');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Errorception);
-};
 
 /**
  * Expose `Errorception` integration.
  */
 
-var Errorception = exports.Integration = integration('Errorception')
+var Errorception = module.exports = integration('Errorception')
   .assumesPageview()
-  .readyOnLoad()
   .global('_errs')
   .option('projectId', '')
-  .option('meta', true);
+  .option('meta', true)
+  .tag('<script src="//beacon.errorception.com/{{ projectId }}.js">');
 
 /**
  * Initialize.
@@ -10591,7 +10837,7 @@ var Errorception = exports.Integration = integration('Errorception')
 Errorception.prototype.initialize = function(page){
   window._errs = window._errs || [this.options.projectId];
   onError(push);
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -10602,16 +10848,6 @@ Errorception.prototype.initialize = function(page){
 
 Errorception.prototype.loaded = function(){
   return !! (window._errs && window._errs.push !== Array.prototype.push);
-};
-
-/**
- * Load the Errorception library.
- *
- * @param {Function} callback
- */
-
-Errorception.prototype.load = function(callback){
-  load('//beacon.errorception.com/' + this.options.projectId + '.js', callback);
 };
 
 /**
@@ -10630,7 +10866,7 @@ Errorception.prototype.identify = function(identify){
   extend(window._errs.meta, traits);
 };
 
-}, {"callback":12,"extend":40,"analytics.js-integration":157,"load-script":159,"on-error":179,"global-queue":181}],
+}, {"extend":40,"segmentio/analytics.js-integration":157,"on-error":186,"global-queue":188}],
 104: [function(require, module, exports) {
 
 /**
@@ -10638,28 +10874,19 @@ Errorception.prototype.identify = function(identify){
  */
 
 var each = require('each');
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_aaq');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Evergage);
-};
 
 /**
  * Expose `Evergage` integration.integration.
  */
 
-var Evergage = exports.Integration = integration('Evergage')
+var Evergage = module.exports = integration('Evergage')
   .assumesPageview()
-  .readyOnLoad()
   .global('_aaq')
   .option('account', '')
-  .option('dataset', '');
+  .option('dataset', '')
+  .tag('<script src="//cdn.evergage.com/beacon/{{ account }}/{{ dataset }}/scripts/evergage.min.js">');
 
 /**
  * Initialize.
@@ -10676,7 +10903,7 @@ Evergage.prototype.initialize = function(page){
   push('setDataset', dataset);
   push('setUseSiteConfig', true);
 
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -10687,19 +10914,6 @@ Evergage.prototype.initialize = function(page){
 
 Evergage.prototype.loaded = function(){
   return !! (window._aaq && window._aaq.push !== Array.prototype.push);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-Evergage.prototype.load = function(callback){
-  var account = this.options.account;
-  var dataset = this.options.dataset;
-  var url = '//cdn.evergage.com/beacon/' + account + '/' + dataset + '/scripts/evergage.min.js';
-  load(url, callback);
 };
 
 /**
@@ -10769,24 +10983,15 @@ Evergage.prototype.track = function(track){
   push('trackAction', track.event(), track.properties());
 };
 
-}, {"each":5,"analytics.js-integration":157,"load-script":159,"global-queue":181}],
+}, {"each":5,"segmentio/analytics.js-integration":157,"global-queue":188}],
 105: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_fbq');
-var load = require('load-script');
-
-/**
- * Expose plugin
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Facebook);
-};
 
 /**
  * HOP
@@ -10798,11 +11003,11 @@ var has = Object.prototype.hasOwnProperty;
  * Expose `Facebook`
  */
 
-var Facebook = exports.Integration = integration('Facebook Ads')
-  .readyOnInitialize()
+var Facebook = module.exports = integration('Facebook Ads')
   .global('_fbq')
   .option('currency', 'USD')
-  .option('events', {});
+  .option('events', {})
+  .tag('<script src="//connect.facebook.net/en_US/fbds.js">');
 
 /**
  * Initialize Facebook Ads.
@@ -10814,17 +11019,7 @@ var Facebook = exports.Integration = integration('Facebook Ads')
 
 Facebook.prototype.initialize = function(page){
   window._fbq = window._fbq || [];
-  this.load();
-};
-
-/**
- * Load the Facebook Ads library.
- *
- * @param {Function} fn
- */
-
-Facebook.prototype.load = function(fn){
-  load('//connect.facebook.net/en_US/fbds.js', fn);
+  this.load(this.ready);
   window._fbq.loaded = true;
 };
 
@@ -10863,7 +11058,7 @@ Facebook.prototype.track = function(track){
   push('track', event, data);
 };
 
-}, {"analytics.js-integration":157,"global-queue":181,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188}],
 106: [function(require, module, exports) {
 
 /**
@@ -10871,29 +11066,19 @@ Facebook.prototype.track = function(track){
  */
 
 var push = require('global-queue')('_fxm');
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var Track = require('facade').Track;
-var callback = require('callback');
-var load = require('load-script');
 var each = require('each');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(FoxMetrics);
-};
 
 /**
  * Expose `FoxMetrics` integration.
  */
 
-var FoxMetrics = exports.Integration = integration('FoxMetrics')
+var FoxMetrics = module.exports = integration('FoxMetrics')
   .assumesPageview()
-  .readyOnLoad()
   .global('_fxm')
-  .option('appId', '');
+  .option('appId', '')
+  .tag('<script src="//d35tca7vmefkrc.cloudfront.net/scripts/{{ appId }}.js">');
 
 /**
  * Initialize.
@@ -10905,7 +11090,7 @@ var FoxMetrics = exports.Integration = integration('FoxMetrics')
 
 FoxMetrics.prototype.initialize = function(page){
   window._fxm = window._fxm || [];
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -10916,17 +11101,6 @@ FoxMetrics.prototype.initialize = function(page){
 
 FoxMetrics.prototype.loaded = function(){
   return !! (window._fxm && window._fxm.appId);
-};
-
-/**
- * Load the FoxMetrics library.
- *
- * @param {Function} callback
- */
-
-FoxMetrics.prototype.load = function(callback){
-  var id = this.options.appId;
-  load('//d35tca7vmefkrc.cloudfront.net/scripts/' + id + '.js', callback);
 };
 
 /**
@@ -11073,40 +11247,30 @@ function ecommerce(event, track, arr){
   ].concat(arr || []));
 }
 
-}, {"global-queue":181,"analytics.js-integration":157,"facade":27,"callback":12,"load-script":159,"each":5}],
+}, {"global-queue":188,"segmentio/analytics.js-integration":157,"facade":27,"each":5}],
 107: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var callback = require('callback');
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var is = require('is');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Frontleaf);
-};
 
 /**
  * Expose `Frontleaf` integration.
  */
 
-var Frontleaf = exports.Integration = integration('Frontleaf')
+var Frontleaf = module.exports = integration('Frontleaf')
   .assumesPageview()
-  .readyOnLoad()
   .global('_fl')
   .global('_flBaseUrl')
   .option('baseUrl', 'https://api.frontleaf.com')
   .option('token', '')
   .option('stream', '')
   .option('trackNamedPages', false)
-  .option('trackCategorizedPages', false);
+  .option('trackCategorizedPages', false)
+  .tag('<script id="_fl" src="{{ baseUrl }}/lib/tracker.js">');
 
 /**
  * Initialize.
@@ -11121,7 +11285,7 @@ Frontleaf.prototype.initialize = function(page){
   window._flBaseUrl = window._flBaseUrl || this.options.baseUrl;
   this._push('setApiToken', this.options.token);
   this._push('setStream', this.options.stream);
-  this.load();
+  this.load({ baseUrl: window._flBaseUrl }, this.ready);
 };
 
 /**
@@ -11132,18 +11296,6 @@ Frontleaf.prototype.initialize = function(page){
 
 Frontleaf.prototype.loaded = function(){
   return is.array(window._fl) && window._fl.ready === true ;
-};
-
-/**
- * Load.
- *
- * @param {Function} fn
- */
-
-Frontleaf.prototype.load = function(fn){
-  if (document.getElementById('_fl')) return callback.async(fn);
-  var script = load(window._flBaseUrl + '/lib/tracker.js', fn);
-  script.id = '_fl';
 };
 
 /**
@@ -11312,35 +11464,25 @@ function flatten(source){
   return output;
 }
 
-}, {"callback":12,"analytics.js-integration":157,"is":18,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157,"is":18}],
 108: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var callback = require('callback');
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_gauges');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Gauges);
-};
 
 /**
  * Expose `Gauges` integration.
  */
 
-var Gauges = exports.Integration = integration('Gauges')
+var Gauges = module.exports = integration('Gauges')
   .assumesPageview()
-  .readyOnLoad()
   .global('_gauges')
-  .option('siteId', '');
+  .option('siteId', '')
+  .tag('<script id="gauges-tracker" src="//secure.gaug.es/track.js" data-site-id="{{ siteId }}">');
 
 /**
  * Initialize Gauges.
@@ -11352,7 +11494,7 @@ var Gauges = exports.Integration = integration('Gauges')
 
 Gauges.prototype.initialize = function(page){
   window._gauges = window._gauges || [];
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -11366,19 +11508,6 @@ Gauges.prototype.loaded = function(){
 };
 
 /**
- * Load the Gauges library.
- *
- * @param {Function} callback
- */
-
-Gauges.prototype.load = function(callback){
-  var id = this.options.siteId;
-  var script = load('//secure.gaug.es/track.js', callback);
-  script.id = 'gauges-tracker';
-  script.setAttribute('data-site-id', id);
-};
-
-/**
  * Page.
  *
  * @param {Page} page
@@ -11388,34 +11517,25 @@ Gauges.prototype.page = function(page){
   push('track');
 };
 
-}, {"callback":12,"analytics.js-integration":157,"load-script":159,"global-queue":181}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188}],
 109: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var onBody = require('on-body');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(GetSatisfaction);
-};
 
 /**
  * Expose `GetSatisfaction` integration.
  */
 
-var GetSatisfaction = exports.Integration = integration('Get Satisfaction')
+var GetSatisfaction = module.exports = integration('Get Satisfaction')
   .assumesPageview()
-  .readyOnLoad()
   .global('GSFN')
-  .option('widgetId', '');
+  .option('widgetId', '')
+  .tag('<script src="https://loader.engage.gsfn.us/loader.js">');
 
 /**
  * Initialize.
@@ -11426,6 +11546,7 @@ var GetSatisfaction = exports.Integration = integration('Get Satisfaction')
  */
 
 GetSatisfaction.prototype.initialize = function(page){
+  var self = this;
   var widget = this.options.widgetId;
   var div = document.createElement('div');
   var id = div.id = 'getsat-widget-' + widget;
@@ -11434,6 +11555,7 @@ GetSatisfaction.prototype.initialize = function(page){
   // usually the snippet is sync, so wait for it before initializing the tab
   this.load(function(){
     window.GSFN.loadWidget(widget, { containerId: id });
+    self.ready();
   });
 };
 
@@ -11446,28 +11568,18 @@ GetSatisfaction.prototype.initialize = function(page){
 GetSatisfaction.prototype.loaded = function(){
   return !! window.GSFN;
 };
-
-/**
- * Load the Get Satisfaction library.
- *
- * @param {Function} callback
- */
-
-GetSatisfaction.prototype.load = function(callback){
-  load('https://loader.engage.gsfn.us/loader.js', callback);
-};
-
-}, {"analytics.js-integration":157,"load-script":159,"on-body":171}],
+}, {"segmentio/analytics.js-integration":157,"on-body":178}],
 110: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_gaq');
 var length = require('object').length;
 var canonical = require('canonical');
+var useHttps = require('use-https');
 var Track = require('facade').Track;
 var callback = require('callback');
 var load = require('load-script');
@@ -11516,7 +11628,11 @@ var GA = exports.Integration = integration('Google Analytics')
   .option('trackCategorizedPages', true)
   .option('sendUserId', false)
   .option('metrics', {})
-  .option('dimensions', {});
+  .option('dimensions', {})
+  .tag('library', '<script src="//www.google-analytics.com/analytics.js">')
+  .tag('double click', '<script src="//stats.g.doubleclick.net/dc.js">')
+  .tag('http', '<script src="http://www.google-analytics.com/ga.js">')
+  .tag('https', '<script src="https://ssl.google-analytics.com/ga.js">');
 
 /**
  * When in "classic" mode, on `construct` swap all of the method to point to
@@ -11526,7 +11642,6 @@ var GA = exports.Integration = integration('Google Analytics')
 GA.on('construct', function(integration){
   if (!integration.options.classic) return;
   integration.initialize = integration.initializeClassic;
-  integration.load = integration.loadClassic;
   integration.loaded = integration.loadedClassic;
   integration.page = integration.pageClassic;
   integration.track = integration.trackClassic;
@@ -11574,7 +11689,7 @@ GA.prototype.initialize = function(){
   var custom = metrics(user.traits(), opts);
   if (length(custom)) window.ga('set', custom);
 
-  this.load();
+  this.load('library', this.ready);
 };
 
 /**
@@ -11585,16 +11700,6 @@ GA.prototype.initialize = function(){
 
 GA.prototype.loaded = function(){
   return !! window.gaplugins;
-};
-
-/**
- * Load the Google Analytics library.
- *
- * @param {Function} callback
- */
-
-GA.prototype.load = function(callback){
-  load('//www.google-analytics.com/analytics.js', callback);
 };
 
 /**
@@ -11740,8 +11845,13 @@ GA.prototype.initializeClassic = function(){
       push('_addIgnoredRef', domain);
     });
   }
-
-  this.load();
+  
+  if (this.options.doubleClick) {
+    this.load('double click', this.ready);
+  } else {
+    var name = useHttps() ? 'https' : 'http';
+    this.load(name, this.ready);
+  }
 };
 
 /**
@@ -11752,24 +11862,6 @@ GA.prototype.initializeClassic = function(){
 
 GA.prototype.loadedClassic = function(){
   return !! (window._gaq && window._gaq.push !== Array.prototype.push);
-};
-
-
-/**
- * Load the classic Google Analytics library.
- *
- * @param {Function} callback
- */
-
-GA.prototype.loadClassic = function(callback){
-  if (this.options.doubleClick) {
-    load('//stats.g.doubleclick.net/dc.js', callback);
-  } else {
-    load({
-      http: 'http://www.google-analytics.com/ga.js',
-      https: 'https://ssl.google-analytics.com/ga.js'
-    }, callback);
-  }
 };
 
 /**
@@ -11927,7 +12019,7 @@ function metrics(obj, data){
   return ret;
 }
 
-}, {"analytics.js-integration":157,"global-queue":181,"object":25,"canonical":13,"facade":27,"callback":12,"load-script":159,"obj-case":60,"each":5,"type":35,"url":26,"is":18}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188,"object":25,"canonical":13,"use-https":159,"facade":27,"callback":12,"load-script":166,"obj-case":60,"each":5,"type":35,"url":26,"is":18}],
 111: [function(require, module, exports) {
 
 /**
@@ -11935,29 +12027,20 @@ function metrics(obj, data){
  */
 
 var push = require('global-queue')('dataLayer', { wrap: false });
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(GTM);
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * Expose `GTM`.
  */
 
-var GTM = exports.Integration = integration('Google Tag Manager')
+var GTM = module.exports = integration('Google Tag Manager')
   .assumesPageview()
-  .readyOnLoad()
   .global('dataLayer')
   .global('google_tag_manager')
   .option('containerId', '')
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true)
+  .tag('<script src="//www.googletagmanager.com/gtm.js?id={{ containerId }}&l=dataLayer">');
 
 /**
  * Initialize.
@@ -11968,7 +12051,8 @@ var GTM = exports.Integration = integration('Google Tag Manager')
  */
 
 GTM.prototype.initialize = function(){
-  this.load();
+  push({ 'gtm.start': +new Date, event: 'gtm.js' });
+  this.load(this.ready);
 };
 
 /**
@@ -11979,18 +12063,6 @@ GTM.prototype.initialize = function(){
 
 GTM.prototype.loaded = function(){
   return !! (window.dataLayer && [].push != window.dataLayer.push);
-};
-
-/**
- * Load.
- *
- * @param {Function} fn
- */
-
-GTM.prototype.load = function(fn){
-  var id = this.options.containerId;
-  push({ 'gtm.start': +new Date, event: 'gtm.js' });
-  load('//www.googletagmanager.com/gtm.js?id=' + id + '&l=dataLayer', fn);
 };
 
 /**
@@ -12038,14 +12110,14 @@ GTM.prototype.track = function(track){
   push(props);
 };
 
-}, {"global-queue":181,"analytics.js-integration":157,"load-script":159}],
+}, {"global-queue":188,"segmentio/analytics.js-integration":157}],
 112: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var Identify = require('facade').Identify;
 var Track = require('facade').Track;
 var callback = require('callback');
@@ -12054,27 +12126,11 @@ var onBody = require('on-body');
 var each = require('each');
 
 /**
- * User reference.
- */
-
-var user;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(GoSquared);
-  user = analytics.user(); // store reference for later
-};
-
-/**
  * Expose `GoSquared` integration.
  */
 
-var GoSquared = exports.Integration = integration('GoSquared')
+var GoSquared = module.exports = integration('GoSquared')
   .assumesPageview()
-  .readyOnLoad()
   .global('_gs')
   .option('siteToken', '')
   .option('anonymizeIP', false)
@@ -12082,7 +12138,8 @@ var GoSquared = exports.Integration = integration('GoSquared')
   .option('useCookies', true)
   .option('trackHash', false)
   .option('trackLocal', false)
-  .option('trackParams', true);
+  .option('trackParams', true)
+  .tag('<script src="//d1l6p2sc9645hc.cloudfront.net/tracker.js">');
 
 /**
  * Initialize.
@@ -12096,6 +12153,7 @@ var GoSquared = exports.Integration = integration('GoSquared')
 GoSquared.prototype.initialize = function(page){
   var self = this;
   var options = this.options;
+  var user = this.analytics.user();
   push(options.siteToken);
 
   each(options, function(name, value){
@@ -12109,7 +12167,7 @@ GoSquared.prototype.initialize = function(page){
     userId: user.id()
   }));
 
-  self.load();
+  self.load(this.ready);
 };
 
 /**
@@ -12120,16 +12178,6 @@ GoSquared.prototype.initialize = function(page){
 
 GoSquared.prototype.loaded = function(){
   return !! (window._gs && window._gs.v);
-};
-
-/**
- * Load the GoSquared library.
- *
- * @param {Function} callback
- */
-
-GoSquared.prototype.load = function(callback){
-  load('//d1l6p2sc9645hc.cloudfront.net/tracker.js', callback);
 };
 
 /**
@@ -12218,36 +12266,26 @@ function push(){
   _gs.apply(null, arguments);
 }
 
-}, {"analytics.js-integration":157,"facade":27,"callback":12,"load-script":159,"on-body":171,"each":5}],
+}, {"segmentio/analytics.js-integration":157,"facade":27,"callback":12,"load-script":166,"on-body":178,"each":5}],
 113: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var callback = require('callback');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var alias = require('alias');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Heap);
-};
 
 /**
  * Expose `Heap` integration.
  */
 
-var Heap = exports.Integration = integration('Heap')
+var Heap = module.exports = integration('Heap')
   .assumesPageview()
-  .readyOnLoad()
   .global('heap')
   .global('_heapid')
-  .option('apiKey', '');
+  .option('apiKey', '')
+  .tag('<script src="//d36lvucg9kzous.cloudfront.net">');
 
 /**
  * Initialize.
@@ -12260,7 +12298,7 @@ var Heap = exports.Integration = integration('Heap')
 Heap.prototype.initialize = function(page){
   window.heap=window.heap||[];window.heap.load=function(a){window._heapid=a;var d=function(a){return function(){window.heap.push([a].concat(Array.prototype.slice.call(arguments,0)));};},e=["identify","track"];for (var f=0;f<e.length;f++)window.heap[e[f]]=d(e[f]);};
   window.heap.load(this.options.apiKey);
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -12271,16 +12309,6 @@ Heap.prototype.initialize = function(page){
 
 Heap.prototype.loaded = function(){
   return (window.heap && window.heap.appid);
-};
-
-/**
- * Load the Heap library.
- *
- * @param {Function} callback
- */
-
-Heap.prototype.load = function(callback){
-  load('//d36lvucg9kzous.cloudfront.net', callback);
 };
 
 /**
@@ -12313,33 +12341,24 @@ Heap.prototype.track = function(track){
   window.heap.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":157,"callback":12,"load-script":159,"alias":187}],
+}, {"segmentio/analytics.js-integration":157,"alias":193}],
 114: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Hellobar);
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * Expose `hellobar.com` integration.
  */
 
-var Hellobar = exports.Integration = integration('Hello Bar')
+var Hellobar = module.exports = integration('Hello Bar')
   .assumesPageview()
-  .readyOnLoad()
   .global('_hbq')
-  .option('apiKey', '');
+  .option('apiKey', '')
+  .tag('<script src="//s3.amazonaws.com/scripts.hellobar.com/{{ apiKey }}.js">');
 
 /**
  * Initialize.
@@ -12351,18 +12370,7 @@ var Hellobar = exports.Integration = integration('Hello Bar')
 
 Hellobar.prototype.initialize = function(page){
   window._hbq = window._hbq || [];
-  this.load();
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-Hellobar.prototype.load = function(callback){
-  var url = '//s3.amazonaws.com/scripts.hellobar.com/' + this.options.apiKey + '.js';
-  load(url, callback);
+  this.load(this.ready);
 };
 
 /**
@@ -12375,34 +12383,25 @@ Hellobar.prototype.loaded = function(){
   return !! (window._hbq && window._hbq.push !== Array.prototype.push);
 };
 
-}, {"analytics.js-integration":157,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157}],
 115: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var is = require('is');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(HitTail);
-};
 
 /**
  * Expose `HitTail` integration.
  */
 
-var HitTail = exports.Integration = integration('HitTail')
+var HitTail = module.exports = integration('HitTail')
   .assumesPageview()
-  .readyOnLoad()
   .global('htk')
-  .option('siteId', '');
+  .option('siteId', '')
+  .tag('<script src="//{{ siteId }}.hittail.com/mlt.js">');
 
 /**
  * Initialize.
@@ -12411,7 +12410,7 @@ var HitTail = exports.Integration = integration('HitTail')
  */
 
 HitTail.prototype.initialize = function(page){
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -12423,48 +12422,26 @@ HitTail.prototype.initialize = function(page){
 HitTail.prototype.loaded = function(){
   return is.fn(window.htk);
 };
-
-/**
- * Load the HitTail library.
- *
- * @param {Function} callback
- */
-
-HitTail.prototype.load = function(callback){
-  var id = this.options.siteId;
-  load('//' + id + '.hittail.com/mlt.js', callback);
-};
-
-}, {"analytics.js-integration":157,"load-script":159,"is":18}],
+}, {"segmentio/analytics.js-integration":157,"is":18}],
 116: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_hsq');
 var convert = require('convert-dates');
-var callback = require('callback');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(HubSpot);
-};
 
 /**
  * Expose `HubSpot` integration.
  */
 
-var HubSpot = exports.Integration = integration('HubSpot')
+var HubSpot = module.exports = integration('HubSpot')
   .assumesPageview()
-  .readyOnLoad()
   .global('_hsq')
-  .option('portalId', null);
+  .option('portalId', null)
+  .tag('<script id="hs-analytics" src="https://js.hs-analytics.net/analytics/{{ cache }}/{{ portalId }}.js">');
 
 /**
  * Initialize.
@@ -12474,7 +12451,8 @@ var HubSpot = exports.Integration = integration('HubSpot')
 
 HubSpot.prototype.initialize = function(page){
   window._hsq = [];
-  this.load();
+  var cache = Math.ceil(new Date() / 300000) * 300000;
+  this.load({ cache: cache }, this.ready);
 };
 
 /**
@@ -12485,21 +12463,6 @@ HubSpot.prototype.initialize = function(page){
 
 HubSpot.prototype.loaded = function(){
   return !! (window._hsq && window._hsq.push !== Array.prototype.push);
-};
-
-/**
- * Load the HubSpot library.
- *
- * @param {Function} fn
- */
-
-HubSpot.prototype.load = function(fn){
-  if (document.getElementById('hs-analytics')) return callback.async(fn);
-  var id = this.options.portalId;
-  var cache = Math.ceil(new Date() / 300000) * 300000;
-  var url = 'https://js.hs-analytics.net/analytics/' + cache + '/' + id + '.js';
-  var script = load(url, fn);
-  script.id = 'hs-analytics';
 };
 
 /**
@@ -12550,37 +12513,27 @@ function convertDates(properties){
   return convert(properties, function(date){ return date.getTime(); });
 }
 
-}, {"analytics.js-integration":157,"global-queue":181,"convert-dates":188,"callback":12,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188,"convert-dates":194}],
 117: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var callback = require('callback');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var alias = require('alias');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Improvely);
-};
 
 /**
  * Expose `Improvely` integration.
  */
 
-var Improvely = exports.Integration = integration('Improvely')
+var Improvely = module.exports = integration('Improvely')
   .assumesPageview()
-  .readyOnLoad()
   .global('_improvely')
   .global('improvely')
   .option('domain', '')
-  .option('projectId', null);
+  .option('projectId', null)
+  .tag('<script src="//{{ domain }}.iljmp.com/improvely.js">');
 
 /**
  * Initialize.
@@ -12597,7 +12550,7 @@ Improvely.prototype.initialize = function(page){
   var domain = this.options.domain;
   var id = this.options.projectId;
   window.improvely.init(domain, id);
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -12608,17 +12561,6 @@ Improvely.prototype.initialize = function(page){
 
 Improvely.prototype.loaded = function(){
   return !! (window.improvely && window.improvely.identify);
-};
-
-/**
- * Load the Improvely library.
- *
- * @param {Function} callback
- */
-
-Improvely.prototype.load = function(callback){
-  var domain = this.options.domain;
-  load('//' + domain + '.iljmp.com/improvely.js', callback);
 };
 
 /**
@@ -12648,37 +12590,28 @@ Improvely.prototype.track = function(track){
   window.improvely.goal(props);
 };
 
-}, {"analytics.js-integration":157,"callback":12,"load-script":159,"alias":187}],
+}, {"segmentio/analytics.js-integration":157,"alias":193}],
 118: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('__insp');
-var load = require('load-script');
 var alias = require('alias');
 var clone = require('clone');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Inspectlet);
-};
 
 /**
  * Expose `Inspectlet` integration.
  */
 
-var Inspectlet = exports.Integration = integration('Inspectlet')
+var Inspectlet = module.exports = integration('Inspectlet')
   .assumesPageview()
-  .readyOnLoad()
   .global('__insp')
   .global('__insp_')
-  .option('wid', '');
+  .option('wid', '')
+  .tag('<script src="//www.inspectlet.com/inspectlet.js">');
 
 /**
  * Initialize.
@@ -12690,7 +12623,7 @@ var Inspectlet = exports.Integration = integration('Inspectlet')
 
 Inspectlet.prototype.initialize = function(page){
   push('wid', this.options.wid);
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -12701,16 +12634,6 @@ Inspectlet.prototype.initialize = function(page){
 
 Inspectlet.prototype.loaded = function(){
   return !! window.__insp_;
-};
-
-/**
- * Load the Inspectlet library.
- *
- * @param {Function} callback
- */
-
-Inspectlet.prototype.load = function(callback){
-  load('//www.inspectlet.com/inspectlet.js', callback);
 };
 
 /**
@@ -12726,7 +12649,6 @@ Inspectlet.prototype.identify = function (identify) {
   push('tagSession', traits);
 };
 
-
 /**
  * Track.
  *
@@ -12739,14 +12661,14 @@ Inspectlet.prototype.track = function(track){
   push('tagSession', track.event());
 };
 
-}, {"analytics.js-integration":157,"global-queue":181,"load-script":159,"alias":187,"clone":186}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188,"alias":193,"clone":192}],
 119: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var convertDates = require('convert-dates');
 var defaults = require('defaults');
 var isEmail = require('is-email');
@@ -12758,31 +12680,16 @@ var when = require('when');
 var is = require('is');
 
 /**
- * Group reference.
- */
-
-var group;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Intercom);
-  group = analytics.group();
-};
-
-/**
  * Expose `Intercom` integration.
  */
 
-var Intercom = exports.Integration = integration('Intercom')
+var Intercom = module.exports = integration('Intercom')
   .assumesPageview()
-  .readyOnLoad()
   .global('Intercom')
   .option('activator', '#IntercomDefaultWidget')
   .option('appId', '')
-  .option('inbox', false);
+  .option('inbox', false)
+  .tag('<script src="https://static.intercomcdn.com/intercom.v1.js">');
 
 /**
  * Initialize.
@@ -12794,7 +12701,10 @@ var Intercom = exports.Integration = integration('Intercom')
  */
 
 Intercom.prototype.initialize = function(page){
-  this.load();
+  var self = this;
+  this.load(function(){
+    when(function(){ return self.loaded(); }, self.ready);
+  });
 };
 
 /**
@@ -12805,25 +12715,6 @@ Intercom.prototype.initialize = function(page){
 
 Intercom.prototype.loaded = function(){
   return is.fn(window.Intercom);
-};
-
-/**
- * Load the Intercom library.
- *
- * TODO: remove `when()` when integration `.loaded()`
- * behavior is fixed.
- *
- * @param {Function} callback
- */
-
-Intercom.prototype.load = function(callback){
-  var self = this;
-  load('https://static.intercomcdn.com/intercom.v1.js', function(err){
-    if (err) return callback(err);
-    when(function(){
-      return self.loaded();
-    }, callback);
-  });
 };
 
 /**
@@ -12853,6 +12744,7 @@ Intercom.prototype.identify = function(identify){
   var email = identify.email();
   var name = identify.name();
   var id = identify.userId();
+  var group = this.analytics.group();
 
   if (!id && !traits.email) return; // one is required
 
@@ -12928,38 +12820,28 @@ function formatDate(date) {
   return Math.floor(date / 1000);
 }
 
-}, {"analytics.js-integration":157,"convert-dates":188,"defaults":180,"is-email":19,"load-script":159,"is-empty":44,"alias":187,"each":5,"when":175,"is":18}],
+}, {"segmentio/analytics.js-integration":157,"convert-dates":194,"defaults":187,"is-email":19,"load-script":166,"is-empty":44,"alias":193,"each":5,"when":182,"is":18}],
 120: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var callback = require('callback');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Keen);
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * Expose `Keen IO` integration.
  */
 
-var Keen = exports.Integration = integration('Keen IO')
-  .readyOnLoad()
+var Keen = module.exports = integration('Keen IO')
   .global('Keen')
   .option('projectId', '')
   .option('readKey', '')
   .option('writeKey', '')
   .option('trackNamedPages', true)
   .option('trackAllPages', false)
-  .option('trackCategorizedPages', true);
+  .option('trackCategorizedPages', true)
+  .tag('<script src="//dc8na2hxrj29i.cloudfront.net/code/keen-2.1.0-min.js">');
 
 /**
  * Initialize.
@@ -12975,7 +12857,7 @@ Keen.prototype.initialize = function(){
     writeKey: options.writeKey,
     readKey: options.readKey
   });
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -12986,16 +12868,6 @@ Keen.prototype.initialize = function(){
 
 Keen.prototype.loaded = function(){
   return !! (window.Keen && window.Keen.Base64);
-};
-
-/**
- * Load the Keen IO library.
- *
- * @param {Function} callback
- */
-
-Keen.prototype.load = function(callback){
-  load('//dc8na2hxrj29i.cloudfront.net/code/keen-2.1.0-min.js', callback);
 };
 
 /**
@@ -13055,36 +12927,27 @@ Keen.prototype.track = function(track){
   window.Keen.addEvent(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":157,"callback":12,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157}],
 121: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var indexof = require('indexof');
 var is = require('is');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Kenshoo);
-};
 
 /**
  * Expose `Kenshoo` integration.
  */
 
-var Kenshoo = exports.Integration = integration('Kenshoo')
-  .readyOnLoad()
+var Kenshoo = module.exports = integration('Kenshoo')
   .global('k_trackevent')
   .option('cid', '')
   .option('subdomain', '')
-  .option('events', []);
+  .option('events', [])
+  .tag('<script src="//{{ subdomain }}.xg4ken.com/media/getpx.php?cid={{ cid }}">');
 
 /**
  * Initialize.
@@ -13095,7 +12958,7 @@ var Kenshoo = exports.Integration = integration('Kenshoo')
  */
 
 Kenshoo.prototype.initialize = function(page){
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -13106,17 +12969,6 @@ Kenshoo.prototype.initialize = function(page){
 
 Kenshoo.prototype.loaded = function(){
   return is.fn(window.k_trackevent);
-};
-
-/**
- * Load Kenshoo script.
- *
- * @param {Function} callback
- */
-
-Kenshoo.prototype.load = function(callback){
-  var url = '//' + this.options.subdomain + '.xg4ken.com/media/getpx.php?cid=' + this.options.cid;
-  load(url, callback);
 };
 
 /**
@@ -13154,45 +13006,36 @@ Kenshoo.prototype.track = function(track){
   window.k_trackevent(params, this.options.subdomain);
 };
 
-}, {"analytics.js-integration":157,"load-script":159,"indexof":46,"is":18}],
+}, {"segmentio/analytics.js-integration":157,"indexof":46,"is":18}],
 122: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_kmq');
 var Track = require('facade').Track;
-var callback = require('callback');
-var load = require('load-script');
 var alias = require('alias');
 var Batch = require('batch');
 var each = require('each');
 var is = require('is');
 
 /**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(KISSmetrics);
-};
-
-/**
  * Expose `KISSmetrics` integration.
  */
 
-var KISSmetrics = exports.Integration = integration('KISSmetrics')
+var KISSmetrics = module.exports = integration('KISSmetrics')
   .assumesPageview()
-  .readyOnLoad()
   .global('_kmq')
   .global('KM')
   .global('_kmil')
   .option('apiKey', '')
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true)
-  .option('prefixProperties', true);
+  .option('prefixProperties', true)
+  .tag('useless', '<script src="//i.kissmetrics.com/i.js">')
+  .tag('library', '<script src="//doug1izaerwt3.cloudfront.net/{{ apiKey }}.1.js">');
 
 /**
  * Check if browser is mobile, for kissmetrics.
@@ -13219,8 +13062,13 @@ KISSmetrics.prototype.initialize = function(page){
   var self = this;
   window._kmq = [];
   if (exports.isMobile) push('set', { 'Mobile Session': 'Yes' });
-  this.load(function(){
+
+  var batch = new Batch();
+  batch.push(function(done){ self.load('useless', done); }) // :)
+  batch.push(function(done){ self.load('library', done); })
+  batch.end(function(){
     self.trackPage(page);
+    self.ready();
   });
 };
 
@@ -13232,23 +13080,6 @@ KISSmetrics.prototype.initialize = function(page){
 
 KISSmetrics.prototype.loaded = function(){
   return is.object(window.KM);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-KISSmetrics.prototype.load = function(callback){
-  var key = this.options.apiKey;
-  var useless = '//i.kissmetrics.com/i.js';
-  var library = '//doug1izaerwt3.cloudfront.net/' + key + '.1.js';
-
-  new Batch()
-    .push(function (done) { load(useless, done); }) // :)
-    .push(function (done) { load(library, done); })
-    .end(callback);
 };
 
 /**
@@ -13369,8 +13200,8 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"analytics.js-integration":157,"global-queue":181,"facade":27,"callback":12,"load-script":159,"alias":187,"batch":189,"each":5,"is":18}],
-189: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":157,"global-queue":188,"facade":27,"alias":193,"batch":195,"each":5,"is":18}],
+195: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -13530,8 +13361,8 @@ Batch.prototype.end = function(cb){
   return this;
 };
 
-}, {"emitter":190}],
-190: [function(require, module, exports) {
+}, {"emitter":196}],
+196: [function(require, module, exports) {
 
 /**
  * Expose `Emitter`.
@@ -13704,20 +13535,10 @@ Emitter.prototype.hasListeners = function(event){
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_learnq');
-var callback = require('callback');
-var load = require('load-script');
 var tick = require('next-tick');
 var alias = require('alias');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Klaviyo);
-};
 
 /**
  * Trait aliases.
@@ -13736,11 +13557,11 @@ var aliases = {
  * Expose `Klaviyo` integration.
  */
 
-var Klaviyo = exports.Integration = integration('Klaviyo')
+var Klaviyo = module.exports = integration('Klaviyo')
   .assumesPageview()
-  .readyOnLoad()
   .global('_learnq')
-  .option('apiKey', '');
+  .option('apiKey', '')
+  .tag('<script src="//a.klaviyo.com/media/js/learnmarklet.js">');
 
 /**
  * Initialize.
@@ -13751,8 +13572,11 @@ var Klaviyo = exports.Integration = integration('Klaviyo')
  */
 
 Klaviyo.prototype.initialize = function(page){
+  var self = this;
   push('account', this.options.apiKey);
-  this.load();
+  this.load(function(){
+    tick(self.ready);
+  });
 };
 
 /**
@@ -13763,18 +13587,6 @@ Klaviyo.prototype.initialize = function(page){
 
 Klaviyo.prototype.loaded = function(){
   return !! (window._learnq && window._learnq.push !== Array.prototype.push);
-};
-
-/**
- * Load.
- *
- * @param {Function} fn
- */
-
-Klaviyo.prototype.load = function(fn){
-  load('//a.klaviyo.com/media/js/learnmarklet.js', function(){
-    tick(fn);
-  });
 };
 
 /**
@@ -13813,34 +13625,25 @@ Klaviyo.prototype.track = function(track){
   }));
 };
 
-}, {"analytics.js-integration":157,"global-queue":181,"callback":12,"load-script":159,"next-tick":45,"alias":187}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188,"next-tick":45,"alias":193}],
 124: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(LeadLander);
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * Expose `LeadLander` integration.
  */
 
-var LeadLander = exports.Integration = integration('LeadLander')
+var LeadLander = module.exports = integration('LeadLander')
   .assumesPageview()
-  .readyOnLoad()
   .global('llactid')
   .global('trackalyzer')
-  .option('accountId', null);
+  .option('accountId', null)
+  .tag('<script src="http://t6.trackalyzer.com/trackalyze-nodoc.js">');
 
 /**
  * Initialize.
@@ -13850,7 +13653,7 @@ var LeadLander = exports.Integration = integration('LeadLander')
 
 LeadLander.prototype.initialize = function(page){
   window.llactid = this.options.accountId;
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -13862,51 +13665,31 @@ LeadLander.prototype.initialize = function(page){
 LeadLander.prototype.loaded = function(){
   return !! window.trackalyzer;
 };
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-LeadLander.prototype.load = function(callback){
-  load('http://t6.trackalyzer.com/trackalyze-nodoc.js', callback);
-};
-
-}, {"analytics.js-integration":157,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157}],
 125: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var clone = require('clone');
 var each = require('each');
 var when = require('when');
 
 /**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(LiveChat);
-};
-
-/**
  * Expose `LiveChat` integration.
  */
 
-var LiveChat = exports.Integration = integration('LiveChat')
+var LiveChat = module.exports = integration('LiveChat')
   .assumesPageview()
-  .readyOnLoad()
   .global('__lc')
   .global('__lc_inited')
   .global('LC_API')
   .global('LC_Invite')
   .option('group', 0)
-  .option('license', '');
+  .option('license', '')
+  .tag('<script src="//cdn.livechatinc.com/tracking.js">');
 
 /**
  * Initialize.
@@ -13917,8 +13700,11 @@ var LiveChat = exports.Integration = integration('LiveChat')
  */
 
 LiveChat.prototype.initialize = function(page){
+  var self = this;
   window.__lc = clone(this.options);
-  this.load();
+  this.load(function(){
+    when(function(){ return self.loaded(); }, self.ready);
+  });
 };
 
 /**
@@ -13929,22 +13715,6 @@ LiveChat.prototype.initialize = function(page){
 
 LiveChat.prototype.loaded = function(){
   return !!(window.LC_API && window.LC_Invite);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-LiveChat.prototype.load = function(callback){
-  var self = this;
-  load('//cdn.livechatinc.com/tracking.js', function(err){
-    if (err) return callback(err);
-    when(function(){
-      return self.loaded();
-    }, callback);
-  });
 };
 
 /**
@@ -13973,45 +13743,31 @@ function convert(traits){
   return arr;
 }
 
-}, {"analytics.js-integration":157,"load-script":159,"clone":186,"each":5,"when":175}],
+}, {"segmentio/analytics.js-integration":157,"clone":192,"each":5,"when":182}],
 126: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var Identify = require('facade').Identify;
-var load = require('load-script');
-
-/**
- * User reference.
- */
-
-var user;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(LuckyOrange);
-  user = analytics.user();
-};
+var useHttps = require('use-https');
 
 /**
  * Expose `LuckyOrange` integration.
  */
 
-var LuckyOrange = exports.Integration = integration('Lucky Orange')
+var LuckyOrange = module.exports = integration('Lucky Orange')
   .assumesPageview()
-  .readyOnLoad()
   .global('_loq')
   .global('__wtw_watcher_added')
   .global('__wtw_lucky_site_id')
   .global('__wtw_lucky_is_segment_io')
   .global('__wtw_custom_user_data')
-  .option('siteId', null);
+  .option('siteId', null)
+  .tag('http', '<script src="http://www.luckyorange.com/w.js?{{ cache }}">')
+  .tag('https', '<script src="https://ssl.luckyorange.com/w.js?{{ cache }}">');
 
 /**
  * Initialize.
@@ -14020,13 +13776,16 @@ var LuckyOrange = exports.Integration = integration('Lucky Orange')
  */
 
 LuckyOrange.prototype.initialize = function(page){
+  var user = this.analytics.user();
   window._loq || (window._loq = []);
   window.__wtw_lucky_site_id = this.options.siteId;
   this.identify(new Identify({
     traits: user.traits(),
     userId: user.id()
   }));
-  this.load();
+  var cache = Math.floor(new Date().getTime() / 60000);
+  var name = useHttps() ? 'https' : 'http';
+  this.load(name, { cache: cache }, this.ready);
 };
 
 /**
@@ -14037,20 +13796,6 @@ LuckyOrange.prototype.initialize = function(page){
 
 LuckyOrange.prototype.loaded = function(){
   return !! window.__wtw_watcher_added;
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-LuckyOrange.prototype.load = function(callback){
-  var cache = Math.floor(new Date().getTime() / 60000);
-  load({
-    http: 'http://www.luckyorange.com/w.js?' + cache,
-    https: 'https://ssl.luckyorange.com/w.js?' + cache
-  }, callback);
 };
 
 /**
@@ -14068,38 +13813,28 @@ LuckyOrange.prototype.identify = function(identify){
   window.__wtw_custom_user_data = traits;
 };
 
-}, {"analytics.js-integration":157,"facade":27,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157,"facade":27,"use-https":159}],
 127: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var callback = require('callback');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var alias = require('alias');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Lytics);
-};
 
 /**
  * Expose `Lytics` integration.
  */
 
-var Lytics = exports.Integration = integration('Lytics')
-  .readyOnLoad()
+var Lytics = module.exports = integration('Lytics')
   .global('jstag')
   .option('cid', '')
   .option('cookie', 'seerid')
   .option('delay', 2000)
   .option('sessionTimeout', 1800)
-  .option('url', '//c.lytics.io');
+  .option('url', '//c.lytics.io')
+  .tag('<script src="//c.lytics.io/static/io.min.js">');
 
 /**
  * Options aliases.
@@ -14120,7 +13855,7 @@ var aliases = {
 Lytics.prototype.initialize = function(page){
   var options = alias(this.options, aliases);
   window.jstag = (function(){var t = { _q: [], _c: options, ts: (new Date()).getTime() }; t.send = function(){this._q.push(['ready', 'send', Array.prototype.slice.call(arguments)]); return this; }; return t; })();
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -14131,16 +13866,6 @@ Lytics.prototype.initialize = function(page){
 
 Lytics.prototype.loaded = function(){
   return !! (window.jstag && window.jstag.bind);
-};
-
-/**
- * Load the Lytics library.
- *
- * @param {Function} callback
- */
-
-Lytics.prototype.load = function(callback){
-  load('//c.lytics.io/static/io.min.js', callback);
 };
 
 /**
@@ -14178,7 +13903,7 @@ Lytics.prototype.track = function(track){
   window.jstag.send(props);
 };
 
-}, {"analytics.js-integration":157,"callback":12,"load-script":159,"alias":187}],
+}, {"segmentio/analytics.js-integration":157,"alias":193}],
 128: [function(require, module, exports) {
 
 /**
@@ -14188,26 +13913,16 @@ Lytics.prototype.track = function(track){
 var alias = require('alias');
 var clone = require('clone');
 var dates = require('convert-dates');
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var iso = require('to-iso-string');
-var load = require('load-script');
 var indexof = require('indexof');
 var del = require('obj-case').del;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Mixpanel);
-};
 
 /**
  * Expose `Mixpanel` integration.
  */
 
-var Mixpanel = exports.Integration = integration('Mixpanel')
-  .readyOnLoad()
+var Mixpanel = module.exports = integration('Mixpanel')
   .global('mixpanel')
   .option('increments', [])
   .option('cookieName', '')
@@ -14217,7 +13932,8 @@ var Mixpanel = exports.Integration = integration('Mixpanel')
   .option('token', '')
   .option('trackAllPages', false)
   .option('trackNamedPages', true)
-  .option('trackCategorizedPages', true);
+  .option('trackCategorizedPages', true)
+  .tag('<script src="//cdn.mxpnl.com/libs/mixpanel-2.2.min.js">');
 
 /**
  * Options aliases.
@@ -14239,7 +13955,7 @@ Mixpanel.prototype.initialize = function(){
   this.options.increments = lowercase(this.options.increments);
   var options = alias(this.options, optionsAliases);
   window.mixpanel.init(options.token, options);
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -14250,16 +13966,6 @@ Mixpanel.prototype.initialize = function(){
 
 Mixpanel.prototype.loaded = function(){
   return !! (window.mixpanel && window.mixpanel.config);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-Mixpanel.prototype.load = function(callback){
-  load('//cdn.mxpnl.com/libs/mixpanel-2.2.min.js', callback);
 };
 
 /**
@@ -14414,35 +14120,26 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":187,"clone":186,"convert-dates":188,"analytics.js-integration":157,"to-iso-string":185,"load-script":159,"indexof":46,"obj-case":60}],
+}, {"alias":193,"clone":192,"convert-dates":194,"segmentio/analytics.js-integration":157,"to-iso-string":191,"indexof":46,"obj-case":60}],
 129: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var bind = require('bind');
 var when = require('when');
 var is = require('is');
 
 /**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Mojn);
-};
-
-/**
  * Expose `Mojn`
  */
 
-var Mojn = exports.Integration = integration('Mojn')
-  .readyOnLoad()
+var Mojn = module.exports = integration('Mojn')
   .option('customerCode', '')
-  .global('_mojnTrack');
+  .global('_mojnTrack')
+  .tag('<script src="https://track.idtargeting.com/{{ customerCode }}/track.js">');
 
 /**
  * Initialize.
@@ -14453,19 +14150,10 @@ var Mojn = exports.Integration = integration('Mojn')
 Mojn.prototype.initialize = function(){
   window._mojnTrack = window._mojnTrack || [];
   window._mojnTrack.push({ cid: this.options.customerCode });
-  this.load();
-};
-
-/**
- * Load the Mojn script.
- *
- * @param {Function} fn
- */
-
-Mojn.prototype.load = function(fn){
   var loaded = bind(this, this.loaded);
-  load('https://track.idtargeting.com/' + this.options.customerCode + '/track.js', function(){
-    when(loaded, fn);
+  var ready = this.ready;
+  this.load(function(){
+    when(loaded, ready);
   });
 };
 
@@ -14511,7 +14199,7 @@ Mojn.prototype.track = function(track){
   return conv;
 };
 
-}, {"analytics.js-integration":157,"load-script":159,"bind":33,"when":175,"is":18}],
+}, {"segmentio/analytics.js-integration":157,"bind":33,"when":182,"is":18}],
 130: [function(require, module, exports) {
 
 /**
@@ -14519,29 +14207,20 @@ Mojn.prototype.track = function(track){
  */
 
 var push = require('global-queue')('_mfq');
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var each = require('each');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Mouseflow);
-};
 
 /**
  * Expose `Mouseflow`.
  */
 
-var Mouseflow = exports.Integration = integration('Mouseflow')
+var Mouseflow = module.exports = integration('Mouseflow')
   .assumesPageview()
-  .readyOnLoad()
   .global('mouseflow')
   .global('_mfq')
   .option('apiKey', '')
-  .option('mouseflowHtmlDelay', 0);
+  .option('mouseflowHtmlDelay', 0)
+  .tag('<script src="//cdn.mouseflow.com/projects/{{ apiKey }}.js">');
 
 /**
  * Initalize.
@@ -14550,7 +14229,8 @@ var Mouseflow = exports.Integration = integration('Mouseflow')
  */
 
 Mouseflow.prototype.initialize = function(page){
-  this.load();
+  window.mouseflowHtmlDelay = this.options.mouseflowHtmlDelay;
+  this.load(this.ready);
 };
 
 /**
@@ -14561,19 +14241,6 @@ Mouseflow.prototype.initialize = function(page){
 
 Mouseflow.prototype.loaded = function(){
   return !! window.mouseflow;
-};
-
-/**
- * Load mouseflow.
- *
- * @param {Function} fn
- */
-
-Mouseflow.prototype.load = function(fn){
-  var apiKey = this.options.apiKey;
-  var self = this;
-  window.mouseflowHtmlDelay = this.options.mouseflowHtmlDelay;
-  load('//cdn.mouseflow.com/projects/' + apiKey + '.js', fn);
 };
 
 /**
@@ -14628,36 +14295,29 @@ function set(obj){
   });
 }
 
-}, {"global-queue":181,"analytics.js-integration":157,"load-script":159,"each":5}],
+}, {"global-queue":188,"segmentio/analytics.js-integration":157,"each":5}],
 131: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
+var useHttps = require('use-https');
 var each = require('each');
 var is = require('is');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(MouseStats);
-};
 
 /**
  * Expose `MouseStats` integration.
  */
 
-var MouseStats = exports.Integration = integration('MouseStats')
+var MouseStats = module.exports = integration('MouseStats')
   .assumesPageview()
-  .readyOnLoad()
   .global('msaa')
   .global('MouseStatsVisitorPlaybacks')
-  .option('accountNumber', '');
+  .option('accountNumber', '')
+  .tag('http', '<script src="http://www2.mousestats.com/js/{{ path }}.js?{{ cache }}">')
+  .tag('https', '<script src="https://ssl.mousestats.com/js/{{ path }}.js?{{ cache }}">');
 
 /**
  * Initialize.
@@ -14668,7 +14328,11 @@ var MouseStats = exports.Integration = integration('MouseStats')
  */
 
 MouseStats.prototype.initialize = function(page){
-  this.load();
+  var number = this.options.accountNumber;
+  var path = number.slice(0,1) + '/' + number.slice(1,2) + '/' + number;
+  var cache = Math.floor(new Date().getTime() / 60000);
+  var name = useHttps() ? 'https' : 'http';
+  this.load(name, { path: path, cache: cache }, this.ready);
 };
 
 /**
@@ -14679,22 +14343,6 @@ MouseStats.prototype.initialize = function(page){
 
 MouseStats.prototype.loaded = function(){
   return is.array(window.MouseStatsVisitorPlaybacks);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-MouseStats.prototype.load = function(callback){
-  var number = this.options.accountNumber;
-  var path = number.slice(0,1) + '/' + number.slice(1,2) + '/' + number;
-  var cache = Math.floor(new Date().getTime() / 60000);
-  var partial = '.mousestats.com/js/' + path + '.js?' + cache;
-  var http = 'http://www2' + partial;
-  var https = 'https://ssl' + partial;
-  load({ http: http, https: https }, callback);
 };
 
 /**
@@ -14711,35 +14359,26 @@ MouseStats.prototype.identify = function(identify){
   });
 };
 
-}, {"analytics.js-integration":157,"load-script":159,"each":5,"is":18}],
+}, {"segmentio/analytics.js-integration":157,"use-https":159,"each":5,"is":18}],
 132: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('__nls');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Navilytics);
-};
 
 /**
  * Expose `Navilytics` integration.
  */
 
-var Navilytics = exports.Integration = integration('Navilytics')
+var Navilytics = module.exports = integration('Navilytics')
   .assumesPageview()
-  .readyOnLoad()
   .global('__nls')
   .option('memberId', '')
-  .option('projectId', '');
+  .option('projectId', '')
+  .tag('<script src="//www.navilytics.com/nls.js?mid={{ memberId }}&pid={{ projectId }}">');
 
 /**
  * Initialize.
@@ -14751,7 +14390,7 @@ var Navilytics = exports.Integration = integration('Navilytics')
 
 Navilytics.prototype.initialize = function(page){
   window.__nls = window.__nls || [];
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -14762,19 +14401,6 @@ Navilytics.prototype.initialize = function(page){
 
 Navilytics.prototype.loaded = function(){
   return !! (window.__nls && [].push != window.__nls.push);
-};
-
-/**
- * Load the Navilytics library.
- *
- * @param {Function} callback
- */
-
-Navilytics.prototype.load = function(callback){
-  var mid = this.options.memberId;
-  var pid = this.options.projectId;
-  var url = '//www.navilytics.com/nls.js?mid=' + mid + '&pid=' + pid;
-  load(url, callback);
 };
 
 /**
@@ -14789,32 +14415,23 @@ Navilytics.prototype.track = function(track){
   push('tagRecording', track.event());
 };
 
-}, {"analytics.js-integration":157,"load-script":159,"global-queue":181}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188}],
 133: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var callback = require('callback');
+var integration = require('segmentio/analytics.js-integration');
 var https = require('use-https');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Olark);
-};
+var tick = require('next-tick');
 
 /**
  * Expose `Olark` integration.
  */
 
-var Olark = exports.Integration = integration('Olark')
+var Olark = module.exports = integration('Olark')
   .assumesPageview()
-  .readyOnLoad()
   .global('olark')
   .option('identify', true)
   .option('page', true)
@@ -14832,7 +14449,10 @@ var Olark = exports.Integration = integration('Olark')
  */
 
 Olark.prototype.initialize = function(page){
-  this.load();
+  var self = this;
+  this.load(function(){
+    tick(self.ready);
+  });
 
   // assign chat to a specific site
   var groupId = this.options.groupId;
@@ -14863,8 +14483,11 @@ Olark.prototype.loaded = function(){
  */
 
 Olark.prototype.load = function(callback){
-  window.olark||(function(c){var f=window,d=document,l=https()?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while (q--) {(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={ 0:+new Date() };a.P=function(u){a.p[u]=new Date()-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return ["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if (!m) {return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if (/MSIE[ ]+6/.test(navigator.userAgent)) {b.src="javascript:false"}b.allowTransparency="true";v[j](b);try {b.contentWindow[g].open()}catch (w) {c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try {var t=b.contentWindow[g];t.write(p());t.close()}catch (x) {b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({ loader: "static.olark.com/jsclient/loader0.js", name:"olark", methods:["configure","extend","declare","identify"] });
-  window.olark.identify(this.options.siteId);
+  var el = document.getElementById('olark');
+  //if (!el) {
+    window.olark||(function(c){var f=window,d=document,l=https()?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while (q--) {(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={ 0:+new Date() };a.P=function(u){a.p[u]=new Date()-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return ["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if (!m) {return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if (/MSIE[ ]+6/.test(navigator.userAgent)) {b.src="javascript:false"}b.allowTransparency="true";v[j](b);try {b.contentWindow[g].open()}catch (w) {c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try {var t=b.contentWindow[g];t.write(p());t.close()}catch (x) {b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({ loader: "static.olark.com/jsclient/loader0.js", name:"olark", methods:["configure","extend","declare","identify"] });
+    window.olark.identify(this.options.siteId);
+  //}
   callback();
 };
 
@@ -14968,14 +14591,14 @@ function chat(action, value){
   window.olark('api.chat.' + action, value);
 }
 
-}, {"analytics.js-integration":157,"callback":12,"use-https":183}],
+}, {"segmentio/analytics.js-integration":157,"use-https":159,"next-tick":45}],
 134: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('optimizely');
 var callback = require('callback');
 var tick = require('next-tick');
@@ -14983,26 +14606,10 @@ var bind = require('bind');
 var each = require('each');
 
 /**
- * Analytics reference.
- */
-
-var analytics;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(ajs){
-  ajs.addIntegration(Optimizely);
-  analytics = ajs; // store for later
-};
-
-/**
  * Expose `Optimizely` integration.
  */
 
-var Optimizely = exports.Integration = integration('Optimizely')
-  .readyOnInitialize()
+var Optimizely = module.exports = integration('Optimizely')
   .option('variations', true)
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true);
@@ -15014,7 +14621,13 @@ var Optimizely = exports.Integration = integration('Optimizely')
  */
 
 Optimizely.prototype.initialize = function(){
-  if (this.options.variations) tick(this.replay);
+  if (this.options.variations) {
+    var self = this;
+    tick(function(){
+      self.replay();
+    });
+  }
+  this.ready();
 };
 
 /**
@@ -15076,35 +14689,26 @@ Optimizely.prototype.replay = function(){
     traits['Experiment: ' + experiment] = variation;
   });
 
-  analytics.identify(traits);
+  this.analytics.identify(traits);
 };
-}, {"analytics.js-integration":157,"global-queue":181,"callback":12,"next-tick":45,"bind":33,"each":5}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188,"callback":12,"next-tick":45,"bind":33,"each":5}],
 135: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(PerfectAudience);
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * Expose `PerfectAudience` integration.
  */
 
-var PerfectAudience = exports.Integration = integration('Perfect Audience')
+var PerfectAudience = module.exports = integration('Perfect Audience')
   .assumesPageview()
-  .readyOnLoad()
   .global('_pa')
-  .option('siteId', '');
+  .option('siteId', '')
+  .tag('<script src="//tag.perfectaudience.com/serve/{{ siteId }}.js">');
 
 /**
  * Initialize.
@@ -15116,7 +14720,7 @@ var PerfectAudience = exports.Integration = integration('Perfect Audience')
 
 PerfectAudience.prototype.initialize = function(page){
   window._pa = window._pa || {};
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -15130,17 +14734,6 @@ PerfectAudience.prototype.loaded = function(){
 };
 
 /**
- * Load.
- *
- * @param {Function} callback
- */
-
-PerfectAudience.prototype.load = function(callback){
-  var id = this.options.siteId;
-  load('//tag.perfectaudience.com/serve/' + id + '.js', callback);
-};
-
-/**
  * Track.
  *
  * @param {Track} event
@@ -15150,35 +14743,27 @@ PerfectAudience.prototype.track = function(track){
   window._pa.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":157,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157}],
 136: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_prum');
-var load = require('load-script');
 var date = require('load-date');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Pingdom);
-};
 
 /**
  * Expose `Pingdom` integration.
  */
 
-var Pingdom = exports.Integration = integration('Pingdom')
+var Pingdom = module.exports = integration('Pingdom')
   .assumesPageview()
-  .readyOnLoad()
   .global('_prum')
-  .option('id', '');
+  .global('PRUM_EPISODES')
+  .option('id', '')
+  .tag('<script src="//rum-static.pingdom.net/prum.min.js">');
 
 /**
  * Initialize.
@@ -15190,7 +14775,8 @@ Pingdom.prototype.initialize = function(page){
   window._prum = window._prum || [];
   push('id', this.options.id);
   push('mark', 'firstbyte', date.getTime());
-  this.load();
+  var self = this;
+  this.load(this.ready);
 };
 
 /**
@@ -15203,46 +14789,27 @@ Pingdom.prototype.loaded = function(){
   return !! (window._prum && window._prum.push !== Array.prototype.push);
 };
 
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-Pingdom.prototype.load = function(callback){
-  load('//rum-static.pingdom.net/prum.min.js', callback);
-};
-
-}, {"analytics.js-integration":157,"global-queue":181,"load-script":159,"load-date":182}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188,"load-date":189}],
 137: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_paq');
-var load = require('load-script');
 var each = require('each');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Piwik);
-};
 
 /**
  * Expose `Piwik` integration.
  */
 
-var Piwik = exports.Integration = integration('Piwik')
+var Piwik = module.exports = integration('Piwik')
   .global('_paq')
   .option('url', null)
   .option('siteId', '')
-  .readyOnLoad()
-  .mapping('goals');
+  .mapping('goals')
+  .tag('<script src="{{ url }}/piwik.js">');
 
 /**
  * Initialize.
@@ -15255,15 +14822,7 @@ Piwik.prototype.initialize = function(){
   push('setSiteId', this.options.siteId);
   push('setTrackerUrl', this.options.url + '/piwik.php');
   push('enableLinkTracking');
-  this.load();
-};
-
-/**
- * Load the Piwik Analytics library.
- */
-
-Piwik.prototype.load = function(callback){
-  load(this.options.url + "/piwik.js", callback);
+  this.load(this.ready);
 };
 
 /**
@@ -15298,37 +14857,27 @@ Piwik.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":157,"global-queue":181,"load-script":159,"each":5}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188,"each":5}],
 138: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var convertDates = require('convert-dates');
 var push = require('global-queue')('_lnq');
-var callback = require('callback');
-var load = require('load-script');
 var alias = require('alias');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Preact);
-};
 
 /**
  * Expose `Preact` integration.
  */
 
-var Preact = exports.Integration = integration('Preact')
+var Preact = module.exports = integration('Preact')
   .assumesPageview()
-  .readyOnLoad()
   .global('_lnq')
-  .option('projectCode', '');
+  .option('projectCode', '')
+  .tag('<script src="//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.4.min.js">');
 
 /**
  * Initialize.
@@ -15341,7 +14890,7 @@ var Preact = exports.Integration = integration('Preact')
 Preact.prototype.initialize = function(page){
   window._lnq = window._lnq || [];
   push('_setCode', this.options.projectCode);
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -15352,16 +14901,6 @@ Preact.prototype.initialize = function(page){
 
 Preact.prototype.loaded = function(){
   return !! (window._lnq && window._lnq.push !== Array.prototype.push);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-Preact.prototype.load = function(callback){
-  load('//d2bbvl6dq48fa6.cloudfront.net/js/ln-2.4.min.js', callback);
 };
 
 /**
@@ -15431,41 +14970,31 @@ function convertDate(date){
   return Math.floor(date / 1000);
 }
 
-}, {"analytics.js-integration":157,"convert-dates":188,"global-queue":181,"callback":12,"load-script":159,"alias":187}],
+}, {"segmentio/analytics.js-integration":157,"convert-dates":194,"global-queue":188,"alias":193}],
 139: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_kiq');
-var callback = require('callback');
-var load = require('load-script');
 var Facade = require('facade');
 var Identify = Facade.Identify;
 var bind = require('bind');
 var when = require('when');
 
 /**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Qualaroo);
-};
-
-/**
  * Expose `Qualaroo` integration.
  */
 
-var Qualaroo = exports.Integration = integration('Qualaroo')
+var Qualaroo = module.exports = integration('Qualaroo')
   .assumesPageview()
-  .readyOnLoad()
   .global('_kiq')
   .option('customerId', '')
   .option('siteToken', '')
-  .option('track', false);
+  .option('track', false)
+  .tag('<script src="//s3.amazonaws.com/ki.js/{{ customerId }}/{{ siteToken }}.js">');
 
 /**
  * Initialize.
@@ -15475,7 +15004,11 @@ var Qualaroo = exports.Integration = integration('Qualaroo')
 
 Qualaroo.prototype.initialize = function(page){
   window._kiq = window._kiq || [];
-  this.load();
+  var loaded = bind(this, this.loaded);
+  var ready = this.ready;
+  this.load(function(){
+    when(loaded, ready);
+  });
 };
 
 /**
@@ -15486,21 +15019,6 @@ Qualaroo.prototype.initialize = function(page){
 
 Qualaroo.prototype.loaded = function(){
   return !! (window._kiq && window._kiq.push !== Array.prototype.push);
-};
-
-/**
- * Load.
- *
- * @param {Function} fn
- */
-
-Qualaroo.prototype.load = function(fn){
-  var token = this.options.siteToken;
-  var id = this.options.customerId;
-  var loaded = bind(this, this.loaded);
-  load('//s3.amazonaws.com/ki.js/' + id + '/' + token + '.js', function(){
-    when(loaded, fn);
-  });
 };
 
 /**
@@ -15537,7 +15055,7 @@ Qualaroo.prototype.track = function(track){
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"analytics.js-integration":157,"global-queue":181,"callback":12,"load-script":159,"facade":27,"bind":33,"when":175}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188,"facade":27,"bind":33,"when":182}],
 140: [function(require, module, exports) {
 
 /**
@@ -15545,35 +15063,21 @@ Qualaroo.prototype.track = function(track){
  */
 
 var push = require('global-queue')('_qevents', { wrap: false });
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * User reference.
- */
-
-var user;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Quantcast);
-  user = analytics.user(); // store for later
-};
+var integration = require('segmentio/analytics.js-integration');
+var useHttps = require('use-https');
 
 /**
  * Expose `Quantcast` integration.
  */
 
-var Quantcast = exports.Integration = integration('Quantcast')
+var Quantcast = module.exports = integration('Quantcast')
   .assumesPageview()
-  .readyOnLoad()
   .global('_qevents')
   .global('__qc')
   .option('pCode', null)
-  .option('advertise', false);
+  .option('advertise', false)
+  .tag('http', '<script src="http://edge.quantserve.com/quant.js">')
+  .tag('https', '<script src="https://secure.quantserve.com/quant.js">');
 
 /**
  * Initialize.
@@ -15589,6 +15093,7 @@ Quantcast.prototype.initialize = function(page){
 
   var opts = this.options;
   var settings = { qacct: opts.pCode };
+  var user = this.analytics.user();
   if (user.id()) settings.uid = user.id();
 
   if (page) {
@@ -15596,7 +15101,9 @@ Quantcast.prototype.initialize = function(page){
   }
 
   push(settings);
-  this.load();
+
+  var name = useHttps() ? 'https' : 'http';
+  this.load(name, this.ready);
 };
 
 /**
@@ -15607,19 +15114,6 @@ Quantcast.prototype.initialize = function(page){
 
 Quantcast.prototype.loaded = function(){
   return !! window.__qc;
-};
-
-/**
- * Load.
- *
- * @param {Function} fn
- */
-
-Quantcast.prototype.load = function(fn){
-  load({
-    http: 'http://edge.quantserve.com/quant.js',
-    https: 'https://secure.quantserve.com/quant.js'
-  }, fn);
 };
 
 /**
@@ -15638,6 +15132,7 @@ Quantcast.prototype.page = function(page){
     labels: this.labels('page', category, name),
     qacct: this.options.pCode,
   };
+  var user = this.analytics.user();
   if (user.id()) settings.uid = user.id();
   push(settings);
 };
@@ -15652,8 +15147,12 @@ Quantcast.prototype.page = function(page){
 
 Quantcast.prototype.identify = function(identify){
   // edit the initial quantcast settings
+  // TODO: could be done in a cleaner way
   var id = identify.userId();
-  if (id && !!window._qevents[0]) window._qevents[0].uid = id;
+  if (id) {
+    window._qevents[0] = window._qevents[0] || {};
+    window._qevents[0].uid = id;
+  }
 };
 
 /**
@@ -15672,6 +15171,7 @@ Quantcast.prototype.track = function(track){
     labels: this.labels('event', name),
     qacct: this.options.pCode
   };
+  var user = this.analytics.user();
   if (null != revenue) settings.revenue = (revenue+''); // convert to string
   if (user.id()) settings.uid = user.id();
   push(settings);
@@ -15741,31 +15241,22 @@ Quantcast.prototype.labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"global-queue":181,"analytics.js-integration":157,"load-script":159}],
+}, {"global-queue":188,"segmentio/analytics.js-integration":157,"use-https":159}],
 141: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var extend = require('extend');
 var is = require('is');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(RollbarIntegration);
-};
 
 /**
  * Expose `Rollbar` integration.
  */
 
-var RollbarIntegration = exports.Integration = integration('Rollbar')
-  .readyOnLoad()
+var RollbarIntegration = module.exports = integration('Rollbar')
   .global('Rollbar')
   .option('identify', true)
   .option('accessToken', '')
@@ -15777,6 +15268,7 @@ var RollbarIntegration = exports.Integration = integration('Rollbar')
  *
  * @param {Object} page
  */
+
 RollbarIntegration.prototype.initialize = function(page){
   var _rollbarConfig = this.config = {
     accessToken: this.options.accessToken,
@@ -15787,7 +15279,7 @@ RollbarIntegration.prototype.initialize = function(page){
   };
 
   (function(a){function b(b){this.shimId=++g,this.notifier=null,this.parentShim=b,this.logger=function(){},a.console&&void 0 === a.console.shimId&&(this.logger=a.console.log)}function c(b,c,d){!d[4]&&a._rollbarWrappedError&&(d[4]=a._rollbarWrappedError,a._rollbarWrappedError=null),b.uncaughtError.apply(b,d),c&&c.apply(a,d)}function d(c){var d=b;return f(function(){if (this.notifier)return this.notifier[c].apply(this.notifier,arguments);var b=this,e="scope"===c;e&&(b=new d(this));var f=Array.prototype.slice.call(arguments,0),g={ shim:b, method:c, args:f, ts:new Date };return a._rollbarShimQueue.push(g),e?b:void 0})}function e(a,b){if (b.hasOwnProperty&&b.hasOwnProperty("addEventListener")){var c=b.addEventListener;b.addEventListener=function(b,d,e){c.call(this,b,a.wrap(d),e)};var d=b.removeEventListener;b.removeEventListener=function(a,b,c){d.call(this,a,b._wrapped||b,c)}}}function f(a,b){return b=b||this.logger,function(){try {return a.apply(this,arguments)} catch (c) {b("Rollbar internal error:",c)}}}var g=0;b.init=function(a,d){var g=d.globalAlias||"Rollbar";if ("object"==typeof a[g])return a[g];a._rollbarShimQueue=[],a._rollbarWrappedError=null,d=d||{};var h=new b;return f(function(){if (h.configure(d),d.captureUncaught){var b=a.onerror;a.onerror=function(){var a=Array.prototype.slice.call(arguments,0);c(h,b,a)};var f,i,j=["EventTarget","Window","Node","ApplicationCache","AudioTrackList","ChannelMergerNode","CryptoOperation","EventSource","FileReader","HTMLUnknownElement","IDBDatabase","IDBRequest","IDBTransaction","KeyOperation","MediaController","MessagePort","ModalWindow","Notification","SVGElementInstance","Screen","TextTrack","TextTrackCue","TextTrackList","WebSocket","WebSocketWorker","Worker","XMLHttpRequest","XMLHttpRequestEventTarget","XMLHttpRequestUpload"];for (f=0;f<j.length;++f)i=j[f],a[i]&&a[i].prototype&&e(h,a[i].prototype)}return a[g]=h,h},h.logger)()},b.prototype.loadFull=function(a,b,c,d,e){var g=f(function(){var a=b.createElement("script"),e=b.getElementsByTagName("script")[0];a.src=d.rollbarJsUrl,a.async=!c,a.onload=h,e.parentNode.insertBefore(a,e)},this.logger),h=f(function(){var b;if (void 0===a._rollbarPayloadQueue){var c,d,f,g;for (b=new Error("rollbar.js did not load");c=a._rollbarShimQueue.shift();)for (f=c.args,g=0;g<f.length;++g)if (d=f[g],"function"==typeof d){d(b);break}}e&&e(b)},this.logger);f(function(){c?g():a.addEventListener?a.addEventListener("load",g,!1):a.attachEvent("onload",g)},this.logger)()},b.prototype.wrap=function(b){if ("function"!=typeof b)return b;if (b._isWrap)return b;if (!b._wrapped){b._wrapped=function(){try {return b.apply(this,arguments)} catch (c) {throw a._rollbarWrappedError=c,c}},b._wrapped._isWrap=!0;for (var c in b)b.hasOwnProperty(c)&&(b._wrapped[c]=b[c])}return b._wrapped};for (var h="log,debug,info,warn,warning,error,critical,global,configure,scope,uncaughtError".split(","),i=0;i<h.length;++i)b.prototype[h[i]]=d(h[i]);var j="//d37gvrvc0wt4s1.cloudfront.net/js/v1.0/rollbar.min.js";_rollbarConfig.rollbarJsUrl=_rollbarConfig.rollbarJsUrl||j,b.init(a,_rollbarConfig)})(window,document);
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -15829,32 +15321,23 @@ RollbarIntegration.prototype.identify = function(identify){
   rollbar.configure({ payload: { person: person }});
 };
 
-}, {"analytics.js-integration":157,"extend":40,"is":18}],
+}, {"segmentio/analytics.js-integration":157,"extend":40,"is":18}],
 142: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(SaaSquatch);
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * Expose `SaaSquatch` integration.
  */
 
-var SaaSquatch = exports.Integration = integration('SaaSquatch')
-  .readyOnInitialize()
+var SaaSquatch = module.exports = integration('SaaSquatch')
   .option('tenantAlias', '')
-  .global('_sqh');
+  .global('_sqh')
+  .tag('<script src="//d2rcp9ak152ke1.cloudfront.net/assets/javascripts/squatch.min.js">');
 
 /**
  * Initialize.
@@ -15862,7 +15345,10 @@ var SaaSquatch = exports.Integration = integration('SaaSquatch')
  * @param {Page} page
  */
 
-SaaSquatch.prototype.initialize = function(page){};
+SaaSquatch.prototype.initialize = function(page){
+  window._sqh = window._sqh || [];
+  this.load(this.ready);
+};
 
 /**
  * Loaded?
@@ -15875,23 +15361,13 @@ SaaSquatch.prototype.loaded = function(){
 };
 
 /**
- * Load the SaaSquatch library.
- *
- * @param {Function} fn
- */
-
-SaaSquatch.prototype.load = function(fn){
-  load('//d2rcp9ak152ke1.cloudfront.net/assets/javascripts/squatch.min.js', fn);
-};
-
-/**
  * Identify.
  *
  * @param {Facade} identify
  */
 
 SaaSquatch.prototype.identify = function(identify){
-  var sqh = window._sqh = window._sqh || [];
+  var sqh = window._sqh;
   var accountId = identify.proxy('traits.accountId');
   var image = identify.proxy('traits.referralImage');
   var opts = identify.options(this.name);
@@ -15918,33 +15394,24 @@ SaaSquatch.prototype.identify = function(identify){
   this.called = true;
   this.load();
 };
-}, {"analytics.js-integration":157,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157}],
 143: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var is = require('is');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Sentry);
-};
 
 /**
  * Expose `Sentry` integration.
  */
 
-var Sentry = exports.Integration = integration('Sentry')
-  .readyOnLoad()
+var Sentry = module.exports = integration('Sentry')
   .global('Raven')
-  .option('config', '');
+  .option('config', '')
+  .tag('<script src="//cdn.ravenjs.com/1.1.10/native/raven.min.js">');
 
 /**
  * Initialize.
@@ -15954,10 +15421,12 @@ var Sentry = exports.Integration = integration('Sentry')
 
 Sentry.prototype.initialize = function(){
   var config = this.options.config;
+  var self = this;
   this.load(function(){
     // for now, raven basically requires `install` to be called
     // https://github.com/getsentry/raven-js/blob/master/src/raven.js#L113
     window.Raven.config(config).install();
+    self.ready();
   });
 };
 
@@ -15972,16 +15441,6 @@ Sentry.prototype.loaded = function(){
 };
 
 /**
- * Load.
- *
- * @param {Function} callback
- */
-
-Sentry.prototype.load = function(callback){
-  load('//cdn.ravenjs.com/1.1.10/native/raven.min.js', callback);
-};
-
-/**
  * Identify.
  *
  * @param {Identify} identify
@@ -15991,34 +15450,25 @@ Sentry.prototype.identify = function(identify){
   window.Raven.setUser(identify.traits());
 };
 
-}, {"analytics.js-integration":157,"load-script":159,"is":18}],
+}, {"segmentio/analytics.js-integration":157,"is":18}],
 144: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var is = require('is');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(SnapEngage);
-};
 
 /**
  * Expose `SnapEngage` integration.
  */
 
-var SnapEngage = exports.Integration = integration('SnapEngage')
+var SnapEngage = module.exports = integration('SnapEngage')
   .assumesPageview()
-  .readyOnLoad()
   .global('SnapABug')
-  .option('apiKey', '');
+  .option('apiKey', '')
+  .tag('<script src="//commondatastorage.googleapis.com/code.snapengage.com/js/{{ apiKey }}.js">');
 
 /**
  * Initialize.
@@ -16029,7 +15479,7 @@ var SnapEngage = exports.Integration = integration('SnapEngage')
  */
 
 SnapEngage.prototype.initialize = function(page){
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -16040,18 +15490,6 @@ SnapEngage.prototype.initialize = function(page){
 
 SnapEngage.prototype.loaded = function(){
   return is.object(window.SnapABug);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-SnapEngage.prototype.load = function(callback){
-  var key = this.options.apiKey;
-  var url = '//commondatastorage.googleapis.com/code.snapengage.com/js/' + key + '.js';
-  load(url, callback);
 };
 
 /**
@@ -16066,36 +15504,27 @@ SnapEngage.prototype.identify = function(identify){
   window.SnapABug.setUserEmail(email);
 };
 
-}, {"analytics.js-integration":157,"load-script":159,"is":18}],
+}, {"segmentio/analytics.js-integration":157,"is":18}],
 145: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var bind = require('bind');
 var when = require('when');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Spinnakr);
-};
 
 /**
  * Expose `Spinnakr` integration.
  */
 
-var Spinnakr = exports.Integration = integration('Spinnakr')
+var Spinnakr = module.exports = integration('Spinnakr')
   .assumesPageview()
-  .readyOnLoad()
   .global('_spinnakr_site_id')
   .global('_spinnakr')
-  .option('siteId', '');
+  .option('siteId', '')
+  .tag('<script src="//d3ojzyhbolvoi5.cloudfront.net/js/so.js">');
 
 /**
  * Initialize.
@@ -16105,7 +15534,11 @@ var Spinnakr = exports.Integration = integration('Spinnakr')
 
 Spinnakr.prototype.initialize = function(page){
   window._spinnakr_site_id = this.options.siteId;
-  this.load();
+  var loaded = bind(this, this.loaded);
+  var ready = this.ready;
+  this.load(function(){
+    when(loaded, ready);
+  });
 };
 
 /**
@@ -16117,52 +15550,29 @@ Spinnakr.prototype.initialize = function(page){
 Spinnakr.prototype.loaded = function(){
   return !! window._spinnakr;
 };
-
-/**
- * Load.
- *
- * @param {Function} fn
- */
-
-Spinnakr.prototype.load = function(fn){
-  var loaded = bind(this, this.loaded);
-  load('//d3ojzyhbolvoi5.cloudfront.net/js/so.js', function(){
-    when(loaded, fn);
-  });
-};
-}, {"analytics.js-integration":157,"load-script":159,"bind":33,"when":175}],
+}, {"segmentio/analytics.js-integration":157,"bind":33,"when":182}],
 146: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var callback = require('callback');
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var slug = require('slug');
 var push = require('global-queue')('_tsq');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Tapstream);
-};
 
 /**
  * Expose `Tapstream` integration.
  */
 
-var Tapstream = exports.Integration = integration('Tapstream')
+var Tapstream = module.exports = integration('Tapstream')
   .assumesPageview()
-  .readyOnLoad()
   .global('_tsq')
   .option('accountName', '')
   .option('trackAllPages', true)
   .option('trackNamedPages', true)
-  .option('trackCategorizedPages', true);
+  .option('trackCategorizedPages', true)
+  .tag('<script src="//cdn.tapstream.com/static/js/tapstream.js">');
 
 /**
  * Initialize.
@@ -16173,7 +15583,7 @@ var Tapstream = exports.Integration = integration('Tapstream')
 Tapstream.prototype.initialize = function(page){
   window._tsq = window._tsq || [];
   push('setAccountName', this.options.accountName);
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -16184,16 +15594,6 @@ Tapstream.prototype.initialize = function(page){
 
 Tapstream.prototype.loaded = function(){
   return !! (window._tsq && window._tsq.push !== Array.prototype.push);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-Tapstream.prototype.load = function(callback){
-  load('//cdn.tapstream.com/static/js/tapstream.js', callback);
 };
 
 /**
@@ -16234,38 +15634,28 @@ Tapstream.prototype.track = function(track){
   push('fireHit', slug(track.event()), [props.url]); // needs events as slugs
 };
 
-}, {"callback":12,"analytics.js-integration":157,"load-script":159,"slug":164,"global-queue":181}],
+}, {"segmentio/analytics.js-integration":157,"slug":164,"global-queue":188}],
 147: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var callback = require('callback');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var alias = require('alias');
 var clone = require('clone');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Trakio);
-};
 
 /**
  * Expose `Trakio` integration.
  */
 
-var Trakio = exports.Integration = integration('trak.io')
+var Trakio = module.exports = integration('trak.io')
   .assumesPageview()
-  .readyOnLoad()
   .global('trak')
   .option('token', '')
   .option('trackNamedPages', true)
-  .option('trackCategorizedPages', true);
+  .option('trackCategorizedPages', true)
+  .tag('<script src="//d29p64779x43zo.cloudfront.net/v1/trak.io.min.js">');
 
 /**
  * Options aliases.
@@ -16290,7 +15680,7 @@ Trakio.prototype.initialize = function(page){
   window.trak.push = window.trak.push || function(){};
   window.trak.io.load = window.trak.io.load || function(e){var r = function(e){return function(){window.trak.push([e].concat(Array.prototype.slice.call(arguments,0))); }; } ,i=["initialize","identify","track","alias","channel","source","host","protocol","page_view"]; for (var s=0;s<i.length;s++) window.trak.io[i[s]]=r(i[s]); window.trak.io.initialize.apply(window.trak.io,arguments); };
   window.trak.io.load(options.token, alias(options, optionsAliases));
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -16301,16 +15691,6 @@ Trakio.prototype.initialize = function(page){
 
 Trakio.prototype.loaded = function(){
   return !! (window.trak && window.trak.loaded);
-};
-
-/**
- * Load the trak.io library.
- *
- * @param {Function} fn
- */
-
-Trakio.prototype.load = function(fn){
-  load('//d29p64779x43zo.cloudfront.net/v1/trak.io.min.js', fn);
 };
 
 /**
@@ -16407,23 +15787,14 @@ Trakio.prototype.alias = function(alias){
   }
 };
 
-}, {"analytics.js-integration":157,"callback":12,"load-script":159,"alias":187,"clone":186}],
+}, {"segmentio/analytics.js-integration":157,"alias":193,"clone":192}],
 148: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var pixel = require('load-pixel')('//analytics.twitter.com/i/adsct');
-var integration = require('analytics.js-integration');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(TwitterAds);
-};
+var integration = require('segmentio/analytics.js-integration');
 
 /**
  * HOP.
@@ -16435,9 +15806,19 @@ var has = Object.prototype.hasOwnProperty;
  * Expose `TwitterAds`.
  */
 
-var TwitterAds = exports.Integration = integration('Twitter Ads')
-  .readyOnLoad()
-  .option('events', {});
+var TwitterAds = module.exports = integration('Twitter Ads')
+  .option('events', {})
+  .tag('pixel', '<img src="//analytics.twitter.com/i/adsct?txn_id={{ event }}&p_id=Twitter"/>');
+
+/**
+ * Initialize.
+ *
+ * @param {Object} page
+ */
+
+TwitterAds.prototype.initialize = function(){
+  this.ready();
+};
 
 /**
  * Track.
@@ -16449,44 +15830,30 @@ TwitterAds.prototype.track = function(track){
   var events = this.options.events;
   var event = track.event();
   if (!has.call(events, event)) return;
-  var img = new Image();
-  img.src = '//analytics.twitter.com/i/adsct'
-    + '?txn_id=' + events[event]
-    + '&p_id=Twitter';
-  img.width = 1;
-  img.height = 1;
-  return img;
+  return this.load('pixel', {
+    event: events[event]
+  });
 };
 
-}, {"load-pixel":176,"analytics.js-integration":157}],
+}, {"segmentio/analytics.js-integration":157}],
 149: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_uc');
-var callback = require('callback');
-var load = require('load-script');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Usercycle);
-};
 
 /**
  * Expose `Usercycle` integration.
  */
 
-var Usercycle = exports.Integration = integration('USERcycle')
+var Usercycle = module.exports = integration('USERcycle')
   .assumesPageview()
-  .readyOnLoad()
   .global('_uc')
-  .option('key', '');
+  .option('key', '')
+  .tag('<script src="//api.usercycle.com/javascripts/track.js">');
 
 /**
  * Initialize.
@@ -16498,7 +15865,7 @@ var Usercycle = exports.Integration = integration('USERcycle')
 
 Usercycle.prototype.initialize = function(page){
   push('_key', this.options.key);
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -16509,16 +15876,6 @@ Usercycle.prototype.initialize = function(page){
 
 Usercycle.prototype.loaded = function(){
   return !! (window._uc && window._uc.push !== Array.prototype.push);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-Usercycle.prototype.load = function(callback){
-  load('//api.usercycle.com/javascripts/track.js', callback);
 };
 
 /**
@@ -16547,7 +15904,7 @@ Usercycle.prototype.track = function(track){
   }));
 };
 
-}, {"analytics.js-integration":157,"global-queue":181,"callback":12,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188}],
 150: [function(require, module, exports) {
 
 /**
@@ -16647,37 +16004,26 @@ function formatDate(date){
   return Math.round(date.getTime() / 1000).toString();
 }
 
-}, {"alias":187,"callback":12,"convert-dates":188,"analytics.js-integration":157,"load-script":159,"global-queue":181}],
+}, {"alias":193,"callback":12,"convert-dates":194,"analytics.js-integration":157,"load-script":166,"global-queue":188}],
 151: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('UserVoice');
 var convertDates = require('convert-dates');
 var unix = require('to-unix-timestamp');
-var callback = require('callback');
-var load = require('load-script');
 var alias = require('alias');
 var clone = require('clone');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(UserVoice);
-};
 
 /**
  * Expose `UserVoice` integration.
  */
 
-var UserVoice = exports.Integration = integration('UserVoice')
+var UserVoice = module.exports = integration('UserVoice')
   .assumesPageview()
-  .readyOnLoad()
   .global('UserVoice')
   .global('showClassicWidget')
   .option('apiKey', '')
@@ -16699,7 +16045,8 @@ var UserVoice = exports.Integration = integration('UserVoice')
   .option('tabLabel', 'Feedback & Support')
   .option('tabColor', '#cc6d00')
   .option('tabPosition', 'middle-right')
-  .option('tabInverted', false);
+  .option('tabInverted', false)
+  .tag('<script src="//widget.uservoice.com/{{ apiKey }}.js">');
 
 /**
  * When in "classic" mode, on `construct` swap all of the method to point to
@@ -16730,7 +16077,7 @@ UserVoice.prototype.initialize = function(page){
       : push('addTrigger', opts);
   }
 
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -16741,17 +16088,6 @@ UserVoice.prototype.initialize = function(page){
 
 UserVoice.prototype.loaded = function(){
   return !! (window.UserVoice && window.UserVoice.push !== Array.prototype.push);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-UserVoice.prototype.load = function(callback){
-  var key = this.options.apiKey;
-  load('//widget.uservoice.com/' + key + '.js', callback);
 };
 
 /**
@@ -16789,7 +16125,7 @@ UserVoice.prototype.initializeClassic = function(){
   var options = this.options;
   window.showClassicWidget = showClassicWidget; // part of public api
   if (options.showWidget) showClassicWidget('showTab', formatClassicOptions(options));
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -16854,8 +16190,8 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"analytics.js-integration":157,"global-queue":181,"convert-dates":188,"to-unix-timestamp":191,"callback":12,"load-script":159,"alias":187,"clone":186}],
-191: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":157,"global-queue":188,"convert-dates":194,"to-unix-timestamp":197,"alias":193,"clone":192}],
+197: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -16881,27 +16217,17 @@ function toUnixTimestamp (date) {
  * Module dependencies.
  */
 
-var callback = require('callback');
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_veroq');
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Vero);
-};
 
 /**
  * Expose `Vero` integration.
  */
 
-var Vero = exports.Integration = integration('Vero')
-  .readyOnLoad()
+var Vero = module.exports = integration('Vero')
   .global('_veroq')
-  .option('apiKey', '');
+  .option('apiKey', '')
+  .tag('<script src="//d3qxef4rp70elm.cloudfront.net/m.js">');
 
 /**
  * Initialize.
@@ -16913,7 +16239,7 @@ var Vero = exports.Integration = integration('Vero')
 
 Vero.prototype.initialize = function(page){
   push('init', { api_key: this.options.apiKey });
-  this.load();
+  this.load(this.ready);
 };
 
 /**
@@ -16924,16 +16250,6 @@ Vero.prototype.initialize = function(page){
 
 Vero.prototype.loaded = function(){
   return !! (window._veroq && window._veroq.push !== Array.prototype.push);
-};
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-Vero.prototype.load = function(callback){
-  load('//d3qxef4rp70elm.cloudfront.net/m.js', callback);
 };
 
 /**
@@ -16976,39 +16292,22 @@ Vero.prototype.track = function(track){
   push('track', track.event(), track.properties());
 };
 
-}, {"callback":12,"analytics.js-integration":157,"load-script":159,"global-queue":181}],
+}, {"segmentio/analytics.js-integration":157,"global-queue":188}],
 153: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var callback = require('callback');
+var integration = require('segmentio/analytics.js-integration');
 var tick = require('next-tick');
 var each = require('each');
-
-/**
- * Analytics reference.
- */
-
-var analytics;
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function(ajs){
-  ajs.addIntegration(VWO);
-  analytics = ajs;
-};
 
 /**
  * Expose `VWO` integration.
  */
 
-var VWO = exports.Integration = integration('Visual Website Optimizer')
-  .readyOnInitialize()
+var VWO = module.exports = integration('Visual Website Optimizer')
   .option('replay', true);
 
 /**
@@ -17019,6 +16318,7 @@ var VWO = exports.Integration = integration('Visual Website Optimizer')
 
 VWO.prototype.initialize = function(){
   if (this.options.replay) this.replay();
+  this.ready();
 };
 
 /**
@@ -17028,6 +16328,7 @@ VWO.prototype.initialize = function(){
  */
 
 VWO.prototype.replay = function(){
+  var analytics = this.analytics;
   tick(function(){
     experiments(function(err, traits){
       if (traits) analytics.identify(traits);
@@ -17040,20 +16341,20 @@ VWO.prototype.replay = function(){
  *
  * http://visualwebsiteoptimizer.com/knowledge/integration-of-vwo-with-kissmetrics/
  *
- * @param {Function} callback
+ * @param {Function} fn
  * @return {Object}
  */
 
-function experiments(callback){
+function experiments(fn){
   enqueue(function(){
     var data = {};
     var ids = window._vwo_exp_ids;
-    if (!ids) return callback();
+    if (!ids) return fn();
     each(ids, function(id){
       var name = variation(id);
       if (name) data['Experiment: ' + id] = name;
     });
-    callback(null, data);
+    fn(null, data);
   });
 }
 
@@ -17085,35 +16386,28 @@ function variation(id){
   return variationId ? experiment.comb_n[variationId] : null;
 }
 
-}, {"analytics.js-integration":157,"callback":12,"next-tick":45,"each":5}],
+}, {"segmentio/analytics.js-integration":157,"next-tick":45,"each":5}],
 154: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
+var useHttps = require('use-https');
 
 /**
- * Expose plugin
+ * Expose `WebEngage` integration.
  */
 
-module.exports = exports = function(analytics){
-  analytics.addIntegration(WebEngage);
-};
-
-/**
- * Expose `WebEngage` integration
- */
-
-var WebEngage = exports.Integration = integration('WebEngage')
+var WebEngage = module.exports = integration('WebEngage')
   .assumesPageview()
-  .readyOnLoad()
   .global('_weq')
   .global('webengage')
   .option('widgetVersion', '4.0')
-  .option('licenseCode', '');
+  .option('licenseCode', '')
+  .tag('http', '<script src="http://cdn.widgets.webengage.com/js/widget/webengage-min-v-4.0.js">')
+  .tag('https', '<script src="https://ssl.widgets.webengage.com/js/widget/webengage-min-v-4.0.js">');
 
 /**
  * Initialize.
@@ -17125,7 +16419,8 @@ WebEngage.prototype.initialize = function(page){
   var _weq = window._weq = window._weq || {};
   _weq['webengage.licenseCode'] = this.options.licenseCode;
   _weq['webengage.widgetVersion'] = this.options.widgetVersion;
-  this.load();
+  var name = useHttps() ? 'https' : 'http';
+  this.load(name, this.ready);
 };
 
 /**
@@ -17138,51 +16433,25 @@ WebEngage.prototype.loaded = function(){
   return !! window.webengage;
 };
 
-/**
- * Load
- *
- * @param {Function} fn
- */
-
-WebEngage.prototype.load = function(fn){
-  var path = '/js/widget/webengage-min-v-4.0.js';
-  load({
-    https: 'https://ssl.widgets.webengage.com' + path,
-    http: 'http://cdn.widgets.webengage.com' + path
-  }, fn);
-};
-
-}, {"analytics.js-integration":157,"load-script":159}],
+}, {"segmentio/analytics.js-integration":157,"use-https":159}],
 155: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var integration = require('segmentio/analytics.js-integration');
 var snake = require('to-snake-case');
-var load = require('load-script');
 var isEmail = require('is-email');
 var extend = require('extend');
 var each = require('each');
 var type = require('type');
 
-
-/**
- * Expose plugin.
- */
-
-module.exports = exports = function (analytics) {
-  analytics.addIntegration(Woopra);
-};
-
-
 /**
  * Expose `Woopra` integration.
  */
 
-var Woopra = exports.Integration = integration('Woopra')
-  .readyOnLoad()
+var Woopra = module.exports = integration('Woopra')
   .global('woopra')
   .option('domain', '')
   .option('cookieName', 'wooTracker')
@@ -17197,8 +16466,8 @@ var Woopra = exports.Integration = integration('Woopra')
   .option('downloadPause', 200)
   .option('outgoingPause', 400)
   .option('ignoreQueryUrl', true)
-  .option('hideCampaign', false);
-
+  .option('hideCampaign', false)
+  .tag('<script src="//static.woopra.com/js/w.js">');
 
 /**
  * Initialize.
@@ -17208,9 +16477,9 @@ var Woopra = exports.Integration = integration('Woopra')
  * @param {Object} page
  */
 
-Woopra.prototype.initialize = function (page) {
+Woopra.prototype.initialize = function(page){
   (function () {var i, s, z, w = window, d = document, a = arguments, q = 'script', f = ['config', 'track', 'identify', 'visit', 'push', 'call'], c = function () {var i, self = this; self._e = []; for (i = 0; i < f.length; i++) {(function (f) {self[f] = function () {self._e.push([f].concat(Array.prototype.slice.call(arguments, 0))); return self; }; })(f[i]); } }; w._w = w._w || {}; for (i = 0; i < a.length; i++) { w._w[a[i]] = w[a[i]] = w[a[i]] || new c(); } })('woopra');
-  this.load();
+  this.load(this.ready);
   each(this.options, function(key, value){
     key = snake(key);
     if (null == value) return;
@@ -17219,28 +16488,15 @@ Woopra.prototype.initialize = function (page) {
   });
 };
 
-
 /**
  * Loaded?
  *
  * @return {Boolean}
  */
 
-Woopra.prototype.loaded = function () {
+Woopra.prototype.loaded = function(){
   return !! (window.woopra && window.woopra.loaded);
 };
-
-
-/**
- * Load.
- *
- * @param {Function} callback
- */
-
-Woopra.prototype.load = function (callback) {
-  load('//static.woopra.com/js/w.js', callback);
-};
-
 
 /**
  * Page.
@@ -17248,13 +16504,12 @@ Woopra.prototype.load = function (callback) {
  * @param {String} category (optional)
  */
 
-Woopra.prototype.page = function (page) {
+Woopra.prototype.page = function(page){
   var props = page.properties();
   var name = page.fullName();
   if (name) props.title = name;
   window.woopra.track('pv', props);
 };
-
 
 /**
  * Identify.
@@ -17262,12 +16517,11 @@ Woopra.prototype.page = function (page) {
  * @param {Identify} identify
  */
 
-Woopra.prototype.identify = function (identify) {
+Woopra.prototype.identify = function(identify){
   var traits = identify.traits();
   if (identify.name()) traits.name = identify.name();
   window.woopra.identify(traits).push(); // `push` sends it off async
 };
-
 
 /**
  * Track.
@@ -17275,41 +16529,32 @@ Woopra.prototype.identify = function (identify) {
  * @param {Track} track
  */
 
-Woopra.prototype.track = function (track) {
+Woopra.prototype.track = function(track){
   window.woopra.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":157,"to-snake-case":158,"load-script":159,"is-email":19,"extend":40,"each":5,"type":35}],
+}, {"segmentio/analytics.js-integration":157,"to-snake-case":158,"is-email":19,"extend":40,"each":5,"type":35}],
 156: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var load = require('load-script');
+var integration = require('segmentio/analytics.js-integration');
 var tick = require('next-tick');
 var bind = require('bind');
 var when = require('when');
 
 /**
- * Expose plugin.
- */
-
-module.exports = exports = function(analytics){
-  analytics.addIntegration(Yandex);
-};
-
-/**
  * Expose `Yandex` integration.
  */
 
-var Yandex = exports.Integration = integration('Yandex Metrica')
+var Yandex = module.exports = integration('Yandex Metrica')
   .assumesPageview()
-  .readyOnLoad()
   .global('yandex_metrika_callbacks')
   .global('Ya')
-  .option('counterId', null);
+  .option('counterId', null)
+  .tag('<script src="//mc.yandex.ru/metrika/watch.js">');
 
 /**
  * Initialize.
@@ -17327,7 +16572,11 @@ Yandex.prototype.initialize = function(page){
     window['yaCounter' + id] = new window.Ya.Metrika({ id: id });
   });
 
-  this.load();
+  var loaded = bind(this, this.loaded);
+  var ready = this.ready;
+  this.load(function(){
+    when(loaded, ready);
+  });
 };
 
 /**
@@ -17341,19 +16590,6 @@ Yandex.prototype.loaded = function(){
 };
 
 /**
- * Load.
- *
- * @param {Function} fn
- */
-
-Yandex.prototype.load = function(fn){
-  var loaded = bind(this, this.loaded);
-  load('//mc.yandex.ru/metrika/watch.js', function(){
-    when(loaded, fn);
-  });
-};
-
-/**
  * Push a new callback on the global Yandex queue.
  *
  * @param {Function} callback
@@ -17364,4 +16600,4 @@ function push(callback){
   window.yandex_metrika_callbacks.push(callback);
 }
 
-}, {"analytics.js-integration":157,"load-script":159,"next-tick":45,"bind":33,"when":175}]}, {}, {"1":"analytics"})
+}, {"segmentio/analytics.js-integration":157,"next-tick":45,"bind":33,"when":182}]}, {}, {"1":"analytics"})

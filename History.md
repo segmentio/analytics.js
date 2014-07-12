@@ -1,4 +1,10 @@
 
+2.3.0 / 2014-07-11
+==================
+
+ * use analytics.js-integrations 1.2.0 which removes plugin.Integration
+ * set .analytics on integration instance
+
 2.2.5 / 2014-07-08
 ==================
 

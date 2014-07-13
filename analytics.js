@@ -6159,7 +6159,7 @@ Screen.prototype.track = function(name){
 }, {"./utils":58,"./page":56,"./track":55}],
 3: [function(require, module, exports) {
 
-module.exports = '2.3.1';
+module.exports = '2.3.2';
 
 }, {}],
 4: [function(require, module, exports) {

@@ -1,4 +1,10 @@
 
+2.3.1 / 2014-07-13
+==================
+
+ * deps: remove duo-package
+ * make: test-saucelabs -> test-sauce
+
 2.3.0 / 2014-07-11
 ==================
 

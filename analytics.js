@@ -3899,6 +3899,7 @@ var clone = require('./utils').clone;
 var isEnabled = require('./is-enabled');
 var objCase = require('obj-case');
 var traverse = require('isodate-traverse');
+var newDate = require('new-date');
 
 /**
  * Expose `Facade`.
@@ -3914,7 +3915,7 @@ module.exports = Facade;
 
 function Facade (obj) {
   if (!obj.hasOwnProperty('timestamp')) obj.timestamp = new Date();
-  else obj.timestamp = new Date(obj.timestamp);
+  else obj.timestamp = newDate(obj.timestamp);
   this.obj = obj;
 }
 
@@ -4161,7 +4162,7 @@ function transform(obj){
   return cloned;
 }
 
-}, {"./utils":58,"./is-enabled":59,"obj-case":60,"isodate-traverse":39}],
+}, {"./utils":58,"./is-enabled":59,"obj-case":60,"isodate-traverse":39,"new-date":21}],
 58: [function(require, module, exports) {
 
 /**
@@ -6159,7 +6160,7 @@ Screen.prototype.track = function(name){
 }, {"./utils":58,"./page":56,"./track":55}],
 3: [function(require, module, exports) {
 
-module.exports = '2.3.2';
+module.exports = '2.3.3';
 
 }, {}],
 4: [function(require, module, exports) {
@@ -7614,6 +7615,18 @@ function objectify(str) {
 module.exports = parse;
 
 /**
+ * Tests for browser support.
+ */
+
+var div = document.createElement('div');
+// Setup
+div.innerHTML = '  <link/><table></table><a href="/a">a</a><input type="checkbox"/>';
+// Make sure that link elements get serialized correctly by innerHTML
+// This requires a wrapper element in IE
+var innerHTMLBug = !div.getElementsByTagName('link').length;
+div = undefined;
+
+/**
  * Wrap map from jquery.
  */
 
@@ -7621,7 +7634,9 @@ var map = {
   legend: [1, '<fieldset>', '</fieldset>'],
   tr: [2, '<table><tbody>', '</tbody></table>'],
   col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
-  _default: [0, '', '']
+  // for script/link/style tags to work in IE6-8, you have to wrap
+  // in a div with a non-whitespace character in front, ha!
+  _default: innerHTMLBug ? [1, 'X<div>', '</div>'] : [0, '', '']
 };
 
 map.td =
@@ -7646,19 +7661,25 @@ map.polyline =
 map.rect = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">','</svg>'];
 
 /**
- * Parse `html` and return the children.
+ * Parse `html` and return a DOM Node instance, which could be a TextNode,
+ * HTML DOM Node of some kind (<div> for example), or a DocumentFragment
+ * instance, depending on the contents of the `html` string.
  *
- * @param {String} html
- * @return {Array}
+ * @param {String} html - HTML string to "domify"
+ * @param {Document} doc - The `document` instance to create the Node for
+ * @return {DOMNode} the TextNode, DOM Node, or DocumentFragment instance
  * @api private
  */
 
-function parse(html) {
+function parse(html, doc) {
   if ('string' != typeof html) throw new TypeError('String expected');
-  
+
+  // default to the global `document` object
+  if (!doc) doc = document;
+
   // tag name
   var m = /<([\w:]+)/.exec(html);
-  if (!m) return document.createTextNode(html);
+  if (!m) return doc.createTextNode(html);
 
   html = html.replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
 
@@ -7666,7 +7687,7 @@ function parse(html) {
 
   // body support
   if (tag == 'body') {
-    var el = document.createElement('html');
+    var el = doc.createElement('html');
     el.innerHTML = html;
     return el.removeChild(el.lastChild);
   }
@@ -7676,7 +7697,7 @@ function parse(html) {
   var depth = wrap[0];
   var prefix = wrap[1];
   var suffix = wrap[2];
-  var el = document.createElement('div');
+  var el = doc.createElement('div');
   el.innerHTML = prefix + html + suffix;
   while (depth--) el = el.lastChild;
 
@@ -7686,7 +7707,7 @@ function parse(html) {
   }
 
   // several elements
-  var fragment = document.createDocumentFragment();
+  var fragment = doc.createDocumentFragment();
   while (el.firstChild) {
     fragment.appendChild(el.removeChild(el.firstChild));
   }

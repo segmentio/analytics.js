@@ -6160,7 +6160,7 @@ Screen.prototype.track = function(name){
 }, {"./utils":58,"./page":56,"./track":55}],
 3: [function(require, module, exports) {
 
-module.exports = '2.3.3';
+module.exports = '2.3.4';
 
 }, {}],
 4: [function(require, module, exports) {
@@ -6224,8 +6224,10 @@ module.exports = [
   require('./lib/heap'),
   require('./lib/hellobar'),
   require('./lib/hittail'),
+  require('./lib/hublo'),
   require('./lib/hubspot'),
   require('./lib/improvely'),
+  require('./lib/insidevault'),
   require('./lib/inspectlet'),
   require('./lib/intercom'),
   require('./lib/keen-io'),
@@ -6267,7 +6269,7 @@ module.exports = [
   require('./lib/yandex-metrica')
 ];
 
-}, {"./lib/adroll":83,"./lib/adwords":84,"./lib/alexa":85,"./lib/amplitude":86,"./lib/appcues":87,"./lib/awesm":88,"./lib/awesomatic":89,"./lib/bing-ads":90,"./lib/bronto":91,"./lib/bugherd":92,"./lib/bugsnag":93,"./lib/chartbeat":94,"./lib/churnbee":95,"./lib/clicktale":96,"./lib/clicky":97,"./lib/comscore":98,"./lib/crazy-egg":99,"./lib/curebit":100,"./lib/customerio":101,"./lib/drip":102,"./lib/errorception":103,"./lib/evergage":104,"./lib/facebook-ads":105,"./lib/foxmetrics":106,"./lib/frontleaf":107,"./lib/gauges":108,"./lib/get-satisfaction":109,"./lib/google-analytics":110,"./lib/google-tag-manager":111,"./lib/gosquared":112,"./lib/heap":113,"./lib/hellobar":114,"./lib/hittail":115,"./lib/hubspot":116,"./lib/improvely":117,"./lib/inspectlet":118,"./lib/intercom":119,"./lib/keen-io":120,"./lib/kenshoo":121,"./lib/kissmetrics":122,"./lib/klaviyo":123,"./lib/leadlander":124,"./lib/livechat":125,"./lib/lucky-orange":126,"./lib/lytics":127,"./lib/mixpanel":128,"./lib/mojn":129,"./lib/mouseflow":130,"./lib/mousestats":131,"./lib/navilytics":132,"./lib/olark":133,"./lib/optimizely":134,"./lib/perfect-audience":135,"./lib/pingdom":136,"./lib/piwik":137,"./lib/preact":138,"./lib/qualaroo":139,"./lib/quantcast":140,"./lib/rollbar":141,"./lib/saasquatch":142,"./lib/sentry":143,"./lib/snapengage":144,"./lib/spinnakr":145,"./lib/tapstream":146,"./lib/trakio":147,"./lib/twitter-ads":148,"./lib/usercycle":149,"./lib/userfox":150,"./lib/uservoice":151,"./lib/vero":152,"./lib/visual-website-optimizer":153,"./lib/webengage":154,"./lib/woopra":155,"./lib/yandex-metrica":156}],
+}, {"./lib/adroll":83,"./lib/adwords":84,"./lib/alexa":85,"./lib/amplitude":86,"./lib/appcues":87,"./lib/awesm":88,"./lib/awesomatic":89,"./lib/bing-ads":90,"./lib/bronto":91,"./lib/bugherd":92,"./lib/bugsnag":93,"./lib/chartbeat":94,"./lib/churnbee":95,"./lib/clicktale":96,"./lib/clicky":97,"./lib/comscore":98,"./lib/crazy-egg":99,"./lib/curebit":100,"./lib/customerio":101,"./lib/drip":102,"./lib/errorception":103,"./lib/evergage":104,"./lib/facebook-ads":105,"./lib/foxmetrics":106,"./lib/frontleaf":107,"./lib/gauges":108,"./lib/get-satisfaction":109,"./lib/google-analytics":110,"./lib/google-tag-manager":111,"./lib/gosquared":112,"./lib/heap":113,"./lib/hellobar":114,"./lib/hittail":115,"./lib/hublo":116,"./lib/hubspot":117,"./lib/improvely":118,"./lib/insidevault":119,"./lib/inspectlet":120,"./lib/intercom":121,"./lib/keen-io":122,"./lib/kenshoo":123,"./lib/kissmetrics":124,"./lib/klaviyo":125,"./lib/leadlander":126,"./lib/livechat":127,"./lib/lucky-orange":128,"./lib/lytics":129,"./lib/mixpanel":130,"./lib/mojn":131,"./lib/mouseflow":132,"./lib/mousestats":133,"./lib/navilytics":134,"./lib/olark":135,"./lib/optimizely":136,"./lib/perfect-audience":137,"./lib/pingdom":138,"./lib/piwik":139,"./lib/preact":140,"./lib/qualaroo":141,"./lib/quantcast":142,"./lib/rollbar":143,"./lib/saasquatch":144,"./lib/sentry":145,"./lib/snapengage":146,"./lib/spinnakr":147,"./lib/tapstream":148,"./lib/trakio":149,"./lib/twitter-ads":150,"./lib/usercycle":151,"./lib/userfox":152,"./lib/uservoice":153,"./lib/vero":154,"./lib/visual-website-optimizer":155,"./lib/webengage":156,"./lib/woopra":157,"./lib/yandex-metrica":158}],
 83: [function(require, module, exports) {
 
 /**
@@ -6277,6 +6279,7 @@ module.exports = [
 var integration = require('segmentio/analytics.js-integration');
 var snake = require('to-snake-case');
 var useHttps = require('use-https');
+var each = require('each');
 var is = require('is');
 
 /**
@@ -6295,11 +6298,11 @@ var AdRoll = module.exports = integration('AdRoll')
   .global('adroll_adv_id')
   .global('adroll_pix_id')
   .global('adroll_custom_data')
-  .option('events', {})
   .option('advId', '')
   .option('pixId', '')
   .tag('http', '<script src="http://a.adroll.com/j/roundtrip.js">')
-  .tag('https', '<script src="https://s.adroll.com/j/roundtrip.js">');
+  .tag('https', '<script src="https://s.adroll.com/j/roundtrip.js">')
+  .mapping('events');
 
 /**
  * Initialize.
@@ -6348,28 +6351,34 @@ AdRoll.prototype.page = function(page){
  */
 
 AdRoll.prototype.track = function(track){
-  var events = this.options.events;
   var event = track.event();
-  var data = {};
   var user = this.analytics.user();
-  if (user.id()) data.user_id = user.id();
+  var events = this.events(event);
+  var total = track.revenue() || track.total() || 0;
+  var orderId = track.orderId() || 0;
 
-  if (has.call(events, event)) {
-    event = events[event];
-    var total = track.revenue() || track.total() || 0;
-    var orderId = track.orderId() || 0;
+  each(events, function(event){
+    var data = {};
+    if (user.id()) data.user_id = user.id();
     data.adroll_conversion_value_in_dollars = total;
     data.order_id = orderId;
+    // the adroll interface only allows for
+    // segment names which are snake cased.
+    data.adroll_segments = snake(event);
+    window.__adroll.record_user(data);
+  });
+
+  // no events found
+  if (!events.length) {
+    var data = {};
+    if (user.id()) data.user_id = user.id();
+    data.adroll_segments = snake(event);
+    window.__adroll.record_user(data);
   }
-
-  // the adroll interface only allows for 
-  // segment names which are snake cased.
-  data.adroll_segments = snake(event);
-
-  window.__adroll.record_user(data);
 };
-}, {"segmentio/analytics.js-integration":157,"to-snake-case":158,"use-https":159,"is":18}],
-157: [function(require, module, exports) {
+
+}, {"segmentio/analytics.js-integration":159,"to-snake-case":160,"use-https":161,"each":5,"is":18}],
+159: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6431,8 +6440,8 @@ function createIntegration(name){
   return Integration;
 }
 
-}, {"./protos":160,"./statics":161,"bind":162,"callback":12,"clone":14,"debug":163,"defaults":16,"slug":164}],
-160: [function(require, module, exports) {
+}, {"./protos":162,"./statics":163,"bind":164,"callback":12,"clone":14,"debug":165,"defaults":16,"slug":166}],
+162: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6806,8 +6815,8 @@ function render(template, locals) {
   });
   return attrs;
 }
-}, {"./events":165,"segmentio/load-script":166,"to-no-case":167,"callback":12,"emitter":17,"next-tick":45,"assert":168,"after":10,"component/each":79,"type":35,"yields/fmt":169}],
-165: [function(require, module, exports) {
+}, {"./events":167,"segmentio/load-script":168,"to-no-case":169,"callback":12,"emitter":17,"next-tick":45,"assert":170,"after":10,"component/each":79,"type":35,"yields/fmt":171}],
+167: [function(require, module, exports) {
 
 /**
  * Expose `events`.
@@ -6821,7 +6830,7 @@ module.exports = {
 };
 
 }, {}],
-166: [function(require, module, exports) {
+168: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6882,8 +6891,8 @@ module.exports = function loadScript(options, fn){
   // give it an ID or attributes.
   return script;
 };
-}, {"script-onload":170,"next-tick":45,"type":35}],
-170: [function(require, module, exports) {
+}, {"script-onload":172,"next-tick":45,"type":35}],
+172: [function(require, module, exports) {
 
 // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
 
@@ -6934,7 +6943,7 @@ function attach(el, fn){
 }
 
 }, {}],
-167: [function(require, module, exports) {
+169: [function(require, module, exports) {
 
 /**
  * Expose `toNoCase`.
@@ -7007,7 +7016,7 @@ function uncamelize (string) {
   });
 }
 }, {}],
-168: [function(require, module, exports) {
+170: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -7195,8 +7204,8 @@ function get(script) {
   return xhr.responseText;
 }
 
-}, {"equals":171,"fmt":169,"stack":172}],
-171: [function(require, module, exports) {
+}, {"equals":173,"fmt":171,"stack":174}],
+173: [function(require, module, exports) {
 
 var type = require('type')
 
@@ -7336,8 +7345,8 @@ function getEnumerableProperties (object) {
   return result
 }
 
-}, {"type":173}],
-173: [function(require, module, exports) {
+}, {"type":175}],
+175: [function(require, module, exports) {
 
 var toString = {}.toString
 var DomNode = typeof window != 'undefined'
@@ -7390,7 +7399,7 @@ var types = exports.types = {
 }
 
 }, {}],
-169: [function(require, module, exports) {
+171: [function(require, module, exports) {
 
 /**
  * Export `fmt`
@@ -7427,7 +7436,7 @@ function fmt(str){
 }
 
 }, {}],
-172: [function(require, module, exports) {
+174: [function(require, module, exports) {
 
 /**
  * Expose `stack()`.
@@ -7452,7 +7461,7 @@ function stack() {
   return stack;
 }
 }, {}],
-161: [function(require, module, exports) {
+163: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -7605,8 +7614,8 @@ function objectify(str) {
     attrs: attrs
   };
 }
-}, {"after":10,"component/domify":174,"component/each":79,"emitter":17}],
-174: [function(require, module, exports) {
+}, {"after":10,"component/domify":176,"component/each":79,"emitter":17}],
+176: [function(require, module, exports) {
 
 /**
  * Expose `parse`.
@@ -7716,7 +7725,7 @@ function parse(html, doc) {
 }
 
 }, {}],
-162: [function(require, module, exports) {
+164: [function(require, module, exports) {
 
 var bind = require('bind')
   , bindAll = require('bind-all');
@@ -7758,15 +7767,15 @@ function bindMethods (obj, methods) {
   return obj;
 }
 }, {"bind":33,"bind-all":34}],
-163: [function(require, module, exports) {
+165: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":175,"./debug":176}],
-175: [function(require, module, exports) {
+}, {"./lib/debug":177,"./debug":178}],
+177: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -7916,7 +7925,7 @@ function coerce(val) {
 }
 
 }, {}],
-176: [function(require, module, exports) {
+178: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -8056,7 +8065,7 @@ try {
 } catch(e){}
 
 }, {}],
-164: [function(require, module, exports) {
+166: [function(require, module, exports) {
 
 /**
  * Generate a slug from the given `str`.
@@ -8082,7 +8091,7 @@ module.exports = function (str, options) {
 };
 
 }, {}],
-158: [function(require, module, exports) {
+160: [function(require, module, exports) {
 var toSpace = require('to-space-case');
 
 
@@ -8105,8 +8114,8 @@ function toSnakeCase (string) {
   return toSpace(string).replace(/\s/g, '_');
 }
 
-}, {"to-space-case":177}],
-177: [function(require, module, exports) {
+}, {"to-space-case":179}],
+179: [function(require, module, exports) {
 
 var clean = require('to-no-case');
 
@@ -8132,7 +8141,7 @@ function toSpaceCase (string) {
   });
 }
 }, {"to-no-case":69}],
-159: [function(require, module, exports) {
+161: [function(require, module, exports) {
 
 /**
  * Protocol.
@@ -8181,6 +8190,7 @@ var integration = require('segmentio/analytics.js-integration');
 var onbody = require('on-body');
 var domify = require('domify');
 var Queue = require('queue');
+var each = require('each');
 
 /**
  * HOP
@@ -8201,8 +8211,8 @@ var q = new Queue({ concurrency: 1, timeout: 2000 });
 var AdWords = module.exports = integration('AdWords')
   .option('conversionId', '')
   .option('remarketing', false)
-  .option('events', {})
-  .tag('conversion', '<script src="//www.googleadservices.com/pagead/conversion.js">');
+  .tag('conversion', '<script src="//www.googleadservices.com/pagead/conversion.js">')
+  .mapping('events');
 
 /**
  * Load.
@@ -8249,13 +8259,15 @@ AdWords.prototype.page = function(page){
 
 AdWords.prototype.track = function(track){
   var id = this.options.conversionId;
-  var events = this.options.events;
-  var event = track.event();
-  if (!has.call(events, event)) return;
-  return this.conversion({
-    value: track.revenue() || 0,
-    label: events[event],
-    conversionId: id
+  var events = this.events(track.event());
+  var revenue = track.revenue() || 0;
+  var self = this;
+  each(events, function(label){
+    self.conversion({
+      conversionId: id,
+      value: revenue,
+      label: label,
+    });
   });
 };
 
@@ -8350,8 +8362,8 @@ AdWords.prototype.shim = function(){
   }
 }
 
-}, {"segmentio/analytics.js-integration":157,"on-body":178,"domify":179,"queue":180}],
-178: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"on-body":180,"domify":181,"queue":182,"each":5}],
+180: [function(require, module, exports) {
 var each = require('each');
 
 
@@ -8406,7 +8418,7 @@ function call (callback) {
   callback(document.body);
 }
 }, {"each":79}],
-179: [function(require, module, exports) {
+181: [function(require, module, exports) {
 
 /**
  * Expose `parse`.
@@ -8495,7 +8507,7 @@ function parse(html) {
 }
 
 }, {}],
-180: [function(require, module, exports) {
+182: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -8631,8 +8643,8 @@ function timeout(fn, ms) {
   }
 }
 
-}, {"emitter":181,"bind":33,"component-emitter":181,"component-bind":33}],
-181: [function(require, module, exports) {
+}, {"emitter":183,"bind":33,"component-emitter":183,"component-bind":33}],
+183: [function(require, module, exports) {
 
 /**
  * Expose `Emitter`.
@@ -8847,7 +8859,7 @@ Alexa.prototype.initialize = function(page){
 Alexa.prototype.loaded = function(){
   return !! window.atrk;
 };
-}, {"segmentio/analytics.js-integration":157}],
+}, {"segmentio/analytics.js-integration":159}],
 86: [function(require, module, exports) {
 
 /**
@@ -8946,7 +8958,7 @@ Amplitude.prototype.track = function(track){
   window.amplitude.logEvent(event, props);
 };
 
-}, {"segmentio/analytics.js-integration":157}],
+}, {"segmentio/analytics.js-integration":159}],
 87: [function(require, module, exports) {
 
 /**
@@ -9027,7 +9039,7 @@ Appcues.prototype.identify = function(identify){
   window.Appcues.identify(identify.traits());
 };
 
-}, {"segmentio/analytics.js-integration":157,"load-script":166,"is":18}],
+}, {"segmentio/analytics.js-integration":159,"load-script":168,"is":18}],
 88: [function(require, module, exports) {
 
 /**
@@ -9035,6 +9047,7 @@ Appcues.prototype.identify = function(identify){
  */
 
 var integration = require('segmentio/analytics.js-integration');
+var each = require('each');
 
 /**
  * Expose `Awesm` integration.
@@ -9044,8 +9057,8 @@ var Awesm = module.exports = integration('awe.sm')
   .assumesPageview()
   .global('AWESM')
   .option('apiKey', '')
-  .option('events', {})
-  .tag('<script src="//widgets.awe.sm/v3/widgets.js?key={{ apiKey }}&async=true">');
+  .tag('<script src="//widgets.awe.sm/v3/widgets.js?key={{ apiKey }}&async=true">')
+  .mapping('events');
 
 /**
  * Initialize.
@@ -9077,14 +9090,14 @@ Awesm.prototype.loaded = function(){
  */
 
 Awesm.prototype.track = function(track){
-  var event = track.event();
-  var goal = this.options.events[event];
-  if (!goal) return;
   var user = this.analytics.user();
-  window.AWESM.convert(goal, track.cents(), null, user.id());
+  var goals = this.events(track.event());
+  each(goals, function(goal){
+    window.AWESM.convert(goal, track.cents(), null, user.id());
+  });
 };
 
-}, {"segmentio/analytics.js-integration":157}],
+}, {"segmentio/analytics.js-integration":159,"each":5}],
 89: [function(require, module, exports) {
 
 /**
@@ -9140,7 +9153,7 @@ Awesomatic.prototype.initialize = function(page){
 Awesomatic.prototype.loaded = function(){
   return is.object(window.Awesomatic);
 };
-}, {"segmentio/analytics.js-integration":157,"is":18,"on-body":178}],
+}, {"segmentio/analytics.js-integration":159,"is":18,"on-body":180}],
 90: [function(require, module, exports) {
 
 /**
@@ -9153,6 +9166,7 @@ var domify = require('domify');
 var extend = require('extend');
 var bind = require('bind');
 var when = require('when');
+var each = require('each');
 
 /**
  * HOP.
@@ -9161,7 +9175,7 @@ var when = require('when');
 var has = Object.prototype.hasOwnProperty;
 
 /**
- * 
+ * Noop.
  */
 
 var noop = function(){};
@@ -9175,8 +9189,8 @@ var noop = function(){};
 var Bing = module.exports = integration('Bing Ads')
   .option('siteId', '')
   .option('domainId', '')
-  .option('events', {})
-  .tag('<script id="mstag_tops" src="//flex.msn.com/mstag/site/{{ siteId }}/mstag.js">');
+  .tag('<script id="mstag_tops" src="//flex.msn.com/mstag/site/{{ siteId }}/mstag.js">')
+  .mapping('events');
 
 /**
  * Initialize.
@@ -9229,18 +9243,17 @@ Bing.prototype.loaded = function(){
  */
 
 Bing.prototype.track = function(track){
-  var events = this.options.events;
-  var traits = track.traits();
-  var event = track.event();
-  if (!has.call(events, event)) return;
-  var goal = events[event];
+  var events = this.events(track.event());
   var revenue = track.revenue() || 0;
-  window.mstag.loadTag('analytics', {
-    domainId: this.options.domainId,
-    revenue: revenue,
-    dedup: '1',
-    type: '1',
-    actionid: goal
+  var self = this;
+  each(events, function(goal){
+    window.mstag.loadTag('analytics', {
+      domainId: self.options.domainId,
+      revenue: revenue,
+      dedup: '1',
+      type: '1',
+      actionid: goal
+    });
   });
 };
 
@@ -9258,14 +9271,15 @@ function writeToAppend(str) {
   // https://github.com/component/domify/issues/14
   if ('script' == el.tagName.toLowerCase() && el.getAttribute('src')) {
     var tmp = document.createElement('script');
-    tmp.src = el.getAttribute('src'); 
+    tmp.src = el.getAttribute('src');
     tmp.async = true;
     el = tmp;
   }
   document.body.appendChild(el);
 }
-}, {"segmentio/analytics.js-integration":157,"on-body":178,"domify":179,"extend":40,"bind":33,"when":182}],
-182: [function(require, module, exports) {
+
+}, {"segmentio/analytics.js-integration":159,"on-body":180,"domify":181,"extend":40,"bind":33,"when":184,"each":5}],
+184: [function(require, module, exports) {
 
 var callback = require('callback');
 
@@ -9427,8 +9441,8 @@ Bronto.prototype.completedOrder = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":157,"facade":27,"load-pixel":183,"querystring":184,"each":5}],
-183: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"facade":27,"load-pixel":185,"querystring":186,"each":5}],
+185: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9483,8 +9497,8 @@ function error(fn, message, img){
   };
 }
 
-}, {"querystring":184,"substitute":185}],
-184: [function(require, module, exports) {
+}, {"querystring":186,"substitute":187}],
+186: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9560,7 +9574,7 @@ exports.stringify = function(obj){
 };
 
 }, {"trim":50,"type":35}],
-185: [function(require, module, exports) {
+187: [function(require, module, exports) {
 
 /**
  * Expose `substitute`
@@ -9596,6 +9610,7 @@ function substitute(str, obj, expr){
  */
 
 var integration = require('segmentio/analytics.js-integration');
+var tick = require('next-tick');
 
 /**
  * Expose `BugHerd` integration.
@@ -9619,7 +9634,10 @@ var BugHerd = module.exports = integration('BugHerd')
 
 BugHerd.prototype.initialize = function(page){
   window.BugHerdConfig = { feedback: { hide: !this.options.showFeedbackTab }};
-  this.load(this.ready);
+  var ready = this.ready;
+  this.load(function(){
+    tick(ready);
+  });
 };
 
 /**
@@ -9631,7 +9649,7 @@ BugHerd.prototype.initialize = function(page){
 BugHerd.prototype.loaded = function(){
   return !! window._bugHerd;
 };
-}, {"segmentio/analytics.js-integration":157}],
+}, {"segmentio/analytics.js-integration":159,"next-tick":45}],
 93: [function(require, module, exports) {
 
 /**
@@ -9689,8 +9707,8 @@ Bugsnag.prototype.identify = function(identify){
   extend(window.Bugsnag.metaData, identify.traits());
 };
 
-}, {"segmentio/analytics.js-integration":157,"is":18,"extend":40,"on-error":186}],
-186: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"is":18,"extend":40,"on-error":188}],
+188: [function(require, module, exports) {
 
 /**
  * Expose `onError`.
@@ -9813,8 +9831,8 @@ Chartbeat.prototype.page = function(page){
   window.pSUPERFLY.virtualPage(props.path, name || props.title);
 };
 
-}, {"segmentio/analytics.js-integration":157,"defaults":187,"on-body":178}],
-187: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"defaults":189,"on-body":180}],
+189: [function(require, module, exports) {
 /**
  * Expose `defaults`.
  */
@@ -9837,8 +9855,9 @@ function defaults (dest, defaults) {
  * Module dependencies.
  */
 
-var push = require('global-queue')('_cbq');
 var integration = require('segmentio/analytics.js-integration');
+var push = require('global-queue')('_cbq');
+var each = require('each');
 
 /**
  * HOP
@@ -9867,9 +9886,9 @@ var supported = {
 var ChurnBee = module.exports = integration('ChurnBee')
   .global('_cbq')
   .global('ChurnBee')
-  .option('events', {})
   .option('apiKey', '')
-  .tag('<script src="//api.churnbee.com/cb.js">');
+  .tag('<script src="//api.churnbee.com/cb.js">')
+  .mapping('events');
 
 /**
  * Initialize.
@@ -9901,15 +9920,17 @@ ChurnBee.prototype.loaded = function(){
  */
 
 ChurnBee.prototype.track = function(track){
-  var events = this.options.events;
   var event = track.event();
-  if (has.call(events, event)) event = events[event];
-  if (true != supported[event]) return;
-  push(event, track.properties({ revenue: 'amount' }));
+  var events = this.events(event);
+  events.push(event);
+  each(events, function(event){
+    if (true != supported[event]) return;
+    push(event, track.properties({ revenue: 'amount' }));
+  });
 };
 
-}, {"global-queue":188,"segmentio/analytics.js-integration":157}],
-188: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"each":5}],
+190: [function(require, module, exports) {
 
 /**
  * Expose `generate`.
@@ -10041,8 +10062,8 @@ ClickTale.prototype.track = function(track){
   window.ClickTaleEvent(track.event());
 };
 
-}, {"load-date":189,"domify":179,"each":5,"segmentio/analytics.js-integration":157,"is":18,"use-https":159,"on-body":178}],
-189: [function(require, module, exports) {
+}, {"load-date":191,"domify":181,"each":5,"segmentio/analytics.js-integration":159,"is":18,"use-https":161,"on-body":180}],
+191: [function(require, module, exports) {
 
 
 /*
@@ -10150,7 +10171,7 @@ Clicky.prototype.track = function(track){
   window.clicky.goal(track.event(), track.revenue());
 };
 
-}, {"facade":27,"extend":40,"segmentio/analytics.js-integration":157,"is":18}],
+}, {"facade":27,"extend":40,"segmentio/analytics.js-integration":159,"is":18}],
 98: [function(require, module, exports) {
 
 /**
@@ -10194,7 +10215,7 @@ Comscore.prototype.initialize = function(page){
 Comscore.prototype.loaded = function(){
   return !! window.COMSCORE;
 };
-}, {"segmentio/analytics.js-integration":157,"use-https":159}],
+}, {"segmentio/analytics.js-integration":159,"use-https":161}],
 99: [function(require, module, exports) {
 
 /**
@@ -10235,7 +10256,7 @@ CrazyEgg.prototype.initialize = function(page){
 CrazyEgg.prototype.loaded = function(){
   return !! window.CE2;
 };
-}, {"segmentio/analytics.js-integration":157}],
+}, {"segmentio/analytics.js-integration":159}],
 100: [function(require, module, exports) {
 
 /**
@@ -10418,8 +10439,8 @@ Curebit.prototype.completedOrder = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188,"facade":27,"throttle":190,"to-iso-string":191,"clone":192,"each":5,"bind":33}],
-190: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"facade":27,"throttle":192,"to-iso-string":193,"clone":194,"each":5,"bind":33}],
+192: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -10452,7 +10473,7 @@ function throttle (func, wait) {
 }
 
 }, {}],
-191: [function(require, module, exports) {
+193: [function(require, module, exports) {
 
 /**
  * Expose `toIsoString`.
@@ -10494,7 +10515,7 @@ function pad (number) {
   return n.length === 1 ? '0' + n : n;
 }
 }, {}],
-192: [function(require, module, exports) {
+194: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -10661,8 +10682,8 @@ function convertDate(date){
   return Math.floor(date.getTime() / 1000);
 }
 
-}, {"alias":193,"convert-dates":194,"facade":27,"segmentio/analytics.js-integration":157}],
-193: [function(require, module, exports) {
+}, {"alias":195,"convert-dates":196,"facade":27,"segmentio/analytics.js-integration":159}],
+195: [function(require, module, exports) {
 
 var type = require('type');
 
@@ -10726,7 +10747,7 @@ function aliasByFunction (obj, convert) {
   return output;
 }
 }, {"type":35,"clone":62}],
-194: [function(require, module, exports) {
+196: [function(require, module, exports) {
 
 var is = require('is');
 
@@ -10824,7 +10845,7 @@ Drip.prototype.track = function(track){
   push('track', props);
 };
 
-}, {"alias":193,"segmentio/analytics.js-integration":157,"is":18,"load-script":166,"global-queue":188}],
+}, {"alias":195,"segmentio/analytics.js-integration":159,"is":18,"load-script":168,"global-queue":190}],
 103: [function(require, module, exports) {
 
 /**
@@ -10887,7 +10908,7 @@ Errorception.prototype.identify = function(identify){
   extend(window._errs.meta, traits);
 };
 
-}, {"extend":40,"segmentio/analytics.js-integration":157,"on-error":186,"global-queue":188}],
+}, {"extend":40,"segmentio/analytics.js-integration":159,"on-error":188,"global-queue":190}],
 104: [function(require, module, exports) {
 
 /**
@@ -11004,7 +11025,7 @@ Evergage.prototype.track = function(track){
   push('trackAction', track.event(), track.properties());
 };
 
-}, {"each":5,"segmentio/analytics.js-integration":157,"global-queue":188}],
+}, {"each":5,"segmentio/analytics.js-integration":159,"global-queue":190}],
 105: [function(require, module, exports) {
 
 /**
@@ -11013,6 +11034,7 @@ Evergage.prototype.track = function(track){
 
 var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_fbq');
+var each = require('each');
 
 /**
  * HOP
@@ -11027,8 +11049,8 @@ var has = Object.prototype.hasOwnProperty;
 var Facebook = module.exports = integration('Facebook Ads')
   .global('_fbq')
   .option('currency', 'USD')
-  .option('events', {})
-  .tag('<script src="//connect.facebook.net/en_US/fbds.js">');
+  .tag('<script src="//connect.facebook.net/en_US/fbds.js">')
+  .mapping('events');
 
 /**
  * Initialize Facebook Ads.
@@ -11063,23 +11085,25 @@ Facebook.prototype.loaded = function(){
  */
 
 Facebook.prototype.track = function(track){
-  var events = this.options.events;
-  var traits = track.traits();
   var event = track.event();
+  var events = this.events(event);
   var revenue = track.revenue() || 0;
-  var data = track.properties();
-  if (has.call(events, event)) {
-    // conversion flow
-    event = events[event];
-    data = {
+  var self = this;
+
+  each(events, function(event){
+    push('track', event, {
       value: String(revenue.toFixed(2)),
-      currency: this.options.currency
-    };
+      currency: self.options.currency
+    });
+  });
+
+  if (!events.length) {
+    var data = track.properties();
+    push('track', event, data);
   }
-  push('track', event, data);
 };
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"each":5}],
 106: [function(require, module, exports) {
 
 /**
@@ -11268,7 +11292,7 @@ function ecommerce(event, track, arr){
   ].concat(arr || []));
 }
 
-}, {"global-queue":188,"segmentio/analytics.js-integration":157,"facade":27,"each":5}],
+}, {"global-queue":190,"segmentio/analytics.js-integration":159,"facade":27,"each":5}],
 107: [function(require, module, exports) {
 
 /**
@@ -11276,6 +11300,8 @@ function ecommerce(event, track, arr){
  */
 
 var integration = require('segmentio/analytics.js-integration');
+var bind = require('bind');
+var when = require('when');
 var is = require('is');
 
 /**
@@ -11306,6 +11332,8 @@ Frontleaf.prototype.initialize = function(page){
   window._flBaseUrl = window._flBaseUrl || this.options.baseUrl;
   this._push('setApiToken', this.options.token);
   this._push('setStream', this.options.stream);
+  var loaded = bind(this, this.loaded);
+  var ready = this.ready;
   this.load({ baseUrl: window._flBaseUrl }, this.ready);
 };
 
@@ -11316,7 +11344,7 @@ Frontleaf.prototype.initialize = function(page){
  */
 
 Frontleaf.prototype.loaded = function(){
-  return is.array(window._fl) && window._fl.ready === true ;
+  return is.array(window._fl) && window._fl.ready === true;
 };
 
 /**
@@ -11485,7 +11513,7 @@ function flatten(source){
   return output;
 }
 
-}, {"segmentio/analytics.js-integration":157,"is":18}],
+}, {"segmentio/analytics.js-integration":159,"bind":33,"when":184,"is":18}],
 108: [function(require, module, exports) {
 
 /**
@@ -11538,7 +11566,7 @@ Gauges.prototype.page = function(page){
   push('track');
 };
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":190}],
 109: [function(require, module, exports) {
 
 /**
@@ -11589,7 +11617,7 @@ GetSatisfaction.prototype.initialize = function(page){
 GetSatisfaction.prototype.loaded = function(){
   return !! window.GSFN;
 };
-}, {"segmentio/analytics.js-integration":157,"on-body":178}],
+}, {"segmentio/analytics.js-integration":159,"on-body":180}],
 110: [function(require, module, exports) {
 
 /**
@@ -12040,7 +12068,7 @@ function metrics(obj, data){
   return ret;
 }
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188,"object":25,"canonical":13,"use-https":159,"facade":27,"callback":12,"load-script":166,"obj-case":60,"each":5,"type":35,"url":26,"is":18}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"object":25,"canonical":13,"use-https":161,"facade":27,"callback":12,"load-script":168,"obj-case":60,"each":5,"type":35,"url":26,"is":18}],
 111: [function(require, module, exports) {
 
 /**
@@ -12131,7 +12159,7 @@ GTM.prototype.track = function(track){
   push(props);
 };
 
-}, {"global-queue":188,"segmentio/analytics.js-integration":157}],
+}, {"global-queue":190,"segmentio/analytics.js-integration":159}],
 112: [function(require, module, exports) {
 
 /**
@@ -12287,7 +12315,7 @@ function push(){
   _gs.apply(null, arguments);
 }
 
-}, {"segmentio/analytics.js-integration":157,"facade":27,"callback":12,"load-script":166,"on-body":178,"each":5}],
+}, {"segmentio/analytics.js-integration":159,"facade":27,"callback":12,"load-script":168,"on-body":180,"each":5}],
 113: [function(require, module, exports) {
 
 /**
@@ -12362,7 +12390,7 @@ Heap.prototype.track = function(track){
   window.heap.track(track.event(), track.properties());
 };
 
-}, {"segmentio/analytics.js-integration":157,"alias":193}],
+}, {"segmentio/analytics.js-integration":159,"alias":195}],
 114: [function(require, module, exports) {
 
 /**
@@ -12404,7 +12432,7 @@ Hellobar.prototype.loaded = function(){
   return !! (window._hbq && window._hbq.push !== Array.prototype.push);
 };
 
-}, {"segmentio/analytics.js-integration":157}],
+}, {"segmentio/analytics.js-integration":159}],
 115: [function(require, module, exports) {
 
 /**
@@ -12443,8 +12471,49 @@ HitTail.prototype.initialize = function(page){
 HitTail.prototype.loaded = function(){
   return is.fn(window.htk);
 };
-}, {"segmentio/analytics.js-integration":157,"is":18}],
+}, {"segmentio/analytics.js-integration":159,"is":18}],
 116: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
+
+/**
+ * Expose `hublo.com` integration.
+ */
+
+var Hublo = module.exports = integration('Hublo')
+  .assumesPageview()
+  .global('_hublo_')
+  .option('apiKey', null)
+  .tag('<script src="//cdn.hublo.co/{{ apiKey }}.js">');
+
+/**
+ * Initialize.
+ *
+ * https://cdn.hublo.co/5353a2e62b26c1277b000004.js
+ *
+ * @param {Object} page
+ */
+
+Hublo.prototype.initialize = function(page){
+  this.load(this.ready);
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Hublo.prototype.loaded = function(){
+  return !! (window._hublo_ && typeof window._hublo_.setup === 'function');
+};
+
+}, {"analytics.js-integration":159}],
+117: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12534,8 +12603,8 @@ function convertDates(properties){
   return convert(properties, function(date){ return date.getTime(); });
 }
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188,"convert-dates":194}],
-117: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"convert-dates":196}],
+118: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12611,8 +12680,75 @@ Improvely.prototype.track = function(track){
   window.improvely.goal(props);
 };
 
-}, {"segmentio/analytics.js-integration":157,"alias":193}],
-118: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"alias":195}],
+119: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
+var push = require('global-queue')('_iva');
+var is = require('is');
+
+/**
+ * Expose `InsideVault` integration.
+ */
+
+var InsideVault = module.exports = integration('InsideVault')
+  .global('_iva')
+  .option('clientId', '')
+  .option('domain', '')
+  .tag('<script src="//analytics.staticiv.com/iva.js">');
+
+/**
+ * Initialize.
+ *
+ * @param page
+ */
+
+InsideVault.prototype.initialize = function(page){
+  var domain = this.options.domain;
+
+  window._iva = window._iva || [];
+
+  push('setClientId', this.options.clientId);
+  if (domain) push('setDomain', domain);
+
+  this.load(this.ready);
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+InsideVault.prototype.loaded = function(){
+  return !! (window._iva && window._iva.push !== Array.prototype.push);
+};
+
+/**
+ * Track.
+ *
+ * Tracks everything except 'sale' events.
+ *
+ * @param {Track} track
+ */
+
+InsideVault.prototype.track = function(track){
+  var event = track.event();
+  var value = track.revenue() || track.value() || 0;
+  var orderId = track.orderId() || '';
+
+  // 'sale' is a special event that will be routed to a table that is deprecated on our end.
+  // We don't want a generic 'sale' event to go to our deprecated table.
+  if (event != 'sale') {
+    push('trackEvent', event, value, orderId);
+  }
+};
+}, {"analytics.js-integration":159,"global-queue":190,"is":18}],
+120: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12682,8 +12818,8 @@ Inspectlet.prototype.track = function(track){
   push('tagSession', track.event());
 };
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188,"alias":193,"clone":192}],
-119: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"alias":195,"clone":194}],
+121: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12841,8 +12977,8 @@ function formatDate(date) {
   return Math.floor(date / 1000);
 }
 
-}, {"segmentio/analytics.js-integration":157,"convert-dates":194,"defaults":187,"is-email":19,"load-script":166,"is-empty":44,"alias":193,"each":5,"when":182,"is":18}],
-120: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"convert-dates":196,"defaults":189,"is-email":19,"load-script":168,"is-empty":44,"alias":195,"each":5,"when":184,"is":18}],
+122: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12948,8 +13084,8 @@ Keen.prototype.track = function(track){
   window.Keen.addEvent(track.event(), track.properties());
 };
 
-}, {"segmentio/analytics.js-integration":157}],
-121: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159}],
+123: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13027,8 +13163,8 @@ Kenshoo.prototype.track = function(track){
   window.k_trackevent(params, this.options.subdomain);
 };
 
-}, {"segmentio/analytics.js-integration":157,"indexof":46,"is":18}],
-122: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"indexof":46,"is":18}],
+124: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13221,8 +13357,8 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188,"facade":27,"alias":193,"batch":195,"each":5,"is":18}],
-195: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"facade":27,"alias":195,"batch":197,"each":5,"is":18}],
+197: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -13382,8 +13518,8 @@ Batch.prototype.end = function(cb){
   return this;
 };
 
-}, {"emitter":196}],
-196: [function(require, module, exports) {
+}, {"emitter":198}],
+198: [function(require, module, exports) {
 
 /**
  * Expose `Emitter`.
@@ -13550,7 +13686,7 @@ Emitter.prototype.hasListeners = function(event){
 };
 
 }, {}],
-123: [function(require, module, exports) {
+125: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13646,8 +13782,8 @@ Klaviyo.prototype.track = function(track){
   }));
 };
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188,"next-tick":45,"alias":193}],
-124: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"next-tick":45,"alias":195}],
+126: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13686,8 +13822,8 @@ LeadLander.prototype.initialize = function(page){
 LeadLander.prototype.loaded = function(){
   return !! window.trackalyzer;
 };
-}, {"segmentio/analytics.js-integration":157}],
-125: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159}],
+127: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13764,8 +13900,8 @@ function convert(traits){
   return arr;
 }
 
-}, {"segmentio/analytics.js-integration":157,"clone":192,"each":5,"when":182}],
-126: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"clone":194,"each":5,"when":184}],
+128: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13834,8 +13970,8 @@ LuckyOrange.prototype.identify = function(identify){
   window.__wtw_custom_user_data = traits;
 };
 
-}, {"segmentio/analytics.js-integration":157,"facade":27,"use-https":159}],
-127: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"facade":27,"use-https":161}],
+129: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13924,8 +14060,8 @@ Lytics.prototype.track = function(track){
   window.jstag.send(props);
 };
 
-}, {"segmentio/analytics.js-integration":157,"alias":193}],
-128: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"alias":195}],
+130: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14141,8 +14277,8 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":193,"clone":192,"convert-dates":194,"segmentio/analytics.js-integration":157,"to-iso-string":191,"indexof":46,"obj-case":60}],
-129: [function(require, module, exports) {
+}, {"alias":195,"clone":194,"convert-dates":196,"segmentio/analytics.js-integration":159,"to-iso-string":193,"indexof":46,"obj-case":60}],
+131: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14220,8 +14356,8 @@ Mojn.prototype.track = function(track){
   return conv;
 };
 
-}, {"segmentio/analytics.js-integration":157,"bind":33,"when":182,"is":18}],
-130: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"bind":33,"when":184,"is":18}],
+132: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14316,8 +14452,8 @@ function set(obj){
   });
 }
 
-}, {"global-queue":188,"segmentio/analytics.js-integration":157,"each":5}],
-131: [function(require, module, exports) {
+}, {"global-queue":190,"segmentio/analytics.js-integration":159,"each":5}],
+133: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14380,8 +14516,8 @@ MouseStats.prototype.identify = function(identify){
   });
 };
 
-}, {"segmentio/analytics.js-integration":157,"use-https":159,"each":5,"is":18}],
-132: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"use-https":161,"each":5,"is":18}],
+134: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14436,8 +14572,8 @@ Navilytics.prototype.track = function(track){
   push('tagRecording', track.event());
 };
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188}],
-133: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190}],
+135: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14612,8 +14748,8 @@ function chat(action, value){
   window.olark('api.chat.' + action, value);
 }
 
-}, {"segmentio/analytics.js-integration":157,"use-https":159,"next-tick":45}],
-134: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"use-https":161,"next-tick":45}],
+136: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14712,8 +14848,8 @@ Optimizely.prototype.replay = function(){
 
   this.analytics.identify(traits);
 };
-}, {"segmentio/analytics.js-integration":157,"global-queue":188,"callback":12,"next-tick":45,"bind":33,"each":5}],
-135: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"callback":12,"next-tick":45,"bind":33,"each":5}],
+137: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14764,8 +14900,8 @@ PerfectAudience.prototype.track = function(track){
   window._pa.track(track.event(), track.properties());
 };
 
-}, {"segmentio/analytics.js-integration":157}],
-136: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159}],
+138: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14810,8 +14946,8 @@ Pingdom.prototype.loaded = function(){
   return !! (window._prum && window._prum.push !== Array.prototype.push);
 };
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188,"load-date":189}],
-137: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"load-date":191}],
+139: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14878,8 +15014,8 @@ Piwik.prototype.track = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188,"each":5}],
-138: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"each":5}],
+140: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14991,8 +15127,8 @@ function convertDate(date){
   return Math.floor(date / 1000);
 }
 
-}, {"segmentio/analytics.js-integration":157,"convert-dates":194,"global-queue":188,"alias":193}],
-139: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"convert-dates":196,"global-queue":190,"alias":195}],
+141: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15076,8 +15212,8 @@ Qualaroo.prototype.track = function(track){
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188,"facade":27,"bind":33,"when":182}],
-140: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"facade":27,"bind":33,"when":184}],
+142: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15262,8 +15398,8 @@ Quantcast.prototype.labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"global-queue":188,"segmentio/analytics.js-integration":157,"use-https":159}],
-141: [function(require, module, exports) {
+}, {"global-queue":190,"segmentio/analytics.js-integration":159,"use-https":161}],
+143: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15342,8 +15478,8 @@ RollbarIntegration.prototype.identify = function(identify){
   rollbar.configure({ payload: { person: person }});
 };
 
-}, {"segmentio/analytics.js-integration":157,"extend":40,"is":18}],
-142: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"extend":40,"is":18}],
+144: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15415,8 +15551,8 @@ SaaSquatch.prototype.identify = function(identify){
   this.called = true;
   this.load();
 };
-}, {"segmentio/analytics.js-integration":157}],
-143: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159}],
+145: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15471,8 +15607,8 @@ Sentry.prototype.identify = function(identify){
   window.Raven.setUser(identify.traits());
 };
 
-}, {"segmentio/analytics.js-integration":157,"is":18}],
-144: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"is":18}],
+146: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15525,8 +15661,8 @@ SnapEngage.prototype.identify = function(identify){
   window.SnapABug.setUserEmail(email);
 };
 
-}, {"segmentio/analytics.js-integration":157,"is":18}],
-145: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"is":18}],
+147: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15571,8 +15707,8 @@ Spinnakr.prototype.initialize = function(page){
 Spinnakr.prototype.loaded = function(){
   return !! window._spinnakr;
 };
-}, {"segmentio/analytics.js-integration":157,"bind":33,"when":182}],
-146: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"bind":33,"when":184}],
+148: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15655,8 +15791,8 @@ Tapstream.prototype.track = function(track){
   push('fireHit', slug(track.event()), [props.url]); // needs events as slugs
 };
 
-}, {"segmentio/analytics.js-integration":157,"slug":164,"global-queue":188}],
-147: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"slug":166,"global-queue":190}],
+149: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15808,14 +15944,15 @@ Trakio.prototype.alias = function(alias){
   }
 };
 
-}, {"segmentio/analytics.js-integration":157,"alias":193,"clone":192}],
-148: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"alias":195,"clone":194}],
+150: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
 var integration = require('segmentio/analytics.js-integration');
+var each = require('each');
 
 /**
  * HOP.
@@ -15828,8 +15965,8 @@ var has = Object.prototype.hasOwnProperty;
  */
 
 var TwitterAds = module.exports = integration('Twitter Ads')
-  .option('events', {})
-  .tag('pixel', '<img src="//analytics.twitter.com/i/adsct?txn_id={{ event }}&p_id=Twitter"/>');
+  .tag('pixel', '<img src="//analytics.twitter.com/i/adsct?txn_id={{ event }}&p_id=Twitter"/>')
+  .mapping('events');
 
 /**
  * Initialize.
@@ -15848,16 +15985,17 @@ TwitterAds.prototype.initialize = function(){
  */
 
 TwitterAds.prototype.track = function(track){
-  var events = this.options.events;
-  var event = track.event();
-  if (!has.call(events, event)) return;
-  return this.load('pixel', {
-    event: events[event]
+  var events = this.events(track.event());
+  var self = this;
+  each(events, function(event){
+    var el = self.load('pixel', {
+      event: event
+    });
   });
 };
 
-}, {"segmentio/analytics.js-integration":157}],
-149: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"each":5}],
+151: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15925,8 +16063,8 @@ Usercycle.prototype.track = function(track){
   }));
 };
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188}],
-150: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190}],
+152: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16025,8 +16163,8 @@ function formatDate(date){
   return Math.round(date.getTime() / 1000).toString();
 }
 
-}, {"alias":193,"callback":12,"convert-dates":194,"analytics.js-integration":157,"load-script":166,"global-queue":188}],
-151: [function(require, module, exports) {
+}, {"alias":195,"callback":12,"convert-dates":196,"analytics.js-integration":159,"load-script":168,"global-queue":190}],
+153: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16211,8 +16349,8 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188,"convert-dates":194,"to-unix-timestamp":197,"alias":193,"clone":192}],
-197: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"convert-dates":196,"to-unix-timestamp":199,"alias":195,"clone":194}],
+199: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -16232,7 +16370,7 @@ function toUnixTimestamp (date) {
   return Math.floor(date.getTime() / 1000);
 }
 }, {}],
-152: [function(require, module, exports) {
+154: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16240,6 +16378,7 @@ function toUnixTimestamp (date) {
 
 var integration = require('segmentio/analytics.js-integration');
 var push = require('global-queue')('_veroq');
+var cookie = require('component/cookie');
 
 /**
  * Expose `Vero` integration.
@@ -16259,6 +16398,12 @@ var Vero = module.exports = integration('Vero')
  */
 
 Vero.prototype.initialize = function(page){
+  // clear default cookie so vero parses correctly.
+  // this is for the tests.
+  // basically, they have window.addEventListener('unload')
+  // which then saves their "command_store", which is an array.
+  // so we just want to create that initially so we can reload the tests.
+  if (!cookie('__veroc4')) cookie('__veroc4', '[]');
   push('init', { api_key: this.options.apiKey });
   this.load(this.ready);
 };
@@ -16313,8 +16458,8 @@ Vero.prototype.track = function(track){
   push('track', track.event(), track.properties());
 };
 
-}, {"segmentio/analytics.js-integration":157,"global-queue":188}],
-153: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":190,"component/cookie":28}],
+155: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16407,8 +16552,8 @@ function variation(id){
   return variationId ? experiment.comb_n[variationId] : null;
 }
 
-}, {"segmentio/analytics.js-integration":157,"next-tick":45,"each":5}],
-154: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"next-tick":45,"each":5}],
+156: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16454,8 +16599,8 @@ WebEngage.prototype.loaded = function(){
   return !! window.webengage;
 };
 
-}, {"segmentio/analytics.js-integration":157,"use-https":159}],
-155: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"use-https":161}],
+157: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16554,8 +16699,8 @@ Woopra.prototype.track = function(track){
   window.woopra.track(track.event(), track.properties());
 };
 
-}, {"segmentio/analytics.js-integration":157,"to-snake-case":158,"is-email":19,"extend":40,"each":5,"type":35}],
-156: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"to-snake-case":160,"is-email":19,"extend":40,"each":5,"type":35}],
+158: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16596,7 +16741,9 @@ Yandex.prototype.initialize = function(page){
   var loaded = bind(this, this.loaded);
   var ready = this.ready;
   this.load(function(){
-    when(loaded, ready);
+    when(loaded, function(){
+      tick(ready);
+    });
   });
 };
 
@@ -16621,4 +16768,4 @@ function push(callback){
   window.yandex_metrika_callbacks.push(callback);
 }
 
-}, {"segmentio/analytics.js-integration":157,"next-tick":45,"bind":33,"when":182}]}, {}, {"1":"analytics"})
+}, {"segmentio/analytics.js-integration":159,"next-tick":45,"bind":33,"when":184}]}, {}, {"1":"analytics"})

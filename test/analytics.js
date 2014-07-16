@@ -261,6 +261,13 @@ describe('Analytics', function () {
       assert(!Test.prototype.invoke.called);
     });
 
+    it('should support .integrations to disable / select integrations', function(){
+      var opts = { integrations: { Test: false } };
+      var facade = new Facade({ options: opts });
+      analytics.identify('123', {}, opts);
+      assert(!Test.prototype.invoke.called);
+    })
+
     it('should emit "invoke" with facade', function(done){
       var opts = { All: false };
       var identify = new Identify({ options: opts });

@@ -3,7 +3,7 @@
   "main": "lib/index.js",
   "repo": "segmentio/analytics.js",
   "description": "The hassle-free way to integrate analytics into any web application.",
-  "version": "2.3.5",
+  "version": "2.3.6",
   "keywords": [
     "analytics",
     "analytics.js",

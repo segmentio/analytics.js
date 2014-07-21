@@ -322,7 +322,7 @@ Analytics.prototype.identify = function (id, traits, options, fn) {
   id = user.id();
   traits = user.traits();
 
-  this._invoke('identify', new Identify({
+  this._invoke('identify', message(Identify, {
     options: options,
     traits: traits,
     userId: id
@@ -369,7 +369,7 @@ Analytics.prototype.group = function (id, traits, options, fn) {
   id = group.id();
   traits = group.traits();
 
-  this._invoke('group', new Group({
+  this._invoke('group', message(Group, {
     options: options,
     traits: traits,
     groupId: id
@@ -395,7 +395,7 @@ Analytics.prototype.track = function (event, properties, options, fn) {
   if (is.fn(options)) fn = options, options = null;
   if (is.fn(properties)) fn = properties, options = null, properties = null;
 
-  this._invoke('track', new Track({
+  this._invoke('track', message(Track, {
     properties: properties,
     options: options,
     event: event
@@ -523,7 +523,7 @@ Analytics.prototype.page = function (category, name, properties, options, fn) {
   defaults(properties, defs);
   properties.url = properties.url || canonicalUrl(properties.search);
 
-  this._invoke('page', new Page({
+  this._invoke('page', message(Page, {
     properties: properties,
     category: category,
     options: options,
@@ -568,7 +568,7 @@ Analytics.prototype.alias = function (to, from, options, fn) {
   if (is.fn(from)) fn = from, options = null, from = null;
   if (is.object(from)) options = from, from = null;
 
-  this._invoke('alias', new Alias({
+  this._invoke('alias', message(Alias, {
     options: options,
     from: from,
     to: to
@@ -732,6 +732,47 @@ function canonicalUrl (search) {
   var url = window.location.href;
   var i = url.indexOf('#');
   return -1 == i ? url : url.slice(0, i);
+}
+
+/**
+ * Create a new message with `Type` and `msg`
+ *
+ * the function will make sure that the `msg.options`
+ * is merged to `msg` and deletes `msg.options` if it
+ * has `.context / .timestamp / .integrations`.
+ *
+ * Example:
+ *
+ *      message(Identify, {
+ *        options: { timestamp: Date, context: Object, integrations: Object },
+ *        traits: { trait: true },
+ *        userId: 123
+ *      });
+ *
+ *      // =>
+ *
+ *      {
+ *        userId: 123,
+ *        context: Object,
+ *        timestamp: Date,
+ *        integrations: Object
+ *        traits: { trait: true }
+ *      }
+ *
+ * @param {Function} Type
+ * @param {Object} msg
+ * @return {Facade}
+ */
+
+function message(Type, msg){
+  var ctx = msg.options || {};
+
+  if (ctx.timestamp || ctx.integrations || ctx.context) {
+    msg = defaults(ctx, msg);
+    delete msg.options;
+  }
+
+  return new Type(msg);
 }
 
 }, {"./cookie":6,"./group":7,"./store":8,"./user":9,"after":10,"bind":11,"callback":12,"canonical":13,"clone":14,"debug":15,"defaults":16,"each":5,"emitter":17,"is":18,"is-email":19,"is-meta":20,"new-date":21,"event":22,"prevent":23,"querystring":24,"object":25,"url":26,"facade":27}],

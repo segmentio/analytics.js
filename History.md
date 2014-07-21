@@ -1,4 +1,13 @@
 
+2.3.7 / 2014-07-21
+==================
+
+ * Merge pull request #390 from segmentio/test/element-error
+ * throw helpful error when passing string to `trackLink`, closes #389
+ * Merge pull request #386 from segmentio/context
+ * add integrations select test
+ * add backwards compat options object support
+
 2.3.6 / 2014-07-16
 ==================
 

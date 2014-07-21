@@ -426,6 +426,7 @@ Analytics.prototype.trackLink = function (links, event, properties) {
 
   var self = this;
   each(links, function (el) {
+    if (!is.element(el)) throw new TypeError('Must pass HTMLElement to `analytics.trackLink`.');
     on(el, 'click', function (e) {
       var ev = is.fn(event) ? event(el) : event;
       var props = is.fn(properties) ? properties(el) : properties;
@@ -463,6 +464,7 @@ Analytics.prototype.trackForm = function (forms, event, properties) {
 
   var self = this;
   each(forms, function (el) {
+    if (!is.element(el)) throw new TypeError('Must pass HTMLElement to `analytics.trackForm`.');
     function handler (e) {
       prevent(e);
 
@@ -6201,7 +6203,7 @@ Screen.prototype.track = function(name){
 }, {"./utils":58,"./page":56,"./track":55}],
 3: [function(require, module, exports) {
 
-module.exports = '2.3.6';
+module.exports = '2.3.7';
 
 }, {}],
 4: [function(require, module, exports) {

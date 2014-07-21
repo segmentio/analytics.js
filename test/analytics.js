@@ -962,6 +962,15 @@ describe('Analytics', function () {
       assert(analytics.track.called);
     });
 
+    it('should not accept a string for an element', function () {
+      var str = 'a';
+      assert.throws(function(){
+        analytics.trackLink(str);
+      }, TypeError, 'Must pass HTMLElement to `analytics.trackLink`.');
+      trigger(link, 'click');
+      assert(!analytics.track.called);
+    });
+
     it('should send an event and properties', function () {
       analytics.trackLink(link, 'event', { property: true });
       trigger(link, 'click');
@@ -1040,6 +1049,15 @@ describe('Analytics', function () {
       analytics.trackForm(form);
       trigger(submit, 'click');
       assert(analytics.track.called);
+    });
+
+    it('should not accept a string for an element', function () {
+      var str = 'form';
+      assert.throws(function(){
+        analytics.trackForm(str);
+      }, TypeError, 'Must pass HTMLElement to `analytics.trackForm`.');
+      trigger(submit, 'click');
+      assert(!analytics.track.called);
     });
 
     it('should send an event and properties', function () {

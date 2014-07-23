@@ -6203,7 +6203,7 @@ Screen.prototype.track = function(name){
 }, {"./utils":58,"./page":56,"./track":55}],
 3: [function(require, module, exports) {
 
-module.exports = '2.3.7';
+module.exports = '2.3.8';
 
 }, {}],
 4: [function(require, module, exports) {
@@ -9082,7 +9082,69 @@ Appcues.prototype.identify = function(identify){
   window.Appcues.identify(identify.traits());
 };
 
-}, {"segmentio/analytics.js-integration":159,"load-script":168,"is":18}],
+}, {"segmentio/analytics.js-integration":159,"load-script":184,"is":18}],
+184: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var onload = require('script-onload');
+var tick = require('next-tick');
+var type = require('type');
+
+/**
+ * Expose `loadScript`.
+ *
+ * @param {Object} options
+ * @param {Function} fn
+ * @api public
+ */
+
+module.exports = function loadScript(options, fn){
+  if (!options) throw new Error('Cant load nothing...');
+
+  // Allow for the simplest case, just passing a `src` string.
+  if ('string' == type(options)) options = { src : options };
+
+  var https = document.location.protocol === 'https:' ||
+              document.location.protocol === 'chrome-extension:';
+
+  // If you use protocol relative URLs, third-party scripts like Google
+  // Analytics break when testing with `file:` so this fixes that.
+  if (options.src && options.src.indexOf('//') === 0) {
+    options.src = https ? 'https:' + options.src : 'http:' + options.src;
+  }
+
+  // Allow them to pass in different URLs depending on the protocol.
+  if (https && options.https) options.src = options.https;
+  else if (!https && options.http) options.src = options.http;
+
+  // Make the `<script>` element and insert it before the first script on the
+  // page, which is guaranteed to exist since this Javascript is running.
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.async = true;
+  script.src = options.src;
+
+  // If we have a fn, attach event handlers, even in IE. Based off of
+  // the Third-Party Javascript script loading example:
+  // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
+  if ('function' == type(fn)) {
+    onload(script, fn);
+  }
+
+  tick(function(){
+    // Append after event listeners are attached for IE.
+    var firstScript = document.getElementsByTagName('script')[0];
+    firstScript.parentNode.insertBefore(script, firstScript);
+  });
+
+  // Return the script element in case they want to do anything special, like
+  // give it an ID or attributes.
+  return script;
+};
+}, {"script-onload":172,"next-tick":45,"type":35}],
 88: [function(require, module, exports) {
 
 /**
@@ -9321,8 +9383,8 @@ function writeToAppend(str) {
   document.body.appendChild(el);
 }
 
-}, {"segmentio/analytics.js-integration":159,"on-body":180,"domify":181,"extend":40,"bind":33,"when":184,"each":5}],
-184: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"on-body":180,"domify":181,"extend":40,"bind":33,"when":185,"each":5}],
+185: [function(require, module, exports) {
 
 var callback = require('callback');
 
@@ -9484,8 +9546,8 @@ Bronto.prototype.completedOrder = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":159,"facade":27,"load-pixel":185,"querystring":186,"each":5}],
-185: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"facade":27,"load-pixel":186,"querystring":187,"each":5}],
+186: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9540,8 +9602,8 @@ function error(fn, message, img){
   };
 }
 
-}, {"querystring":186,"substitute":187}],
-186: [function(require, module, exports) {
+}, {"querystring":187,"substitute":188}],
+187: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9617,7 +9679,7 @@ exports.stringify = function(obj){
 };
 
 }, {"trim":50,"type":35}],
-187: [function(require, module, exports) {
+188: [function(require, module, exports) {
 
 /**
  * Expose `substitute`
@@ -9750,8 +9812,8 @@ Bugsnag.prototype.identify = function(identify){
   extend(window.Bugsnag.metaData, identify.traits());
 };
 
-}, {"segmentio/analytics.js-integration":159,"is":18,"extend":40,"on-error":188}],
-188: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"is":18,"extend":40,"on-error":189}],
+189: [function(require, module, exports) {
 
 /**
  * Expose `onError`.
@@ -9874,8 +9936,8 @@ Chartbeat.prototype.page = function(page){
   window.pSUPERFLY.virtualPage(props.path, name || props.title);
 };
 
-}, {"segmentio/analytics.js-integration":159,"defaults":189,"on-body":180}],
-189: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"defaults":190,"on-body":180}],
+190: [function(require, module, exports) {
 /**
  * Expose `defaults`.
  */
@@ -9972,8 +10034,8 @@ ChurnBee.prototype.track = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"each":5}],
-190: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"each":5}],
+191: [function(require, module, exports) {
 
 /**
  * Expose `generate`.
@@ -10105,8 +10167,8 @@ ClickTale.prototype.track = function(track){
   window.ClickTaleEvent(track.event());
 };
 
-}, {"load-date":191,"domify":181,"each":5,"segmentio/analytics.js-integration":159,"is":18,"use-https":161,"on-body":180}],
-191: [function(require, module, exports) {
+}, {"load-date":192,"domify":181,"each":5,"segmentio/analytics.js-integration":159,"is":18,"use-https":161,"on-body":180}],
+192: [function(require, module, exports) {
 
 
 /*
@@ -10482,8 +10544,8 @@ Curebit.prototype.completedOrder = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"facade":27,"throttle":192,"to-iso-string":193,"clone":194,"each":5,"bind":33}],
-192: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"facade":27,"throttle":193,"to-iso-string":194,"clone":195,"each":5,"bind":33}],
+193: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -10516,7 +10578,7 @@ function throttle (func, wait) {
 }
 
 }, {}],
-193: [function(require, module, exports) {
+194: [function(require, module, exports) {
 
 /**
  * Expose `toIsoString`.
@@ -10558,7 +10620,7 @@ function pad (number) {
   return n.length === 1 ? '0' + n : n;
 }
 }, {}],
-194: [function(require, module, exports) {
+195: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -10725,8 +10787,8 @@ function convertDate(date){
   return Math.floor(date.getTime() / 1000);
 }
 
-}, {"alias":195,"convert-dates":196,"facade":27,"segmentio/analytics.js-integration":159}],
-195: [function(require, module, exports) {
+}, {"alias":196,"convert-dates":197,"facade":27,"segmentio/analytics.js-integration":159}],
+196: [function(require, module, exports) {
 
 var type = require('type');
 
@@ -10790,7 +10852,7 @@ function aliasByFunction (obj, convert) {
   return output;
 }
 }, {"type":35,"clone":62}],
-196: [function(require, module, exports) {
+197: [function(require, module, exports) {
 
 var is = require('is');
 
@@ -10888,7 +10950,7 @@ Drip.prototype.track = function(track){
   push('track', props);
 };
 
-}, {"alias":195,"segmentio/analytics.js-integration":159,"is":18,"load-script":168,"global-queue":190}],
+}, {"alias":196,"segmentio/analytics.js-integration":159,"is":18,"load-script":184,"global-queue":191}],
 103: [function(require, module, exports) {
 
 /**
@@ -10951,7 +11013,7 @@ Errorception.prototype.identify = function(identify){
   extend(window._errs.meta, traits);
 };
 
-}, {"extend":40,"segmentio/analytics.js-integration":159,"on-error":188,"global-queue":190}],
+}, {"extend":40,"segmentio/analytics.js-integration":159,"on-error":189,"global-queue":191}],
 104: [function(require, module, exports) {
 
 /**
@@ -11068,7 +11130,7 @@ Evergage.prototype.track = function(track){
   push('trackAction', track.event(), track.properties());
 };
 
-}, {"each":5,"segmentio/analytics.js-integration":159,"global-queue":190}],
+}, {"each":5,"segmentio/analytics.js-integration":159,"global-queue":191}],
 105: [function(require, module, exports) {
 
 /**
@@ -11146,7 +11208,7 @@ Facebook.prototype.track = function(track){
   }
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"each":5}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"each":5}],
 106: [function(require, module, exports) {
 
 /**
@@ -11335,7 +11397,7 @@ function ecommerce(event, track, arr){
   ].concat(arr || []));
 }
 
-}, {"global-queue":190,"segmentio/analytics.js-integration":159,"facade":27,"each":5}],
+}, {"global-queue":191,"segmentio/analytics.js-integration":159,"facade":27,"each":5}],
 107: [function(require, module, exports) {
 
 /**
@@ -11556,7 +11618,7 @@ function flatten(source){
   return output;
 }
 
-}, {"segmentio/analytics.js-integration":159,"bind":33,"when":184,"is":18}],
+}, {"segmentio/analytics.js-integration":159,"bind":33,"when":185,"is":18}],
 108: [function(require, module, exports) {
 
 /**
@@ -11609,7 +11671,7 @@ Gauges.prototype.page = function(page){
   push('track');
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191}],
 109: [function(require, module, exports) {
 
 /**
@@ -12111,7 +12173,7 @@ function metrics(obj, data){
   return ret;
 }
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"object":25,"canonical":13,"use-https":161,"facade":27,"callback":12,"load-script":168,"obj-case":60,"each":5,"type":35,"url":26,"is":18}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"object":25,"canonical":13,"use-https":161,"facade":27,"callback":12,"load-script":184,"obj-case":60,"each":5,"type":35,"url":26,"is":18}],
 111: [function(require, module, exports) {
 
 /**
@@ -12202,7 +12264,7 @@ GTM.prototype.track = function(track){
   push(props);
 };
 
-}, {"global-queue":190,"segmentio/analytics.js-integration":159}],
+}, {"global-queue":191,"segmentio/analytics.js-integration":159}],
 112: [function(require, module, exports) {
 
 /**
@@ -12358,7 +12420,7 @@ function push(){
   _gs.apply(null, arguments);
 }
 
-}, {"segmentio/analytics.js-integration":159,"facade":27,"callback":12,"load-script":168,"on-body":180,"each":5}],
+}, {"segmentio/analytics.js-integration":159,"facade":27,"callback":12,"load-script":184,"on-body":180,"each":5}],
 113: [function(require, module, exports) {
 
 /**
@@ -12433,7 +12495,7 @@ Heap.prototype.track = function(track){
   window.heap.track(track.event(), track.properties());
 };
 
-}, {"segmentio/analytics.js-integration":159,"alias":195}],
+}, {"segmentio/analytics.js-integration":159,"alias":196}],
 114: [function(require, module, exports) {
 
 /**
@@ -12646,7 +12708,7 @@ function convertDates(properties){
   return convert(properties, function(date){ return date.getTime(); });
 }
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"convert-dates":196}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"convert-dates":197}],
 118: [function(require, module, exports) {
 
 /**
@@ -12723,7 +12785,7 @@ Improvely.prototype.track = function(track){
   window.improvely.goal(props);
 };
 
-}, {"segmentio/analytics.js-integration":159,"alias":195}],
+}, {"segmentio/analytics.js-integration":159,"alias":196}],
 119: [function(require, module, exports) {
 
 /**
@@ -12790,7 +12852,7 @@ InsideVault.prototype.track = function(track){
     push('trackEvent', event, value, orderId);
   }
 };
-}, {"analytics.js-integration":159,"global-queue":190,"is":18}],
+}, {"analytics.js-integration":159,"global-queue":191,"is":18}],
 120: [function(require, module, exports) {
 
 /**
@@ -12861,7 +12923,7 @@ Inspectlet.prototype.track = function(track){
   push('tagSession', track.event());
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"alias":195,"clone":194}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"alias":196,"clone":195}],
 121: [function(require, module, exports) {
 
 /**
@@ -13020,7 +13082,7 @@ function formatDate(date) {
   return Math.floor(date / 1000);
 }
 
-}, {"segmentio/analytics.js-integration":159,"convert-dates":196,"defaults":189,"is-email":19,"load-script":168,"is-empty":44,"alias":195,"each":5,"when":184,"is":18}],
+}, {"segmentio/analytics.js-integration":159,"convert-dates":197,"defaults":190,"is-email":19,"load-script":184,"is-empty":44,"alias":196,"each":5,"when":185,"is":18}],
 122: [function(require, module, exports) {
 
 /**
@@ -13400,8 +13462,8 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"facade":27,"alias":195,"batch":197,"each":5,"is":18}],
-197: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"facade":27,"alias":196,"batch":198,"each":5,"is":18}],
+198: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -13561,8 +13623,8 @@ Batch.prototype.end = function(cb){
   return this;
 };
 
-}, {"emitter":198}],
-198: [function(require, module, exports) {
+}, {"emitter":199}],
+199: [function(require, module, exports) {
 
 /**
  * Expose `Emitter`.
@@ -13825,7 +13887,7 @@ Klaviyo.prototype.track = function(track){
   }));
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"next-tick":45,"alias":195}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"next-tick":45,"alias":196}],
 126: [function(require, module, exports) {
 
 /**
@@ -13943,7 +14005,7 @@ function convert(traits){
   return arr;
 }
 
-}, {"segmentio/analytics.js-integration":159,"clone":194,"each":5,"when":184}],
+}, {"segmentio/analytics.js-integration":159,"clone":195,"each":5,"when":185}],
 128: [function(require, module, exports) {
 
 /**
@@ -14103,7 +14165,7 @@ Lytics.prototype.track = function(track){
   window.jstag.send(props);
 };
 
-}, {"segmentio/analytics.js-integration":159,"alias":195}],
+}, {"segmentio/analytics.js-integration":159,"alias":196}],
 130: [function(require, module, exports) {
 
 /**
@@ -14320,7 +14382,7 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":195,"clone":194,"convert-dates":196,"segmentio/analytics.js-integration":159,"to-iso-string":193,"indexof":46,"obj-case":60}],
+}, {"alias":196,"clone":195,"convert-dates":197,"segmentio/analytics.js-integration":159,"to-iso-string":194,"indexof":46,"obj-case":60}],
 131: [function(require, module, exports) {
 
 /**
@@ -14399,7 +14461,7 @@ Mojn.prototype.track = function(track){
   return conv;
 };
 
-}, {"segmentio/analytics.js-integration":159,"bind":33,"when":184,"is":18}],
+}, {"segmentio/analytics.js-integration":159,"bind":33,"when":185,"is":18}],
 132: [function(require, module, exports) {
 
 /**
@@ -14495,7 +14557,7 @@ function set(obj){
   });
 }
 
-}, {"global-queue":190,"segmentio/analytics.js-integration":159,"each":5}],
+}, {"global-queue":191,"segmentio/analytics.js-integration":159,"each":5}],
 133: [function(require, module, exports) {
 
 /**
@@ -14615,7 +14677,7 @@ Navilytics.prototype.track = function(track){
   push('tagRecording', track.event());
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191}],
 135: [function(require, module, exports) {
 
 /**
@@ -14891,7 +14953,7 @@ Optimizely.prototype.replay = function(){
 
   this.analytics.identify(traits);
 };
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"callback":12,"next-tick":45,"bind":33,"each":5}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"callback":12,"next-tick":45,"bind":33,"each":5}],
 137: [function(require, module, exports) {
 
 /**
@@ -14989,7 +15051,7 @@ Pingdom.prototype.loaded = function(){
   return !! (window._prum && window._prum.push !== Array.prototype.push);
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"load-date":191}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"load-date":192}],
 139: [function(require, module, exports) {
 
 /**
@@ -15057,7 +15119,7 @@ Piwik.prototype.track = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"each":5}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"each":5}],
 140: [function(require, module, exports) {
 
 /**
@@ -15170,7 +15232,7 @@ function convertDate(date){
   return Math.floor(date / 1000);
 }
 
-}, {"segmentio/analytics.js-integration":159,"convert-dates":196,"global-queue":190,"alias":195}],
+}, {"segmentio/analytics.js-integration":159,"convert-dates":197,"global-queue":191,"alias":196}],
 141: [function(require, module, exports) {
 
 /**
@@ -15255,7 +15317,7 @@ Qualaroo.prototype.track = function(track){
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"facade":27,"bind":33,"when":184}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"facade":27,"bind":33,"when":185}],
 142: [function(require, module, exports) {
 
 /**
@@ -15441,7 +15503,7 @@ Quantcast.prototype.labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"global-queue":190,"segmentio/analytics.js-integration":159,"use-https":161}],
+}, {"global-queue":191,"segmentio/analytics.js-integration":159,"use-https":161}],
 143: [function(require, module, exports) {
 
 /**
@@ -15750,7 +15812,7 @@ Spinnakr.prototype.initialize = function(page){
 Spinnakr.prototype.loaded = function(){
   return !! window._spinnakr;
 };
-}, {"segmentio/analytics.js-integration":159,"bind":33,"when":184}],
+}, {"segmentio/analytics.js-integration":159,"bind":33,"when":185}],
 148: [function(require, module, exports) {
 
 /**
@@ -15834,7 +15896,7 @@ Tapstream.prototype.track = function(track){
   push('fireHit', slug(track.event()), [props.url]); // needs events as slugs
 };
 
-}, {"segmentio/analytics.js-integration":159,"slug":166,"global-queue":190}],
+}, {"segmentio/analytics.js-integration":159,"slug":166,"global-queue":191}],
 149: [function(require, module, exports) {
 
 /**
@@ -15987,7 +16049,7 @@ Trakio.prototype.alias = function(alias){
   }
 };
 
-}, {"segmentio/analytics.js-integration":159,"alias":195,"clone":194}],
+}, {"segmentio/analytics.js-integration":159,"alias":196,"clone":195}],
 150: [function(require, module, exports) {
 
 /**
@@ -16106,7 +16168,7 @@ Usercycle.prototype.track = function(track){
   }));
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191}],
 152: [function(require, module, exports) {
 
 /**
@@ -16206,7 +16268,7 @@ function formatDate(date){
   return Math.round(date.getTime() / 1000).toString();
 }
 
-}, {"alias":195,"callback":12,"convert-dates":196,"analytics.js-integration":159,"load-script":168,"global-queue":190}],
+}, {"alias":196,"callback":12,"convert-dates":197,"analytics.js-integration":159,"load-script":184,"global-queue":191}],
 153: [function(require, module, exports) {
 
 /**
@@ -16392,8 +16454,8 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"convert-dates":196,"to-unix-timestamp":199,"alias":195,"clone":194}],
-199: [function(require, module, exports) {
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"convert-dates":197,"to-unix-timestamp":200,"alias":196,"clone":195}],
+200: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -16501,7 +16563,7 @@ Vero.prototype.track = function(track){
   push('track', track.event(), track.properties());
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":190,"component/cookie":28}],
+}, {"segmentio/analytics.js-integration":159,"global-queue":191,"component/cookie":28}],
 155: [function(require, module, exports) {
 
 /**
@@ -16811,4 +16873,4 @@ function push(callback){
   window.yandex_metrika_callbacks.push(callback);
 }
 
-}, {"segmentio/analytics.js-integration":159,"next-tick":45,"bind":33,"when":184}]}, {}, {"1":"analytics"})
+}, {"segmentio/analytics.js-integration":159,"next-tick":45,"bind":33,"when":185}]}, {}, {"1":"analytics"})

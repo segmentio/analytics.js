@@ -3959,6 +3959,7 @@ module.exports = Facade;
 function Facade (obj) {
   if (!obj.hasOwnProperty('timestamp')) obj.timestamp = new Date();
   else obj.timestamp = newDate(obj.timestamp);
+  traverse(obj);
   this.obj = obj;
 }
 
@@ -4201,7 +4202,6 @@ Facade.prototype.ip = Facade.proxy('options.ip');
 
 function transform(obj){
   var cloned = clone(obj);
-  traverse(cloned);
   return cloned;
 }
 
@@ -5613,7 +5613,7 @@ Identify.prototype.traits = function (aliases) {
       : this[alias]();
     if (null == value) continue;
     ret[aliases[alias]] = value;
-    delete ret[alias];
+    if (alias !== aliases[alias]) delete ret[alias];
   }
 
   return ret;
@@ -6203,7 +6203,7 @@ Screen.prototype.track = function(name){
 }, {"./utils":58,"./page":56,"./track":55}],
 3: [function(require, module, exports) {
 
-module.exports = '2.3.8';
+module.exports = '2.3.9';
 
 }, {}],
 4: [function(require, module, exports) {
@@ -6319,7 +6319,7 @@ module.exports = [
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var snake = require('to-snake-case');
 var useHttps = require('use-https');
 var each = require('each');
@@ -6420,7 +6420,7 @@ AdRoll.prototype.track = function(track){
   }
 };
 
-}, {"segmentio/analytics.js-integration":159,"to-snake-case":160,"use-https":161,"each":5,"is":18}],
+}, {"analytics.js-integration":159,"to-snake-case":160,"use-https":161,"each":5,"is":18}],
 159: [function(require, module, exports) {
 
 /**
@@ -8229,7 +8229,7 @@ function check () {
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var onbody = require('on-body');
 var domify = require('domify');
 var Queue = require('queue');
@@ -8405,7 +8405,7 @@ AdWords.prototype.shim = function(){
   }
 }
 
-}, {"segmentio/analytics.js-integration":159,"on-body":180,"domify":181,"queue":182,"each":5}],
+}, {"analytics.js-integration":159,"on-body":180,"domify":181,"queue":182,"each":5}],
 180: [function(require, module, exports) {
 var each = require('each');
 
@@ -8860,7 +8860,7 @@ Emitter.prototype.hasListeners = function(event){
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose Alexa integration.
@@ -8902,14 +8902,15 @@ Alexa.prototype.initialize = function(page){
 Alexa.prototype.loaded = function(){
   return !! window.atrk;
 };
-}, {"segmentio/analytics.js-integration":159}],
+
+}, {"analytics.js-integration":159}],
 86: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `Amplitude` integration.
@@ -9001,14 +9002,14 @@ Amplitude.prototype.track = function(track){
   window.amplitude.logEvent(event, props);
 };
 
-}, {"segmentio/analytics.js-integration":159}],
+}, {"analytics.js-integration":159}],
 87: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var load = require('load-script');
 var is = require('is');
 
@@ -9082,7 +9083,7 @@ Appcues.prototype.identify = function(identify){
   window.Appcues.identify(identify.traits());
 };
 
-}, {"segmentio/analytics.js-integration":159,"load-script":184,"is":18}],
+}, {"analytics.js-integration":159,"load-script":184,"is":18}],
 184: [function(require, module, exports) {
 
 /**
@@ -9151,7 +9152,7 @@ module.exports = function loadScript(options, fn){
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var each = require('each');
 
 /**
@@ -9202,14 +9203,14 @@ Awesm.prototype.track = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":159,"each":5}],
+}, {"analytics.js-integration":159,"each":5}],
 89: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var is = require('is');
 var noop = function(){};
 var onBody = require('on-body');
@@ -9258,14 +9259,15 @@ Awesomatic.prototype.initialize = function(page){
 Awesomatic.prototype.loaded = function(){
   return is.object(window.Awesomatic);
 };
-}, {"segmentio/analytics.js-integration":159,"is":18,"on-body":180}],
+
+}, {"analytics.js-integration":159,"is":18,"on-body":180}],
 90: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var onbody = require('on-body');
 var domify = require('domify');
 var extend = require('extend');
@@ -9383,7 +9385,7 @@ function writeToAppend(str) {
   document.body.appendChild(el);
 }
 
-}, {"segmentio/analytics.js-integration":159,"on-body":180,"domify":181,"extend":40,"bind":33,"when":185,"each":5}],
+}, {"analytics.js-integration":159,"on-body":180,"domify":181,"extend":40,"bind":33,"when":185,"each":5}],
 185: [function(require, module, exports) {
 
 var callback = require('callback');
@@ -9420,7 +9422,7 @@ function when (condition, fn, interval) {
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var Identify = require('facade').Identify;
 var Track = require('facade').Track;
 var pixel = require('load-pixel')('http://app.bronto.com/public/');
@@ -9474,14 +9476,14 @@ Bronto.prototype.loaded = function(){
 /**
  * Track.
  *
- * The JS conversion tracking toggles must be on 
- * in the application in order for you to see the data 
- * in your account, and for it to function as it should. 
- * If the toggle is not on the system will ignore 
+ * The JS conversion tracking toggles must be on
+ * in the application in order for you to see the data
+ * in your account, and for it to function as it should.
+ * If the toggle is not on the system will ignore
  * any requests coming into it.
  *
- * To create a test user, create a contact in Bronto, 
- * send that contact an email, then process through your site 
+ * To create a test user, create a contact in Bronto,
+ * send that contact an email, then process through your site
  * to place a test order to hit the JS code.
  *
  * Provided you have Click Through Link Tracking enabled,
@@ -9503,10 +9505,10 @@ Bronto.prototype.track = function(track){
 /**
  * Completed order.
  *
- * The cookie is used to link the order being processed back to the delivery, 
+ * The cookie is used to link the order being processed back to the delivery,
  * message, and contact which makes it a conversion.
- * Passing in just the email ensures that the order itself 
- * gets linked to the contact record in Bronto even if the user 
+ * Passing in just the email ensures that the order itself
+ * gets linked to the contact record in Bronto even if the user
  * does not have a tracking cookie.
  *
  * @param {Track} track
@@ -9546,7 +9548,7 @@ Bronto.prototype.completedOrder = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":159,"facade":27,"load-pixel":186,"querystring":187,"each":5}],
+}, {"analytics.js-integration":159,"facade":27,"load-pixel":186,"querystring":187,"each":5}],
 186: [function(require, module, exports) {
 
 /**
@@ -9714,7 +9716,7 @@ function substitute(str, obj, expr){
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var tick = require('next-tick');
 
 /**
@@ -9754,14 +9756,15 @@ BugHerd.prototype.initialize = function(page){
 BugHerd.prototype.loaded = function(){
   return !! window._bugHerd;
 };
-}, {"segmentio/analytics.js-integration":159,"next-tick":45}],
+
+}, {"analytics.js-integration":159,"next-tick":45}],
 93: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var is = require('is');
 var extend = require('extend');
 var onError = require('on-error');
@@ -9812,7 +9815,7 @@ Bugsnag.prototype.identify = function(identify){
   extend(window.Bugsnag.metaData, identify.traits());
 };
 
-}, {"segmentio/analytics.js-integration":159,"is":18,"extend":40,"on-error":189}],
+}, {"analytics.js-integration":159,"is":18,"extend":40,"on-error":189}],
 189: [function(require, module, exports) {
 
 /**
@@ -9872,7 +9875,7 @@ function onError (fn) {
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var defaults = require('defaults');
 var onBody = require('on-body');
 
@@ -9936,7 +9939,7 @@ Chartbeat.prototype.page = function(page){
   window.pSUPERFLY.virtualPage(props.path, name || props.title);
 };
 
-}, {"segmentio/analytics.js-integration":159,"defaults":190,"on-body":180}],
+}, {"analytics.js-integration":159,"defaults":190,"on-body":180}],
 190: [function(require, module, exports) {
 /**
  * Expose `defaults`.
@@ -9960,7 +9963,7 @@ function defaults (dest, defaults) {
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_cbq');
 var each = require('each');
 
@@ -10034,7 +10037,7 @@ ChurnBee.prototype.track = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"each":5}],
+}, {"analytics.js-integration":159,"global-queue":191,"each":5}],
 191: [function(require, module, exports) {
 
 /**
@@ -10074,7 +10077,7 @@ function generate (name, options) {
 var date = require('load-date');
 var domify = require('domify');
 var each = require('each');
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var is = require('is');
 var useHttps = require('use-https');
 var onBody = require('on-body');
@@ -10120,8 +10123,8 @@ ClickTale.prototype.initialize = function(page){
 
   this.load({ src: src }, function(){
     window.ClickTale(
-      self.options.projectId, 
-      self.options.recordingRatio, 
+      self.options.projectId,
+      self.options.recordingRatio,
       self.options.partitionId
     );
     self.ready();
@@ -10167,7 +10170,7 @@ ClickTale.prototype.track = function(track){
   window.ClickTaleEvent(track.event());
 };
 
-}, {"load-date":192,"domify":181,"each":5,"segmentio/analytics.js-integration":159,"is":18,"use-https":161,"on-body":180}],
+}, {"load-date":192,"domify":181,"each":5,"analytics.js-integration":159,"is":18,"use-https":161,"on-body":180}],
 192: [function(require, module, exports) {
 
 
@@ -10194,7 +10197,7 @@ module.exports = time;
 
 var Identify = require('facade').Identify;
 var extend = require('extend');
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var is = require('is');
 
 /**
@@ -10276,14 +10279,14 @@ Clicky.prototype.track = function(track){
   window.clicky.goal(track.event(), track.revenue());
 };
 
-}, {"facade":27,"extend":40,"segmentio/analytics.js-integration":159,"is":18}],
+}, {"facade":27,"extend":40,"analytics.js-integration":159,"is":18}],
 98: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var useHttps = require('use-https');
 
 /**
@@ -10320,14 +10323,15 @@ Comscore.prototype.initialize = function(page){
 Comscore.prototype.loaded = function(){
   return !! window.COMSCORE;
 };
-}, {"segmentio/analytics.js-integration":159,"use-https":161}],
+
+}, {"analytics.js-integration":159,"use-https":161}],
 99: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `CrazyEgg` integration.
@@ -10361,14 +10365,15 @@ CrazyEgg.prototype.initialize = function(page){
 CrazyEgg.prototype.loaded = function(){
   return !! window.CE2;
 };
-}, {"segmentio/analytics.js-integration":159}],
+
+}, {"analytics.js-integration":159}],
 100: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_curebitq');
 var Identify = require('facade').Identify;
 var throttle = require('throttle');
@@ -10544,7 +10549,7 @@ Curebit.prototype.completedOrder = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"facade":27,"throttle":193,"to-iso-string":194,"clone":195,"each":5,"bind":33}],
+}, {"analytics.js-integration":159,"global-queue":191,"facade":27,"throttle":193,"to-iso-string":194,"clone":195,"each":5,"bind":33}],
 193: [function(require, module, exports) {
 
 /**
@@ -10691,7 +10696,7 @@ function clone(obj){
 var alias = require('alias');
 var convertDates = require('convert-dates');
 var Identify = require('facade').Identify;
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `Customerio` integration.
@@ -10787,7 +10792,7 @@ function convertDate(date){
   return Math.floor(date.getTime() / 1000);
 }
 
-}, {"alias":196,"convert-dates":197,"facade":27,"segmentio/analytics.js-integration":159}],
+}, {"alias":196,"convert-dates":197,"facade":27,"analytics.js-integration":159}],
 196: [function(require, module, exports) {
 
 var type = require('type');
@@ -10895,7 +10900,7 @@ function convertDates (obj, convert) {
  */
 
 var alias = require('alias');
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var is = require('is');
 var load = require('load-script');
 var push = require('global-queue')('_dcq');
@@ -10950,7 +10955,7 @@ Drip.prototype.track = function(track){
   push('track', props);
 };
 
-}, {"alias":196,"segmentio/analytics.js-integration":159,"is":18,"load-script":184,"global-queue":191}],
+}, {"alias":196,"analytics.js-integration":159,"is":18,"load-script":184,"global-queue":191}],
 103: [function(require, module, exports) {
 
 /**
@@ -10958,7 +10963,7 @@ Drip.prototype.track = function(track){
  */
 
 var extend = require('extend');
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var onError = require('on-error');
 var push = require('global-queue')('_errs');
 
@@ -11013,7 +11018,7 @@ Errorception.prototype.identify = function(identify){
   extend(window._errs.meta, traits);
 };
 
-}, {"extend":40,"segmentio/analytics.js-integration":159,"on-error":189,"global-queue":191}],
+}, {"extend":40,"analytics.js-integration":159,"on-error":189,"global-queue":191}],
 104: [function(require, module, exports) {
 
 /**
@@ -11021,7 +11026,7 @@ Errorception.prototype.identify = function(identify){
  */
 
 var each = require('each');
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_aaq');
 
 /**
@@ -11130,14 +11135,14 @@ Evergage.prototype.track = function(track){
   push('trackAction', track.event(), track.properties());
 };
 
-}, {"each":5,"segmentio/analytics.js-integration":159,"global-queue":191}],
+}, {"each":5,"analytics.js-integration":159,"global-queue":191}],
 105: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_fbq');
 var each = require('each');
 
@@ -11208,7 +11213,7 @@ Facebook.prototype.track = function(track){
   }
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"each":5}],
+}, {"analytics.js-integration":159,"global-queue":191,"each":5}],
 106: [function(require, module, exports) {
 
 /**
@@ -11216,7 +11221,7 @@ Facebook.prototype.track = function(track){
  */
 
 var push = require('global-queue')('_fxm');
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var Track = require('facade').Track;
 var each = require('each');
 
@@ -11397,14 +11402,14 @@ function ecommerce(event, track, arr){
   ].concat(arr || []));
 }
 
-}, {"global-queue":191,"segmentio/analytics.js-integration":159,"facade":27,"each":5}],
+}, {"global-queue":191,"analytics.js-integration":159,"facade":27,"each":5}],
 107: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var bind = require('bind');
 var when = require('when');
 var is = require('is');
@@ -11618,14 +11623,14 @@ function flatten(source){
   return output;
 }
 
-}, {"segmentio/analytics.js-integration":159,"bind":33,"when":185,"is":18}],
+}, {"analytics.js-integration":159,"bind":33,"when":185,"is":18}],
 108: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_gauges');
 
 /**
@@ -11671,14 +11676,14 @@ Gauges.prototype.page = function(page){
   push('track');
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191}],
+}, {"analytics.js-integration":159,"global-queue":191}],
 109: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var onBody = require('on-body');
 
 /**
@@ -11722,14 +11727,15 @@ GetSatisfaction.prototype.initialize = function(page){
 GetSatisfaction.prototype.loaded = function(){
   return !! window.GSFN;
 };
-}, {"segmentio/analytics.js-integration":159,"on-body":180}],
+
+}, {"analytics.js-integration":159,"on-body":180}],
 110: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_gaq');
 var length = require('object').length;
 var canonical = require('canonical');
@@ -11999,7 +12005,7 @@ GA.prototype.initializeClassic = function(){
       push('_addIgnoredRef', domain);
     });
   }
-  
+
   if (this.options.doubleClick) {
     this.load('double click', this.ready);
   } else {
@@ -12173,7 +12179,7 @@ function metrics(obj, data){
   return ret;
 }
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"object":25,"canonical":13,"use-https":161,"facade":27,"callback":12,"load-script":184,"obj-case":60,"each":5,"type":35,"url":26,"is":18}],
+}, {"analytics.js-integration":159,"global-queue":191,"object":25,"canonical":13,"use-https":161,"facade":27,"callback":12,"load-script":184,"obj-case":60,"each":5,"type":35,"url":26,"is":18}],
 111: [function(require, module, exports) {
 
 /**
@@ -12181,7 +12187,7 @@ function metrics(obj, data){
  */
 
 var push = require('global-queue')('dataLayer', { wrap: false });
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `GTM`.
@@ -12264,14 +12270,14 @@ GTM.prototype.track = function(track){
   push(props);
 };
 
-}, {"global-queue":191,"segmentio/analytics.js-integration":159}],
+}, {"global-queue":191,"analytics.js-integration":159}],
 112: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var Identify = require('facade').Identify;
 var Track = require('facade').Track;
 var callback = require('callback');
@@ -12420,14 +12426,14 @@ function push(){
   _gs.apply(null, arguments);
 }
 
-}, {"segmentio/analytics.js-integration":159,"facade":27,"callback":12,"load-script":184,"on-body":180,"each":5}],
+}, {"analytics.js-integration":159,"facade":27,"callback":12,"load-script":184,"on-body":180,"each":5}],
 113: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var alias = require('alias');
 
 /**
@@ -12495,14 +12501,14 @@ Heap.prototype.track = function(track){
   window.heap.track(track.event(), track.properties());
 };
 
-}, {"segmentio/analytics.js-integration":159,"alias":196}],
+}, {"analytics.js-integration":159,"alias":196}],
 114: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `hellobar.com` integration.
@@ -12537,14 +12543,14 @@ Hellobar.prototype.loaded = function(){
   return !! (window._hbq && window._hbq.push !== Array.prototype.push);
 };
 
-}, {"segmentio/analytics.js-integration":159}],
+}, {"analytics.js-integration":159}],
 115: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var is = require('is');
 
 /**
@@ -12576,7 +12582,8 @@ HitTail.prototype.initialize = function(page){
 HitTail.prototype.loaded = function(){
   return is.fn(window.htk);
 };
-}, {"segmentio/analytics.js-integration":159,"is":18}],
+
+}, {"analytics.js-integration":159,"is":18}],
 116: [function(require, module, exports) {
 
 /**
@@ -12624,7 +12631,7 @@ Hublo.prototype.loaded = function(){
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_hsq');
 var convert = require('convert-dates');
 
@@ -12708,14 +12715,14 @@ function convertDates(properties){
   return convert(properties, function(date){ return date.getTime(); });
 }
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"convert-dates":197}],
+}, {"analytics.js-integration":159,"global-queue":191,"convert-dates":197}],
 118: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var alias = require('alias');
 
 /**
@@ -12785,7 +12792,7 @@ Improvely.prototype.track = function(track){
   window.improvely.goal(props);
 };
 
-}, {"segmentio/analytics.js-integration":159,"alias":196}],
+}, {"analytics.js-integration":159,"alias":196}],
 119: [function(require, module, exports) {
 
 /**
@@ -12794,7 +12801,14 @@ Improvely.prototype.track = function(track){
 
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('_iva');
+var Track = require('facade').Track;
 var is = require('is');
+
+/**
+ * HOP.
+ */
+
+var has = Object.prototype.hasOwnProperty;
 
 /**
  * Expose `InsideVault` integration.
@@ -12804,7 +12818,8 @@ var InsideVault = module.exports = integration('InsideVault')
   .global('_iva')
   .option('clientId', '')
   .option('domain', '')
-  .tag('<script src="//analytics.staticiv.com/iva.js">');
+  .tag('<script src="//analytics.staticiv.com/iva.js">')
+  .mapping('events');
 
 /**
  * Initialize.
@@ -12814,12 +12829,9 @@ var InsideVault = module.exports = integration('InsideVault')
 
 InsideVault.prototype.initialize = function(page){
   var domain = this.options.domain;
-
   window._iva = window._iva || [];
-
   push('setClientId', this.options.clientId);
   if (domain) push('setDomain', domain);
-
   this.load(this.ready);
 };
 
@@ -12834,6 +12846,17 @@ InsideVault.prototype.loaded = function(){
 };
 
 /**
+ * Page.
+ *
+ * @param {Page} page
+ */
+
+InsideVault.prototype.page = function(page){
+  // they want every landing page to send a "click" event.
+  push('trackEvent', 'click');
+};
+
+/**
  * Track.
  *
  * Tracks everything except 'sale' events.
@@ -12842,24 +12865,28 @@ InsideVault.prototype.loaded = function(){
  */
 
 InsideVault.prototype.track = function(track){
+  var user = this.analytics.user();
+  var events = this.options.events;
   var event = track.event();
   var value = track.revenue() || track.value() || 0;
-  var orderId = track.orderId() || '';
+  var eventId = track.orderId() || user.id() || '';
+  if (!has.call(events, event)) return;
+  event = events[event];
 
-  // 'sale' is a special event that will be routed to a table that is deprecated on our end.
-  // We don't want a generic 'sale' event to go to our deprecated table.
+  // 'sale' is a special event that will be routed to a table that is deprecated on InsideVault's end.
+  // They don't want a generic 'sale' event to go to their deprecated table.
   if (event != 'sale') {
-    push('trackEvent', event, value, orderId);
+    push('trackEvent', event, value, eventId);
   }
 };
-}, {"analytics.js-integration":159,"global-queue":191,"is":18}],
+}, {"analytics.js-integration":159,"global-queue":191,"facade":27,"is":18}],
 120: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('__insp');
 var alias = require('alias');
 var clone = require('clone');
@@ -12923,14 +12950,14 @@ Inspectlet.prototype.track = function(track){
   push('tagSession', track.event());
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"alias":196,"clone":195}],
+}, {"analytics.js-integration":159,"global-queue":191,"alias":196,"clone":195}],
 121: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var convertDates = require('convert-dates');
 var defaults = require('defaults');
 var isEmail = require('is-email');
@@ -13082,14 +13109,14 @@ function formatDate(date) {
   return Math.floor(date / 1000);
 }
 
-}, {"segmentio/analytics.js-integration":159,"convert-dates":197,"defaults":190,"is-email":19,"load-script":184,"is-empty":44,"alias":196,"each":5,"when":185,"is":18}],
+}, {"analytics.js-integration":159,"convert-dates":197,"defaults":190,"is-email":19,"load-script":184,"is-empty":44,"alias":196,"each":5,"when":185,"is":18}],
 122: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `Keen IO` integration.
@@ -13189,14 +13216,14 @@ Keen.prototype.track = function(track){
   window.Keen.addEvent(track.event(), track.properties());
 };
 
-}, {"segmentio/analytics.js-integration":159}],
+}, {"analytics.js-integration":159}],
 123: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var indexof = require('indexof');
 var is = require('is');
 
@@ -13268,14 +13295,14 @@ Kenshoo.prototype.track = function(track){
   window.k_trackevent(params, this.options.subdomain);
 };
 
-}, {"segmentio/analytics.js-integration":159,"indexof":46,"is":18}],
+}, {"analytics.js-integration":159,"indexof":46,"is":18}],
 124: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_kmq');
 var Track = require('facade').Track;
 var alias = require('alias');
@@ -13462,7 +13489,7 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"facade":27,"alias":196,"batch":198,"each":5,"is":18}],
+}, {"analytics.js-integration":159,"global-queue":191,"facade":27,"alias":196,"batch":198,"each":5,"is":18}],
 198: [function(require, module, exports) {
 /**
  * Module dependencies.
@@ -13797,7 +13824,7 @@ Emitter.prototype.hasListeners = function(event){
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_learnq');
 var tick = require('next-tick');
 var alias = require('alias');
@@ -13887,14 +13914,14 @@ Klaviyo.prototype.track = function(track){
   }));
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"next-tick":45,"alias":196}],
+}, {"analytics.js-integration":159,"global-queue":191,"next-tick":45,"alias":196}],
 126: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `LeadLander` integration.
@@ -13927,14 +13954,15 @@ LeadLander.prototype.initialize = function(page){
 LeadLander.prototype.loaded = function(){
   return !! window.trackalyzer;
 };
-}, {"segmentio/analytics.js-integration":159}],
+
+}, {"analytics.js-integration":159}],
 127: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var clone = require('clone');
 var each = require('each');
 var when = require('when');
@@ -14005,14 +14033,14 @@ function convert(traits){
   return arr;
 }
 
-}, {"segmentio/analytics.js-integration":159,"clone":195,"each":5,"when":185}],
+}, {"analytics.js-integration":159,"clone":195,"each":5,"when":185}],
 128: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var Identify = require('facade').Identify;
 var useHttps = require('use-https');
 
@@ -14075,14 +14103,14 @@ LuckyOrange.prototype.identify = function(identify){
   window.__wtw_custom_user_data = traits;
 };
 
-}, {"segmentio/analytics.js-integration":159,"facade":27,"use-https":161}],
+}, {"analytics.js-integration":159,"facade":27,"use-https":161}],
 129: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var alias = require('alias');
 
 /**
@@ -14165,7 +14193,7 @@ Lytics.prototype.track = function(track){
   window.jstag.send(props);
 };
 
-}, {"segmentio/analytics.js-integration":159,"alias":196}],
+}, {"analytics.js-integration":159,"alias":196}],
 130: [function(require, module, exports) {
 
 /**
@@ -14175,7 +14203,7 @@ Lytics.prototype.track = function(track){
 var alias = require('alias');
 var clone = require('clone');
 var dates = require('convert-dates');
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var iso = require('to-iso-string');
 var indexof = require('indexof');
 var del = require('obj-case').del;
@@ -14382,14 +14410,14 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":196,"clone":195,"convert-dates":197,"segmentio/analytics.js-integration":159,"to-iso-string":194,"indexof":46,"obj-case":60}],
+}, {"alias":196,"clone":195,"convert-dates":197,"analytics.js-integration":159,"to-iso-string":194,"indexof":46,"obj-case":60}],
 131: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var bind = require('bind');
 var when = require('when');
 var is = require('is');
@@ -14461,7 +14489,7 @@ Mojn.prototype.track = function(track){
   return conv;
 };
 
-}, {"segmentio/analytics.js-integration":159,"bind":33,"when":185,"is":18}],
+}, {"analytics.js-integration":159,"bind":33,"when":185,"is":18}],
 132: [function(require, module, exports) {
 
 /**
@@ -14469,7 +14497,7 @@ Mojn.prototype.track = function(track){
  */
 
 var push = require('global-queue')('_mfq');
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var each = require('each');
 
 /**
@@ -14557,14 +14585,14 @@ function set(obj){
   });
 }
 
-}, {"global-queue":191,"segmentio/analytics.js-integration":159,"each":5}],
+}, {"global-queue":191,"analytics.js-integration":159,"each":5}],
 133: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var useHttps = require('use-https');
 var each = require('each');
 var is = require('is');
@@ -14621,14 +14649,14 @@ MouseStats.prototype.identify = function(identify){
   });
 };
 
-}, {"segmentio/analytics.js-integration":159,"use-https":161,"each":5,"is":18}],
+}, {"analytics.js-integration":159,"use-https":161,"each":5,"is":18}],
 134: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('__nls');
 
 /**
@@ -14677,14 +14705,14 @@ Navilytics.prototype.track = function(track){
   push('tagRecording', track.event());
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191}],
+}, {"analytics.js-integration":159,"global-queue":191}],
 135: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var https = require('use-https');
 var tick = require('next-tick');
 
@@ -14853,14 +14881,14 @@ function chat(action, value){
   window.olark('api.chat.' + action, value);
 }
 
-}, {"segmentio/analytics.js-integration":159,"use-https":161,"next-tick":45}],
+}, {"analytics.js-integration":159,"use-https":161,"next-tick":45}],
 136: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('optimizely');
 var callback = require('callback');
 var tick = require('next-tick');
@@ -14953,14 +14981,15 @@ Optimizely.prototype.replay = function(){
 
   this.analytics.identify(traits);
 };
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"callback":12,"next-tick":45,"bind":33,"each":5}],
+
+}, {"analytics.js-integration":159,"global-queue":191,"callback":12,"next-tick":45,"bind":33,"each":5}],
 137: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `PerfectAudience` integration.
@@ -15005,14 +15034,14 @@ PerfectAudience.prototype.track = function(track){
   window._pa.track(track.event(), track.properties());
 };
 
-}, {"segmentio/analytics.js-integration":159}],
+}, {"analytics.js-integration":159}],
 138: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_prum');
 var date = require('load-date');
 
@@ -15051,14 +15080,14 @@ Pingdom.prototype.loaded = function(){
   return !! (window._prum && window._prum.push !== Array.prototype.push);
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"load-date":192}],
+}, {"analytics.js-integration":159,"global-queue":191,"load-date":192}],
 139: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_paq');
 var each = require('each');
 
@@ -15107,7 +15136,7 @@ Piwik.prototype.page = function(page){
 
 /**
  * Track.
- * 
+ *
  * @param {Track} track
  */
 
@@ -15119,14 +15148,14 @@ Piwik.prototype.track = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"each":5}],
+}, {"analytics.js-integration":159,"global-queue":191,"each":5}],
 140: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var convertDates = require('convert-dates');
 var push = require('global-queue')('_lnq');
 var alias = require('alias');
@@ -15232,14 +15261,14 @@ function convertDate(date){
   return Math.floor(date / 1000);
 }
 
-}, {"segmentio/analytics.js-integration":159,"convert-dates":197,"global-queue":191,"alias":196}],
+}, {"analytics.js-integration":159,"convert-dates":197,"global-queue":191,"alias":196}],
 141: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_kiq');
 var Facade = require('facade');
 var Identify = Facade.Identify;
@@ -15317,7 +15346,7 @@ Qualaroo.prototype.track = function(track){
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"facade":27,"bind":33,"when":185}],
+}, {"analytics.js-integration":159,"global-queue":191,"facade":27,"bind":33,"when":185}],
 142: [function(require, module, exports) {
 
 /**
@@ -15325,7 +15354,7 @@ Qualaroo.prototype.track = function(track){
  */
 
 var push = require('global-queue')('_qevents', { wrap: false });
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var useHttps = require('use-https');
 
 /**
@@ -15503,14 +15532,14 @@ Quantcast.prototype.labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"global-queue":191,"segmentio/analytics.js-integration":159,"use-https":161}],
+}, {"global-queue":191,"analytics.js-integration":159,"use-https":161}],
 143: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var extend = require('extend');
 var is = require('is');
 
@@ -15583,14 +15612,14 @@ RollbarIntegration.prototype.identify = function(identify){
   rollbar.configure({ payload: { person: person }});
 };
 
-}, {"segmentio/analytics.js-integration":159,"extend":40,"is":18}],
+}, {"analytics.js-integration":159,"extend":40,"is":18}],
 144: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `SaaSquatch` integration.
@@ -15656,14 +15685,15 @@ SaaSquatch.prototype.identify = function(identify){
   this.called = true;
   this.load();
 };
-}, {"segmentio/analytics.js-integration":159}],
+
+}, {"analytics.js-integration":159}],
 145: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var is = require('is');
 
 /**
@@ -15712,14 +15742,14 @@ Sentry.prototype.identify = function(identify){
   window.Raven.setUser(identify.traits());
 };
 
-}, {"segmentio/analytics.js-integration":159,"is":18}],
+}, {"analytics.js-integration":159,"is":18}],
 146: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var is = require('is');
 
 /**
@@ -15766,14 +15796,14 @@ SnapEngage.prototype.identify = function(identify){
   window.SnapABug.setUserEmail(email);
 };
 
-}, {"segmentio/analytics.js-integration":159,"is":18}],
+}, {"analytics.js-integration":159,"is":18}],
 147: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var bind = require('bind');
 var when = require('when');
 
@@ -15812,14 +15842,15 @@ Spinnakr.prototype.initialize = function(page){
 Spinnakr.prototype.loaded = function(){
   return !! window._spinnakr;
 };
-}, {"segmentio/analytics.js-integration":159,"bind":33,"when":185}],
+
+}, {"analytics.js-integration":159,"bind":33,"when":185}],
 148: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var slug = require('slug');
 var push = require('global-queue')('_tsq');
 
@@ -15896,14 +15927,14 @@ Tapstream.prototype.track = function(track){
   push('fireHit', slug(track.event()), [props.url]); // needs events as slugs
 };
 
-}, {"segmentio/analytics.js-integration":159,"slug":166,"global-queue":191}],
+}, {"analytics.js-integration":159,"slug":166,"global-queue":191}],
 149: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var alias = require('alias');
 var clone = require('clone');
 
@@ -16049,14 +16080,14 @@ Trakio.prototype.alias = function(alias){
   }
 };
 
-}, {"segmentio/analytics.js-integration":159,"alias":196,"clone":195}],
+}, {"analytics.js-integration":159,"alias":196,"clone":195}],
 150: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var each = require('each');
 
 /**
@@ -16099,14 +16130,14 @@ TwitterAds.prototype.track = function(track){
   });
 };
 
-}, {"segmentio/analytics.js-integration":159,"each":5}],
+}, {"analytics.js-integration":159,"each":5}],
 151: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_uc');
 
 /**
@@ -16168,7 +16199,7 @@ Usercycle.prototype.track = function(track){
   }));
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191}],
+}, {"analytics.js-integration":159,"global-queue":191}],
 152: [function(require, module, exports) {
 
 /**
@@ -16275,7 +16306,7 @@ function formatDate(date){
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('UserVoice');
 var convertDates = require('convert-dates');
 var unix = require('to-unix-timestamp');
@@ -16454,7 +16485,7 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"convert-dates":197,"to-unix-timestamp":200,"alias":196,"clone":195}],
+}, {"analytics.js-integration":159,"global-queue":191,"convert-dates":197,"to-unix-timestamp":200,"alias":196,"clone":195}],
 200: [function(require, module, exports) {
 
 /**
@@ -16481,7 +16512,7 @@ function toUnixTimestamp (date) {
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_veroq');
 var cookie = require('component/cookie');
 
@@ -16563,14 +16594,14 @@ Vero.prototype.track = function(track){
   push('track', track.event(), track.properties());
 };
 
-}, {"segmentio/analytics.js-integration":159,"global-queue":191,"component/cookie":28}],
+}, {"analytics.js-integration":159,"global-queue":191,"component/cookie":28}],
 155: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var tick = require('next-tick');
 var each = require('each');
 
@@ -16657,14 +16688,14 @@ function variation(id){
   return variationId ? experiment.comb_n[variationId] : null;
 }
 
-}, {"segmentio/analytics.js-integration":159,"next-tick":45,"each":5}],
+}, {"analytics.js-integration":159,"next-tick":45,"each":5}],
 156: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var useHttps = require('use-https');
 
 /**
@@ -16704,14 +16735,14 @@ WebEngage.prototype.loaded = function(){
   return !! window.webengage;
 };
 
-}, {"segmentio/analytics.js-integration":159,"use-https":161}],
+}, {"analytics.js-integration":159,"use-https":161}],
 157: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var snake = require('to-snake-case');
 var isEmail = require('is-email');
 var extend = require('extend');
@@ -16804,14 +16835,14 @@ Woopra.prototype.track = function(track){
   window.woopra.track(track.event(), track.properties());
 };
 
-}, {"segmentio/analytics.js-integration":159,"to-snake-case":160,"is-email":19,"extend":40,"each":5,"type":35}],
+}, {"analytics.js-integration":159,"to-snake-case":160,"is-email":19,"extend":40,"each":5,"type":35}],
 158: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('segmentio/analytics.js-integration');
+var integration = require('analytics.js-integration');
 var tick = require('next-tick');
 var bind = require('bind');
 var when = require('when');
@@ -16873,4 +16904,4 @@ function push(callback){
   window.yandex_metrika_callbacks.push(callback);
 }
 
-}, {"segmentio/analytics.js-integration":159,"next-tick":45,"bind":33,"when":185}]}, {}, {"1":"analytics"})
+}, {"analytics.js-integration":159,"next-tick":45,"bind":33,"when":185}]}, {}, {"1":"analytics"})

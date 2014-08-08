@@ -16924,6 +16924,6 @@ module.exports.User = User;
 }, {"debug":185,"./entity":198,"inherit":199,"bind":183,"./cookie":184}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.10';
+module.exports = '2.3.11';
 
 }, {}]}, {}, {"1":"analytics"})

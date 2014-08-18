@@ -12994,1165 +12994,7 @@ Qualaroo.prototype.track = function(track){
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"analytics.js-integration":83,"global-queue":168,"facade":181,"bind":95,"when":125}],
-181: [function(require, module, exports) {
-
-var Facade = require('./facade');
-
-/**
- * Expose `Facade` facade.
- */
-
-module.exports = Facade;
-
-/**
- * Expose specific-method facades.
- */
-
-Facade.Alias = require('./alias');
-Facade.Group = require('./group');
-Facade.Identify = require('./identify');
-Facade.Track = require('./track');
-Facade.Page = require('./page');
-Facade.Screen = require('./screen');
-
-}, {"./facade":182,"./alias":183,"./group":184,"./identify":185,"./track":186,"./page":187,"./screen":188}],
-182: [function(require, module, exports) {
-
-var clone = require('./utils').clone;
-var isEnabled = require('./is-enabled');
-var objCase = require('obj-case');
-var traverse = require('isodate-traverse');
-var newDate = require('new-date');
-
-/**
- * Expose `Facade`.
- */
-
-module.exports = Facade;
-
-/**
- * Initialize a new `Facade` with an `obj` of arguments.
- *
- * @param {Object} obj
- */
-
-function Facade (obj) {
-  if (!obj.hasOwnProperty('timestamp')) obj.timestamp = new Date();
-  else obj.timestamp = newDate(obj.timestamp);
-  traverse(obj);
-  this.obj = obj;
-}
-
-/**
- * Return a proxy function for a `field` that will attempt to first use methods,
- * and fallback to accessing the underlying object directly. You can specify
- * deeply nested fields too like:
- *
- *   this.proxy('options.Librato');
- *
- * @param {String} field
- */
-
-Facade.prototype.proxy = function (field) {
-  var fields = field.split('.');
-  field = fields.shift();
-
-  // Call a function at the beginning to take advantage of facaded fields
-  var obj = this[field] || this.field(field);
-  if (!obj) return obj;
-  if (typeof obj === 'function') obj = obj.call(this) || {};
-  if (fields.length === 0) return transform(obj);
-
-  obj = objCase(obj, fields.join('.'));
-  return transform(obj);
-};
-
-/**
- * Directly access a specific `field` from the underlying object, returning a
- * clone so outsiders don't mess with stuff.
- *
- * @param {String} field
- * @return {Mixed}
- */
-
-Facade.prototype.field = function (field) {
-  var obj = this.obj[field];
-  return transform(obj);
-};
-
-/**
- * Utility method to always proxy a particular `field`. You can specify deeply
- * nested fields too like:
- *
- *   Facade.proxy('options.Librato');
- *
- * @param {String} field
- * @return {Function}
- */
-
-Facade.proxy = function (field) {
-  return function () {
-    return this.proxy(field);
-  };
-};
-
-/**
- * Utility method to directly access a `field`.
- *
- * @param {String} field
- * @return {Function}
- */
-
-Facade.field = function (field) {
-  return function () {
-    return this.field(field);
-  };
-};
-
-/**
- * Get the basic json object of this facade.
- *
- * @return {Object}
- */
-
-Facade.prototype.json = function () {
-  var ret = clone(this.obj);
-  if (this.type) ret.type = this.type();
-  return ret;
-};
-
-/**
- * Get the options of a call (formerly called "context"). If you pass an
- * integration name, it will get the options for that specific integration, or
- * undefined if the integration is not enabled.
- *
- * @param {String} integration (optional)
- * @return {Object or Null}
- */
-
-Facade.prototype.context =
-Facade.prototype.options = function (integration) {
-  var options = clone(this.obj.options || this.obj.context) || {};
-  if (!integration) return clone(options);
-  if (!this.enabled(integration)) return;
-  var integrations = this.integrations();
-  var value = integrations[integration] || objCase(integrations, integration);
-  if ('boolean' == typeof value) value = {};
-  return value || {};
-};
-
-/**
- * Check whether an integration is enabled.
- *
- * @param {String} integration
- * @return {Boolean}
- */
-
-Facade.prototype.enabled = function (integration) {
-  var allEnabled = this.proxy('options.providers.all');
-  if (typeof allEnabled !== 'boolean') allEnabled = this.proxy('options.all');
-  if (typeof allEnabled !== 'boolean') allEnabled = this.proxy('integrations.all');
-  if (typeof allEnabled !== 'boolean') allEnabled = true;
-
-  var enabled = allEnabled && isEnabled(integration);
-  var options = this.integrations();
-
-  // If the integration is explicitly enabled or disabled, use that
-  // First, check options.providers for backwards compatibility
-  if (options.providers && options.providers.hasOwnProperty(integration)) {
-    enabled = options.providers[integration];
-  }
-
-  // Next, check for the integration's existence in 'options' to enable it.
-  // If the settings are a boolean, use that, otherwise it should be enabled.
-  if (options.hasOwnProperty(integration)) {
-    var settings = options[integration];
-    if (typeof settings === 'boolean') {
-      enabled = settings;
-    } else {
-      enabled = true;
-    }
-  }
-
-  return enabled ? true : false;
-};
-
-/**
- * Get all `integration` options.
- *
- * @param {String} integration
- * @return {Object}
- * @api private
- */
-
-Facade.prototype.integrations = function(){
-  return this.obj.integrations
-    || this.proxy('options.providers')
-    || this.options();
-};
-
-/**
- * Check whether the user is active.
- *
- * @return {Boolean}
- */
-
-Facade.prototype.active = function () {
-  var active = this.proxy('options.active');
-  if (active === null || active === undefined) active = true;
-  return active;
-};
-
-/**
- * Get `sessionId / anonymousId`.
- *
- * @return {Mixed}
- * @api public
- */
-
-Facade.prototype.sessionId =
-Facade.prototype.anonymousId = function(){
-  return this.field('anonymousId')
-    || this.field('sessionId');
-};
-
-/**
- * Get `groupId` from `context.groupId`.
- *
- * @return {String}
- * @api public
- */
-
-Facade.prototype.groupId = Facade.proxy('options.groupId');
-
-/**
- * Get the call's "super properties" which are just traits that have been
- * passed in as if from an identify call.
- *
- * @param {Object} aliases
- * @return {Object}
- */
-
-Facade.prototype.traits = function (aliases) {
-  var ret = this.proxy('options.traits') || {};
-  var id = this.userId();
-  aliases = aliases || {};
-
-  if (id) ret.id = id;
-
-  for (var alias in aliases) {
-    var value = null == this[alias]
-      ? this.proxy('options.traits.' + alias)
-      : this[alias]();
-    if (null == value) continue;
-    ret[aliases[alias]] = value;
-    delete ret[alias];
-  }
-
-  return ret;
-};
-
-/**
- * Add a convenient way to get the library name and version
- */
-
-Facade.prototype.library = function(){
-  var library = this.proxy('options.library');
-  if (!library) return { name: 'unknown', version: null };
-  if (typeof library === 'string') return { name: library, version: null };
-  return library;
-};
-
-/**
- * Setup some basic proxies.
- */
-
-Facade.prototype.userId = Facade.field('userId');
-Facade.prototype.channel = Facade.field('channel');
-Facade.prototype.timestamp = Facade.field('timestamp');
-Facade.prototype.userAgent = Facade.proxy('options.userAgent');
-Facade.prototype.ip = Facade.proxy('options.ip');
-
-/**
- * Return the cloned and traversed object
- *
- * @param {Mixed} obj
- * @return {Mixed}
- */
-
-function transform(obj){
-  var cloned = clone(obj);
-  return cloned;
-}
-
-}, {"./utils":189,"./is-enabled":190,"obj-case":138,"isodate-traverse":139,"new-date":140}],
-189: [function(require, module, exports) {
-
-/**
- * TODO: use component symlink, everywhere ?
- */
-
-try {
-  exports.inherit = require('inherit');
-  exports.clone = require('clone');
-} catch (e) {
-  exports.inherit = require('inherit-component');
-  exports.clone = require('clone-component');
-}
-
-}, {"inherit":141,"clone":142}],
-190: [function(require, module, exports) {
-
-/**
- * A few integrations are disabled by default. They must be explicitly
- * enabled by setting options[Provider] = true.
- */
-
-var disabled = {
-  Salesforce: true,
-  Marketo: true
-};
-
-/**
- * Check whether an integration should be enabled by default.
- *
- * @param {String} integration
- * @return {Boolean}
- */
-
-module.exports = function (integration) {
-  return ! disabled[integration];
-};
-}, {}],
-183: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var inherit = require('./utils').inherit;
-var Facade = require('./facade');
-
-/**
- * Expose `Alias` facade.
- */
-
-module.exports = Alias;
-
-/**
- * Initialize a new `Alias` facade with a `dictionary` of arguments.
- *
- * @param {Object} dictionary
- *   @property {String} from
- *   @property {String} to
- *   @property {Object} options
- */
-
-function Alias (dictionary) {
-  Facade.call(this, dictionary);
-}
-
-/**
- * Inherit from `Facade`.
- */
-
-inherit(Alias, Facade);
-
-/**
- * Return type of facade.
- *
- * @return {String}
- */
-
-Alias.prototype.type =
-Alias.prototype.action = function () {
-  return 'alias';
-};
-
-/**
- * Get `previousId`.
- *
- * @return {Mixed}
- * @api public
- */
-
-Alias.prototype.from =
-Alias.prototype.previousId = function(){
-  return this.field('previousId')
-    || this.field('from');
-};
-
-/**
- * Get `userId`.
- *
- * @return {String}
- * @api public
- */
-
-Alias.prototype.to =
-Alias.prototype.userId = function(){
-  return this.field('userId')
-    || this.field('to');
-};
-
-}, {"./utils":189,"./facade":182}],
-184: [function(require, module, exports) {
-
-var inherit = require('./utils').inherit;
-var Facade = require('./facade');
-var newDate = require('new-date');
-
-/**
- * Expose `Group` facade.
- */
-
-module.exports = Group;
-
-/**
- * Initialize a new `Group` facade with a `dictionary` of arguments.
- *
- * @param {Object} dictionary
- *   @param {String} userId
- *   @param {String} groupId
- *   @param {Object} properties
- *   @param {Object} options
- */
-
-function Group (dictionary) {
-  Facade.call(this, dictionary);
-}
-
-/**
- * Inherit from `Facade`
- */
-
-inherit(Group, Facade);
-
-/**
- * Get the facade's action.
- */
-
-Group.prototype.type =
-Group.prototype.action = function () {
-  return 'group';
-};
-
-/**
- * Setup some basic proxies.
- */
-
-Group.prototype.groupId = Facade.field('groupId');
-
-/**
- * Get created or createdAt.
- *
- * @return {Date}
- */
-
-Group.prototype.created = function(){
-  var created = this.proxy('traits.createdAt')
-    || this.proxy('traits.created')
-    || this.proxy('properties.createdAt')
-    || this.proxy('properties.created');
-
-  if (created) return newDate(created);
-};
-
-/**
- * Get the group's traits.
- *
- * @param {Object} aliases
- * @return {Object}
- */
-
-Group.prototype.traits = function (aliases) {
-  var ret = this.properties();
-  var id = this.groupId();
-  aliases = aliases || {};
-
-  if (id) ret.id = id;
-
-  for (var alias in aliases) {
-    var value = null == this[alias]
-      ? this.proxy('traits.' + alias)
-      : this[alias]();
-    if (null == value) continue;
-    ret[aliases[alias]] = value;
-    delete ret[alias];
-  }
-
-  return ret;
-};
-
-/**
- * Get traits or properties.
- *
- * TODO: remove me
- *
- * @return {Object}
- */
-
-Group.prototype.properties = function(){
-  return this.field('traits')
-    || this.field('properties')
-    || {};
-};
-
-}, {"./utils":189,"./facade":182,"new-date":140}],
-185: [function(require, module, exports) {
-
-var Facade = require('./facade');
-var isEmail = require('is-email');
-var newDate = require('new-date');
-var utils = require('./utils');
-var trim = require('trim');
-var inherit = utils.inherit;
-var clone = utils.clone;
-
-/**
- * Expose `Idenfity` facade.
- */
-
-module.exports = Identify;
-
-/**
- * Initialize a new `Identify` facade with a `dictionary` of arguments.
- *
- * @param {Object} dictionary
- *   @param {String} userId
- *   @param {String} sessionId
- *   @param {Object} traits
- *   @param {Object} options
- */
-
-function Identify (dictionary) {
-  Facade.call(this, dictionary);
-}
-
-/**
- * Inherit from `Facade`.
- */
-
-inherit(Identify, Facade);
-
-/**
- * Get the facade's action.
- */
-
-Identify.prototype.type =
-Identify.prototype.action = function () {
-  return 'identify';
-};
-
-/**
- * Get the user's traits.
- *
- * @param {Object} aliases
- * @return {Object}
- */
-
-Identify.prototype.traits = function (aliases) {
-  var ret = this.field('traits') || {};
-  var id = this.userId();
-  aliases = aliases || {};
-
-  if (id) ret.id = id;
-
-  for (var alias in aliases) {
-    var value = null == this[alias]
-      ? this.proxy('traits.' + alias)
-      : this[alias]();
-    if (null == value) continue;
-    ret[aliases[alias]] = value;
-    if (alias !== aliases[alias]) delete ret[alias];
-  }
-
-  return ret;
-};
-
-/**
- * Get the user's email, falling back to their user ID if it's a valid email.
- *
- * @return {String}
- */
-
-Identify.prototype.email = function () {
-  var email = this.proxy('traits.email');
-  if (email) return email;
-
-  var userId = this.userId();
-  if (isEmail(userId)) return userId;
-};
-
-/**
- * Get the user's created date, optionally looking for `createdAt` since lots of
- * people do that instead.
- *
- * @return {Date or Undefined}
- */
-
-Identify.prototype.created = function () {
-  var created = this.proxy('traits.created') || this.proxy('traits.createdAt');
-  if (created) return newDate(created);
-};
-
-/**
- * Get the company created date.
- *
- * @return {Date or undefined}
- */
-
-Identify.prototype.companyCreated = function(){
-  var created = this.proxy('traits.company.created')
-    || this.proxy('traits.company.createdAt');
-
-  if (created) return newDate(created);
-};
-
-/**
- * Get the user's name, optionally combining a first and last name if that's all
- * that was provided.
- *
- * @return {String or Undefined}
- */
-
-Identify.prototype.name = function () {
-  var name = this.proxy('traits.name');
-  if (typeof name === 'string') return trim(name);
-
-  var firstName = this.firstName();
-  var lastName = this.lastName();
-  if (firstName && lastName) return trim(firstName + ' ' + lastName);
-};
-
-/**
- * Get the user's first name, optionally splitting it out of a single name if
- * that's all that was provided.
- *
- * @return {String or Undefined}
- */
-
-Identify.prototype.firstName = function () {
-  var firstName = this.proxy('traits.firstName');
-  if (typeof firstName === 'string') return trim(firstName);
-
-  var name = this.proxy('traits.name');
-  if (typeof name === 'string') return trim(name).split(' ')[0];
-};
-
-/**
- * Get the user's last name, optionally splitting it out of a single name if
- * that's all that was provided.
- *
- * @return {String or Undefined}
- */
-
-Identify.prototype.lastName = function () {
-  var lastName = this.proxy('traits.lastName');
-  if (typeof lastName === 'string') return trim(lastName);
-
-  var name = this.proxy('traits.name');
-  if (typeof name !== 'string') return;
-
-  var space = trim(name).indexOf(' ');
-  if (space === -1) return;
-
-  return trim(name.substr(space + 1));
-};
-
-/**
- * Get the user's unique id.
- *
- * @return {String or undefined}
- */
-
-Identify.prototype.uid = function(){
-  return this.userId()
-    || this.username()
-    || this.email();
-};
-
-/**
- * Get description.
- *
- * @return {String}
- */
-
-Identify.prototype.description = function(){
-  return this.proxy('traits.description')
-    || this.proxy('traits.background');
-};
-
-/**
- * Setup sme basic "special" trait proxies.
- */
-
-Identify.prototype.username = Facade.proxy('traits.username');
-Identify.prototype.website = Facade.proxy('traits.website');
-Identify.prototype.phone = Facade.proxy('traits.phone');
-Identify.prototype.address = Facade.proxy('traits.address');
-Identify.prototype.avatar = Facade.proxy('traits.avatar');
-
-}, {"./facade":182,"is-email":163,"new-date":140,"./utils":189,"trim":164}],
-186: [function(require, module, exports) {
-
-var inherit = require('./utils').inherit;
-var clone = require('./utils').clone;
-var Facade = require('./facade');
-var Identify = require('./identify');
-var isEmail = require('is-email');
-
-/**
- * Expose `Track` facade.
- */
-
-module.exports = Track;
-
-/**
- * Initialize a new `Track` facade with a `dictionary` of arguments.
- *
- * @param {object} dictionary
- *   @property {String} event
- *   @property {String} userId
- *   @property {String} sessionId
- *   @property {Object} properties
- *   @property {Object} options
- */
-
-function Track (dictionary) {
-  Facade.call(this, dictionary);
-}
-
-/**
- * Inherit from `Facade`.
- */
-
-inherit(Track, Facade);
-
-/**
- * Return the facade's action.
- *
- * @return {String}
- */
-
-Track.prototype.type =
-Track.prototype.action = function () {
-  return 'track';
-};
-
-/**
- * Setup some basic proxies.
- */
-
-Track.prototype.event = Facade.field('event');
-Track.prototype.value = Facade.proxy('properties.value');
-
-/**
- * Misc
- */
-
-Track.prototype.category = Facade.proxy('properties.category');
-Track.prototype.country = Facade.proxy('properties.country');
-Track.prototype.state = Facade.proxy('properties.state');
-Track.prototype.city = Facade.proxy('properties.city');
-Track.prototype.zip = Facade.proxy('properties.zip');
-
-/**
- * Ecommerce
- */
-
-Track.prototype.id = Facade.proxy('properties.id');
-Track.prototype.sku = Facade.proxy('properties.sku');
-Track.prototype.tax = Facade.proxy('properties.tax');
-Track.prototype.name = Facade.proxy('properties.name');
-Track.prototype.price = Facade.proxy('properties.price');
-Track.prototype.total = Facade.proxy('properties.total');
-Track.prototype.coupon = Facade.proxy('properties.coupon');
-Track.prototype.shipping = Facade.proxy('properties.shipping');
-
-/**
- * Order id.
- *
- * @return {String}
- * @api public
- */
-
-Track.prototype.orderId = function(){
-  return this.proxy('properties.id')
-    || this.proxy('properties.orderId');
-};
-
-/**
- * Get subtotal.
- *
- * @return {Number}
- */
-
-Track.prototype.subtotal = function(){
-  var subtotal = this.obj.properties.subtotal;
-  var total = this.total();
-  var n;
-
-  if (subtotal) return subtotal;
-  if (!total) return 0;
-  if (n = this.tax()) total -= n;
-  if (n = this.shipping()) total -= n;
-
-  return total;
-};
-
-/**
- * Get products.
- *
- * @return {Array}
- */
-
-Track.prototype.products = function(){
-  var props = this.obj.properties || {};
-  return props.products || [];
-};
-
-/**
- * Get quantity.
- *
- * @return {Number}
- */
-
-Track.prototype.quantity = function(){
-  var props = this.obj.properties || {};
-  return props.quantity || 1;
-};
-
-/**
- * Get currency.
- *
- * @return {String}
- */
-
-Track.prototype.currency = function(){
-  var props = this.obj.properties || {};
-  return props.currency || 'USD';
-};
-
-/**
- * BACKWARDS COMPATIBILITY: should probably re-examine where these come from.
- */
-
-Track.prototype.referrer = Facade.proxy('properties.referrer');
-Track.prototype.query = Facade.proxy('options.query');
-
-/**
- * Get the call's properties.
- *
- * @param {Object} aliases
- * @return {Object}
- */
-
-Track.prototype.properties = function (aliases) {
-  var ret = this.field('properties') || {};
-  aliases = aliases || {};
-
-  for (var alias in aliases) {
-    var value = null == this[alias]
-      ? this.proxy('properties.' + alias)
-      : this[alias]();
-    if (null == value) continue;
-    ret[aliases[alias]] = value;
-    delete ret[alias];
-  }
-
-  return ret;
-};
-
-/**
- * Get the call's username.
- *
- * @return {String or Undefined}
- */
-
-Track.prototype.username = function () {
-  return this.proxy('traits.username') ||
-         this.proxy('properties.username') ||
-         this.userId() ||
-         this.sessionId();
-};
-
-/**
- * Get the call's email, using an the user ID if it's a valid email.
- *
- * @return {String or Undefined}
- */
-
-Track.prototype.email = function () {
-  var email = this.proxy('traits.email');
-  email = email || this.proxy('properties.email');
-  if (email) return email;
-
-  var userId = this.userId();
-  if (isEmail(userId)) return userId;
-};
-
-/**
- * Get the call's revenue, parsing it from a string with an optional leading
- * dollar sign.
- *
- * For products/services that don't have shipping and are not directly taxed,
- * they only care about tracking `revenue`. These are things like
- * SaaS companies, who sell monthly subscriptions. The subscriptions aren't
- * taxed directly, and since it's a digital product, it has no shipping.
- *
- * The only case where there's a difference between `revenue` and `total`
- * (in the context of analytics) is on ecommerce platforms, where they want
- * the `revenue` function to actually return the `total` (which includes
- * tax and shipping, total = subtotal + tax + shipping). This is probably
- * because on their backend they assume tax and shipping has been applied to
- * the value, and so can get the revenue on their own.
- *
- * @return {Number}
- */
-
-Track.prototype.revenue = function () {
-  var revenue = this.proxy('properties.revenue');
-  var event = this.event();
-
-  // it's always revenue, unless it's called during an order completion.
-  if (!revenue && event && event.match(/completed ?order/i)) {
-    revenue = this.proxy('properties.total');
-  }
-
-  return currency(revenue);
-};
-
-/**
- * Get cents.
- *
- * @return {Number}
- */
-
-Track.prototype.cents = function(){
-  var revenue = this.revenue();
-  return 'number' != typeof revenue
-    ? this.value() || 0
-    : revenue * 100;
-};
-
-/**
- * A utility to turn the pieces of a track call into an identify. Used for
- * integrations with super properties or rate limits.
- *
- * TODO: remove me.
- *
- * @return {Facade}
- */
-
-Track.prototype.identify = function () {
-  var json = this.json();
-  json.traits = this.traits();
-  return new Identify(json);
-};
-
-/**
- * Get float from currency value.
- *
- * @param {Mixed} val
- * @return {Number}
- */
-
-function currency(val) {
-  if (!val) return;
-  if (typeof val === 'number') return val;
-  if (typeof val !== 'string') return;
-
-  val = val.replace(/\$/g, '');
-  val = parseFloat(val);
-
-  if (!isNaN(val)) return val;
-}
-
-}, {"./utils":189,"./facade":182,"./identify":185,"is-email":163}],
-187: [function(require, module, exports) {
-
-var inherit = require('./utils').inherit;
-var Facade = require('./facade');
-var Track = require('./track');
-
-/**
- * Expose `Page` facade
- */
-
-module.exports = Page;
-
-/**
- * Initialize new `Page` facade with `dictionary`.
- *
- * @param {Object} dictionary
- *   @param {String} category
- *   @param {String} name
- *   @param {Object} traits
- *   @param {Object} options
- */
-
-function Page(dictionary){
-  Facade.call(this, dictionary);
-}
-
-/**
- * Inherit from `Facade`
- */
-
-inherit(Page, Facade);
-
-/**
- * Get the facade's action.
- *
- * @return {String}
- */
-
-Page.prototype.type =
-Page.prototype.action = function(){
-  return 'page';
-};
-
-/**
- * Proxies
- */
-
-Page.prototype.category = Facade.field('category');
-Page.prototype.name = Facade.field('name');
-
-/**
- * Get the page properties mixing `category` and `name`.
- *
- * @return {Object}
- */
-
-Page.prototype.properties = function(){
-  var props = this.field('properties') || {};
-  var category = this.category();
-  var name = this.name();
-  if (category) props.category = category;
-  if (name) props.name = name;
-  return props;
-};
-
-/**
- * Get the page fullName.
- *
- * @return {String}
- */
-
-Page.prototype.fullName = function(){
-  var category = this.category();
-  var name = this.name();
-  return name && category
-    ? category + ' ' + name
-    : name;
-};
-
-/**
- * Get event with `name`.
- *
- * @return {String}
- */
-
-Page.prototype.event = function(name){
-  return name
-    ? 'Viewed ' + name + ' Page'
-    : 'Loaded a Page';
-};
-
-/**
- * Convert this Page to a Track facade with `name`.
- *
- * @param {String} name
- * @return {Track}
- */
-
-Page.prototype.track = function(name){
-  var props = this.properties();
-  return new Track({
-    event: this.event(name),
-    properties: props
-  });
-};
-
-}, {"./utils":189,"./facade":182,"./track":186}],
-188: [function(require, module, exports) {
-
-var inherit = require('./utils').inherit;
-var Page = require('./page');
-var Track = require('./track');
-
-/**
- * Expose `Screen` facade
- */
-
-module.exports = Screen;
-
-/**
- * Initialize new `Screen` facade with `dictionary`.
- *
- * @param {Object} dictionary
- *   @param {String} category
- *   @param {String} name
- *   @param {Object} traits
- *   @param {Object} options
- */
-
-function Screen(dictionary){
-  Page.call(this, dictionary);
-}
-
-/**
- * Inherit from `Page`
- */
-
-inherit(Screen, Page);
-
-/**
- * Get the facade's action.
- *
- * @return {String}
- * @api public
- */
-
-Screen.prototype.type =
-Screen.prototype.action = function(){
-  return 'screen';
-};
-
-/**
- * Get event with `name`.
- *
- * @param {String} name
- * @return {String}
- * @api public
- */
-
-Screen.prototype.event = function(name){
-  return name
-    ? 'Viewed ' + name + ' Screen'
-    : 'Loaded a Screen';
-};
-
-/**
- * Convert this Screen.
- *
- * @param {String} name
- * @return {Track}
- * @api public
- */
-
-Screen.prototype.track = function(name){
-  var props = this.properties();
-  return new Track({
-    event: this.event(name),
-    properties: props
-  });
-};
-
-}, {"./utils":189,"./page":187,"./track":186}],
+}, {"analytics.js-integration":83,"global-queue":168,"facade":126,"bind":95,"when":125}],
 67: [function(require, module, exports) {
 
 /**
@@ -15202,8 +14044,8 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"analytics.js-integration":83,"global-queue":168,"convert-dates":174,"to-unix-timestamp":191,"alias":173,"clone":172}],
-191: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":168,"convert-dates":174,"to-unix-timestamp":181,"alias":173,"clone":172}],
+181: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -15311,8 +14153,8 @@ Vero.prototype.track = function(track){
   push('track', track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":83,"global-queue":168,"component/cookie":192}],
-192: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":168,"component/cookie":182}],
+182: [function(require, module, exports) {
 /**
  * Encode.
  */
@@ -15936,7 +14778,7 @@ Analytics.prototype.identify = function (id, traits, options, fn) {
   id = user.id();
   traits = user.traits();
 
-  this._invoke('identify', new Identify({
+  this._invoke('identify', message(Identify, {
     options: options,
     traits: traits,
     userId: id
@@ -15983,7 +14825,7 @@ Analytics.prototype.group = function (id, traits, options, fn) {
   id = group.id();
   traits = group.traits();
 
-  this._invoke('group', new Group({
+  this._invoke('group', message(Group, {
     options: options,
     traits: traits,
     groupId: id
@@ -16009,7 +14851,7 @@ Analytics.prototype.track = function (event, properties, options, fn) {
   if (is.fn(options)) fn = options, options = null;
   if (is.fn(properties)) fn = properties, options = null, properties = null;
 
-  this._invoke('track', new Track({
+  this._invoke('track', message(Track, {
     properties: properties,
     options: options,
     event: event
@@ -16040,6 +14882,7 @@ Analytics.prototype.trackLink = function (links, event, properties) {
 
   var self = this;
   each(links, function (el) {
+    if (!is.element(el)) throw new TypeError('Must pass HTMLElement to `analytics.trackLink`.');
     on(el, 'click', function (e) {
       var ev = is.fn(event) ? event(el) : event;
       var props = is.fn(properties) ? properties(el) : properties;
@@ -16077,6 +14920,7 @@ Analytics.prototype.trackForm = function (forms, event, properties) {
 
   var self = this;
   each(forms, function (el) {
+    if (!is.element(el)) throw new TypeError('Must pass HTMLElement to `analytics.trackForm`.');
     function handler (e) {
       prevent(e);
 
@@ -16137,7 +14981,7 @@ Analytics.prototype.page = function (category, name, properties, options, fn) {
   defaults(properties, defs);
   properties.url = properties.url || canonicalUrl(properties.search);
 
-  this._invoke('page', new Page({
+  this._invoke('page', message(Page, {
     properties: properties,
     category: category,
     options: options,
@@ -16182,7 +15026,7 @@ Analytics.prototype.alias = function (to, from, options, fn) {
   if (is.fn(from)) fn = from, options = null, from = null;
   if (is.object(from)) options = from, from = null;
 
-  this._invoke('alias', new Alias({
+  this._invoke('alias', message(Alias, {
     options: options,
     from: from,
     to: to
@@ -16348,8 +15192,49 @@ function canonicalUrl (search) {
   return -1 == i ? url : url.slice(0, i);
 }
 
-}, {"after":105,"bind":193,"callback":88,"canonical":176,"clone":89,"./cookie":194,"debug":195,"defaults":91,"each":4,"emitter":102,"./group":196,"is":86,"is-email":163,"is-meta":197,"new-date":140,"event":198,"prevent":199,"querystring":200,"object":175,"./store":201,"url":177,"./user":202,"facade":181}],
-193: [function(require, module, exports) {
+/**
+ * Create a new message with `Type` and `msg`
+ *
+ * the function will make sure that the `msg.options`
+ * is merged to `msg` and deletes `msg.options` if it
+ * has `.context / .timestamp / .integrations`.
+ *
+ * Example:
+ *
+ *      message(Identify, {
+ *        options: { timestamp: Date, context: Object, integrations: Object },
+ *        traits: { trait: true },
+ *        userId: 123
+ *      });
+ *
+ *      // =>
+ *
+ *      {
+ *        userId: 123,
+ *        context: Object,
+ *        timestamp: Date,
+ *        integrations: Object
+ *        traits: { trait: true }
+ *      }
+ *
+ * @param {Function} Type
+ * @param {Object} msg
+ * @return {Facade}
+ */
+
+function message(Type, msg){
+  var ctx = msg.options || {};
+
+  if (ctx.timestamp || ctx.integrations || ctx.context) {
+    msg = defaults(ctx, msg);
+    delete msg.options;
+  }
+
+  return new Type(msg);
+}
+
+}, {"after":105,"bind":183,"callback":88,"canonical":176,"clone":89,"./cookie":184,"debug":185,"defaults":91,"each":4,"emitter":102,"./group":186,"is":86,"is-email":163,"is-meta":187,"new-date":140,"event":188,"prevent":189,"querystring":190,"object":175,"./store":191,"url":177,"./user":192,"facade":126}],
+183: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -16396,7 +15281,7 @@ function bindMethods (obj, methods) {
   return obj;
 }
 }, {"bind":95,"bind-all":96}],
-194: [function(require, module, exports) {
+184: [function(require, module, exports) {
 
 var debug = require('debug')('analytics.js:cookie');
 var bind = require('bind');
@@ -16524,16 +15409,16 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"debug":195,"bind":193,"cookie":192,"clone":89,"defaults":91,"json":203,"top-domain":204}],
-195: [function(require, module, exports) {
+}, {"debug":185,"bind":183,"cookie":182,"clone":89,"defaults":91,"json":193,"top-domain":194}],
+185: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":205,"./debug":206}],
-205: [function(require, module, exports) {
+}, {"./lib/debug":195,"./debug":196}],
+195: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -16683,7 +15568,7 @@ function coerce(val) {
 }
 
 }, {}],
-206: [function(require, module, exports) {
+196: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -16823,7 +15708,7 @@ try {
 } catch(e){}
 
 }, {}],
-203: [function(require, module, exports) {
+193: [function(require, module, exports) {
 
 var json = window.JSON || {};
 var stringify = json.stringify;
@@ -16833,8 +15718,8 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":207}],
-207: [function(require, module, exports) {
+}, {"json-fallback":197}],
+197: [function(require, module, exports) {
 /*
     json2.js
     2014-02-04
@@ -17324,7 +16209,7 @@ module.exports = parse && stringify
 }());
 
 }, {}],
-204: [function(require, module, exports) {
+194: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17373,7 +16258,7 @@ function domain(url){
 };
 
 }, {"url":177}],
-196: [function(require, module, exports) {
+186: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:group');
 var Entity = require('./entity');
@@ -17429,8 +16314,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":195,"./entity":208,"inherit":209,"bind":193}],
-208: [function(require, module, exports) {
+}, {"debug":185,"./entity":198,"inherit":199,"bind":183}],
+198: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var defaults = require('defaults');
@@ -17631,8 +16516,8 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"isodate-traverse":139,"defaults":91,"./cookie":194,"./store":201,"extend":124,"clone":89}],
-201: [function(require, module, exports) {
+}, {"isodate-traverse":139,"defaults":91,"./cookie":184,"./store":191,"extend":124,"clone":89}],
+191: [function(require, module, exports) {
 
 var bind = require('bind');
 var defaults = require('defaults');
@@ -17719,8 +16604,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":193,"defaults":91,"store.js":210}],
-210: [function(require, module, exports) {
+}, {"bind":183,"defaults":91,"store.js":200}],
+200: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -17872,8 +16757,8 @@ try {
 store.enabled = !store.disabled
 
 module.exports = store;
-}, {"json":203}],
-209: [function(require, module, exports) {
+}, {"json":193}],
+199: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -17882,7 +16767,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-197: [function(require, module, exports) {
+187: [function(require, module, exports) {
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
 
@@ -17898,7 +16783,7 @@ module.exports = function isMeta (e) {
     return false;
 };
 }, {}],
-198: [function(require, module, exports) {
+188: [function(require, module, exports) {
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -17941,7 +16826,7 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 }, {}],
-199: [function(require, module, exports) {
+189: [function(require, module, exports) {
 
 /**
  * prevent default on the given `e`.
@@ -17964,7 +16849,7 @@ module.exports = function(e){
 };
 
 }, {}],
-200: [function(require, module, exports) {
+190: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -18040,7 +16925,7 @@ exports.stringify = function(obj){
 };
 
 }, {"trim":164,"type":7}],
-202: [function(require, module, exports) {
+192: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:user');
 var Entity = require('./entity');
@@ -18126,9 +17011,9 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":195,"./entity":208,"inherit":209,"bind":193,"./cookie":194}],
+}, {"debug":185,"./entity":198,"inherit":199,"bind":183,"./cookie":184}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.6';
+module.exports = '2.3.12';
 
 }, {}]}, {}, {"1":"analytics"})

@@ -11,7 +11,7 @@ SRC = $(wildcard lib/*.js)
 MINIFY = $(BINS)/uglifyjs
 PID = test/server/pid.txt
 BINS = node_modules/.bin
-BUILD = build/build.js
+BUILD = build.js
 DUO = $(BINS)/duo
 DUOT = $(BINS)/duo-test
 
@@ -25,8 +25,8 @@ default: test
 # Clean.
 #
 
-clean: kill
-	@-rm -rf components build
+clean:
+	@-rm -rf components $(BUILD)
 	@-rm analytics.js analytics.min.js
 	@-rm -rf node_modules npm-debug.log
 
@@ -68,8 +68,6 @@ test-browser: $(BUILD)
 #
 
 .PHONY: clean
-.PHONY: kill
-.PHONY: kill-all
 .PHONY: test
 .PHONY: test-browser
 .PHONY: test-coverage
@@ -95,4 +93,4 @@ node_modules: package.json
 #
 
 $(BUILD): $(TESTS) analytics.js
-	@$(DUO) --development test/tests.js $(BUILD)
+	@$(DUO) --development test/tests.js > $(BUILD)

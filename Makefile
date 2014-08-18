@@ -29,7 +29,6 @@ clean: kill
 	@-rm -rf components build
 	@-rm analytics.js analytics.min.js
 	@-rm -rf node_modules npm-debug.log
-	@-npm cache clean
 
 #
 # update version

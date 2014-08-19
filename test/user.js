@@ -15,13 +15,16 @@ describe('user', function () {
   var localStorageKey = user._options.localStorage.key;
 
   before(function () {
+    assert.equal(location.protocol, user.protocol);
     user.reset();
   });
 
   afterEach(function () {
     user.reset();
     cookie.remove(cookieKey);
+    store.remove(cookieKey);
     store.remove(localStorageKey);
+    user.protocol = location.protocol;
   });
 
   describe('()', function(){
@@ -38,30 +41,96 @@ describe('user', function () {
   })
 
   describe('#id', function () {
-    it('should get an id from the cookie', function () {
-      cookie.set(cookieKey, 'id');
-      assert('id' == user.id());
+    describe('when file:', function(){
+      beforeEach(function(){
+        user.protocol = 'file:';
+      });
+
+      it('should get an id from the store', function () {
+        store.set(cookieKey, 'id');
+        assert('id' == user.id());
+      });
+
+      it('should get an id when not persisting', function () {
+        user.options({ persist: false });
+        user._id = 'id';
+        assert('id' == user.id());
+      });
+
+      it('should set an id to the store', function () {
+        user.id('id');
+        assert('id' === store.get(cookieKey));
+      });
+
+      it('should set the id when not persisting', function () {
+        user.options({ persist: false });
+        user.id('id');
+        assert('id' == user._id);
+      });
+
+      it('should be null by default', function () {
+        assert(null === user.id());
+      });
     });
 
-    it('should get an id when not persisting', function () {
-      user.options({ persist: false });
-      user._id = 'id';
-      assert('id' == user.id());
+    describe('when chrome-extension:', function(){
+      beforeEach(function(){
+        user.protocol = 'chrome-extension:';
+      });
+
+      it('should get an id from the store', function () {
+        store.set(cookieKey, 'id');
+        assert('id' == user.id());
+      });
+
+      it('should get an id when not persisting', function () {
+        user.options({ persist: false });
+        user._id = 'id';
+        assert('id' == user.id());
+      });
+
+      it('should set an id to the store', function () {
+        user.id('id');
+        assert('id' === store.get(cookieKey));
+      });
+
+      it('should set the id when not persisting', function () {
+        user.options({ persist: false });
+        user.id('id');
+        assert('id' == user._id);
+      });
+
+      it('should be null by default', function () {
+        assert(null === user.id());
+      });
     });
 
-    it('should set an id to the cookie', function () {
-      user.id('id');
-      assert('id' === cookie.get(cookieKey));
-    });
+    describe('when http:', function(){
+      it('should get an id from the cookie', function () {
+        cookie.set(cookieKey, 'id');
+        assert('id' == user.id());
+      });
 
-    it('should set the id when not persisting', function () {
-      user.options({ persist: false });
-      user.id('id');
-      assert('id' == user._id);
-    });
+      it('should get an id when not persisting', function () {
+        user.options({ persist: false });
+        user._id = 'id';
+        assert('id' == user.id());
+      });
 
-    it('should be null by default', function () {
-      assert(null === user.id());
+      it('should set an id to the cookie', function () {
+        user.id('id');
+        assert('id' === cookie.get(cookieKey));
+      });
+
+      it('should set the id when not persisting', function () {
+        user.options({ persist: false });
+        user.id('id');
+        assert('id' == user._id);
+      });
+
+      it('should be null by default', function () {
+        assert(null === user.id());
+      });
     });
   });
 

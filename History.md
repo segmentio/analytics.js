@@ -1,4 +1,13 @@
 
+2.3.13 / 2014-08-20
+==================
+
+ * localstorage fallback: add implementation
+ * localstorage fallback: add tests
+ * rebuild
+ * deps: upgrade to duo 0.7
+ * make: dont clean my npm cache :P
+
 2.3.12 / 2014-08-07
 ==================
 

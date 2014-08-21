@@ -4,16 +4,14 @@
 #
 
 BROWSER ?= chrome,firefox,safari
-REPORTER ?= spec
 TESTS = $(wildcard test/*.js)
-TEST = test/server
 SRC = $(wildcard lib/*.js)
 MINIFY = $(BINS)/uglifyjs
 PID = test/server/pid.txt
 BINS = node_modules/.bin
 BUILD = build.js
 DUO = $(BINS)/duo
-DUOT = $(BINS)/duo-test
+DUOT = $(BINS)/duo-test -p test/server -R spec
 
 #
 # Default target.
@@ -42,17 +40,16 @@ version: component.json
 #
 
 test: $(BUILD)
-	@$(DUOT) phantomjs $(TEST)
+	@$(DUOT) phantomjs
 
 #
 # Test with saucelabs
 #
 
 test-sauce: $(BUILD)
-	@$(DUOT) saucelabs $(TEST) \
-		--reporter $(REPORTER) \
-		--browser $(BROWSER) \
-		--name analytics.js
+	@$(DUOT) saucelabs \
+		--browsers $(BROWSER) \
+		--title analytics.js
 
 #
 # Test in the browser.
@@ -61,7 +58,7 @@ test-sauce: $(BUILD)
 #
 
 test-browser: $(BUILD)
-	@$(DUOT) browser $(TEST) default
+	@$(DUOT) browser default
 
 #
 # Phony targets.

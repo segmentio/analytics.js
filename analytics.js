@@ -16746,6 +16746,6 @@ module.exports.User = User;
 }, {"debug":184,"./entity":197,"inherit":198,"bind":182,"./cookie":183}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.15';
+module.exports = '2.3.16';
 
 }, {}]}, {}, {"1":"analytics"})

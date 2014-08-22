@@ -1,4 +1,10 @@
 
+2.3.14 / 2014-08-22
+==================
+
+ * deps: upgrade to duo-test@0.3.x
+ * google adwords: switch to async api
+
 2.3.13 / 2014-08-20
 ==================
 

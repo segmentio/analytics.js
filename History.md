@@ -1,4 +1,9 @@
 
+2.3.15 / 2014-08-22
+==================
+
+ * google adwords: directly pass remarketing option
+
 2.3.14 / 2014-08-22
 ==================
 

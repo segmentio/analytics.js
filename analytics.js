@@ -3235,14 +3235,13 @@ AdWords.prototype.loaded = function(){
  */
 
 AdWords.prototype.page = function(page){
-  var remarketing = this.options.remarketing;
+  var remarketing = !!this.options.remarketing;
   var id = this.options.conversionId;
-  if (!remarketing) return;
   var props = {};
   window.google_trackConversion({
     google_conversion_id: id,
     google_custom_params: props,
-    google_remarketing_only: true
+    google_remarketing_only: remarketing
   });
 };
 
@@ -3257,6 +3256,7 @@ AdWords.prototype.track = function(track){
   var id = this.options.conversionId;
   var events = this.events(track.event());
   var revenue = track.revenue() || 0;
+  var remarketing = !!this.options.remarketing;
   each(events, function(label){
     var props = track.properties();
     window.google_trackConversion({
@@ -3268,7 +3268,7 @@ AdWords.prototype.track = function(track){
       google_conversion_color: 'ffffff',
       google_conversion_label: label,
       google_conversion_value: revenue,
-      google_remarketing_only: false
+      google_remarketing_only: remarketing
     });
   });
 };
@@ -16746,6 +16746,6 @@ module.exports.User = User;
 }, {"debug":184,"./entity":197,"inherit":198,"bind":182,"./cookie":183}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.13';
+module.exports = '2.3.15';
 
 }, {}]}, {}, {"1":"analytics"})

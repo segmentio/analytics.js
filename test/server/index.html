@@ -3,7 +3,6 @@
 <head>
   <title>analytics.js tests</title>
   <link rel="stylesheet" href="/test/server/mocha.css">
-  <script src="/duotest.js"></script>
   <script src="/test/server/mocha.js"></script>
   <script>mocha.setup({ ui: 'bdd' })</script>
   <script src="/analytics.js"></script>
@@ -12,6 +11,8 @@
 <body>
   <div id="mocha"></div>
   <script src="/saucelabs.js"></script>
-  <script>duotest(mocha.run())</script>
+  <script>m = window.mochaPhantomJS || mocha</script>
+  <script>s = window.saucelabs || function(){}</script>
+  <script>s(m.run())</script>
 </body>
 </html>

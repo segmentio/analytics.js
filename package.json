@@ -14,7 +14,7 @@
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {
-    "duo": "0.x",
+    "duo": "0.7",
     "duo-test": "0.x",
     "mocha-phantomjs": "3.1.2",
     "phantomjs": "~1.9.2-0",

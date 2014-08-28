@@ -503,6 +503,13 @@ describe('Analytics', function () {
       assert.deepEqual(app, page.obj.context.app);
     });
 
+    it('should accept top level option .anonymousId', function(){
+      var app = { name: 'segment' };
+      analytics.page({ prop: true }, { anonymousId: 'id' });
+      var page = analytics._invoke.args[0][1];
+      assert.equal('id', page.obj.anonymousId);
+    });
+
     it('should emit page', function (done) {
       defaults.category = 'category';
       defaults.name = 'name';

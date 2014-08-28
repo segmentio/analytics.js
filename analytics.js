@@ -14910,7 +14910,7 @@ function canonicalUrl (search) {
  *
  * the function will make sure that the `msg.options`
  * is merged to `msg` and deletes `msg.options` if it
- * has `.context / .timestamp / .integrations`.
+ * has `.context / .timestamp / .integrations / .anonymousId`.
  *
  * Example:
  *
@@ -14938,7 +14938,7 @@ function canonicalUrl (search) {
 function message(Type, msg){
   var ctx = msg.options || {};
 
-  if (ctx.timestamp || ctx.integrations || ctx.context) {
+  if (ctx.timestamp || ctx.integrations || ctx.context || ctx.anonymousId) {
     msg = defaults(ctx, msg);
     delete msg.options;
   }

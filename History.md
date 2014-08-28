@@ -1,4 +1,12 @@
 
+2.3.17 / 2014-08-28
+===================
+
+  * deps: duo 0.7
+  * deps: duo 0.7
+  * Merge pull request #397 from segmentio/add/anonymous-id
+  * add checking for anonymous id in options
+
 2.3.15 / 2014-08-22
 ==================
 

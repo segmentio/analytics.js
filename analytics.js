@@ -4786,10 +4786,16 @@ module.exports = function(proto){
   function trait(a, b){
     return function(){
       var traits = this.traits();
+      var props = this.properties ? this.properties() : {};
+
       return get(traits, 'address.' + a)
         || get(traits, a)
         || (b ? get(traits, 'address.' + b) : null)
-        || (b ? get(traits, b) : null);
+        || (b ? get(traits, b) : null)
+        || get(props, 'address.' + a)
+        || get(props, a)
+        || (b ? get(props, 'address.' + b) : null)
+        || (b ? get(props, b) : null);
     };
   }
 };
@@ -4797,26 +4803,7 @@ module.exports = function(proto){
 }, {"obj-case":138}],
 138: [function(require, module, exports) {
 
-var Case = require('case');
 var identity = function(_){ return _; };
-
-
-/**
- * Cases
- */
-
-var cases = [
-  identity,
-  Case.upper,
-  Case.lower,
-  Case.snake,
-  Case.pascal,
-  Case.camel,
-  Case.constant,
-  Case.title,
-  Case.capital,
-  Case.sentence
-];
 
 
 /**
@@ -4851,18 +4838,58 @@ module.exports.del = function (obj, key) {
  */
 
 function multiple (fn) {
-  return function (obj, key, val) {
-    var keys = key.split('.');
-    if (keys.length === 0) return;
+  return function (obj, path, val) {
+    path = normalize(path);
 
-    while (keys.length > 1) {
-      key = keys.shift();
-      obj = find(obj, key);
+    var key;
+    var finished = false;
 
-      if (obj === null || obj === undefined) return;
+    while (!finished) loop();
+
+    function loop() {
+      for (key in obj) {
+        var normalizedKey = normalize(key);
+        if (0 === path.indexOf(normalizedKey)) {
+          var temp = path.substr(normalizedKey.length);
+          if (temp.charAt(0) === '.' || temp.length === 0) {
+            path = temp.substr(1);
+            var child = obj[key];
+
+            // we're at the end and there is nothing.
+            if (null == child) {
+              finished = true;
+              obj = null;
+              return;
+            }
+
+            // we're at the end and there is something.
+            if (!path.length) {
+              finished = true;
+              return;
+            }
+
+            // step into child
+            obj = child;
+
+            // but we're done here
+            return;
+          }
+        }
+      }
+
+      key = undefined;
+      // if we found no matching properties
+      // on the current object, there's no match.
+      finished = true;
     }
 
-    key = keys.shift();
+    if (!key) return;
+
+    // the `obj` and `key` is one above the leaf object and key, so
+    // start object: { a: { 'b.c': 10 } }
+    // end object: { 'b.c': 10 }
+    // end key: 'b.c'
+    // this way, you can do `obj[key]` and get `10`.
     return fn(obj, key, val);
   };
 }
@@ -4875,10 +4902,7 @@ function multiple (fn) {
  */
 
 function find (obj, key) {
-  for (var i = 0; i < cases.length; i++) {
-    var cased = cases[i](key);
-    if (obj.hasOwnProperty(cased)) return obj[cased];
-  }
+  if (obj.hasOwnProperty(key)) return obj[key];
 }
 
 
@@ -4889,10 +4913,7 @@ function find (obj, key) {
  */
 
 function del (obj, key) {
-  for (var i = 0; i < cases.length; i++) {
-    var cased = cases[i](key);
-    if (obj.hasOwnProperty(cased)) delete obj[cased];
-  }
+  if (obj.hasOwnProperty(key)) delete obj[key];
   return obj;
 }
 
@@ -4904,545 +4925,22 @@ function del (obj, key) {
  */
 
 function replace (obj, key, val) {
-  for (var i = 0; i < cases.length; i++) {
-    var cased = cases[i](key);
-    if (obj.hasOwnProperty(cased)) obj[cased] = val;
-  }
+  if (obj.hasOwnProperty(key)) obj[key] = val;
   return obj;
 }
 
-}, {"case":144}],
-144: [function(require, module, exports) {
-
-var cases = require('./cases');
-
-
 /**
- * Expose `determineCase`.
- */
-
-module.exports = exports = determineCase;
-
-
-/**
- * Determine the case of a `string`.
+ * Normalize a `dot.separated.path`.
+ * 
+ * A.HELL(!*&#(!)O_WOR   LD.bar => ahelloworldbar
  *
- * @param {String} string
- * @return {String|Null}
+ * @param {String} path
+ * @return {String}
  */
 
-function determineCase (string) {
-  for (var key in cases) {
-    if (key == 'none') continue;
-    var convert = cases[key];
-    if (convert(string) == string) return key;
-  }
-  return null;
+function normalize(path) {
+  return path.replace(/[^a-zA-Z0-9\.]+/g, '').toLowerCase();
 }
-
-
-/**
- * Define a case by `name` with a `convert` function.
- *
- * @param {String} name
- * @param {Object} convert
- */
-
-exports.add = function (name, convert) {
-  exports[name] = cases[name] = convert;
-};
-
-
-/**
- * Add all the `cases`.
- */
-
-for (var key in cases) {
-  exports.add(key, cases[key]);
-}
-}, {"./cases":145}],
-145: [function(require, module, exports) {
-
-var camel = require('to-camel-case')
-  , capital = require('to-capital-case')
-  , constant = require('to-constant-case')
-  , dot = require('to-dot-case')
-  , none = require('to-no-case')
-  , pascal = require('to-pascal-case')
-  , sentence = require('to-sentence-case')
-  , slug = require('to-slug-case')
-  , snake = require('to-snake-case')
-  , space = require('to-space-case')
-  , title = require('to-title-case');
-
-
-/**
- * Camel.
- */
-
-exports.camel = camel;
-
-
-/**
- * Pascal.
- */
-
-exports.pascal = pascal;
-
-
-/**
- * Dot. Should precede lowercase.
- */
-
-exports.dot = dot;
-
-
-/**
- * Slug. Should precede lowercase.
- */
-
-exports.slug = slug;
-
-
-/**
- * Snake. Should precede lowercase.
- */
-
-exports.snake = snake;
-
-
-/**
- * Space. Should precede lowercase.
- */
-
-exports.space = space;
-
-
-/**
- * Constant. Should precede uppercase.
- */
-
-exports.constant = constant;
-
-
-/**
- * Capital. Should precede sentence and title.
- */
-
-exports.capital = capital;
-
-
-/**
- * Title.
- */
-
-exports.title = title;
-
-
-/**
- * Sentence.
- */
-
-exports.sentence = sentence;
-
-
-/**
- * Convert a `string` to lower case from camel, slug, etc. Different that the
- * usual `toLowerCase` in that it will try to break apart the input first.
- *
- * @param {String} string
- * @return {String}
- */
-
-exports.lower = function (string) {
-  return none(string).toLowerCase();
-};
-
-
-/**
- * Convert a `string` to upper case from camel, slug, etc. Different that the
- * usual `toUpperCase` in that it will try to break apart the input first.
- *
- * @param {String} string
- * @return {String}
- */
-
-exports.upper = function (string) {
-  return none(string).toUpperCase();
-};
-
-
-/**
- * Invert each character in a `string` from upper to lower and vice versa.
- *
- * @param {String} string
- * @return {String}
- */
-
-exports.inverse = function (string) {
-  for (var i = 0, char; char = string[i]; i++) {
-    if (!/[a-z]/i.test(char)) continue;
-    var upper = char.toUpperCase();
-    var lower = char.toLowerCase();
-    string[i] = char == upper ? lower : upper;
-  }
-  return string;
-};
-
-
-/**
- * None.
- */
-
-exports.none = none;
-}, {"to-camel-case":146,"to-capital-case":147,"to-constant-case":148,"to-dot-case":149,"to-no-case":117,"to-pascal-case":150,"to-sentence-case":151,"to-slug-case":152,"to-snake-case":153,"to-space-case":154,"to-title-case":155}],
-146: [function(require, module, exports) {
-
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toCamelCase`.
- */
-
-module.exports = toCamelCase;
-
-
-/**
- * Convert a `string` to camel case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toCamelCase (string) {
-  return toSpace(string).replace(/\s(\w)/g, function (matches, letter) {
-    return letter.toUpperCase();
-  });
-}
-}, {"to-space-case":154}],
-154: [function(require, module, exports) {
-
-var clean = require('to-no-case');
-
-
-/**
- * Expose `toSpaceCase`.
- */
-
-module.exports = toSpaceCase;
-
-
-/**
- * Convert a `string` to space case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSpaceCase (string) {
-  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
-    return match ? ' ' + match : '';
-  });
-}
-}, {"to-no-case":117}],
-147: [function(require, module, exports) {
-
-var clean = require('to-no-case');
-
-
-/**
- * Expose `toCapitalCase`.
- */
-
-module.exports = toCapitalCase;
-
-
-/**
- * Convert a `string` to capital case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toCapitalCase (string) {
-  return clean(string).replace(/(^|\s)(\w)/g, function (matches, previous, letter) {
-    return previous + letter.toUpperCase();
-  });
-}
-}, {"to-no-case":117}],
-148: [function(require, module, exports) {
-
-var snake = require('to-snake-case');
-
-
-/**
- * Expose `toConstantCase`.
- */
-
-module.exports = toConstantCase;
-
-
-/**
- * Convert a `string` to constant case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toConstantCase (string) {
-  return snake(string).toUpperCase();
-}
-}, {"to-snake-case":153}],
-153: [function(require, module, exports) {
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toSnakeCase`.
- */
-
-module.exports = toSnakeCase;
-
-
-/**
- * Convert a `string` to snake case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSnakeCase (string) {
-  return toSpace(string).replace(/\s/g, '_');
-}
-
-}, {"to-space-case":154}],
-149: [function(require, module, exports) {
-
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toDotCase`.
- */
-
-module.exports = toDotCase;
-
-
-/**
- * Convert a `string` to slug case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toDotCase (string) {
-  return toSpace(string).replace(/\s/g, '.');
-}
-}, {"to-space-case":154}],
-150: [function(require, module, exports) {
-
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toPascalCase`.
- */
-
-module.exports = toPascalCase;
-
-
-/**
- * Convert a `string` to pascal case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toPascalCase (string) {
-  return toSpace(string).replace(/(?:^|\s)(\w)/g, function (matches, letter) {
-    return letter.toUpperCase();
-  });
-}
-}, {"to-space-case":154}],
-151: [function(require, module, exports) {
-
-var clean = require('to-no-case');
-
-
-/**
- * Expose `toSentenceCase`.
- */
-
-module.exports = toSentenceCase;
-
-
-/**
- * Convert a `string` to camel case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSentenceCase (string) {
-  return clean(string).replace(/[a-z]/i, function (letter) {
-    return letter.toUpperCase();
-  });
-}
-}, {"to-no-case":117}],
-152: [function(require, module, exports) {
-
-var toSpace = require('to-space-case');
-
-
-/**
- * Expose `toSlugCase`.
- */
-
-module.exports = toSlugCase;
-
-
-/**
- * Convert a `string` to slug case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toSlugCase (string) {
-  return toSpace(string).replace(/\s/g, '-');
-}
-}, {"to-space-case":154}],
-155: [function(require, module, exports) {
-
-var capital = require('to-capital-case')
-  , escape = require('escape-regexp')
-  , map = require('map')
-  , minors = require('title-case-minors');
-
-
-/**
- * Expose `toTitleCase`.
- */
-
-module.exports = toTitleCase;
-
-
-/**
- * Minors.
- */
-
-var escaped = map(minors, escape);
-var minorMatcher = new RegExp('[^^]\\b(' + escaped.join('|') + ')\\b', 'ig');
-var colonMatcher = /:\s*(\w)/g;
-
-
-/**
- * Convert a `string` to camel case.
- *
- * @param {String} string
- * @return {String}
- */
-
-
-function toTitleCase (string) {
-  return capital(string)
-    .replace(minorMatcher, function (minor) {
-      return minor.toLowerCase();
-    })
-    .replace(colonMatcher, function (letter) {
-      return letter.toUpperCase();
-    });
-}
-}, {"to-capital-case":147,"escape-regexp":156,"map":157,"title-case-minors":158}],
-156: [function(require, module, exports) {
-
-/**
- * Escape regexp special characters in `str`.
- *
- * @param {String} str
- * @return {String}
- * @api public
- */
-
-module.exports = function(str){
-  return String(str).replace(/([.*+?=^!:${}()|[\]\/\\])/g, '\\$1');
-};
-}, {}],
-157: [function(require, module, exports) {
-
-var each = require('each');
-
-
-/**
- * Map an array or object.
- *
- * @param {Array|Object} obj
- * @param {Function} iterator
- * @return {Mixed}
- */
-
-module.exports = function map (obj, iterator) {
-  var arr = [];
-  each(obj, function (o) {
-    arr.push(iterator.apply(null, arguments));
-  });
-  return arr;
-};
-}, {"each":106}],
-158: [function(require, module, exports) {
-
-module.exports = [
-  'a',
-  'an',
-  'and',
-  'as',
-  'at',
-  'but',
-  'by',
-  'en',
-  'for',
-  'from',
-  'how',
-  'if',
-  'in',
-  'neither',
-  'nor',
-  'of',
-  'on',
-  'only',
-  'onto',
-  'out',
-  'or',
-  'per',
-  'so',
-  'than',
-  'that',
-  'the',
-  'to',
-  'until',
-  'up',
-  'upon',
-  'v',
-  'v.',
-  'versus',
-  'vs',
-  'vs.',
-  'via',
-  'when',
-  'with',
-  'without',
-  'yet'
-];
 }, {}],
 139: [function(require, module, exports) {
 
@@ -5484,8 +4982,8 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
-}, {"is":159,"isodate":141,"./milliseconds":160,"./seconds":161}],
-159: [function(require, module, exports) {
+}, {"is":144,"isodate":141,"./milliseconds":145,"./seconds":146}],
+144: [function(require, module, exports) {
 
 var isEmpty = require('is-empty')
   , typeOf = require('type');
@@ -5557,7 +5055,7 @@ function generate (type) {
   };
 }
 }, {"is-empty":118,"type":7}],
-160: [function(require, module, exports) {
+145: [function(require, module, exports) {
 
 /**
  * Matcher.
@@ -5590,7 +5088,7 @@ exports.parse = function (millis) {
   return new Date(millis);
 };
 }, {}],
-161: [function(require, module, exports) {
+146: [function(require, module, exports) {
 
 /**
  * Matcher.
@@ -5824,8 +5322,8 @@ Group.prototype.properties = function(){
     || {};
 };
 
-}, {"./utils":136,"./address":137,"is-email":162,"new-date":139,"./facade":127}],
-162: [function(require, module, exports) {
+}, {"./utils":136,"./address":137,"is-email":147,"new-date":139,"./facade":127}],
+147: [function(require, module, exports) {
 
 /**
  * Expose `isEmail`.
@@ -6102,8 +5600,8 @@ Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.gender = Facade.proxy('traits.gender');
 Identify.prototype.birthday = Facade.proxy('traits.birthday');
 
-}, {"./address":137,"./facade":127,"is-email":162,"new-date":139,"./utils":136,"obj-case":138,"trim":163}],
-163: [function(require, module, exports) {
+}, {"./address":137,"./facade":127,"is-email":147,"new-date":139,"./utils":136,"obj-case":138,"trim":148}],
+148: [function(require, module, exports) {
 
 exports = module.exports = trim;
 
@@ -6183,10 +5681,6 @@ Track.prototype.value = Facade.proxy('properties.value');
  */
 
 Track.prototype.category = Facade.proxy('properties.category');
-Track.prototype.country = Facade.proxy('properties.country');
-Track.prototype.state = Facade.proxy('properties.state');
-Track.prototype.city = Facade.proxy('properties.city');
-Track.prototype.zip = Facade.proxy('properties.zip');
 
 /**
  * Ecommerce
@@ -6415,7 +5909,7 @@ function currency(val) {
   if (!isNaN(val)) return val;
 }
 
-}, {"./utils":136,"./facade":127,"./identify":130,"is-email":162,"obj-case":138}],
+}, {"./utils":136,"./facade":127,"./identify":130,"is-email":147,"obj-case":138}],
 132: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
@@ -6665,7 +6159,7 @@ function error(fn, message, img){
   };
 }
 
-}, {"querystring":126,"substitute":164}],
+}, {"querystring":126,"substitute":149}],
 126: [function(require, module, exports) {
 
 /**
@@ -6741,8 +6235,8 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":163,"type":7}],
-164: [function(require, module, exports) {
+}, {"trim":148,"type":7}],
+149: [function(require, module, exports) {
 
 /**
  * Expose `substitute`
@@ -6886,8 +6380,8 @@ Bugsnag.prototype.identify = function(identify){
   extend(window.Bugsnag.metaData, identify.traits());
 };
 
-}, {"analytics.js-integration":83,"is":86,"extend":122,"on-error":165}],
-165: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"is":86,"extend":122,"on-error":150}],
+150: [function(require, module, exports) {
 
 /**
  * Expose `onError`.
@@ -7010,8 +6504,8 @@ Chartbeat.prototype.page = function(page){
   window.pSUPERFLY.virtualPage(props.path, name || props.title);
 };
 
-}, {"analytics.js-integration":83,"defaults":166,"on-body":121}],
-166: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"defaults":151,"on-body":121}],
+151: [function(require, module, exports) {
 /**
  * Expose `defaults`.
  */
@@ -7108,8 +6602,8 @@ ChurnBee.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":83,"global-queue":167,"each":4}],
-167: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":152,"each":4}],
+152: [function(require, module, exports) {
 
 /**
  * Expose `generate`.
@@ -7241,8 +6735,8 @@ ClickTale.prototype.track = function(track){
   window.ClickTaleEvent(track.event());
 };
 
-}, {"load-date":168,"domify":119,"each":4,"analytics.js-integration":83,"is":86,"use-https":85,"on-body":121}],
-168: [function(require, module, exports) {
+}, {"load-date":153,"domify":119,"each":4,"analytics.js-integration":83,"is":86,"use-https":85,"on-body":121}],
+153: [function(require, module, exports) {
 
 
 /*
@@ -7620,8 +7114,8 @@ Curebit.prototype.completedOrder = function(track){
   });
 };
 
-}, {"analytics.js-integration":83,"global-queue":167,"facade":124,"throttle":169,"to-iso-string":170,"clone":171,"each":4,"bind":95}],
-169: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":152,"facade":124,"throttle":154,"to-iso-string":155,"clone":156,"each":4,"bind":95}],
+154: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -7654,7 +7148,7 @@ function throttle (func, wait) {
 }
 
 }, {}],
-170: [function(require, module, exports) {
+155: [function(require, module, exports) {
 
 /**
  * Expose `toIsoString`.
@@ -7696,7 +7190,7 @@ function pad (number) {
   return n.length === 1 ? '0' + n : n;
 }
 }, {}],
-171: [function(require, module, exports) {
+156: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -7863,8 +7357,8 @@ function convertDate(date){
   return Math.floor(date.getTime() / 1000);
 }
 
-}, {"alias":172,"convert-dates":173,"facade":124,"analytics.js-integration":83}],
-172: [function(require, module, exports) {
+}, {"alias":157,"convert-dates":158,"facade":124,"analytics.js-integration":83}],
+157: [function(require, module, exports) {
 
 var type = require('type');
 
@@ -7928,7 +7422,7 @@ function aliasByFunction (obj, convert) {
   return output;
 }
 }, {"type":7,"clone":143}],
-173: [function(require, module, exports) {
+158: [function(require, module, exports) {
 
 var is = require('is');
 
@@ -8035,7 +7529,7 @@ Drip.prototype.identify = function (identify) {
   push('identify', identify.traits());
 };
 
-}, {"alias":172,"analytics.js-integration":83,"is":86,"load-script":120,"global-queue":167}],
+}, {"alias":157,"analytics.js-integration":83,"is":86,"load-script":120,"global-queue":152}],
 28: [function(require, module, exports) {
 
 /**
@@ -8098,7 +7592,7 @@ Errorception.prototype.identify = function(identify){
   extend(window._errs.meta, traits);
 };
 
-}, {"extend":122,"analytics.js-integration":83,"on-error":165,"global-queue":167}],
+}, {"extend":122,"analytics.js-integration":83,"on-error":150,"global-queue":152}],
 29: [function(require, module, exports) {
 
 /**
@@ -8215,7 +7709,7 @@ Evergage.prototype.track = function(track){
   push('trackAction', track.event(), track.properties());
 };
 
-}, {"each":4,"analytics.js-integration":83,"global-queue":167}],
+}, {"each":4,"analytics.js-integration":83,"global-queue":152}],
 30: [function(require, module, exports) {
 
 /**
@@ -8293,7 +7787,7 @@ Facebook.prototype.track = function(track){
   }
 };
 
-}, {"analytics.js-integration":83,"global-queue":167,"each":4}],
+}, {"analytics.js-integration":83,"global-queue":152,"each":4}],
 31: [function(require, module, exports) {
 
 /**
@@ -8482,7 +7976,7 @@ function ecommerce(event, track, arr){
   ].concat(arr || []));
 }
 
-}, {"global-queue":167,"analytics.js-integration":83,"facade":124,"each":4}],
+}, {"global-queue":152,"analytics.js-integration":83,"facade":124,"each":4}],
 32: [function(require, module, exports) {
 
 /**
@@ -8756,7 +8250,7 @@ Gauges.prototype.page = function(page){
   push('track');
 };
 
-}, {"analytics.js-integration":83,"global-queue":167}],
+}, {"analytics.js-integration":83,"global-queue":152}],
 34: [function(require, module, exports) {
 
 /**
@@ -9265,8 +8759,8 @@ function metrics(obj, data){
   return ret;
 }
 
-}, {"analytics.js-integration":83,"global-queue":167,"object":174,"canonical":175,"use-https":85,"facade":124,"callback":88,"load-script":120,"obj-case":138,"each":4,"type":7,"url":176,"is":86}],
-174: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":152,"object":159,"canonical":160,"use-https":85,"facade":124,"callback":88,"load-script":120,"obj-case":161,"each":4,"type":7,"url":162,"is":86}],
+159: [function(require, module, exports) {
 
 /**
  * HOP ref.
@@ -9352,7 +8846,7 @@ exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
 }, {}],
-175: [function(require, module, exports) {
+160: [function(require, module, exports) {
 module.exports = function canonical () {
   var tags = document.getElementsByTagName('link');
   for (var i = 0, tag; tag = tags[i]; i++) {
@@ -9360,7 +8854,656 @@ module.exports = function canonical () {
   }
 };
 }, {}],
+161: [function(require, module, exports) {
+
+var Case = require('case');
+var identity = function(_){ return _; };
+
+
+/**
+ * Cases
+ */
+
+var cases = [
+  identity,
+  Case.upper,
+  Case.lower,
+  Case.snake,
+  Case.pascal,
+  Case.camel,
+  Case.constant,
+  Case.title,
+  Case.capital,
+  Case.sentence
+];
+
+
+/**
+ * Module exports, export
+ */
+
+module.exports = module.exports.find = multiple(find);
+
+
+/**
+ * Export the replacement function, return the modified object
+ */
+
+module.exports.replace = function (obj, key, val) {
+  multiple(replace).apply(this, arguments);
+  return obj;
+};
+
+
+/**
+ * Export the delete function, return the modified object
+ */
+
+module.exports.del = function (obj, key) {
+  multiple(del).apply(this, arguments);
+  return obj;
+};
+
+
+/**
+ * Compose applying the function to a nested key
+ */
+
+function multiple (fn) {
+  return function (obj, key, val) {
+    var keys = key.split('.');
+    if (keys.length === 0) return;
+
+    while (keys.length > 1) {
+      key = keys.shift();
+      obj = find(obj, key);
+
+      if (obj === null || obj === undefined) return;
+    }
+
+    key = keys.shift();
+    return fn(obj, key, val);
+  };
+}
+
+
+/**
+ * Find an object by its key
+ *
+ * find({ first_name : 'Calvin' }, 'firstName')
+ */
+
+function find (obj, key) {
+  for (var i = 0; i < cases.length; i++) {
+    var cased = cases[i](key);
+    if (obj.hasOwnProperty(cased)) return obj[cased];
+  }
+}
+
+
+/**
+ * Delete a value for a given key
+ *
+ * del({ a : 'b', x : 'y' }, 'X' }) -> { a : 'b' }
+ */
+
+function del (obj, key) {
+  for (var i = 0; i < cases.length; i++) {
+    var cased = cases[i](key);
+    if (obj.hasOwnProperty(cased)) delete obj[cased];
+  }
+  return obj;
+}
+
+
+/**
+ * Replace an objects existing value with a new one
+ *
+ * replace({ a : 'b' }, 'a', 'c') -> { a : 'c' }
+ */
+
+function replace (obj, key, val) {
+  for (var i = 0; i < cases.length; i++) {
+    var cased = cases[i](key);
+    if (obj.hasOwnProperty(cased)) obj[cased] = val;
+  }
+  return obj;
+}
+
+}, {"case":163}],
+163: [function(require, module, exports) {
+
+var cases = require('./cases');
+
+
+/**
+ * Expose `determineCase`.
+ */
+
+module.exports = exports = determineCase;
+
+
+/**
+ * Determine the case of a `string`.
+ *
+ * @param {String} string
+ * @return {String|Null}
+ */
+
+function determineCase (string) {
+  for (var key in cases) {
+    if (key == 'none') continue;
+    var convert = cases[key];
+    if (convert(string) == string) return key;
+  }
+  return null;
+}
+
+
+/**
+ * Define a case by `name` with a `convert` function.
+ *
+ * @param {String} name
+ * @param {Object} convert
+ */
+
+exports.add = function (name, convert) {
+  exports[name] = cases[name] = convert;
+};
+
+
+/**
+ * Add all the `cases`.
+ */
+
+for (var key in cases) {
+  exports.add(key, cases[key]);
+}
+}, {"./cases":164}],
+164: [function(require, module, exports) {
+
+var camel = require('to-camel-case')
+  , capital = require('to-capital-case')
+  , constant = require('to-constant-case')
+  , dot = require('to-dot-case')
+  , none = require('to-no-case')
+  , pascal = require('to-pascal-case')
+  , sentence = require('to-sentence-case')
+  , slug = require('to-slug-case')
+  , snake = require('to-snake-case')
+  , space = require('to-space-case')
+  , title = require('to-title-case');
+
+
+/**
+ * Camel.
+ */
+
+exports.camel = camel;
+
+
+/**
+ * Pascal.
+ */
+
+exports.pascal = pascal;
+
+
+/**
+ * Dot. Should precede lowercase.
+ */
+
+exports.dot = dot;
+
+
+/**
+ * Slug. Should precede lowercase.
+ */
+
+exports.slug = slug;
+
+
+/**
+ * Snake. Should precede lowercase.
+ */
+
+exports.snake = snake;
+
+
+/**
+ * Space. Should precede lowercase.
+ */
+
+exports.space = space;
+
+
+/**
+ * Constant. Should precede uppercase.
+ */
+
+exports.constant = constant;
+
+
+/**
+ * Capital. Should precede sentence and title.
+ */
+
+exports.capital = capital;
+
+
+/**
+ * Title.
+ */
+
+exports.title = title;
+
+
+/**
+ * Sentence.
+ */
+
+exports.sentence = sentence;
+
+
+/**
+ * Convert a `string` to lower case from camel, slug, etc. Different that the
+ * usual `toLowerCase` in that it will try to break apart the input first.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+exports.lower = function (string) {
+  return none(string).toLowerCase();
+};
+
+
+/**
+ * Convert a `string` to upper case from camel, slug, etc. Different that the
+ * usual `toUpperCase` in that it will try to break apart the input first.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+exports.upper = function (string) {
+  return none(string).toUpperCase();
+};
+
+
+/**
+ * Invert each character in a `string` from upper to lower and vice versa.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+exports.inverse = function (string) {
+  for (var i = 0, char; char = string[i]; i++) {
+    if (!/[a-z]/i.test(char)) continue;
+    var upper = char.toUpperCase();
+    var lower = char.toLowerCase();
+    string[i] = char == upper ? lower : upper;
+  }
+  return string;
+};
+
+
+/**
+ * None.
+ */
+
+exports.none = none;
+}, {"to-camel-case":165,"to-capital-case":166,"to-constant-case":167,"to-dot-case":168,"to-no-case":117,"to-pascal-case":169,"to-sentence-case":170,"to-slug-case":171,"to-snake-case":172,"to-space-case":173,"to-title-case":174}],
+165: [function(require, module, exports) {
+
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toCamelCase`.
+ */
+
+module.exports = toCamelCase;
+
+
+/**
+ * Convert a `string` to camel case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toCamelCase (string) {
+  return toSpace(string).replace(/\s(\w)/g, function (matches, letter) {
+    return letter.toUpperCase();
+  });
+}
+}, {"to-space-case":173}],
+173: [function(require, module, exports) {
+
+var clean = require('to-no-case');
+
+
+/**
+ * Expose `toSpaceCase`.
+ */
+
+module.exports = toSpaceCase;
+
+
+/**
+ * Convert a `string` to space case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSpaceCase (string) {
+  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
+    return match ? ' ' + match : '';
+  });
+}
+}, {"to-no-case":117}],
+166: [function(require, module, exports) {
+
+var clean = require('to-no-case');
+
+
+/**
+ * Expose `toCapitalCase`.
+ */
+
+module.exports = toCapitalCase;
+
+
+/**
+ * Convert a `string` to capital case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toCapitalCase (string) {
+  return clean(string).replace(/(^|\s)(\w)/g, function (matches, previous, letter) {
+    return previous + letter.toUpperCase();
+  });
+}
+}, {"to-no-case":117}],
+167: [function(require, module, exports) {
+
+var snake = require('to-snake-case');
+
+
+/**
+ * Expose `toConstantCase`.
+ */
+
+module.exports = toConstantCase;
+
+
+/**
+ * Convert a `string` to constant case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toConstantCase (string) {
+  return snake(string).toUpperCase();
+}
+}, {"to-snake-case":172}],
+172: [function(require, module, exports) {
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toSnakeCase`.
+ */
+
+module.exports = toSnakeCase;
+
+
+/**
+ * Convert a `string` to snake case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSnakeCase (string) {
+  return toSpace(string).replace(/\s/g, '_');
+}
+
+}, {"to-space-case":173}],
+168: [function(require, module, exports) {
+
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toDotCase`.
+ */
+
+module.exports = toDotCase;
+
+
+/**
+ * Convert a `string` to slug case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toDotCase (string) {
+  return toSpace(string).replace(/\s/g, '.');
+}
+}, {"to-space-case":173}],
+169: [function(require, module, exports) {
+
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toPascalCase`.
+ */
+
+module.exports = toPascalCase;
+
+
+/**
+ * Convert a `string` to pascal case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toPascalCase (string) {
+  return toSpace(string).replace(/(?:^|\s)(\w)/g, function (matches, letter) {
+    return letter.toUpperCase();
+  });
+}
+}, {"to-space-case":173}],
+170: [function(require, module, exports) {
+
+var clean = require('to-no-case');
+
+
+/**
+ * Expose `toSentenceCase`.
+ */
+
+module.exports = toSentenceCase;
+
+
+/**
+ * Convert a `string` to camel case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSentenceCase (string) {
+  return clean(string).replace(/[a-z]/i, function (letter) {
+    return letter.toUpperCase();
+  });
+}
+}, {"to-no-case":117}],
+171: [function(require, module, exports) {
+
+var toSpace = require('to-space-case');
+
+
+/**
+ * Expose `toSlugCase`.
+ */
+
+module.exports = toSlugCase;
+
+
+/**
+ * Convert a `string` to slug case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toSlugCase (string) {
+  return toSpace(string).replace(/\s/g, '-');
+}
+}, {"to-space-case":173}],
+174: [function(require, module, exports) {
+
+var capital = require('to-capital-case')
+  , escape = require('escape-regexp')
+  , map = require('map')
+  , minors = require('title-case-minors');
+
+
+/**
+ * Expose `toTitleCase`.
+ */
+
+module.exports = toTitleCase;
+
+
+/**
+ * Minors.
+ */
+
+var escaped = map(minors, escape);
+var minorMatcher = new RegExp('[^^]\\b(' + escaped.join('|') + ')\\b', 'ig');
+var colonMatcher = /:\s*(\w)/g;
+
+
+/**
+ * Convert a `string` to camel case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+function toTitleCase (string) {
+  return capital(string)
+    .replace(minorMatcher, function (minor) {
+      return minor.toLowerCase();
+    })
+    .replace(colonMatcher, function (letter) {
+      return letter.toUpperCase();
+    });
+}
+}, {"to-capital-case":166,"escape-regexp":175,"map":176,"title-case-minors":177}],
+175: [function(require, module, exports) {
+
+/**
+ * Escape regexp special characters in `str`.
+ *
+ * @param {String} str
+ * @return {String}
+ * @api public
+ */
+
+module.exports = function(str){
+  return String(str).replace(/([.*+?=^!:${}()|[\]\/\\])/g, '\\$1');
+};
+}, {}],
 176: [function(require, module, exports) {
+
+var each = require('each');
+
+
+/**
+ * Map an array or object.
+ *
+ * @param {Array|Object} obj
+ * @param {Function} iterator
+ * @return {Mixed}
+ */
+
+module.exports = function map (obj, iterator) {
+  var arr = [];
+  each(obj, function (o) {
+    arr.push(iterator.apply(null, arguments));
+  });
+  return arr;
+};
+}, {"each":106}],
+177: [function(require, module, exports) {
+
+module.exports = [
+  'a',
+  'an',
+  'and',
+  'as',
+  'at',
+  'but',
+  'by',
+  'en',
+  'for',
+  'from',
+  'how',
+  'if',
+  'in',
+  'neither',
+  'nor',
+  'of',
+  'on',
+  'only',
+  'onto',
+  'out',
+  'or',
+  'per',
+  'so',
+  'than',
+  'that',
+  'the',
+  'to',
+  'until',
+  'up',
+  'upon',
+  'v',
+  'v.',
+  'versus',
+  'vs',
+  'vs.',
+  'via',
+  'when',
+  'with',
+  'without',
+  'yet'
+];
+}, {}],
+162: [function(require, module, exports) {
 
 /**
  * Parse the given `url`.
@@ -9517,7 +9660,7 @@ GTM.prototype.track = function(track){
   push(props);
 };
 
-}, {"global-queue":167,"analytics.js-integration":83}],
+}, {"global-queue":152,"analytics.js-integration":83}],
 37: [function(require, module, exports) {
 
 /**
@@ -9748,7 +9891,7 @@ Heap.prototype.track = function(track){
   window.heap.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":83,"alias":172}],
+}, {"analytics.js-integration":83,"alias":157}],
 39: [function(require, module, exports) {
 
 /**
@@ -9962,7 +10105,7 @@ function convertDates(properties){
   return convert(properties, function(date){ return date.getTime(); });
 }
 
-}, {"analytics.js-integration":83,"global-queue":167,"convert-dates":173}],
+}, {"analytics.js-integration":83,"global-queue":152,"convert-dates":158}],
 43: [function(require, module, exports) {
 
 /**
@@ -10039,7 +10182,7 @@ Improvely.prototype.track = function(track){
   window.improvely.goal(props);
 };
 
-}, {"analytics.js-integration":83,"alias":172}],
+}, {"analytics.js-integration":83,"alias":157}],
 44: [function(require, module, exports) {
 
 /**
@@ -10126,7 +10269,7 @@ InsideVault.prototype.track = function(track){
     push('trackEvent', event, value, eventId);
   }
 };
-}, {"analytics.js-integration":83,"global-queue":167,"facade":124,"is":86}],
+}, {"analytics.js-integration":83,"global-queue":152,"facade":124,"is":86}],
 45: [function(require, module, exports) {
 
 /**
@@ -10197,7 +10340,7 @@ Inspectlet.prototype.track = function(track){
   push('tagSession', track.event());
 };
 
-}, {"analytics.js-integration":83,"global-queue":167,"alias":172,"clone":171}],
+}, {"analytics.js-integration":83,"global-queue":152,"alias":157,"clone":156}],
 46: [function(require, module, exports) {
 
 /**
@@ -10356,7 +10499,7 @@ function formatDate(date) {
   return Math.floor(date / 1000);
 }
 
-}, {"analytics.js-integration":83,"convert-dates":173,"defaults":166,"is-email":162,"load-script":120,"is-empty":118,"alias":172,"each":4,"when":123,"is":86}],
+}, {"analytics.js-integration":83,"convert-dates":158,"defaults":151,"is-email":147,"load-script":120,"is-empty":118,"alias":157,"each":4,"when":123,"is":86}],
 47: [function(require, module, exports) {
 
 /**
@@ -10796,8 +10939,8 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"analytics.js-integration":83,"global-queue":167,"facade":124,"alias":172,"batch":177,"each":4,"is":86}],
-177: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":152,"facade":124,"alias":157,"batch":178,"each":4,"is":86}],
+178: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -10957,8 +11100,8 @@ Batch.prototype.end = function(cb){
   return this;
 };
 
-}, {"emitter":178}],
-178: [function(require, module, exports) {
+}, {"emitter":179}],
+179: [function(require, module, exports) {
 
 /**
  * Expose `Emitter`.
@@ -11221,7 +11364,7 @@ Klaviyo.prototype.track = function(track){
   }));
 };
 
-}, {"analytics.js-integration":83,"global-queue":167,"next-tick":97,"alias":172}],
+}, {"analytics.js-integration":83,"global-queue":152,"next-tick":97,"alias":157}],
 51: [function(require, module, exports) {
 
 /**
@@ -11352,7 +11495,7 @@ function convert(traits){
   return arr;
 }
 
-}, {"analytics.js-integration":83,"clone":171,"each":4,"facade":124,"when":123}],
+}, {"analytics.js-integration":83,"clone":156,"each":4,"facade":124,"when":123}],
 53: [function(require, module, exports) {
 
 /**
@@ -11512,7 +11655,7 @@ Lytics.prototype.track = function(track){
   window.jstag.send(props);
 };
 
-}, {"analytics.js-integration":83,"alias":172}],
+}, {"analytics.js-integration":83,"alias":157}],
 55: [function(require, module, exports) {
 
 /**
@@ -11737,8 +11880,8 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":172,"clone":171,"convert-dates":173,"analytics.js-integration":83,"is":86,"to-iso-string":170,"indexof":109,"obj-case":138,"some":179}],
-179: [function(require, module, exports) {
+}, {"alias":157,"clone":156,"convert-dates":158,"analytics.js-integration":83,"is":86,"to-iso-string":155,"indexof":109,"obj-case":161,"some":180}],
+180: [function(require, module, exports) {
 
 /**
  * some
@@ -11946,7 +12089,7 @@ function set(obj){
   });
 }
 
-}, {"global-queue":167,"analytics.js-integration":83,"each":4}],
+}, {"global-queue":152,"analytics.js-integration":83,"each":4}],
 58: [function(require, module, exports) {
 
 /**
@@ -12066,7 +12209,7 @@ Navilytics.prototype.track = function(track){
   push('tagRecording', track.event());
 };
 
-}, {"analytics.js-integration":83,"global-queue":167}],
+}, {"analytics.js-integration":83,"global-queue":152}],
 60: [function(require, module, exports) {
 
 /**
@@ -12322,7 +12465,7 @@ Optimizely.prototype.replay = function(){
   this.analytics.identify(traits);
 };
 
-}, {"analytics.js-integration":83,"global-queue":167,"callback":88,"next-tick":97,"bind":95,"each":4}],
+}, {"analytics.js-integration":83,"global-queue":152,"callback":88,"next-tick":97,"bind":95,"each":4}],
 62: [function(require, module, exports) {
 
 /**
@@ -12420,7 +12563,7 @@ Pingdom.prototype.loaded = function(){
   return !! (window._prum && window._prum.push !== Array.prototype.push);
 };
 
-}, {"analytics.js-integration":83,"global-queue":167,"load-date":168}],
+}, {"analytics.js-integration":83,"global-queue":152,"load-date":153}],
 64: [function(require, module, exports) {
 
 /**
@@ -12488,7 +12631,7 @@ Piwik.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":83,"global-queue":167,"each":4}],
+}, {"analytics.js-integration":83,"global-queue":152,"each":4}],
 65: [function(require, module, exports) {
 
 /**
@@ -12601,7 +12744,7 @@ function convertDate(date){
   return Math.floor(date / 1000);
 }
 
-}, {"analytics.js-integration":83,"convert-dates":173,"global-queue":167,"alias":172}],
+}, {"analytics.js-integration":83,"convert-dates":158,"global-queue":152,"alias":157}],
 66: [function(require, module, exports) {
 
 /**
@@ -12686,7 +12829,7 @@ Qualaroo.prototype.track = function(track){
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"analytics.js-integration":83,"global-queue":167,"facade":124,"bind":95,"when":123}],
+}, {"analytics.js-integration":83,"global-queue":152,"facade":124,"bind":95,"when":123}],
 67: [function(require, module, exports) {
 
 /**
@@ -12872,7 +13015,7 @@ Quantcast.prototype.labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"global-queue":167,"analytics.js-integration":83,"use-https":85}],
+}, {"global-queue":152,"analytics.js-integration":83,"use-https":85}],
 68: [function(require, module, exports) {
 
 /**
@@ -13267,7 +13410,7 @@ Tapstream.prototype.track = function(track){
   push('fireHit', slug(track.event()), [props.url]); // needs events as slugs
 };
 
-}, {"analytics.js-integration":83,"slug":93,"global-queue":167}],
+}, {"analytics.js-integration":83,"slug":93,"global-queue":152}],
 74: [function(require, module, exports) {
 
 /**
@@ -13420,7 +13563,7 @@ Trakio.prototype.alias = function(alias){
   }
 };
 
-}, {"analytics.js-integration":83,"alias":172,"clone":171}],
+}, {"analytics.js-integration":83,"alias":157,"clone":156}],
 75: [function(require, module, exports) {
 
 /**
@@ -13550,7 +13693,7 @@ Usercycle.prototype.track = function(track){
   }));
 };
 
-}, {"analytics.js-integration":83,"global-queue":167}],
+}, {"analytics.js-integration":83,"global-queue":152}],
 77: [function(require, module, exports) {
 
 /**
@@ -13736,8 +13879,8 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"analytics.js-integration":83,"global-queue":167,"convert-dates":173,"to-unix-timestamp":180,"alias":172,"clone":171}],
-180: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":152,"convert-dates":158,"to-unix-timestamp":181,"alias":157,"clone":156}],
+181: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -13845,8 +13988,8 @@ Vero.prototype.track = function(track){
   push('track', track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":83,"global-queue":167,"component/cookie":181}],
-181: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":152,"component/cookie":182}],
+182: [function(require, module, exports) {
 /**
  * Encode.
  */
@@ -14192,7 +14335,7 @@ Woopra.prototype.track = function(track){
   window.woopra.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":83,"to-snake-case":84,"is-email":162,"extend":122,"each":4,"type":7}],
+}, {"analytics.js-integration":83,"to-snake-case":84,"is-email":147,"extend":122,"each":4,"type":7}],
 82: [function(require, module, exports) {
 
 /**
@@ -14925,8 +15068,8 @@ function message(Type, msg){
   return new Type(msg);
 }
 
-}, {"after":105,"bind":182,"callback":88,"canonical":175,"clone":89,"./cookie":183,"debug":184,"defaults":91,"each":4,"emitter":102,"./group":185,"is":86,"is-email":162,"is-meta":186,"new-date":139,"event":187,"prevent":188,"querystring":189,"object":174,"./store":190,"url":176,"./user":191,"facade":124}],
-182: [function(require, module, exports) {
+}, {"after":105,"bind":183,"callback":88,"canonical":160,"clone":89,"./cookie":184,"debug":185,"defaults":91,"each":4,"emitter":102,"./group":186,"is":86,"is-email":147,"is-meta":187,"new-date":139,"event":188,"prevent":189,"querystring":190,"object":159,"./store":191,"url":162,"./user":192,"facade":124}],
+183: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -14973,7 +15116,7 @@ function bindMethods (obj, methods) {
   return obj;
 }
 }, {"bind":95,"bind-all":96}],
-183: [function(require, module, exports) {
+184: [function(require, module, exports) {
 
 var debug = require('debug')('analytics.js:cookie');
 var bind = require('bind');
@@ -15101,16 +15244,16 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"debug":184,"bind":182,"cookie":181,"clone":89,"defaults":91,"json":192,"top-domain":193}],
-184: [function(require, module, exports) {
+}, {"debug":185,"bind":183,"cookie":182,"clone":89,"defaults":91,"json":193,"top-domain":194}],
+185: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":194,"./debug":195}],
-194: [function(require, module, exports) {
+}, {"./lib/debug":195,"./debug":196}],
+195: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15260,7 +15403,7 @@ function coerce(val) {
 }
 
 }, {}],
-195: [function(require, module, exports) {
+196: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -15400,7 +15543,7 @@ try {
 } catch(e){}
 
 }, {}],
-192: [function(require, module, exports) {
+193: [function(require, module, exports) {
 
 var json = window.JSON || {};
 var stringify = json.stringify;
@@ -15410,8 +15553,8 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":196}],
-196: [function(require, module, exports) {
+}, {"json-fallback":197}],
+197: [function(require, module, exports) {
 /*
     json2.js
     2014-02-04
@@ -15901,7 +16044,7 @@ module.exports = parse && stringify
 }());
 
 }, {}],
-193: [function(require, module, exports) {
+194: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15949,8 +16092,8 @@ function domain(url){
   return match ? match[0] : '';
 };
 
-}, {"url":176}],
-185: [function(require, module, exports) {
+}, {"url":162}],
+186: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:group');
 var Entity = require('./entity');
@@ -16006,8 +16149,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":184,"./entity":197,"inherit":198,"bind":182}],
-197: [function(require, module, exports) {
+}, {"debug":185,"./entity":198,"inherit":199,"bind":183}],
+198: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var defaults = require('defaults');
@@ -16227,8 +16370,8 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"isodate-traverse":134,"defaults":91,"./cookie":183,"./store":190,"extend":122,"clone":89}],
-190: [function(require, module, exports) {
+}, {"isodate-traverse":134,"defaults":91,"./cookie":184,"./store":191,"extend":122,"clone":89}],
+191: [function(require, module, exports) {
 
 var bind = require('bind');
 var defaults = require('defaults');
@@ -16315,8 +16458,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":182,"defaults":91,"store.js":199}],
-199: [function(require, module, exports) {
+}, {"bind":183,"defaults":91,"store.js":200}],
+200: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -16468,8 +16611,8 @@ try {
 store.enabled = !store.disabled
 
 module.exports = store;
-}, {"json":192}],
-198: [function(require, module, exports) {
+}, {"json":193}],
+199: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -16478,7 +16621,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-186: [function(require, module, exports) {
+187: [function(require, module, exports) {
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
 
@@ -16494,7 +16637,7 @@ module.exports = function isMeta (e) {
     return false;
 };
 }, {}],
-187: [function(require, module, exports) {
+188: [function(require, module, exports) {
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -16537,7 +16680,7 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 }, {}],
-188: [function(require, module, exports) {
+189: [function(require, module, exports) {
 
 /**
  * prevent default on the given `e`.
@@ -16560,7 +16703,7 @@ module.exports = function(e){
 };
 
 }, {}],
-189: [function(require, module, exports) {
+190: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16635,8 +16778,8 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":163,"type":7}],
-191: [function(require, module, exports) {
+}, {"trim":148,"type":7}],
+192: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:user');
 var Entity = require('./entity');
@@ -16722,9 +16865,9 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":184,"./entity":197,"inherit":198,"bind":182,"./cookie":183}],
+}, {"debug":185,"./entity":198,"inherit":199,"bind":183,"./cookie":184}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.17';
+module.exports = '2.3.18';
 
 }, {}]}, {}, {"1":"analytics"})

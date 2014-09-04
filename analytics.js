@@ -14334,7 +14334,6 @@ var Alias = Facade.Alias;
 var Track = Facade.Track;
 var Page = Facade.Page;
 
-
 /**
  * Expose `Analytics`.
  */
@@ -14361,23 +14360,20 @@ function Analytics () {
   bind.all(this);
 
   var self = this;
-  this.on('initialize', function (settings, options) {
+  this.on('initialize', function(settings, options){
     if (options.initialPageview) self.page();
   });
 
-  this.on('initialize', function () {
+  this.on('initialize', function(){
     self._parseQuery();
   });
-
 }
-
 
 /**
  * Event Emitter.
  */
 
 Emitter(Analytics.prototype);
-
 
 /**
  * Use a `plugin`.
@@ -14390,7 +14386,6 @@ Analytics.prototype.use = function (plugin) {
   plugin(this);
   return this;
 };
-
 
 /**
  * Define a new `Integration`.
@@ -14405,7 +14400,6 @@ Analytics.prototype.addIntegration = function (Integration) {
   this.Integrations[name] = Integration;
   return this;
 };
-
 
 /**
  * Initialize with the given integration `settings` and `options`. Aliased to
@@ -14480,7 +14474,6 @@ Analytics.prototype.add = function(integration){
   return this;
 };
 
-
 /**
  * Identify a user by optional `id` and `traits`.
  *
@@ -14515,7 +14508,6 @@ Analytics.prototype.identify = function (id, traits, options, fn) {
   return this;
 };
 
-
 /**
  * Return the current user.
  *
@@ -14525,7 +14517,6 @@ Analytics.prototype.identify = function (id, traits, options, fn) {
 Analytics.prototype.user = function () {
   return user;
 };
-
 
 /**
  * Identify a group by optional `id` and `traits`. Or, if no arguments are
@@ -14561,7 +14552,6 @@ Analytics.prototype.group = function (id, traits, options, fn) {
   return this;
 };
 
-
 /**
  * Track an `event` that a user has triggered with optional `properties`.
  *
@@ -14586,7 +14576,6 @@ Analytics.prototype.track = function (event, properties, options, fn) {
   this._callback(fn);
   return this;
 };
-
 
 /**
  * Helper method to track an outbound link that would normally navigate away
@@ -14624,7 +14613,6 @@ Analytics.prototype.trackLink = function (links, event, properties) {
 
   return this;
 };
-
 
 /**
  * Helper method to track an outbound form that would normally navigate away
@@ -14670,7 +14658,6 @@ Analytics.prototype.trackForm = function (forms, event, properties) {
 
   return this;
 };
-
 
 /**
  * Trigger a pageview, labeling the current page with an optional `category`,
@@ -14718,7 +14705,6 @@ Analytics.prototype.page = function (category, name, properties, options, fn) {
   return this;
 };
 
-
 /**
  * BACKWARDS COMPATIBILITY: convert an old `pageview` to a `page` call.
  *
@@ -14734,7 +14720,6 @@ Analytics.prototype.pageview = function (url, options) {
   this.page(properties);
   return this;
 };
-
 
 /**
  * Merge two previously unassociated user identities.
@@ -14762,7 +14747,6 @@ Analytics.prototype.alias = function (to, from, options, fn) {
   return this;
 };
 
-
 /**
  * Register a `fn` to be fired when all the analytics services are ready.
  *
@@ -14778,7 +14762,6 @@ Analytics.prototype.ready = function (fn) {
   return this;
 };
 
-
 /**
  * Set the `timeout` (in milliseconds) used for callbacks.
  *
@@ -14788,7 +14771,6 @@ Analytics.prototype.ready = function (fn) {
 Analytics.prototype.timeout = function (timeout) {
   this._timeout = timeout;
 };
-
 
 /**
  * Enable or disable debug.
@@ -14803,7 +14785,6 @@ Analytics.prototype.debug = function(str){
     debug.disable();
   }
 };
-
 
 /**
  * Apply options.
@@ -14822,7 +14803,6 @@ Analytics.prototype._options = function (options) {
   return this;
 };
 
-
 /**
  * Callback a `fn` after our defined timeout period.
  *
@@ -14835,7 +14815,6 @@ Analytics.prototype._callback = function (fn) {
   callback.async(fn, this._timeout);
   return this;
 };
-
 
 /**
  * Call `method` with `facade` on all enabled integrations.
@@ -14886,7 +14865,6 @@ Analytics.prototype._parseQuery = function () {
   if (q.ajs_event) this.track(q.ajs_event);
   return this;
 };
-
 
 /**
  * Return the canonical path for the page.
@@ -16758,6 +16736,6 @@ module.exports.User = User;
 }, {"debug":183,"./entity":196,"inherit":197,"bind":181,"./cookie":182}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.20';
+module.exports = '2.3.21';
 
 }, {}]}, {}, {"1":"analytics"})

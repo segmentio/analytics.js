@@ -1072,10 +1072,10 @@ module.exports = defaults;
  */
 
 var loadScript = require('segmentio/load-script');
+var events = require('analytics-events');
 var normalize = require('to-no-case');
 var callback = require('callback');
 var Emitter = require('emitter');
-var events = require('./events');
 var tick = require('next-tick');
 var assert = require('assert');
 var after = require('after');
@@ -1146,21 +1146,21 @@ exports.track = function(track){};
 
 /**
  * Get events that match `str`.
- * 
+ *
  * Examples:
- * 
+ *
  *    events = { my_event: 'a4991b88' }
  *    .map(events, 'My Event');
  *    // => ["a4991b88"]
  *    .map(events, 'whatever');
  *    // => []
- * 
+ *
  *    events = [{ key: 'my event', value: '9b5eb1fa' }]
  *    .map(events, 'my_event');
  *    // => ["9b5eb1fa"]
  *    .map(events, 'whatever');
  *    // => []
- * 
+ *
  * @param {String} str
  * @return {Array}
  * @api public
@@ -1368,7 +1368,7 @@ exports._wrapPage = function(){
     if (this._assumesPageview && !this._initialized) {
       return this.initialize.apply(this, arguments);
     }
-    
+
     return page.apply(this, arguments);
   };
 };
@@ -1439,7 +1439,8 @@ function render(template, locals) {
   });
   return attrs;
 }
-}, {"segmentio/load-script":98,"to-no-case":99,"callback":86,"emitter":100,"./events":101,"next-tick":95,"assert":102,"after":103,"component/each":104,"type":7,"yields/fmt":105}],
+
+}, {"segmentio/load-script":98,"analytics-events":99,"to-no-case":100,"callback":86,"emitter":101,"next-tick":95,"assert":102,"after":103,"component/each":104,"type":7,"yields/fmt":105}],
 98: [function(require, module, exports) {
 
 /**
@@ -1555,6 +1556,17 @@ function attach(el, fn){
 }, {}],
 99: [function(require, module, exports) {
 
+module.exports = {
+  removedProduct: /^[ _]?removed[ _]?product[ _]?$/i,
+  viewedProduct: /^[ _]?viewed[ _]?product[ _]?$/i,
+  viewedProductCategory: /^[ _]?viewed[ _]?product[ _]?category[ _]?$/i,
+  addedProduct: /^[ _]?added[ _]?product[ _]?$/i,
+  completedOrder: /^[ _]?completed[ _]?order[ _]?$/i
+};
+
+}, {}],
+100: [function(require, module, exports) {
+
 /**
  * Expose `toNoCase`.
  */
@@ -1626,7 +1638,7 @@ function uncamelize (string) {
   });
 }
 }, {}],
-100: [function(require, module, exports) {
+101: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -1801,20 +1813,6 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-}, {}],
-101: [function(require, module, exports) {
-
-/**
- * Expose `events`.
- */
-
-module.exports = {
-  removedProduct: /removed[ _]?product/i,
-  viewedProduct: /viewed[ _]?product/i,
-  addedProduct: /added[ _]?product/i,
-  completedOrder: /completed[ _]?order/i
-};
-
 }, {}],
 102: [function(require, module, exports) {
 
@@ -2789,7 +2787,7 @@ function objectify(str) {
     attrs: attrs
   };
 }
-}, {"after":103,"component/domify":113,"component/each":104,"emitter":100}],
+}, {"after":103,"component/domify":113,"component/each":104,"emitter":101}],
 113: [function(require, module, exports) {
 
 /**
@@ -14936,7 +14934,7 @@ function message(Type, msg){
   return new Type(msg);
 }
 
-}, {"after":103,"bind":181,"callback":86,"canonical":158,"clone":87,"./cookie":182,"debug":183,"defaults":89,"each":4,"emitter":100,"./group":184,"is":84,"is-email":145,"is-meta":185,"new-date":137,"event":186,"prevent":187,"querystring":188,"object":157,"./store":189,"url":160,"./user":190,"facade":122}],
+}, {"after":103,"bind":181,"callback":86,"canonical":158,"clone":87,"./cookie":182,"debug":183,"defaults":89,"each":4,"emitter":101,"./group":184,"is":84,"is-email":145,"is-meta":185,"new-date":137,"event":186,"prevent":187,"querystring":188,"object":157,"./store":189,"url":160,"./user":190,"facade":122}],
 181: [function(require, module, exports) {
 
 try {
@@ -16736,6 +16734,6 @@ module.exports.User = User;
 }, {"debug":183,"./entity":196,"inherit":197,"bind":181,"./cookie":182}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.21';
+module.exports = '2.3.22';
 
 }, {}]}, {}, {"1":"analytics"})

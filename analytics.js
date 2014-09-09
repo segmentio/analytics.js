@@ -4854,7 +4854,6 @@ function multiple (fn) {
             // we're at the end and there is nothing.
             if (null == child) {
               finished = true;
-              obj = null;
               return;
             }
 
@@ -4880,6 +4879,7 @@ function multiple (fn) {
     }
 
     if (!key) return;
+    if (null == obj) return obj;
 
     // the `obj` and `key` is one above the leaf object and key, so
     // start object: { a: { 'b.c': 10 } }
@@ -16734,6 +16734,6 @@ module.exports.User = User;
 }, {"debug":183,"./entity":196,"inherit":197,"bind":181,"./cookie":182}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.22';
+module.exports = '2.3.23';
 
 }, {}]}, {}, {"1":"analytics"})

@@ -6333,13 +6333,25 @@ var extend = require('extend');
 var onError = require('on-error');
 
 /**
+ * UMD ?
+ */
+
+var umd = 'function' == typeof define && define.amd;
+
+/**
+ * Source.
+ */
+
+var src = '//d2wy8f7a9ursnm.cloudfront.net/bugsnag-2.min.js';
+
+/**
  * Expose `Bugsnag` integration.
  */
 
 var Bugsnag = module.exports = integration('Bugsnag')
   .global('Bugsnag')
   .option('apiKey', '')
-  .tag('<script src="//d2wy8f7a9ursnm.cloudfront.net/bugsnag-2.min.js">');
+  .tag('<script src="' + src + '">');
 
 /**
  * Initialize.
@@ -6351,6 +6363,16 @@ var Bugsnag = module.exports = integration('Bugsnag')
 
 Bugsnag.prototype.initialize = function(page){
   var self = this;
+
+  if (umd) {
+    window.require([src], function(bugsnag){
+      bugsnag.apiKey = self.options.apiKey;
+      window.Bugsnag = bugsnag;
+      self.ready();
+    });
+    return;
+  }
+
   this.load(function(){
     window.Bugsnag.apiKey = self.options.apiKey;
     self.ready();
@@ -10178,6 +10200,8 @@ InsideVault.prototype.initialize = function(page){
   var domain = this.options.domain;
   window._iva = window._iva || [];
   push('setClientId', this.options.clientId);
+  var userId = this.analytics.user().id();
+  if (userId) push('setUserId', userId);
   if (domain) push('setDomain', domain);
   this.load(this.ready);
 };
@@ -10191,6 +10215,17 @@ InsideVault.prototype.initialize = function(page){
 InsideVault.prototype.loaded = function(){
   return !! (window._iva && window._iva.push !== Array.prototype.push);
 };
+
+/**
+ * Identify.
+ *
+ * @param {Identify} identify
+ */
+
+InsideVault.prototype.identify = function(identify){
+  push('setUserId', identify.userId());
+};
+
 
 /**
  * Page.
@@ -10269,7 +10304,7 @@ Inspectlet.prototype.initialize = function(page){
  */
 
 Inspectlet.prototype.loaded = function(){
-  return !! window.__insp_;
+  return !! (window.__insp_ && window.__insp);
 };
 
 /**
@@ -10464,6 +10499,7 @@ function formatDate(date) {
  */
 
 var integration = require('analytics.js-integration');
+var clone = require('clone');
 
 /**
  * Expose `Keen IO` integration.
@@ -10610,7 +10646,7 @@ Keen.prototype.identify = function(identify){
   };
 
   this.client.setGlobalProperties(function(){
-    return props;
+    return clone(props);
   });
 };
 
@@ -10623,7 +10659,8 @@ Keen.prototype.identify = function(identify){
 Keen.prototype.track = function(track){
   this.client.addEvent(track.event(), track.properties());
 };
-}, {"analytics.js-integration":81}],
+
+}, {"analytics.js-integration":81,"clone":154}],
 47: [function(require, module, exports) {
 
 /**
@@ -16734,6 +16771,6 @@ module.exports.User = User;
 }, {"debug":183,"./entity":196,"inherit":197,"bind":181,"./cookie":182}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.23';
+module.exports = '2.3.24';
 
 }, {}]}, {}, {"1":"analytics"})

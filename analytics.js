@@ -1081,7 +1081,7 @@ var assert = require('assert');
 var after = require('after');
 var each = require('component/each');
 var type = require('type');
-var fmt = require('yields/fmt');
+var fmt = require('fmt');
 
 /**
  * Window defaults.
@@ -1440,7 +1440,7 @@ function render(template, locals) {
   return attrs;
 }
 
-}, {"segmentio/load-script":98,"analytics-events":99,"to-no-case":100,"callback":86,"emitter":101,"next-tick":95,"assert":102,"after":103,"component/each":104,"type":7,"yields/fmt":105}],
+}, {"segmentio/load-script":98,"analytics-events":99,"to-no-case":100,"callback":86,"emitter":101,"next-tick":95,"assert":102,"after":103,"component/each":104,"type":7,"fmt":105}],
 98: [function(require, module, exports) {
 
 /**
@@ -2200,6 +2200,14 @@ var types = exports.types = {
 105: [function(require, module, exports) {
 
 /**
+ * toString.
+ */
+
+var toString = window.JSON
+  ? JSON.stringify
+  : function(_){ return String(_); };
+
+/**
  * Export `fmt`
  */
 
@@ -2209,7 +2217,7 @@ module.exports = fmt;
  * Formatters
  */
 
-fmt.o = JSON.stringify;
+fmt.o = toString;
 fmt.s = String;
 fmt.d = parseInt;
 
@@ -16692,6 +16700,6 @@ module.exports.User = User;
 }, {"debug":182,"./entity":195,"inherit":196,"bind":180,"./cookie":181}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.25';
+module.exports = '2.3.26';
 
 }, {}]}, {}, {"1":"analytics"})

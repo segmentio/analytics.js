@@ -8300,7 +8300,7 @@ var GA = exports.Integration = integration('Google Analytics')
   .global('GoogleAnalyticsObject')
   .option('anonymizeIp', false)
   .option('classic', false)
-  .option('domain', 'none')
+  .option('domain', 'auto')
   .option('doubleClick', false)
   .option('enhancedLinkAttribution', false)
   .option('ignoredReferrers', null)
@@ -8347,6 +8347,8 @@ GA.prototype.initialize = function(){
     window.ga.q.push(arguments);
   };
   window.ga.l = new Date().getTime();
+
+  if(window.location.hostname == 'localhost') opts.domain = 'none';
 
   window.ga('create', opts.trackingId, {
     cookieDomain: opts.domain || GA.prototype.defaults.domain, // to protect against empty string
@@ -9783,7 +9785,7 @@ var Heap = module.exports = integration('Heap')
   .assumesPageview()
   .global('heap')
   .global('_heapid')
-  .option('apiKey', '')
+  .option('appId', '')
   .tag('<script src="//d36lvucg9kzous.cloudfront.net">');
 
 /**
@@ -9796,7 +9798,7 @@ var Heap = module.exports = integration('Heap')
 
 Heap.prototype.initialize = function(page){
   window.heap=window.heap||[];window.heap.load=function(a){window._heapid=a;var d=function(a){return function(){window.heap.push([a].concat(Array.prototype.slice.call(arguments,0)));};},e=["identify","track"];for (var f=0;f<e.length;f++)window.heap[e[f]]=d(e[f]);};
-  window.heap.load(this.options.apiKey);
+  window.heap.load(this.options.appId);
   this.load(this.ready);
 };
 
@@ -16700,6 +16702,6 @@ module.exports.User = User;
 }, {"debug":182,"./entity":195,"inherit":196,"bind":180,"./cookie":181}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.26';
+module.exports = '2.3.27';
 
 }, {}]}, {}, {"1":"analytics"})

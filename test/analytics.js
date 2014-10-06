@@ -1192,4 +1192,24 @@ describe('Analytics', function () {
     })
   })
 
+  describe('#reset', function(){
+    beforeEach(function(){
+      user.id('user-id');
+      user.traits({ name: 'John Doe' });
+      group.id('group-id');
+      group.traits({ name: 'Example' });
+    });
+
+    it('should remove persisted group and user', function(){
+      assert('user-id' == user.id());
+      assert('John Doe' == user.traits().name);
+      assert('group-id' == group.id());
+      assert('Example' == group.traits().name);
+      analytics.reset();
+      assert(null == user.id());
+      assert.deepEqual({}, user.traits());
+      assert(null == group.id());
+      assert.deepEqual({}, group.traits());
+    });
+  });
 });

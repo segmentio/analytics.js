@@ -10139,7 +10139,6 @@ Improvely.prototype.track = function(track){
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('_iva');
 var Track = require('facade').Track;
-var each = require('each');
 var is = require('is');
 
 /**
@@ -10217,19 +10216,20 @@ InsideVault.prototype.page = function(page){
 
 InsideVault.prototype.track = function(track){
   var user = this.analytics.user();
-  var events = this.events(track.event());
+  var events = this.options.events;
+  var event = track.event();
   var value = track.revenue() || track.value() || 0;
   var eventId = track.orderId() || user.id() || '';
-  each(events, function(event){
-    // 'sale' is a special event that will be routed to a table that is deprecated on InsideVault's end.
-    // They don't want a generic 'sale' event to go to their deprecated table.
-    if (event != 'sale') {
-      push('trackEvent', event, value, eventId);
-    }
-  });
-};
+  if (!has.call(events, event)) return;
+  event = events[event];
 
-}, {"analytics.js-integration":81,"global-queue":150,"facade":122,"each":4,"is":84}],
+  // 'sale' is a special event that will be routed to a table that is deprecated on InsideVault's end.
+  // They don't want a generic 'sale' event to go to their deprecated table.
+  if (event != 'sale') {
+    push('trackEvent', event, value, eventId);
+  }
+};
+}, {"analytics.js-integration":81,"global-queue":150,"facade":122,"is":84}],
 44: [function(require, module, exports) {
 
 /**
@@ -10501,7 +10501,7 @@ Keen.prototype.initialize = function(){
     writeKey: options.writeKey,
     readKey: options.readKey
   });
-
+  
   // if you have a read-key, then load the full keen library
   var lib = this.options.readKey ? 'keen' : 'keen-tracker';
   this.load({ lib: lib }, this.ready);
@@ -10550,7 +10550,7 @@ Keen.prototype.page = function(page){
  *
  * TODO: migrate from old `userId` to simpler `id`
  * https://keen.io/docs/data-collection/data-enrichment/#add-ons
- *
+ * 
  * Set up the Keen addons object. These must be specifically
  * enabled by the settings in order to include the plugins, or else
  * Keen will reject the request.
@@ -10562,10 +10562,57 @@ Keen.prototype.identify = function(identify){
   var traits = identify.traits();
   var id = identify.userId();
   var user = {};
+  var options = this.options;
   if (id) user.userId = id;
   if (traits) user.traits = traits;
   var props = { user: user };
-  this.addons(props, identify);
+  var addons = [];
+
+  if (options.ipAddon) {
+    addons.push({
+      name: 'keen:ip_to_geo',
+      input: { ip: 'ip_address' },
+      output: 'ip_geo_info'
+    });
+    props.ip_address = '${keen.ip}';
+  }
+
+  if (options.uaAddon) {
+    addons.push({
+      name: 'keen:ua_parser',
+      input: { ua_string: 'user_agent' },
+      output: 'parsed_user_agent'
+    });
+    props.user_agent = '${keen.user_agent}';
+  }
+
+  if (options.urlAddon) {
+    addons.push({
+      name: 'keen:url_parser',
+      input: { url: 'page_url' },
+      output: 'parsed_page_url'
+    });
+    props.page_url = document.location.href;
+  }
+
+  if (options.referrerAddon) {
+    addons.push({
+      name: 'keen:referrer_parser',
+      input: {
+        referrer_url: 'referrer_url',
+        page_url: 'page_url'
+      },
+      output: 'referrer_info'
+    });
+    props.referrer_url = document.referrer;
+    props.page_url = document.location.href;
+  }
+  
+  props.keen = {
+    timestamp: identify.timestamp(),
+    addons: addons
+  };
+
   this.client.setGlobalProperties(function(){
     return clone(props);
   });
@@ -10578,66 +10625,7 @@ Keen.prototype.identify = function(identify){
  */
 
 Keen.prototype.track = function(track){
-  var props = track.properties();
-  this.addons(props, track);
-  this.client.addEvent(track.event(), props);
-};
-
-/**
- * Attach addons to `obj` with `msg`.
- *
- * @param {Object} obj
- * @param {Facade} msg
- */
-
-Keen.prototype.addons = function(obj, msg){
-  var options = this.options;
-  var addons = [];
-
-  if (options.ipAddon) {
-    addons.push({
-      name: 'keen:ip_to_geo',
-      input: { ip: 'ip_address' },
-      output: 'ip_geo_info'
-    });
-    obj.ip_address = '${keen.ip}';
-  }
-
-  if (options.uaAddon) {
-    addons.push({
-      name: 'keen:ua_parser',
-      input: { ua_string: 'user_agent' },
-      output: 'parsed_user_agent'
-    });
-    obj.user_agent = '${keen.user_agent}';
-  }
-
-  if (options.urlAddon) {
-    addons.push({
-      name: 'keen:url_parser',
-      input: { url: 'page_url' },
-      output: 'parsed_page_url'
-    });
-    obj.page_url = document.location.href;
-  }
-
-  if (options.referrerAddon) {
-    addons.push({
-      name: 'keen:referrer_parser',
-      input: {
-        referrer_url: 'referrer_url',
-        page_url: 'page_url'
-      },
-      output: 'referrer_info'
-    });
-    obj.referrer_url = document.referrer;
-    obj.page_url = document.location.href;
-  }
-
-  obj.keen = {
-    timestamp: msg.timestamp(),
-    addons: addons
-  };
+  this.client.addEvent(track.event(), track.properties());
 };
 
 }, {"analytics.js-integration":81,"clone":154}],
@@ -14864,6 +14852,17 @@ Analytics.prototype.push = function(args){
   var method = args.shift();
   if (!this[method]) return;
   this[method].apply(this, args);
+};
+
+/**
+ * Reset group and user traits and id's.
+ *
+ * @api public
+ */
+
+Analytics.prototype.reset = function(){
+  this.user().reset();
+  this.group().reset();
 };
 
 /**

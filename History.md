@@ -1,4 +1,10 @@
 
+2.3.29 / 2014-10-06
+===================
+
+  * Merge pull request #400 from segmentio/add/reset
+  * add reset(), closes #378
+
 2.3.28 / 2014-10-01
 ===================
 

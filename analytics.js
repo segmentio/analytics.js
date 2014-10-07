@@ -6419,6 +6419,16 @@ Comscore.prototype.loaded = function(){
   return !! window.COMSCORE;
 };
 
+/**
+ * Page
+ *
+ * @param {Object} page
+ */
+
+Comscore.prototype.page = function(page){
+  window.COMSCORE.beacon(this.options);
+};
+
 }, {"analytics.js-integration":81,"use-https":83}],
 24: [function(require, module, exports) {
 
@@ -16318,6 +16328,6 @@ module.exports.User = User;
 }, {"debug":178,"./entity":191,"inherit":192,"bind":176,"./cookie":177}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.29';
+module.exports = '2.3.30';
 
 }, {}]}, {}, {"1":"analytics"})

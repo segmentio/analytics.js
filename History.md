@@ -2,27 +2,29 @@
 2.3.30 / 2014-10-07
 ===================
 
-
+  * upgrade integrations
 
 2.3.29 / 2014-10-06
 ===================
 
-  * Merge pull request #400 from segmentio/add/reset
   * add reset(), closes #378
 
 2.3.28 / 2014-10-01
 ===================
 
+  * upgrade integrations
 
 
 2.3.27 / 2014-09-26
 ===================
 
+  * upgrade integrations
 
 
 2.3.26 / 2014-09-26
 ===================
 
+  * upgrade integrations
 
 
 2.3.25 / 2014-09-22
@@ -33,16 +35,19 @@
 2.3.24 / 2014-09-17
 ===================
 
+  * upgrade integrations
 
 
 2.3.23 / 2014-09-08
 ===================
 
+  * upgrade integrations
 
 
 2.3.22 / 2014-09-05
 ===================
 
+  * upgrade integrations
 
 
 2.3.21 / 2014-09-04
@@ -53,16 +58,19 @@
 2.3.20 / 2014-09-04
 ===================
 
+  * upgrade integrations
 
 
 2.3.19 / 2014-09-02
 ===================
 
+  * upgrade integrations
 
 
 2.3.18 / 2014-09-02
 ===================
 
+  * upgrade integrations
 
 
 2.3.17 / 2014-08-28
@@ -120,16 +128,19 @@
 2.3.6 / 2014-07-16
 ==================
 
+  * upgrade integrations
 
 
 2.3.5 / 2014-07-16
 ==================
 
+  * upgrade integrations
 
 
 2.3.4 / 2014-07-16
 ==================
 
+  * upgrade integrations
 
 
 2.3.3 / 2014-07-16

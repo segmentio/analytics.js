@@ -24,6 +24,10 @@ describe('user', function () {
     cookie.remove(cookieKey);
     store.remove(cookieKey);
     store.remove(localStorageKey);
+    store.remove('ajs_anonymous_id');
+    cookie.remove('ajs_anonymous_id');
+    cookie.remove('_sio');
+    store.remove('_sio');
     user.protocol = location.protocol;
   });
 
@@ -38,6 +42,28 @@ describe('user', function () {
       assert('my id' == user.id());
       assert(true == user.traits().trait);
     })
+
+    it('should pick the old "_sio" anonymousId', function(){
+      cookie.set('_sio', 'user-id----anonymous-id');
+      var user = new User;
+      assert('anonymous-id' == user.anonymousId());
+    });
+
+    it('should not pick the old "_sio" if anonymous id is present', function(){
+      cookie.set('_sio', 'user-id----old-anonymous-id');
+      cookie.set('ajs_anonymous_id', 'new-anonymous-id');
+      assert('new-anonymous-id' == new User().anonymousId());
+    });
+
+    it('should create anonymous id if missing', function(){
+      var user = new User;
+      assert(36 == user.anonymousId().length);
+    });
+
+    it('should not overwrite anonymous id', function(){
+      cookie.set('ajs_anonymous_id', 'anonymous');
+      assert('anonymous' == new User().anonymousId());
+    });
   })
 
   describe('#id', function () {
@@ -130,6 +156,52 @@ describe('user', function () {
 
       it('should be null by default', function () {
         assert(null === user.id());
+      });
+    });
+  });
+
+  describe('#anonymousId', function () {
+    describe('when file:', function(){
+      beforeEach(function(){
+        user.protocol = 'file:';
+      });
+
+      it('should get an id from the store', function () {
+        store.set('ajs_anonymous_id', 'anon-id');
+        assert('anon-id' == user.anonymousId());
+      });
+
+      it('should set an id to the store', function () {
+        user.anonymousId('anon-id');
+        assert('anon-id' === store.get('ajs_anonymous_id'));
+      });
+    });
+
+    describe('when chrome-extension:', function(){
+      beforeEach(function(){
+        user.protocol = 'chrome-extension:';
+      });
+
+      it('should get an id from the store', function () {
+        store.set('ajs_anonymous_id', 'anon-id');
+        assert('anon-id' == user.anonymousId());
+      });
+
+      it('should set an id to the store', function () {
+        user.anonymousId('anon-id');
+        assert('anon-id' === store.get('ajs_anonymous_id'));
+      });
+    });
+
+    describe('when http:', function(){
+      it('should get an id from the cookie', function () {
+        cookie.set('ajs_anonymous_id', 'anon-id');
+        assert('anon-id' == user.anonymousId());
+      });
+
+      it('should set an id to the cookie', function () {
+        user.anonymousId('anon-id');
+        assert('anon-id' === cookie.get('ajs_anonymous_id'));
       });
     });
   });

@@ -40,6 +40,7 @@ describe('Analytics', function () {
   afterEach(function () {
     user.reset();
     group.reset();
+    user.anonymousId(null);
     // clear the hash
     if (window.history && window.history.pushState) {
       window.history.pushState('', '', window.location.pathname);
@@ -354,6 +355,18 @@ describe('Analytics', function () {
       assert(analytics._invoke.calledWith('page'));
     });
 
+    it('should default .anonymousId', function(){
+      analytics.page();
+      var msg = analytics._invoke.args[0][1];
+      assert(36 == msg.anonymousId().length);
+    });
+
+    it('should override .anonymousId', function(){
+      analytics.page('category', 'name', {}, { anonymousId: 'anon-id' });
+      var msg = analytics._invoke.args[0][1];
+      assert('anon-id' == msg.anonymousId());
+    });
+
     it('should call #_invoke with Page instance', function(){
       analytics.page();
       var page = analytics._invoke.args[0][1];
@@ -550,6 +563,18 @@ describe('Analytics', function () {
       assert(analytics._invoke.calledWith('identify'));
     });
 
+    it('should default .anonymousId', function(){
+      analytics.identify('user-id');
+      var msg = analytics._invoke.args[0][1];
+      assert(36 == msg.anonymousId().length);
+    });
+
+    it('should override .anonymousId', function(){
+      analytics.identify('user-id', {}, { anonymousId: 'anon-id' });
+      var msg = analytics._invoke.args[0][1];
+      assert('anon-id' == msg.anonymousId());
+    });
+
     it('should call #_invoke with Identify', function(){
       analytics.identify();
       var identify = analytics._invoke.getCall(0).args[1];
@@ -732,6 +757,18 @@ describe('Analytics', function () {
       assert(analytics._invoke.calledWith('group'));
     });
 
+    it('should default .anonymousId', function(){
+      analytics.group('group-id');
+      var msg = analytics._invoke.args[0][1];
+      assert(36 == msg.anonymousId().length);
+    });
+
+    it('should override .anonymousId', function(){
+      analytics.group('group-id', {}, { anonymousId: 'anon-id' });
+      var msg = analytics._invoke.args[0][1];
+      assert('anon-id' == msg.anonymousId());
+    });
+
     it('should call #_invoke with group facade instance', function(){
       analytics.group('id');
       var group = analytics._invoke.args[0][1];
@@ -867,6 +904,18 @@ describe('Analytics', function () {
     it('should call #_invoke', function () {
       analytics.track();
       assert(analytics._invoke.calledWith('track'));
+    });
+
+    it('should default .anonymousId', function(){
+      analytics.track();
+      var msg = analytics._invoke.args[0][1];
+      assert(36 == msg.anonymousId().length);
+    });
+
+    it('should override .anonymousId', function(){
+      analytics.track('event', {}, { anonymousId: 'anon-id' });
+      var msg = analytics._invoke.args[0][1];
+      assert('anon-id' == msg.anonymousId());
     });
 
     it('should transform arguments into Track', function(){
@@ -1139,7 +1188,19 @@ describe('Analytics', function () {
       analytics.alias();
       var alias = analytics._invoke.args[0][1];
       assert('alias' == alias.action());
-    })
+    });
+
+    it('should default .anonymousId', function(){
+      analytics.alias('previous-id', 'user-id');
+      var msg = analytics._invoke.args[0][1];
+      assert(36 == msg.anonymousId().length);
+    });
+
+    it('should override .anonymousId', function(){
+      analytics.alias('previous-id', 'user-id', { anonymousId: 'anon-id' });
+      var msg = analytics._invoke.args[0][1];
+      assert('anon-id' == msg.anonymousId());
+    });
 
     it('should accept (new, old, options, callback)', function (done) {
       analytics.alias('new', 'old', {}, function () {

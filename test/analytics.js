@@ -337,6 +337,7 @@ describe('Analytics', function () {
   });
 
   describe('#page', function () {
+    var head = document.getElementsByTagName('head')[0];
     var defaults;
 
     beforeEach(function () {
@@ -384,10 +385,10 @@ describe('Analytics', function () {
       var el = document.createElement('link');
       el.rel = 'canonical';
       el.href = 'baz.com';
-      document.head.appendChild(el);
+      head.appendChild(el);
       analytics.page();
       var page = analytics._invoke.args[0][1];
-      assert('baz.com' == page.properties().url);
+      assert.equal('baz.com' + window.location.search, page.properties().url);
       el.parentNode.removeChild(el);
     });
 
@@ -395,7 +396,7 @@ describe('Analytics', function () {
       var el = document.createElement('link');
       el.rel = 'canonical';
       el.href = 'baz.com';
-      document.head.appendChild(el);
+      head.appendChild(el);
       analytics.page({ search: '?querystring' });
       var page = analytics._invoke.args[0][1];
       assert('baz.com?querystring' == page.properties().url);
@@ -999,10 +1000,13 @@ describe('Analytics', function () {
     beforeEach(function () {
       sinon.spy(analytics, 'track');
       link = document.createElement('a');
+      link.href = '#';
+      document.body.appendChild(link);
     });
 
     afterEach(function () {
       window.location.hash = '';
+      document.body.removeChild(link);
     });
 
     it('should trigger a track on an element click', function () {
@@ -1077,7 +1081,7 @@ describe('Analytics', function () {
     });
 
     after(function () {
-      delete window.jQuery;
+      window.jQuery = null;
     });
 
     beforeEach(function () {
@@ -1088,22 +1092,24 @@ describe('Analytics', function () {
       submit = document.createElement('input');
       submit.type = 'submit';
       form.appendChild(submit);
+      document.body.appendChild(form);
     });
 
     afterEach(function () {
       window.location.hash = '';
+      document.body.removeChild(form);
     });
 
     it('should trigger a track on a form submit', function () {
       analytics.trackForm(form);
-      trigger(submit, 'click');
+      submit.click();
       assert(analytics.track.called);
     });
 
     it('should accept a jquery object for an element', function () {
       var $form = jQuery(form);
       analytics.trackForm(form);
-      trigger(submit, 'click');
+      submit.click();
       assert(analytics.track.called);
     });
 
@@ -1112,51 +1118,51 @@ describe('Analytics', function () {
       assert.throws(function(){
         analytics.trackForm(str);
       }, TypeError, 'Must pass HTMLElement to `analytics.trackForm`.');
-      trigger(submit, 'click');
+      submit.click();
       assert(!analytics.track.called);
     });
 
     it('should send an event and properties', function () {
       analytics.trackForm(form, 'event', { property: true });
-      trigger(submit, 'click');
+      submit.click();
       assert(analytics.track.calledWith('event', { property: true }));
     });
 
     it('should accept an event function', function () {
       function event (el) { return 'event'; }
       analytics.trackForm(form, event);
-      trigger(submit, 'click');
+      submit.click();
       assert(analytics.track.calledWith('event'));
     });
 
     it('should accept a properties function', function () {
       function properties (el) { return { property: true }; }
       analytics.trackForm(form, 'event', properties);
-      trigger(submit, 'click');
+      submit.click();
       assert(analytics.track.calledWith('event', { property: true }));
     });
 
     it('should call submit after a timeout', function (done) {
-      var spy = sinon.spy(form, 'submit');
+      var spy = form.submit = sinon.spy();
       analytics.trackForm(form);
-      trigger(submit, 'click');
+      submit.click();
       setTimeout(function () {
         assert(spy.called);
         done();
-      });
+      }, 50);
     });
 
     it('should trigger an existing submit handler', function (done) {
       bind(form, 'submit', function () { done(); });
       analytics.trackForm(form);
-      trigger(submit, 'click');
+      submit.click();
     });
 
     it('should trigger an existing jquery submit handler', function (done) {
       var $form = jQuery(form);
       $form.submit(function () { done(); });
       analytics.trackForm(form);
-      trigger(submit, 'click');
+      submit.click();
     });
 
     it('should track on a form submitted via jquery', function () {

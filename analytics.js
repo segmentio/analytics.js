@@ -7894,6 +7894,7 @@ var GA = exports.Integration = integration('Google Analytics')
   .option('domain', 'auto')
   .option('doubleClick', false)
   .option('enhancedLinkAttribution', false)
+  .option('nonInteraction', false)
   .option('ignoredReferrers', null)
   .option('includeSearch', false)
   .option('siteSpeedSampleRate', 1)
@@ -8005,13 +8006,13 @@ GA.prototype.page = function(page){
   // categorized pages
   if (category && this.options.trackCategorizedPages) {
     track = page.track(category);
-    this.track(track, { noninteraction: true });
+    this.track(track, { nonInteraction: 1 });
   }
 
   // named pages
   if (name && this.options.trackNamedPages) {
     track = page.track(name);
-    this.track(track, { noninteraction: true });
+    this.track(track, { nonInteraction: 1 });
   }
 };
 
@@ -8032,7 +8033,7 @@ GA.prototype.track = function(track, options){
     eventCategory: props.category || this._category || 'All',
     eventLabel: props.label,
     eventValue: formatValue(props.value || track.revenue()),
-    nonInteraction: props.noninteraction || opts.noninteraction
+    nonInteraction: !!(props.nonInteraction || opts.nonInteraction)
   });
 };
 
@@ -8163,13 +8164,13 @@ GA.prototype.pageClassic = function(page){
   // categorized pages
   if (category && this.options.trackCategorizedPages) {
     track = page.track(category);
-    this.track(track, { noninteraction: true });
+    this.track(track, { nonInteraction: 1 });
   }
 
   // named pages
   if (name && this.options.trackNamedPages) {
     track = page.track(name);
-    this.track(track, { noninteraction: true });
+    this.track(track, { nonInteraction: 1 });
   }
 };
 
@@ -8189,8 +8190,8 @@ GA.prototype.trackClassic = function(track, options){
   var category = this._category || props.category || 'All';
   var label = props.label;
   var value = formatValue(revenue || props.value);
-  var noninteraction = props.noninteraction || opts.noninteraction;
-  push('_trackEvent', category, event, label, value, noninteraction);
+  var nonInteraction = !!(props.nonInteraction || opts.nonInteraction);
+  push('_trackEvent', category, event, label, value, nonInteraction);
 };
 
 /**
@@ -16328,6 +16329,6 @@ module.exports.User = User;
 }, {"debug":178,"./entity":191,"inherit":192,"bind":176,"./cookie":177}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.30';
+module.exports = '2.3.31';
 
 }, {}]}, {}, {"1":"analytics"})

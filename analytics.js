@@ -9805,7 +9805,7 @@ var Inspectlet = module.exports = integration('Inspectlet')
   .global('__insp')
   .global('__insp_')
   .option('wid', '')
-  .tag('<script src="//www.inspectlet.com/inspectlet.js">');
+  .tag('<script src="//cdn.inspectlet.com/inspectlet.js">');
 
 /**
  * Initialize.
@@ -16329,6 +16329,6 @@ module.exports.User = User;
 }, {"debug":178,"./entity":191,"inherit":192,"bind":176,"./cookie":177}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.31';
+module.exports = '2.3.32';
 
 }, {}]}, {}, {"1":"analytics"})

@@ -24,10 +24,8 @@ describe('user', function () {
     cookie.remove(cookieKey);
     store.remove(cookieKey);
     store.remove(localStorageKey);
-    store.remove('ajs_anonymous_id');
-    cookie.remove('ajs_anonymous_id');
-    cookie.remove('_sio');
     store.remove('_sio');
+    cookie.remove('_sio');
     user.protocol = location.protocol;
   });
 
@@ -302,8 +300,10 @@ describe('user', function () {
   describe('#logout', function () {
     it('should reset an id and traits', function () {
       user.id('id');
+      user.anonymousId('anon-id');
       user.traits({ trait: true });
       user.logout();
+      assert(null === cookie.get('ajs_anonymous_id'));
       assert(null === user.id());
       assert(equal({}, user.traits()));
     });

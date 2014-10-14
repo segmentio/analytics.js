@@ -9,6 +9,7 @@ describe('user', function () {
   var json = require('json');
   var store = Analytics.store;
   var user = analytics.user();
+  var rawCookie = require('cookie');
   var User = user.User;
 
   var cookieKey = user._options.cookie.key;
@@ -26,6 +27,7 @@ describe('user', function () {
     store.remove(localStorageKey);
     store.remove('_sio');
     cookie.remove('_sio');
+    rawCookie('_sio', null);
     user.protocol = location.protocol;
   });
 
@@ -42,20 +44,20 @@ describe('user', function () {
     })
 
     it('should pick the old "_sio" anonymousId', function(){
-      cookie.set('_sio', 'user-id----anonymous-id');
+      rawCookie('_sio', 'user-id----anonymous-id');
       var user = new User;
       assert('anonymous-id' == user.anonymousId());
     });
 
     it('should not pick the old "_sio" if anonymous id is present', function(){
-      cookie.set('_sio', 'user-id----old-anonymous-id');
+      rawCookie('_sio', 'user-id----old-anonymous-id');
       cookie.set('ajs_anonymous_id', 'new-anonymous-id');
       assert('new-anonymous-id' == new User().anonymousId());
     });
 
     it('should create anonymous id if missing', function(){
       var user = new User;
-      assert(36 == user.anonymousId().length);
+      assert.equal(36, user.anonymousId().length);
     });
 
     it('should not overwrite anonymous id', function(){

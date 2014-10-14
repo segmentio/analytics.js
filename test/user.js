@@ -95,6 +95,22 @@ describe('user', function () {
       it('should be null by default', function () {
         assert(null === user.id());
       });
+
+      it('should not reset anonymousId if the user didnt have previous id', function(){
+        var prev = user.anonymousId();
+        user.id('foo');
+        user.id('foo');
+        user.id('foo');
+        assert.equal(prev, user.anonymousId());
+      });
+
+      it('should reset anonymousId if the user id changed', function(){
+        var prev = user.anonymousId();
+        user.id('foo');
+        user.id('baz');
+        assert.notEqual(prev, user.anonymousId());
+        assert.equal(36, user.anonymousId().length);
+      });
     });
 
     describe('when chrome-extension:', function(){
@@ -127,6 +143,22 @@ describe('user', function () {
       it('should be null by default', function () {
         assert(null === user.id());
       });
+
+      it('should not reset anonymousId if the user didnt have previous id', function(){
+        var prev = user.anonymousId();
+        user.id('foo');
+        user.id('foo');
+        user.id('foo');
+        assert.equal(prev, user.anonymousId());
+      });
+
+      it('should reset anonymousId if the user id changed', function(){
+        var prev = user.anonymousId();
+        user.id('foo');
+        user.id('baz');
+        assert.notEqual(prev, user.anonymousId());
+        assert.equal(36, user.anonymousId().length);
+      });
     });
 
     describe('when http:', function(){
@@ -154,6 +186,22 @@ describe('user', function () {
 
       it('should be null by default', function () {
         assert(null === user.id());
+      });
+
+      it('should not reset anonymousId if the user didnt have previous id', function(){
+        var prev = user.anonymousId();
+        user.id('foo');
+        user.id('foo');
+        user.id('foo');
+        assert.equal(prev, user.anonymousId());
+      });
+
+      it('should reset anonymousId if the user id changed', function(){
+        var prev = user.anonymousId();
+        user.id('foo');
+        user.id('baz');
+        assert.notEqual(prev, user.anonymousId());
+        assert.equal(36, user.anonymousId().length);
       });
     });
   });

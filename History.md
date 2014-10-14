@@ -1,8 +1,7 @@
 
-2.3.33 / 2014-10-14
-===================
+2.4.0 / 2014-10-14
+==================
 
-  * Merge pull request #404 from segmentio/reset/anonymous-id
   * anonymousId: re-generate when user id changes
   * Merge pull request #401 from segmentio/anonymous-id
   * analytics.reset(): use .logout() to preserve options
@@ -12,11 +11,20 @@
   * add User#anonymousId
   * Release 2.3.33
 
+2.3.33 / 2014-10-14
+===================
+
+  * upgrade integrations
+
 2.3.33 / 2014-10-10
 ==================
 
+  * upgrade integrations
+
 2.3.32 / 2014-10-09
 ===================
+
+  * upgrade integrations
 
 2.3.31 / 2014-10-08
 ===================

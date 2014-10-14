@@ -1,4 +1,17 @@
 
+2.3.33 / 2014-10-14
+===================
+
+  * Merge pull request #404 from segmentio/reset/anonymous-id
+  * anonymousId: re-generate when user id changes
+  * Merge pull request #401 from segmentio/anonymous-id
+  * analytics.reset(): use .logout() to preserve options
+  * logout: remove anonymous id
+  * parseQuery: add ajs_aid
+  * analytics add anonymousId support
+  * add User#anonymousId
+  * Release 2.3.33
+
 2.3.33 / 2014-10-10
 ==================
 

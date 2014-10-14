@@ -14538,8 +14538,8 @@ Analytics.prototype.push = function(args){
  */
 
 Analytics.prototype.reset = function(){
-  this.user().reset();
-  this.group().reset();
+  this.user().logout();
+  this.group().logout();
 };
 
 /**
@@ -14554,6 +14554,7 @@ Analytics.prototype._parseQuery = function () {
   var q = querystring.parse(window.location.search);
   if (q.ajs_uid) this.identify(q.ajs_uid);
   if (q.ajs_event) this.track(q.ajs_event);
+  if (q.ajs_aid) user.anonymousId(q.ajs_aid);
   return this;
 };
 
@@ -14623,6 +14624,12 @@ function message(Type, msg){
     msg = defaults(ctx, msg);
     delete msg.options;
   }
+
+  if (ctx.anonymousId) {
+    user.anonymousId(ctx.anonymousId);
+  }
+
+  msg.anonymousId = user.anonymousId();
 
   return new Type(msg);
 }
@@ -16345,6 +16352,7 @@ var Entity = require('./entity');
 var inherit = require('inherit');
 var bind = require('bind');
 var cookie = require('./cookie');
+var uuid = require('uuid');
 
 
 /**
@@ -16382,6 +16390,81 @@ function User (options) {
 
 inherit(User, Entity);
 
+/**
+ * Set / get the user id.
+ *
+ * When the user id changes, the method will
+ * reset his anonymousId to a new one.
+ *
+ * Example:
+ *
+ *      // didn't change because the user didn't have previous id.
+ *      anonId = user.anonymousId();
+ *      user.id('foo');
+ *      assert.equal(anonId, user.anonymousId());
+ *
+ *     // change because the user had previous id.
+ *     anonId = user.anonymousId();
+ *     user.id('foo');
+ *     user.id('baz'); // triggers change
+ *     user.id('baz'); // no change
+ *     assert.notEqual(anonId, user.anonymousId());
+ *
+ * @param {String} id
+ * @return {Mixed}
+ */
+
+User.prototype.id = function(id){
+  var prev = this._getId();
+  var ret = Entity.prototype.id.apply(this, arguments);
+  if (null == prev) return ret;
+  if (prev != id) this.anonymousId(null);
+  return ret;
+};
+
+/**
+ * Set / get / remove anonymousId.
+ *
+ * @param {String} anonId
+ * @return {String|User}
+ */
+
+User.prototype.anonymousId = function(anonId){
+  var store = this.storage();
+
+  // set / remove
+  if (arguments.length) {
+    store.set('ajs_anonymous_id', anonId);
+    return this;
+  }
+
+  // new
+  if (anonId = store.get('ajs_anonymous_id')) {
+    return anonId;
+  }
+
+  // old
+  if (anonId = store.get('_sio')) {
+    anonId = anonId.split('----')[1];
+    store.set('ajs_anonymous_id', anonId);
+    store.remove('_sio');
+    return anonId;
+  }
+
+  // empty
+  anonId = uuid();
+  store.set('ajs_anonymous_id', anonId);
+  return anonId;
+};
+
+/**
+ * Remove anonymous id on logout too.
+ */
+
+User.prototype.logout = function(){
+  Entity.prototype.logout.call(this);
+  this.anonymousId(null);
+};
 
 /**
  * Load saved user `id` or `traits` from storage.
@@ -16424,9 +16507,39 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":179,"./entity":192,"inherit":193,"bind":177,"./cookie":178}],
+}, {"debug":179,"./entity":192,"inherit":193,"bind":177,"./cookie":178,"uuid":195}],
+195: [function(require, module, exports) {
+
+/**
+ * Taken straight from jed's gist: https://gist.github.com/982883
+ *
+ * Returns a random v4 UUID of the form xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx,
+ * where each x is replaced with a random hexadecimal digit from 0 to f, and
+ * y is replaced with a random hexadecimal digit from 8 to b.
+ */
+
+module.exports = function uuid(a){
+  return a           // if the placeholder was passed, return
+    ? (              // a random number from 0 to 15
+      a ^            // unless b is 8,
+      Math.random()  // in which case
+      * 16           // a random number from
+      >> a/4         // 8 to 11
+      ).toString(16) // in hexadecimal
+    : (              // or otherwise a concatenated string:
+      [1e7] +        // 10000000 +
+      -1e3 +         // -1000 +
+      -4e3 +         // -4000 +
+      -8e3 +         // -80000000 +
+      -1e11          // -100000000000,
+      ).replace(     // replacing
+        /[018]/g,    // zeroes, ones, and eights with
+        uuid         // random hex digits
+      )
+};
+}, {}],
 5: [function(require, module, exports) {
 
-module.exports = '2.3.32';
+module.exports = '2.3.33';
 
 }, {}]}, {}, {"1":"analytics"})

@@ -1,4 +1,11 @@
 
+2.4.1 / 2014-10-14
+==================
+
+  * Merge pull request #405 from segmentio/fix/old-anonymous-id
+  * fix: old anonymousId is not stringified, use raw cookie
+  * Release 2.4.0
+
 2.4.0 / 2014-10-14
 ==================
 

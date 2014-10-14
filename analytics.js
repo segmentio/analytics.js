@@ -16353,6 +16353,7 @@ var inherit = require('inherit');
 var bind = require('bind');
 var cookie = require('./cookie');
 var uuid = require('uuid');
+var rawCookie = require('cookie');
 
 
 /**
@@ -16443,8 +16444,8 @@ User.prototype.anonymousId = function(anonId){
     return anonId;
   }
 
-  // old
-  if (anonId = store.get('_sio')) {
+  // old - it is not stringified so we use the raw cookie.
+  if (anonId = rawCookie('_sio')) {
     anonId = anonId.split('----')[1];
     store.set('ajs_anonymous_id', anonId);
     store.remove('_sio');
@@ -16507,7 +16508,7 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":179,"./entity":192,"inherit":193,"bind":177,"./cookie":178,"uuid":195}],
+}, {"debug":179,"./entity":192,"inherit":193,"bind":177,"./cookie":178,"uuid":195,"cookie":176}],
 195: [function(require, module, exports) {
 
 /**
@@ -16540,6 +16541,6 @@ module.exports = function uuid(a){
 }, {}],
 5: [function(require, module, exports) {
 
-module.exports = '2.4.0';
+module.exports = '2.4.1';
 
 }, {}]}, {}, {"1":"analytics"})

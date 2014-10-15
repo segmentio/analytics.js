@@ -16404,6 +16404,12 @@ inherit(User, Entity);
  *      user.id('foo');
  *      assert.equal(anonId, user.anonymousId());
  *
+ *      // didn't change because the user id changed to null.
+ *      anonId = user.anonymousId();
+ *      user.id('foo');
+ *      user.id(null);
+ *      assert.equal(anonId, user.anonymousId());
+ *
  *     // change because the user had previous id.
  *     anonId = user.anonymousId();
  *     user.id('foo');
@@ -16419,7 +16425,7 @@ User.prototype.id = function(id){
   var prev = this._getId();
   var ret = Entity.prototype.id.apply(this, arguments);
   if (null == prev) return ret;
-  if (prev != id) this.anonymousId(null);
+  if (prev != id && id) this.anonymousId(null);
   return ret;
 };
 
@@ -16541,6 +16547,6 @@ module.exports = function uuid(a){
 }, {}],
 5: [function(require, module, exports) {
 
-module.exports = '2.4.1';
+module.exports = '2.4.2';
 
 }, {}]}, {}, {"1":"analytics"})

@@ -1,4 +1,10 @@
 
+2.4.2 / 2014-10-15
+==================
+
+  * Merge pull request #406 from segmentio/fix/user-id-reset
+  * fix: prevent anonymousId from changing when user id is reset
+
 2.4.1 / 2014-10-14
 ==================
 

@@ -217,6 +217,13 @@ describe('user', function () {
   });
 
   describe('#anonymousId', function () {
+    var noop = { set: function(){}, get: function(){} };
+    var storage = user.storage;
+
+    afterEach(function(){
+      user.storage = storage;
+    });
+
     describe('when file:', function(){
       beforeEach(function(){
         user.protocol = 'file:';
@@ -230,6 +237,11 @@ describe('user', function () {
       it('should set an id to the store', function () {
         user.anonymousId('anon-id');
         assert('anon-id' === store.get('ajs_anonymous_id'));
+      });
+
+      it('should return anonymousId using the store', function(){
+        user.storage = function(){ return noop; };
+        assert(null == user.anonymousId());
       });
     });
 
@@ -247,6 +259,11 @@ describe('user', function () {
         user.anonymousId('anon-id');
         assert('anon-id' === store.get('ajs_anonymous_id'));
       });
+
+      it('should return anonymousId using the store', function(){
+        user.storage = function(){ return noop; };
+        assert(null == user.anonymousId());
+      });
     });
 
     describe('when http:', function(){
@@ -258,6 +275,11 @@ describe('user', function () {
       it('should set an id to the cookie', function () {
         user.anonymousId('anon-id');
         assert('anon-id' === cookie.get('ajs_anonymous_id'));
+      });
+
+      it('should return anonymousId using the store', function(){
+        user.storage = function(){ return noop; };
+        assert(null == user.anonymousId());
       });
     });
   });

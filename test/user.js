@@ -113,6 +113,14 @@ describe('user', function () {
         assert.notEqual(prev, user.anonymousId());
         assert.equal(36, user.anonymousId().length);
       });
+
+      it('should not reset anonymousId if the user id changed to null', function(){
+        var prev = user.anonymousId();
+        user.id('foo');
+        user.id(null);
+        assert.equal(prev, user.anonymousId());
+        assert.equal(36, user.anonymousId().length);
+      });
     });
 
     describe('when chrome-extension:', function(){

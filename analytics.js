@@ -16461,7 +16461,7 @@ User.prototype.anonymousId = function(anonId){
   // empty
   anonId = uuid();
   store.set('ajs_anonymous_id', anonId);
-  return anonId;
+  return store.get('ajs_anonymous_id');
 };
 
 /**
@@ -16547,6 +16547,6 @@ module.exports = function uuid(a){
 }, {}],
 5: [function(require, module, exports) {
 
-module.exports = '2.4.2';
+module.exports = '2.4.3';
 
 }, {}]}, {}, {"1":"analytics"})

@@ -1,4 +1,10 @@
 
+2.4.3 / 2014-10-15
+==================
+
+  * Merge pull request #407 from segmentio/prevent/duplicates
+  * fix: prevent duplicates when cookie cannot be set
+
 2.4.2 / 2014-10-15
 ==================
 

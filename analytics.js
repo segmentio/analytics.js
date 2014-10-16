@@ -1273,6 +1273,7 @@ exports.load = function(name, locals, fn){
   var template = this.templates[name];
   if (!template) throw new Error(fmt('template "%s" not defined.', name));
   var attrs = render(template, locals);
+  var self = this;
   var el;
 
   switch (template.type) {
@@ -1282,7 +1283,10 @@ exports.load = function(name, locals, fn){
       el = loadImage(attrs, fn);
       break;
     case 'script':
-      el = loadScript(attrs, fn);
+      el = loadScript(attrs, function(err){
+        if (!err) return fn();
+        self.debug('error loading "%s" error="%s"', self.name, err);
+      });
       // TODO: hack until refactoring load-script
       delete attrs.src;
       each(attrs, function(key, val){
@@ -1522,7 +1526,7 @@ module.exports = function(el, fn){
 function add(el, fn){
   el.addEventListener('load', function(_, e){ fn(null, e); }, false);
   el.addEventListener('error', function(e){
-    var err = new Error('failed to load the script "' + el.src + '"');
+    var err = new Error('script error "' + el.src + '"');
     err.event = e;
     fn(err);
   }, false);
@@ -1540,6 +1544,11 @@ function attach(el, fn){
   el.attachEvent('onreadystatechange', function(e){
     if (!/complete|loaded/.test(el.readyState)) return;
     fn(null, e);
+  });
+  el.attachEvent('onerror', function(e){
+    var err = new Error('failed to load the script "' + el.src + '"');
+    err.event = e || window.event;
+    fn(err);
   });
 }
 
@@ -16547,6 +16556,6 @@ module.exports = function uuid(a){
 }, {}],
 5: [function(require, module, exports) {
 
-module.exports = '2.4.3';
+module.exports = '2.4.4';
 
 }, {}]}, {}, {"1":"analytics"})

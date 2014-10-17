@@ -1084,6 +1084,12 @@ var type = require('type');
 var fmt = require('fmt');
 
 /**
+ * Noop.
+ */
+
+function noop(){}
+
+/**
  * Window defaults.
  */
 
@@ -1273,6 +1279,7 @@ exports.load = function(name, locals, fn){
   var template = this.templates[name];
   if (!template) throw new Error(fmt('template "%s" not defined.', name));
   var attrs = render(template, locals);
+  var fn = fn || noop;
   var self = this;
   var el;
 
@@ -1434,6 +1441,7 @@ function render(template, locals) {
   return attrs;
 }
 
+
 }, {"segmentio/load-script":99,"analytics-events":100,"to-no-case":101,"callback":87,"emitter":102,"next-tick":96,"after":103,"component/each":104,"type":7,"fmt":105}],
 99: [function(require, module, exports) {
 
@@ -1560,7 +1568,16 @@ module.exports = {
   viewedProduct: /^[ _]?viewed[ _]?product[ _]?$/i,
   viewedProductCategory: /^[ _]?viewed[ _]?product[ _]?category[ _]?$/i,
   addedProduct: /^[ _]?added[ _]?product[ _]?$/i,
-  completedOrder: /^[ _]?completed[ _]?order[ _]?$/i
+  completedOrder: /^[ _]?completed[ _]?order[ _]?$/i,
+  startedOrder: /^[ _]?started[ _]?order[ _]?$/i,
+  updatedOrder: /^[ _]?updated[ _]?order[ _]?$/i,
+  refundedOrder: /^[ _]?refunded?[ _]?order[ _]?$/i,
+  viewedProductDetails: /^[ _]?viewed[ _]?product[ _]?details?[ _]?$/i,
+  clickedProduct: /^[ _]?clicked[ _]?product[ _]?$/i,
+  viewedPromotion: /^[ _]?viewed[ _]?promotion?[ _]?$/i,
+  clickedPromotion: /^[ _]?clicked[ _]?promotion?[ _]?$/i,
+  viewedCheckoutStep: /^[ _]?viewed[ _]?checkout[ _]?step[ _]?$/i,
+  completedCheckoutStep: /^[ _]?completed[ _]?checkout[ _]?step[ _]?$/i
 };
 
 }, {}],
@@ -7965,6 +7982,7 @@ var GA = exports.Integration = integration('Google Analytics')
   .option('classic', false)
   .option('domain', 'auto')
   .option('doubleClick', false)
+  .option('enhancedEcommerce', false)
   .option('enhancedLinkAttribution', false)
   .option('nonInteraction', false)
   .option('ignoredReferrers', null)
@@ -7982,17 +8000,32 @@ var GA = exports.Integration = integration('Google Analytics')
   .tag('https', '<script src="https://ssl.google-analytics.com/ga.js">');
 
 /**
- * When in "classic" mode, on `construct` swap all of the method to point to
- * their classic counterparts.
+ * On `construct` swap any config-based methods to the proper implementation.
  */
 
 GA.on('construct', function(integration){
-  if (!integration.options.classic) return;
-  integration.initialize = integration.initializeClassic;
-  integration.loaded = integration.loadedClassic;
-  integration.page = integration.pageClassic;
-  integration.track = integration.trackClassic;
-  integration.completedOrder = integration.completedOrderClassic;
+  if (integration.options.classic) {
+    integration.initialize = integration.initializeClassic;
+    integration.loaded = integration.loadedClassic;
+    integration.page = integration.pageClassic;
+    integration.track = integration.trackClassic;
+    integration.completedOrder = integration.completedOrderClassic;
+
+  } else if (integration.options.enhancedEcommerce) {
+    integration.viewedProduct = integration.viewedProductEnhanced;
+    integration.clickedProduct = integration.clickedProductEnhanced;
+    integration.viewedProductDetails = integration.viewedProductDetailsEnhanced;
+    integration.addedProduct = integration.addedProductEnhanced;
+    integration.removedProduct = integration.removedProductEnhanced;
+    integration.startedOrder = integration.startedOrderEnhanced;
+    integration.viewedCheckoutStep = integration.viewedCheckoutStepEnhanced;
+    integration.completedCheckoutStep = integration.completedCheckoutStepEnhanced;
+    integration.updatedOrder = integration.updatedOrderEnhanced;
+    integration.completedOrder = integration.completedOrderEnhanced;
+    integration.refundedOrder = integration.refundedOrderEnhanced;
+    integration.viewedPromotion = integration.viewedPromotionEnhanced;
+    integration.clickedPromotion = integration.clickedPromotionEnhanced;
+  }
 });
 
 /**
@@ -8372,6 +8405,335 @@ function metrics(obj, data){
   }
 
   return ret;
+}
+
+/**
+ * Loads ec.js (unless already loaded)
+ */
+
+GA.prototype.loadEnhancedEcommerce = function(track){
+  if (!this.enhancedEcommerceLoaded) {
+    window.ga('require', 'ec');
+    this.enhancedEcommerceLoaded = true;
+  }
+
+  // Ensure we set currency for every hit
+  window.ga('set', '&cu', track.currency());
+};
+
+/**
+ * Pushes an event and all previously set EE data to GA.
+ */
+
+GA.prototype.pushEnhancedEcommerce = function(track){
+  // Send a custom non-interaction event to ensure all EE data is pushed.
+  // Without doing this we'd need to require page display after setting EE data.
+  ga('send', 'event', 'EnhancedEcommerce', 'Push', {'nonInteraction': 1});
+};
+
+/**
+ * Started order - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#checkout-steps
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.startedOrderEnhanced = function(track) {
+  // same as viewed checkout step #1
+  this.viewedCheckoutStep(track);
+};
+
+/**
+ * Updated order - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#checkout-steps
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.updatedOrderEnhanced = function(track){
+  // Same event as started order - will override
+  this.startedOrderEnhanced(track);
+};
+
+/**
+ * Viewed checkout step - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#checkout-steps
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.viewedCheckoutStepEnhanced = function(track){
+  var products = track.products();
+  var props = track.properties();
+  var options = extractCheckoutOptions(props);
+
+  this.loadEnhancedEcommerce(track);
+
+  each(products, function(product){
+    var track = new Track({ properties: product });
+    enhancedEcommerceTrackProduct(track);
+  });
+
+  window.ga('ec:setAction','checkout', {
+    'step': props.step || 1,
+    'option': options || undefined,
+  });
+
+  this.pushEnhancedEcommerce();
+};
+
+/**
+ * Completed checkout step - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#checkout-options
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.completedCheckoutStepEnhanced = function(track){
+  var props = track.properties();
+  var options = extractCheckoutOptions(props);
+
+  // Only send an event if we have step and options to update
+  if (!props.step || !options) return;
+
+  this.loadEnhancedEcommerce(track);
+
+  window.ga('ec:setAction', 'checkout_option', {
+    step: props.step || 1,
+    option: options,
+  });
+
+  window.ga('send', 'event', 'Checkout', 'Option');
+};
+
+/**
+ * Completed order - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#measuring-transactions
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.completedOrderEnhanced = function(track){
+  var total = track.total() || track.revenue() || 0;
+  var orderId = track.orderId();
+  var products = track.products();
+  var props = track.properties();
+
+  // orderId is required.
+  if (!orderId) return;
+
+  this.loadEnhancedEcommerce(track);
+
+  each(products, function(product){
+    var track = new Track({ properties: product });
+    enhancedEcommerceTrackProduct(track);
+  });
+
+  window.ga('ec:setAction', 'purchase', {
+    id: orderId,
+    affiliation: props.affiliation,
+    revenue: total,
+    tax: track.tax(),
+    shipping: track.shipping(),
+    coupon: track.coupon(),
+  });
+
+  this.pushEnhancedEcommerce(track);
+};
+
+/**
+ * Refunded order - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#measuring-refunds
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.refundedOrderEnhanced = function(track) {
+  var orderId = track.orderId();
+  var products = track.products();
+
+  // orderId is required.
+  if (!orderId) return;
+
+  this.loadEnhancedEcommerce(track);
+
+  // Without any products it's a full refund
+  each(products, function(product){
+    var track = new Track({ properties: product });
+    window.ga('ec:addProduct', {
+      id: track.id() || track.sku(),
+      quantity: track.quantity(),
+    });
+  });
+
+  window.ga('ec:setAction', 'refund', {
+    id: orderId,
+  });
+
+  this.pushEnhancedEcommerce(track);
+};
+
+/**
+ * Added product - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#add-remove-cart
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.addedProductEnhanced = function(track) {
+  this.loadEnhancedEcommerce(track);
+  enhancedEcommerceProductAction(track, 'add');
+  this.pushEnhancedEcommerce(track);
+};
+
+/**
+ * Removed product - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#add-remove-cart
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.removedProductEnhanced = function(track) {
+  this.loadEnhancedEcommerce(track);
+  enhancedEcommerceProductAction(track, 'remove');
+  this.pushEnhancedEcommerce(track);
+};
+
+/**
+ * Viewed product details - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#product-detail-view
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.viewedProductDetailsEnhanced = function(track) {
+  this.loadEnhancedEcommerce(track);
+  enhancedEcommerceProductAction(track, 'detail');
+  this.pushEnhancedEcommerce(track);
+};
+
+/**
+ * Viewed product - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#measuring-impressions
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.viewedProductEnhanced = function(track) {
+  var props = track.properties();
+
+  this.loadEnhancedEcommerce(track);
+  ga('ec:addImpression', {
+    id: track.id() || track.sku(),
+    name: track.name(),
+    category: track.category(),
+    brand: props.brand,
+    variant: props.variant,
+    list: props.list,
+    position: props.position,
+  });
+  this.pushEnhancedEcommerce(track);
+};
+
+/**
+ * Clicked product - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#measuring-actions
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.clickedProductEnhanced = function(track) {
+  var props = track.properties();
+
+  this.loadEnhancedEcommerce(track);
+  enhancedEcommerceProductAction(track, 'click', {
+    list: props.list
+  });
+  this.pushEnhancedEcommerce(track);
+};
+
+/**
+ * Viewed promotion - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#measuring-promo-impressions
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.viewedPromotionEnhanced = function(track) {
+  var props = track.properties();
+
+  this.loadEnhancedEcommerce(track);
+  window.ga('ec:addPromo', {
+    id: track.id(),
+    name: track.name(),
+    creative: props.creative,
+    position: props.position,
+  });
+  this.pushEnhancedEcommerce(track);
+};
+
+/**
+ * Clicked promotion - Enhanced Ecommerce
+ *
+ * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#measuring-promo-clicks
+ *
+ * @param {Track} track
+ */
+
+GA.prototype.clickedPromotionEnhanced = function(track) {
+  var props = track.properties();
+
+  this.loadEnhancedEcommerce(track);
+  window.ga('ec:addPromo', {
+    id: track.id(),
+    name: track.name(),
+    creative: props.creative,
+    position: props.position,
+  });
+  ga('ec:setAction', 'promo_click', {});
+  this.pushEnhancedEcommerce(track);
+};
+
+function enhancedEcommerceTrackProduct(track) {
+  var props = track.properties();
+
+  window.ga('ec:addProduct', {
+    id: track.id() || track.sku(),
+    name: track.name(),
+    category: track.category(),
+    quantity: track.quantity(),
+    price: track.price(),
+    brand: props.brand,
+    variant: props.variant,
+  });
+}
+
+function enhancedEcommerceProductAction(track, action, actionData) {
+  enhancedEcommerceTrackProduct(track);
+  window.ga('ec:setAction', action, actionData || {});
+}
+
+function extractCheckoutOptions(properties) {
+  var options = [];
+
+  options.push(properties.paymentMethod);
+  options.push(properties.shippingMethod);
+
+  // Remove all nulls, empty strings, zeroes, and join with commas.
+  var valid = options.filter(function(e){return e});
+  return valid.length > 0 ? valid.join(', ') : null;
 }
 
 }, {"analytics.js-integration":82,"global-queue":146,"object":153,"canonical":154,"use-https":84,"facade":118,"callback":87,"load-script":114,"obj-case":155,"each":4,"type":7,"url":156,"is":85}],
@@ -16556,6 +16918,6 @@ module.exports = function uuid(a){
 }, {}],
 5: [function(require, module, exports) {
 
-module.exports = '2.4.4';
+module.exports = '2.4.5';
 
 }, {}]}, {}, {"1":"analytics"})

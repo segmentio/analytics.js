@@ -7947,6 +7947,7 @@ var Track = require('facade').Track;
 var callback = require('callback');
 var load = require('load-script');
 var keys = require('object').keys;
+var select = require('select');
 var dot = require('obj-case');
 var each = require('each');
 var type = require('type');
@@ -8706,6 +8707,14 @@ GA.prototype.clickedPromotionEnhanced = function(track) {
   this.pushEnhancedEcommerce(track);
 };
 
+/**
+ * Enhanced ecommerce track product.
+ *
+ * Simple helper so that we don't repeat `ec:addProduct` everywhere.
+ *
+ * @param {Track} track
+ */
+
 function enhancedEcommerceTrackProduct(track) {
   var props = track.properties();
 
@@ -8720,23 +8729,38 @@ function enhancedEcommerceTrackProduct(track) {
   });
 }
 
-function enhancedEcommerceProductAction(track, action, actionData) {
+/**
+ * Set `action` on `track` with `data`.
+ *
+ * @param {Track} track
+ * @param {String} action
+ * @param {Object} data
+ */
+
+function enhancedEcommerceProductAction(track, action, data) {
   enhancedEcommerceTrackProduct(track);
-  window.ga('ec:setAction', action, actionData || {});
+  window.ga('ec:setAction', action, data || {});
 }
 
-function extractCheckoutOptions(properties) {
-  var options = [];
+/**
+ * Extracts checkout options.
+ *
+ * @param {Object} props
+ * @return {Null|String}
+ */
 
-  options.push(properties.paymentMethod);
-  options.push(properties.shippingMethod);
+function extractCheckoutOptions(props) {
+  var options = [
+    props.paymentMethod,
+    props.shippingMethod
+  ];
 
   // Remove all nulls, empty strings, zeroes, and join with commas.
-  var valid = options.filter(function(e){return e});
+  var valid = select(options, function(e){return e; });
   return valid.length > 0 ? valid.join(', ') : null;
 }
 
-}, {"analytics.js-integration":82,"global-queue":146,"object":153,"canonical":154,"use-https":84,"facade":118,"callback":87,"load-script":114,"obj-case":155,"each":4,"type":7,"url":156,"is":85}],
+}, {"analytics.js-integration":82,"global-queue":146,"object":153,"canonical":154,"use-https":84,"facade":118,"callback":87,"load-script":114,"select":155,"obj-case":156,"each":4,"type":7,"url":157,"is":85}],
 153: [function(require, module, exports) {
 
 /**
@@ -8832,6 +8856,37 @@ module.exports = function canonical () {
 };
 }, {}],
 155: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var toFunction = require('to-function');
+
+/**
+ * Filter the given `arr` with callback `fn(val, i)`,
+ * when a truthy value is return then `val` is included
+ * in the array returned.
+ *
+ * @param {Array} arr
+ * @param {Function} fn
+ * @return {Array}
+ * @api public
+ */
+
+module.exports = function(arr, fn){
+  var ret = [];
+  fn = toFunction(fn);
+  for (var i = 0; i < arr.length; ++i) {
+    if (fn(arr[i], i)) {
+      ret.push(arr[i]);
+    }
+  }
+  return ret;
+};
+
+}, {"to-function":108}],
+156: [function(require, module, exports) {
 
 var Case = require('case');
 var identity = function(_){ return _; };
@@ -8947,8 +9002,8 @@ function replace (obj, key, val) {
   return obj;
 }
 
-}, {"case":157}],
-157: [function(require, module, exports) {
+}, {"case":158}],
+158: [function(require, module, exports) {
 
 var cases = require('./cases');
 
@@ -8996,8 +9051,8 @@ exports.add = function (name, convert) {
 for (var key in cases) {
   exports.add(key, cases[key]);
 }
-}, {"./cases":158}],
-158: [function(require, module, exports) {
+}, {"./cases":159}],
+159: [function(require, module, exports) {
 
 var camel = require('to-camel-case')
   , capital = require('to-capital-case')
@@ -9131,8 +9186,8 @@ exports.inverse = function (string) {
  */
 
 exports.none = none;
-}, {"to-camel-case":159,"to-capital-case":160,"to-constant-case":161,"to-dot-case":162,"to-no-case":112,"to-pascal-case":163,"to-sentence-case":164,"to-slug-case":165,"to-snake-case":166,"to-space-case":167,"to-title-case":168}],
-159: [function(require, module, exports) {
+}, {"to-camel-case":160,"to-capital-case":161,"to-constant-case":162,"to-dot-case":163,"to-no-case":112,"to-pascal-case":164,"to-sentence-case":165,"to-slug-case":166,"to-snake-case":167,"to-space-case":168,"to-title-case":169}],
+160: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
 
@@ -9157,8 +9212,8 @@ function toCamelCase (string) {
     return letter.toUpperCase();
   });
 }
-}, {"to-space-case":167}],
-167: [function(require, module, exports) {
+}, {"to-space-case":168}],
+168: [function(require, module, exports) {
 
 var clean = require('to-no-case');
 
@@ -9184,7 +9239,7 @@ function toSpaceCase (string) {
   });
 }
 }, {"to-no-case":112}],
-160: [function(require, module, exports) {
+161: [function(require, module, exports) {
 
 var clean = require('to-no-case');
 
@@ -9210,7 +9265,7 @@ function toCapitalCase (string) {
   });
 }
 }, {"to-no-case":112}],
-161: [function(require, module, exports) {
+162: [function(require, module, exports) {
 
 var snake = require('to-snake-case');
 
@@ -9233,8 +9288,8 @@ module.exports = toConstantCase;
 function toConstantCase (string) {
   return snake(string).toUpperCase();
 }
-}, {"to-snake-case":166}],
-166: [function(require, module, exports) {
+}, {"to-snake-case":167}],
+167: [function(require, module, exports) {
 var toSpace = require('to-space-case');
 
 
@@ -9257,8 +9312,8 @@ function toSnakeCase (string) {
   return toSpace(string).replace(/\s/g, '_');
 }
 
-}, {"to-space-case":167}],
-162: [function(require, module, exports) {
+}, {"to-space-case":168}],
+163: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
 
@@ -9281,8 +9336,8 @@ module.exports = toDotCase;
 function toDotCase (string) {
   return toSpace(string).replace(/\s/g, '.');
 }
-}, {"to-space-case":167}],
-163: [function(require, module, exports) {
+}, {"to-space-case":168}],
+164: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
 
@@ -9307,8 +9362,8 @@ function toPascalCase (string) {
     return letter.toUpperCase();
   });
 }
-}, {"to-space-case":167}],
-164: [function(require, module, exports) {
+}, {"to-space-case":168}],
+165: [function(require, module, exports) {
 
 var clean = require('to-no-case');
 
@@ -9334,7 +9389,7 @@ function toSentenceCase (string) {
   });
 }
 }, {"to-no-case":112}],
-165: [function(require, module, exports) {
+166: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
 
@@ -9357,8 +9412,8 @@ module.exports = toSlugCase;
 function toSlugCase (string) {
   return toSpace(string).replace(/\s/g, '-');
 }
-}, {"to-space-case":167}],
-168: [function(require, module, exports) {
+}, {"to-space-case":168}],
+169: [function(require, module, exports) {
 
 var capital = require('to-capital-case')
   , escape = require('escape-regexp')
@@ -9399,8 +9454,8 @@ function toTitleCase (string) {
       return letter.toUpperCase();
     });
 }
-}, {"to-capital-case":160,"escape-regexp":169,"map":170,"title-case-minors":171}],
-169: [function(require, module, exports) {
+}, {"to-capital-case":161,"escape-regexp":170,"map":171,"title-case-minors":172}],
+170: [function(require, module, exports) {
 
 /**
  * Escape regexp special characters in `str`.
@@ -9414,7 +9469,7 @@ module.exports = function(str){
   return String(str).replace(/([.*+?=^!:${}()|[\]\/\\])/g, '\\$1');
 };
 }, {}],
-170: [function(require, module, exports) {
+171: [function(require, module, exports) {
 
 var each = require('each');
 
@@ -9435,7 +9490,7 @@ module.exports = function map (obj, iterator) {
   return arr;
 };
 }, {"each":104}],
-171: [function(require, module, exports) {
+172: [function(require, module, exports) {
 
 module.exports = [
   'a',
@@ -9480,7 +9535,7 @@ module.exports = [
   'yet'
 ];
 }, {}],
-156: [function(require, module, exports) {
+157: [function(require, module, exports) {
 
 /**
  * Parse the given `url`.
@@ -10914,8 +10969,8 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"analytics.js-integration":82,"global-queue":146,"facade":118,"alias":151,"batch":172,"each":4,"is":85}],
-172: [function(require, module, exports) {
+}, {"analytics.js-integration":82,"global-queue":146,"facade":118,"alias":151,"batch":173,"each":4,"is":85}],
+173: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -11075,8 +11130,8 @@ Batch.prototype.end = function(cb){
   return this;
 };
 
-}, {"emitter":173}],
-173: [function(require, module, exports) {
+}, {"emitter":174}],
+174: [function(require, module, exports) {
 
 /**
  * Expose `Emitter`.
@@ -11855,8 +11910,8 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":151,"clone":150,"convert-dates":152,"analytics.js-integration":82,"is":85,"to-iso-string":149,"indexof":107,"obj-case":155,"some":174}],
-174: [function(require, module, exports) {
+}, {"alias":151,"clone":150,"convert-dates":152,"analytics.js-integration":82,"is":85,"to-iso-string":149,"indexof":107,"obj-case":156,"some":175}],
+175: [function(require, module, exports) {
 
 /**
  * some
@@ -13820,8 +13875,8 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"analytics.js-integration":82,"global-queue":146,"convert-dates":152,"to-unix-timestamp":175,"alias":151,"clone":150}],
-175: [function(require, module, exports) {
+}, {"analytics.js-integration":82,"global-queue":146,"convert-dates":152,"to-unix-timestamp":176,"alias":151,"clone":150}],
+176: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -13929,8 +13984,8 @@ Vero.prototype.track = function(track){
   push('track', track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"component/cookie":176}],
-176: [function(require, module, exports) {
+}, {"analytics.js-integration":82,"global-queue":146,"component/cookie":177}],
+177: [function(require, module, exports) {
 /**
  * Encode.
  */
@@ -15005,8 +15060,8 @@ function message(Type, msg){
   return new Type(msg);
 }
 
-}, {"after":103,"bind":177,"callback":87,"canonical":154,"clone":88,"./cookie":178,"debug":179,"defaults":90,"each":4,"emitter":102,"./group":180,"is":85,"is-email":141,"is-meta":181,"new-date":133,"event":182,"prevent":183,"querystring":184,"object":153,"./store":185,"url":156,"./user":186,"facade":118}],
-177: [function(require, module, exports) {
+}, {"after":103,"bind":178,"callback":87,"canonical":154,"clone":88,"./cookie":179,"debug":180,"defaults":90,"each":4,"emitter":102,"./group":181,"is":85,"is-email":141,"is-meta":182,"new-date":133,"event":183,"prevent":184,"querystring":185,"object":153,"./store":186,"url":157,"./user":187,"facade":118}],
+178: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -15053,7 +15108,7 @@ function bindMethods (obj, methods) {
   return obj;
 }
 }, {"bind":94,"bind-all":95}],
-178: [function(require, module, exports) {
+179: [function(require, module, exports) {
 
 var debug = require('debug')('analytics.js:cookie');
 var bind = require('bind');
@@ -15181,16 +15236,16 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"debug":179,"bind":177,"cookie":176,"clone":88,"defaults":90,"json":187,"top-domain":188}],
-179: [function(require, module, exports) {
+}, {"debug":180,"bind":178,"cookie":177,"clone":88,"defaults":90,"json":188,"top-domain":189}],
+180: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":189,"./debug":190}],
-189: [function(require, module, exports) {
+}, {"./lib/debug":190,"./debug":191}],
+190: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15340,7 +15395,7 @@ function coerce(val) {
 }
 
 }, {}],
-190: [function(require, module, exports) {
+191: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -15480,7 +15535,7 @@ try {
 } catch(e){}
 
 }, {}],
-187: [function(require, module, exports) {
+188: [function(require, module, exports) {
 
 var json = window.JSON || {};
 var stringify = json.stringify;
@@ -15490,8 +15545,8 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":191}],
-191: [function(require, module, exports) {
+}, {"json-fallback":192}],
+192: [function(require, module, exports) {
 /*
     json2.js
     2014-02-04
@@ -15981,7 +16036,7 @@ module.exports = parse && stringify
 }());
 
 }, {}],
-188: [function(require, module, exports) {
+189: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16029,8 +16084,8 @@ function domain(url){
   return match ? match[0] : '';
 };
 
-}, {"url":156}],
-180: [function(require, module, exports) {
+}, {"url":157}],
+181: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:group');
 var Entity = require('./entity');
@@ -16086,8 +16141,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":179,"./entity":192,"inherit":193,"bind":177}],
-192: [function(require, module, exports) {
+}, {"debug":180,"./entity":193,"inherit":194,"bind":178}],
+193: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var defaults = require('defaults');
@@ -16307,8 +16362,8 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"isodate-traverse":128,"defaults":90,"./cookie":178,"./store":185,"extend":116,"clone":88}],
-185: [function(require, module, exports) {
+}, {"isodate-traverse":128,"defaults":90,"./cookie":179,"./store":186,"extend":116,"clone":88}],
+186: [function(require, module, exports) {
 
 var bind = require('bind');
 var defaults = require('defaults');
@@ -16395,8 +16450,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":177,"defaults":90,"store.js":194}],
-194: [function(require, module, exports) {
+}, {"bind":178,"defaults":90,"store.js":195}],
+195: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -16548,8 +16603,8 @@ try {
 store.enabled = !store.disabled
 
 module.exports = store;
-}, {"json":187}],
-193: [function(require, module, exports) {
+}, {"json":188}],
+194: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -16558,7 +16613,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-181: [function(require, module, exports) {
+182: [function(require, module, exports) {
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
 
@@ -16574,7 +16629,7 @@ module.exports = function isMeta (e) {
     return false;
 };
 }, {}],
-182: [function(require, module, exports) {
+183: [function(require, module, exports) {
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -16617,7 +16672,7 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 }, {}],
-183: [function(require, module, exports) {
+184: [function(require, module, exports) {
 
 /**
  * prevent default on the given `e`.
@@ -16640,7 +16695,7 @@ module.exports = function(e){
 };
 
 }, {}],
-184: [function(require, module, exports) {
+185: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16716,7 +16771,7 @@ exports.stringify = function(obj){
 };
 
 }, {"trim":142,"type":7}],
-186: [function(require, module, exports) {
+187: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:user');
 var Entity = require('./entity');
@@ -16885,8 +16940,8 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":179,"./entity":192,"inherit":193,"bind":177,"./cookie":178,"uuid":195,"cookie":176}],
-195: [function(require, module, exports) {
+}, {"debug":180,"./entity":193,"inherit":194,"bind":178,"./cookie":179,"uuid":196,"cookie":177}],
+196: [function(require, module, exports) {
 
 /**
  * Taken straight from jed's gist: https://gist.github.com/982883
@@ -16918,6 +16973,6 @@ module.exports = function uuid(a){
 }, {}],
 5: [function(require, module, exports) {
 
-module.exports = '2.4.5';
+module.exports = '2.4.6';
 
 }, {}]}, {}, {"1":"analytics"})

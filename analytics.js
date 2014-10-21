@@ -7789,15 +7789,18 @@ var FullStory = module.exports = integration('FullStory')
  */
 
 FullStory.prototype.initialize = function(){
+  var self = this;
   window['_fs_debug'] = this.options.debug;
   window['_fs_host'] = 'www.fullstory.com';
   window['_fs_org'] = this.options.org;
+
   (function(m,n,e,t,l,o,g,y){
     g=m[e]=function(a,b){g.q?g.q.push([a,b]):g._api(a,b);};g.q=[];
     g.identify=function(i,v){g(l,{uid:i});if(v)g(l,v)};g.setUserVars=function(v){FS(l,v)};
-    g.setSessionVars=function(v){FS('session',v)};g.setPageVars=function(v){FS('page',v)};
+    g.setSessionVars=function(v){FS('session',v)};g.setPageVars=function(v){FS('page',v)}; 
+    self.ready();
+    self.load();
   })(window,document,'FS','script','user');
-  this.load(this.ready);
 };
 
 /**
@@ -7822,7 +7825,6 @@ FullStory.prototype.identify = function(identify){
   traits.displayName = identify.name();
   traits.email = identify.email();
   if (!id) return; // id is required
-  if (!traits) return window.FS.identify(id);
   window.FS.identify(id, traits);
 };
 
@@ -7945,6 +7947,7 @@ var canonical = require('canonical');
 var useHttps = require('use-https');
 var Track = require('facade').Track;
 var callback = require('callback');
+var defaults = require('defaults');
 var load = require('load-script');
 var keys = require('object').keys;
 var select = require('select');
@@ -8132,8 +8135,12 @@ GA.prototype.page = function(page){
  */
 
 GA.prototype.track = function(track, options){
-  var opts = options || track.options(this.name);
+  var contextOpts = track.options(this.name);
+  var interfaceOpts = this.options;    
+  var opts = defaults(options || {}, contextOpts);
+  opts = defaults(opts, interfaceOpts);
   var props = track.properties();
+  
   window.ga('send', 'event', {
     eventAction: track.event(),
     eventCategory: props.category || this._category || 'All',
@@ -8760,7 +8767,7 @@ function extractCheckoutOptions(props) {
   return valid.length > 0 ? valid.join(', ') : null;
 }
 
-}, {"analytics.js-integration":82,"global-queue":146,"object":153,"canonical":154,"use-https":84,"facade":118,"callback":87,"load-script":114,"select":155,"obj-case":156,"each":4,"type":7,"url":157,"is":85}],
+}, {"analytics.js-integration":82,"global-queue":146,"object":153,"canonical":154,"use-https":84,"facade":118,"callback":87,"defaults":145,"load-script":114,"select":155,"obj-case":156,"each":4,"type":7,"url":157,"is":85}],
 153: [function(require, module, exports) {
 
 /**
@@ -13175,6 +13182,7 @@ var integration = require('analytics.js-integration');
 
 var SaaSquatch = module.exports = integration('SaaSquatch')
   .option('tenantAlias', '')
+  .option('referralImage', '')
   .global('_sqh')
   .tag('<script src="//d2rcp9ak152ke1.cloudfront.net/assets/javascripts/squatch.min.js">');
 
@@ -13208,7 +13216,7 @@ SaaSquatch.prototype.loaded = function(){
 SaaSquatch.prototype.identify = function(identify){
   var sqh = window._sqh;
   var accountId = identify.proxy('traits.accountId');
-  var image = identify.proxy('traits.referralImage');
+  var image = identify.proxy('traits.referralImage') || this.options.referralImage;
   var opts = identify.options(this.name);
   var id = identify.userId();
   var email = identify.email();
@@ -13226,6 +13234,35 @@ SaaSquatch.prototype.identify = function(identify){
   };
 
   if (accountId) init.account_id = accountId;
+  if (opts.checksum) init.checksum = opts.checksum;
+  if (image) init.fb_share_image = image;
+
+  sqh.push(['init', init]);
+  this.called = true;
+  this.load();
+};
+
+/**
+ * Group.
+ *
+ * @param {Group} group
+ */
+
+SaaSquatch.prototype.group = function(group){
+  var sqh = window._sqh;
+  var props = group.properties();
+  var id = group.groupId();
+  var image = group.proxy('traits.referralImage') || this.options.referralImage;
+  var opts = group.options(this.name);
+
+  // tenant_alias is required.
+  if (this.called) return;
+
+  var init = {
+    tenant_alias: this.options.tenantAlias,
+    account_id: id
+  };
+
   if (opts.checksum) init.checksum = opts.checksum;
   if (image) init.fb_share_image = image;
 
@@ -13905,6 +13942,7 @@ function toUnixTimestamp (date) {
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('_veroq');
 var cookie = require('component/cookie');
+var objCase = require('obj-case');
 
 /**
  * Expose `Vero` integration.
@@ -13981,10 +14019,16 @@ Vero.prototype.identify = function(identify){
  */
 
 Vero.prototype.track = function(track){
-  push('track', track.event(), track.properties());
+  var regex = /[uU]nsubscribe/;
+
+  if (track.event().match(regex)) {
+    push('unsubscribe', { id: track.properties().id });
+  } else {
+    push('track', track.event(), track.properties());
+  }
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"component/cookie":177}],
+}, {"analytics.js-integration":82,"global-queue":146,"component/cookie":177,"obj-case":156}],
 177: [function(require, module, exports) {
 /**
  * Encode.

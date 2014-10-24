@@ -7,6 +7,12 @@ describe('cookie', function () {
   var cookie = Analytics.cookie;
   var equal = require('equals');
 
+  before(function(){
+    // Just to make sure that
+    // URIError is never thrown here.
+    document.cookie = 'bad=%';
+  });
+
   afterEach(function () {
     cookie.options({}); // reset to defaults
     cookie.remove('x');

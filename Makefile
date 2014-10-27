@@ -75,7 +75,7 @@ test-browser: $(BUILD)
 #
 
 analytics.js: node_modules $(SRC) version
-	@$(DUO) --global analytics lib/index.js > analytics.js
+	@$(DUO) --standalone analytics lib/index.js > analytics.js
 	@$(MINIFY) analytics.js --output analytics.min.js
 
 #

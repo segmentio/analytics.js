@@ -17839,7 +17839,7 @@ module.exports.User = User;
 }, {"debug":191,"./entity":205,"inherit":206,"bind":196,"./cookie":197,"uuid":182,"cookie":181}],
 5: [function(require, module, exports) {
 
-module.exports = '2.4.10';
+module.exports = '2.4.11';
 
 }, {}]}, {}, {"1":""})
 );

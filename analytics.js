@@ -333,6 +333,7 @@ module.exports = [
   require('./lib/quantcast'),
   require('./lib/rollbar'),
   require('./lib/saasquatch'),
+  require('./lib/segmentio'),
   require('./lib/sentry'),
   require('./lib/snapengage'),
   require('./lib/spinnakr'),
@@ -347,7 +348,7 @@ module.exports = [
   require('./lib/yandex-metrica')
 ];
 
-}, {"./lib/adroll":8,"./lib/adwords":9,"./lib/alexa":10,"./lib/amplitude":11,"./lib/appcues":12,"./lib/awesm":13,"./lib/awesomatic":14,"./lib/bing-ads":15,"./lib/bronto":16,"./lib/bugherd":17,"./lib/bugsnag":18,"./lib/chartbeat":19,"./lib/churnbee":20,"./lib/clicktale":21,"./lib/clicky":22,"./lib/comscore":23,"./lib/crazy-egg":24,"./lib/curebit":25,"./lib/customerio":26,"./lib/drip":27,"./lib/errorception":28,"./lib/evergage":29,"./lib/facebook-conversion-tracking":30,"./lib/foxmetrics":31,"./lib/frontleaf":32,"./lib/fullstory":33,"./lib/gauges":34,"./lib/get-satisfaction":35,"./lib/google-analytics":36,"./lib/google-tag-manager":37,"./lib/gosquared":38,"./lib/heap":39,"./lib/hellobar":40,"./lib/hittail":41,"./lib/hubspot":42,"./lib/improvely":43,"./lib/insidevault":44,"./lib/inspectlet":45,"./lib/intercom":46,"./lib/keen-io":47,"./lib/kenshoo":48,"./lib/kissmetrics":49,"./lib/klaviyo":50,"./lib/leadlander":51,"./lib/livechat":52,"./lib/lucky-orange":53,"./lib/lytics":54,"./lib/mixpanel":55,"./lib/mojn":56,"./lib/mouseflow":57,"./lib/mousestats":58,"./lib/navilytics":59,"./lib/olark":60,"./lib/optimizely":61,"./lib/perfect-audience":62,"./lib/pingdom":63,"./lib/piwik":64,"./lib/preact":65,"./lib/qualaroo":66,"./lib/quantcast":67,"./lib/rollbar":68,"./lib/saasquatch":69,"./lib/sentry":70,"./lib/snapengage":71,"./lib/spinnakr":72,"./lib/tapstream":73,"./lib/trakio":74,"./lib/twitter-ads":75,"./lib/uservoice":76,"./lib/vero":77,"./lib/visual-website-optimizer":78,"./lib/webengage":79,"./lib/woopra":80,"./lib/yandex-metrica":81}],
+}, {"./lib/adroll":8,"./lib/adwords":9,"./lib/alexa":10,"./lib/amplitude":11,"./lib/appcues":12,"./lib/awesm":13,"./lib/awesomatic":14,"./lib/bing-ads":15,"./lib/bronto":16,"./lib/bugherd":17,"./lib/bugsnag":18,"./lib/chartbeat":19,"./lib/churnbee":20,"./lib/clicktale":21,"./lib/clicky":22,"./lib/comscore":23,"./lib/crazy-egg":24,"./lib/curebit":25,"./lib/customerio":26,"./lib/drip":27,"./lib/errorception":28,"./lib/evergage":29,"./lib/facebook-conversion-tracking":30,"./lib/foxmetrics":31,"./lib/frontleaf":32,"./lib/fullstory":33,"./lib/gauges":34,"./lib/get-satisfaction":35,"./lib/google-analytics":36,"./lib/google-tag-manager":37,"./lib/gosquared":38,"./lib/heap":39,"./lib/hellobar":40,"./lib/hittail":41,"./lib/hubspot":42,"./lib/improvely":43,"./lib/insidevault":44,"./lib/inspectlet":45,"./lib/intercom":46,"./lib/keen-io":47,"./lib/kenshoo":48,"./lib/kissmetrics":49,"./lib/klaviyo":50,"./lib/leadlander":51,"./lib/livechat":52,"./lib/lucky-orange":53,"./lib/lytics":54,"./lib/mixpanel":55,"./lib/mojn":56,"./lib/mouseflow":57,"./lib/mousestats":58,"./lib/navilytics":59,"./lib/olark":60,"./lib/optimizely":61,"./lib/perfect-audience":62,"./lib/pingdom":63,"./lib/piwik":64,"./lib/preact":65,"./lib/qualaroo":66,"./lib/quantcast":67,"./lib/rollbar":68,"./lib/saasquatch":69,"./lib/segmentio":70,"./lib/sentry":71,"./lib/snapengage":72,"./lib/spinnakr":73,"./lib/tapstream":74,"./lib/trakio":75,"./lib/twitter-ads":76,"./lib/uservoice":77,"./lib/vero":78,"./lib/visual-website-optimizer":79,"./lib/webengage":80,"./lib/woopra":81,"./lib/yandex-metrica":82}],
 8: [function(require, module, exports) {
 
 /**
@@ -455,8 +456,8 @@ AdRoll.prototype.track = function(track){
   }
 };
 
-}, {"analytics.js-integration":82,"to-snake-case":83,"use-https":84,"each":4,"is":85}],
-82: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"to-snake-case":84,"use-https":85,"each":4,"is":86}],
+83: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -518,8 +519,8 @@ function createIntegration(name){
   return Integration;
 }
 
-}, {"bind":86,"callback":87,"clone":88,"debug":89,"defaults":90,"./protos":91,"slug":92,"./statics":93}],
-86: [function(require, module, exports) {
+}, {"bind":87,"callback":88,"clone":89,"debug":90,"defaults":91,"./protos":92,"slug":93,"./statics":94}],
+87: [function(require, module, exports) {
 
 var bind = require('bind')
   , bindAll = require('bind-all');
@@ -560,8 +561,8 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":94,"bind-all":95}],
-94: [function(require, module, exports) {
+}, {"bind":95,"bind-all":96}],
+95: [function(require, module, exports) {
 /**
  * Slice reference.
  */
@@ -587,7 +588,7 @@ module.exports = function(obj, fn){
 };
 
 }, {}],
-95: [function(require, module, exports) {
+96: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -604,8 +605,8 @@ module.exports = function (obj) {
   }
   return obj;
 };
-}, {"bind":94,"type":7}],
-87: [function(require, module, exports) {
+}, {"bind":95,"type":7}],
+88: [function(require, module, exports) {
 var next = require('next-tick');
 
 
@@ -648,8 +649,8 @@ callback.async = function (fn, wait) {
 
 callback.sync = callback;
 
-}, {"next-tick":96}],
-96: [function(require, module, exports) {
+}, {"next-tick":97}],
+97: [function(require, module, exports) {
 "use strict"
 
 if (typeof setImmediate == 'function') {
@@ -685,7 +686,7 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 }
 
 }, {}],
-88: [function(require, module, exports) {
+89: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -747,15 +748,15 @@ function clone(obj){
 }
 
 }, {"type":7}],
-89: [function(require, module, exports) {
+90: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":97,"./debug":98}],
-97: [function(require, module, exports) {
+}, {"./lib/debug":98,"./debug":99}],
+98: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -905,7 +906,7 @@ function coerce(val) {
 }
 
 }, {}],
-98: [function(require, module, exports) {
+99: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -1045,7 +1046,7 @@ try {
 } catch(e){}
 
 }, {}],
-90: [function(require, module, exports) {
+91: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -1074,7 +1075,7 @@ var defaults = function (dest, src, recursive) {
 module.exports = defaults;
 
 }, {}],
-91: [function(require, module, exports) {
+92: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -1450,8 +1451,8 @@ function render(template, locals) {
 }
 
 
-}, {"segmentio/load-script":99,"analytics-events":100,"to-no-case":101,"callback":87,"emitter":102,"next-tick":96,"after":103,"component/each":104,"type":7,"fmt":105}],
-99: [function(require, module, exports) {
+}, {"segmentio/load-script":100,"analytics-events":101,"to-no-case":102,"callback":88,"emitter":103,"next-tick":97,"after":104,"component/each":105,"type":7,"fmt":106}],
+100: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -1512,8 +1513,8 @@ module.exports = function loadScript(options, fn){
   // give it an ID or attributes.
   return script;
 };
-}, {"script-onload":106,"next-tick":96,"type":7}],
-106: [function(require, module, exports) {
+}, {"script-onload":107,"next-tick":97,"type":7}],
+107: [function(require, module, exports) {
 
 // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
 
@@ -1569,7 +1570,7 @@ function attach(el, fn){
 }
 
 }, {}],
-100: [function(require, module, exports) {
+101: [function(require, module, exports) {
 
 module.exports = {
   removedProduct: /^[ _]?removed[ _]?product[ _]?$/i,
@@ -1589,7 +1590,7 @@ module.exports = {
 };
 
 }, {}],
-101: [function(require, module, exports) {
+102: [function(require, module, exports) {
 
 /**
  * Expose `toNoCase`.
@@ -1662,7 +1663,7 @@ function uncamelize (string) {
   });
 }
 }, {}],
-102: [function(require, module, exports) {
+103: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -1828,8 +1829,8 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-}, {"indexof":107}],
-107: [function(require, module, exports) {
+}, {"indexof":108}],
+108: [function(require, module, exports) {
 module.exports = function(arr, obj){
   if (arr.indexOf) return arr.indexOf(obj);
   for (var i = 0; i < arr.length; ++i) {
@@ -1838,7 +1839,7 @@ module.exports = function(arr, obj){
   return -1;
 };
 }, {}],
-103: [function(require, module, exports) {
+104: [function(require, module, exports) {
 
 module.exports = function after (times, func) {
   // After 0, really?
@@ -1852,7 +1853,7 @@ module.exports = function after (times, func) {
   };
 };
 }, {}],
-104: [function(require, module, exports) {
+105: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -1943,8 +1944,8 @@ function array(obj, fn, ctx) {
   }
 }
 
-}, {"type":7,"component-type":7,"to-function":108}],
-108: [function(require, module, exports) {
+}, {"type":7,"component-type":7,"to-function":109}],
+109: [function(require, module, exports) {
 
 /**
  * Module Dependencies
@@ -2098,8 +2099,8 @@ function stripNested (prop, str, val) {
   });
 }
 
-}, {"props":109,"component-props":109}],
-109: [function(require, module, exports) {
+}, {"props":110,"component-props":110}],
+110: [function(require, module, exports) {
 /**
  * Global Names
  */
@@ -2187,7 +2188,7 @@ function prefixed(str) {
 }
 
 }, {}],
-105: [function(require, module, exports) {
+106: [function(require, module, exports) {
 
 /**
  * toString.
@@ -2232,7 +2233,7 @@ function fmt(str){
 }
 
 }, {}],
-92: [function(require, module, exports) {
+93: [function(require, module, exports) {
 
 /**
  * Generate a slug from the given `str`.
@@ -2258,7 +2259,7 @@ module.exports = function (str, options) {
 };
 
 }, {}],
-93: [function(require, module, exports) {
+94: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -2412,8 +2413,8 @@ function objectify(str) {
   };
 }
 
-}, {"after":103,"domify":110,"each":104,"emitter":102}],
-110: [function(require, module, exports) {
+}, {"after":104,"domify":111,"each":105,"emitter":103}],
+111: [function(require, module, exports) {
 
 /**
  * Expose `parse`.
@@ -2523,7 +2524,7 @@ function parse(html, doc) {
 }
 
 }, {}],
-83: [function(require, module, exports) {
+84: [function(require, module, exports) {
 var toSpace = require('to-space-case');
 
 
@@ -2546,8 +2547,8 @@ function toSnakeCase (string) {
   return toSpace(string).replace(/\s/g, '_');
 }
 
-}, {"to-space-case":111}],
-111: [function(require, module, exports) {
+}, {"to-space-case":112}],
+112: [function(require, module, exports) {
 
 var clean = require('to-no-case');
 
@@ -2572,8 +2573,8 @@ function toSpaceCase (string) {
     return match ? ' ' + match : '';
   });
 }
-}, {"to-no-case":112}],
-112: [function(require, module, exports) {
+}, {"to-no-case":113}],
+113: [function(require, module, exports) {
 
 /**
  * Expose `toNoCase`.
@@ -2649,7 +2650,7 @@ function uncamelize (string) {
   });
 }
 }, {}],
-84: [function(require, module, exports) {
+85: [function(require, module, exports) {
 
 /**
  * Protocol.
@@ -2688,7 +2689,7 @@ function check () {
   );
 }
 }, {}],
-85: [function(require, module, exports) {
+86: [function(require, module, exports) {
 
 var isEmpty = require('is-empty');
 
@@ -2764,8 +2765,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":113,"type":7,"component-type":7}],
-113: [function(require, module, exports) {
+}, {"is-empty":114,"type":7,"component-type":7}],
+114: [function(require, module, exports) {
 
 /**
  * Expose `isEmpty`.
@@ -2893,7 +2894,7 @@ AdWords.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":82,"domify":110,"each":4}],
+}, {"analytics.js-integration":83,"domify":111,"each":4}],
 10: [function(require, module, exports) {
 
 /**
@@ -2943,7 +2944,7 @@ Alexa.prototype.loaded = function(){
   return !! window.atrk;
 };
 
-}, {"analytics.js-integration":82}],
+}, {"analytics.js-integration":83}],
 11: [function(require, module, exports) {
 
 /**
@@ -3041,7 +3042,7 @@ Amplitude.prototype.track = function(track){
   window.amplitude.logEvent(event, props);
 };
 
-}, {"analytics.js-integration":82}],
+}, {"analytics.js-integration":83}],
 12: [function(require, module, exports) {
 
 /**
@@ -3122,8 +3123,8 @@ Appcues.prototype.identify = function(identify){
   window.Appcues.identify(identify.traits());
 };
 
-}, {"analytics.js-integration":82,"load-script":114,"is":85}],
-114: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"load-script":115,"is":86}],
+115: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -3184,7 +3185,7 @@ module.exports = function loadScript(options, fn){
   // give it an ID or attributes.
   return script;
 };
-}, {"script-onload":106,"next-tick":96,"type":7}],
+}, {"script-onload":107,"next-tick":97,"type":7}],
 13: [function(require, module, exports) {
 
 /**
@@ -3242,7 +3243,7 @@ Awesm.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":82,"each":4}],
+}, {"analytics.js-integration":83,"each":4}],
 14: [function(require, module, exports) {
 
 /**
@@ -3299,8 +3300,8 @@ Awesomatic.prototype.loaded = function(){
   return is.object(window.Awesomatic);
 };
 
-}, {"analytics.js-integration":82,"is":85,"on-body":115}],
-115: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"is":86,"on-body":116}],
+116: [function(require, module, exports) {
 var each = require('each');
 
 
@@ -3354,7 +3355,7 @@ var interval = setInterval(function () {
 function call (callback) {
   callback(document.body);
 }
-}, {"each":104}],
+}, {"each":105}],
 15: [function(require, module, exports) {
 
 /**
@@ -3479,8 +3480,8 @@ function writeToAppend(str) {
   document.body.appendChild(el);
 }
 
-}, {"analytics.js-integration":82,"on-body":115,"domify":110,"extend":116,"bind":94,"when":117,"each":4}],
-116: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"on-body":116,"domify":111,"extend":117,"bind":95,"when":118,"each":4}],
+117: [function(require, module, exports) {
 
 module.exports = function extend (object) {
     // Takes an unlimited number of extenders.
@@ -3497,7 +3498,7 @@ module.exports = function extend (object) {
     return object;
 };
 }, {}],
-117: [function(require, module, exports) {
+118: [function(require, module, exports) {
 
 var callback = require('callback');
 
@@ -3526,7 +3527,7 @@ function when (condition, fn, interval) {
     clearInterval(ref);
   }, interval || 10);
 }
-}, {"callback":87}],
+}, {"callback":88}],
 16: [function(require, module, exports) {
 
 /**
@@ -3630,8 +3631,8 @@ Bronto.prototype.completedOrder = function(track){
   });
 };
 
-}, {"analytics.js-integration":82,"facade":118,"load-pixel":119,"querystring":120,"each":4}],
-118: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"facade":119,"load-pixel":120,"querystring":121,"each":4}],
+119: [function(require, module, exports) {
 
 var Facade = require('./facade');
 
@@ -3652,8 +3653,8 @@ Facade.Track = require('./track');
 Facade.Page = require('./page');
 Facade.Screen = require('./screen');
 
-}, {"./facade":121,"./alias":122,"./group":123,"./identify":124,"./track":125,"./page":126,"./screen":127}],
-121: [function(require, module, exports) {
+}, {"./facade":122,"./alias":123,"./group":124,"./identify":125,"./track":126,"./page":127,"./screen":128}],
+122: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var isEnabled = require('./is-enabled');
@@ -3963,8 +3964,8 @@ function transform(obj){
   return cloned;
 }
 
-}, {"isodate-traverse":128,"./is-enabled":129,"./utils":130,"./address":131,"obj-case":132,"new-date":133}],
-128: [function(require, module, exports) {
+}, {"isodate-traverse":129,"./is-enabled":130,"./utils":131,"./address":132,"obj-case":133,"new-date":134}],
+129: [function(require, module, exports) {
 
 var is = require('is');
 var isodate = require('isodate');
@@ -4036,8 +4037,8 @@ function array (arr, strict) {
   return arr;
 }
 
-}, {"is":134,"isodate":135,"each":4}],
-134: [function(require, module, exports) {
+}, {"is":135,"isodate":136,"each":4}],
+135: [function(require, module, exports) {
 
 var isEmpty = require('is-empty');
 
@@ -4113,8 +4114,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":113,"type":7,"component-type":7}],
-135: [function(require, module, exports) {
+}, {"is-empty":114,"type":7,"component-type":7}],
+136: [function(require, module, exports) {
 
 /**
  * Matcher, slightly modified from:
@@ -4186,7 +4187,7 @@ exports.is = function (string, strict) {
   return matcher.test(string);
 };
 }, {}],
-129: [function(require, module, exports) {
+130: [function(require, module, exports) {
 
 /**
  * A few integrations are disabled by default. They must be explicitly
@@ -4208,7 +4209,7 @@ module.exports = function (integration) {
   return ! disabled[integration];
 };
 }, {}],
-130: [function(require, module, exports) {
+131: [function(require, module, exports) {
 
 /**
  * TODO: use component symlink, everywhere ?
@@ -4224,8 +4225,8 @@ try {
   exports.type = require('type-component');
 }
 
-}, {"inherit":136,"clone":137,"type":7}],
-136: [function(require, module, exports) {
+}, {"inherit":137,"clone":138,"type":7}],
+137: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -4234,7 +4235,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-137: [function(require, module, exports) {
+138: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -4294,7 +4295,7 @@ function clone(obj){
 }
 
 }, {"component-type":7,"type":7}],
-131: [function(require, module, exports) {
+132: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4332,8 +4333,8 @@ module.exports = function(proto){
   }
 };
 
-}, {"obj-case":132}],
-132: [function(require, module, exports) {
+}, {"obj-case":133}],
+133: [function(require, module, exports) {
 
 var identity = function(_){ return _; };
 
@@ -4474,7 +4475,7 @@ function normalize(path) {
   return path.replace(/[^a-zA-Z0-9\.]+/g, '').toLowerCase();
 }
 }, {}],
-133: [function(require, module, exports) {
+134: [function(require, module, exports) {
 
 var is = require('is');
 var isodate = require('isodate');
@@ -4514,8 +4515,8 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
-}, {"is":138,"isodate":135,"./milliseconds":139,"./seconds":140}],
-138: [function(require, module, exports) {
+}, {"is":139,"isodate":136,"./milliseconds":140,"./seconds":141}],
+139: [function(require, module, exports) {
 
 var isEmpty = require('is-empty')
   , typeOf = require('type');
@@ -4586,8 +4587,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":113,"type":7}],
-139: [function(require, module, exports) {
+}, {"is-empty":114,"type":7}],
+140: [function(require, module, exports) {
 
 /**
  * Matcher.
@@ -4620,7 +4621,7 @@ exports.parse = function (millis) {
   return new Date(millis);
 };
 }, {}],
-140: [function(require, module, exports) {
+141: [function(require, module, exports) {
 
 /**
  * Matcher.
@@ -4653,7 +4654,7 @@ exports.parse = function (seconds) {
   return new Date(millis);
 };
 }, {}],
-122: [function(require, module, exports) {
+123: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4724,8 +4725,8 @@ Alias.prototype.userId = function(){
     || this.field('to');
 };
 
-}, {"./utils":130,"./facade":121}],
-123: [function(require, module, exports) {
+}, {"./utils":131,"./facade":122}],
+124: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4854,8 +4855,8 @@ Group.prototype.properties = function(){
     || {};
 };
 
-}, {"./utils":130,"./address":131,"is-email":141,"new-date":133,"./facade":121}],
-141: [function(require, module, exports) {
+}, {"./utils":131,"./address":132,"is-email":142,"new-date":134,"./facade":122}],
+142: [function(require, module, exports) {
 
 /**
  * Expose `isEmail`.
@@ -4882,7 +4883,7 @@ function isEmail (string) {
   return matcher.test(string);
 }
 }, {}],
-124: [function(require, module, exports) {
+125: [function(require, module, exports) {
 
 var address = require('./address');
 var Facade = require('./facade');
@@ -5132,8 +5133,8 @@ Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.gender = Facade.proxy('traits.gender');
 Identify.prototype.birthday = Facade.proxy('traits.birthday');
 
-}, {"./address":131,"./facade":121,"is-email":141,"new-date":133,"./utils":130,"obj-case":132,"trim":142}],
-142: [function(require, module, exports) {
+}, {"./address":132,"./facade":122,"is-email":142,"new-date":134,"./utils":131,"obj-case":133,"trim":143}],
+143: [function(require, module, exports) {
 
 exports = module.exports = trim;
 
@@ -5153,7 +5154,7 @@ exports.right = function(str){
 };
 
 }, {}],
-125: [function(require, module, exports) {
+126: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var clone = require('./utils').clone;
@@ -5443,8 +5444,8 @@ function currency(val) {
   if (!isNaN(val)) return val;
 }
 
-}, {"./utils":130,"./facade":121,"./identify":124,"is-email":141,"obj-case":132}],
-126: [function(require, module, exports) {
+}, {"./utils":131,"./facade":122,"./identify":125,"is-email":142,"obj-case":133}],
+127: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Facade = require('./facade');
@@ -5569,8 +5570,8 @@ Page.prototype.track = function(name){
   });
 };
 
-}, {"./utils":130,"./facade":121,"./track":125}],
-127: [function(require, module, exports) {
+}, {"./utils":131,"./facade":122,"./track":126}],
+128: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Page = require('./page');
@@ -5646,8 +5647,8 @@ Screen.prototype.track = function(name){
   });
 };
 
-}, {"./utils":130,"./page":126,"./track":125}],
-119: [function(require, module, exports) {
+}, {"./utils":131,"./page":127,"./track":126}],
+120: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -5702,8 +5703,8 @@ function error(fn, message, img){
   };
 }
 
-}, {"querystring":120,"substitute":143}],
-120: [function(require, module, exports) {
+}, {"querystring":121,"substitute":144}],
+121: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -5778,8 +5779,8 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":142,"type":7}],
-143: [function(require, module, exports) {
+}, {"trim":143,"type":7}],
+144: [function(require, module, exports) {
 
 /**
  * Expose `substitute`
@@ -5865,7 +5866,7 @@ BugHerd.prototype.loaded = function(){
   return !! window._bugHerd;
 };
 
-}, {"analytics.js-integration":82,"next-tick":96}],
+}, {"analytics.js-integration":83,"next-tick":97}],
 18: [function(require, module, exports) {
 
 /**
@@ -5945,8 +5946,8 @@ Bugsnag.prototype.identify = function(identify){
   extend(window.Bugsnag.metaData, identify.traits());
 };
 
-}, {"analytics.js-integration":82,"is":85,"extend":116,"on-error":144}],
-144: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"is":86,"extend":117,"on-error":145}],
+145: [function(require, module, exports) {
 
 /**
  * Expose `onError`.
@@ -6069,8 +6070,8 @@ Chartbeat.prototype.page = function(page){
   window.pSUPERFLY.virtualPage(props.path, name || props.title);
 };
 
-}, {"analytics.js-integration":82,"defaults":145,"on-body":115}],
-145: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"defaults":146,"on-body":116}],
+146: [function(require, module, exports) {
 /**
  * Expose `defaults`.
  */
@@ -6167,8 +6168,8 @@ ChurnBee.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"each":4}],
-146: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":147,"each":4}],
+147: [function(require, module, exports) {
 
 /**
  * Expose `generate`.
@@ -6300,8 +6301,8 @@ ClickTale.prototype.track = function(track){
   window.ClickTaleEvent(track.event());
 };
 
-}, {"load-date":147,"domify":110,"each":4,"analytics.js-integration":82,"is":85,"use-https":84,"on-body":115}],
-147: [function(require, module, exports) {
+}, {"load-date":148,"domify":111,"each":4,"analytics.js-integration":83,"is":86,"use-https":85,"on-body":116}],
+148: [function(require, module, exports) {
 
 
 /*
@@ -6409,7 +6410,7 @@ Clicky.prototype.track = function(track){
   window.clicky.goal(track.event(), track.revenue());
 };
 
-}, {"facade":118,"extend":116,"analytics.js-integration":82,"is":85}],
+}, {"facade":119,"extend":117,"analytics.js-integration":83,"is":86}],
 23: [function(require, module, exports) {
 
 /**
@@ -6464,7 +6465,7 @@ Comscore.prototype.page = function(page){
   window.COMSCORE.beacon(this.options);
 };
 
-}, {"analytics.js-integration":82,"use-https":84}],
+}, {"analytics.js-integration":83,"use-https":85}],
 24: [function(require, module, exports) {
 
 /**
@@ -6506,7 +6507,7 @@ CrazyEgg.prototype.loaded = function(){
   return !! window.CE2;
 };
 
-}, {"analytics.js-integration":82}],
+}, {"analytics.js-integration":83}],
 25: [function(require, module, exports) {
 
 /**
@@ -6689,8 +6690,8 @@ Curebit.prototype.completedOrder = function(track){
   });
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"facade":118,"throttle":148,"to-iso-string":149,"clone":150,"each":4,"bind":94}],
-148: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":147,"facade":119,"throttle":149,"to-iso-string":150,"clone":89,"each":4,"bind":95}],
+149: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -6723,7 +6724,7 @@ function throttle (func, wait) {
 }
 
 }, {}],
-149: [function(require, module, exports) {
+150: [function(require, module, exports) {
 
 /**
  * Expose `toIsoString`.
@@ -6765,68 +6766,6 @@ function pad (number) {
   return n.length === 1 ? '0' + n : n;
 }
 }, {}],
-150: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var type;
-
-try {
-  type = require('type');
-} catch(e){
-  type = require('type-component');
-}
-
-/**
- * Module exports.
- */
-
-module.exports = clone;
-
-/**
- * Clones objects.
- *
- * @param {Mixed} any object
- * @api public
- */
-
-function clone(obj){
-  switch (type(obj)) {
-    case 'object':
-      var copy = {};
-      for (var key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          copy[key] = clone(obj[key]);
-        }
-      }
-      return copy;
-
-    case 'array':
-      var copy = new Array(obj.length);
-      for (var i = 0, l = obj.length; i < l; i++) {
-        copy[i] = clone(obj[i]);
-      }
-      return copy;
-
-    case 'regexp':
-      // from millermedeiros/amd-utils - MIT
-      var flags = '';
-      flags += obj.multiline ? 'm' : '';
-      flags += obj.global ? 'g' : '';
-      flags += obj.ignoreCase ? 'i' : '';
-      return new RegExp(obj.source, flags);
-
-    case 'date':
-      return new Date(obj.getTime());
-
-    default: // string, number, boolean, …
-      return obj;
-  }
-}
-
-}, {"type":7}],
 26: [function(require, module, exports) {
 
 /**
@@ -6932,7 +6871,7 @@ function convertDate(date){
   return Math.floor(date.getTime() / 1000);
 }
 
-}, {"alias":151,"convert-dates":152,"facade":118,"analytics.js-integration":82}],
+}, {"alias":151,"convert-dates":152,"facade":119,"analytics.js-integration":83}],
 151: [function(require, module, exports) {
 
 var type = require('type');
@@ -6996,7 +6935,7 @@ function aliasByFunction (obj, convert) {
   for (var key in obj) output[convert(key)] = obj[key];
   return output;
 }
-}, {"type":7,"clone":137}],
+}, {"type":7,"clone":138}],
 152: [function(require, module, exports) {
 
 var is = require('is');
@@ -7032,7 +6971,7 @@ function convertDates (obj, convert) {
   }
   return obj;
 }
-}, {"is":85,"clone":88}],
+}, {"is":86,"clone":89}],
 27: [function(require, module, exports) {
 
 /**
@@ -7104,7 +7043,7 @@ Drip.prototype.identify = function (identify) {
   push('identify', identify.traits());
 };
 
-}, {"alias":151,"analytics.js-integration":82,"is":85,"load-script":114,"global-queue":146}],
+}, {"alias":151,"analytics.js-integration":83,"is":86,"load-script":115,"global-queue":147}],
 28: [function(require, module, exports) {
 
 /**
@@ -7167,7 +7106,7 @@ Errorception.prototype.identify = function(identify){
   extend(window._errs.meta, traits);
 };
 
-}, {"extend":116,"analytics.js-integration":82,"on-error":144,"global-queue":146}],
+}, {"extend":117,"analytics.js-integration":83,"on-error":145,"global-queue":147}],
 29: [function(require, module, exports) {
 
 /**
@@ -7284,7 +7223,7 @@ Evergage.prototype.track = function(track){
   push('trackAction', track.event(), track.properties());
 };
 
-}, {"each":4,"analytics.js-integration":82,"global-queue":146}],
+}, {"each":4,"analytics.js-integration":83,"global-queue":147}],
 30: [function(require, module, exports) {
 
 /**
@@ -7362,7 +7301,7 @@ Facebook.prototype.track = function(track){
   }
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"each":4}],
+}, {"analytics.js-integration":83,"global-queue":147,"each":4}],
 31: [function(require, module, exports) {
 
 /**
@@ -7551,7 +7490,7 @@ function ecommerce(event, track, arr){
   ].concat(arr || []));
 }
 
-}, {"global-queue":146,"analytics.js-integration":82,"facade":118,"each":4}],
+}, {"global-queue":147,"analytics.js-integration":83,"facade":119,"each":4}],
 32: [function(require, module, exports) {
 
 /**
@@ -7772,7 +7711,7 @@ function flatten(source){
   return output;
 }
 
-}, {"analytics.js-integration":82,"bind":94,"when":117,"is":85}],
+}, {"analytics.js-integration":83,"bind":95,"when":118,"is":86}],
 33: [function(require, module, exports) {
 
 /**
@@ -7836,7 +7775,7 @@ FullStory.prototype.identify = function(identify){
   window.FS.identify(id, traits);
 };
 
-}, {"analytics.js-integration":82}],
+}, {"analytics.js-integration":83}],
 34: [function(require, module, exports) {
 
 /**
@@ -7889,7 +7828,7 @@ Gauges.prototype.page = function(page){
   push('track');
 };
 
-}, {"analytics.js-integration":82,"global-queue":146}],
+}, {"analytics.js-integration":83,"global-queue":147}],
 35: [function(require, module, exports) {
 
 /**
@@ -7941,7 +7880,7 @@ GetSatisfaction.prototype.loaded = function(){
   return !! window.GSFN;
 };
 
-}, {"analytics.js-integration":82,"on-body":115}],
+}, {"analytics.js-integration":83,"on-body":116}],
 36: [function(require, module, exports) {
 
 /**
@@ -8057,7 +7996,7 @@ GA.prototype.initialize = function(){
   };
   window.ga.l = new Date().getTime();
 
-  if(window.location.hostname == 'localhost') opts.domain = 'none';
+  if (window.location.hostname == 'localhost') opts.domain = 'none';
 
   window.ga('create', opts.trackingId, {
     cookieDomain: opts.domain || GA.prototype.defaults.domain, // to protect against empty string
@@ -8108,17 +8047,24 @@ GA.prototype.page = function(page){
   var category = page.category();
   var props = page.properties();
   var name = page.fullName();
+  var campaign = page.proxy('context.campaign') || {};
   var pageview = {};
   var track;
 
   this._category = category; // store for later
 
+  pageview.page = path(props, this.options);
+  pageview.title = name || props.title;
+  pageview.location = props.url;
+
+  if (campaign.name) pageview.campaignName = '(' + campaign.name + ')';
+  if (campaign.source) pageview.campaignSource = '(' + campaign.source + ')';
+  if (campaign.medium) pageview.campaignMedium = campaign.medium;
+  if (campaign.content) pageview.campaignContent = campaign.content;
+  if (campaign.term) pageview.campaignKeyword = campaign.term;
+
   // send
-  window.ga('send', 'pageview', {
-    page: path(props, this.options),
-    title: name || props.title,
-    location: props.url
-  });
+  window.ga('send', 'pageview', pageview);
 
   // categorized pages
   if (category && this.options.trackCategorizedPages) {
@@ -8144,18 +8090,27 @@ GA.prototype.page = function(page){
 
 GA.prototype.track = function(track, options){
   var contextOpts = track.options(this.name);
-  var interfaceOpts = this.options;    
+  var interfaceOpts = this.options;
   var opts = defaults(options || {}, contextOpts);
   opts = defaults(opts, interfaceOpts);
   var props = track.properties();
-  
-  window.ga('send', 'event', {
+  var campaign = track.proxy('context.campaign') || {};
+
+  var payload = {
     eventAction: track.event(),
     eventCategory: props.category || this._category || 'All',
     eventLabel: props.label,
     eventValue: formatValue(props.value || track.revenue()),
     nonInteraction: !!(props.nonInteraction || opts.nonInteraction)
-  });
+  };
+
+  if (campaign.name) payload.campaignName = '(' + campaign.name + ')';
+  if (campaign.source) payload.campaignSource = '(' + campaign.source + ')';
+  if (campaign.medium) payload.campaignMedium = campaign.medium;
+  if (campaign.content) payload.campaignContent = campaign.content;
+  if (campaign.term) payload.campaignKeyword = campaign.term;
+
+  window.ga('send', 'event', payload);
 };
 
 /**
@@ -8775,7 +8730,7 @@ function extractCheckoutOptions(props) {
   return valid.length > 0 ? valid.join(', ') : null;
 }
 
-}, {"analytics.js-integration":82,"global-queue":146,"object":153,"canonical":154,"use-https":84,"facade":118,"callback":87,"defaults":145,"load-script":114,"select":155,"obj-case":156,"each":4,"type":7,"url":157,"is":85}],
+}, {"analytics.js-integration":83,"global-queue":147,"object":153,"canonical":154,"use-https":85,"facade":119,"callback":88,"defaults":146,"load-script":115,"select":155,"obj-case":156,"each":4,"type":7,"url":157,"is":86}],
 153: [function(require, module, exports) {
 
 /**
@@ -8900,7 +8855,7 @@ module.exports = function(arr, fn){
   return ret;
 };
 
-}, {"to-function":108}],
+}, {"to-function":109}],
 156: [function(require, module, exports) {
 
 var Case = require('case');
@@ -9201,7 +9156,7 @@ exports.inverse = function (string) {
  */
 
 exports.none = none;
-}, {"to-camel-case":160,"to-capital-case":161,"to-constant-case":162,"to-dot-case":163,"to-no-case":112,"to-pascal-case":164,"to-sentence-case":165,"to-slug-case":166,"to-snake-case":167,"to-space-case":168,"to-title-case":169}],
+}, {"to-camel-case":160,"to-capital-case":161,"to-constant-case":162,"to-dot-case":163,"to-no-case":113,"to-pascal-case":164,"to-sentence-case":165,"to-slug-case":166,"to-snake-case":167,"to-space-case":168,"to-title-case":169}],
 160: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
@@ -9253,7 +9208,7 @@ function toSpaceCase (string) {
     return match ? ' ' + match : '';
   });
 }
-}, {"to-no-case":112}],
+}, {"to-no-case":113}],
 161: [function(require, module, exports) {
 
 var clean = require('to-no-case');
@@ -9279,7 +9234,7 @@ function toCapitalCase (string) {
     return previous + letter.toUpperCase();
   });
 }
-}, {"to-no-case":112}],
+}, {"to-no-case":113}],
 162: [function(require, module, exports) {
 
 var snake = require('to-snake-case');
@@ -9403,7 +9358,7 @@ function toSentenceCase (string) {
     return letter.toUpperCase();
   });
 }
-}, {"to-no-case":112}],
+}, {"to-no-case":113}],
 166: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
@@ -9504,7 +9459,7 @@ module.exports = function map (obj, iterator) {
   });
   return arr;
 };
-}, {"each":104}],
+}, {"each":105}],
 172: [function(require, module, exports) {
 
 module.exports = [
@@ -9707,7 +9662,7 @@ GTM.prototype.track = function(track){
   push(props);
 };
 
-}, {"global-queue":146,"analytics.js-integration":82}],
+}, {"global-queue":147,"analytics.js-integration":83}],
 38: [function(require, module, exports) {
 
 /**
@@ -9780,7 +9735,7 @@ GoSquared.prototype.loaded = function(){
 /**
  * Page.
  *
- * https://www.gosquared.com/developer/tracker/pageviews
+ * https://beta.gosquared.com/docs/tracking/api/#pageviews
  *
  * @param {Page} page
  */
@@ -9794,26 +9749,36 @@ GoSquared.prototype.page = function(page){
 /**
  * Identify.
  *
- * https://www.gosquared.com/developer/tracker/tagging
+ * https://beta.gosquared.com/docs/tracking/identify
  *
  * @param {Identify} identify
  */
 
 GoSquared.prototype.identify = function(identify){
-  var traits = identify.traits({ userId: 'userID' });
-  var username = identify.username();
-  var email = identify.email();
+  var traits = identify.traits({
+    userId: 'user_id',
+    created: 'created_at'
+  });
+
   var id = identify.userId();
-  if (id) push('set', 'visitorID', id);
-  var name =  email || username || id;
+  var name = identify.name();
+  var email = identify.email();
+  var username = identify.username();
+
+  if (id) {
+    push('identify', id, traits);
+  } else {
+    push('properties', traits);
+  }
+
+  var name = email || username || id;
   if (name) push('set', 'visitorName', name);
-  push('set', 'visitor', traits);
 };
 
 /**
  * Track.
  *
- * https://www.gosquared.com/developer/tracker/events
+ * https://beta.gosquared.com/docs/tracking/events
  *
  * @param {Track} track
  */
@@ -9824,6 +9789,8 @@ GoSquared.prototype.track = function(track){
 
 /**
  * Checked out.
+ *
+ * https://beta.gosquared.com/docs/tracking/ecommerce
  *
  * @param {Track} track
  * @api private
@@ -9863,7 +9830,7 @@ function push(){
   _gs.apply(null, arguments);
 }
 
-}, {"analytics.js-integration":82,"facade":118,"callback":87,"load-script":114,"on-body":115,"each":4}],
+}, {"analytics.js-integration":83,"facade":119,"callback":88,"load-script":115,"on-body":116,"each":4}],
 39: [function(require, module, exports) {
 
 /**
@@ -9938,7 +9905,7 @@ Heap.prototype.track = function(track){
   window.heap.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":82,"alias":151}],
+}, {"analytics.js-integration":83,"alias":151}],
 40: [function(require, module, exports) {
 
 /**
@@ -9980,7 +9947,7 @@ Hellobar.prototype.loaded = function(){
   return !! (window._hbq && window._hbq.push !== Array.prototype.push);
 };
 
-}, {"analytics.js-integration":82}],
+}, {"analytics.js-integration":83}],
 41: [function(require, module, exports) {
 
 /**
@@ -10020,7 +9987,7 @@ HitTail.prototype.loaded = function(){
   return is.fn(window.htk);
 };
 
-}, {"analytics.js-integration":82,"is":85}],
+}, {"analytics.js-integration":83,"is":86}],
 42: [function(require, module, exports) {
 
 /**
@@ -10111,7 +10078,7 @@ function convertDates(properties){
   return convert(properties, function(date){ return date.getTime(); });
 }
 
-}, {"analytics.js-integration":82,"global-queue":146,"convert-dates":152}],
+}, {"analytics.js-integration":83,"global-queue":147,"convert-dates":152}],
 43: [function(require, module, exports) {
 
 /**
@@ -10188,7 +10155,7 @@ Improvely.prototype.track = function(track){
   window.improvely.goal(props);
 };
 
-}, {"analytics.js-integration":82,"alias":151}],
+}, {"analytics.js-integration":83,"alias":151}],
 44: [function(require, module, exports) {
 
 /**
@@ -10288,7 +10255,7 @@ InsideVault.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"facade":118,"each":4,"is":85}],
+}, {"analytics.js-integration":83,"global-queue":147,"facade":119,"each":4,"is":86}],
 45: [function(require, module, exports) {
 
 /**
@@ -10371,7 +10338,7 @@ Inspectlet.prototype.page = function(){
   push('virtualPage');
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"alias":151,"clone":150}],
+}, {"analytics.js-integration":83,"global-queue":147,"alias":151,"clone":89}],
 46: [function(require, module, exports) {
 
 /**
@@ -10531,7 +10498,7 @@ function formatDate(date) {
   return Math.floor(date / 1000);
 }
 
-}, {"analytics.js-integration":82,"convert-dates":152,"defaults":145,"is-email":141,"load-script":114,"is-empty":113,"alias":151,"each":4,"when":117,"is":85}],
+}, {"analytics.js-integration":83,"convert-dates":152,"defaults":146,"is-email":142,"load-script":115,"is-empty":114,"alias":151,"each":4,"when":118,"is":86}],
 47: [function(require, module, exports) {
 
 /**
@@ -10712,7 +10679,7 @@ Keen.prototype.addons = function(obj, msg){
   };
 };
 
-}, {"analytics.js-integration":82,"clone":150}],
+}, {"analytics.js-integration":83,"clone":89}],
 48: [function(require, module, exports) {
 
 /**
@@ -10791,7 +10758,7 @@ Kenshoo.prototype.track = function(track){
   window.k_trackevent(params, this.options.subdomain);
 };
 
-}, {"analytics.js-integration":82,"indexof":107,"is":85}],
+}, {"analytics.js-integration":83,"indexof":108,"is":86}],
 49: [function(require, module, exports) {
 
 /**
@@ -10955,7 +10922,6 @@ KISSmetrics.prototype.completedOrder = function(track){
   window._kmq.push(function(){
     var km = window.KM;
     each(products, function(product, i){
-      var temp = new Track({ event: event, properties: product });
       var item = prefix(event, product);
       item._t = km.ts() + i;
       item._d = 1;
@@ -10985,7 +10951,7 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"analytics.js-integration":82,"global-queue":146,"facade":118,"alias":151,"batch":173,"each":4,"is":85}],
+}, {"analytics.js-integration":83,"global-queue":147,"facade":119,"alias":151,"batch":173,"each":4,"is":86}],
 173: [function(require, module, exports) {
 /**
  * Module dependencies.
@@ -11410,7 +11376,7 @@ Klaviyo.prototype.track = function(track){
   }));
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"next-tick":96,"alias":151}],
+}, {"analytics.js-integration":83,"global-queue":147,"next-tick":97,"alias":151}],
 51: [function(require, module, exports) {
 
 /**
@@ -11451,7 +11417,7 @@ LeadLander.prototype.loaded = function(){
   return !! window.trackalyzer;
 };
 
-}, {"analytics.js-integration":82}],
+}, {"analytics.js-integration":83}],
 52: [function(require, module, exports) {
 
 /**
@@ -11541,7 +11507,7 @@ function convert(traits){
   return arr;
 }
 
-}, {"analytics.js-integration":82,"clone":150,"each":4,"facade":118,"when":117}],
+}, {"analytics.js-integration":83,"clone":89,"each":4,"facade":119,"when":118}],
 53: [function(require, module, exports) {
 
 /**
@@ -11611,7 +11577,7 @@ LuckyOrange.prototype.identify = function(identify){
   window.__wtw_custom_user_data = traits;
 };
 
-}, {"analytics.js-integration":82,"facade":118,"use-https":84}],
+}, {"analytics.js-integration":83,"facade":119,"use-https":85}],
 54: [function(require, module, exports) {
 
 /**
@@ -11701,7 +11667,7 @@ Lytics.prototype.track = function(track){
   window.jstag.send(props);
 };
 
-}, {"analytics.js-integration":82,"alias":151}],
+}, {"analytics.js-integration":83,"alias":151}],
 55: [function(require, module, exports) {
 
 /**
@@ -11926,7 +11892,7 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":151,"clone":150,"convert-dates":152,"analytics.js-integration":82,"is":85,"to-iso-string":149,"indexof":107,"obj-case":156,"some":175}],
+}, {"alias":151,"clone":89,"convert-dates":152,"analytics.js-integration":83,"is":86,"to-iso-string":150,"indexof":108,"obj-case":156,"some":175}],
 175: [function(require, module, exports) {
 
 /**
@@ -12039,7 +12005,7 @@ Mojn.prototype.track = function(track){
   return conv;
 };
 
-}, {"analytics.js-integration":82,"bind":94,"when":117,"is":85}],
+}, {"analytics.js-integration":83,"bind":95,"when":118,"is":86}],
 57: [function(require, module, exports) {
 
 /**
@@ -12135,7 +12101,7 @@ function set(obj){
   });
 }
 
-}, {"global-queue":146,"analytics.js-integration":82,"each":4}],
+}, {"global-queue":147,"analytics.js-integration":83,"each":4}],
 58: [function(require, module, exports) {
 
 /**
@@ -12199,7 +12165,7 @@ MouseStats.prototype.identify = function(identify){
   });
 };
 
-}, {"analytics.js-integration":82,"use-https":84,"each":4,"is":85}],
+}, {"analytics.js-integration":83,"use-https":85,"each":4,"is":86}],
 59: [function(require, module, exports) {
 
 /**
@@ -12255,7 +12221,7 @@ Navilytics.prototype.track = function(track){
   push('tagRecording', track.event());
 };
 
-}, {"analytics.js-integration":82,"global-queue":146}],
+}, {"analytics.js-integration":83,"global-queue":147}],
 60: [function(require, module, exports) {
 
 /**
@@ -12410,7 +12376,7 @@ function api(action, value) {
   window.olark('api.' + action, value);
 }
 
-}, {"analytics.js-integration":82,"use-https":84,"next-tick":96}],
+}, {"analytics.js-integration":83,"use-https":85,"next-tick":97}],
 61: [function(require, module, exports) {
 
 /**
@@ -12511,7 +12477,7 @@ Optimizely.prototype.replay = function(){
   this.analytics.identify(traits);
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"callback":87,"next-tick":96,"bind":94,"each":4}],
+}, {"analytics.js-integration":83,"global-queue":147,"callback":88,"next-tick":97,"bind":95,"each":4}],
 62: [function(require, module, exports) {
 
 /**
@@ -12598,7 +12564,7 @@ PerfectAudience.prototype.completedOrder = function(track){
   push('track', track.event(), props);
 };
 
-}, {"analytics.js-integration":82,"global-queue":146}],
+}, {"analytics.js-integration":83,"global-queue":147}],
 63: [function(require, module, exports) {
 
 /**
@@ -12644,7 +12610,7 @@ Pingdom.prototype.loaded = function(){
   return !! (window._prum && window._prum.push !== Array.prototype.push);
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"load-date":147}],
+}, {"analytics.js-integration":83,"global-queue":147,"load-date":148}],
 64: [function(require, module, exports) {
 
 /**
@@ -12712,7 +12678,7 @@ Piwik.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"each":4}],
+}, {"analytics.js-integration":83,"global-queue":147,"each":4}],
 65: [function(require, module, exports) {
 
 /**
@@ -12825,7 +12791,7 @@ function convertDate(date){
   return Math.floor(date / 1000);
 }
 
-}, {"analytics.js-integration":82,"convert-dates":152,"global-queue":146,"alias":151}],
+}, {"analytics.js-integration":83,"convert-dates":152,"global-queue":147,"alias":151}],
 66: [function(require, module, exports) {
 
 /**
@@ -12910,7 +12876,7 @@ Qualaroo.prototype.track = function(track){
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"facade":118,"bind":94,"when":117}],
+}, {"analytics.js-integration":83,"global-queue":147,"facade":119,"bind":95,"when":118}],
 67: [function(require, module, exports) {
 
 /**
@@ -13096,7 +13062,7 @@ Quantcast.prototype.labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"global-queue":146,"analytics.js-integration":82,"use-https":84}],
+}, {"global-queue":147,"analytics.js-integration":83,"use-https":85}],
 68: [function(require, module, exports) {
 
 /**
@@ -13176,7 +13142,7 @@ RollbarIntegration.prototype.identify = function(identify){
   rollbar.configure({ payload: { person: person }});
 };
 
-}, {"analytics.js-integration":82,"extend":116,"is":85}],
+}, {"analytics.js-integration":83,"extend":117,"is":86}],
 69: [function(require, module, exports) {
 
 /**
@@ -13280,8 +13246,1839 @@ SaaSquatch.prototype.group = function(group){
   this.load();
 };
 
-}, {"analytics.js-integration":82}],
+}, {"analytics.js-integration":83}],
 70: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
+var localstorage = require('store');
+var protocol = require('protocol');
+var utm = require('utm-params');
+var ads = require('ad-params');
+var send = require('send-json');
+var cookie = require('cookie');
+var clone = require('clone');
+var uuid = require('uuid');
+var top = require('top-domain');
+var extend = require('extend');
+var json = require('segmentio/json@1.0.0');
+
+/**
+ * Cookie options
+ */
+
+var options = {
+  maxage: 31536000000, // 1y
+  secure: false,
+  path: '/'
+};
+
+/**
+ * Expose `Segment` integration.
+ */
+
+var Segment = exports = module.exports = integration('Segment.io')
+  .option('apiKey', '');
+
+/**
+ * Get the store.
+ *
+ * @return {Function}
+ */
+
+exports.storage = function(){
+  return 'file:' == protocol()
+    || 'chrome-extension:' == protocol()
+    ? localstorage
+    : cookie;
+};
+
+/**
+ * Expose global for testing.
+ */
+
+exports.global = window;
+
+/**
+ * Initialize.
+ *
+ * https://github.com/segmentio/segmentio/blob/master/modules/segmentjs/segment.js/v1/segment.js
+ *
+ * @param {Object} page
+ */
+
+Segment.prototype.initialize = function(page){
+  var self = this;
+  this.ready();
+  this.analytics.on('invoke', function(msg){
+    var action = msg.action();
+    var listener = 'on' + msg.action();
+    self.debug('%s %o', action, msg);
+    if (self[listener]) self[listener](msg);
+    self.ready();
+  });
+};
+
+/**
+ * Loaded.
+ *
+ * @return {Boolean}
+ */
+
+Segment.prototype.loaded = function(){
+  return true;
+};
+
+/**
+ * Page.
+ *
+ * @param {Page} page
+ */
+
+Segment.prototype.onpage = function(page){
+  this.send('/p', page.json());
+};
+
+/**
+ * Identify.
+ *
+ * @param {Identify} identify
+ */
+
+Segment.prototype.onidentify = function(identify){
+  this.send('/i', identify.json());
+};
+
+/**
+ * Group.
+ *
+ * @param {Group} group
+ */
+
+Segment.prototype.ongroup = function(group){
+  this.send('/g', group.json());
+};
+
+/**
+ * Track.
+ *
+ * @param {Track} track
+ */
+
+Segment.prototype.ontrack = function(track){
+  var json = track.json();
+  delete json.traits; // TODO: figure out why we need traits.
+  this.send('/t', json);
+};
+
+/**
+ * Alias.
+ *
+ * @param {Alias} alias
+ */
+
+Segment.prototype.onalias = function(alias){
+  var json = alias.json();
+  var user = this.analytics.user();
+  json.previousId = json.from || user.id() || user.anonymousId();
+  json.userId = json.to;
+  delete json.from;
+  delete json.to;
+  this.send('/a', json);
+};
+
+/**
+ * Normalize the given `msg`.
+ *
+ * @param {Object} msg
+ * @api private
+ */
+
+Segment.prototype.normalize = function(msg){
+  this.debug('normalize %o', msg);
+  var user = this.analytics.user();
+  var global = exports.global;
+  var query = global.location.search;
+  var ctx = msg.context = msg.context || msg.options || {};
+  delete msg.options;
+  msg.writeKey = this.options.apiKey;
+  ctx.userAgent = navigator.userAgent;
+  if (!ctx.library) ctx.library = { name: 'analytics.js', version: this.analytics.VERSION };
+  if (query) ctx.campaign = utm(query);
+  this.referrerId(query, ctx);
+  msg.userId = msg.userId || user.id();
+  msg.anonymousId = user.anonymousId();
+  msg.messageId = uuid();
+  this.debug('normalized %o', msg);
+  return msg;
+};
+
+/**
+ * Send `obj` to `path`.
+ *
+ * @param {String} path
+ * @param {Object} obj
+ * @param {Function} fn
+ * @api private
+ */
+
+Segment.prototype.send = function(path, msg, fn){
+  var url = scheme() + '//api.segment.io/v1' + path;
+  var headers = { 'Content-Type': 'application/json' };
+  var fn = fn || noop;
+  var self = this;
+
+  // msg
+  msg = this.normalize(msg);
+
+  // send
+  send(url, msg, headers, function(err, res){
+    self.debug('sent %O, received %O', msg, arguments);
+    if (err) return fn(err);
+    res.url = url;
+    fn(null, res);
+  });
+};
+
+/**
+ * Gets/sets cookies on the appropriate domain.
+ *
+ * @param {String} name
+ * @param {Mixed} val
+ */
+
+Segment.prototype.cookie = function(name, val){
+  var store = Segment.storage();
+  if (arguments.length === 1) return store(name);
+  var global = exports.global;
+  var href = global.location.href;
+  var domain = '.' + top(href);
+  if ('.' == domain) domain = '';
+  this.debug('store domain %s -> %s', href, domain);
+  var opts = clone(options);
+  opts.domain = domain;
+  this.debug('store %s, %s, %o', name, val, opts);
+  store(name, val, opts);
+  if (store(name)) return;
+  delete opts.domain;
+  this.debug('fallback store %s, %s, %o', name, val, opts);
+  store(name, val, opts);
+};
+
+/**
+ * Add referrerId to context.
+ *
+ * TODO: remove.
+ *
+ * @param {Object} query
+ * @param {Object} ctx
+ * @api private
+ */
+
+Segment.prototype.referrerId = function(query, ctx){
+  var stored = this.cookie('s:context.referrer');
+  var ad;
+
+  if (stored) stored = json.parse(stored);
+  if (query) ad = ads(query);
+
+  ad = ad || stored;
+
+  if (!ad) return;
+  ctx.referrer = extend(ctx.referrer || {}, ad);
+  this.cookie('s:context.referrer', json.stringify(ad));
+}
+
+/**
+ * Get the scheme.
+ *
+ * The function returns `http:`
+ * if the protocol is `http:` and
+ * `https:` for other protocols.
+ *
+ * @return {String}
+ */
+
+function scheme(){
+  return 'http:' == protocol()
+    ? 'http:'
+    : 'https:';
+}
+
+/**
+ * Noop
+ */
+
+function noop(){}
+
+}, {"analytics.js-integration":83,"store":176,"protocol":177,"utm-params":178,"ad-params":179,"send-json":180,"cookie":181,"clone":89,"uuid":182,"top-domain":183,"extend":117,"segmentio/json@1.0.0":184}],
+176: [function(require, module, exports) {
+
+/**
+ * dependencies.
+ */
+
+var unserialize = require('yields/unserialize');
+var each = require('component/each');
+var storage = window.localStorage;
+
+/**
+ * Expose `store`
+ */
+
+module.exports = store;
+
+/**
+ * Store the given `key`, `val`.
+ *
+ * @param {String|Object} key
+ * @param {Mixed} value
+ * @return {Mixed}
+ * @api public
+ */
+
+function store(key, value){
+  var length = arguments.length;
+  if (0 == length) return all();
+  if (2 <= length) return set(key, value);
+  if (1 != length) return;
+  if (null == key) return storage.clear();
+  if ('string' == typeof key) return get(key);
+  if ('object' == typeof key) return each(key, set);
+}
+
+/**
+ * supported flag.
+ */
+
+store.supported = !! storage;
+
+/**
+ * Set `key` to `val`.
+ *
+ * @param {String} key
+ * @param {Mixed} val
+ */
+
+function set(key, val){
+  return null == val
+    ? storage.removeItem(key)
+    : storage.setItem(key, JSON.stringify(val));
+}
+
+/**
+ * Get `key`.
+ *
+ * @param {String} key
+ * @return {Mixed}
+ */
+
+function get(key){
+  return unserialize(storage.getItem(key));
+}
+
+/**
+ * Get all.
+ *
+ * @return {Object}
+ */
+
+function all(){
+  var len = storage.length;
+  var ret = {};
+  var key;
+
+  while (0 <= --len) {
+    key = storage.key(len);
+    ret[key] = get(key);
+  }
+
+  return ret;
+}
+
+}, {"yields/unserialize":185,"component/each":105}],
+185: [function(require, module, exports) {
+
+/**
+ * Unserialize the given "stringified" javascript.
+ * 
+ * @param {String} val
+ * @return {Mixed}
+ */
+
+module.exports = function(val){
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    return val || undefined;
+  }
+};
+
+}, {}],
+177: [function(require, module, exports) {
+
+/**
+ * Convenience alias
+ */
+
+var define = Object.defineProperty;
+
+
+/**
+ *  The base protocol
+ */
+
+var initialProtocol = window.location.protocol;
+
+/**
+ * Fallback mocked protocol in case Object.defineProperty doesn't exist.
+ */
+
+var mockedProtocol;
+
+
+module.exports = function (protocol) {
+  if (arguments.length === 0) return get();
+  else return set(protocol);
+};
+
+
+/**
+ * Sets the protocol to be http:
+ */
+
+module.exports.http = function () {
+  set('http:');
+};
+
+
+/**
+ * Sets the protocol to be https:
+ */
+
+module.exports.https = function () {
+  set('https:');
+};
+
+
+/**
+ * Reset to the initial protocol.
+ */
+
+module.exports.reset = function () {
+  set(initialProtocol);
+};
+
+
+/**
+ * Gets the current protocol, using the fallback and then the native protocol.
+ *
+ * @return {String} protocol
+ */
+
+function get () {
+  return mockedProtocol || window.location.protocol;
+}
+
+
+/**
+ * Sets the protocol
+ *
+ * @param {String} protocol
+ */
+
+function set (protocol) {
+  try {
+    define(window.location, 'protocol', {
+      get: function () { return protocol; }
+    });
+  } catch (err) {
+    mockedProtocol = protocol;
+  }
+}
+
+}, {}],
+178: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var parse = require('querystring').parse;
+
+/**
+ * Expose `utm`
+ */
+
+module.exports = utm;
+
+/**
+ * Get all utm params from the given `querystring`
+ *
+ * @param {String} query
+ * @return {Object}
+ * @api private
+ */
+
+function utm(query){
+  var params = parse(query);
+  var param;
+  var ret = {};
+
+  for (var key in params) {
+    if (~key.indexOf('utm_')) {
+      param = key.substr(4);
+      if ('campaign' == param) param = 'name';
+      ret[param] = params[key];
+    }
+  }
+
+  return ret;
+}
+
+}, {"querystring":121}],
+179: [function(require, module, exports) {
+/**
+ * Module dependencies.
+ */
+ 
+var parse = require('querystring').parse;
+ 
+/**
+ * Expose `ads`
+ */
+ 
+module.exports = ads;
+ 
+/**
+ * All the ad query params we look for.
+ */
+ 
+var QUERYIDS = {
+  'btid' : 'dataxu',
+  'urid' : 'millennial-media'
+};
+ 
+/**
+ * Get all ads info from the given `querystring`
+ *
+ * @param {String} query
+ * @return {Object}
+ * @api private
+ */
+ 
+function ads(query){
+  var params = parse(query);
+  for (var key in params) {
+    for (var id in QUERYIDS) {
+      if (key === id) {
+        return {
+          id : params[key],
+          type : QUERYIDS[id]
+        };
+      }
+    }
+  }
+}
+}, {"querystring":121}],
+180: [function(require, module, exports) {
+/**
+ * Module dependencies.
+ */
+
+var encode = require('base64-encode');
+var cors = require('has-cors');
+var jsonp = require('jsonp');
+var JSON = require('json');
+
+/**
+ * Expose `send`
+ */
+
+exports = module.exports = cors
+  ? json
+  : base64;
+
+/**
+ * Expose `callback`
+ */
+
+exports.callback = 'callback';
+
+/**
+ * Expose `prefix`
+ */
+
+exports.prefix = 'data';
+
+/**
+ * Expose `json`.
+ */
+
+exports.json = json;
+
+/**
+ * Expose `base64`.
+ */
+
+exports.base64 = base64;
+
+/**
+ * Expose `type`
+ */
+
+exports.type = cors
+  ? 'xhr'
+  : 'jsonp';
+
+/**
+ * Send the given `obj` to `url` with `fn(err, req)`.
+ *
+ * @param {String} url
+ * @param {Object} obj
+ * @param {Object} headers
+ * @param {Function} fn
+ * @api private
+ */
+
+function json(url, obj, headers, fn){
+  if (3 == arguments.length) fn = headers, headers = {};
+
+  var req = new XMLHttpRequest;
+  req.onerror = fn;
+  req.onreadystatechange = done;
+  req.open('POST', url, true);
+  for (var k in headers) req.setRequestHeader(k, headers[k]);
+  req.send(JSON.stringify(obj));
+
+  function done(){
+    if (4 == req.readyState) return fn(null, req);
+  }
+}
+
+/**
+ * Send the given `obj` to `url` with `fn(err, req)`.
+ *
+ * @param {String} url
+ * @param {Object} obj
+ * @param {Function} fn
+ * @api private
+ */
+
+function base64(url, obj, _, fn){
+  if (3 == arguments.length) fn = _;
+  var prefix = exports.prefix;
+  obj = encode(JSON.stringify(obj));
+  obj = encodeURIComponent(obj);
+  url += '?' + prefix + '=' + obj;
+  jsonp(url, { param: exports.callback }, function(err, obj){
+    if (err) return fn(err);
+    fn(null, {
+      url: url,
+      body: obj
+    });
+  });
+}
+
+}, {"base64-encode":186,"has-cors":187,"jsonp":188,"json":184}],
+186: [function(require, module, exports) {
+var utf8Encode = require('utf8-encode');
+var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+
+module.exports = encode;
+function encode(input) {
+    var output = "";
+    var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+    var i = 0;
+
+    input = utf8Encode(input);
+
+    while (i < input.length) {
+
+        chr1 = input.charCodeAt(i++);
+        chr2 = input.charCodeAt(i++);
+        chr3 = input.charCodeAt(i++);
+
+        enc1 = chr1 >> 2;
+        enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+        enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+        enc4 = chr3 & 63;
+
+        if (isNaN(chr2)) {
+            enc3 = enc4 = 64;
+        } else if (isNaN(chr3)) {
+            enc4 = 64;
+        }
+
+        output = output +
+            keyStr.charAt(enc1) + keyStr.charAt(enc2) +
+            keyStr.charAt(enc3) + keyStr.charAt(enc4);
+
+    }
+
+    return output;
+}
+}, {"utf8-encode":189}],
+189: [function(require, module, exports) {
+module.exports = encode;
+
+function encode(string) {
+    string = string.replace(/\r\n/g, "\n");
+    var utftext = "";
+
+    for (var n = 0; n < string.length; n++) {
+
+        var c = string.charCodeAt(n);
+
+        if (c < 128) {
+            utftext += String.fromCharCode(c);
+        }
+        else if ((c > 127) && (c < 2048)) {
+            utftext += String.fromCharCode((c >> 6) | 192);
+            utftext += String.fromCharCode((c & 63) | 128);
+        }
+        else {
+            utftext += String.fromCharCode((c >> 12) | 224);
+            utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+            utftext += String.fromCharCode((c & 63) | 128);
+        }
+
+    }
+
+    return utftext;
+}
+}, {}],
+187: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var global = require('global');
+
+/**
+ * Module exports.
+ *
+ * Logic borrowed from Modernizr:
+ *
+ *   - https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cors.js
+ */
+
+try {
+  module.exports = 'XMLHttpRequest' in global &&
+    'withCredentials' in new global.XMLHttpRequest();
+} catch (err) {
+  // if XMLHttp support is disabled in IE then it will throw
+  // when trying to create
+  module.exports = false;
+}
+
+}, {"global":190}],
+190: [function(require, module, exports) {
+
+/**
+ * Returns `this`. Execute this without a "context" (i.e. without it being
+ * attached to an object of the left-hand side), and `this` points to the
+ * "global" scope of the current JS execution.
+ */
+
+module.exports = (function () { return this; })();
+
+}, {}],
+188: [function(require, module, exports) {
+/**
+ * Module dependencies
+ */
+
+var debug = require('debug')('jsonp');
+
+/**
+ * Module exports.
+ */
+
+module.exports = jsonp;
+
+/**
+ * Callback index.
+ */
+
+var count = 0;
+
+/**
+ * Noop function.
+ */
+
+function noop(){}
+
+/**
+ * JSONP handler
+ *
+ * Options:
+ *  - param {String} qs parameter (`callback`)
+ *  - timeout {Number} how long after a timeout error is emitted (`60000`)
+ *
+ * @param {String} url
+ * @param {Object|Function} optional options / callback
+ * @param {Function} optional callback
+ */
+
+function jsonp(url, opts, fn){
+  if ('function' == typeof opts) {
+    fn = opts;
+    opts = {};
+  }
+  if (!opts) opts = {};
+
+  var prefix = opts.prefix || '__jp';
+  var param = opts.param || 'callback';
+  var timeout = null != opts.timeout ? opts.timeout : 60000;
+  var enc = encodeURIComponent;
+  var target = document.getElementsByTagName('script')[0] || document.head;
+  var script;
+  var timer;
+
+  // generate a unique id for this request
+  var id = prefix + (count++);
+
+  if (timeout) {
+    timer = setTimeout(function(){
+      cleanup();
+      if (fn) fn(new Error('Timeout'));
+    }, timeout);
+  }
+
+  function cleanup(){
+    script.parentNode.removeChild(script);
+    window[id] = noop;
+  }
+
+  window[id] = function(data){
+    debug('jsonp got', data);
+    if (timer) clearTimeout(timer);
+    cleanup();
+    if (fn) fn(null, data);
+  };
+
+  // add qs component
+  url += (~url.indexOf('?') ? '&' : '?') + param + '=' + enc(id);
+  url = url.replace('?&', '?');
+
+  debug('jsonp req "%s"', url);
+
+  // create script
+  script = document.createElement('script');
+  script.src = url;
+  target.parentNode.insertBefore(script, target);
+}
+
+}, {"debug":191}],
+191: [function(require, module, exports) {
+if ('undefined' == typeof window) {
+  module.exports = require('./lib/debug');
+} else {
+  module.exports = require('./debug');
+}
+
+}, {"./lib/debug":192,"./debug":193}],
+192: [function(require, module, exports) {
+/**
+ * Module dependencies.
+ */
+
+var tty = require('tty');
+
+/**
+ * Expose `debug()` as the module.
+ */
+
+module.exports = debug;
+
+/**
+ * Enabled debuggers.
+ */
+
+var names = []
+  , skips = [];
+
+(process.env.DEBUG || '')
+  .split(/[\s,]+/)
+  .forEach(function(name){
+    name = name.replace('*', '.*?');
+    if (name[0] === '-') {
+      skips.push(new RegExp('^' + name.substr(1) + '$'));
+    } else {
+      names.push(new RegExp('^' + name + '$'));
+    }
+  });
+
+/**
+ * Colors.
+ */
+
+var colors = [6, 2, 3, 4, 5, 1];
+
+/**
+ * Previous debug() call.
+ */
+
+var prev = {};
+
+/**
+ * Previously assigned color.
+ */
+
+var prevColor = 0;
+
+/**
+ * Is stdout a TTY? Colored output is disabled when `true`.
+ */
+
+var isatty = tty.isatty(2);
+
+/**
+ * Select a color.
+ *
+ * @return {Number}
+ * @api private
+ */
+
+function color() {
+  return colors[prevColor++ % colors.length];
+}
+
+/**
+ * Humanize the given `ms`.
+ *
+ * @param {Number} m
+ * @return {String}
+ * @api private
+ */
+
+function humanize(ms) {
+  var sec = 1000
+    , min = 60 * 1000
+    , hour = 60 * min;
+
+  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
+  if (ms >= min) return (ms / min).toFixed(1) + 'm';
+  if (ms >= sec) return (ms / sec | 0) + 's';
+  return ms + 'ms';
+}
+
+/**
+ * Create a debugger with the given `name`.
+ *
+ * @param {String} name
+ * @return {Type}
+ * @api public
+ */
+
+function debug(name) {
+  function disabled(){}
+  disabled.enabled = false;
+
+  var match = skips.some(function(re){
+    return re.test(name);
+  });
+
+  if (match) return disabled;
+
+  match = names.some(function(re){
+    return re.test(name);
+  });
+
+  if (!match) return disabled;
+  var c = color();
+
+  function colored(fmt) {
+    fmt = coerce(fmt);
+
+    var curr = new Date;
+    var ms = curr - (prev[name] || curr);
+    prev[name] = curr;
+
+    fmt = '  \u001b[9' + c + 'm' + name + ' '
+      + '\u001b[3' + c + 'm\u001b[90m'
+      + fmt + '\u001b[3' + c + 'm'
+      + ' +' + humanize(ms) + '\u001b[0m';
+
+    console.error.apply(this, arguments);
+  }
+
+  function plain(fmt) {
+    fmt = coerce(fmt);
+
+    fmt = new Date().toUTCString()
+      + ' ' + name + ' ' + fmt;
+    console.error.apply(this, arguments);
+  }
+
+  colored.enabled = plain.enabled = true;
+
+  return isatty || process.env.DEBUG_COLORS
+    ? colored
+    : plain;
+}
+
+/**
+ * Coerce `val`.
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
+}, {}],
+193: [function(require, module, exports) {
+
+/**
+ * Expose `debug()` as the module.
+ */
+
+module.exports = debug;
+
+/**
+ * Create a debugger with the given `name`.
+ *
+ * @param {String} name
+ * @return {Type}
+ * @api public
+ */
+
+function debug(name) {
+  if (!debug.enabled(name)) return function(){};
+
+  return function(fmt){
+    fmt = coerce(fmt);
+
+    var curr = new Date;
+    var ms = curr - (debug[name] || curr);
+    debug[name] = curr;
+
+    fmt = name
+      + ' '
+      + fmt
+      + ' +' + debug.humanize(ms);
+
+    // This hackery is required for IE8
+    // where `console.log` doesn't have 'apply'
+    window.console
+      && console.log
+      && Function.prototype.apply.call(console.log, console, arguments);
+  }
+}
+
+/**
+ * The currently active debug mode names.
+ */
+
+debug.names = [];
+debug.skips = [];
+
+/**
+ * Enables a debug mode by name. This can include modes
+ * separated by a colon and wildcards.
+ *
+ * @param {String} name
+ * @api public
+ */
+
+debug.enable = function(name) {
+  try {
+    localStorage.debug = name;
+  } catch(e){}
+
+  var split = (name || '').split(/[\s,]+/)
+    , len = split.length;
+
+  for (var i = 0; i < len; i++) {
+    name = split[i].replace('*', '.*?');
+    if (name[0] === '-') {
+      debug.skips.push(new RegExp('^' + name.substr(1) + '$'));
+    }
+    else {
+      debug.names.push(new RegExp('^' + name + '$'));
+    }
+  }
+};
+
+/**
+ * Disable debug output.
+ *
+ * @api public
+ */
+
+debug.disable = function(){
+  debug.enable('');
+};
+
+/**
+ * Humanize the given `ms`.
+ *
+ * @param {Number} m
+ * @return {String}
+ * @api private
+ */
+
+debug.humanize = function(ms) {
+  var sec = 1000
+    , min = 60 * 1000
+    , hour = 60 * min;
+
+  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
+  if (ms >= min) return (ms / min).toFixed(1) + 'm';
+  if (ms >= sec) return (ms / sec | 0) + 's';
+  return ms + 'ms';
+};
+
+/**
+ * Returns true if the given mode name is enabled, false otherwise.
+ *
+ * @param {String} name
+ * @return {Boolean}
+ * @api public
+ */
+
+debug.enabled = function(name) {
+  for (var i = 0, len = debug.skips.length; i < len; i++) {
+    if (debug.skips[i].test(name)) {
+      return false;
+    }
+  }
+  for (var i = 0, len = debug.names.length; i < len; i++) {
+    if (debug.names[i].test(name)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * Coerce `val`.
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
+// persist
+
+try {
+  if (window.localStorage) debug.enable(localStorage.debug);
+} catch(e){}
+
+}, {}],
+184: [function(require, module, exports) {
+
+var json = window.JSON || {};
+var stringify = json.stringify;
+var parse = json.parse;
+
+module.exports = parse && stringify
+  ? JSON
+  : require('json-fallback');
+
+}, {"json-fallback":194}],
+194: [function(require, module, exports) {
+/*
+    json2.js
+    2014-02-04
+
+    Public Domain.
+
+    NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+
+    See http://www.JSON.org/js.html
+
+
+    This code should be minified before deployment.
+    See http://javascript.crockford.com/jsmin.html
+
+    USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO
+    NOT CONTROL.
+
+
+    This file creates a global JSON object containing two methods: stringify
+    and parse.
+
+        JSON.stringify(value, replacer, space)
+            value       any JavaScript value, usually an object or array.
+
+            replacer    an optional parameter that determines how object
+                        values are stringified for objects. It can be a
+                        function or an array of strings.
+
+            space       an optional parameter that specifies the indentation
+                        of nested structures. If it is omitted, the text will
+                        be packed without extra whitespace. If it is a number,
+                        it will specify the number of spaces to indent at each
+                        level. If it is a string (such as '\t' or '&nbsp;'),
+                        it contains the characters used to indent at each level.
+
+            This method produces a JSON text from a JavaScript value.
+
+            When an object value is found, if the object contains a toJSON
+            method, its toJSON method will be called and the result will be
+            stringified. A toJSON method does not serialize: it returns the
+            value represented by the name/value pair that should be serialized,
+            or undefined if nothing should be serialized. The toJSON method
+            will be passed the key associated with the value, and this will be
+            bound to the value
+
+            For example, this would serialize Dates as ISO strings.
+
+                Date.prototype.toJSON = function (key) {
+                    function f(n) {
+                        // Format integers to have at least two digits.
+                        return n < 10 ? '0' + n : n;
+                    }
+
+                    return this.getUTCFullYear()   + '-' +
+                         f(this.getUTCMonth() + 1) + '-' +
+                         f(this.getUTCDate())      + 'T' +
+                         f(this.getUTCHours())     + ':' +
+                         f(this.getUTCMinutes())   + ':' +
+                         f(this.getUTCSeconds())   + 'Z';
+                };
+
+            You can provide an optional replacer method. It will be passed the
+            key and value of each member, with this bound to the containing
+            object. The value that is returned from your method will be
+            serialized. If your method returns undefined, then the member will
+            be excluded from the serialization.
+
+            If the replacer parameter is an array of strings, then it will be
+            used to select the members to be serialized. It filters the results
+            such that only members with keys listed in the replacer array are
+            stringified.
+
+            Values that do not have JSON representations, such as undefined or
+            functions, will not be serialized. Such values in objects will be
+            dropped; in arrays they will be replaced with null. You can use
+            a replacer function to replace those with JSON values.
+            JSON.stringify(undefined) returns undefined.
+
+            The optional space parameter produces a stringification of the
+            value that is filled with line breaks and indentation to make it
+            easier to read.
+
+            If the space parameter is a non-empty string, then that string will
+            be used for indentation. If the space parameter is a number, then
+            the indentation will be that many spaces.
+
+            Example:
+
+            text = JSON.stringify(['e', {pluribus: 'unum'}]);
+            // text is '["e",{"pluribus":"unum"}]'
+
+
+            text = JSON.stringify(['e', {pluribus: 'unum'}], null, '\t');
+            // text is '[\n\t"e",\n\t{\n\t\t"pluribus": "unum"\n\t}\n]'
+
+            text = JSON.stringify([new Date()], function (key, value) {
+                return this[key] instanceof Date ?
+                    'Date(' + this[key] + ')' : value;
+            });
+            // text is '["Date(---current time---)"]'
+
+
+        JSON.parse(text, reviver)
+            This method parses a JSON text to produce an object or array.
+            It can throw a SyntaxError exception.
+
+            The optional reviver parameter is a function that can filter and
+            transform the results. It receives each of the keys and values,
+            and its return value is used instead of the original value.
+            If it returns what it received, then the structure is not modified.
+            If it returns undefined then the member is deleted.
+
+            Example:
+
+            // Parse the text. Values that look like ISO date strings will
+            // be converted to Date objects.
+
+            myData = JSON.parse(text, function (key, value) {
+                var a;
+                if (typeof value === 'string') {
+                    a =
+/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
+                    if (a) {
+                        return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],
+                            +a[5], +a[6]));
+                    }
+                }
+                return value;
+            });
+
+            myData = JSON.parse('["Date(09/09/2001)"]', function (key, value) {
+                var d;
+                if (typeof value === 'string' &&
+                        value.slice(0, 5) === 'Date(' &&
+                        value.slice(-1) === ')') {
+                    d = new Date(value.slice(5, -1));
+                    if (d) {
+                        return d;
+                    }
+                }
+                return value;
+            });
+
+
+    This is a reference implementation. You are free to copy, modify, or
+    redistribute.
+*/
+
+/*jslint evil: true, regexp: true */
+
+/*members "", "\b", "\t", "\n", "\f", "\r", "\"", JSON, "\\", apply,
+    call, charCodeAt, getUTCDate, getUTCFullYear, getUTCHours,
+    getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join,
+    lastIndex, length, parse, prototype, push, replace, slice, stringify,
+    test, toJSON, toString, valueOf
+*/
+
+
+// Create a JSON object only if one does not already exist. We create the
+// methods in a closure to avoid creating global variables.
+
+(function () {
+    'use strict';
+
+    var JSON = module.exports = {};
+
+    function f(n) {
+        // Format integers to have at least two digits.
+        return n < 10 ? '0' + n : n;
+    }
+
+    if (typeof Date.prototype.toJSON !== 'function') {
+
+        Date.prototype.toJSON = function () {
+
+            return isFinite(this.valueOf())
+                ? this.getUTCFullYear()     + '-' +
+                    f(this.getUTCMonth() + 1) + '-' +
+                    f(this.getUTCDate())      + 'T' +
+                    f(this.getUTCHours())     + ':' +
+                    f(this.getUTCMinutes())   + ':' +
+                    f(this.getUTCSeconds())   + 'Z'
+                : null;
+        };
+
+        String.prototype.toJSON      =
+            Number.prototype.toJSON  =
+            Boolean.prototype.toJSON = function () {
+                return this.valueOf();
+            };
+    }
+
+    var cx,
+        escapable,
+        gap,
+        indent,
+        meta,
+        rep;
+
+
+    function quote(string) {
+
+// If the string contains no control characters, no quote characters, and no
+// backslash characters, then we can safely slap some quotes around it.
+// Otherwise we must also replace the offending characters with safe escape
+// sequences.
+
+        escapable.lastIndex = 0;
+        return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
+            var c = meta[a];
+            return typeof c === 'string'
+                ? c
+                : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+        }) + '"' : '"' + string + '"';
+    }
+
+
+    function str(key, holder) {
+
+// Produce a string from holder[key].
+
+        var i,          // The loop counter.
+            k,          // The member key.
+            v,          // The member value.
+            length,
+            mind = gap,
+            partial,
+            value = holder[key];
+
+// If the value has a toJSON method, call it to obtain a replacement value.
+
+        if (value && typeof value === 'object' &&
+                typeof value.toJSON === 'function') {
+            value = value.toJSON(key);
+        }
+
+// If we were called with a replacer function, then call the replacer to
+// obtain a replacement value.
+
+        if (typeof rep === 'function') {
+            value = rep.call(holder, key, value);
+        }
+
+// What happens next depends on the value's type.
+
+        switch (typeof value) {
+        case 'string':
+            return quote(value);
+
+        case 'number':
+
+// JSON numbers must be finite. Encode non-finite numbers as null.
+
+            return isFinite(value) ? String(value) : 'null';
+
+        case 'boolean':
+        case 'null':
+
+// If the value is a boolean or null, convert it to a string. Note:
+// typeof null does not produce 'null'. The case is included here in
+// the remote chance that this gets fixed someday.
+
+            return String(value);
+
+// If the type is 'object', we might be dealing with an object or an array or
+// null.
+
+        case 'object':
+
+// Due to a specification blunder in ECMAScript, typeof null is 'object',
+// so watch out for that case.
+
+            if (!value) {
+                return 'null';
+            }
+
+// Make an array to hold the partial results of stringifying this object value.
+
+            gap += indent;
+            partial = [];
+
+// Is the value an array?
+
+            if (Object.prototype.toString.apply(value) === '[object Array]') {
+
+// The value is an array. Stringify every element. Use null as a placeholder
+// for non-JSON values.
+
+                length = value.length;
+                for (i = 0; i < length; i += 1) {
+                    partial[i] = str(i, value) || 'null';
+                }
+
+// Join all of the elements together, separated with commas, and wrap them in
+// brackets.
+
+                v = partial.length === 0
+                    ? '[]'
+                    : gap
+                    ? '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']'
+                    : '[' + partial.join(',') + ']';
+                gap = mind;
+                return v;
+            }
+
+// If the replacer is an array, use it to select the members to be stringified.
+
+            if (rep && typeof rep === 'object') {
+                length = rep.length;
+                for (i = 0; i < length; i += 1) {
+                    if (typeof rep[i] === 'string') {
+                        k = rep[i];
+                        v = str(k, value);
+                        if (v) {
+                            partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                        }
+                    }
+                }
+            } else {
+
+// Otherwise, iterate through all of the keys in the object.
+
+                for (k in value) {
+                    if (Object.prototype.hasOwnProperty.call(value, k)) {
+                        v = str(k, value);
+                        if (v) {
+                            partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                        }
+                    }
+                }
+            }
+
+// Join all of the member texts together, separated with commas,
+// and wrap them in braces.
+
+            v = partial.length === 0
+                ? '{}'
+                : gap
+                ? '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
+                : '{' + partial.join(',') + '}';
+            gap = mind;
+            return v;
+        }
+    }
+
+// If the JSON object does not yet have a stringify method, give it one.
+
+    if (typeof JSON.stringify !== 'function') {
+        escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+        meta = {    // table of character substitutions
+            '\b': '\\b',
+            '\t': '\\t',
+            '\n': '\\n',
+            '\f': '\\f',
+            '\r': '\\r',
+            '"' : '\\"',
+            '\\': '\\\\'
+        };
+        JSON.stringify = function (value, replacer, space) {
+
+// The stringify method takes a value and an optional replacer, and an optional
+// space parameter, and returns a JSON text. The replacer can be a function
+// that can replace values, or an array of strings that will select the keys.
+// A default replacer method can be provided. Use of the space parameter can
+// produce text that is more easily readable.
+
+            var i;
+            gap = '';
+            indent = '';
+
+// If the space parameter is a number, make an indent string containing that
+// many spaces.
+
+            if (typeof space === 'number') {
+                for (i = 0; i < space; i += 1) {
+                    indent += ' ';
+                }
+
+// If the space parameter is a string, it will be used as the indent string.
+
+            } else if (typeof space === 'string') {
+                indent = space;
+            }
+
+// If there is a replacer, it must be a function or an array.
+// Otherwise, throw an error.
+
+            rep = replacer;
+            if (replacer && typeof replacer !== 'function' &&
+                    (typeof replacer !== 'object' ||
+                    typeof replacer.length !== 'number')) {
+                throw new Error('JSON.stringify');
+            }
+
+// Make a fake root object containing our value under the key of ''.
+// Return the result of stringifying the value.
+
+            return str('', {'': value});
+        };
+    }
+
+
+// If the JSON object does not yet have a parse method, give it one.
+
+    if (typeof JSON.parse !== 'function') {
+        cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+        JSON.parse = function (text, reviver) {
+
+// The parse method takes a text and an optional reviver function, and returns
+// a JavaScript value if the text is a valid JSON text.
+
+            var j;
+
+            function walk(holder, key) {
+
+// The walk method is used to recursively walk the resulting structure so
+// that modifications can be made.
+
+                var k, v, value = holder[key];
+                if (value && typeof value === 'object') {
+                    for (k in value) {
+                        if (Object.prototype.hasOwnProperty.call(value, k)) {
+                            v = walk(value, k);
+                            if (v !== undefined) {
+                                value[k] = v;
+                            } else {
+                                delete value[k];
+                            }
+                        }
+                    }
+                }
+                return reviver.call(holder, key, value);
+            }
+
+
+// Parsing happens in four stages. In the first stage, we replace certain
+// Unicode characters with escape sequences. JavaScript handles many characters
+// incorrectly, either silently deleting them, or treating them as line endings.
+
+            text = String(text);
+            cx.lastIndex = 0;
+            if (cx.test(text)) {
+                text = text.replace(cx, function (a) {
+                    return '\\u' +
+                        ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+                });
+            }
+
+// In the second stage, we run the text against regular expressions that look
+// for non-JSON patterns. We are especially concerned with '()' and 'new'
+// because they can cause invocation, and '=' because it can cause mutation.
+// But just to be safe, we want to reject all unexpected forms.
+
+// We split the second stage into 4 regexp operations in order to work around
+// crippling inefficiencies in IE's and Safari's regexp engines. First we
+// replace the JSON backslash pairs with '@' (a non-JSON character). Second, we
+// replace all simple value tokens with ']' characters. Third, we delete all
+// open brackets that follow a colon or comma or that begin the text. Finally,
+// we look to see that the remaining characters are only whitespace or ']' or
+// ',' or ':' or '{' or '}'. If that is so, then the text is safe for eval.
+
+            if (/^[\],:{}\s]*$/
+                    .test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@')
+                        .replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']')
+                        .replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
+
+// In the third stage we use the eval function to compile the text into a
+// JavaScript structure. The '{' operator is subject to a syntactic ambiguity
+// in JavaScript: it can begin a block or an object literal. We wrap the text
+// in parens to eliminate the ambiguity.
+
+                j = eval('(' + text + ')');
+
+// In the optional fourth stage, we recursively walk the new structure, passing
+// each name/value pair to a reviver function for possible transformation.
+
+                return typeof reviver === 'function'
+                    ? walk({'': j}, '')
+                    : j;
+            }
+
+// If the text is not JSON parseable, then a SyntaxError is thrown.
+
+            throw new SyntaxError('JSON.parse');
+        };
+    }
+}());
+
+}, {}],
+181: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var debug = require('debug')('cookie');
+
+/**
+ * Set or get cookie `name` with `value` and `options` object.
+ *
+ * @param {String} name
+ * @param {String} value
+ * @param {Object} options
+ * @return {Mixed}
+ * @api public
+ */
+
+module.exports = function(name, value, options){
+  switch (arguments.length) {
+    case 3:
+    case 2:
+      return set(name, value, options);
+    case 1:
+      return get(name);
+    default:
+      return all();
+  }
+};
+
+/**
+ * Set cookie `name` to `value`.
+ *
+ * @param {String} name
+ * @param {String} value
+ * @param {Object} options
+ * @api private
+ */
+
+function set(name, value, options) {
+  options = options || {};
+  var str = encode(name) + '=' + encode(value);
+
+  if (null == value) options.maxage = -1;
+
+  if (options.maxage) {
+    options.expires = new Date(+new Date + options.maxage);
+  }
+
+  if (options.path) str += '; path=' + options.path;
+  if (options.domain) str += '; domain=' + options.domain;
+  if (options.expires) str += '; expires=' + options.expires.toUTCString();
+  if (options.secure) str += '; secure';
+
+  document.cookie = str;
+}
+
+/**
+ * Return all cookies.
+ *
+ * @return {Object}
+ * @api private
+ */
+
+function all() {
+  return parse(document.cookie);
+}
+
+/**
+ * Get cookie `name`.
+ *
+ * @param {String} name
+ * @return {String}
+ * @api private
+ */
+
+function get(name) {
+  return all()[name];
+}
+
+/**
+ * Parse cookie `str`.
+ *
+ * @param {String} str
+ * @return {Object}
+ * @api private
+ */
+
+function parse(str) {
+  var obj = {};
+  var pairs = str.split(/ *; */);
+  var pair;
+  if ('' == pairs[0]) return obj;
+  for (var i = 0; i < pairs.length; ++i) {
+    pair = pairs[i].split('=');
+    obj[decode(pair[0])] = decode(pair[1]);
+  }
+  return obj;
+}
+
+/**
+ * Encode.
+ */
+
+function encode(value){
+  try {
+    return encodeURIComponent(value);
+  } catch (e) {
+    debug('error `encode(%o)` - %o', value, e)
+  }
+}
+
+/**
+ * Decode.
+ */
+
+function decode(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch (e) {
+    debug('error `decode(%o)` - %o', value, e)
+  }
+}
+
+}, {"debug":191}],
+182: [function(require, module, exports) {
+
+/**
+ * Taken straight from jed's gist: https://gist.github.com/982883
+ *
+ * Returns a random v4 UUID of the form xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx,
+ * where each x is replaced with a random hexadecimal digit from 0 to f, and
+ * y is replaced with a random hexadecimal digit from 8 to b.
+ */
+
+module.exports = function uuid(a){
+  return a           // if the placeholder was passed, return
+    ? (              // a random number from 0 to 15
+      a ^            // unless b is 8,
+      Math.random()  // in which case
+      * 16           // a random number from
+      >> a/4         // 8 to 11
+      ).toString(16) // in hexadecimal
+    : (              // or otherwise a concatenated string:
+      [1e7] +        // 10000000 +
+      -1e3 +         // -1000 +
+      -4e3 +         // -4000 +
+      -8e3 +         // -80000000 +
+      -1e11          // -100000000000,
+      ).replace(     // replacing
+        /[018]/g,    // zeroes, ones, and eights with
+        uuid         // random hex digits
+      )
+};
+}, {}],
+183: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var parse = require('url').parse;
+
+/**
+ * Expose `domain`
+ */
+
+module.exports = domain;
+
+/**
+ * RegExp
+ */
+
+var regexp = /[a-z0-9][a-z0-9\-]*[a-z0-9]\.[a-z\.]{2,6}$/i;
+
+/**
+ * Get the top domain.
+ * 
+ * Official Grammar: http://tools.ietf.org/html/rfc883#page-56
+ * Look for tlds with up to 2-6 characters.
+ * 
+ * Example:
+ * 
+ *      domain('http://localhost:3000/baz');
+ *      // => ''
+ *      domain('http://dev:3000/baz');
+ *      // => ''
+ *      domain('http://127.0.0.1:3000/baz');
+ *      // => ''
+ *      domain('http://segment.io/baz');
+ *      // => 'segment.io'
+ * 
+ * @param {String} url
+ * @return {String}
+ * @api public
+ */
+
+function domain(url){
+  var host = parse(url).hostname;
+  var match = host.match(regexp);
+  return match ? match[0] : '';
+};
+
+}, {"url":157}],
+71: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13336,8 +15133,8 @@ Sentry.prototype.identify = function(identify){
   window.Raven.setUser(identify.traits());
 };
 
-}, {"analytics.js-integration":82,"is":85}],
-71: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"is":86}],
+72: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13390,8 +15187,8 @@ SnapEngage.prototype.identify = function(identify){
   window.SnapABug.setUserEmail(email);
 };
 
-}, {"analytics.js-integration":82,"is":85}],
-72: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"is":86}],
+73: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13437,8 +15234,8 @@ Spinnakr.prototype.loaded = function(){
   return !! window._spinnakr;
 };
 
-}, {"analytics.js-integration":82,"bind":94,"when":117}],
-73: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"bind":95,"when":118}],
+74: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13521,8 +15318,8 @@ Tapstream.prototype.track = function(track){
   push('fireHit', slug(track.event()), [props.url]); // needs events as slugs
 };
 
-}, {"analytics.js-integration":82,"slug":92,"global-queue":146}],
-74: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"slug":93,"global-queue":147}],
+75: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13674,8 +15471,8 @@ Trakio.prototype.alias = function(alias){
   }
 };
 
-}, {"analytics.js-integration":82,"alias":151,"clone":150}],
-75: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"alias":151,"clone":89}],
+76: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13735,8 +15532,8 @@ TwitterAds.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":82,"each":4}],
-76: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"each":4}],
+77: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13921,8 +15718,8 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"analytics.js-integration":82,"global-queue":146,"convert-dates":152,"to-unix-timestamp":176,"alias":151,"clone":150}],
-176: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":147,"convert-dates":152,"to-unix-timestamp":195,"alias":151,"clone":89}],
+195: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -13942,7 +15739,7 @@ function toUnixTimestamp (date) {
   return Math.floor(date.getTime() / 1000);
 }
 }, {}],
-77: [function(require, module, exports) {
+78: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14037,431 +15834,8 @@ Vero.prototype.track = function(track){
   }
 };
 
-}, {"analytics.js-integration":82,"global-queue":146,"component/cookie":177,"obj-case":156}],
-177: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var debug = require('debug')('cookie');
-
-/**
- * Set or get cookie `name` with `value` and `options` object.
- *
- * @param {String} name
- * @param {String} value
- * @param {Object} options
- * @return {Mixed}
- * @api public
- */
-
-module.exports = function(name, value, options){
-  switch (arguments.length) {
-    case 3:
-    case 2:
-      return set(name, value, options);
-    case 1:
-      return get(name);
-    default:
-      return all();
-  }
-};
-
-/**
- * Set cookie `name` to `value`.
- *
- * @param {String} name
- * @param {String} value
- * @param {Object} options
- * @api private
- */
-
-function set(name, value, options) {
-  options = options || {};
-  var str = encode(name) + '=' + encode(value);
-
-  if (null == value) options.maxage = -1;
-
-  if (options.maxage) {
-    options.expires = new Date(+new Date + options.maxage);
-  }
-
-  if (options.path) str += '; path=' + options.path;
-  if (options.domain) str += '; domain=' + options.domain;
-  if (options.expires) str += '; expires=' + options.expires.toUTCString();
-  if (options.secure) str += '; secure';
-
-  document.cookie = str;
-}
-
-/**
- * Return all cookies.
- *
- * @return {Object}
- * @api private
- */
-
-function all() {
-  return parse(document.cookie);
-}
-
-/**
- * Get cookie `name`.
- *
- * @param {String} name
- * @return {String}
- * @api private
- */
-
-function get(name) {
-  return all()[name];
-}
-
-/**
- * Parse cookie `str`.
- *
- * @param {String} str
- * @return {Object}
- * @api private
- */
-
-function parse(str) {
-  var obj = {};
-  var pairs = str.split(/ *; */);
-  var pair;
-  if ('' == pairs[0]) return obj;
-  for (var i = 0; i < pairs.length; ++i) {
-    pair = pairs[i].split('=');
-    obj[decode(pair[0])] = decode(pair[1]);
-  }
-  return obj;
-}
-
-/**
- * Encode.
- */
-
-function encode(value){
-  try {
-    return encodeURIComponent(value);
-  } catch (e) {
-    debug('error `encode(%o)` - %o', value, e)
-  }
-}
-
-/**
- * Decode.
- */
-
-function decode(value) {
-  try {
-    return decodeURIComponent(value);
-  } catch (e) {
-    debug('error `decode(%o)` - %o', value, e)
-  }
-}
-
-}, {"debug":178}],
-178: [function(require, module, exports) {
-if ('undefined' == typeof window) {
-  module.exports = require('./lib/debug');
-} else {
-  module.exports = require('./debug');
-}
-
-}, {"./lib/debug":179,"./debug":180}],
-179: [function(require, module, exports) {
-/**
- * Module dependencies.
- */
-
-var tty = require('tty');
-
-/**
- * Expose `debug()` as the module.
- */
-
-module.exports = debug;
-
-/**
- * Enabled debuggers.
- */
-
-var names = []
-  , skips = [];
-
-(process.env.DEBUG || '')
-  .split(/[\s,]+/)
-  .forEach(function(name){
-    name = name.replace('*', '.*?');
-    if (name[0] === '-') {
-      skips.push(new RegExp('^' + name.substr(1) + '$'));
-    } else {
-      names.push(new RegExp('^' + name + '$'));
-    }
-  });
-
-/**
- * Colors.
- */
-
-var colors = [6, 2, 3, 4, 5, 1];
-
-/**
- * Previous debug() call.
- */
-
-var prev = {};
-
-/**
- * Previously assigned color.
- */
-
-var prevColor = 0;
-
-/**
- * Is stdout a TTY? Colored output is disabled when `true`.
- */
-
-var isatty = tty.isatty(2);
-
-/**
- * Select a color.
- *
- * @return {Number}
- * @api private
- */
-
-function color() {
-  return colors[prevColor++ % colors.length];
-}
-
-/**
- * Humanize the given `ms`.
- *
- * @param {Number} m
- * @return {String}
- * @api private
- */
-
-function humanize(ms) {
-  var sec = 1000
-    , min = 60 * 1000
-    , hour = 60 * min;
-
-  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
-  if (ms >= min) return (ms / min).toFixed(1) + 'm';
-  if (ms >= sec) return (ms / sec | 0) + 's';
-  return ms + 'ms';
-}
-
-/**
- * Create a debugger with the given `name`.
- *
- * @param {String} name
- * @return {Type}
- * @api public
- */
-
-function debug(name) {
-  function disabled(){}
-  disabled.enabled = false;
-
-  var match = skips.some(function(re){
-    return re.test(name);
-  });
-
-  if (match) return disabled;
-
-  match = names.some(function(re){
-    return re.test(name);
-  });
-
-  if (!match) return disabled;
-  var c = color();
-
-  function colored(fmt) {
-    fmt = coerce(fmt);
-
-    var curr = new Date;
-    var ms = curr - (prev[name] || curr);
-    prev[name] = curr;
-
-    fmt = '  \u001b[9' + c + 'm' + name + ' '
-      + '\u001b[3' + c + 'm\u001b[90m'
-      + fmt + '\u001b[3' + c + 'm'
-      + ' +' + humanize(ms) + '\u001b[0m';
-
-    console.error.apply(this, arguments);
-  }
-
-  function plain(fmt) {
-    fmt = coerce(fmt);
-
-    fmt = new Date().toUTCString()
-      + ' ' + name + ' ' + fmt;
-    console.error.apply(this, arguments);
-  }
-
-  colored.enabled = plain.enabled = true;
-
-  return isatty || process.env.DEBUG_COLORS
-    ? colored
-    : plain;
-}
-
-/**
- * Coerce `val`.
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-}, {}],
-180: [function(require, module, exports) {
-
-/**
- * Expose `debug()` as the module.
- */
-
-module.exports = debug;
-
-/**
- * Create a debugger with the given `name`.
- *
- * @param {String} name
- * @return {Type}
- * @api public
- */
-
-function debug(name) {
-  if (!debug.enabled(name)) return function(){};
-
-  return function(fmt){
-    fmt = coerce(fmt);
-
-    var curr = new Date;
-    var ms = curr - (debug[name] || curr);
-    debug[name] = curr;
-
-    fmt = name
-      + ' '
-      + fmt
-      + ' +' + debug.humanize(ms);
-
-    // This hackery is required for IE8
-    // where `console.log` doesn't have 'apply'
-    window.console
-      && console.log
-      && Function.prototype.apply.call(console.log, console, arguments);
-  }
-}
-
-/**
- * The currently active debug mode names.
- */
-
-debug.names = [];
-debug.skips = [];
-
-/**
- * Enables a debug mode by name. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} name
- * @api public
- */
-
-debug.enable = function(name) {
-  try {
-    localStorage.debug = name;
-  } catch(e){}
-
-  var split = (name || '').split(/[\s,]+/)
-    , len = split.length;
-
-  for (var i = 0; i < len; i++) {
-    name = split[i].replace('*', '.*?');
-    if (name[0] === '-') {
-      debug.skips.push(new RegExp('^' + name.substr(1) + '$'));
-    }
-    else {
-      debug.names.push(new RegExp('^' + name + '$'));
-    }
-  }
-};
-
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-debug.disable = function(){
-  debug.enable('');
-};
-
-/**
- * Humanize the given `ms`.
- *
- * @param {Number} m
- * @return {String}
- * @api private
- */
-
-debug.humanize = function(ms) {
-  var sec = 1000
-    , min = 60 * 1000
-    , hour = 60 * min;
-
-  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';
-  if (ms >= min) return (ms / min).toFixed(1) + 'm';
-  if (ms >= sec) return (ms / sec | 0) + 's';
-  return ms + 'ms';
-};
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-debug.enabled = function(name) {
-  for (var i = 0, len = debug.skips.length; i < len; i++) {
-    if (debug.skips[i].test(name)) {
-      return false;
-    }
-  }
-  for (var i = 0, len = debug.names.length; i < len; i++) {
-    if (debug.names[i].test(name)) {
-      return true;
-    }
-  }
-  return false;
-};
-
-/**
- * Coerce `val`.
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-// persist
-
-try {
-  if (window.localStorage) debug.enable(localStorage.debug);
-} catch(e){}
-
-}, {}],
-78: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":147,"component/cookie":181,"obj-case":156}],
+79: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14554,8 +15928,8 @@ function variation(id){
   return variationId ? experiment.comb_n[variationId] : null;
 }
 
-}, {"analytics.js-integration":82,"next-tick":96,"each":4}],
-79: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"next-tick":97,"each":4}],
+80: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14601,8 +15975,8 @@ WebEngage.prototype.loaded = function(){
   return !! window.webengage;
 };
 
-}, {"analytics.js-integration":82,"use-https":84}],
-80: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"use-https":85}],
+81: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14701,8 +16075,8 @@ Woopra.prototype.track = function(track){
   window.woopra.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":82,"to-snake-case":83,"is-email":141,"extend":116,"each":4,"type":7}],
-81: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"to-snake-case":84,"is-email":142,"extend":117,"each":4,"type":7}],
+82: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14778,7 +16152,7 @@ function push(callback){
   window.yandex_metrika_callbacks.push(callback);
 }
 
-}, {"analytics.js-integration":82,"next-tick":96,"bind":94,"when":117}],
+}, {"analytics.js-integration":83,"next-tick":97,"bind":95,"when":118}],
 3: [function(require, module, exports) {
 
 var after = require('after');
@@ -15430,8 +16804,8 @@ function message(Type, msg){
   return new Type(msg);
 }
 
-}, {"after":103,"bind":181,"callback":87,"canonical":154,"clone":88,"./cookie":182,"debug":178,"defaults":90,"each":4,"emitter":102,"./group":183,"is":85,"is-email":141,"is-meta":184,"new-date":133,"event":185,"prevent":186,"querystring":187,"object":153,"./store":188,"url":157,"./user":189,"facade":118}],
-181: [function(require, module, exports) {
+}, {"after":104,"bind":196,"callback":88,"canonical":154,"clone":89,"./cookie":197,"debug":191,"defaults":91,"each":4,"emitter":103,"./group":198,"is":86,"is-email":142,"is-meta":199,"new-date":134,"event":200,"prevent":201,"querystring":202,"object":153,"./store":203,"url":157,"./user":204,"facade":119}],
+196: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -15477,8 +16851,8 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":94,"bind-all":95}],
-182: [function(require, module, exports) {
+}, {"bind":95,"bind-all":96}],
+197: [function(require, module, exports) {
 
 var debug = require('debug')('analytics.js:cookie');
 var bind = require('bind');
@@ -15606,558 +16980,8 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"debug":178,"bind":181,"cookie":177,"clone":88,"defaults":90,"json":190,"top-domain":191}],
-190: [function(require, module, exports) {
-
-var json = window.JSON || {};
-var stringify = json.stringify;
-var parse = json.parse;
-
-module.exports = parse && stringify
-  ? JSON
-  : require('json-fallback');
-
-}, {"json-fallback":192}],
-192: [function(require, module, exports) {
-/*
-    json2.js
-    2014-02-04
-
-    Public Domain.
-
-    NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
-
-    See http://www.JSON.org/js.html
-
-
-    This code should be minified before deployment.
-    See http://javascript.crockford.com/jsmin.html
-
-    USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO
-    NOT CONTROL.
-
-
-    This file creates a global JSON object containing two methods: stringify
-    and parse.
-
-        JSON.stringify(value, replacer, space)
-            value       any JavaScript value, usually an object or array.
-
-            replacer    an optional parameter that determines how object
-                        values are stringified for objects. It can be a
-                        function or an array of strings.
-
-            space       an optional parameter that specifies the indentation
-                        of nested structures. If it is omitted, the text will
-                        be packed without extra whitespace. If it is a number,
-                        it will specify the number of spaces to indent at each
-                        level. If it is a string (such as '\t' or '&nbsp;'),
-                        it contains the characters used to indent at each level.
-
-            This method produces a JSON text from a JavaScript value.
-
-            When an object value is found, if the object contains a toJSON
-            method, its toJSON method will be called and the result will be
-            stringified. A toJSON method does not serialize: it returns the
-            value represented by the name/value pair that should be serialized,
-            or undefined if nothing should be serialized. The toJSON method
-            will be passed the key associated with the value, and this will be
-            bound to the value
-
-            For example, this would serialize Dates as ISO strings.
-
-                Date.prototype.toJSON = function (key) {
-                    function f(n) {
-                        // Format integers to have at least two digits.
-                        return n < 10 ? '0' + n : n;
-                    }
-
-                    return this.getUTCFullYear()   + '-' +
-                         f(this.getUTCMonth() + 1) + '-' +
-                         f(this.getUTCDate())      + 'T' +
-                         f(this.getUTCHours())     + ':' +
-                         f(this.getUTCMinutes())   + ':' +
-                         f(this.getUTCSeconds())   + 'Z';
-                };
-
-            You can provide an optional replacer method. It will be passed the
-            key and value of each member, with this bound to the containing
-            object. The value that is returned from your method will be
-            serialized. If your method returns undefined, then the member will
-            be excluded from the serialization.
-
-            If the replacer parameter is an array of strings, then it will be
-            used to select the members to be serialized. It filters the results
-            such that only members with keys listed in the replacer array are
-            stringified.
-
-            Values that do not have JSON representations, such as undefined or
-            functions, will not be serialized. Such values in objects will be
-            dropped; in arrays they will be replaced with null. You can use
-            a replacer function to replace those with JSON values.
-            JSON.stringify(undefined) returns undefined.
-
-            The optional space parameter produces a stringification of the
-            value that is filled with line breaks and indentation to make it
-            easier to read.
-
-            If the space parameter is a non-empty string, then that string will
-            be used for indentation. If the space parameter is a number, then
-            the indentation will be that many spaces.
-
-            Example:
-
-            text = JSON.stringify(['e', {pluribus: 'unum'}]);
-            // text is '["e",{"pluribus":"unum"}]'
-
-
-            text = JSON.stringify(['e', {pluribus: 'unum'}], null, '\t');
-            // text is '[\n\t"e",\n\t{\n\t\t"pluribus": "unum"\n\t}\n]'
-
-            text = JSON.stringify([new Date()], function (key, value) {
-                return this[key] instanceof Date ?
-                    'Date(' + this[key] + ')' : value;
-            });
-            // text is '["Date(---current time---)"]'
-
-
-        JSON.parse(text, reviver)
-            This method parses a JSON text to produce an object or array.
-            It can throw a SyntaxError exception.
-
-            The optional reviver parameter is a function that can filter and
-            transform the results. It receives each of the keys and values,
-            and its return value is used instead of the original value.
-            If it returns what it received, then the structure is not modified.
-            If it returns undefined then the member is deleted.
-
-            Example:
-
-            // Parse the text. Values that look like ISO date strings will
-            // be converted to Date objects.
-
-            myData = JSON.parse(text, function (key, value) {
-                var a;
-                if (typeof value === 'string') {
-                    a =
-/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
-                    if (a) {
-                        return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],
-                            +a[5], +a[6]));
-                    }
-                }
-                return value;
-            });
-
-            myData = JSON.parse('["Date(09/09/2001)"]', function (key, value) {
-                var d;
-                if (typeof value === 'string' &&
-                        value.slice(0, 5) === 'Date(' &&
-                        value.slice(-1) === ')') {
-                    d = new Date(value.slice(5, -1));
-                    if (d) {
-                        return d;
-                    }
-                }
-                return value;
-            });
-
-
-    This is a reference implementation. You are free to copy, modify, or
-    redistribute.
-*/
-
-/*jslint evil: true, regexp: true */
-
-/*members "", "\b", "\t", "\n", "\f", "\r", "\"", JSON, "\\", apply,
-    call, charCodeAt, getUTCDate, getUTCFullYear, getUTCHours,
-    getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join,
-    lastIndex, length, parse, prototype, push, replace, slice, stringify,
-    test, toJSON, toString, valueOf
-*/
-
-
-// Create a JSON object only if one does not already exist. We create the
-// methods in a closure to avoid creating global variables.
-
-(function () {
-    'use strict';
-
-    var JSON = module.exports = {};
-
-    function f(n) {
-        // Format integers to have at least two digits.
-        return n < 10 ? '0' + n : n;
-    }
-
-    if (typeof Date.prototype.toJSON !== 'function') {
-
-        Date.prototype.toJSON = function () {
-
-            return isFinite(this.valueOf())
-                ? this.getUTCFullYear()     + '-' +
-                    f(this.getUTCMonth() + 1) + '-' +
-                    f(this.getUTCDate())      + 'T' +
-                    f(this.getUTCHours())     + ':' +
-                    f(this.getUTCMinutes())   + ':' +
-                    f(this.getUTCSeconds())   + 'Z'
-                : null;
-        };
-
-        String.prototype.toJSON      =
-            Number.prototype.toJSON  =
-            Boolean.prototype.toJSON = function () {
-                return this.valueOf();
-            };
-    }
-
-    var cx,
-        escapable,
-        gap,
-        indent,
-        meta,
-        rep;
-
-
-    function quote(string) {
-
-// If the string contains no control characters, no quote characters, and no
-// backslash characters, then we can safely slap some quotes around it.
-// Otherwise we must also replace the offending characters with safe escape
-// sequences.
-
-        escapable.lastIndex = 0;
-        return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
-            var c = meta[a];
-            return typeof c === 'string'
-                ? c
-                : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
-        }) + '"' : '"' + string + '"';
-    }
-
-
-    function str(key, holder) {
-
-// Produce a string from holder[key].
-
-        var i,          // The loop counter.
-            k,          // The member key.
-            v,          // The member value.
-            length,
-            mind = gap,
-            partial,
-            value = holder[key];
-
-// If the value has a toJSON method, call it to obtain a replacement value.
-
-        if (value && typeof value === 'object' &&
-                typeof value.toJSON === 'function') {
-            value = value.toJSON(key);
-        }
-
-// If we were called with a replacer function, then call the replacer to
-// obtain a replacement value.
-
-        if (typeof rep === 'function') {
-            value = rep.call(holder, key, value);
-        }
-
-// What happens next depends on the value's type.
-
-        switch (typeof value) {
-        case 'string':
-            return quote(value);
-
-        case 'number':
-
-// JSON numbers must be finite. Encode non-finite numbers as null.
-
-            return isFinite(value) ? String(value) : 'null';
-
-        case 'boolean':
-        case 'null':
-
-// If the value is a boolean or null, convert it to a string. Note:
-// typeof null does not produce 'null'. The case is included here in
-// the remote chance that this gets fixed someday.
-
-            return String(value);
-
-// If the type is 'object', we might be dealing with an object or an array or
-// null.
-
-        case 'object':
-
-// Due to a specification blunder in ECMAScript, typeof null is 'object',
-// so watch out for that case.
-
-            if (!value) {
-                return 'null';
-            }
-
-// Make an array to hold the partial results of stringifying this object value.
-
-            gap += indent;
-            partial = [];
-
-// Is the value an array?
-
-            if (Object.prototype.toString.apply(value) === '[object Array]') {
-
-// The value is an array. Stringify every element. Use null as a placeholder
-// for non-JSON values.
-
-                length = value.length;
-                for (i = 0; i < length; i += 1) {
-                    partial[i] = str(i, value) || 'null';
-                }
-
-// Join all of the elements together, separated with commas, and wrap them in
-// brackets.
-
-                v = partial.length === 0
-                    ? '[]'
-                    : gap
-                    ? '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']'
-                    : '[' + partial.join(',') + ']';
-                gap = mind;
-                return v;
-            }
-
-// If the replacer is an array, use it to select the members to be stringified.
-
-            if (rep && typeof rep === 'object') {
-                length = rep.length;
-                for (i = 0; i < length; i += 1) {
-                    if (typeof rep[i] === 'string') {
-                        k = rep[i];
-                        v = str(k, value);
-                        if (v) {
-                            partial.push(quote(k) + (gap ? ': ' : ':') + v);
-                        }
-                    }
-                }
-            } else {
-
-// Otherwise, iterate through all of the keys in the object.
-
-                for (k in value) {
-                    if (Object.prototype.hasOwnProperty.call(value, k)) {
-                        v = str(k, value);
-                        if (v) {
-                            partial.push(quote(k) + (gap ? ': ' : ':') + v);
-                        }
-                    }
-                }
-            }
-
-// Join all of the member texts together, separated with commas,
-// and wrap them in braces.
-
-            v = partial.length === 0
-                ? '{}'
-                : gap
-                ? '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
-                : '{' + partial.join(',') + '}';
-            gap = mind;
-            return v;
-        }
-    }
-
-// If the JSON object does not yet have a stringify method, give it one.
-
-    if (typeof JSON.stringify !== 'function') {
-        escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
-        meta = {    // table of character substitutions
-            '\b': '\\b',
-            '\t': '\\t',
-            '\n': '\\n',
-            '\f': '\\f',
-            '\r': '\\r',
-            '"' : '\\"',
-            '\\': '\\\\'
-        };
-        JSON.stringify = function (value, replacer, space) {
-
-// The stringify method takes a value and an optional replacer, and an optional
-// space parameter, and returns a JSON text. The replacer can be a function
-// that can replace values, or an array of strings that will select the keys.
-// A default replacer method can be provided. Use of the space parameter can
-// produce text that is more easily readable.
-
-            var i;
-            gap = '';
-            indent = '';
-
-// If the space parameter is a number, make an indent string containing that
-// many spaces.
-
-            if (typeof space === 'number') {
-                for (i = 0; i < space; i += 1) {
-                    indent += ' ';
-                }
-
-// If the space parameter is a string, it will be used as the indent string.
-
-            } else if (typeof space === 'string') {
-                indent = space;
-            }
-
-// If there is a replacer, it must be a function or an array.
-// Otherwise, throw an error.
-
-            rep = replacer;
-            if (replacer && typeof replacer !== 'function' &&
-                    (typeof replacer !== 'object' ||
-                    typeof replacer.length !== 'number')) {
-                throw new Error('JSON.stringify');
-            }
-
-// Make a fake root object containing our value under the key of ''.
-// Return the result of stringifying the value.
-
-            return str('', {'': value});
-        };
-    }
-
-
-// If the JSON object does not yet have a parse method, give it one.
-
-    if (typeof JSON.parse !== 'function') {
-        cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
-        JSON.parse = function (text, reviver) {
-
-// The parse method takes a text and an optional reviver function, and returns
-// a JavaScript value if the text is a valid JSON text.
-
-            var j;
-
-            function walk(holder, key) {
-
-// The walk method is used to recursively walk the resulting structure so
-// that modifications can be made.
-
-                var k, v, value = holder[key];
-                if (value && typeof value === 'object') {
-                    for (k in value) {
-                        if (Object.prototype.hasOwnProperty.call(value, k)) {
-                            v = walk(value, k);
-                            if (v !== undefined) {
-                                value[k] = v;
-                            } else {
-                                delete value[k];
-                            }
-                        }
-                    }
-                }
-                return reviver.call(holder, key, value);
-            }
-
-
-// Parsing happens in four stages. In the first stage, we replace certain
-// Unicode characters with escape sequences. JavaScript handles many characters
-// incorrectly, either silently deleting them, or treating them as line endings.
-
-            text = String(text);
-            cx.lastIndex = 0;
-            if (cx.test(text)) {
-                text = text.replace(cx, function (a) {
-                    return '\\u' +
-                        ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
-                });
-            }
-
-// In the second stage, we run the text against regular expressions that look
-// for non-JSON patterns. We are especially concerned with '()' and 'new'
-// because they can cause invocation, and '=' because it can cause mutation.
-// But just to be safe, we want to reject all unexpected forms.
-
-// We split the second stage into 4 regexp operations in order to work around
-// crippling inefficiencies in IE's and Safari's regexp engines. First we
-// replace the JSON backslash pairs with '@' (a non-JSON character). Second, we
-// replace all simple value tokens with ']' characters. Third, we delete all
-// open brackets that follow a colon or comma or that begin the text. Finally,
-// we look to see that the remaining characters are only whitespace or ']' or
-// ',' or ':' or '{' or '}'. If that is so, then the text is safe for eval.
-
-            if (/^[\],:{}\s]*$/
-                    .test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@')
-                        .replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']')
-                        .replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
-
-// In the third stage we use the eval function to compile the text into a
-// JavaScript structure. The '{' operator is subject to a syntactic ambiguity
-// in JavaScript: it can begin a block or an object literal. We wrap the text
-// in parens to eliminate the ambiguity.
-
-                j = eval('(' + text + ')');
-
-// In the optional fourth stage, we recursively walk the new structure, passing
-// each name/value pair to a reviver function for possible transformation.
-
-                return typeof reviver === 'function'
-                    ? walk({'': j}, '')
-                    : j;
-            }
-
-// If the text is not JSON parseable, then a SyntaxError is thrown.
-
-            throw new SyntaxError('JSON.parse');
-        };
-    }
-}());
-
-}, {}],
-191: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var parse = require('url').parse;
-
-/**
- * Expose `domain`
- */
-
-module.exports = domain;
-
-/**
- * RegExp
- */
-
-var regexp = /[a-z0-9][a-z0-9\-]*[a-z0-9]\.[a-z\.]{2,6}$/i;
-
-/**
- * Get the top domain.
- * 
- * Official Grammar: http://tools.ietf.org/html/rfc883#page-56
- * Look for tlds with up to 2-6 characters.
- * 
- * Example:
- * 
- *      domain('http://localhost:3000/baz');
- *      // => ''
- *      domain('http://dev:3000/baz');
- *      // => ''
- *      domain('http://127.0.0.1:3000/baz');
- *      // => ''
- *      domain('http://segment.io/baz');
- *      // => 'segment.io'
- * 
- * @param {String} url
- * @return {String}
- * @api public
- */
-
-function domain(url){
-  var host = parse(url).hostname;
-  var match = host.match(regexp);
-  return match ? match[0] : '';
-};
-
-}, {"url":157}],
-183: [function(require, module, exports) {
+}, {"debug":191,"bind":196,"cookie":181,"clone":89,"defaults":91,"json":184,"top-domain":183}],
+198: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:group');
 var Entity = require('./entity');
@@ -16213,8 +17037,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":178,"./entity":193,"inherit":194,"bind":181}],
-193: [function(require, module, exports) {
+}, {"debug":191,"./entity":205,"inherit":206,"bind":196}],
+205: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var defaults = require('defaults');
@@ -16434,8 +17258,8 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"isodate-traverse":128,"defaults":90,"./cookie":182,"./store":188,"extend":116,"clone":88}],
-188: [function(require, module, exports) {
+}, {"isodate-traverse":129,"defaults":91,"./cookie":197,"./store":203,"extend":117,"clone":89}],
+203: [function(require, module, exports) {
 
 var bind = require('bind');
 var defaults = require('defaults');
@@ -16522,8 +17346,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":181,"defaults":90,"store.js":195}],
-195: [function(require, module, exports) {
+}, {"bind":196,"defaults":91,"store.js":207}],
+207: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -16675,8 +17499,8 @@ try {
 store.enabled = !store.disabled
 
 module.exports = store;
-}, {"json":190}],
-194: [function(require, module, exports) {
+}, {"json":184}],
+206: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -16685,7 +17509,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-184: [function(require, module, exports) {
+199: [function(require, module, exports) {
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
 
@@ -16701,7 +17525,7 @@ module.exports = function isMeta (e) {
     return false;
 };
 }, {}],
-185: [function(require, module, exports) {
+200: [function(require, module, exports) {
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -16744,7 +17568,7 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 }, {}],
-186: [function(require, module, exports) {
+201: [function(require, module, exports) {
 
 /**
  * prevent default on the given `e`.
@@ -16767,7 +17591,7 @@ module.exports = function(e){
 };
 
 }, {}],
-187: [function(require, module, exports) {
+202: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16842,8 +17666,8 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":142,"type":7}],
-189: [function(require, module, exports) {
+}, {"trim":143,"type":7}],
+204: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:user');
 var Entity = require('./entity');
@@ -17012,37 +17836,7 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":178,"./entity":193,"inherit":194,"bind":181,"./cookie":182,"uuid":196,"cookie":177}],
-196: [function(require, module, exports) {
-
-/**
- * Taken straight from jed's gist: https://gist.github.com/982883
- *
- * Returns a random v4 UUID of the form xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx,
- * where each x is replaced with a random hexadecimal digit from 0 to f, and
- * y is replaced with a random hexadecimal digit from 8 to b.
- */
-
-module.exports = function uuid(a){
-  return a           // if the placeholder was passed, return
-    ? (              // a random number from 0 to 15
-      a ^            // unless b is 8,
-      Math.random()  // in which case
-      * 16           // a random number from
-      >> a/4         // 8 to 11
-      ).toString(16) // in hexadecimal
-    : (              // or otherwise a concatenated string:
-      [1e7] +        // 10000000 +
-      -1e3 +         // -1000 +
-      -4e3 +         // -4000 +
-      -8e3 +         // -80000000 +
-      -1e11          // -100000000000,
-      ).replace(     // replacing
-        /[018]/g,    // zeroes, ones, and eights with
-        uuid         // random hex digits
-      )
-};
-}, {}],
+}, {"debug":191,"./entity":205,"inherit":206,"bind":196,"./cookie":197,"uuid":182,"cookie":181}],
 5: [function(require, module, exports) {
 
 module.exports = '2.4.10';

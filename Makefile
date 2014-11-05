@@ -24,9 +24,9 @@ default: test
 #
 
 clean:
-	@-rm -rf components $(BUILD)
-	@-rm analytics.js analytics.min.js
-	@-rm -rf node_modules npm-debug.log
+	@rm -rf components $(BUILD)
+	@rm -f analytics.js analytics.min.js
+	@rm -rf node_modules npm-debug.log
 
 #
 # update version

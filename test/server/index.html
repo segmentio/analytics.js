@@ -10,9 +10,7 @@
 </head>
 <body>
   <div id="mocha"></div>
-  <script src="/saucelabs.js"></script>
-  <script>m = window.mochaPhantomJS || mocha</script>
-  <script>s = window.saucelabs || function(){}</script>
-  <script>s(m.run())</script>
+  <script src="/duotest.js"></script>
+  <script>duotest(mocha.run())</script>
 </body>
 </html>

@@ -3,7 +3,8 @@
 # Task args.
 #
 
-BROWSER ?= chrome,firefox,safari
+PORT ?= 0
+BROWSER ?= ie:9
 TESTS = $(wildcard test/*.js)
 SRC = $(wildcard lib/*.js)
 MINIFY = $(BINS)/uglifyjs
@@ -11,7 +12,7 @@ PID = test/server/pid.txt
 BINS = node_modules/.bin
 BUILD = build.js
 DUO = $(BINS)/duo
-DUOT = $(BINS)/duo-test
+DUOT = $(BINS)/duo-test -p test/server -R spec -P $(PORT) -c "make build.js"
 
 #
 # Default target.
@@ -40,14 +41,14 @@ version: component.json
 #
 
 test: $(BUILD)
-	@$(DUOT) phantomjs test/server
+	@$(DUOT) phantomjs
 
 #
 # Test with saucelabs
 #
 
 test-sauce: $(BUILD)
-	@$(DUOT) saucelabs test/server \
+	@$(DUOT) saucelabs \
 		--browsers $(BROWSER) \
 		--title analytics.js
 
@@ -58,7 +59,7 @@ test-sauce: $(BUILD)
 #
 
 test-browser: $(BUILD)
-	@$(DUOT) browser default
+	@$(DUOT) browser
 
 #
 # Phony targets.

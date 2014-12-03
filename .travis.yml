@@ -12,14 +12,7 @@ env:
   - BROWSER=chrome
   - BROWSER=firefox
   - BROWSER=safari
-  # TODO: add those back once tests are fixed
-  # - BROWSER=ie11
-  # - BROWSER=ie10
-  # - BROWSER=ie9
-  # TODO: iphone?
-  # TODO: android?
-  # TODO: opera
-  # TODO: once duo-test supports 8-6
-  # - BROWSER=ie8
-  # - BROWSER=ie7
-  # - BROWSER=ie6
+  - BROWSER=ie:11
+  - BROWSER=ie:10
+  - BROWSER=ie:9
+  - BROWSER=ie:8

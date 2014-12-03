@@ -996,6 +996,17 @@ describe('Analytics', function () {
 
   describe('#trackLink', function () {
     var link;
+    var wrap;
+    var svg;
+
+    beforeEach(function(){
+      // IE8 doesn't have createElementNS.
+      if (!document.createElementNS) return;
+      wrap = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg = document.createElementNS('http://www.w3.org/2000/svg', 'a');
+      wrap.appendChild(svg);
+      document.body.appendChild(wrap);
+    });
 
     beforeEach(function () {
       sinon.spy(analytics, 'track');
@@ -1006,6 +1017,7 @@ describe('Analytics', function () {
 
     afterEach(function () {
       window.location.hash = '';
+      if (wrap) document.body.removeChild(wrap);
       document.body.removeChild(link);
     });
 
@@ -1057,6 +1069,39 @@ describe('Analytics', function () {
       trigger(link, 'click');
       tick(function () {
         assert(window.location.hash == '#test');
+        done();
+      });
+    });
+
+    it('should support svg .href attribute', function(done){
+      if (!svg) return done();
+      svg.setAttribute('href', '#svg'); // not correct svg, but should work.
+      analytics.trackLink(svg);
+      trigger(svg, 'click');
+      tick(function(){
+        assert.equal(window.location.hash, '#svg');
+        done();
+      });
+    });
+
+    it('should fallback to getAttributeNS', function(done){
+      if (!wrap) return done();
+      svg.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#svg');
+      analytics.trackLink(svg);
+      trigger(svg, 'click');
+      tick(function(){
+        assert.equal(window.location.hash, '#svg');
+        done();
+      });
+    });
+
+    it('should support xlink:href', function(done){
+      if (!wrap) return done();
+      svg.setAttribute('xlink:href', '#svg');
+      analytics.trackLink(svg);
+      trigger(svg, 'click');
+      tick(function(){
+        assert.equal(window.location.hash, '#svg');
         done();
       });
     });

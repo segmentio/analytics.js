@@ -18132,7 +18132,7 @@ module.exports.User = User;
 }, {"debug":192,"./entity":206,"inherit":207,"bind":197,"./cookie":198,"uuid":185,"cookie":184}],
 5: [function(require, module, exports) {
 
-module.exports = '2.4.19';
+module.exports = '2.4.20';
 
 }, {}]}, {}, {"1":""})
 );

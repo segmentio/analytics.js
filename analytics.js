@@ -2977,8 +2977,9 @@ var Amplitude = module.exports = integration('Amplitude')
  */
 
 Amplitude.prototype.initialize = function(page){
+  // jscs:disable
   (function(h,a){var f=h.amplitude||{};f._q=[];function e(i){f[i]=function(){f._q.push([i].concat(Array.prototype.slice.call(arguments,0)))}}var c=["init","logEvent","setUserId","setUserProperties","setVersionName","setDomain","setGlobalUserProperties"];for(var d=0;d<c.length;d++){e(c[d])}h.amplitude=f})(window,document);
-
+  // jscs:enable
   this.setDomain(window.location.href);
   window.amplitude.init(this.options.apiKey);
   this.setGlobalUserProperties(window.location.search);
@@ -3073,6 +3074,7 @@ Amplitude.prototype.setGlobalUserProperties = function(query){
   delete campaign.name;
   if (campaign) window.amplitude.setGlobalUserProperties(campaign);
 };
+
 }, {"analytics.js-integration":84,"utm-params":116,"top-domain":117}],
 116: [function(require, module, exports) {
 
@@ -3359,7 +3361,7 @@ var is = require('is');
  * Expose plugin.
  */
 
-module.exports = exports = function (analytics) {
+module.exports = exports = function(analytics){
   analytics.addIntegration(Appcues);
 };
 
@@ -3384,7 +3386,7 @@ var Appcues = exports.Integration = integration('Appcues')
  */
 
 Appcues.prototype.initialize = function(){
-  this.load(function() {
+  this.load(function(){
     window.Appcues.init();
   });
 };
@@ -3411,7 +3413,6 @@ Appcues.prototype.load = function(callback){
   script.setAttribute('data-user-id', this.options.userId);
   script.setAttribute('data-user-email', this.options.userEmail);
 };
-
 
 /**
  * Identify.
@@ -3848,7 +3849,6 @@ var Blueshift = module.exports = integration('Blueshift')
   .option('retarget', false)
   .tag('<script src="https://cdn.getblueshift.com/blueshift.js">');
 
-
 /**
  * Initialize.
  *
@@ -3859,7 +3859,9 @@ var Blueshift = module.exports = integration('Blueshift')
 
 Blueshift.prototype.initialize = function(page){
   window.blueshift=window.blueshift||[];
+  // jscs:disable
   window.blueshift.load=function(a){window._blueshiftid=a;var d=function(a){return function(){blueshift.push([a].concat(Array.prototype.slice.call(arguments,0)))}},e=["identify","track","click", "pageload", "capture", "retarget"];for(var f=0;f<e.length;f++)blueshift[e[f]]=d(e[f])};
+  // jscs:enable
   window.blueshift.load(this.options.apiKey);
 
   this.load(this.ready);
@@ -3882,7 +3884,7 @@ Blueshift.prototype.loaded = function(){
  */
 
 Blueshift.prototype.page = function(page){
-  if(this.options.retarget) window.blueshift.retarget();
+  if (this.options.retarget) window.blueshift.retarget();
   var properties = page.properties();
   properties._bsft_source = 'segment.com';
   window.blueshift.pageload(properties);
@@ -3896,7 +3898,7 @@ Blueshift.prototype.page = function(page){
 
 Blueshift.prototype.identify = function(identify){
   if (!identify.userId()) return this.debug('user id required');
-  var traits = identify.traits({ created: 'created_at'});
+  var traits = identify.traits({ created: 'created_at' });
   traits._bsft_source = 'segment.com';
   window.blueshift.identify(traits);
 };
@@ -7342,7 +7344,7 @@ Drip.prototype.track = function(track){
  * @param {Identify} identify
  */
 
-Drip.prototype.identify = function (identify) {
+Drip.prototype.identify = function(identify){
   push('identify', identify.traits());
 };
 
@@ -8043,13 +8045,15 @@ var FullStory = module.exports = integration('FullStory')
 
 FullStory.prototype.initialize = function(){
   var self = this;
-  window['_fs_debug'] = this.options.debug;
-  window['_fs_host'] = 'www.fullstory.com';
-  window['_fs_org'] = this.options.org;
+  window._fs_debug = this.options.debug;
+  window._fs_host = 'www.fullstory.com';
+  window._fs_org = this.options.org;
 
   (function(m,n,e,t,l,o,g,y){
     g=m[e]=function(a,b){g.q?g.q.push([a,b]):g._api(a,b);};g.q=[];
+    // jscs:disable
     g.identify=function(i,v){g(l,{uid:i});if(v)g(l,v)};g.setUserVars=function(v){FS(l,v)};
+    // jscs:enable
     g.setSessionVars=function(v){FS('session',v)};g.setPageVars=function(v){FS('page',v)};
     self.ready();
     self.load();
@@ -8084,7 +8088,7 @@ FullStory.prototype.identify = function(identify){
   }
 
   // Except for displayName and email
-  each(traits, function(trait, value) {
+  each(traits, function(trait, value){
     if (trait !== "displayName" && trait !== "email") {
       var newTrait = convert(trait, value);
       traits[newTrait] = value;
@@ -8996,7 +9000,7 @@ GA.prototype.initialize = function(){
   };
   window.ga.l = new Date().getTime();
 
-  if (window.location.hostname == 'localhost') opts.domain = 'none';
+  if (window.location.hostname === 'localhost') opts.domain = 'none';
 
   window.ga('create', opts.trackingId, {
     cookieDomain: opts.domain || GA.prototype.defaults.domain, // to protect against empty string
@@ -9197,7 +9201,7 @@ GA.prototype.initializeClassic = function(){
 
   if (ignore) {
     if (!is.array(ignore)) ignore = [ignore];
-    each(ignore, function (domain) {
+    each(ignore, function(domain){
       push('_addIgnoredRef', domain);
     });
   }
@@ -9291,26 +9295,26 @@ GA.prototype.completedOrderClassic = function(track){
   if (!orderId) return;
 
   // add transaction
-  push('_addTrans'
-    , orderId
-    , props.affiliation
-    , total
-    , track.tax()
-    , track.shipping()
-    , track.city()
-    , track.state()
-    , track.country());
+  push('_addTrans',
+    orderId,
+    props.affiliation,
+    total,
+    track.tax(),
+    track.shipping(),
+    track.city(),
+    track.state(),
+    track.country());
 
   // add items
   each(products, function(product){
     var track = new Track({ properties: product });
-    push('_addItem'
-      , orderId
-      , track.sku()
-      , track.name()
-      , track.category()
-      , track.price()
-      , track.quantity());
+    push('_addItem',
+      orderId,
+      track.sku(),
+      track.name(),
+      track.category(),
+      track.price(),
+      track.quantity());
   });
 
   // send
@@ -9399,7 +9403,7 @@ GA.prototype.loadEnhancedEcommerce = function(track){
 GA.prototype.pushEnhancedEcommerce = function(track){
   // Send a custom non-interaction event to ensure all EE data is pushed.
   // Without doing this we'd need to require page display after setting EE data.
-  ga('send', 'event', 'EnhancedEcommerce', 'Push', {'nonInteraction': 1});
+  ga('send', 'event', 'EnhancedEcommerce', 'Push', { nonInteraction: 1 });
 };
 
 /**
@@ -9410,7 +9414,7 @@ GA.prototype.pushEnhancedEcommerce = function(track){
  * @param {Track} track
  */
 
-GA.prototype.startedOrderEnhanced = function(track) {
+GA.prototype.startedOrderEnhanced = function(track){
   // same as viewed checkout step #1
   this.viewedCheckoutStep(track);
 };
@@ -9449,8 +9453,8 @@ GA.prototype.viewedCheckoutStepEnhanced = function(track){
   });
 
   window.ga('ec:setAction','checkout', {
-    'step': props.step || 1,
-    'option': options || undefined,
+    step: props.step || 1,
+    option: options || undefined,
   });
 
   this.pushEnhancedEcommerce();
@@ -9525,7 +9529,7 @@ GA.prototype.completedOrderEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.refundedOrderEnhanced = function(track) {
+GA.prototype.refundedOrderEnhanced = function(track){
   var orderId = track.orderId();
   var products = track.products();
 
@@ -9558,7 +9562,7 @@ GA.prototype.refundedOrderEnhanced = function(track) {
  * @param {Track} track
  */
 
-GA.prototype.addedProductEnhanced = function(track) {
+GA.prototype.addedProductEnhanced = function(track){
   this.loadEnhancedEcommerce(track);
   enhancedEcommerceProductAction(track, 'add');
   this.pushEnhancedEcommerce(track);
@@ -9572,7 +9576,7 @@ GA.prototype.addedProductEnhanced = function(track) {
  * @param {Track} track
  */
 
-GA.prototype.removedProductEnhanced = function(track) {
+GA.prototype.removedProductEnhanced = function(track){
   this.loadEnhancedEcommerce(track);
   enhancedEcommerceProductAction(track, 'remove');
   this.pushEnhancedEcommerce(track);
@@ -9586,7 +9590,7 @@ GA.prototype.removedProductEnhanced = function(track) {
  * @param {Track} track
  */
 
-GA.prototype.viewedProductDetailsEnhanced = function(track) {
+GA.prototype.viewedProductDetailsEnhanced = function(track){
   this.loadEnhancedEcommerce(track);
   enhancedEcommerceProductAction(track, 'detail');
   this.pushEnhancedEcommerce(track);
@@ -9600,7 +9604,7 @@ GA.prototype.viewedProductDetailsEnhanced = function(track) {
  * @param {Track} track
  */
 
-GA.prototype.viewedProductEnhanced = function(track) {
+GA.prototype.viewedProductEnhanced = function(track){
   var props = track.properties();
 
   this.loadEnhancedEcommerce(track);
@@ -9624,7 +9628,7 @@ GA.prototype.viewedProductEnhanced = function(track) {
  * @param {Track} track
  */
 
-GA.prototype.clickedProductEnhanced = function(track) {
+GA.prototype.clickedProductEnhanced = function(track){
   var props = track.properties();
 
   this.loadEnhancedEcommerce(track);
@@ -9642,7 +9646,7 @@ GA.prototype.clickedProductEnhanced = function(track) {
  * @param {Track} track
  */
 
-GA.prototype.viewedPromotionEnhanced = function(track) {
+GA.prototype.viewedPromotionEnhanced = function(track){
   var props = track.properties();
 
   this.loadEnhancedEcommerce(track);
@@ -9663,7 +9667,7 @@ GA.prototype.viewedPromotionEnhanced = function(track) {
  * @param {Track} track
  */
 
-GA.prototype.clickedPromotionEnhanced = function(track) {
+GA.prototype.clickedPromotionEnhanced = function(track){
   var props = track.properties();
 
   this.loadEnhancedEcommerce(track);
@@ -9685,7 +9689,7 @@ GA.prototype.clickedPromotionEnhanced = function(track) {
  * @param {Track} track
  */
 
-function enhancedEcommerceTrackProduct(track) {
+function enhancedEcommerceTrackProduct(track){
   var props = track.properties();
 
   window.ga('ec:addProduct', {
@@ -9707,7 +9711,7 @@ function enhancedEcommerceTrackProduct(track) {
  * @param {Object} data
  */
 
-function enhancedEcommerceProductAction(track, action, data) {
+function enhancedEcommerceProductAction(track, action, data){
   enhancedEcommerceTrackProduct(track);
   window.ga('ec:setAction', action, data || {});
 }
@@ -9719,7 +9723,7 @@ function enhancedEcommerceProductAction(track, action, data) {
  * @return {Null|String}
  */
 
-function extractCheckoutOptions(props) {
+function extractCheckoutOptions(props){
   var options = [
     props.paymentMethod,
     props.shippingMethod
@@ -10572,7 +10576,6 @@ InsideVault.prototype.identify = function(identify){
   push('setUserId', identify.userId());
 };
 
-
 /**
  * Page.
  *
@@ -10660,7 +10663,7 @@ Inspectlet.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Inspectlet.prototype.identify = function (identify) {
+Inspectlet.prototype.identify = function(identify){
   var traits = identify.traits({ id: 'userid' });
   push('tagSession', traits);
 };
@@ -10887,7 +10890,28 @@ var Keen = module.exports = integration('Keen IO')
 
 Keen.prototype.initialize = function(){
   var options = this.options;
-  !function(a,b){if(void 0===b[a]){b["_"+a]={},b[a]=function(c){b["_"+a].clients=b["_"+a].clients||{},b["_"+a].clients[c.projectId]=this,this._config=c},b[a].ready=function(c){b["_"+a].ready=b["_"+a].ready||[],b["_"+a].ready.push(c)};for(var c=["addEvent","setGlobalProperties","trackExternalLink","on"],d=0;d<c.length;d++){var e=c[d],f=function(a){return function(){return this["_"+a]=this["_"+a]||[],this["_"+a].push(arguments),this}};b[a].prototype[e]=f(e)}}}("Keen",window);
+  !(function(a,b){
+    if (void 0===b[a]){
+      b["_"+a]={},
+      b[a]=function(c){
+        b["_"+a].clients=b["_"+a].clients||{},
+        b["_"+a].clients[c.projectId]=this,
+        this._config=c
+      },
+      b[a].ready=function(c){
+        b["_"+a].ready=b["_"+a].ready||[],b["_"+a].ready.push(c)
+      };
+      for (var c=["addEvent","setGlobalProperties","trackExternalLink","on"],d=0;d<c.length;d++){
+        var e=c[d],
+        f=function(a){
+          return function(){
+            return this["_"+a]=this["_"+a]||[],this["_"+a].push(arguments),this
+          }
+        };
+        b[a].prototype[e]=f(e)
+      }
+    }
+  })("Keen",window);
   this.client = new window.Keen({
     projectId: options.projectId,
     writeKey: options.writeKey,
@@ -12513,7 +12537,7 @@ MouseStats.prototype.loaded = function(){
  */
 
 MouseStats.prototype.identify = function(identify){
-  each(identify.traits(), function (key, value) {
+  each(identify.traits(), function(key, value){
     window.MouseStatsVisitorPlaybacks.customVariable(key, value);
   });
 };
@@ -12900,7 +12924,6 @@ PerfectAudience.prototype.track = function(track){
     push('track', track.event());
   }
 };
-
 
 /**
  * Viewed Product.
@@ -13802,7 +13825,7 @@ Segment.prototype.normalize = function(msg){
 
 Segment.prototype.send = function(path, msg, fn){
   var url = scheme() + '//api.segment.io/v1' + path;
-  var headers = { 'Content-Type': 'application/json' };
+  var headers = { 'Content-Type': 'text/plain' };
   var fn = fn || noop;
   var self = this;
 
@@ -16286,7 +16309,7 @@ var Woopra = module.exports = integration('Woopra')
  */
 
 Woopra.prototype.initialize = function(page){
-  (function () {var i, s, z, w = window, d = document, a = arguments, q = 'script', f = ['config', 'track', 'identify', 'visit', 'push', 'call'], c = function () {var i, self = this; self._e = []; for (i = 0; i < f.length; i++) {(function (f) {self[f] = function () {self._e.push([f].concat(Array.prototype.slice.call(arguments, 0))); return self; }; })(f[i]); } }; w._w = w._w || {}; for (i = 0; i < a.length; i++) { w._w[a[i]] = w[a[i]] = w[a[i]] || new c(); } })('woopra');
+  (function(){var i, s, z, w = window, d = document, a = arguments, q = 'script', f = ['config', 'track', 'identify', 'visit', 'push', 'call'], c = function(){var i, self = this; self._e = []; for (i = 0; i < f.length; i++){(function(f){self[f] = function(){self._e.push([f].concat(Array.prototype.slice.call(arguments, 0))); return self; }; })(f[i]); } }; w._w = w._w || {}; for (i = 0; i < a.length; i++){ w._w[a[i]] = w[a[i]] = w[a[i]] || new c(); } })('woopra');
   this.load(this.ready);
   each(this.options, function(key, value){
     key = snake(key);

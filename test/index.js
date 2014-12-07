@@ -20,4 +20,11 @@ describe('analytics', function () {
       assert(a.name == b.name);
     });
   });
+
+  it('should restore original with noConflict()', function () {
+    var actual = analytics.noConflict();
+    assert(actual == analytics);
+    assert(actual != window.analytics);
+    window.analytics = actual;
+  });
 });

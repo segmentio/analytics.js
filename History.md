@@ -1,4 +1,13 @@
 
+2.4.21 / 2014-12-11
+===================
+
+  * Updating analytics.js-integrations
+  * tests: skip svg tests on legacy browsers
+  * travis: node 0.11.13
+  * trackLink: support svg anchor tags
+  * add cross browser tests
+
 2.4.18 / 2014-11-22
 ===================
 

@@ -84,6 +84,16 @@ describe('Analytics', function () {
     });
   });
 
+  describe('#setAnonymousId', function(){
+    it('should set the user\'s anonymous id', function(){
+      var prev = analytics.user().anonymousId();
+      assert.equal(36, prev.length);
+      analytics.setAnonymousId('new-id');
+      var curr = analytics.user().anonymousId();
+      assert.equal('new-id', curr);
+    });
+  });
+
   describe('#initialize', function () {
     beforeEach(function () {
       sinon.spy(user, 'load');

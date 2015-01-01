@@ -1,4 +1,10 @@
 
+2.5.0 / 2015-01-01
+==================
+
+  * update integrations
+  * analytics: add setAnonymousId
+
 2.4.21 / 2014-12-11
 ===================
 

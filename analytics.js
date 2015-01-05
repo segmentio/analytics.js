@@ -18161,7 +18161,7 @@ module.exports.User = User;
 }, {"debug":191,"./entity":205,"inherit":206,"bind":196,"./cookie":197,"uuid":184,"cookie":183}],
 5: [function(require, module, exports) {
 
-module.exports = '2.5.0';
+module.exports = '2.5.1';
 
 }, {}]}, {}, {"1":""})
 );

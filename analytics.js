@@ -11636,7 +11636,7 @@ module.exports = function uuid(a){
 }, {}],
 5: [function(require, module, exports) {
 
-module.exports = '2.5.2';
+module.exports = '2.5.3';
 
 }, {}]}, {}, {"1":""})
 );

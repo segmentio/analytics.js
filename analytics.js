@@ -8202,10 +8202,11 @@ Evergage.prototype.track = function(track){
 */
 
 var bind = require('bind');
+var domify = require('domify');
 var each = require('each');
+var extend = require('extend');
 var integration = require('analytics.js-integration');
-var formatConversionParams = require('./extole/formatConversionParams');
-var createConversionTag = require('./extole/createConversionTag');
+var json = require('json');
 
 /**
 * Expose `Extole` integration.
@@ -8262,9 +8263,9 @@ Extole.prototype.track = function(track){
   }
 
   each(extoleEvents, bind(this, function(extoleEvent){
-    this._registerConversion(createConversionTag({
+    this._registerConversion(this._createConversionTag({
       type: extoleEvent,
-      params: formatConversionParams(event, email, userId, track.properties())
+      params: this._formatConversionParams(event, email, userId, track.properties())
     }));
   }));
 };
@@ -8291,15 +8292,6 @@ Extole.prototype._registerConversion = function(conversionTag){
   }
 };
 
-}, {"bind":96,"each":4,"analytics.js-integration":83,"./extole/formatConversionParams":173,"./extole/createConversionTag":174}],
-173: [function(require, module, exports) {
-'use strict';
-/**
- * Module dependencies.
- */
-
-var extend = require('extend');
-
 /**
  * formatConversionParams. Formats details from a Segment track event into a
  * data format Extole can accept.
@@ -8310,7 +8302,8 @@ var extend = require('extend');
  * @param {Object} properties The result of calling `track.properties()`.
  * @return {Object}
  */
-var formatConversionParams = function(event, email, userId, properties){
+
+Extole.prototype._formatConversionParams = function(event, email, userId, properties){
   var total;
 
   if (properties.total) {
@@ -8327,40 +8320,18 @@ var formatConversionParams = function(event, email, userId, properties){
 };
 
 /**
- * Exports.
- */
-
-module.exports = formatConversionParams;
-
-}, {"extend":139}],
-174: [function(require, module, exports) {
-'use strict';
-
-/**
- * Module dependencies.
- */
-
-var domify = require('domify');
-var json = require('json');
-
-/**
  * Create an Extole conversion tag.
  *
  * @param {Object} conversion An Extole conversion object.
  * @return {HTMLElement}
  */
-var createConversionTag = function(conversion){
+
+Extole.prototype._createConversionTag = function(conversion){
   return domify('<script type="extole/conversion">' + json.stringify(conversion) + '</script>');
 };
 
-/**
- * Exports.
- */
-
-module.exports = createConversionTag;
-
-}, {"domify":113,"json":175}],
-175: [function(require, module, exports) {
+}, {"bind":96,"domify":113,"each":4,"extend":139,"analytics.js-integration":83,"json":173}],
+173: [function(require, module, exports) {
 
 var json = window.JSON || {};
 var stringify = json.stringify;
@@ -8370,8 +8341,8 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":176}],
-176: [function(require, module, exports) {
+}, {"json-fallback":174}],
+174: [function(require, module, exports) {
 /*
     json2.js
     2014-02-04
@@ -10422,8 +10393,8 @@ function extractCheckoutOptions(props){
   return valid.length > 0 ? valid.join(', ') : null;
 }
 
-}, {"analytics.js-integration":83,"global-queue":167,"object":177,"canonical":178,"use-https":85,"facade":141,"callback":89,"defaults":166,"load-script":137,"select":179,"obj-case":87,"each":4,"type":107,"url":180,"is":86}],
-177: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":167,"object":175,"canonical":176,"use-https":85,"facade":141,"callback":89,"defaults":166,"load-script":137,"select":177,"obj-case":87,"each":4,"type":107,"url":178,"is":86}],
+175: [function(require, module, exports) {
 
 /**
  * HOP ref.
@@ -10509,7 +10480,7 @@ exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
 }, {}],
-178: [function(require, module, exports) {
+176: [function(require, module, exports) {
 module.exports = function canonical () {
   var tags = document.getElementsByTagName('link');
   for (var i = 0, tag; tag = tags[i]; i++) {
@@ -10517,7 +10488,7 @@ module.exports = function canonical () {
   }
 };
 }, {}],
-179: [function(require, module, exports) {
+177: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -10548,7 +10519,7 @@ module.exports = function(arr, fn){
 };
 
 }, {"to-function":111}],
-180: [function(require, module, exports) {
+178: [function(require, module, exports) {
 
 /**
  * Parse the given `url`.
@@ -12022,8 +11993,8 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"analytics.js-integration":83,"global-queue":167,"facade":141,"alias":171,"batch":181,"each":4,"is":86}],
-181: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":167,"facade":141,"alias":171,"batch":179,"each":4,"is":86}],
+179: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -12183,8 +12154,8 @@ Batch.prototype.end = function(cb){
   return this;
 };
 
-}, {"emitter":182}],
-182: [function(require, module, exports) {
+}, {"emitter":180}],
+180: [function(require, module, exports) {
 
 /**
  * Expose `Emitter`.
@@ -12924,8 +12895,8 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":171,"clone":90,"convert-dates":172,"analytics.js-integration":83,"is":86,"to-iso-string":170,"indexof":110,"obj-case":87,"some":183}],
-183: [function(require, module, exports) {
+}, {"alias":171,"clone":90,"convert-dates":172,"analytics.js-integration":83,"is":86,"to-iso-string":170,"indexof":110,"obj-case":87,"some":181}],
+181: [function(require, module, exports) {
 
 /**
  * some
@@ -14570,8 +14541,8 @@ function scheme(){
 
 function noop(){}
 
-}, {"analytics.js-integration":83,"store":184,"protocol":185,"utm-params":132,"ad-params":186,"send-json":187,"cookie":188,"clone":90,"uuid":189,"top-domain":133,"extend":139,"segmentio/json@1.0.0":175}],
-184: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"store":182,"protocol":183,"utm-params":132,"ad-params":184,"send-json":185,"cookie":186,"clone":90,"uuid":187,"top-domain":133,"extend":139,"segmentio/json@1.0.0":173}],
+182: [function(require, module, exports) {
 
 /**
  * dependencies.
@@ -14666,8 +14637,8 @@ function all(){
   return ret;
 }
 
-}, {"unserialize":190,"each":106}],
-190: [function(require, module, exports) {
+}, {"unserialize":188,"each":106}],
+188: [function(require, module, exports) {
 
 /**
  * Unserialize the given "stringified" javascript.
@@ -14685,7 +14656,7 @@ module.exports = function(val){
 };
 
 }, {}],
-185: [function(require, module, exports) {
+183: [function(require, module, exports) {
 
 /**
  * Convenience alias
@@ -14768,7 +14739,7 @@ function set (protocol) {
 }
 
 }, {}],
-186: [function(require, module, exports) {
+184: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -14812,7 +14783,7 @@ function ads(query){
   }
 }
 }, {"querystring":134}],
-187: [function(require, module, exports) {
+185: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -14911,8 +14882,8 @@ function base64(url, obj, _, fn){
   });
 }
 
-}, {"base64-encode":191,"has-cors":192,"jsonp":193,"json":175}],
-191: [function(require, module, exports) {
+}, {"base64-encode":189,"has-cors":190,"jsonp":191,"json":173}],
+189: [function(require, module, exports) {
 var utf8Encode = require('utf8-encode');
 var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
 
@@ -14949,8 +14920,8 @@ function encode(input) {
 
     return output;
 }
-}, {"utf8-encode":194}],
-194: [function(require, module, exports) {
+}, {"utf8-encode":192}],
+192: [function(require, module, exports) {
 module.exports = encode;
 
 function encode(string) {
@@ -14979,7 +14950,7 @@ function encode(string) {
     return utftext;
 }
 }, {}],
-192: [function(require, module, exports) {
+190: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -14999,7 +14970,7 @@ try {
 }
 
 }, {}],
-193: [function(require, module, exports) {
+191: [function(require, module, exports) {
 /**
  * Module dependencies
  */
@@ -15085,16 +15056,16 @@ function jsonp(url, opts, fn){
   target.parentNode.insertBefore(script, target);
 }
 
-}, {"debug":195}],
-195: [function(require, module, exports) {
+}, {"debug":193}],
+193: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":196,"./debug":197}],
-196: [function(require, module, exports) {
+}, {"./lib/debug":194,"./debug":195}],
+194: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15244,7 +15215,7 @@ function coerce(val) {
 }
 
 }, {}],
-197: [function(require, module, exports) {
+195: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -15384,7 +15355,7 @@ try {
 } catch(e){}
 
 }, {}],
-188: [function(require, module, exports) {
+186: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15508,8 +15479,8 @@ function decode(value) {
   }
 }
 
-}, {"debug":195}],
-189: [function(require, module, exports) {
+}, {"debug":193}],
+187: [function(require, module, exports) {
 
 /**
  * Taken straight from jed's gist: https://gist.github.com/982883
@@ -16175,8 +16146,8 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"analytics.js-integration":83,"global-queue":167,"convert-dates":172,"to-unix-timestamp":198,"alias":171,"clone":90}],
-198: [function(require, module, exports) {
+}, {"analytics.js-integration":83,"global-queue":167,"convert-dates":172,"to-unix-timestamp":196,"alias":171,"clone":90}],
+196: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -16291,7 +16262,7 @@ Vero.prototype.track = function(track){
   }
 };
 
-}, {"analytics.js-integration":83,"global-queue":167,"component/cookie":188,"obj-case":87}],
+}, {"analytics.js-integration":83,"global-queue":167,"component/cookie":186,"obj-case":87}],
 79: [function(require, module, exports) {
 
 /**
@@ -17276,8 +17247,8 @@ function message(Type, msg){
   return new Type(msg);
 }
 
-}, {"after":105,"bind":199,"callback":89,"canonical":178,"clone":90,"./cookie":200,"debug":195,"defaults":92,"each":4,"emitter":104,"./group":201,"is":86,"is-email":163,"is-meta":202,"new-date":155,"event":203,"prevent":204,"querystring":205,"object":177,"./store":206,"url":180,"./user":207,"facade":141}],
-199: [function(require, module, exports) {
+}, {"after":105,"bind":197,"callback":89,"canonical":176,"clone":90,"./cookie":198,"debug":193,"defaults":92,"each":4,"emitter":104,"./group":199,"is":86,"is-email":163,"is-meta":200,"new-date":155,"event":201,"prevent":202,"querystring":203,"object":175,"./store":204,"url":178,"./user":205,"facade":141}],
+197: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -17324,7 +17295,7 @@ function bindMethods (obj, methods) {
   return obj;
 }
 }, {"bind":96,"bind-all":97}],
-200: [function(require, module, exports) {
+198: [function(require, module, exports) {
 
 var debug = require('debug')('analytics.js:cookie');
 var bind = require('bind');
@@ -17452,8 +17423,8 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"debug":195,"bind":199,"cookie":188,"clone":90,"defaults":92,"json":175,"top-domain":133}],
-201: [function(require, module, exports) {
+}, {"debug":193,"bind":197,"cookie":186,"clone":90,"defaults":92,"json":173,"top-domain":133}],
+199: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:group');
 var Entity = require('./entity');
@@ -17509,8 +17480,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":195,"./entity":208,"inherit":209,"bind":199}],
-208: [function(require, module, exports) {
+}, {"debug":193,"./entity":206,"inherit":207,"bind":197}],
+206: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var defaults = require('defaults');
@@ -17730,8 +17701,8 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"isodate-traverse":150,"defaults":92,"./cookie":200,"./store":206,"extend":139,"clone":90}],
-206: [function(require, module, exports) {
+}, {"isodate-traverse":150,"defaults":92,"./cookie":198,"./store":204,"extend":139,"clone":90}],
+204: [function(require, module, exports) {
 
 var bind = require('bind');
 var defaults = require('defaults');
@@ -17818,8 +17789,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":199,"defaults":92,"store.js":210}],
-210: [function(require, module, exports) {
+}, {"bind":197,"defaults":92,"store.js":208}],
+208: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -17971,8 +17942,8 @@ try {
 store.enabled = !store.disabled
 
 module.exports = store;
-}, {"json":175}],
-209: [function(require, module, exports) {
+}, {"json":173}],
+207: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -17981,7 +17952,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-202: [function(require, module, exports) {
+200: [function(require, module, exports) {
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
 
@@ -17997,7 +17968,7 @@ module.exports = function isMeta (e) {
     return false;
 };
 }, {}],
-203: [function(require, module, exports) {
+201: [function(require, module, exports) {
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -18040,7 +18011,7 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 }, {}],
-204: [function(require, module, exports) {
+202: [function(require, module, exports) {
 
 /**
  * prevent default on the given `e`.
@@ -18063,7 +18034,7 @@ module.exports = function(e){
 };
 
 }, {}],
-205: [function(require, module, exports) {
+203: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -18139,7 +18110,7 @@ exports.stringify = function(obj){
 };
 
 }, {"trim":135,"type":7}],
-207: [function(require, module, exports) {
+205: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:user');
 var Entity = require('./entity');
@@ -18308,10 +18279,10 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":195,"./entity":208,"inherit":209,"bind":199,"./cookie":200,"uuid":189,"cookie":188}],
+}, {"debug":193,"./entity":206,"inherit":207,"bind":197,"./cookie":198,"uuid":187,"cookie":186}],
 5: [function(require, module, exports) {
 
-module.exports = '2.5.5';
+module.exports = '2.5.6';
 
 }, {}]}, {}, {"1":""})
 );

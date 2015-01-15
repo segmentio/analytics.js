@@ -8204,8 +8204,8 @@ Evergage.prototype.track = function(track){
 var bind = require('bind');
 var each = require('each');
 var integration = require('analytics.js-integration');
-var formatConversionParams = require('./lib/formatConversionParams');
-var createConversionTag = require('./lib/createConversionTag');
+var formatConversionParams = require('./extole/formatConversionParams');
+var createConversionTag = require('./extole/createConversionTag');
 
 /**
 * Expose `Extole` integration.
@@ -8291,7 +8291,7 @@ Extole.prototype._registerConversion = function(conversionTag){
   }
 };
 
-}, {"bind":96,"each":4,"analytics.js-integration":83,"./lib/formatConversionParams":173,"./lib/createConversionTag":174}],
+}, {"bind":96,"each":4,"analytics.js-integration":83,"./extole/formatConversionParams":173,"./extole/createConversionTag":174}],
 173: [function(require, module, exports) {
 'use strict';
 /**
@@ -18311,7 +18311,7 @@ module.exports.User = User;
 }, {"debug":195,"./entity":208,"inherit":209,"bind":199,"./cookie":200,"uuid":189,"cookie":188}],
 5: [function(require, module, exports) {
 
-module.exports = '2.5.4';
+module.exports = '2.5.5';
 
 }, {}]}, {}, {"1":""})
 );

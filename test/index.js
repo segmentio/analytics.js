@@ -20,4 +20,30 @@ describe('analytics', function () {
       assert(a.name == b.name);
     });
   });
+
+  describe('noConflict', function () {
+    beforeEach(function () {
+      analytics = window.analytics;
+    });
+
+    afterEach(function () {
+      window.analytics = analytics;
+    });
+
+    it('should leave window.analytics unchanged', function () {
+      // Overwrite window.analytics with random object
+      var dummy = {dummy: true};
+      window.analytics = dummy;
+      assert(window.analytics == dummy);
+
+      // Unfortunately loading scripts in doesn't work inside a test
+      window.analytics = require('../lib/index.js');
+      assert(window.analytics != dummy);
+
+      var newAnalytics = window.analytics;
+      var noConflictAnalytics = window.analytics.noConflict();
+      assert(window.analytics == dummy);
+      assert(newAnalytics == noConflictAnalytics);
+    });
+  });
 });

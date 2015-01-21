@@ -98,6 +98,7 @@
  * (C) 2013 Segment.io Inc.
  */
 
+var _analytics = window.analytics;
 var Integrations = require('analytics.js-integrations');
 var Analytics = require('./analytics');
 var each = require('each');
@@ -16712,6 +16713,7 @@ Userlike.prototype.loaded = function(){
 }, {"analytics.js-integration":85,"facade":143,"clone":92}],
 3: [function(require, module, exports) {
 
+var _analytics = window.analytics;
 var after = require('after');
 var bind = require('bind');
 var callback = require('callback');
@@ -17297,6 +17299,15 @@ Analytics.prototype._parseQuery = function () {
   if (q.ajs_uid) this.identify(q.ajs_uid);
   if (q.ajs_event) this.track(q.ajs_event);
   if (q.ajs_aid) user.anonymousId(q.ajs_aid);
+  return this;
+};
+
+/**
+ * No conflict support.
+ */
+
+Analytics.prototype.noConflict = function(){
+  window.analytics = _analytics;
   return this;
 };
 
@@ -18411,7 +18422,7 @@ module.exports.User = User;
 }, {"debug":195,"./entity":208,"inherit":209,"bind":199,"./cookie":200,"uuid":189,"cookie":188}],
 5: [function(require, module, exports) {
 
-module.exports = '2.5.7';
+module.exports = '2.5.8';
 
 }, {}]}, {}, {"1":""})
 );

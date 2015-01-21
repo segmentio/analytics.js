@@ -31,15 +31,11 @@ describe('analytics', function () {
     });
 
     it('should leave window.analytics unchanged', function () {
-      // Overwrite window.analytics with random object
-      var dummy = {dummy: true};
+      var dummy = { dummy: true };
       window.analytics = dummy;
       assert(window.analytics == dummy);
-
-      // Unfortunately loading scripts in doesn't work inside a test
       window.analytics = require('../lib/index.js');
       assert(window.analytics != dummy);
-
       var newAnalytics = window.analytics;
       var noConflictAnalytics = window.analytics.noConflict();
       assert(window.analytics == dummy);

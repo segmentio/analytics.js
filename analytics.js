@@ -18592,7 +18592,7 @@ module.exports.User = User;
 }, {"debug":198,"./entity":211,"inherit":212,"bind":202,"./cookie":203,"uuid":192,"cookie":191}],
 5: [function(require, module, exports) {
 
-module.exports = '2.5.10';
+module.exports = '2.5.11';
 
 }, {}]}, {}, {"1":""})
 );

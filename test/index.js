@@ -9,7 +9,8 @@ describe('analytics', function () {
   var is = require('is');
 
   it('should expose a .VERSION', function () {
-    assert(analytics.VERSION);
+    var pkg = require('../bower.json');
+    assert.equal(analytics.VERSION, pkg.version);
   });
 
   it('should add integrations', function () {

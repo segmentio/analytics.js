@@ -28,14 +28,6 @@ clean:
 	@rm -rf components $(BUILD)
 	@rm -f analytics.js analytics.min.js
 	@rm -rf node_modules npm-debug.log
-
-#
-# update version
-#
-
-version: component.json
-	@node bin/version
-
 #
 # Test with phantomjs.
 #
@@ -75,7 +67,7 @@ test-browser: $(BUILD)
 # Target for `analytics.js` file.
 #
 
-analytics.js: node_modules $(SRC) version
+analytics.js: node_modules $(SRC)
 	@$(DUO) --standalone analytics lib/index.js > analytics.js
 	@$(MINIFY) analytics.js --output analytics.min.js
 

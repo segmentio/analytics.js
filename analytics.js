@@ -120,7 +120,7 @@ analytics.require = require;
  * Expose `VERSION`.
  */
 
-exports.VERSION = require('./version');
+exports.VERSION = require('../bower.json').version;
 
 /**
  * Add integrations.
@@ -130,7 +130,7 @@ each(Integrations, function (name, Integration) {
   analytics.use(Integration);
 });
 
-}, {"analytics.js-integrations":2,"./analytics":3,"each":4,"./version":5}],
+}, {"analytics.js-integrations":2,"./analytics":3,"each":4,"../bower.json":5}],
 2: [function(require, module, exports) {
 
 /**
@@ -18591,8 +18591,12 @@ module.exports.User = User;
 
 }, {"debug":198,"./entity":211,"inherit":212,"bind":202,"./cookie":203,"uuid":192,"cookie":191}],
 5: [function(require, module, exports) {
-
-module.exports = '2.5.11';
-
+module.exports = {
+  "name": "analytics",
+  "version": "2.5.12",
+  "main": "analytics.js",
+  "dependencies": {},
+  "devDependencies": {}
+};
 }, {}]}, {}, {"1":""})
 );

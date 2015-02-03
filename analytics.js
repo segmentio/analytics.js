@@ -7499,7 +7499,15 @@ Clicky.prototype.page = function(page){
 Clicky.prototype.identify = function(identify){
   window.clicky_custom = window.clicky_custom || {};
   window.clicky_custom.session = window.clicky_custom.session || {};
-  extend(window.clicky_custom.session, identify.traits());
+  var traits = identify.traits();
+
+  var username = identify.username();
+  var email = identify.email();
+  var name = identify.name();
+
+  if (username || email || name) traits.username = username || email || name;
+
+  extend(window.clicky_custom.session, traits);
 };
 
 /**
@@ -9874,6 +9882,25 @@ GA.prototype.page = function(page){
 };
 
 /**
+ * Identify.
+ *
+ * @param {Identify} event
+ */
+
+GA.prototype.identify = function(identify){
+  var opts = this.options;
+
+  //set userId
+  if (opts.sendUserId && identify.userId()) {
+    window.ga('set', 'userId', identify.userId());
+  }
+
+  //set dimensions
+  var custom = metrics(user.traits(), opts);
+  if (length(custom)) window.ga('set', custom);
+ };
+
+/**
  * Track.
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/events
@@ -10653,7 +10680,162 @@ module.exports = function(arr, fn){
   return ret;
 };
 
-}, {"to-function":116}],
+}, {"to-function":184}],
+184: [function(require, module, exports) {
+
+/**
+ * Module Dependencies
+ */
+
+var expr;
+try {
+  expr = require('props');
+} catch(e) {
+  expr = require('component-props');
+}
+
+/**
+ * Expose `toFunction()`.
+ */
+
+module.exports = toFunction;
+
+/**
+ * Convert `obj` to a `Function`.
+ *
+ * @param {Mixed} obj
+ * @return {Function}
+ * @api private
+ */
+
+function toFunction(obj) {
+  switch ({}.toString.call(obj)) {
+    case '[object Object]':
+      return objectToFunction(obj);
+    case '[object Function]':
+      return obj;
+    case '[object String]':
+      return stringToFunction(obj);
+    case '[object RegExp]':
+      return regexpToFunction(obj);
+    default:
+      return defaultToFunction(obj);
+  }
+}
+
+/**
+ * Default to strict equality.
+ *
+ * @param {Mixed} val
+ * @return {Function}
+ * @api private
+ */
+
+function defaultToFunction(val) {
+  return function(obj){
+    return val === obj;
+  };
+}
+
+/**
+ * Convert `re` to a function.
+ *
+ * @param {RegExp} re
+ * @return {Function}
+ * @api private
+ */
+
+function regexpToFunction(re) {
+  return function(obj){
+    return re.test(obj);
+  };
+}
+
+/**
+ * Convert property `str` to a function.
+ *
+ * @param {String} str
+ * @return {Function}
+ * @api private
+ */
+
+function stringToFunction(str) {
+  // immediate such as "> 20"
+  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
+
+  // properties such as "name.first" or "age > 18" or "age > 18 && age < 36"
+  return new Function('_', 'return ' + get(str));
+}
+
+/**
+ * Convert `object` to a function.
+ *
+ * @param {Object} object
+ * @return {Function}
+ * @api private
+ */
+
+function objectToFunction(obj) {
+  var match = {};
+  for (var key in obj) {
+    match[key] = typeof obj[key] === 'string'
+      ? defaultToFunction(obj[key])
+      : toFunction(obj[key]);
+  }
+  return function(val){
+    if (typeof val !== 'object') return false;
+    for (var key in match) {
+      if (!(key in val)) return false;
+      if (!match[key](val[key])) return false;
+    }
+    return true;
+  };
+}
+
+/**
+ * Built the getter function. Supports getter style functions
+ *
+ * @param {String} str
+ * @return {String}
+ * @api private
+ */
+
+function get(str) {
+  var props = expr(str);
+  if (!props.length) return '_.' + str;
+
+  var val, i, prop;
+  for (i = 0; i < props.length; i++) {
+    prop = props[i];
+    val = '_.' + prop;
+    val = "('function' == typeof " + val + " ? " + val + "() : " + val + ")";
+
+    // mimic negative lookbehind to avoid problems with nested properties
+    str = stripNested(prop, str, val);
+  }
+
+  return str;
+}
+
+/**
+ * Mimic negative lookbehind to avoid problems with nested properties.
+ *
+ * See: http://blog.stevenlevithan.com/archives/mimic-lookbehind-javascript
+ *
+ * @param {String} prop
+ * @param {String} str
+ * @param {String} val
+ * @return {String}
+ * @api private
+ */
+
+function stripNested (prop, str, val) {
+  return str.replace(new RegExp('(\\.)?' + prop, 'g'), function($0, $1) {
+    return $1 ? $0 : val;
+  });
+}
+
+}, {"props":117,"component-props":117}],
 183: [function(require, module, exports) {
 
 /**
@@ -12127,8 +12309,8 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"analytics.js-integration":88,"global-queue":172,"facade":146,"alias":176,"batch":184,"each":4,"is":91}],
-184: [function(require, module, exports) {
+}, {"analytics.js-integration":88,"global-queue":172,"facade":146,"alias":176,"batch":185,"each":4,"is":91}],
+185: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -12288,8 +12470,8 @@ Batch.prototype.end = function(cb){
   return this;
 };
 
-}, {"emitter":185}],
-185: [function(require, module, exports) {
+}, {"emitter":186}],
+186: [function(require, module, exports) {
 
 /**
  * Expose `Emitter`.
@@ -13029,8 +13211,8 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":176,"clone":95,"convert-dates":177,"analytics.js-integration":88,"is":91,"to-iso-string":175,"indexof":115,"obj-case":92,"some":186}],
-186: [function(require, module, exports) {
+}, {"alias":176,"clone":95,"convert-dates":177,"analytics.js-integration":88,"is":91,"to-iso-string":175,"indexof":115,"obj-case":92,"some":187}],
+187: [function(require, module, exports) {
 
 /**
  * some
@@ -14310,8 +14492,8 @@ Quantcast.prototype._labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"global-queue":172,"analytics.js-integration":88,"use-https":90,"is":91,"reduce":187}],
-187: [function(require, module, exports) {
+}, {"global-queue":172,"analytics.js-integration":88,"use-https":90,"is":91,"reduce":188}],
+188: [function(require, module, exports) {
 
 /**
  * Reduce `arr` with `fn`.
@@ -14754,6 +14936,7 @@ Segment.prototype.normalize = function(msg){
   msg.userId = msg.userId || user.id();
   msg.anonymousId = user.anonymousId();
   msg.messageId = uuid();
+  msg.sentAt = new Date();
   this.debug('normalized %o', msg);
   return msg;
 };
@@ -14856,8 +15039,8 @@ function scheme(){
 
 function noop(){}
 
-}, {"analytics.js-integration":88,"store":188,"protocol":189,"utm-params":137,"ad-params":190,"send-json":191,"cookie":192,"clone":95,"uuid":193,"top-domain":138,"extend":144,"segmentio/json@1.0.0":178}],
-188: [function(require, module, exports) {
+}, {"analytics.js-integration":88,"store":189,"protocol":190,"utm-params":137,"ad-params":191,"send-json":192,"cookie":193,"clone":95,"uuid":194,"top-domain":138,"extend":144,"segmentio/json@1.0.0":178}],
+189: [function(require, module, exports) {
 
 /**
  * dependencies.
@@ -14952,8 +15135,8 @@ function all(){
   return ret;
 }
 
-}, {"unserialize":194,"each":111}],
-194: [function(require, module, exports) {
+}, {"unserialize":195,"each":111}],
+195: [function(require, module, exports) {
 
 /**
  * Unserialize the given "stringified" javascript.
@@ -14971,7 +15154,7 @@ module.exports = function(val){
 };
 
 }, {}],
-189: [function(require, module, exports) {
+190: [function(require, module, exports) {
 
 /**
  * Convenience alias
@@ -15054,7 +15237,7 @@ function set (protocol) {
 }
 
 }, {}],
-190: [function(require, module, exports) {
+191: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15098,7 +15281,7 @@ function ads(query){
   }
 }
 }, {"querystring":139}],
-191: [function(require, module, exports) {
+192: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15197,8 +15380,8 @@ function base64(url, obj, _, fn){
   });
 }
 
-}, {"base64-encode":195,"has-cors":196,"jsonp":197,"json":178}],
-195: [function(require, module, exports) {
+}, {"base64-encode":196,"has-cors":197,"jsonp":198,"json":178}],
+196: [function(require, module, exports) {
 var utf8Encode = require('utf8-encode');
 var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
 
@@ -15235,8 +15418,8 @@ function encode(input) {
 
     return output;
 }
-}, {"utf8-encode":198}],
-198: [function(require, module, exports) {
+}, {"utf8-encode":199}],
+199: [function(require, module, exports) {
 module.exports = encode;
 
 function encode(string) {
@@ -15265,7 +15448,7 @@ function encode(string) {
     return utftext;
 }
 }, {}],
-196: [function(require, module, exports) {
+197: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -15285,7 +15468,7 @@ try {
 }
 
 }, {}],
-197: [function(require, module, exports) {
+198: [function(require, module, exports) {
 /**
  * Module dependencies
  */
@@ -15371,16 +15554,16 @@ function jsonp(url, opts, fn){
   target.parentNode.insertBefore(script, target);
 }
 
-}, {"debug":199}],
-199: [function(require, module, exports) {
+}, {"debug":200}],
+200: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":200,"./debug":201}],
-200: [function(require, module, exports) {
+}, {"./lib/debug":201,"./debug":202}],
+201: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15530,7 +15713,7 @@ function coerce(val) {
 }
 
 }, {}],
-201: [function(require, module, exports) {
+202: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -15670,7 +15853,7 @@ try {
 } catch(e){}
 
 }, {}],
-192: [function(require, module, exports) {
+193: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15794,8 +15977,8 @@ function decode(value) {
   }
 }
 
-}, {"debug":199}],
-193: [function(require, module, exports) {
+}, {"debug":200}],
+194: [function(require, module, exports) {
 
 /**
  * Taken straight from jed's gist: https://gist.github.com/982883
@@ -16461,8 +16644,8 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"analytics.js-integration":88,"global-queue":172,"convert-dates":177,"to-unix-timestamp":202,"alias":176,"clone":95}],
-202: [function(require, module, exports) {
+}, {"analytics.js-integration":88,"global-queue":172,"convert-dates":177,"to-unix-timestamp":203,"alias":176,"clone":95}],
+203: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -16587,7 +16770,7 @@ Vero.prototype.alias = function(alias){
   }
 };
 
-}, {"analytics.js-integration":88,"global-queue":172,"component/cookie":192,"obj-case":92}],
+}, {"analytics.js-integration":88,"global-queue":172,"component/cookie":193,"obj-case":92}],
 83: [function(require, module, exports) {
 
 /**
@@ -17645,8 +17828,8 @@ function message(Type, msg){
   return new Type(msg);
 }
 
-}, {"after":110,"bind":203,"callback":94,"canonical":181,"clone":95,"./cookie":204,"debug":199,"defaults":97,"each":4,"emitter":109,"./group":205,"is":91,"is-email":168,"is-meta":206,"new-date":160,"event":207,"prevent":208,"querystring":209,"object":180,"./store":210,"url":183,"./user":211,"facade":146}],
-203: [function(require, module, exports) {
+}, {"after":110,"bind":204,"callback":94,"canonical":181,"clone":95,"./cookie":205,"debug":200,"defaults":97,"each":4,"emitter":109,"./group":206,"is":91,"is-email":168,"is-meta":207,"new-date":160,"event":208,"prevent":209,"querystring":210,"object":180,"./store":211,"url":183,"./user":212,"facade":146}],
+204: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -17693,7 +17876,7 @@ function bindMethods (obj, methods) {
   return obj;
 }
 }, {"bind":101,"bind-all":102}],
-204: [function(require, module, exports) {
+205: [function(require, module, exports) {
 
 var debug = require('debug')('analytics.js:cookie');
 var bind = require('bind');
@@ -17821,8 +18004,8 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"debug":199,"bind":203,"cookie":192,"clone":95,"defaults":97,"json":178,"top-domain":138}],
-205: [function(require, module, exports) {
+}, {"debug":200,"bind":204,"cookie":193,"clone":95,"defaults":97,"json":178,"top-domain":138}],
+206: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:group');
 var Entity = require('./entity');
@@ -17878,8 +18061,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":199,"./entity":212,"inherit":213,"bind":203}],
-212: [function(require, module, exports) {
+}, {"debug":200,"./entity":213,"inherit":214,"bind":204}],
+213: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var defaults = require('defaults');
@@ -18099,8 +18282,8 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"isodate-traverse":155,"defaults":97,"./cookie":204,"./store":210,"extend":144,"clone":95}],
-210: [function(require, module, exports) {
+}, {"isodate-traverse":155,"defaults":97,"./cookie":205,"./store":211,"extend":144,"clone":95}],
+211: [function(require, module, exports) {
 
 var bind = require('bind');
 var defaults = require('defaults');
@@ -18187,8 +18370,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":203,"defaults":97,"store.js":214}],
-214: [function(require, module, exports) {
+}, {"bind":204,"defaults":97,"store.js":215}],
+215: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -18341,7 +18524,7 @@ store.enabled = !store.disabled
 
 module.exports = store;
 }, {"json":178}],
-213: [function(require, module, exports) {
+214: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -18350,7 +18533,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-206: [function(require, module, exports) {
+207: [function(require, module, exports) {
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
 
@@ -18366,7 +18549,7 @@ module.exports = function isMeta (e) {
     return false;
 };
 }, {}],
-207: [function(require, module, exports) {
+208: [function(require, module, exports) {
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -18409,7 +18592,7 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 }, {}],
-208: [function(require, module, exports) {
+209: [function(require, module, exports) {
 
 /**
  * prevent default on the given `e`.
@@ -18432,7 +18615,7 @@ module.exports = function(e){
 };
 
 }, {}],
-209: [function(require, module, exports) {
+210: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -18508,7 +18691,7 @@ exports.stringify = function(obj){
 };
 
 }, {"trim":140,"type":7}],
-211: [function(require, module, exports) {
+212: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:user');
 var Entity = require('./entity');
@@ -18677,11 +18860,11 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":199,"./entity":212,"inherit":213,"bind":203,"./cookie":204,"uuid":193,"cookie":192}],
+}, {"debug":200,"./entity":213,"inherit":214,"bind":204,"./cookie":205,"uuid":194,"cookie":193}],
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.5.12",
+  "version": "2.5.13",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

@@ -360,6 +360,11 @@ describe('Analytics', function () {
       analytics._options({ group: { option: true }});
       assert(group.options.calledWith({ option: true }));
     });
+
+    it('should preserve options', function(){
+      analytics._options({ foo: { option: true }});
+      assert.deepEqual(analytics.options, { foo: { option: true } });
+    });
   });
 
   describe('#_timeout', function () {

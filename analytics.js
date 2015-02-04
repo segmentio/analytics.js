@@ -347,16 +347,16 @@ module.exports = [
   require('./lib/tapstream'),
   require('./lib/trakio'),
   require('./lib/twitter-ads'),
+  require('./lib/userlike'),
   require('./lib/uservoice'),
   require('./lib/vero'),
   require('./lib/visual-website-optimizer'),
   require('./lib/webengage'),
   require('./lib/woopra'),
-  require('./lib/yandex-metrica'),
-  require('./lib/userlike')
+  require('./lib/yandex-metrica')
 ];
 
-}, {"./lib/adroll":8,"./lib/adwords":9,"./lib/alexa":10,"./lib/amplitude":11,"./lib/appcues":12,"./lib/atatus":13,"./lib/autosend":14,"./lib/awesm":15,"./lib/bing-ads":16,"./lib/blueshift":17,"./lib/bronto":18,"./lib/bugherd":19,"./lib/bugsnag":20,"./lib/chartbeat":21,"./lib/churnbee":22,"./lib/clicktale":23,"./lib/clicky":24,"./lib/comscore":25,"./lib/crazy-egg":26,"./lib/curebit":27,"./lib/customerio":28,"./lib/drip":29,"./lib/errorception":30,"./lib/evergage":31,"./lib/extole":32,"./lib/facebook-conversion-tracking":33,"./lib/foxmetrics":34,"./lib/frontleaf":35,"./lib/fullstory":36,"./lib/gauges":37,"./lib/get-satisfaction":38,"./lib/google-analytics":39,"./lib/google-tag-manager":40,"./lib/gosquared":41,"./lib/heap":42,"./lib/hellobar":43,"./lib/hittail":44,"./lib/hubspot":45,"./lib/improvely":46,"./lib/insidevault":47,"./lib/inspectlet":48,"./lib/intercom":49,"./lib/keen-io":50,"./lib/kenshoo":51,"./lib/kissmetrics":52,"./lib/klaviyo":53,"./lib/livechat":54,"./lib/lucky-orange":55,"./lib/lytics":56,"./lib/mixpanel":57,"./lib/mojn":58,"./lib/mouseflow":59,"./lib/mousestats":60,"./lib/navilytics":61,"./lib/nudgespot":62,"./lib/olark":63,"./lib/optimizely":64,"./lib/perfect-audience":65,"./lib/pingdom":66,"./lib/piwik":67,"./lib/preact":68,"./lib/qualaroo":69,"./lib/quantcast":70,"./lib/rollbar":71,"./lib/saasquatch":72,"./lib/satismeter":73,"./lib/segmentio":74,"./lib/sentry":75,"./lib/snapengage":76,"./lib/spinnakr":77,"./lib/tapstream":78,"./lib/trakio":79,"./lib/twitter-ads":80,"./lib/uservoice":81,"./lib/vero":82,"./lib/visual-website-optimizer":83,"./lib/webengage":84,"./lib/woopra":85,"./lib/yandex-metrica":86,"./lib/userlike":87}],
+}, {"./lib/adroll":8,"./lib/adwords":9,"./lib/alexa":10,"./lib/amplitude":11,"./lib/appcues":12,"./lib/atatus":13,"./lib/autosend":14,"./lib/awesm":15,"./lib/bing-ads":16,"./lib/blueshift":17,"./lib/bronto":18,"./lib/bugherd":19,"./lib/bugsnag":20,"./lib/chartbeat":21,"./lib/churnbee":22,"./lib/clicktale":23,"./lib/clicky":24,"./lib/comscore":25,"./lib/crazy-egg":26,"./lib/curebit":27,"./lib/customerio":28,"./lib/drip":29,"./lib/errorception":30,"./lib/evergage":31,"./lib/extole":32,"./lib/facebook-conversion-tracking":33,"./lib/foxmetrics":34,"./lib/frontleaf":35,"./lib/fullstory":36,"./lib/gauges":37,"./lib/get-satisfaction":38,"./lib/google-analytics":39,"./lib/google-tag-manager":40,"./lib/gosquared":41,"./lib/heap":42,"./lib/hellobar":43,"./lib/hittail":44,"./lib/hubspot":45,"./lib/improvely":46,"./lib/insidevault":47,"./lib/inspectlet":48,"./lib/intercom":49,"./lib/keen-io":50,"./lib/kenshoo":51,"./lib/kissmetrics":52,"./lib/klaviyo":53,"./lib/livechat":54,"./lib/lucky-orange":55,"./lib/lytics":56,"./lib/mixpanel":57,"./lib/mojn":58,"./lib/mouseflow":59,"./lib/mousestats":60,"./lib/navilytics":61,"./lib/nudgespot":62,"./lib/olark":63,"./lib/optimizely":64,"./lib/perfect-audience":65,"./lib/pingdom":66,"./lib/piwik":67,"./lib/preact":68,"./lib/qualaroo":69,"./lib/quantcast":70,"./lib/rollbar":71,"./lib/saasquatch":72,"./lib/satismeter":73,"./lib/segmentio":74,"./lib/sentry":75,"./lib/snapengage":76,"./lib/spinnakr":77,"./lib/tapstream":78,"./lib/trakio":79,"./lib/twitter-ads":80,"./lib/userlike":81,"./lib/uservoice":82,"./lib/vero":83,"./lib/visual-website-optimizer":84,"./lib/webengage":85,"./lib/woopra":86,"./lib/yandex-metrica":87}],
 8: [function(require, module, exports) {
 
 /**
@@ -10224,7 +10224,7 @@ GA.prototype.loadEnhancedEcommerce = function(track){
 GA.prototype.pushEnhancedEcommerce = function(track){
   // Send a custom non-interaction event to ensure all EE data is pushed.
   // Without doing this we'd need to require page display after setting EE data.
-  ga('send', 'event', 'EnhancedEcommerce', 'Push', { nonInteraction: 1 });
+  ga('send', 'event', track.category() || 'EnhancedEcommerce', track.event(), { nonInteraction: 1 });
 };
 
 /**
@@ -10269,8 +10269,8 @@ GA.prototype.viewedCheckoutStepEnhanced = function(track){
   this.loadEnhancedEcommerce(track);
 
   each(products, function(product){
-    var track = new Track({ properties: product });
-    enhancedEcommerceTrackProduct(track);
+    var trackTemp = new Track({ properties: product });
+    enhancedEcommerceTrackProduct(trackTemp);
   });
 
   window.ga('ec:setAction','checkout', {
@@ -10278,7 +10278,7 @@ GA.prototype.viewedCheckoutStepEnhanced = function(track){
     option: options || undefined,
   });
 
-  this.pushEnhancedEcommerce();
+  this.pushEnhancedEcommerce(track);
 };
 
 /**
@@ -16466,6 +16466,69 @@ TwitterAds.prototype.track = function(track){
  */
 
 var integration = require('analytics.js-integration');
+var Identify = require('facade').Identify;
+var clone = require('clone');
+
+/**
+ * Expose Userlike integration.
+ */
+
+var Userlike = module.exports = integration('Userlike')
+  .assumesPageview()
+  .global('userlikeConfig')
+  .global('userlikeData')
+  .option('secretKey', '')
+  .tag('<script src="//userlike-cdn-widgets.s3-eu-west-1.amazonaws.com/{{ secretKey }}.js">');
+
+/**
+ * Initialize.
+ *
+ * @param {Object} page
+ */
+Userlike.prototype.initialize = function(page){
+  var self = this;
+  var user = this.analytics.user();
+  var identify = new Identify({
+    userId: user.id(),
+    traits: user.traits()
+  });
+
+  segment_base_info = clone(this.options);
+
+  segment_base_info.visitor = {
+    name: identify.name(),
+    email: identify.email()
+  };
+
+  if (!window.userlikeData)
+    window.userlikeData = {
+      custom:{}
+    }
+
+  window.userlikeData.custom.segmentio = segment_base_info;
+
+  this.load(function(){
+    self.ready();
+  });
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+Userlike.prototype.loaded = function(){
+  return !! (window.userlikeConfig && window.userlikeData);
+};
+
+}, {"analytics.js-integration":88,"facade":146,"clone":95}],
+82: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('UserVoice');
 var convertDates = require('convert-dates');
 var unix = require('to-unix-timestamp');
@@ -16486,6 +16549,7 @@ var UserVoice = module.exports = integration('UserVoice')
   .option('showWidget', true)
   .option('mode', 'contact')
   .option('accentColor', '#448dd6')
+  .option('screenshotEnabled', true)
   .option('smartvote', true)
   .option('trigger', null)
   .option('triggerPosition', 'bottom-right')
@@ -16500,6 +16564,7 @@ var UserVoice = module.exports = integration('UserVoice')
   .option('tabColor', '#cc6d00')
   .option('tabPosition', 'middle-right')
   .option('tabInverted', false)
+  .option('customTicketFields', {})
   .tag('<script src="//widget.uservoice.com/{{ apiKey }}.js">');
 
 /**
@@ -16606,7 +16671,9 @@ function formatOptions(options){
     smartvote: 'smartvote_enabled',
     triggerColor: 'trigger_color',
     triggerBackgroundColor: 'trigger_background_color',
-    triggerPosition: 'trigger_position'
+    triggerPosition: 'trigger_position',
+    screenshotEnabled: 'screenshot_enabled',
+    customTicketFields: 'ticket_custom_fields'
   });
 }
 
@@ -16665,7 +16732,7 @@ function toUnixTimestamp (date) {
   return Math.floor(date.getTime() / 1000);
 }
 }, {}],
-82: [function(require, module, exports) {
+83: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16771,7 +16838,7 @@ Vero.prototype.alias = function(alias){
 };
 
 }, {"analytics.js-integration":88,"global-queue":172,"component/cookie":193,"obj-case":92}],
-83: [function(require, module, exports) {
+84: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16865,7 +16932,7 @@ function variation(id){
 }
 
 }, {"analytics.js-integration":88,"next-tick":103,"each":4}],
-84: [function(require, module, exports) {
+85: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16912,7 +16979,7 @@ WebEngage.prototype.loaded = function(){
 };
 
 }, {"analytics.js-integration":88,"use-https":90}],
-85: [function(require, module, exports) {
+86: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17012,7 +17079,7 @@ Woopra.prototype.track = function(track){
 };
 
 }, {"analytics.js-integration":88,"to-snake-case":89,"is-email":168,"extend":144,"each":4,"type":112}],
-86: [function(require, module, exports) {
+87: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17089,69 +17156,6 @@ function push(callback){
 }
 
 }, {"analytics.js-integration":88,"next-tick":103,"bind":101,"when":145}],
-87: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var integration = require('analytics.js-integration');
-var Identify = require('facade').Identify;
-var clone = require('clone');
-
-/**
- * Expose Userlike integration.
- */
-
-var Userlike = module.exports = integration('Userlike')
-  .assumesPageview()
-  .global('userlikeConfig')
-  .global('userlikeData')
-  .option('secretKey', '')
-  .tag('<script src="//userlike-cdn-widgets.s3-eu-west-1.amazonaws.com/{{ secretKey }}.js">');
-
-/**
- * Initialize.
- *
- * @param {Object} page
- */
-Userlike.prototype.initialize = function(page){
-  var self = this;
-  var user = this.analytics.user();
-  var identify = new Identify({
-    userId: user.id(),
-    traits: user.traits()
-  });
-
-  segment_base_info = clone(this.options);
-
-  segment_base_info.visitor = {
-    name: identify.name(),
-    email: identify.email()
-  };
-
-  if (!window.userlikeData)
-    window.userlikeData = {
-      custom:{}
-    }
-
-  window.userlikeData.custom.segmentio = segment_base_info;
-
-  this.load(function(){
-    self.ready();
-  });
-};
-
-/**
- * Loaded?
- *
- * @return {Boolean}
- */
-Userlike.prototype.loaded = function(){
-  return !! (window.userlikeConfig && window.userlikeData);
-};
-
-}, {"analytics.js-integration":88,"facade":146,"clone":95}],
 3: [function(require, module, exports) {
 
 var _analytics = window.analytics;
@@ -18864,7 +18868,7 @@ module.exports.User = User;
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.5.14",
+  "version": "2.5.15",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

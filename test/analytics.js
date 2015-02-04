@@ -25,16 +25,21 @@ describe('Analytics', function () {
 
   var analytics;
   var Test;
-  var settings = {
-    Test: {
-      key: 'key'
+  var Example;
+  var settings;
+
+  beforeEach(function(){
+    settings = {
+      Test: { key: 'key' },
+      Example: { key: 'key' }
     }
-  };
+  });
 
   beforeEach(function () {
     analytics = new Analytics();
     analytics.timeout(0);
     Test = createIntegration('Test');
+    Example = createIntegration('Example');
   });
 
   afterEach(function () {
@@ -244,7 +249,10 @@ describe('Analytics', function () {
     beforeEach(function (done) {
       Test.readyOnInitialize();
       Test.prototype.invoke = sinon.spy();
+      Example.readyOnInitialize();
+      Example.prototype.invoke = sinon.spy();
       analytics.addIntegration(Test);
+      analytics.addIntegration(Example);
       analytics.ready(done);
       analytics.initialize(settings);
     });
@@ -277,7 +285,34 @@ describe('Analytics', function () {
       var facade = new Facade({ options: opts });
       analytics.identify('123', {}, opts);
       assert(!Test.prototype.invoke.called);
-    })
+    });
+
+    it('should call hooks with correct arguments', function(){
+      var hook = sinon.spy();
+      var track = new Track({});
+      analytics.hook('ignore', hook);
+      analytics._invoke('track', track);
+      assert.deepEqual(hook.args[0], [analytics._integrations.Test, track]);
+    });
+
+    it('should call hooks for each integration', function(){
+      var hook = sinon.spy();
+      var track = new Track({});
+      analytics.hook('ignore', hook);
+      analytics._invoke('track', track);
+      assert.deepEqual(hook.args[0], [analytics._integrations.Test, track]);
+      assert.deepEqual(hook.args[1], [analytics._integrations.Example, track]);
+    });
+
+    it('should respect "ignore" hook', function(){
+      analytics.hook('ignore', function(_, msg){ return 'track' == msg.action(); });
+      var track = new Track({ event: 'ignored' });
+      var page = new Page({ name: 'not ignored' });
+      analytics._invoke('track', track);
+      assert(!Test.prototype.invoke.called);
+      analytics._invoke('page', page);
+      assert(Test.prototype.invoke.called);
+    });
 
     it('should emit "invoke" with facade', function(done){
       var opts = { All: false };
@@ -1334,4 +1369,32 @@ describe('Analytics', function () {
       assert.deepEqual({}, group.traits());
     });
   });
+
+  describe('#hook', function(){
+    var a;
+    var b;
+
+    beforeEach(function(){
+      a = sinon.spy(function(){ return ['a'].concat([].slice.call(arguments)); });
+      b = sinon.spy(function(){ return ['b'].concat([].slice.call(arguments)); });
+    });
+
+    it('should add a hook with `type`', function(){
+      analytics.hook('foo', a);
+      analytics.hook('foo', b);
+      assert.deepEqual(analytics.hooks.foo, [a, b]);
+    });
+
+    it('should do nothing when there are no hooks to invoke', function(){
+      analytics.hook('foo', [1, 2, 3]);
+    });
+
+    it('should invoke hooks with `type` and return the last value', function(){
+      analytics.hook('baz', a);
+      analytics.hook('baz', b);
+      var ret = analytics.hook('baz', [1, 2, 3]);
+      var args = [].slice.call(ret);
+      assert.deepEqual(args, ['b', 1, 2, 3]);
+    });
+  })
 });

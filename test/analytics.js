@@ -25,11 +25,15 @@ describe('Analytics', function () {
 
   var analytics;
   var Test;
-  var settings = {
-    Test: {
-      key: 'key'
-    }
-  };
+  var settings;
+
+  beforeEach(function(){
+    settings = {
+      Test: {
+        key: 'key'
+      }
+    };
+  });
 
   beforeEach(function () {
     analytics = new Analytics();
@@ -1001,6 +1005,53 @@ describe('Analytics', function () {
       analytics.track('event', { prop: true }, { context: { app: app } });
       var track = analytics._invoke.args[0][1];
       assert.deepEqual(app, track.obj.context.app);
+    });
+
+    it('should not call #_invoke if the event is archived', function(){
+      analytics.options.plan = {
+        track: {
+          event: { archived: true }
+        }
+      };
+      analytics.track('event');
+      assert(!analytics._invoke.called);
+    });
+
+    it('should call #_invoke if the event is not archived', function(){
+      analytics.options.plan = {
+        track: {
+          event: { archived: false }
+        }
+      };
+      analytics.track('event');
+      assert(analytics._invoke.called);
+    });
+
+    it('should call the callback even if the event is archived', function(done){
+      analytics.options.plan = {
+        track: {
+          event: { archived: true }
+        }
+      };
+      assert(!analytics._invoke.called);
+      analytics.track('event', {}, {}, function(){
+        done();
+      });
+    });
+
+    it('should default .integrations to plan.integrations', function(){
+      analytics.options.plan = {
+        track: {
+          event: {
+            integrations: { All: true }
+          }
+        }
+      };
+
+      analytics.track('event', {}, { integrations: { Segment: true }});
+      var msg = analytics._invoke.args[0][1];
+      assert('event' == msg.event());
+      assert.deepEqual(msg.integrations(), { All: true, Segment: true });
     });
   });
 

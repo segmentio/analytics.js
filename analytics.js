@@ -12230,8 +12230,7 @@ var KISSmetrics = module.exports = integration('KISSmetrics')
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true)
   .option('prefixProperties', true)
-  .tag('useless', '<script src="//i.kissmetrics.com/i.js">')
-  .tag('library', '<script src="//doug1izaerwt3.cloudfront.net/{{ apiKey }}.1.js">');
+  .tag('library', '<script src="//scripts.kissmetrics.com/{{ apiKey }}.2.js">');
 
 /**
  * Check if browser is mobile, for kissmetrics.
@@ -12260,7 +12259,6 @@ KISSmetrics.prototype.initialize = function(page){
   if (exports.isMobile) push('set', { 'Mobile Session': 'Yes' });
 
   var batch = new Batch();
-  batch.push(function(done){ self.load('useless', done); }) // :)
   batch.push(function(done){ self.load('library', done); })
   batch.end(function(){
     self.trackPage(page);

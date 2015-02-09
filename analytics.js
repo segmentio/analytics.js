@@ -17292,6 +17292,7 @@ exports.store = store;
  */
 
 function Analytics () {
+  this._options({});
   this.Integrations = {};
   this._integrations = {};
   this._readied = false;
@@ -17517,9 +17518,32 @@ Analytics.prototype.track = function (event, properties, options, fn) {
   if (is.fn(options)) fn = options, options = null;
   if (is.fn(properties)) fn = properties, options = null, properties = null;
 
+  // figure out if the event is archived.
+  var plan = this.options.plan || {};
+  var events = plan.track || {};
+  plan = events[event] || {};
+
+  if (plan.archived) {
+    this._callback(fn);
+    return;
+  }
+
+  // default integrations.
+  var ctx = clone(options || {});
+  plan.integrations = plan.integrations || {};
+
+  // merge integrations, they could be in `.integrations` or `.providers`.
+  if (ctx.integrations) {
+    defaults(ctx.integrations, plan.integrations);
+  } else if (ctx.providers) {
+    defaults(ctx.providers, plan.integrations);
+  } else {
+    ctx.integrations = plan.integrations;
+  }
+
   this._invoke('track', message(Track, {
     properties: properties,
-    options: options,
+    options: ctx,
     event: event
   }));
 
@@ -17751,6 +17775,7 @@ Analytics.prototype.debug = function(str){
 
 Analytics.prototype._options = function (options) {
   options = options || {};
+  this.options = options;
   cookie.options(options.cookie);
   store.options(options.localStorage);
   user.options(options.user);
@@ -17902,7 +17927,7 @@ function canonicalUrl (search) {
  */
 
 function message(Type, msg){
-  var ctx = msg.options || {};
+  var ctx = clone(msg.options || {});
 
   if (ctx.timestamp || ctx.integrations || ctx.context || ctx.anonymousId) {
     msg = defaults(ctx, msg);
@@ -18954,7 +18979,7 @@ module.exports.User = User;
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.5.16",
+  "version": "2.6.0",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

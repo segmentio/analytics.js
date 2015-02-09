@@ -1,4 +1,10 @@
 
+2.6.0 / 2015-02-09
+==================
+
+  * .track(): ignore archived events
+  * ._options(): preserve options
+
 2.5.17 / 2015-02-04
 ===================
 

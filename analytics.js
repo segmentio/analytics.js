@@ -18913,7 +18913,7 @@ User.prototype.anonymousId = function(anonId){
 
   // old - it is not stringified so we use the raw cookie.
   if (anonId = rawCookie('_sio')) {
-    anonId = anonId.split('----')[1];
+    anonId = anonId.split('----')[0];
     store.set('ajs_anonymous_id', anonId);
     store.remove('_sio');
     return anonId;

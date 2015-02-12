@@ -44,13 +44,13 @@ describe('user', function () {
     })
 
     it('should pick the old "_sio" anonymousId', function(){
-      rawCookie('_sio', 'user-id----anonymous-id');
+      rawCookie('_sio', 'anonymous-id----user-id');
       var user = new User;
       assert('anonymous-id' == user.anonymousId());
     });
 
     it('should not pick the old "_sio" if anonymous id is present', function(){
-      rawCookie('_sio', 'user-id----old-anonymous-id');
+      rawCookie('_sio', 'old-anonymous-id----user-id');
       cookie.set('ajs_anonymous_id', 'new-anonymous-id');
       assert('new-anonymous-id' == new User().anonymousId());
     });

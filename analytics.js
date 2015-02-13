@@ -17532,13 +17532,12 @@ Analytics.prototype.track = function (event, properties, options, fn) {
   var ctx = clone(options || {});
   plan.integrations = plan.integrations || {};
 
-  // merge integrations, they could be in `.integrations` or `.providers`.
-  if (ctx.integrations) {
-    defaults(ctx.integrations, plan.integrations);
-  } else if (ctx.providers) {
-    defaults(ctx.providers, plan.integrations);
-  } else {
-    ctx.integrations = plan.integrations;
+  // if the user's plan has any integrations
+  // merge them to the call's integrations.
+  if (size(plan.integrations)) {
+    var ints = ctx.integrations || ctx.providers;
+    if (ints) defaults(ints, plan.integrations);
+    else ctx.integrations = plan.integrations;
   }
 
   this._invoke('track', message(Track, {
@@ -18979,7 +18978,7 @@ module.exports.User = User;
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

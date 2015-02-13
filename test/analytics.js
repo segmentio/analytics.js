@@ -1053,6 +1053,13 @@ describe('Analytics', function () {
       assert('event' == msg.event());
       assert.deepEqual(msg.integrations(), { All: true, Segment: true });
     });
+
+    it('should not set ctx.integrations if plan.integrations is empty', function(){
+      analytics.options.plan = { track: { event: {} } };
+      analytics.track('event', {}, { campaign: {} });
+      var msg = analytics._invoke.args[0][1];
+      assert.deepEqual({}, msg.proxy('context.campaign'));
+    })
   });
 
   describe('#trackLink', function () {

@@ -554,6 +554,7 @@ describe('Analytics', function () {
 
   describe('#pageview', function () {
     beforeEach(function () {
+      analytics.initialize();
       sinon.spy(analytics, 'page');
     });
 

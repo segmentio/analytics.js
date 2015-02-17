@@ -1007,30 +1007,30 @@ describe('Analytics', function () {
       assert.deepEqual(app, track.obj.context.app);
     });
 
-    it('should not call #_invoke if the event is archived', function(){
+    it('should not call #_invoke if the event is disabled', function(){
       analytics.options.plan = {
         track: {
-          event: { archived: true }
+          event: { enabled: false }
         }
       };
       analytics.track('event');
       assert(!analytics._invoke.called);
     });
 
-    it('should call #_invoke if the event is not archived', function(){
+    it('should call #_invoke if the event is enabled', function(){
       analytics.options.plan = {
         track: {
-          event: { archived: false }
+          event: { enabled: true }
         }
       };
       analytics.track('event');
       assert(analytics._invoke.called);
     });
 
-    it('should call the callback even if the event is archived', function(done){
+    it('should call the callback even if the event is disabled', function(done){
       analytics.options.plan = {
         track: {
-          event: { archived: true }
+          event: { enabled: false }
         }
       };
       assert(!analytics._invoke.called);

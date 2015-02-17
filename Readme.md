@@ -1,5 +1,7 @@
 
-# Analytics.js [![Build Status](https://travis-ci.org/segmentio/analytics.js.png?branch=master)](https://travis-ci.org/segmentio/analytics.js)
+[![Build Status](https://travis-ci.org/segmentio/analytics.js.png?branch=master)](https://travis-ci.org/segmentio/analytics.js)
+
+# Analytics.js 
 
 The hassle-free way to integrate analytics into any web application. 
 

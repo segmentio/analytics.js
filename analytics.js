@@ -17349,7 +17349,9 @@ var newDate = require('new-date');
 var on = require('event').bind;
 var prevent = require('prevent');
 var querystring = require('querystring');
+var normalize = require('./normalize');
 var size = require('object').length;
+var keys = require('object').keys;
 var store = require('./store');
 var url = require('url');
 var user = require('./user');
@@ -17384,6 +17386,7 @@ function Analytics () {
   this._readied = false;
   this._timeout = 300;
   this._user = user; // BACKWARDS COMPATIBILITY
+  this.log = debug('analytics.js');
   bind.all(this);
 
   var self = this;
@@ -17456,6 +17459,7 @@ Analytics.prototype.initialize = function (settings, options) {
   each(settings, function (name, opts) {
     var Integration = self.Integrations[name];
     var integration = new Integration(clone(opts));
+    self.log('initialize %o - %o', name, opts);
     self.add(integration);
   });
 
@@ -17531,14 +17535,14 @@ Analytics.prototype.identify = function (id, traits, options, fn) {
   // clone traits before we manipulate so we don't do anything uncouth, and take
   // from `user` so that we carryover anonymous traits
   user.identify(id, traits);
-  id = user.id();
-  traits = user.traits();
 
-  this._invoke('identify', message(Identify, {
+  var msg = this.normalize({
     options: options,
-    traits: traits,
-    userId: id
-  }));
+    traits: user.traits(),
+    userId: user.id(),
+  });
+
+  this._invoke('identify', new Identify(msg));
 
   // emit
   this.emit('identify', id, traits, options);
@@ -17576,14 +17580,14 @@ Analytics.prototype.group = function (id, traits, options, fn) {
 
   // grab from group again to make sure we're taking from the source
   group.identify(id, traits);
-  id = group.id();
-  traits = group.traits();
 
-  this._invoke('group', message(Group, {
+  var msg = this.normalize({
     options: options,
-    traits: traits,
-    groupId: id
-  }));
+    traits: group.traits(),
+    groupId: group.id()
+  });
+
+  this._invoke('group', new Group(msg));
 
   this.emit('group', id, traits, options);
   this._callback(fn);
@@ -17607,31 +17611,22 @@ Analytics.prototype.track = function (event, properties, options, fn) {
   // figure out if the event is archived.
   var plan = this.options.plan || {};
   var events = plan.track || {};
-  plan = events[event] || {};
 
-  // disabled.
-  if (false === plan.enabled) {
-    this._callback(fn);
-    return;
-  }
-
-  // default integrations.
-  var ctx = clone(options || {});
-  plan.integrations = plan.integrations || {};
-
-  // if the user's plan has any integrations
-  // merge them to the call's integrations.
-  if (size(plan.integrations)) {
-    var ints = ctx.integrations || ctx.providers;
-    if (ints) defaults(ints, plan.integrations);
-    else ctx.integrations = plan.integrations;
-  }
-
-  this._invoke('track', message(Track, {
+  // normalize
+  var msg = this.normalize({
     properties: properties,
-    options: ctx,
+    options: options,
     event: event
-  }));
+  });
+
+  // plan.
+  if (plan = events[event]) {
+    this.log('plan %o - %o', event, plan);
+    if (false == plan.enabled) return this._callback(fn);
+    defaults(msg.integrations, plan.integrations || {});
+  }
+
+  this._invoke('track', new Track(msg));
 
   this.emit('track', event, properties, options);
   this._callback(fn);
@@ -17758,12 +17753,14 @@ Analytics.prototype.page = function (category, name, properties, options, fn) {
   defaults(properties, defs);
   properties.url = properties.url || canonicalUrl(properties.search);
 
-  this._invoke('page', message(Page, {
+  var msg = this.normalize({
     properties: properties,
     category: category,
     options: options,
     name: name
-  }));
+  });
+
+  this._invoke('page', new Page(msg));
 
   this.emit('page', category, name, properties, options);
   this._callback(fn);
@@ -17801,11 +17798,13 @@ Analytics.prototype.alias = function (to, from, options, fn) {
   if (is.fn(from)) fn = from, options = null, from = null;
   if (is.object(from)) options = from, from = null;
 
-  this._invoke('alias', message(Alias, {
+  var msg = this.normalize({
     options: options,
-    from: from,
-    to: to
-  }));
+    previousId: from,
+    userId: to
+  });
+
+  this._invoke('alias', new Alias(msg));
 
   this.emit('alias', to, from, options);
   this._callback(fn);
@@ -17945,6 +17944,20 @@ Analytics.prototype._parseQuery = function () {
 };
 
 /**
+ * Normalize the given `msg`.
+ *
+ * @param {Object} msg
+ * @return {Object}
+ */
+
+Analytics.prototype.normalize = function(msg){
+  msg = normalize(msg, keys(this._integrations));
+  if (msg.anonymousId) user.anonymousId(msg.anonymousId);
+  msg.anonymousId = user.anonymousId();
+  return msg;
+};
+
+/**
  * No conflict support.
  */
 
@@ -17982,54 +17995,7 @@ function canonicalUrl (search) {
   return -1 == i ? url : url.slice(0, i);
 }
 
-/**
- * Create a new message with `Type` and `msg`
- *
- * the function will make sure that the `msg.options`
- * is merged to `msg` and deletes `msg.options` if it
- * has `.context / .timestamp / .integrations / .anonymousId`.
- *
- * Example:
- *
- *      message(Identify, {
- *        options: { timestamp: Date, context: Object, integrations: Object },
- *        traits: { trait: true },
- *        userId: 123
- *      });
- *
- *      // =>
- *
- *      {
- *        userId: 123,
- *        context: Object,
- *        timestamp: Date,
- *        integrations: Object
- *        traits: { trait: true }
- *      }
- *
- * @param {Function} Type
- * @param {Object} msg
- * @return {Facade}
- */
-
-function message(Type, msg){
-  var ctx = clone(msg.options || {});
-
-  if (ctx.timestamp || ctx.integrations || ctx.context || ctx.anonymousId) {
-    msg = defaults(ctx, msg);
-    delete msg.options;
-  }
-
-  if (ctx.anonymousId) {
-    user.anonymousId(ctx.anonymousId);
-  }
-
-  msg.anonymousId = user.anonymousId();
-
-  return new Type(msg);
-}
-
-}, {"after":111,"bind":207,"callback":94,"canonical":182,"clone":95,"./cookie":208,"debug":203,"defaults":97,"each":4,"emitter":110,"./group":209,"is":91,"is-email":169,"is-meta":210,"new-date":161,"event":211,"prevent":212,"querystring":213,"object":181,"./store":214,"url":184,"./user":215,"facade":147}],
+}, {"after":111,"bind":207,"callback":94,"canonical":182,"clone":95,"./cookie":208,"debug":203,"defaults":97,"each":4,"emitter":110,"./group":209,"is":91,"is-email":169,"is-meta":210,"new-date":161,"event":211,"prevent":212,"querystring":213,"./normalize":214,"object":181,"./store":215,"url":184,"./user":216,"facade":147}],
 207: [function(require, module, exports) {
 
 try {
@@ -18262,8 +18228,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":203,"./entity":216,"inherit":217,"bind":207}],
-216: [function(require, module, exports) {
+}, {"debug":203,"./entity":217,"inherit":218,"bind":207}],
+217: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var defaults = require('defaults');
@@ -18483,8 +18449,8 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"isodate-traverse":156,"defaults":97,"./cookie":208,"./store":214,"extend":145,"clone":95}],
-214: [function(require, module, exports) {
+}, {"isodate-traverse":156,"defaults":97,"./cookie":208,"./store":215,"extend":145,"clone":95}],
+215: [function(require, module, exports) {
 
 var bind = require('bind');
 var defaults = require('defaults');
@@ -18571,8 +18537,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":207,"defaults":97,"store.js":218}],
-218: [function(require, module, exports) {
+}, {"bind":207,"defaults":97,"store.js":219}],
+219: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -18725,7 +18691,7 @@ store.enabled = !store.disabled
 
 module.exports = store;
 }, {"json":179}],
-217: [function(require, module, exports) {
+218: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -18892,7 +18858,135 @@ exports.stringify = function(obj){
 };
 
 }, {"trim":141,"type":7}],
-215: [function(require, module, exports) {
+214: [function(require, module, exports) {
+
+/**
+ * Module Dependencies.
+ */
+
+var debug = require('debug')('analytics.js:normalize');
+var indexof = require('component/indexof');
+var defaults = require('defaults');
+var map = require('component/map');
+var each = require('each');
+var is = require('is');
+
+/**
+ * HOP.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Expose `normalize`
+ */
+
+module.exports = normalize;
+
+/**
+ * Toplevel properties.
+ */
+
+var toplevel = [
+  'integrations',
+  'anonymousId',
+  'properties',
+  'previousId',
+  'timestamp',
+  'category',
+  'context',
+  'groupId',
+  'userId',
+  'traits',
+  'event',
+  'name'
+];
+
+/**
+ * Normalize `msg` based on integrations `list`.
+ *
+ * @param {Object} msg
+ * @param {Array} list
+ * @return {Function}
+ */
+
+function normalize(msg, list){
+  var lower = map(list, function(s){ return s.toLowerCase(); });
+  var opts = msg.options || {};
+  var integrations = opts.integrations || {};
+  var providers = opts.providers || {};
+  var context = opts.context || {};
+  var ret = {};
+  debug('<-', msg);
+
+  // integrations.
+  each(opts, function(key, value){
+    if (!integration(key)) return;
+    if (!has.call(integrations, key)) integrations[key] = value;
+    delete opts[key];
+  });
+
+  // providers.
+  delete opts.providers;
+  each(providers, function(key, value){
+    if (!integration(key)) return;
+    if (is.object(integrations[key])) return;
+    if (has.call(integrations, key) && 'boolean' == typeof providers[key]) return;
+    integrations[key] = value;
+  });
+
+  // move all toplevel options to msg
+  // and the rest to context.
+  each(opts, function(key){
+    if (~indexof(toplevel, key)) {
+      ret[key] = opts[key];
+    } else {
+      context[key] = opts[key];
+    }
+  });
+
+  // cleanup
+  delete msg.options;
+  ret.integrations = integrations;
+  ret.context = context;
+  ret = defaults(ret, msg);
+  debug('->', ret);
+  return ret;
+
+  function integration(name){
+    return !! (~indexof(list, name)
+      || 'all' == name.toLowerCase()
+      || ~indexof(lower, name.toLowerCase()));
+  }
+}
+}, {"debug":203,"component/indexof":116,"defaults":97,"component/map":220,"each":4,"is":91}],
+220: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var toFunction = require('to-function');
+
+/**
+ * Map the given `arr` with callback `fn(val, i)`.
+ *
+ * @param {Array} arr
+ * @param {Function} fn
+ * @return {Array}
+ * @api public
+ */
+
+module.exports = function(arr, fn){
+  var ret = [];
+  fn = toFunction(fn);
+  for (var i = 0; i < arr.length; ++i) {
+    ret.push(fn(arr[i], i));
+  }
+  return ret;
+};
+}, {"to-function":185}],
+216: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:user');
 var Entity = require('./entity');
@@ -19061,15 +19155,14 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":203,"./entity":216,"inherit":217,"bind":207,"./cookie":208,"uuid":197,"cookie":196}],
+}, {"debug":203,"./entity":217,"inherit":218,"bind":207,"./cookie":208,"uuid":197,"cookie":196}],
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.6.3",
+  "version": "2.6.5",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}
-}
-;
+};
 }, {}]}, {}, {"1":""})
 );

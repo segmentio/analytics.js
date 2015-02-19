@@ -1,4 +1,15 @@
 
+2.6.5 / 2015-02-19
+==================
+
+  * analytics: less verbose logging
+  * analytics.js: cleanup plan
+  * analytics.js: add debugs
+  * normalize: dont clobber and add tests
+  * analytics: use normalize removing message()
+  * add normalize.js
+
+
 2.6.4 / 2015-02-19
 ==================
 

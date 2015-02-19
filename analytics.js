@@ -3733,7 +3733,7 @@ var umd = 'function' == typeof define && define.amd;
  * Source.
  */
 
-var src = '//d24n15hnbwhuhn.cloudfront.net/libs/amplitude-2.0.2-min.js';
+var src = '//d24n15hnbwhuhn.cloudfront.net/libs/amplitude-2.0.3-min.js';
 
 /**
  * Expose `Amplitude` integration.
@@ -11329,20 +11329,35 @@ var alias = require('alias');
 
 var Heap = module.exports = integration('Heap')
   .global('heap')
-  .global('_heapid')
   .option('appId', '')
-  .tag('<script src="//d36lvucg9kzous.cloudfront.net">');
+  .tag('<script src="//cdn.heapanalytics.com/js/heap-{{ appId }}.js">');
 
 /**
  * Initialize.
  *
- * https://heapanalytics.com/docs#installWeb
+ * https://heapanalytics.com/docs/installation#web
  *
  * @param {Object} page
  */
 
 Heap.prototype.initialize = function(page){
-  window.heap=window.heap||[];window.heap.load=function(a){window._heapid=a;var d=function(a){return function(){window.heap.push([a].concat(Array.prototype.slice.call(arguments,0)));};},e=["identify","track"];for (var f=0;f<e.length;f++)window.heap[e[f]]=d(e[f]);};
+  window.heap = window.heap || [];
+  window.heap.load = function(appid, config){
+    window.heap.appid = appid;
+    window.heap.config = config;
+
+    var methodFactory = function(type){
+      return function(){
+        heap.push([type].concat(Array.prototype.slice.call(arguments, 0)));
+      };
+    };
+
+    var methods = ['clearEventProperties', 'identify', 'setEventProperties', 'track', 'unsetEventProperty'];
+    for (var i = 0; i < methods.length; i++) {
+      heap[methods[i]] = methodFactory(methods[i]);
+    }
+  };
+
   window.heap.load(this.options.appId);
   this.load(this.ready);
 };
@@ -14571,7 +14586,7 @@ Quantcast.prototype.track = function(track){
 
   var user = this.analytics.user();
   if (null != revenue) settings.revenue = (revenue+''); // convert to string
-  if (orderId) settings.orderId = orderId;
+  if (orderId) settings.orderid = orderId;
   if (user.id()) settings.uid = user.id();
   push(settings);
 };
@@ -14901,22 +14916,30 @@ SatisMeter.prototype.loaded = function(){
  */
 
 SatisMeter.prototype.identify = function(identify){
-  var user = {
+  var traits = identify.traits();
+
+  traits.token = this.options.token;
+
+  traits.user = {
     id: identify.userId()
   };
   if (identify.name()) {
-    user.name = identify.name();
+    traits.user.name = identify.name();
   }
   if (identify.email()) {
-    user.email = identify.email();
+    traits.user.email = identify.email();
   }
   if (identify.created()) {
-    user.signUpDate = identify.created().toISOString();
+    traits.user.signUpDate = identify.created().toISOString();
   }
-  window.satismeter({
-    token: this.options.token,
-    user: user
-  });
+
+  // Remove traits that are already passed in user object
+  delete traits.id;
+  delete traits.email;
+  delete traits.name;
+  delete traits.created;
+
+  window.satismeter(traits);
 };
 
 }, {"analytics.js-integration":88,"when":146}],

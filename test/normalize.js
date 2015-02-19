@@ -115,6 +115,21 @@ describe('normalize', function(){
           }
         });
       });
+
+      it('should not clobber', function(){
+        opts.all = false;
+        opts.Segment = {};
+        opts.integrations = {};
+        opts.integrations.all = true;
+        opts.integrations.Segment = true;
+        assert.deepEqual(normalize(msg, list), {
+          context: {},
+          integrations: {
+            all: true,
+            Segment: true
+          }
+        });
+      });
     });
 
     describe('as providers', function(){
@@ -164,6 +179,32 @@ describe('normalize', function(){
           context: {},
           integrations: {
             all: true
+          }
+        });
+      });
+
+      it('should not clobber booleans', function(){
+        providers.all = false;
+        providers.Segment = false;
+        opts.integrations = {};
+        opts.integrations.all = true;
+        opts.integrations.Segment = true;
+        assert.deepEqual(normalize(msg, list), {
+          context: {},
+          integrations: {
+            all: true,
+            Segment: true
+          }
+        });
+      });
+
+      it('should override if providers[key] is an object', function(){
+        providers.Segment = {};
+        opts.integrations = { Segment: true };
+        assert.deepEqual(normalize(msg, list), {
+          context: {},
+          integrations: {
+            Segment: {}
           }
         });
       });

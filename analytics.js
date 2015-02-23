@@ -15079,8 +15079,8 @@ Segment.prototype.ontrack = function(track){
 Segment.prototype.onalias = function(alias){
   var json = alias.json();
   var user = this.analytics.user();
-  json.previousId = json.from || user.id() || user.anonymousId();
-  json.userId = json.to;
+  json.previousId = json.previousId || json.from || user.id() || user.anonymousId();
+  json.userId = json.userId || json.to;
   delete json.from;
   delete json.to;
   this.send('/a', json);

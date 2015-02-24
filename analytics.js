@@ -11381,9 +11381,8 @@ Heap.prototype.loaded = function(){
  */
 
 Heap.prototype.identify = function(identify){
-  var traits = identify.traits();
+  var traits = identify.traits({ email: '_email' });
   var id = identify.userId();
-  if (traits.email) delete traits.email
   if (id) traits.handle = id;
   window.heap.identify(traits);
 };
@@ -17392,9 +17391,6 @@ function Analytics () {
   var self = this;
   this.on('initialize', function(settings, options){
     if (options.initialPageview) self.page();
-  });
-
-  this.on('initialize', function(){
     self._parseQuery();
   });
 }
@@ -17656,7 +17652,7 @@ Analytics.prototype.trackLink = function (links, event, properties) {
     on(el, 'click', function (e) {
       var ev = is.fn(event) ? event(el) : event;
       var props = is.fn(properties) ? properties(el) : properties;
-      var href = el.getAttribute('href') 
+      var href = el.getAttribute('href')
         || el.getAttributeNS('http://www.w3.org/1999/xlink', 'href')
         || el.getAttribute('xlink:href');
 

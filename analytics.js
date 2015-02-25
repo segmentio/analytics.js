@@ -5621,7 +5621,7 @@ module.exports.del = function (obj, key, options) {
 
 function multiple (fn) {
   return function (obj, path, val, options) {
-    normalize = options && isFunction(options.normalizer) ? options.normalizer : defaultNormalize;
+    var normalize = options && isFunction(options.normalizer) ? options.normalizer : defaultNormalize;
     path = normalize(path);
 
     var key;
@@ -19155,7 +19155,7 @@ module.exports.User = User;
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.6.6",
+  "version": "2.6.7",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

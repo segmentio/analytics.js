@@ -36,7 +36,6 @@ describe('normalize', function(){
       opts.groupId = 'group-id';
       opts.integrations = { foo: 1 };
       opts.properties = { prop: 1 };
-      opts.traits = { trait: 1 };
       opts.previousId = 'previous-id';
       opts.context = { context: 1 };
 
@@ -50,7 +49,6 @@ describe('normalize', function(){
       assert.equal(out.groupId, 'group-id');
       assert.deepEqual(out.integrations, { foo: 1 });
       assert.deepEqual(out.properties, { prop: 1 });
-      assert.deepEqual(out.traits, { trait: 1 });
       assert.equal(out.previousId, 'previous-id');
       assert.deepEqual(out.context, { context: 1 });
     });
@@ -59,11 +57,13 @@ describe('normalize', function(){
       opts.context = { foo: 1 };
       opts.campaign = { name: 'campaign-name' };
       opts.library = 'analytics-wordpress';
+      opts.traits = { trait: true };
       assert.deepEqual(normalize(msg, list), {
         integrations: {},
         context: {
           campaign: { name: 'campaign-name' },
           library: 'analytics-wordpress',
+          traits: { trait: true },
           foo: 1
         }
       });

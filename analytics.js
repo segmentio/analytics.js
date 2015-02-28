@@ -18893,7 +18893,6 @@ var toplevel = [
   'context',
   'groupId',
   'userId',
-  'traits',
   'event',
   'name'
 ];

@@ -538,6 +538,14 @@ describe('Analytics', function () {
       assert.equal('id', page.obj.anonymousId);
     });
 
+    it('should accept context.traits', function(){
+      analytics.page({ prop: true }, { traits: { trait: true } });
+      var page = analytics._invoke.args[0][1];
+      assert.deepEqual(page.context(), {
+        traits: { trait: true }
+      });
+    });
+
     it('should emit page', function (done) {
       defaults.category = 'category';
       defaults.name = 'name';
@@ -746,6 +754,15 @@ describe('Analytics', function () {
       var identify = analytics._invoke.args[0][1];
       assert.deepEqual(app, identify.obj.context.app);
     });
+
+    it('should accept context.traits', function(){
+      analytics.identify(1, { trait: 1 }, { traits: { trait: true } });
+      var identify = analytics._invoke.args[0][1];
+      assert.deepEqual(identify.traits(), { trait: 1, id: 1 });
+      assert.deepEqual(identify.context(), {
+        traits: { trait: true }
+      });
+    });
   });
 
   describe('#user', function () {
@@ -910,6 +927,15 @@ describe('Analytics', function () {
       var group = analytics._invoke.args[0][1];
       assert.deepEqual(app, group.obj.context.app);
     });
+
+    it('should accept context.traits', function(){
+      analytics.group(1, { trait: 1 }, { traits: { trait: true } });
+      var group = analytics._invoke.args[0][1];
+      assert.deepEqual(group.traits(), { trait: 1, id: 1 });
+      assert.deepEqual(group.context(), {
+        traits: { trait: true }
+      });
+    });
   });
 
   describe('#track', function () {
@@ -1060,7 +1086,16 @@ describe('Analytics', function () {
       analytics.track('event', {}, { campaign: {} });
       var msg = analytics._invoke.args[0][1];
       assert.deepEqual({}, msg.proxy('context.campaign'));
-    })
+    });
+
+    it('should accept context.traits', function(){
+      analytics.track('event', { prop: 1 }, { traits: { trait: true } });
+      var track = analytics._invoke.args[0][1];
+      assert.deepEqual(track.properties(), { prop: 1 });
+      assert.deepEqual(track.context(), {
+        traits: { trait: true }
+      });
+    });
   });
 
   describe('#trackLink', function () {

@@ -18860,15 +18860,8 @@ module.exports = normalize;
 var toplevel = [
   'integrations',
   'anonymousId',
-  'properties',
-  'previousId',
   'timestamp',
-  'category',
   'context',
-  'groupId',
-  'userId',
-  'event',
-  'name'
 ];
 
 /**
@@ -19128,7 +19121,7 @@ module.exports.User = User;
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.6.11",
+  "version": "2.6.12",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

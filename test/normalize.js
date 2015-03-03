@@ -29,27 +29,13 @@ describe('normalize', function(){
     it('should move all toplevel keys to the message', function(){
       var date = opts.timestamp = new Date();
       opts.anonymousId = 'anonymous-id';
-      opts.category = 'category';
-      opts.name = 'name';
-      opts.event = 'event';
-      opts.userId = 'user-id';
-      opts.groupId = 'group-id';
       opts.integrations = { foo: 1 };
-      opts.properties = { prop: 1 };
-      opts.previousId = 'previous-id';
       opts.context = { context: 1 };
 
       var out = normalize(msg, list);
       assert.equal(out.timestamp.getTime(), date.getTime());
       assert.equal(out.anonymousId, 'anonymous-id');
-      assert.equal(out.category, 'category');
-      assert.equal(out.name, 'name');
-      assert.equal(out.event, 'event');
-      assert.equal(out.userId, 'user-id');
-      assert.equal(out.groupId, 'group-id');
       assert.deepEqual(out.integrations, { foo: 1 });
-      assert.deepEqual(out.properties, { prop: 1 });
-      assert.equal(out.previousId, 'previous-id');
       assert.deepEqual(out.context, { context: 1 });
     });
 

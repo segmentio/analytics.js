@@ -3648,10 +3648,10 @@ AdWords.prototype.track = function(track){
   var revenue = track.revenue() || 0;
   each(events, function(label){
     var props = track.properties();
+    delete props.revenue
     window.google_trackConversion({
       google_conversion_id: id,
-      // TODO
-      // google_custom_params: props,
+      google_custom_params: props,
       google_conversion_language: 'en',
       google_conversion_format: '3',
       google_conversion_color: 'ffffff',
@@ -9833,7 +9833,6 @@ GA.on('construct', function(integration){
   } else if (integration.options.enhancedEcommerce) {
     integration.viewedProduct = integration.viewedProductEnhanced;
     integration.clickedProduct = integration.clickedProductEnhanced;
-    integration.viewedProductDetails = integration.viewedProductDetailsEnhanced;
     integration.addedProduct = integration.addedProductEnhanced;
     integration.removedProduct = integration.removedProductEnhanced;
     integration.startedOrder = integration.startedOrderEnhanced;
@@ -10477,33 +10476,9 @@ GA.prototype.removedProductEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.viewedProductDetailsEnhanced = function(track){
+GA.prototype.viewedProductEnhanced = function(track){
   this.loadEnhancedEcommerce(track);
   enhancedEcommerceProductAction(track, 'detail');
-  this.pushEnhancedEcommerce(track);
-};
-
-/**
- * Viewed product - Enhanced Ecommerce
- *
- * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#measuring-impressions
- *
- * @param {Track} track
- */
-
-GA.prototype.viewedProductEnhanced = function(track){
-  var props = track.properties();
-
-  this.loadEnhancedEcommerce(track);
-  ga('ec:addImpression', {
-    id: track.id() || track.sku(),
-    name: track.name(),
-    category: track.category(),
-    brand: props.brand,
-    variant: props.variant,
-    list: props.list,
-    position: props.position,
-  });
   this.pushEnhancedEcommerce(track);
 };
 
@@ -13703,7 +13678,6 @@ Navilytics.prototype.track = function(track){
 
 }, {"analytics.js-integration":88,"global-queue":173}],
 62: [function(require, module, exports) {
-
 var integration = require('analytics.js-integration');
 var alias = require('alias');
 var Identify = require('facade').Identify;
@@ -13724,7 +13698,7 @@ var Nudgespot = module.exports = integration('Nudgespot')
   .assumesPageview()
   .option('apiKey', '')
   .global('nudgespot')
-  .tag('<script id="nudgespot" src="http://cdn.nudgespot.com/nudgespot.js">');
+  .tag('<script id="nudgespot" src="//cdn.nudgespot.com/nudgespot.js">');
 
 /**
  * Initialize Nudgespot.
@@ -13753,7 +13727,7 @@ Nudgespot.prototype.identify = function(identify){
   if (!identify.userId()) return this.debug('user id required');
   var traits = identify.traits({ createdAt: 'created' });
   traits = alias(traits, { created: 'created_at' });
-  window.nudgespot.identify(traits);
+  window.nudgespot.identify(identify.userId(), traits);
 };
 
 /**

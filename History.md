@@ -1,4 +1,11 @@
 
+2.6.13 / 2015-03-04
+===================
+
+  * normalize: remove trailing comma
+  * dist: rebuild to make tests pass
+  * normalize: remove redundant keys from toplevel
+
 2.6.12 / 2015-03-03
 ===================
 

@@ -12266,7 +12266,6 @@ var integration = require('analytics.js-integration');
 var push = require('global-queue')('_kmq');
 var Track = require('facade').Track;
 var alias = require('alias');
-var Batch = require('batch');
 var each = require('each');
 var is = require('is');
 
@@ -12283,8 +12282,7 @@ var KISSmetrics = module.exports = integration('KISSmetrics')
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true)
   .option('prefixProperties', true)
-  .tag('useless', '<script src="//i.kissmetrics.com/i.js">')
-  .tag('library', '<script src="//doug1izaerwt3.cloudfront.net/{{ apiKey }}.1.js">');
+  .tag('library', '<script src="//scripts.kissmetrics.com/{{ apiKey }}.2.js">');
 
 /**
  * Check if browser is mobile, for kissmetrics.
@@ -12312,10 +12310,7 @@ KISSmetrics.prototype.initialize = function(page){
   window._kmq = [];
   if (exports.isMobile) push('set', { 'Mobile Session': 'Yes' });
 
-  var batch = new Batch();
-  batch.push(function(done){ self.load('useless', done); }) // :)
-  batch.push(function(done){ self.load('library', done); })
-  batch.end(function(){
+  this.load('library', function(){
     self.trackPage(page);
     self.ready();
   });
@@ -12448,332 +12443,7 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"analytics.js-integration":88,"global-queue":173,"facade":147,"alias":177,"batch":188,"each":4,"is":91}],
-188: [function(require, module, exports) {
-/**
- * Module dependencies.
- */
-
-try {
-  var EventEmitter = require('events').EventEmitter;
-} catch (err) {
-  var Emitter = require('emitter');
-}
-
-/**
- * Noop.
- */
-
-function noop(){}
-
-/**
- * Expose `Batch`.
- */
-
-module.exports = Batch;
-
-/**
- * Create a new Batch.
- */
-
-function Batch() {
-  if (!(this instanceof Batch)) return new Batch;
-  this.fns = [];
-  this.concurrency(Infinity);
-  this.throws(true);
-  for (var i = 0, len = arguments.length; i < len; ++i) {
-    this.push(arguments[i]);
-  }
-}
-
-/**
- * Inherit from `EventEmitter.prototype`.
- */
-
-if (EventEmitter) {
-  Batch.prototype.__proto__ = EventEmitter.prototype;
-} else {
-  Emitter(Batch.prototype);
-}
-
-/**
- * Set concurrency to `n`.
- *
- * @param {Number} n
- * @return {Batch}
- * @api public
- */
-
-Batch.prototype.concurrency = function(n){
-  this.n = n;
-  return this;
-};
-
-/**
- * Queue a function.
- *
- * @param {Function} fn
- * @return {Batch}
- * @api public
- */
-
-Batch.prototype.push = function(fn){
-  this.fns.push(fn);
-  return this;
-};
-
-/**
- * Set wether Batch will or will not throw up.
- *
- * @param  {Boolean} throws
- * @return {Batch}
- * @api public
- */
-Batch.prototype.throws = function(throws) {
-  this.e = !!throws;
-  return this;
-};
-
-/**
- * Execute all queued functions in parallel,
- * executing `cb(err, results)`.
- *
- * @param {Function} cb
- * @return {Batch}
- * @api public
- */
-
-Batch.prototype.end = function(cb){
-  var self = this
-    , total = this.fns.length
-    , pending = total
-    , results = []
-    , errors = []
-    , cb = cb || noop
-    , fns = this.fns
-    , max = this.n
-    , throws = this.e
-    , index = 0
-    , done;
-
-  // empty
-  if (!fns.length) return cb(null, results);
-
-  // process
-  function next() {
-    var i = index++;
-    var fn = fns[i];
-    if (!fn) return;
-    var start = new Date;
-
-    try {
-      fn(callback);
-    } catch (err) {
-      callback(err);
-    }
-
-    function callback(err, res){
-      if (done) return;
-      if (err && throws) return done = true, cb(err);
-      var complete = total - pending + 1;
-      var end = new Date;
-
-      results[i] = res;
-      errors[i] = err;
-
-      self.emit('progress', {
-        index: i,
-        value: res,
-        error: err,
-        pending: pending,
-        total: total,
-        complete: complete,
-        percent: complete / total * 100 | 0,
-        start: start,
-        end: end,
-        duration: end - start
-      });
-
-      if (--pending) next()
-      else if(!throws) cb(errors, results);
-      else cb(null, results);
-    }
-  }
-
-  // concurrency
-  for (var i = 0; i < fns.length; i++) {
-    if (i == max) break;
-    next();
-  }
-
-  return this;
-};
-
-}, {"emitter":189}],
-189: [function(require, module, exports) {
-
-/**
- * Expose `Emitter`.
- */
-
-module.exports = Emitter;
-
-/**
- * Initialize a new `Emitter`.
- *
- * @api public
- */
-
-function Emitter(obj) {
-  if (obj) return mixin(obj);
-};
-
-/**
- * Mixin the emitter properties.
- *
- * @param {Object} obj
- * @return {Object}
- * @api private
- */
-
-function mixin(obj) {
-  for (var key in Emitter.prototype) {
-    obj[key] = Emitter.prototype[key];
-  }
-  return obj;
-}
-
-/**
- * Listen on the given `event` with `fn`.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.on =
-Emitter.prototype.addEventListener = function(event, fn){
-  this._callbacks = this._callbacks || {};
-  (this._callbacks['$' + event] = this._callbacks['$' + event] || [])
-    .push(fn);
-  return this;
-};
-
-/**
- * Adds an `event` listener that will be invoked a single
- * time then automatically removed.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.once = function(event, fn){
-  function on() {
-    this.off(event, on);
-    fn.apply(this, arguments);
-  }
-
-  on.fn = fn;
-  this.on(event, on);
-  return this;
-};
-
-/**
- * Remove the given callback for `event` or all
- * registered callbacks.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.off =
-Emitter.prototype.removeListener =
-Emitter.prototype.removeAllListeners =
-Emitter.prototype.removeEventListener = function(event, fn){
-  this._callbacks = this._callbacks || {};
-
-  // all
-  if (0 == arguments.length) {
-    this._callbacks = {};
-    return this;
-  }
-
-  // specific event
-  var callbacks = this._callbacks['$' + event];
-  if (!callbacks) return this;
-
-  // remove all handlers
-  if (1 == arguments.length) {
-    delete this._callbacks['$' + event];
-    return this;
-  }
-
-  // remove specific handler
-  var cb;
-  for (var i = 0; i < callbacks.length; i++) {
-    cb = callbacks[i];
-    if (cb === fn || cb.fn === fn) {
-      callbacks.splice(i, 1);
-      break;
-    }
-  }
-  return this;
-};
-
-/**
- * Emit `event` with the given args.
- *
- * @param {String} event
- * @param {Mixed} ...
- * @return {Emitter}
- */
-
-Emitter.prototype.emit = function(event){
-  this._callbacks = this._callbacks || {};
-  var args = [].slice.call(arguments, 1)
-    , callbacks = this._callbacks['$' + event];
-
-  if (callbacks) {
-    callbacks = callbacks.slice(0);
-    for (var i = 0, len = callbacks.length; i < len; ++i) {
-      callbacks[i].apply(this, args);
-    }
-  }
-
-  return this;
-};
-
-/**
- * Return array of callbacks for `event`.
- *
- * @param {String} event
- * @return {Array}
- * @api public
- */
-
-Emitter.prototype.listeners = function(event){
-  this._callbacks = this._callbacks || {};
-  return this._callbacks['$' + event] || [];
-};
-
-/**
- * Check if this emitter has `event` handlers.
- *
- * @param {String} event
- * @return {Boolean}
- * @api public
- */
-
-Emitter.prototype.hasListeners = function(event){
-  return !! this.listeners(event).length;
-};
-
-}, {}],
+}, {"analytics.js-integration":88,"global-queue":173,"facade":147,"alias":177,"each":4,"is":91}],
 53: [function(require, module, exports) {
 
 /**
@@ -13347,8 +13017,8 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":177,"clone":95,"convert-dates":178,"analytics.js-integration":88,"is":91,"to-iso-string":176,"indexof":116,"obj-case":92,"some":190}],
-190: [function(require, module, exports) {
+}, {"alias":177,"clone":95,"convert-dates":178,"analytics.js-integration":88,"is":91,"to-iso-string":176,"indexof":116,"obj-case":92,"some":188}],
+188: [function(require, module, exports) {
 
 /**
  * some
@@ -14629,8 +14299,8 @@ Quantcast.prototype._labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"global-queue":173,"analytics.js-integration":88,"use-https":90,"is":91,"reduce":191}],
-191: [function(require, module, exports) {
+}, {"global-queue":173,"analytics.js-integration":88,"use-https":90,"is":91,"reduce":189}],
+189: [function(require, module, exports) {
 
 /**
  * Reduce `arr` with `fn`.
@@ -15184,8 +14854,8 @@ function scheme(){
 
 function noop(){}
 
-}, {"analytics.js-integration":88,"store":192,"protocol":193,"utm-params":138,"ad-params":194,"send-json":195,"cookie":196,"clone":95,"uuid":197,"top-domain":139,"extend":145,"segmentio/json@1.0.0":179}],
-192: [function(require, module, exports) {
+}, {"analytics.js-integration":88,"store":190,"protocol":191,"utm-params":138,"ad-params":192,"send-json":193,"cookie":194,"clone":95,"uuid":195,"top-domain":139,"extend":145,"segmentio/json@1.0.0":179}],
+190: [function(require, module, exports) {
 
 /**
  * dependencies.
@@ -15280,8 +14950,8 @@ function all(){
   return ret;
 }
 
-}, {"unserialize":198,"each":112}],
-198: [function(require, module, exports) {
+}, {"unserialize":196,"each":112}],
+196: [function(require, module, exports) {
 
 /**
  * Unserialize the given "stringified" javascript.
@@ -15299,7 +14969,7 @@ module.exports = function(val){
 };
 
 }, {}],
-193: [function(require, module, exports) {
+191: [function(require, module, exports) {
 
 /**
  * Convenience alias
@@ -15382,7 +15052,7 @@ function set (protocol) {
 }
 
 }, {}],
-194: [function(require, module, exports) {
+192: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15426,7 +15096,7 @@ function ads(query){
   }
 }
 }, {"querystring":140}],
-195: [function(require, module, exports) {
+193: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15525,8 +15195,8 @@ function base64(url, obj, _, fn){
   });
 }
 
-}, {"base64-encode":199,"has-cors":200,"jsonp":201,"json":179}],
-199: [function(require, module, exports) {
+}, {"base64-encode":197,"has-cors":198,"jsonp":199,"json":179}],
+197: [function(require, module, exports) {
 var utf8Encode = require('utf8-encode');
 var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
 
@@ -15563,8 +15233,8 @@ function encode(input) {
 
     return output;
 }
-}, {"utf8-encode":202}],
-202: [function(require, module, exports) {
+}, {"utf8-encode":200}],
+200: [function(require, module, exports) {
 module.exports = encode;
 
 function encode(string) {
@@ -15593,7 +15263,7 @@ function encode(string) {
     return utftext;
 }
 }, {}],
-200: [function(require, module, exports) {
+198: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -15613,7 +15283,7 @@ try {
 }
 
 }, {}],
-201: [function(require, module, exports) {
+199: [function(require, module, exports) {
 /**
  * Module dependencies
  */
@@ -15699,16 +15369,16 @@ function jsonp(url, opts, fn){
   target.parentNode.insertBefore(script, target);
 }
 
-}, {"debug":203}],
-203: [function(require, module, exports) {
+}, {"debug":201}],
+201: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":204,"./debug":205}],
-204: [function(require, module, exports) {
+}, {"./lib/debug":202,"./debug":203}],
+202: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15858,7 +15528,7 @@ function coerce(val) {
 }
 
 }, {}],
-205: [function(require, module, exports) {
+203: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -15998,7 +15668,7 @@ try {
 } catch(e){}
 
 }, {}],
-196: [function(require, module, exports) {
+194: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16122,8 +15792,8 @@ function decode(value) {
   }
 }
 
-}, {"debug":203}],
-197: [function(require, module, exports) {
+}, {"debug":201}],
+195: [function(require, module, exports) {
 
 /**
  * Taken straight from jed's gist: https://gist.github.com/982883
@@ -16856,8 +16526,8 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"analytics.js-integration":88,"global-queue":173,"convert-dates":178,"to-unix-timestamp":206,"alias":177,"clone":95}],
-206: [function(require, module, exports) {
+}, {"analytics.js-integration":88,"global-queue":173,"convert-dates":178,"to-unix-timestamp":204,"alias":177,"clone":95}],
+204: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -16982,7 +16652,7 @@ Vero.prototype.alias = function(alias){
   }
 };
 
-}, {"analytics.js-integration":88,"global-queue":173,"component/cookie":196,"obj-case":92}],
+}, {"analytics.js-integration":88,"global-queue":173,"component/cookie":194,"obj-case":92}],
 84: [function(require, module, exports) {
 
 /**
@@ -17965,8 +17635,8 @@ function canonicalUrl (search) {
   return -1 == i ? url : url.slice(0, i);
 }
 
-}, {"after":111,"bind":207,"callback":94,"canonical":182,"clone":95,"./cookie":208,"debug":203,"defaults":97,"each":4,"emitter":110,"./group":209,"is":91,"is-email":169,"is-meta":210,"new-date":161,"event":211,"prevent":212,"querystring":213,"./normalize":214,"object":181,"./store":215,"url":184,"./user":216,"facade":147}],
-207: [function(require, module, exports) {
+}, {"after":111,"bind":205,"callback":94,"canonical":182,"clone":95,"./cookie":206,"debug":201,"defaults":97,"each":4,"emitter":110,"./group":207,"is":91,"is-email":169,"is-meta":208,"new-date":161,"event":209,"prevent":210,"querystring":211,"./normalize":212,"object":181,"./store":213,"url":184,"./user":214,"facade":147}],
+205: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -18013,7 +17683,7 @@ function bindMethods (obj, methods) {
   return obj;
 }
 }, {"bind":101,"bind-all":102}],
-208: [function(require, module, exports) {
+206: [function(require, module, exports) {
 
 var debug = require('debug')('analytics.js:cookie');
 var bind = require('bind');
@@ -18141,8 +17811,8 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"debug":203,"bind":207,"cookie":196,"clone":95,"defaults":97,"json":179,"top-domain":139}],
-209: [function(require, module, exports) {
+}, {"debug":201,"bind":205,"cookie":194,"clone":95,"defaults":97,"json":179,"top-domain":139}],
+207: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:group');
 var Entity = require('./entity');
@@ -18198,8 +17868,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":203,"./entity":217,"inherit":218,"bind":207}],
-217: [function(require, module, exports) {
+}, {"debug":201,"./entity":215,"inherit":216,"bind":205}],
+215: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var defaults = require('defaults');
@@ -18419,8 +18089,8 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"isodate-traverse":156,"defaults":97,"./cookie":208,"./store":215,"extend":145,"clone":95}],
-215: [function(require, module, exports) {
+}, {"isodate-traverse":156,"defaults":97,"./cookie":206,"./store":213,"extend":145,"clone":95}],
+213: [function(require, module, exports) {
 
 var bind = require('bind');
 var defaults = require('defaults');
@@ -18507,8 +18177,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":207,"defaults":97,"store.js":219}],
-219: [function(require, module, exports) {
+}, {"bind":205,"defaults":97,"store.js":217}],
+217: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -18661,7 +18331,7 @@ store.enabled = !store.disabled
 
 module.exports = store;
 }, {"json":179}],
-218: [function(require, module, exports) {
+216: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -18670,7 +18340,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-210: [function(require, module, exports) {
+208: [function(require, module, exports) {
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
 
@@ -18686,7 +18356,7 @@ module.exports = function isMeta (e) {
     return false;
 };
 }, {}],
-211: [function(require, module, exports) {
+209: [function(require, module, exports) {
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -18729,7 +18399,7 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 }, {}],
-212: [function(require, module, exports) {
+210: [function(require, module, exports) {
 
 /**
  * prevent default on the given `e`.
@@ -18752,7 +18422,7 @@ module.exports = function(e){
 };
 
 }, {}],
-213: [function(require, module, exports) {
+211: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -18828,7 +18498,7 @@ exports.stringify = function(obj){
 };
 
 }, {"trim":141,"type":7}],
-214: [function(require, module, exports) {
+212: [function(require, module, exports) {
 
 /**
  * Module Dependencies.
@@ -18861,7 +18531,7 @@ var toplevel = [
   'integrations',
   'anonymousId',
   'timestamp',
-  'context',
+  'context'
 ];
 
 /**
@@ -18921,8 +18591,8 @@ function normalize(msg, list){
       || ~indexof(lower, name.toLowerCase()));
   }
 }
-}, {"debug":203,"component/indexof":116,"defaults":97,"component/map":220,"each":4,"is":91}],
-220: [function(require, module, exports) {
+}, {"debug":201,"component/indexof":116,"defaults":97,"component/map":218,"each":4,"is":91}],
+218: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -18948,7 +18618,7 @@ module.exports = function(arr, fn){
   return ret;
 };
 }, {"to-function":185}],
-216: [function(require, module, exports) {
+214: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:user');
 var Entity = require('./entity');
@@ -19117,7 +18787,7 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":203,"./entity":217,"inherit":218,"bind":207,"./cookie":208,"uuid":197,"cookie":196}],
+}, {"debug":201,"./entity":215,"inherit":216,"bind":205,"./cookie":206,"uuid":195,"cookie":194}],
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",

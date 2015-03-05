@@ -1,4 +1,9 @@
 
+2.7.0 / 2015-03-05
+==================
+
+  * Attach page metadata to all calls as `context.page`
+
 2.6.13 / 2015-03-04
 ===================
 

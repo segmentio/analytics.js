@@ -1,4 +1,16 @@
 
+2.8.0 / 2015-03-07
+==================
+
+  * group: fix typo
+  * entity: add debug warning for memory store
+  * test: add fallback to memory tests
+  * entity: fallback to memory
+  * add memory store
+  * entity: fallback to localstorage when cookies are disabled
+  * tests: add localstorage fallback tests
+  * dist: rebuild
+  
 2.7.1 / 2015-03-05
 ==================
 

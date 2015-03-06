@@ -8,6 +8,7 @@ describe('group', function () {
   var equal = require('equals');
   var json = require('json');
   var sinon = require('sinon');
+  var memory = Analytics.memory;
   var store = Analytics.store;
   var group = analytics.group();
   var Group = group.Group;
@@ -52,7 +53,7 @@ describe('group', function () {
         cookie.get.restore();
       });
 
-      it('should get an id from the store', function () {
+      it('should get an id from memory', function () {
         store.set(cookieKey, 'id');
         assert('id' == group.id());
       });
@@ -66,6 +67,45 @@ describe('group', function () {
       it('should set an id to the store', function () {
         group.id('id');
         assert('id' === store.get(cookieKey));
+      });
+
+      it('should set the id when not persisting', function () {
+        group.options({ persist: false });
+        group.id('id');
+        assert('id' == group._id);
+      });
+
+      it('should be null by default', function () {
+        assert(null === group.id());
+      });
+    });
+
+    describe('when cookies and localStorage are disabled', function(){
+      beforeEach(function(){
+        sinon.stub(cookie, 'get', function(){});
+        store.enabled = false;
+        group = new Group;
+      })
+
+      afterEach(function(){
+        store.enabled = true;
+        cookie.get.restore();
+      });
+
+      it('should get an id from the store', function () {
+        memory.set(cookieKey, 'id');
+        assert('id' == group.id());
+      });
+
+      it('should get an id when not persisting', function () {
+        group.options({ persist: false });
+        group._id = 'id';
+        assert('id' == group.id());
+      });
+
+      it('should set an id to the store', function () {
+        group.id('id');
+        assert('id' === memory.get(cookieKey));
       });
 
       it('should set the id when not persisting', function () {

@@ -8,6 +8,7 @@ describe('user', function () {
   var equal = require('equals');
   var json = require('json');
   var store = Analytics.store;
+  var memory = Analytics.memory;
   var user = analytics.user();
   var rawCookie = require('cookie');
   var sinon = require('sinon');
@@ -128,6 +129,69 @@ describe('user', function () {
       });
     });
 
+    describe('when cookies and localStorage are disabled', function(){
+      beforeEach(function(){
+        sinon.stub(cookie, 'get', function(){});
+        store.enabled = false;
+        user = new User;
+      });
+
+      afterEach(function(){
+        store.enabled = true;
+        cookie.get.restore();
+      })
+
+      it('should get an id from the memory', function () {
+        memory.set(cookieKey, 'id');
+        assert('id' == user.id());
+      });
+
+      it('should get an id when not persisting', function () {
+        user.options({ persist: false });
+        user._id = 'id';
+        assert('id' == user.id());
+      });
+
+      it('should set an id to the memory', function () {
+        user.id('id');
+        assert('id' === memory.get(cookieKey));
+      });
+
+      it('should set the id when not persisting', function () {
+        user.options({ persist: false });
+        user.id('id');
+        assert('id' == user._id);
+      });
+
+      it('should be null by default', function () {
+        assert(null === user.id());
+      });
+
+      it('should not reset anonymousId if the user didnt have previous id', function(){
+        var prev = user.anonymousId();
+        user.id('foo');
+        user.id('foo');
+        user.id('foo');
+        assert.equal(prev, user.anonymousId());
+      });
+
+      it('should reset anonymousId if the user id changed', function(){
+        var prev = user.anonymousId();
+        user.id('foo');
+        user.id('baz');
+        assert.notEqual(prev, user.anonymousId());
+        assert.equal(36, user.anonymousId().length);
+      });
+
+      it('should not reset anonymousId if the user id changed to null', function(){
+        var prev = user.anonymousId();
+        user.id('foo');
+        user.id(null);
+        assert.equal(prev, user.anonymousId());
+        assert.equal(36, user.anonymousId().length);
+      });
+    });
+
     describe('when cookies are enabled', function(){
       it('should get an id from the cookie', function () {
         cookie.set(cookieKey, 'id');
@@ -199,6 +263,34 @@ describe('user', function () {
       it('should set an id to the store', function () {
         user.anonymousId('anon-id');
         assert('anon-id' === store.get('ajs_anonymous_id'));
+      });
+
+      it('should return anonymousId using the store', function(){
+        user.storage = function(){ return noop; };
+        assert(null == user.anonymousId());
+      });
+    });
+
+    describe('when cookies and localStorage are disabled', function(){
+      beforeEach(function(){
+        sinon.stub(cookie, 'get', function(){});
+        store.enabled = false;
+        user = new User;
+      });
+
+      afterEach(function(){
+        store.enabled = true;
+        cookie.get.restore();
+      });
+
+      it('should get an id from the memory', function () {
+        memory.set('ajs_anonymous_id', 'anon-id');
+        assert('anon-id' == user.anonymousId());
+      });
+
+      it('should set an id to the memory', function () {
+        user.anonymousId('anon-id');
+        assert('anon-id' === memory.get('ajs_anonymous_id'));
       });
 
       it('should return anonymousId using the store', function(){

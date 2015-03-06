@@ -17379,8 +17379,8 @@ Analytics.prototype.page = function (category, name, properties, options, fn) {
   if (is.string(category) && !is.string(name)) name = category, category = null;
 
   properties = clone(properties) || {};
-  if (category) properties.name = name;
-  if (name) properties.category = category;
+  if (name) properties.name = name;
+  if (category) properties.category = category;
 
   // Ensure properties has baseline spec properties.
   // TODO: Eventually move these entirely to `options.context.page`
@@ -17873,26 +17873,39 @@ module.exports = Entity;
  */
 
 function Entity(options){
-  this.protocol = window.location.protocol;
   this.options(options);
+  this.initialize();
 }
 
 /**
+ * Initialize picks the storage.
+ *
+ * Checks to see if cookies can be set
+ * otherwise fallsback to localStorage.
+ */
+
+Entity.prototype.initialize = function(){
+  cookie.set('ajs:cookies', true);
+
+  // cookies are enabled.
+  if (cookie.get('ajs:cookies')) {
+    cookie.remove('ajs:cookies');
+    this._storage = cookie;
+    return;
+  }
+
+  // fallback to localstorage.
+  this._storage = store;
+};
+
+/**
  * Get the storage.
- *
- * When .protocol is `file:` or `chrome-extension:`
- * the method will return the localstorage (store)
- * otherwise it will return the cookie.
- *
- * @return {Object}
  */
 
 Entity.prototype.storage = function(){
-  return 'file:' == this.protocol
-    || 'chrome-extension:' == this.protocol
-    ? store
-    : cookie;
+  return this._storage;
 };
+
 
 /**
  * Get or set storage `options`.
@@ -17932,9 +17945,8 @@ Entity.prototype.id = function (id) {
  */
 
 Entity.prototype._getId = function () {
-  var storage = this.storage();
   var ret = this._options.persist
-    ? storage.get(this._options.cookie.key)
+    ? this.storage().get(this._options.cookie.key)
     : this._id;
   return ret === undefined ? null : ret;
 };
@@ -17947,9 +17959,8 @@ Entity.prototype._getId = function () {
  */
 
 Entity.prototype._setId = function (id) {
-  var storage = this.storage();
   if (this._options.persist) {
-    storage.set(this._options.cookie.key, id);
+    this.storage().set(this._options.cookie.key, id);
   } else {
     this._id = id;
   }

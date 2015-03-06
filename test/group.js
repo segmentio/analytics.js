@@ -7,6 +7,7 @@ describe('group', function () {
   var cookie = Analytics.cookie;
   var equal = require('equals');
   var json = require('json');
+  var sinon = require('sinon');
   var store = Analytics.store;
   var group = analytics.group();
   var Group = group.Group;
@@ -14,8 +15,8 @@ describe('group', function () {
   var cookieKey = group._options.cookie.key;
   var localStorageKey = group._options.localStorage.key;
 
-  before(function () {
-    assert.equal(location.protocol, group.protocol);
+  beforeEach(function () {
+    group = new Group
     group.reset();
   });
 
@@ -41,9 +42,14 @@ describe('group', function () {
   })
 
   describe('#id', function () {
-    describe('when file:', function(){
+    describe('when cookies are disabled', function(){
       beforeEach(function(){
-        group.protocol = 'file:';
+        sinon.stub(cookie, 'get', function(){});
+        group = new Group;
+      });
+
+      afterEach(function(){
+        cookie.get.restore();
       });
 
       it('should get an id from the store', function () {
@@ -73,41 +79,10 @@ describe('group', function () {
       });
     });
 
-    describe('when chrome-extension:', function(){
-      beforeEach(function(){
-        group.protocol = 'chrome-extension:';
-      });
-
-      it('should get an id from the store', function () {
-        store.set(cookieKey, 'id');
-        assert('id' == group.id());
-      });
-
-      it('should get an id when not persisting', function () {
-        group.options({ persist: false });
-        group._id = 'id';
-        assert('id' == group.id());
-      });
-
-      it('should set an id to the store', function () {
-        group.id('id');
-        assert('id' === store.get(cookieKey));
-      });
-
-      it('should set the id when not persisting', function () {
-        group.options({ persist: false });
-        group.id('id');
-        assert('id' == group._id);
-      });
-
-      it('should be null by default', function () {
-        assert(null === group.id());
-      });
-    });
-
-    describe('http:', function(){
+    describe('when cookies are enabled', function(){
       it('should get an id from the cookie', function () {
         cookie.set(cookieKey, 'id');
+
         assert('id' == group.id());
       });
 

@@ -10,13 +10,14 @@ describe('user', function () {
   var store = Analytics.store;
   var user = analytics.user();
   var rawCookie = require('cookie');
+  var sinon = require('sinon');
   var User = user.User;
 
   var cookieKey = user._options.cookie.key;
   var localStorageKey = user._options.localStorage.key;
 
-  before(function () {
-    assert.equal(location.protocol, user.protocol);
+  beforeEach(function () {
+    user = new User
     user.reset();
   });
 
@@ -28,7 +29,6 @@ describe('user', function () {
     store.remove('_sio');
     cookie.remove('_sio');
     rawCookie('_sio', null);
-    user.protocol = location.protocol;
   });
 
   describe('()', function(){
@@ -67,10 +67,15 @@ describe('user', function () {
   })
 
   describe('#id', function () {
-    describe('when file:', function(){
+    describe('when cookies are disabled', function(){
       beforeEach(function(){
-        user.protocol = 'file:';
+        sinon.stub(cookie, 'get', function(){});
+        user = new User;
       });
+
+      afterEach(function(){
+        cookie.get.restore();
+      })
 
       it('should get an id from the store', function () {
         store.set(cookieKey, 'id');
@@ -123,55 +128,7 @@ describe('user', function () {
       });
     });
 
-    describe('when chrome-extension:', function(){
-      beforeEach(function(){
-        user.protocol = 'chrome-extension:';
-      });
-
-      it('should get an id from the store', function () {
-        store.set(cookieKey, 'id');
-        assert('id' == user.id());
-      });
-
-      it('should get an id when not persisting', function () {
-        user.options({ persist: false });
-        user._id = 'id';
-        assert('id' == user.id());
-      });
-
-      it('should set an id to the store', function () {
-        user.id('id');
-        assert('id' === store.get(cookieKey));
-      });
-
-      it('should set the id when not persisting', function () {
-        user.options({ persist: false });
-        user.id('id');
-        assert('id' == user._id);
-      });
-
-      it('should be null by default', function () {
-        assert(null === user.id());
-      });
-
-      it('should not reset anonymousId if the user didnt have previous id', function(){
-        var prev = user.anonymousId();
-        user.id('foo');
-        user.id('foo');
-        user.id('foo');
-        assert.equal(prev, user.anonymousId());
-      });
-
-      it('should reset anonymousId if the user id changed', function(){
-        var prev = user.anonymousId();
-        user.id('foo');
-        user.id('baz');
-        assert.notEqual(prev, user.anonymousId());
-        assert.equal(36, user.anonymousId().length);
-      });
-    });
-
-    describe('when http:', function(){
+    describe('when cookies are enabled', function(){
       it('should get an id from the cookie', function () {
         cookie.set(cookieKey, 'id');
         assert('id' == user.id());
@@ -224,9 +181,14 @@ describe('user', function () {
       user.storage = storage;
     });
 
-    describe('when file:', function(){
+    describe('when cookies are disabled', function(){
       beforeEach(function(){
-        user.protocol = 'file:';
+        sinon.stub(cookie, 'get', function(){});
+        user = new User;
+      });
+
+      afterEach(function(){
+        cookie.get.restore();
       });
 
       it('should get an id from the store', function () {
@@ -245,28 +207,7 @@ describe('user', function () {
       });
     });
 
-    describe('when chrome-extension:', function(){
-      beforeEach(function(){
-        user.protocol = 'chrome-extension:';
-      });
-
-      it('should get an id from the store', function () {
-        store.set('ajs_anonymous_id', 'anon-id');
-        assert('anon-id' == user.anonymousId());
-      });
-
-      it('should set an id to the store', function () {
-        user.anonymousId('anon-id');
-        assert('anon-id' === store.get('ajs_anonymous_id'));
-      });
-
-      it('should return anonymousId using the store', function(){
-        user.storage = function(){ return noop; };
-        assert(null == user.anonymousId());
-      });
-    });
-
-    describe('when http:', function(){
+    describe('when are enabled', function(){
       it('should get an id from the cookie', function () {
         cookie.set('ajs_anonymous_id', 'anon-id');
         assert('anon-id' == user.anonymousId());

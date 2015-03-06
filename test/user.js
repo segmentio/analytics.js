@@ -207,7 +207,7 @@ describe('user', function () {
       });
     });
 
-    describe('when are enabled', function(){
+    describe('when cookies are enabled', function(){
       it('should get an id from the cookie', function () {
         cookie.set('ajs_anonymous_id', 'anon-id');
         assert('anon-id' == user.anonymousId());

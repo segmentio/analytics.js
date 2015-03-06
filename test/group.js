@@ -53,7 +53,7 @@ describe('group', function () {
         cookie.get.restore();
       });
 
-      it('should get an id from memory', function () {
+      it('should get an id from store', function () {
         store.set(cookieKey, 'id');
         assert('id' == group.id());
       });

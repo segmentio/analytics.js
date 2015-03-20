@@ -84,3 +84,11 @@ node_modules: package.json
 
 $(BUILD): $(TESTS) analytics.js
 	@$(DUO) --development test/tests.js > $(BUILD)
+
+#
+# Phony build target
+#
+
+build: build.js
+
+.PHONY: build

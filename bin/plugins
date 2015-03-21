@@ -1,0 +1,24 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var fs = require('fs');
+var path = require('path');
+var write = fs.writeFileSync;
+var integrations = require('../integrations.json');
+
+write(__dirname + '/../plugins.js', [
+  "",
+  "/**",
+  " * DON'T EDIT THIS FILE. It's automatically generated!",
+  " */",
+  "",
+  "module.exports = [",
+    integrations.map(function(slug){ return "require('analytics.js-integrations:/lib/" + slug + "')"; })
+      .join(',\n')
+      .replace(/^/gm, '  '),
+  "];",
+  ""
+].join('\n'));

@@ -17,6 +17,11 @@ First read the [Analytics.js QuickStart](https://segment.io/docs/tutorials/quick
 
 Looking to add support for a new integration? Take a look at the [analytics.js-integrations](https://github.com/segmentio/analytics.js-integrations) repository, where all of the integration-specific code is stored. We love pull requests!
 
+## Custom builds
+
+It is possible to build your own version of `analytics.js` file with only integrations you use in your project.
+To do so, rename `integrations.json.skel` to `integrations.json` and update it with [tracking services](https://github.com/segmentio/analytics.js-integrations/tree/master/lib) you plan to utilize.
+Run `make` command to generate new `analytics.js` file.
 
 ## Development
 

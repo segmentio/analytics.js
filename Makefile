@@ -64,10 +64,26 @@ test-browser: $(BUILD)
 .PHONY: test-sauce
 
 #
+# Target for `plugins.js` file
+#
+
+plugins.js: integrations.json
+	@node bin/plugins
+
+#
+# Target for `integrations.json` file
+#
+
+integrations.json: integrations.json.skel
+ifeq ($(wildcard integrations.json),)
+	@cp integrations.json.skel integrations.json
+endif
+
+#
 # Target for `analytics.js` file.
 #
 
-analytics.js: node_modules $(SRC)
+analytics.js: node_modules $(SRC) plugins.js
 	@$(DUO) --standalone analytics lib/index.js > analytics.js
 	@$(MINIFY) analytics.js --output analytics.min.js
 

@@ -1,7 +1,7 @@
 
 describe('analytics', function () {
 
-  var Integrations = require('analytics.js-integrations');
+  var Integrations = require('../integrations.js');
   var createIntegration = require('analytics.js-integration');
   var analytics = window.analytics;
   var assert = require('assert');

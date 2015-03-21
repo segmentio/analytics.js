@@ -7,6 +7,76 @@ The hassle-free way to integrate analytics into any web application.
 
 Analytics.js is the open-source library that powers [Segment](https://segment.io). Segment is a hosted solution that gives you an interface by which to edit all of your settings, instead of having to write any code. It also extends the same functionality of Analytics.js to your [mobile apps](https://segment.io/libraries) and your [servers](https://segment.io/libraries).
 
+## Quick Start
+
+Change (where it says `CHANGE` in comments) and put this code on your pages:
+
+```js
+(function () {
+    var analytics = window.analytics = window.analytics || [];
+
+    if (analytics.invoked) {
+        if (window.console && console.error) {
+            console.error('Segment snippet included twice.');
+        }
+        return;
+    }
+    analytics.invoked = true;
+
+    analytics.methods = [
+        'trackSubmit',
+        'trackClick',
+        'trackLink',
+        'trackForm',
+        'pageview',
+        'identify',
+        'initialize',
+        'group',
+        'track',
+        'ready',
+        'alias',
+        'page',
+        'once',
+        'off',
+        'on'
+    ];
+    analytics.factory = function (method) {
+        return function () {
+            var args = Array.prototype.slice.call(arguments);
+            args.unshift(method);
+            analytics.push(args);
+            return analytics;
+        };
+    };
+
+    if (!(typeof analytics.init === 'function')) {
+        for (var i = 0; i < analytics.methods.length; i++) {
+            var key = analytics.methods[i];
+            analytics[key] = analytics.factory(key);
+        }
+    }
+
+    analytics.load = function (path) {
+
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.src = path;
+
+        var first = document.getElementsByTagName('script')[0];
+        first.parentNode.insertBefore(script, first);
+    };
+
+    analytics.SNIPPET_VERSION = '3.0.1';
+    analytics.load('http://example.net/analytics.js'); // CHANGE this URL
+    analytics.initialize({ // CHANGE this configuration
+        'Google Analytics': {
+            trackingId: 'UA-XXXX-1'
+        }
+    });
+    analytics.page();
+})();
+```
 
 ## Documentation
 

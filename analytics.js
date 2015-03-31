@@ -453,6 +453,7 @@ AdRoll.prototype.track = function(track){
   if (orderId) data.order_id = orderId;
   if (productId) data.product_id = productId;
   if (sku) data.sku = sku;
+  if (total) data.adroll_conversion_value_in_dollars = total;
   del(customProps, "revenue");
   del(customProps, "total");
   del(customProps, "orderId");
@@ -461,7 +462,6 @@ AdRoll.prototype.track = function(track){
   if (!is.empty(customProps)) data.adroll_custom_data = customProps;
 
   each(events, function(event){
-    data.adroll_conversion_value_in_dollars = total;
     // the adroll interface only allows for
     // segment names which are snake cased.
     data.adroll_segments = snake(event);
@@ -3734,7 +3734,7 @@ var umd = 'function' == typeof define && define.amd;
  * Source.
  */
 
-var src = '//d24n15hnbwhuhn.cloudfront.net/libs/amplitude-2.0.3-min.js';
+var src = '//d24n15hnbwhuhn.cloudfront.net/libs/amplitude-2.1.0-min.js';
 
 /**
  * Expose `Amplitude` integration.
@@ -3746,6 +3746,7 @@ var Amplitude = module.exports = integration('Amplitude')
   .option('trackAllPages', false)
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true)
+  .option('trackUtmProperties', true)
   .tag('<script src="' + src + '">');
 
 /**
@@ -3758,11 +3759,13 @@ var Amplitude = module.exports = integration('Amplitude')
 
 Amplitude.prototype.initialize = function(page){
   // jscs:disable
-  (function(h,a){var f=h.amplitude||{};f._q=[];function e(i){f[i]=function(){f._q.push([i].concat(Array.prototype.slice.call(arguments,0)))}}var c=["init","logEvent","setUserId","setUserProperties","setVersionName","setDomain","setDeviceId","setGlobalUserProperties"];for(var d=0;d<c.length;d++){e(c[d])}h.amplitude=f})(window,document);
+  (function(e,t){var r=e.amplitude||{};r._q=[];function a(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)))}}var i=["init","logEvent","logRevenue","setUserId","setUserProperties","setOptOut","setVersionName","setDomain","setDeviceId","setGlobalUserProperties"];for(var o=0;o<i.length;o++){a(i[o])}e.amplitude=r})(window,document);
   // jscs:enable
+
   this.setDomain(window.location.href);
-  window.amplitude.init(this.options.apiKey);
-  this.setUserProperties(window.location.search);
+  window.amplitude.init(this.options.apiKey, null, {
+    includeUtm: this.options.trackUtmProperties
+  });
 
   var self = this;
   if (umd) {
@@ -3838,7 +3841,15 @@ Amplitude.prototype.identify = function(identify){
 Amplitude.prototype.track = function(track){
   var props = track.properties();
   var event = track.event();
+  var revenue = track.revenue();
+
+  // track the event
   window.amplitude.logEvent(event, props);
+
+  // also track revenue
+  if (revenue) {
+    window.amplitude.logRevenue(revenue, props.quantity, props.productId);
+  }
 };
 
 /**
@@ -3860,21 +3871,6 @@ Amplitude.prototype.setDomain = function(href){
 
 Amplitude.prototype.setDeviceId = function(deviceId){
   if (deviceId) window.amplitude.setDeviceId(deviceId);
-};
-
-/**
- * Set campaign params as global user properties
- *
- * @param {String} query
- */
-
-Amplitude.prototype.setUserProperties = function(query){
-  var campaign = utm(query);
-  // switch name to campaign so it doesn't conflict with the user's name
-  var campaignName = campaign.name;
-  campaign.campaign = campaignName;
-  delete campaign.name;
-  if (campaign) window.amplitude.setUserProperties(campaign);
 };
 
 }, {"analytics.js-integration":88,"utm-params":138,"top-domain":139}],
@@ -3930,6 +3926,8 @@ var decode = decodeURIComponent;
 var trim = require('trim');
 var type = require('type');
 
+var pattern = /(\w+)\[(\d+)\]/
+
 /**
  * Parse the given query `str`.
  *
@@ -3952,7 +3950,7 @@ exports.parse = function(str){
     var key = decode(parts[0]);
     var m;
 
-    if (m = /(\w+)\[(\d+)\]/.exec(key)) {
+    if (m = pattern.exec(key)) {
       obj[m[1]] = obj[m[1]] || [];
       obj[m[1]][m[2]] = decode(parts[1]);
       continue;
@@ -9617,9 +9615,8 @@ function flatten(source){
  * Module dependencies.
  */
 
-var each = require('each');
+var foldl = require('foldl');
 var is = require('is');
-var del = require('obj-case').del;
 var camel = require('to-camel-case');
 var integration = require('analytics.js-integration');
 
@@ -9673,27 +9670,14 @@ FullStory.prototype.loaded = function(){
 
 FullStory.prototype.identify = function(identify){
   var id = identify.userId() || identify.anonymousId();
-  var traits = identify.traits();
+  var traits = identify.traits({ name: 'displayName' });
 
-  del(traits, 'id');
+  var newTraits = foldl(function(results, value, key){
+    if (key !== 'id') results[key === 'displayName' || key === 'email' ? key : convert(key, value)] = value;
+    return results;
+  }, {}, traits);
 
-  if (identify.name()) {
-    traits.displayName = identify.name();
-    del(traits, 'name');
-  }
-
-  // Except for displayName and email
-  each(traits, function(trait, value){
-    if (trait !== 'displayName' && trait !== 'email') {
-      var newTrait = convert(trait, value);
-      traits[newTrait] = value;
-      del(traits, trait);
-    }
-  });
-
-  if (typeof id !== 'string') id = '' + id;
-
-  window.FS.identify(id, traits);
+  window.FS.identify(String(id), newTraits);
 };
 
 /**
@@ -9728,8 +9712,388 @@ function isInt(n) {
   return n === +n && n === (n|0);
 }
 
-}, {"each":4,"is":91,"obj-case":92,"to-camel-case":182,"analytics.js-integration":88}],
+}, {"foldl":182,"is":91,"to-camel-case":183,"analytics.js-integration":88}],
 182: [function(require, module, exports) {
+'use strict';
+
+/**
+ * Module dependencies.
+ */
+
+var each = require('each');
+
+/**
+ * Reduces all the values in a collection down into a single value. Does so by iterating through the
+ * collection from left to right, repeatedly calling an `iterator` function and passing to it four
+ * arguments: `(accumulator, value, index, collection)`.
+ *
+ * Returns the final return value of the `iterator` function.
+ *
+ * @name foldl
+ * @api public
+ * @param {Function} iterator The function to invoke per iteration.
+ * @param {*} accumulator The initial accumulator value, passed to the first invocation of `iterator`.
+ * @param {Array|Object} collection The collection to iterate over.
+ * @return {*} The return value of the final call to `iterator`.
+ * @example
+ * foldl(function(total, n) {
+ *   return total + n;
+ * }, 0, [1, 2, 3]);
+ * //=> 6
+ *
+ * var phonebook = { bob: '555-111-2345', tim: '655-222-6789', sheila: '655-333-1298' };
+ *
+ * foldl(function(results, phoneNumber) {
+ *  if (phoneNumber[0] === '6') {
+ *    return results.concat(phoneNumber);
+ *  }
+ *  return results;
+ * }, [], phonebook);
+ * // => ['655-222-6789', '655-333-1298']
+ */
+
+var foldl = function foldl(iterator, accumulator, collection) {
+  if (typeof iterator !== 'function') {
+    throw new TypeError('Expected a function but received a ' + typeof iterator);
+  }
+
+  each(function(val, i, collection) {
+    accumulator = iterator(accumulator, val, i, collection);
+  }, collection);
+
+  return accumulator;
+};
+
+/**
+ * Exports.
+ */
+
+module.exports = foldl;
+
+}, {"each":184}],
+184: [function(require, module, exports) {
+'use strict';
+
+/**
+ * Module dependencies.
+ */
+
+var keys = require('keys');
+
+/**
+ * Object.prototype.toString reference.
+ */
+
+var objToString = Object.prototype.toString;
+
+/**
+ * Tests if a value is a number.
+ *
+ * @name isNumber
+ * @api private
+ * @param {*} val The value to test.
+ * @return {boolean} Returns `true` if `val` is a number, otherwise `false`.
+ */
+
+// TODO: Move to library
+var isNumber = function isNumber(val) {
+  var type = typeof val;
+  return type === 'number' || (type === 'object' && objToString.call(val) === '[object Number]');
+};
+
+/**
+ * Tests if a value is an array.
+ *
+ * @name isArray
+ * @api private
+ * @param {*} val The value to test.
+ * @return {boolean} Returns `true` if the value is an array, otherwise `false`.
+ */
+
+// TODO: Move to library
+var isArray = typeof Array.isArray === 'function' ? Array.isArray : function isArray(val) {
+  return objToString.call(val) === '[object Array]';
+};
+
+/**
+ * Tests if a value is array-like. Array-like means the value is not a function and has a numeric
+ * `.length` property.
+ *
+ * @name isArrayLike
+ * @api private
+ * @param {*} val
+ * @return {boolean}
+ */
+
+// TODO: Move to library
+var isArrayLike = function isArrayLike(val) {
+  return val != null && (isArray(val) || (val !== 'function' && isNumber(val.length)));
+};
+
+/**
+ * Internal implementation of `each`. Works on arrays and array-like data structures.
+ *
+ * @name arrayEach
+ * @api private
+ * @param {Function(value, key, collection)} iterator The function to invoke per iteration.
+ * @param {Array} array The array(-like) structure to iterate over.
+ * @return {undefined}
+ */
+
+var arrayEach = function arrayEach(iterator, array) {
+  for (var i = 0; i < array.length; i += 1) {
+    // Break iteration early if `iterator` returns `false`
+    if (iterator(array[i], i, array) === false) {
+      break;
+    }
+  }
+};
+
+/**
+ * Internal implementation of `each`. Works on objects.
+ *
+ * @name baseEach
+ * @api private
+ * @param {Function(value, key, collection)} iterator The function to invoke per iteration.
+ * @param {Object} object The object to iterate over.
+ * @return {undefined}
+ */
+
+var baseEach = function baseEach(iterator, object) {
+  var ks = keys(object);
+
+  for (var i = 0; i < ks.length; i += 1) {
+    // Break iteration early if `iterator` returns `false`
+    if (iterator(object[ks[i]], ks[i], object) === false) {
+      break;
+    }
+  }
+};
+
+/**
+ * Iterate over an input collection, invoking an `iterator` function for each element in the
+ * collection and passing to it three arguments: `(value, index, collection)`. The `iterator`
+ * function can end iteration early by returning `false`.
+ *
+ * @name each
+ * @api public
+ * @param {Function(value, key, collection)} iterator The function to invoke per iteration.
+ * @param {Array|Object|string} collection The collection to iterate over.
+ * @return {undefined} Because `each` is run only for side effects, always returns `undefined`.
+ * @example
+ * var log = console.log.bind(console);
+ *
+ * each(log, ['a', 'b', 'c']);
+ * //-> 'a', 0, ['a', 'b', 'c']
+ * //-> 'b', 1, ['a', 'b', 'c']
+ * //-> 'c', 2, ['a', 'b', 'c']
+ * //=> undefined
+ *
+ * each(log, 'tim');
+ * //-> 't', 2, 'tim'
+ * //-> 'i', 1, 'tim'
+ * //-> 'm', 0, 'tim'
+ * //=> undefined
+ *
+ * // Note: Iteration order not guaranteed across environments
+ * each(log, { name: 'tim', occupation: 'enchanter' });
+ * //-> 'tim', 'name', { name: 'tim', occupation: 'enchanter' }
+ * //-> 'enchanter', 'occupation', { name: 'tim', occupation: 'enchanter' }
+ * //=> undefined
+ */
+
+var each = function each(iterator, collection) {
+  return (isArrayLike(collection) ? arrayEach : baseEach).call(this, iterator, collection);
+};
+
+/**
+ * Exports.
+ */
+
+module.exports = each;
+
+}, {"keys":185}],
+185: [function(require, module, exports) {
+'use strict';
+
+/**
+ * charAt reference.
+ */
+
+var strCharAt = String.prototype.charAt;
+
+/**
+ * Returns the character at a given index.
+ *
+ * @param {string} str
+ * @param {number} index
+ * @return {string|undefined}
+ */
+
+// TODO: Move to a library
+var charAt = function(str, index) {
+  return strCharAt.call(str, index);
+};
+
+/**
+ * hasOwnProperty reference.
+ */
+
+var hop = Object.prototype.hasOwnProperty;
+
+/**
+ * Object.prototype.toString reference.
+ */
+
+var toStr = Object.prototype.toString;
+
+/**
+ * hasOwnProperty, wrapped as a function.
+ *
+ * @name has
+ * @api private
+ * @param {*} context
+ * @param {string|number} prop
+ * @return {boolean}
+ */
+
+// TODO: Move to a library
+var has = function has(context, prop) {
+  return hop.call(context, prop);
+};
+
+/**
+ * Returns true if a value is a string, otherwise false.
+ *
+ * @name isString
+ * @api private
+ * @param {*} val
+ * @return {boolean}
+ */
+
+// TODO: Move to a library
+var isString = function isString(val) {
+  return toStr.call(val) === '[object String]';
+};
+
+/**
+ * Returns true if a value is array-like, otherwise false. Array-like means a
+ * value is not null, undefined, or a function, and has a numeric `length`
+ * property.
+ *
+ * @name isArrayLike
+ * @api private
+ * @param {*} val
+ * @return {boolean}
+ */
+
+// TODO: Move to a library
+var isArrayLike = function isArrayLike(val) {
+  return val != null && (typeof val !== 'function' && typeof val.length === 'number');
+};
+
+
+/**
+ * indexKeys
+ *
+ * @name indexKeys
+ * @api private
+ * @param {} target
+ * @param {} pred
+ * @return {Array}
+ */
+
+var indexKeys = function indexKeys(target, pred) {
+  pred = pred || has;
+  var results = [];
+
+  for (var i = 0, len = target.length; i < len; i += 1) {
+    if (pred(target, i)) {
+      results.push(String(i));
+    }
+  }
+
+  return results;
+};
+
+/**
+ * Returns an array of all the owned
+ *
+ * @name objectKeys
+ * @api private
+ * @param {*} target
+ * @param {Function} pred Predicate function used to include/exclude values from
+ * the resulting array.
+ * @return {Array}
+ */
+
+var objectKeys = function objectKeys(target, pred) {
+  pred = pred || has;
+  var results = [];
+
+
+  for (var key in target) {
+    if (pred(target, key)) {
+      results.push(String(key));
+    }
+  }
+
+  return results;
+};
+
+/**
+ * Creates an array composed of all keys on the input object. Ignores any non-enumerable properties.
+ * More permissive than the native `Object.keys` function (non-objects will not throw errors).
+ *
+ * @name keys
+ * @api public
+ * @category Object
+ * @param {Object} source The value to retrieve keys from.
+ * @return {Array} An array containing all the input `source`'s keys.
+ * @example
+ * keys({ likes: 'avocado', hates: 'pineapple' });
+ * //=> ['likes', 'pineapple'];
+ *
+ * // Ignores non-enumerable properties
+ * var hasHiddenKey = { name: 'Tim' };
+ * Object.defineProperty(hasHiddenKey, 'hidden', {
+ *   value: 'i am not enumerable!',
+ *   enumerable: false
+ * })
+ * keys(hasHiddenKey);
+ * //=> ['name'];
+ *
+ * // Works on arrays
+ * keys(['a', 'b', 'c']);
+ * //=> ['0', '1', '2']
+ *
+ * // Skips unpopulated indices in sparse arrays
+ * var arr = [1];
+ * arr[4] = 4;
+ * keys(arr);
+ * //=> ['0', '4']
+ */
+
+module.exports = function keys(source) {
+  if (source == null) {
+    return [];
+  }
+
+  // IE6-8 compatibility (string)
+  if (isString(source)) {
+    return indexKeys(source, charAt);
+  }
+
+  // IE6-8 compatibility (arguments)
+  if (isArrayLike(source)) {
+    return indexKeys(source, has);
+  }
+
+  return objectKeys(source);
+};
+
+}, {}],
+183: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
 
@@ -10712,8 +11076,8 @@ function extractCheckoutOptions(props){
   return valid.length > 0 ? valid.join(', ') : null;
 }
 
-}, {"analytics.js-integration":88,"global-queue":174,"object":183,"canonical":184,"use-https":90,"facade":147,"callback":94,"defaults":173,"load-script":143,"select":185,"obj-case":92,"each":4,"type":113,"url":186,"is":91}],
-183: [function(require, module, exports) {
+}, {"analytics.js-integration":88,"global-queue":174,"object":186,"canonical":187,"use-https":90,"facade":147,"callback":94,"defaults":173,"load-script":143,"select":188,"obj-case":92,"each":4,"type":113,"url":189,"is":91}],
+186: [function(require, module, exports) {
 
 /**
  * HOP ref.
@@ -10799,7 +11163,7 @@ exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
 }, {}],
-184: [function(require, module, exports) {
+187: [function(require, module, exports) {
 module.exports = function canonical () {
   var tags = document.getElementsByTagName('link');
   for (var i = 0, tag; tag = tags[i]; i++) {
@@ -10807,7 +11171,7 @@ module.exports = function canonical () {
   }
 };
 }, {}],
-185: [function(require, module, exports) {
+188: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -10837,8 +11201,8 @@ module.exports = function(arr, fn){
   return ret;
 };
 
-}, {"to-function":187}],
-187: [function(require, module, exports) {
+}, {"to-function":190}],
+190: [function(require, module, exports) {
 
 /**
  * Module Dependencies
@@ -10993,7 +11357,7 @@ function stripNested (prop, str, val) {
 }
 
 }, {"props":118,"component-props":118}],
-186: [function(require, module, exports) {
+189: [function(require, module, exports) {
 
 /**
  * Parse the given `url`.
@@ -11349,8 +11713,8 @@ function push(){
   _gs.apply(null, arguments);
 }
 
-}, {"analytics.js-integration":88,"facade":147,"callback":94,"load-script":143,"on-body":144,"each":4,"is":91,"pick":188,"omit":189}],
-188: [function(require, module, exports) {
+}, {"analytics.js-integration":88,"facade":147,"callback":94,"load-script":143,"on-body":144,"each":4,"is":91,"pick":191,"omit":192}],
+191: [function(require, module, exports) {
 
 /**
  * Expose `pick`.
@@ -11377,7 +11741,7 @@ function pick(obj){
   return ret;
 }
 }, {}],
-189: [function(require, module, exports) {
+192: [function(require, module, exports) {
 /**
  * Expose `omit`.
  */
@@ -13137,8 +13501,8 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":178,"clone":95,"convert-dates":179,"analytics.js-integration":88,"is":91,"to-iso-string":177,"indexof":116,"obj-case":92,"some":190}],
-190: [function(require, module, exports) {
+}, {"alias":178,"clone":95,"convert-dates":179,"analytics.js-integration":88,"is":91,"to-iso-string":177,"indexof":116,"obj-case":92,"some":193}],
+193: [function(require, module, exports) {
 
 /**
  * some
@@ -14419,8 +14783,8 @@ Quantcast.prototype._labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"global-queue":174,"analytics.js-integration":88,"use-https":90,"is":91,"reduce":191}],
-191: [function(require, module, exports) {
+}, {"global-queue":174,"analytics.js-integration":88,"use-https":90,"is":91,"reduce":194}],
+194: [function(require, module, exports) {
 
 /**
  * Reduce `arr` with `fn`.
@@ -14974,8 +15338,8 @@ function scheme(){
 
 function noop(){}
 
-}, {"analytics.js-integration":88,"store":192,"protocol":193,"utm-params":138,"ad-params":194,"send-json":195,"cookie":196,"clone":95,"uuid":197,"top-domain":139,"extend":145,"segmentio/json@1.0.0":180}],
-192: [function(require, module, exports) {
+}, {"analytics.js-integration":88,"store":195,"protocol":196,"utm-params":138,"ad-params":197,"send-json":198,"cookie":199,"clone":95,"uuid":200,"top-domain":139,"extend":145,"segmentio/json@1.0.0":180}],
+195: [function(require, module, exports) {
 
 /**
  * dependencies.
@@ -15070,8 +15434,8 @@ function all(){
   return ret;
 }
 
-}, {"unserialize":198,"each":112}],
-198: [function(require, module, exports) {
+}, {"unserialize":201,"each":112}],
+201: [function(require, module, exports) {
 
 /**
  * Unserialize the given "stringified" javascript.
@@ -15089,7 +15453,7 @@ module.exports = function(val){
 };
 
 }, {}],
-193: [function(require, module, exports) {
+196: [function(require, module, exports) {
 
 /**
  * Convenience alias
@@ -15172,7 +15536,7 @@ function set (protocol) {
 }
 
 }, {}],
-194: [function(require, module, exports) {
+197: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15216,7 +15580,7 @@ function ads(query){
   }
 }
 }, {"querystring":140}],
-195: [function(require, module, exports) {
+198: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15315,8 +15679,8 @@ function base64(url, obj, _, fn){
   });
 }
 
-}, {"base64-encode":199,"has-cors":200,"jsonp":201,"json":180}],
-199: [function(require, module, exports) {
+}, {"base64-encode":202,"has-cors":203,"jsonp":204,"json":180}],
+202: [function(require, module, exports) {
 var utf8Encode = require('utf8-encode');
 var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
 
@@ -15353,8 +15717,8 @@ function encode(input) {
 
     return output;
 }
-}, {"utf8-encode":202}],
-202: [function(require, module, exports) {
+}, {"utf8-encode":205}],
+205: [function(require, module, exports) {
 module.exports = encode;
 
 function encode(string) {
@@ -15383,7 +15747,7 @@ function encode(string) {
     return utftext;
 }
 }, {}],
-200: [function(require, module, exports) {
+203: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -15403,7 +15767,7 @@ try {
 }
 
 }, {}],
-201: [function(require, module, exports) {
+204: [function(require, module, exports) {
 /**
  * Module dependencies
  */
@@ -15489,16 +15853,16 @@ function jsonp(url, opts, fn){
   target.parentNode.insertBefore(script, target);
 }
 
-}, {"debug":203}],
-203: [function(require, module, exports) {
+}, {"debug":206}],
+206: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":204,"./debug":205}],
-204: [function(require, module, exports) {
+}, {"./lib/debug":207,"./debug":208}],
+207: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15648,7 +16012,7 @@ function coerce(val) {
 }
 
 }, {}],
-205: [function(require, module, exports) {
+208: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -15788,7 +16152,7 @@ try {
 } catch(e){}
 
 }, {}],
-196: [function(require, module, exports) {
+199: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15912,8 +16276,8 @@ function decode(value) {
   }
 }
 
-}, {"debug":203}],
-197: [function(require, module, exports) {
+}, {"debug":206}],
+200: [function(require, module, exports) {
 
 /**
  * Taken straight from jed's gist: https://gist.github.com/982883
@@ -16012,7 +16376,7 @@ var SnapEngage = module.exports = integration('SnapEngage')
   .assumesPageview()
   .global('SnapABug')
   .option('apiKey', '')
-  .tag('<script src="//commondatastorage.googleapis.com/code.snapengage.com/js/{{ apiKey }}.js">');
+  .tag('<script src="//www.snapengage.com/cdn/js/{{ apiKey }}.js">');
 
 /**
  * Initialize.
@@ -16646,8 +17010,8 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"analytics.js-integration":88,"global-queue":174,"convert-dates":179,"to-unix-timestamp":206,"alias":178,"clone":95}],
-206: [function(require, module, exports) {
+}, {"analytics.js-integration":88,"global-queue":174,"convert-dates":179,"to-unix-timestamp":209,"alias":178,"clone":95}],
+209: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -16772,7 +17136,7 @@ Vero.prototype.alias = function(alias){
   }
 };
 
-}, {"analytics.js-integration":88,"global-queue":174,"component/cookie":196,"obj-case":92}],
+}, {"analytics.js-integration":88,"global-queue":174,"component/cookie":199,"obj-case":92}],
 84: [function(require, module, exports) {
 
 /**
@@ -17737,8 +18101,8 @@ Analytics.prototype.noConflict = function(){
 };
 
 
-}, {"after":111,"bind":207,"callback":94,"clone":95,"./cookie":208,"debug":203,"defaults":97,"each":4,"emitter":110,"./group":209,"is":91,"is-email":170,"is-meta":210,"new-date":162,"event":211,"./pageDefaults":212,"pick":213,"prevent":214,"querystring":215,"./normalize":216,"object":183,"./memory":217,"./store":218,"./user":219,"facade":147}],
-207: [function(require, module, exports) {
+}, {"after":111,"bind":210,"callback":94,"clone":95,"./cookie":211,"debug":206,"defaults":97,"each":4,"emitter":110,"./group":212,"is":91,"is-email":170,"is-meta":213,"new-date":162,"event":214,"./pageDefaults":215,"pick":216,"prevent":217,"querystring":218,"./normalize":219,"object":186,"./memory":220,"./store":221,"./user":222,"facade":147}],
+210: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -17785,7 +18149,7 @@ function bindMethods (obj, methods) {
   return obj;
 }
 }, {"bind":101,"bind-all":102}],
-208: [function(require, module, exports) {
+211: [function(require, module, exports) {
 
 var debug = require('debug')('analytics.js:cookie');
 var bind = require('bind');
@@ -17913,8 +18277,8 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"debug":203,"bind":207,"cookie":196,"clone":95,"defaults":97,"json":180,"top-domain":139}],
-209: [function(require, module, exports) {
+}, {"debug":206,"bind":210,"cookie":199,"clone":95,"defaults":97,"json":180,"top-domain":139}],
+212: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:group');
 var Entity = require('./entity');
@@ -17970,8 +18334,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":203,"./entity":220,"inherit":221,"bind":207}],
-220: [function(require, module, exports) {
+}, {"debug":206,"./entity":223,"inherit":224,"bind":210}],
+223: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:entity');
 var traverse = require('isodate-traverse');
@@ -18211,8 +18575,8 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"debug":203,"isodate-traverse":157,"defaults":97,"./memory":217,"./cookie":208,"./store":218,"extend":145,"clone":95}],
-217: [function(require, module, exports) {
+}, {"debug":206,"isodate-traverse":157,"defaults":97,"./memory":220,"./cookie":211,"./store":221,"extend":145,"clone":95}],
+220: [function(require, module, exports) {
 
 /**
  * Module Dependencies.
@@ -18276,8 +18640,8 @@ Memory.prototype.remove = function(key){
   delete this.store[key];
   return true;
 };
-}, {"clone":95,"bind":207}],
-218: [function(require, module, exports) {
+}, {"clone":95,"bind":210}],
+221: [function(require, module, exports) {
 
 var bind = require('bind');
 var defaults = require('defaults');
@@ -18364,8 +18728,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":207,"defaults":97,"store.js":222}],
-222: [function(require, module, exports) {
+}, {"bind":210,"defaults":97,"store.js":225}],
+225: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -18518,7 +18882,7 @@ store.enabled = !store.disabled
 
 module.exports = store;
 }, {"json":180}],
-221: [function(require, module, exports) {
+224: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -18527,7 +18891,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-210: [function(require, module, exports) {
+213: [function(require, module, exports) {
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
 
@@ -18543,7 +18907,7 @@ module.exports = function isMeta (e) {
     return false;
 };
 }, {}],
-211: [function(require, module, exports) {
+214: [function(require, module, exports) {
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -18586,7 +18950,7 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 }, {}],
-212: [function(require, module, exports) {
+215: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -18648,8 +19012,8 @@ function canonicalUrl (search) {
 
 module.exports = pageDefaults;
 
-}, {"canonical":184,"url":186}],
-213: [function(require, module, exports) {
+}, {"canonical":187,"url":189}],
+216: [function(require, module, exports) {
 'use strict';
 
 var objToString = Object.prototype.toString;
@@ -18725,7 +19089,7 @@ var pick = function pick(props, object) {
 module.exports = pick;
 
 }, {}],
-214: [function(require, module, exports) {
+217: [function(require, module, exports) {
 
 /**
  * prevent default on the given `e`.
@@ -18748,7 +19112,7 @@ module.exports = function(e){
 };
 
 }, {}],
-215: [function(require, module, exports) {
+218: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -18824,7 +19188,7 @@ exports.stringify = function(obj){
 };
 
 }, {"trim":141,"type":7}],
-216: [function(require, module, exports) {
+219: [function(require, module, exports) {
 
 /**
  * Module Dependencies.
@@ -18917,8 +19281,8 @@ function normalize(msg, list){
       || ~indexof(lower, name.toLowerCase()));
   }
 }
-}, {"debug":203,"component/indexof":116,"defaults":97,"component/map":223,"each":4,"is":91}],
-223: [function(require, module, exports) {
+}, {"debug":206,"component/indexof":116,"defaults":97,"component/map":226,"each":4,"is":91}],
+226: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -18943,8 +19307,8 @@ module.exports = function(arr, fn){
   }
   return ret;
 };
-}, {"to-function":187}],
-219: [function(require, module, exports) {
+}, {"to-function":190}],
+222: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:user');
 var Entity = require('./entity');
@@ -19113,11 +19477,11 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":203,"./entity":220,"inherit":221,"bind":207,"./cookie":208,"uuid":197,"cookie":196}],
+}, {"debug":206,"./entity":223,"inherit":224,"bind":210,"./cookie":211,"uuid":200,"cookie":199}],
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.8.1",
+  "version": "2.8.2",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

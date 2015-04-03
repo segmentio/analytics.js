@@ -7,6 +7,76 @@ The hassle-free way to integrate analytics into any web application.
 
 Analytics.js is the open-source library that powers [Segment](https://segment.io). Segment is a hosted solution that gives you an interface by which to edit all of your settings, instead of having to write any code. It also extends the same functionality of Analytics.js to your [mobile apps](https://segment.io/libraries) and your [servers](https://segment.io/libraries).
 
+## Quick Start
+
+Change (where it says `CHANGE` in comments) and put this code on your pages:
+
+```js
+(function () {
+    var analytics = window.analytics = window.analytics || [];
+
+    if (analytics.invoked) {
+        if (window.console && console.error) {
+            console.error('Segment snippet included twice.');
+        }
+        return;
+    }
+    analytics.invoked = true;
+
+    analytics.methods = [
+        'trackSubmit',
+        'trackClick',
+        'trackLink',
+        'trackForm',
+        'pageview',
+        'identify',
+        'initialize',
+        'group',
+        'track',
+        'ready',
+        'alias',
+        'page',
+        'once',
+        'off',
+        'on'
+    ];
+    analytics.factory = function (method) {
+        return function () {
+            var args = Array.prototype.slice.call(arguments);
+            args.unshift(method);
+            analytics.push(args);
+            return analytics;
+        };
+    };
+
+    if (!(typeof analytics.init === 'function')) {
+        for (var i = 0; i < analytics.methods.length; i++) {
+            var key = analytics.methods[i];
+            analytics[key] = analytics.factory(key);
+        }
+    }
+
+    analytics.load = function (path) {
+
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.src = path;
+
+        var first = document.getElementsByTagName('script')[0];
+        first.parentNode.insertBefore(script, first);
+    };
+
+    analytics.SNIPPET_VERSION = '3.0.1';
+    analytics.load('http://example.net/analytics.js'); // CHANGE this URL
+    analytics.initialize({ // CHANGE this configuration
+        'Google Analytics': {
+            trackingId: 'UA-XXXX-1'
+        }
+    });
+    analytics.page();
+})();
+```
 
 ## Documentation
 
@@ -17,6 +87,11 @@ First read the [Analytics.js QuickStart](https://segment.io/docs/tutorials/quick
 
 Looking to add support for a new integration? Take a look at the [analytics.js-integrations](https://github.com/segmentio/analytics.js-integrations) repository, where all of the integration-specific code is stored. We love pull requests!
 
+## Custom builds
+
+It is possible to build your own version of `analytics.js` file with only integrations you use in your project.
+To do so, rename `integrations.json.skel` to `integrations.json` and update it with [tracking services](https://github.com/segmentio/analytics.js-integrations/tree/master/lib) you plan to utilize.
+Run `make` command to generate new `analytics.js` file.
 
 ## Development
 

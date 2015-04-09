@@ -15,6 +15,12 @@ DUO = $(BINS)/duo
 DUOT = $(BINS)/duo-test -p test/server -R spec -P $(PORT) -c "make build.js"
 
 #
+# Git hooks.
+#
+
+HOOKS := $(addprefix .git/hooks/, $(notdir $(wildcard bin/hooks/*)))
+
+#
 # Default target.
 #
 
@@ -27,7 +33,14 @@ default: test
 clean:
 	@rm -rf components $(BUILD)
 	@rm -f analytics.js analytics.min.js
-	@rm -rf node_modules npm-debug.log
+	@rm -rf npm-debug.log
+
+clean-deps:
+	@rm -rf node_modules
+
+clean-hooks:
+	@rm $(HOOKS)
+
 #
 # Test with phantomjs.
 #
@@ -67,9 +80,11 @@ test-browser: $(BUILD)
 # Target for `analytics.js` file.
 #
 
-analytics.js: node_modules $(SRC)
-	@$(DUO) --standalone analytics lib/index.js > analytics.js
-	@$(MINIFY) analytics.js --output analytics.min.js
+analytics.js: node_modules $(SRC) package.json
+	@$(DUO) --standalone analytics lib/index.js > $@
+
+analytics.min.js: analytics.js
+	@$(MINIFY) $< --output $@
 
 #
 # Target for `node_modules` folder.
@@ -82,13 +97,22 @@ node_modules: package.json
 # Target for build files.
 #
 
-$(BUILD): $(TESTS) analytics.js
+$(BUILD): $(TESTS) analytics.js analytics.min.js
 	@$(DUO) --development test/tests.js > $(BUILD)
 
 #
 # Phony build target
 #
 
-build: build.js
-
+build: $(BUILD)
 .PHONY: build
+
+#
+# Git hooks.
+#
+
+hooks: $(HOOKS)
+.PHONY: hooks
+
+.git/hooks/%: bin/hooks/%
+	@ln -s $(abspath $<) $@

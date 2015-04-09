@@ -18844,7 +18844,7 @@ module.exports.User = User;
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.8.4",
+  "version": "2.8.5",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

@@ -1,4 +1,10 @@
 
+2.8.7 / 2015-04-09
+==================
+
+  * Build updated
+  * adding pre-release hook (and make targets for hooks)
+
 2.8.6 / 2015-04-09
 ==================
 

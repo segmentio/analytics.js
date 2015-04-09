@@ -13486,7 +13486,7 @@ Optimizely.prototype.replay = function(){
   if (!window.optimizely) return; // in case the snippet isnt on the page
 
   var data = window.optimizely.data;
-  if (!data) return;
+  if (!data || !data.state) return;
 
   var experiments = data.experiments;
   var map = data.state.variationNamesMap;
@@ -18844,10 +18844,11 @@ module.exports.User = User;
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.8.3",
+  "version": "2.8.4",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}
-};
+}
+;
 }, {}]}, {}, {"1":""})
 );

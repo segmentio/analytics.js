@@ -3147,6 +3147,27 @@ AdWords.prototype.page = function(page){
  *
  * @param {Track}
  * @api public
+<<<<<<< HEAD
+ */
+
+AdWords.prototype.track = function(track){
+  var id = this.options.conversionId;
+  var events = this.events(track.event());
+  var revenue = track.revenue() || 0;
+  each(events, function(label){
+    var props = track.properties();
+    delete props.revenue
+    window.google_trackConversion({
+      google_conversion_id: id,
+      google_custom_params: props,
+      google_conversion_language: 'en',
+      google_conversion_format: '3',
+      google_conversion_color: 'ffffff',
+      google_conversion_label: label,
+      google_conversion_value: revenue,
+      google_remarketing_only: false
+    });
+=======
  */
 
 AdWords.prototype.track = function(track){
@@ -3788,14 +3809,20 @@ module.exports = function loadScript(options, fn){
     // Append after event listeners are attached for IE.
     var firstScript = document.getElementsByTagName('script')[0];
     firstScript.parentNode.insertBefore(script, firstScript);
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
   });
 
+<<<<<<< HEAD
+}, {"analytics.js-integration":88,"domify":119,"each":4}],
+10: [function(require, module, exports) {
+=======
   // Return the script element in case they want to do anything special, like
   // give it an ID or attributes.
   return script;
 };
 }, {"script-onload":115,"next-tick":103,"type":7}],
 13: [function(require, module, exports) {
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 /**
  * Module dependencies.
@@ -3858,16 +3885,31 @@ Atatus.prototype.identify = function(identify){
  * Module dependencies.
  */
 
+<<<<<<< HEAD
+var src = '//d24n15hnbwhuhn.cloudfront.net/libs/amplitude-2.1.0-min.js';
+=======
 var integration = require('analytics.js-integration');
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 /**
  * Expose `Autosend` integration.
  */
 
+<<<<<<< HEAD
+var Amplitude = module.exports = integration('Amplitude')
+  .global('amplitude')
+  .option('apiKey', '')
+  .option('trackAllPages', false)
+  .option('trackNamedPages', true)
+  .option('trackCategorizedPages', true)
+  .option('trackUtmProperties', true)
+  .tag('<script src="' + src + '">');
+=======
 var Autosend = module.exports = integration('Autosend')
   .global('_autosend')
   .option('appKey', '')
   .tag('<script id="asnd-tracker" src="https://d2zjxodm1cz8d6.cloudfront.net/js/v1/autosend.js" data-auth-key="{{ appKey }}">');
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 /**
  * Initialize.
@@ -3877,7 +3919,28 @@ var Autosend = module.exports = integration('Autosend')
  * @param {Object} page
  */
 
+<<<<<<< HEAD
+Amplitude.prototype.initialize = function(page){
+  // jscs:disable
+  (function(e,t){var r=e.amplitude||{};r._q=[];function a(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)))}}var i=["init","logEvent","logRevenue","setUserId","setUserProperties","setOptOut","setVersionName","setDomain","setDeviceId","setGlobalUserProperties"];for(var o=0;o<i.length;o++){a(i[o])}e.amplitude=r})(window,document);
+  // jscs:enable
+
+  this.setDomain(window.location.href);
+  window.amplitude.init(this.options.apiKey, null, {
+    includeUtm: this.options.trackUtmProperties
+  });
+
+  var self = this;
+  if (umd) {
+    window.require([src], function(amplitude){
+      window.amplitude = amplitude;
+      self.ready();
+    });
+    return;
+  }
+=======
 Autosend.prototype.initialize = function(page){
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
   window._autosend = window._autosend || [];
   (function(){var a,b,c;a=function(f){return function(){window._autosend.push([f].concat(Array.prototype.slice.call(arguments,0))); }; }; b=["identify", "track", "cb"];for (c=0;c<b.length;c++){window._autosend[b[c]]=a(b[c]); } })();
@@ -3919,8 +3982,23 @@ Autosend.prototype.identify = function(identify){
  * @param {Track} track
  */
 
+<<<<<<< HEAD
+Amplitude.prototype.track = function(track){
+  var props = track.properties();
+  var event = track.event();
+  var revenue = track.revenue();
+
+  // track the event
+  window.amplitude.logEvent(event, props);
+
+  // also track revenue
+  if (revenue) {
+    window.amplitude.logRevenue(revenue, props.quantity, props.productId);
+  }
+=======
 Autosend.prototype.track = function(track){
   window._autosend.track(track.event());
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 };
 
 }, {"analytics.js-integration":88}],
@@ -3944,6 +4022,10 @@ var Awesm = module.exports = integration('awe.sm')
   .tag('<script src="//widgets.awe.sm/v3/widgets.js?key={{ apiKey }}&async=true">')
   .mapping('events');
 
+<<<<<<< HEAD
+}, {"analytics.js-integration":88,"utm-params":123,"top-domain":124}],
+123: [function(require, module, exports) {
+=======
 /**
  * Initialize.
  *
@@ -3956,6 +4038,7 @@ Awesm.prototype.initialize = function(page){
   window.AWESM = { api_key: this.options.apiKey };
   this.load(this.ready);
 };
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 /**
  * Loaded?
@@ -4000,13 +4083,20 @@ var each = require('each');
  * HOP.
  */
 
+<<<<<<< HEAD
+}, {"querystring":125}],
+125: [function(require, module, exports) {
+=======
 var has = Object.prototype.hasOwnProperty;
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 /**
  * Noop.
  */
 
 var noop = function(){};
+
+var pattern = /(\w+)\[(\d+)\]/
 
 /**
  * Expose `Bing`.
@@ -4026,9 +4116,17 @@ var Bing = module.exports = integration('Bing Ads')
  * https://gist.github.com/sperand-io/8bef4207e9c66e1aa83b
  */
 
+<<<<<<< HEAD
+    if (m = pattern.exec(key)) {
+      obj[m[1]] = obj[m[1]] || [];
+      obj[m[1]][m[2]] = decode(parts[1]);
+      continue;
+    }
+=======
 Bing.prototype.initialize = function(){
   window.uetq = window.uetq || [];
   var self = this;
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
   self.load(function(){
     var setup = {
@@ -4061,6 +4159,10 @@ Bing.prototype.page = function(){
   window.uetq.push("pageLoad");
 };
 
+<<<<<<< HEAD
+}, {"trim":126,"type":7}],
+126: [function(require, module, exports) {
+=======
 /**
  * Track
  *
@@ -4069,6 +4171,7 @@ Bing.prototype.page = function(){
  *
  * @param {Track} track
  */
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 Bing.prototype.track = function(track){
   var event = {
@@ -4086,6 +4189,11 @@ Bing.prototype.track = function(track){
 129: [function(require, module, exports) {
 var each = require('each');
 
+<<<<<<< HEAD
+}, {}],
+124: [function(require, module, exports) {
+=======
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 /**
  * Cache whether `<body>` exists.
@@ -4127,6 +4235,11 @@ var interval = setInterval(function () {
   clearInterval(interval);
 }, 5);
 
+<<<<<<< HEAD
+}, {"url":127}],
+127: [function(require, module, exports) {
+=======
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 /**
  * Call a callback, passing it the body.
@@ -4187,6 +4300,625 @@ function when (condition, fn, interval) {
 }, {"callback":94}],
 17: [function(require, module, exports) {
 /**
+ * Module dependencies.
+ */
+var integration = require('analytics.js-integration');
+
+/**
+ * Expose `Blueshift` integration.
+ */
+
+var Blueshift = module.exports = integration('Blueshift')
+  .global('blueshift')
+  .global('_blueshiftid')
+  .option('apiKey', '')
+  .option('retarget', false)
+  .tag('<script src="https://cdn.getblueshift.com/blueshift.js">');
+
+/**
+ * Initialize.
+ *
+ * Documentation: http://getblueshift.com/documentation
+ *
+ * @param {Object} page
+ */
+
+Blueshift.prototype.initialize = function(page){
+  window.blueshift=window.blueshift||[];
+  // jscs:disable
+  window.blueshift.load=function(a){window._blueshiftid=a;var d=function(a){return function(){blueshift.push([a].concat(Array.prototype.slice.call(arguments,0)))}},e=["identify","track","click", "pageload", "capture", "retarget"];for(var f=0;f<e.length;f++)blueshift[e[f]]=d(e[f])};
+  // jscs:enable
+  window.blueshift.load(this.options.apiKey);
+
+  this.load(this.ready);
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Blueshift.prototype.loaded = function(){
+  return !! (window.blueshift && window._blueshiftid);
+};
+
+/**
+ * Page.
+ *
+ * @param {Page} page
+ */
+
+Blueshift.prototype.page = function(page){
+  if (this.options.retarget) window.blueshift.retarget();
+  var properties = page.properties();
+  properties._bsft_source = 'segment.com';
+  window.blueshift.pageload(properties);
+};
+
+/**
+ * Identify.
+ *
+ * @param {Identify} identify
+ */
+
+Blueshift.prototype.identify = function(identify){
+  if (!identify.userId()) return this.debug('user id required');
+  var traits = identify.traits({ created: 'created_at' });
+  traits._bsft_source = 'segment.com';
+  window.blueshift.identify(traits);
+};
+
+<<<<<<< HEAD
+}, {"analytics.js-integration":88,"load-script":128,"is":91}],
+128: [function(require, module, exports) {
+
+=======
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
+/**
+ * Group.
+ *
+ * @param {Group} group
+ */
+
+Blueshift.prototype.group = function(group){
+  var traits = group.traits({ created: 'created_at' });
+  traits._bsft_source = 'segment.com';
+  window.blueshift.track('group', traits);
+};
+
+/**
+ * Track.
+ *
+ * @param {Track} track
+ */
+
+Blueshift.prototype.track = function(track){
+  var properties = track.properties();
+  properties._bsft_source = 'segment.com';
+  window.blueshift.track(track.event(), properties);
+};
+<<<<<<< HEAD
+}, {"script-onload":115,"next-tick":103,"type":7}],
+13: [function(require, module, exports) {
+=======
+
+}, {"analytics.js-integration":88}],
+18: [function(require, module, exports) {
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
+var Identify = require('facade').Identify;
+var Track = require('facade').Track;
+var pixel = require('load-pixel')('http://app.bronto.com/public/');
+var qs = require('querystring');
+var each = require('each');
+
+/**
+ * Expose `Bronto` integration.
+ */
+
+var Bronto = module.exports = integration('Bronto')
+  .global('__bta')
+  .option('siteId', '')
+  .option('host', '')
+  .tag('<script src="//p.bm23.com/bta.js">');
+
+/**
+ * Initialize.
+ *
+ * http://app.bronto.com/mail/help/help_view/?k=mail:home:api_tracking:tracking_data_store_js#addingjavascriptconversiontrackingtoyoursite
+ * http://bronto.com/product-blog/features/using-conversion-tracking-private-domain#.Ut_Vk2T8KqB
+ * http://bronto.com/product-blog/features/javascript-conversion-tracking-setup-and-reporting#.Ut_VhmT8KqB
+ *
+ * @param {Object} page
+ */
+
+Bronto.prototype.initialize = function(page){
+  var self = this;
+  var params = qs.parse(window.location.search);
+  if (!params._bta_tid && !params._bta_c) {
+    this.debug('missing tracking URL parameters `_bta_tid` and `_bta_c`.');
+  }
+  this.load(function(){
+    var opts = self.options;
+    self.bta = new window.__bta(opts.siteId);
+    if (opts.host) self.bta.setHost(opts.host);
+    self.ready();
+  });
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Bronto.prototype.loaded = function(){
+  return this.bta;
+};
+
+/**
+ * Completed order.
+ *
+ * The cookie is used to link the order being processed back to the delivery,
+ * message, and contact which makes it a conversion.
+ * Passing in just the email ensures that the order itself
+ * gets linked to the contact record in Bronto even if the user
+ * does not have a tracking cookie.
+ *
+ * @param {Track} track
+ * @api private
+ */
+
+Bronto.prototype.completedOrder = function(track){
+  var user = this.analytics.user();
+  var products = track.products();
+  var props = track.properties();
+  var items = [];
+  var identify = new Identify({
+    userId: user.id(),
+    traits: user.traits()
+  });
+  var email = identify.email();
+
+  // items
+  each(products, function(product){
+    var track = new Track({ properties: product });
+    items.push({
+      item_id: track.id() || track.sku(),
+      desc: product.description || track.name(),
+      quantity: track.quantity(),
+      amount: track.price(),
+    });
+  });
+
+  // add conversion
+  this.bta.addOrder({
+    order_id: track.orderId(),
+    email: email,
+    // they recommend not putting in a date
+    // because it needs to be formatted correctly
+    // YYYY-MM-DDTHH:MM:SS
+    items: items
+  });
+};
+
+}, {"analytics.js-integration":88,"facade":132,"load-pixel":133,"querystring":134,"each":4}],
+132: [function(require, module, exports) {
+
+var Facade = require('./facade');
+
+/**
+ * Expose `Facade` facade.
+ */
+
+module.exports = Facade;
+
+/**
+ * Expose specific-method facades.
+ */
+
+Facade.Alias = require('./alias');
+Facade.Group = require('./group');
+Facade.Identify = require('./identify');
+Facade.Track = require('./track');
+Facade.Page = require('./page');
+Facade.Screen = require('./screen');
+
+}, {"./facade":135,"./alias":136,"./group":137,"./identify":138,"./track":139,"./page":140,"./screen":141}],
+135: [function(require, module, exports) {
+
+var traverse = require('isodate-traverse');
+var isEnabled = require('./is-enabled');
+var clone = require('./utils').clone;
+var type = require('./utils').type;
+var address = require('./address');
+var objCase = require('obj-case');
+var newDate = require('new-date');
+
+/**
+ * Expose `Facade`.
+ */
+
+module.exports = Facade;
+
+/**
+ * Initialize a new `Facade` with an `obj` of arguments.
+ *
+ * @param {Object} obj
+ */
+
+function Facade (obj) {
+  if (!obj.hasOwnProperty('timestamp')) obj.timestamp = new Date();
+  else obj.timestamp = newDate(obj.timestamp);
+  traverse(obj);
+  this.obj = obj;
+}
+
+/**
+ * Mixin address traits.
+ */
+
+address(Facade.prototype);
+
+/**
+ * Return a proxy function for a `field` that will attempt to first use methods,
+ * and fallback to accessing the underlying object directly. You can specify
+ * deeply nested fields too like:
+ *
+ *   this.proxy('options.Librato');
+ *
+ * @param {String} field
+ */
+
+Facade.prototype.proxy = function (field) {
+  var fields = field.split('.');
+  field = fields.shift();
+
+  // Call a function at the beginning to take advantage of facaded fields
+  var obj = this[field] || this.field(field);
+  if (!obj) return obj;
+  if (typeof obj === 'function') obj = obj.call(this) || {};
+  if (fields.length === 0) return transform(obj);
+
+  obj = objCase(obj, fields.join('.'));
+  return transform(obj);
+};
+
+/**
+ * Directly access a specific `field` from the underlying object, returning a
+ * clone so outsiders don't mess with stuff.
+ *
+ * @param {String} field
+ * @return {Mixed}
+ */
+
+Facade.prototype.field = function (field) {
+  var obj = this.obj[field];
+  return transform(obj);
+};
+
+/**
+ * Utility method to always proxy a particular `field`. You can specify deeply
+ * nested fields too like:
+ *
+ *   Facade.proxy('options.Librato');
+ *
+ * @param {String} field
+ * @return {Function}
+ */
+
+Facade.proxy = function (field) {
+  return function () {
+    return this.proxy(field);
+  };
+};
+
+/**
+ * Utility method to directly access a `field`.
+ *
+ * @param {String} field
+ * @return {Function}
+ */
+
+Facade.field = function (field) {
+  return function () {
+    return this.field(field);
+  };
+};
+
+/**
+ * Proxy multiple `path`.
+ *
+ * @param {String} path
+ * @return {Array}
+ */
+
+Facade.multi = function(path){
+  return function(){
+    var multi = this.proxy(path + 's');
+    if ('array' == type(multi)) return multi;
+    var one = this.proxy(path);
+    if (one) one = [clone(one)];
+    return one || [];
+  };
+};
+
+/**
+ * Proxy one `path`.
+ *
+ * @param {String} path
+ * @return {Mixed}
+ */
+
+Facade.one = function(path){
+  return function(){
+    var one = this.proxy(path);
+    if (one) return one;
+    var multi = this.proxy(path + 's');
+    if ('array' == type(multi)) return multi[0];
+  };
+};
+
+/**
+ * Get the basic json object of this facade.
+ *
+ * @return {Object}
+ */
+
+Facade.prototype.json = function () {
+  var ret = clone(this.obj);
+  if (this.type) ret.type = this.type();
+  return ret;
+};
+
+/**
+ * Get the options of a call (formerly called "context"). If you pass an
+ * integration name, it will get the options for that specific integration, or
+ * undefined if the integration is not enabled.
+ *
+ * @param {String} integration (optional)
+ * @return {Object or Null}
+ */
+
+Facade.prototype.context =
+Facade.prototype.options = function (integration) {
+  var options = clone(this.obj.options || this.obj.context) || {};
+  if (!integration) return clone(options);
+  if (!this.enabled(integration)) return;
+  var integrations = this.integrations();
+  var value = integrations[integration] || objCase(integrations, integration);
+  if ('boolean' == typeof value) value = {};
+  return value || {};
+};
+
+/**
+ * Check whether an integration is enabled.
+ *
+ * @param {String} integration
+ * @return {Boolean}
+ */
+
+Facade.prototype.enabled = function (integration) {
+  var allEnabled = this.proxy('options.providers.all');
+  if (typeof allEnabled !== 'boolean') allEnabled = this.proxy('options.all');
+  if (typeof allEnabled !== 'boolean') allEnabled = this.proxy('integrations.all');
+  if (typeof allEnabled !== 'boolean') allEnabled = true;
+
+  var enabled = allEnabled && isEnabled(integration);
+  var options = this.integrations();
+
+  // If the integration is explicitly enabled or disabled, use that
+  // First, check options.providers for backwards compatibility
+  if (options.providers && options.providers.hasOwnProperty(integration)) {
+    enabled = options.providers[integration];
+  }
+
+  // Next, check for the integration's existence in 'options' to enable it.
+  // If the settings are a boolean, use that, otherwise it should be enabled.
+  if (options.hasOwnProperty(integration)) {
+    var settings = options[integration];
+    if (typeof settings === 'boolean') {
+      enabled = settings;
+    } else {
+      enabled = true;
+    }
+  }
+
+  return enabled ? true : false;
+};
+
+/**
+ * Get all `integration` options.
+ *
+ * @param {String} integration
+ * @return {Object}
+ * @api private
+ */
+
+Facade.prototype.integrations = function(){
+  return this.obj.integrations
+    || this.proxy('options.providers')
+    || this.options();
+};
+
+/**
+ * Check whether the user is active.
+ *
+ * @return {Boolean}
+ */
+
+Facade.prototype.active = function () {
+  var active = this.proxy('options.active');
+  if (active === null || active === undefined) active = true;
+  return active;
+};
+
+/**
+ * Get `sessionId / anonymousId`.
+ *
+ * @return {Mixed}
+ * @api public
+ */
+
+Facade.prototype.sessionId =
+Facade.prototype.anonymousId = function(){
+  return this.field('anonymousId')
+    || this.field('sessionId');
+};
+
+/**
+ * Get `groupId` from `context.groupId`.
+ *
+ * @return {String}
+ * @api public
+ */
+
+<<<<<<< HEAD
+Bing.prototype.track = function(track){
+  var event = {
+    ea: 'track',
+    el: track.event()
+  };
+
+  if (track.category()) event.ec = track.category();
+  if (track.revenue()) event.ev = track.revenue();
+
+  window.uetq.push(event);
+};
+
+}, {"analytics.js-integration":88,"on-body":129,"domify":119,"extend":130,"bind":101,"when":131,"each":4}],
+129: [function(require, module, exports) {
+var each = require('each');
+
+=======
+Facade.prototype.groupId = Facade.proxy('options.groupId');
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
+
+/**
+ * Get the call's "super properties" which are just traits that have been
+ * passed in as if from an identify call.
+ *
+ * @param {Object} aliases
+ * @return {Object}
+ */
+
+Facade.prototype.traits = function (aliases) {
+  var ret = this.proxy('options.traits') || {};
+  var id = this.userId();
+  aliases = aliases || {};
+
+  if (id) ret.id = id;
+
+  for (var alias in aliases) {
+    var value = null == this[alias]
+      ? this.proxy('options.traits.' + alias)
+      : this[alias]();
+    if (null == value) continue;
+    ret[aliases[alias]] = value;
+    delete ret[alias];
+  }
+
+  return ret;
+};
+
+/**
+ * Add a convenient way to get the library name and version
+ */
+
+Facade.prototype.library = function(){
+  var library = this.proxy('options.library');
+  if (!library) return { name: 'unknown', version: null };
+  if (typeof library === 'string') return { name: library, version: null };
+  return library;
+};
+
+/**
+ * Setup some basic proxies.
+ */
+
+Facade.prototype.userId = Facade.field('userId');
+Facade.prototype.channel = Facade.field('channel');
+Facade.prototype.timestamp = Facade.field('timestamp');
+Facade.prototype.userAgent = Facade.proxy('options.userAgent');
+Facade.prototype.ip = Facade.proxy('options.ip');
+
+/**
+ * Return the cloned and traversed object
+ *
+ * @param {Mixed} obj
+ * @return {Mixed}
+ */
+
+function transform(obj){
+  var cloned = clone(obj);
+  return cloned;
+}
+<<<<<<< HEAD
+}, {"each":112}],
+130: [function(require, module, exports) {
+
+module.exports = function extend (object) {
+    // Takes an unlimited number of extenders.
+    var args = Array.prototype.slice.call(arguments, 1);
+
+    // For each extender, copy their properties on our object.
+    for (var i = 0, source; source = args[i]; i++) {
+        if (!source) continue;
+        for (var property in source) {
+            object[property] = source[property];
+        }
+    }
+
+    return object;
+};
+}, {}],
+131: [function(require, module, exports) {
+=======
+
+}, {"isodate-traverse":142,"./is-enabled":143,"./utils":144,"./address":145,"obj-case":92,"new-date":146}],
+142: [function(require, module, exports) {
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
+
+var is = require('is');
+var isodate = require('isodate');
+var each;
+
+try {
+  each = require('each');
+} catch (err) {
+  each = require('each-component');
+}
+
+/**
+ * Expose `traverse`.
+ */
+
+module.exports = traverse;
+
+/**
+ * Traverse an object or array, and return a clone with all ISO strings parsed
+ * into Date objects.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ */
+
+function traverse (input, strict) {
+  if (strict === undefined) strict = true;
+
+  if (is.object(input)) return object(input, strict);
+  if (is.array(input)) return array(input, strict);
+  return input;
+}
+
+/**
+<<<<<<< HEAD
  * Module dependencies.
  */
 var integration = require('analytics.js-integration');
@@ -4753,6 +5485,8 @@ function traverse (input, strict) {
 }
 
 /**
+=======
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
  * Object traverser.
  *
  * @param {Object} obj
@@ -6404,6 +7138,79 @@ exports.stringify = function(obj){
       continue;
     }
 
+<<<<<<< HEAD
+}, {}],
+134: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var encode = encodeURIComponent;
+var decode = decodeURIComponent;
+var trim = require('trim');
+var type = require('type');
+
+/**
+ * Parse the given query `str`.
+ *
+ * @param {String} str
+ * @return {Object}
+ * @api public
+ */
+
+exports.parse = function(str){
+  if ('string' != typeof str) return {};
+
+  str = trim(str);
+  if ('' == str) return {};
+  if ('?' == str.charAt(0)) str = str.slice(1);
+
+  var obj = {};
+  var pairs = str.split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var parts = pairs[i].split('=');
+    var key = decode(parts[0]);
+    var m;
+
+    if (m = /(\w+)\[(\d+)\]/.exec(key)) {
+      obj[m[1]] = obj[m[1]] || [];
+      obj[m[1]][m[2]] = decode(parts[1]);
+      continue;
+    }
+
+    obj[parts[0]] = null == parts[1]
+      ? ''
+      : decode(parts[1]);
+  }
+
+  return obj;
+};
+
+/**
+ * Stringify the given `obj`.
+ *
+ * @param {Object} obj
+ * @return {String}
+ * @api public
+ */
+
+exports.stringify = function(obj){
+  if (!obj) return '';
+  var pairs = [];
+
+  for (var key in obj) {
+    var value = obj[key];
+
+    if ('array' == type(value)) {
+      for (var i = 0; i < value.length; ++i) {
+        pairs.push(encode(key + '[' + i + ']') + '=' + encode(value[i]));
+      }
+      continue;
+    }
+
+=======
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
     pairs.push(encode(key) + '=' + encode(obj[key]));
   }
 
@@ -9022,6 +9829,15 @@ FullStory.prototype.loaded = function(){
 FullStory.prototype.identify = function(identify){
   var id = identify.userId() || identify.anonymousId();
   var traits = identify.traits({ name: 'displayName' });
+<<<<<<< HEAD
+
+  var newTraits = foldl(function(results, value, key){
+    if (key !== 'id') results[key === 'displayName' || key === 'email' ? key : convert(key, value)] = value;
+    return results;
+  }, {}, traits);
+
+  window.FS.identify(String(id), newTraits);
+=======
 
   var newTraits = foldl(function(results, value, key){
     if (key !== 'id') results[key === 'displayName' || key === 'email' ? key : convert(key, value)] = value;
@@ -9441,6 +10257,420 @@ module.exports = function keys(source) {
   }
 
   return objectKeys(source);
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
+};
+
+}, {}],
+167: [function(require, module, exports) {
+
+var toSpace = require('to-space-case');
+
+<<<<<<< HEAD
+function convert (trait, value) {
+  trait = camel(trait);
+  if (is.string(value)) return trait += '_str';
+  if (isInt(value)) return trait += '_int';
+  if (isFloat(value)) return trait += '_real';
+  if (is.date(value)) return trait += '_date';
+  if (is.boolean(value)) return trait += '_bool';
+}
+=======
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
+
+/**
+ * Expose `toCamelCase`.
+ */
+
+module.exports = toCamelCase;
+
+
+/**
+ * Convert a `string` to camel case.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+
+<<<<<<< HEAD
+}, {"foldl":166,"is":91,"to-camel-case":167,"analytics.js-integration":88}],
+166: [function(require, module, exports) {
+'use strict';
+
+/**
+ * Module dependencies.
+ */
+
+var each = require('each');
+
+/**
+ * Reduces all the values in a collection down into a single value. Does so by iterating through the
+ * collection from left to right, repeatedly calling an `iterator` function and passing to it four
+ * arguments: `(accumulator, value, index, collection)`.
+ *
+ * Returns the final return value of the `iterator` function.
+ *
+ * @name foldl
+ * @api public
+ * @param {Function} iterator The function to invoke per iteration.
+ * @param {*} accumulator The initial accumulator value, passed to the first invocation of `iterator`.
+ * @param {Array|Object} collection The collection to iterate over.
+ * @return {*} The return value of the final call to `iterator`.
+ * @example
+ * foldl(function(total, n) {
+ *   return total + n;
+ * }, 0, [1, 2, 3]);
+ * //=> 6
+ *
+ * var phonebook = { bob: '555-111-2345', tim: '655-222-6789', sheila: '655-333-1298' };
+ *
+ * foldl(function(results, phoneNumber) {
+ *  if (phoneNumber[0] === '6') {
+ *    return results.concat(phoneNumber);
+ *  }
+ *  return results;
+ * }, [], phonebook);
+ * // => ['655-222-6789', '655-333-1298']
+ */
+
+var foldl = function foldl(iterator, accumulator, collection) {
+  if (typeof iterator !== 'function') {
+    throw new TypeError('Expected a function but received a ' + typeof iterator);
+  }
+
+  each(function(val, i, collection) {
+    accumulator = iterator(accumulator, val, i, collection);
+  }, collection);
+
+  return accumulator;
+};
+
+/**
+ * Exports.
+ */
+
+module.exports = foldl;
+
+}, {"each":168}],
+168: [function(require, module, exports) {
+'use strict';
+
+/**
+ * Module dependencies.
+ */
+
+var keys = require('keys');
+
+/**
+ * Object.prototype.toString reference.
+ */
+
+var objToString = Object.prototype.toString;
+
+/**
+ * Tests if a value is a number.
+ *
+ * @name isNumber
+ * @api private
+ * @param {*} val The value to test.
+ * @return {boolean} Returns `true` if `val` is a number, otherwise `false`.
+ */
+
+// TODO: Move to library
+var isNumber = function isNumber(val) {
+  var type = typeof val;
+  return type === 'number' || (type === 'object' && objToString.call(val) === '[object Number]');
+};
+
+/**
+ * Tests if a value is an array.
+ *
+ * @name isArray
+ * @api private
+ * @param {*} val The value to test.
+ * @return {boolean} Returns `true` if the value is an array, otherwise `false`.
+ */
+
+// TODO: Move to library
+var isArray = typeof Array.isArray === 'function' ? Array.isArray : function isArray(val) {
+  return objToString.call(val) === '[object Array]';
+};
+
+/**
+ * Tests if a value is array-like. Array-like means the value is not a function and has a numeric
+ * `.length` property.
+ *
+ * @name isArrayLike
+ * @api private
+ * @param {*} val
+ * @return {boolean}
+ */
+
+// TODO: Move to library
+var isArrayLike = function isArrayLike(val) {
+  return val != null && (isArray(val) || (val !== 'function' && isNumber(val.length)));
+};
+
+/**
+ * Internal implementation of `each`. Works on arrays and array-like data structures.
+ *
+ * @name arrayEach
+ * @api private
+ * @param {Function(value, key, collection)} iterator The function to invoke per iteration.
+ * @param {Array} array The array(-like) structure to iterate over.
+ * @return {undefined}
+ */
+
+var arrayEach = function arrayEach(iterator, array) {
+  for (var i = 0; i < array.length; i += 1) {
+    // Break iteration early if `iterator` returns `false`
+    if (iterator(array[i], i, array) === false) {
+      break;
+    }
+  }
+};
+
+/**
+ * Internal implementation of `each`. Works on objects.
+ *
+ * @name baseEach
+ * @api private
+ * @param {Function(value, key, collection)} iterator The function to invoke per iteration.
+ * @param {Object} object The object to iterate over.
+ * @return {undefined}
+ */
+
+var baseEach = function baseEach(iterator, object) {
+  var ks = keys(object);
+
+  for (var i = 0; i < ks.length; i += 1) {
+    // Break iteration early if `iterator` returns `false`
+    if (iterator(object[ks[i]], ks[i], object) === false) {
+      break;
+    }
+  }
+};
+
+/**
+ * Iterate over an input collection, invoking an `iterator` function for each element in the
+ * collection and passing to it three arguments: `(value, index, collection)`. The `iterator`
+ * function can end iteration early by returning `false`.
+ *
+ * @name each
+ * @api public
+ * @param {Function(value, key, collection)} iterator The function to invoke per iteration.
+ * @param {Array|Object|string} collection The collection to iterate over.
+ * @return {undefined} Because `each` is run only for side effects, always returns `undefined`.
+ * @example
+ * var log = console.log.bind(console);
+ *
+ * each(log, ['a', 'b', 'c']);
+ * //-> 'a', 0, ['a', 'b', 'c']
+ * //-> 'b', 1, ['a', 'b', 'c']
+ * //-> 'c', 2, ['a', 'b', 'c']
+ * //=> undefined
+ *
+ * each(log, 'tim');
+ * //-> 't', 2, 'tim'
+ * //-> 'i', 1, 'tim'
+ * //-> 'm', 0, 'tim'
+ * //=> undefined
+ *
+ * // Note: Iteration order not guaranteed across environments
+ * each(log, { name: 'tim', occupation: 'enchanter' });
+ * //-> 'tim', 'name', { name: 'tim', occupation: 'enchanter' }
+ * //-> 'enchanter', 'occupation', { name: 'tim', occupation: 'enchanter' }
+ * //=> undefined
+ */
+
+var each = function each(iterator, collection) {
+  return (isArrayLike(collection) ? arrayEach : baseEach).call(this, iterator, collection);
+};
+
+/**
+ * Exports.
+ */
+
+module.exports = each;
+
+}, {"keys":169}],
+169: [function(require, module, exports) {
+'use strict';
+
+/**
+ * charAt reference.
+ */
+
+var strCharAt = String.prototype.charAt;
+
+/**
+ * Returns the character at a given index.
+ *
+ * @param {string} str
+ * @param {number} index
+ * @return {string|undefined}
+ */
+
+// TODO: Move to a library
+var charAt = function(str, index) {
+  return strCharAt.call(str, index);
+};
+
+/**
+ * hasOwnProperty reference.
+ */
+
+var hop = Object.prototype.hasOwnProperty;
+
+/**
+ * Object.prototype.toString reference.
+ */
+
+var toStr = Object.prototype.toString;
+
+/**
+ * hasOwnProperty, wrapped as a function.
+ *
+ * @name has
+ * @api private
+ * @param {*} context
+ * @param {string|number} prop
+ * @return {boolean}
+ */
+
+// TODO: Move to a library
+var has = function has(context, prop) {
+  return hop.call(context, prop);
+};
+
+/**
+ * Returns true if a value is a string, otherwise false.
+ *
+ * @name isString
+ * @api private
+ * @param {*} val
+ * @return {boolean}
+ */
+
+// TODO: Move to a library
+var isString = function isString(val) {
+  return toStr.call(val) === '[object String]';
+};
+
+/**
+ * Returns true if a value is array-like, otherwise false. Array-like means a
+ * value is not null, undefined, or a function, and has a numeric `length`
+ * property.
+ *
+ * @name isArrayLike
+ * @api private
+ * @param {*} val
+ * @return {boolean}
+ */
+
+// TODO: Move to a library
+var isArrayLike = function isArrayLike(val) {
+  return val != null && (typeof val !== 'function' && typeof val.length === 'number');
+};
+
+
+/**
+ * indexKeys
+ *
+ * @name indexKeys
+ * @api private
+ * @param {} target
+ * @param {} pred
+ * @return {Array}
+ */
+
+var indexKeys = function indexKeys(target, pred) {
+  pred = pred || has;
+  var results = [];
+
+  for (var i = 0, len = target.length; i < len; i += 1) {
+    if (pred(target, i)) {
+      results.push(String(i));
+    }
+  }
+
+  return results;
+};
+
+/**
+ * Returns an array of all the owned
+ *
+ * @name objectKeys
+ * @api private
+ * @param {*} target
+ * @param {Function} pred Predicate function used to include/exclude values from
+ * the resulting array.
+ * @return {Array}
+ */
+
+var objectKeys = function objectKeys(target, pred) {
+  pred = pred || has;
+  var results = [];
+
+
+  for (var key in target) {
+    if (pred(target, key)) {
+      results.push(String(key));
+    }
+  }
+
+  return results;
+};
+
+/**
+ * Creates an array composed of all keys on the input object. Ignores any non-enumerable properties.
+ * More permissive than the native `Object.keys` function (non-objects will not throw errors).
+ *
+ * @name keys
+ * @api public
+ * @category Object
+ * @param {Object} source The value to retrieve keys from.
+ * @return {Array} An array containing all the input `source`'s keys.
+ * @example
+ * keys({ likes: 'avocado', hates: 'pineapple' });
+ * //=> ['likes', 'pineapple'];
+ *
+ * // Ignores non-enumerable properties
+ * var hasHiddenKey = { name: 'Tim' };
+ * Object.defineProperty(hasHiddenKey, 'hidden', {
+ *   value: 'i am not enumerable!',
+ *   enumerable: false
+ * })
+ * keys(hasHiddenKey);
+ * //=> ['name'];
+ *
+ * // Works on arrays
+ * keys(['a', 'b', 'c']);
+ * //=> ['0', '1', '2']
+ *
+ * // Skips unpopulated indices in sparse arrays
+ * var arr = [1];
+ * arr[4] = 4;
+ * keys(arr);
+ * //=> ['0', '4']
+ */
+
+module.exports = function keys(source) {
+  if (source == null) {
+    return [];
+  }
+
+  // IE6-8 compatibility (string)
+  if (isString(source)) {
+    return indexKeys(source, charAt);
+  }
+
+  // IE6-8 compatibility (arguments)
+  if (isArrayLike(source)) {
+    return indexKeys(source, has);
+  }
+
+  return objectKeys(source);
 };
 
 }, {}],
@@ -9464,6 +10694,8 @@ module.exports = toCamelCase;
  */
 
 
+=======
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 function toCamelCase (string) {
   return toSpace(string).replace(/\s(\w)/g, function (matches, letter) {
     return letter.toUpperCase();
@@ -11611,6 +12843,7 @@ Inspectlet.prototype.loaded = function(){
 Inspectlet.prototype.identify = function(identify){
   var traits = identify.traits({ id: 'userid' });
   push('tagSession', traits);
+<<<<<<< HEAD
 };
 
 /**
@@ -11782,6 +13015,184 @@ Intercom.prototype.group = function(group){
   var id = group.groupId();
   if (id) props.id = id;
   window.Intercom('update', { company: props });
+=======
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
+};
+
+/**
+ * Track.
+ *
+ * http://www.inspectlet.com/docs/tags
+ *
+ * @param {Track} track
+ */
+
+Inspectlet.prototype.track = function(track){
+  push('tagSession', track.event());
+};
+
+/**
+ * Page.
+ *
+ * http://www.inspectlet.com/docs/tags
+ *
+ * @param {Track} track
+ */
+
+Inspectlet.prototype.page = function(){
+  push('virtualPage');
+};
+
+<<<<<<< HEAD
+}, {"analytics.js-integration":88,"convert-dates":163,"defaults":157,"obj-case":92,"is-email":154,"load-script":128,"is-empty":122,"alias":162,"each":4,"when":131,"is":91}],
+50: [function(require, module, exports) {
+=======
+}, {"analytics.js-integration":88,"global-queue":158,"alias":162,"clone":95}],
+49: [function(require, module, exports) {
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
+var convertDates = require('convert-dates');
+var defaults = require('defaults');
+var del = require('obj-case').del;
+var isEmail = require('is-email');
+var load = require('load-script');
+var empty = require('is-empty');
+var alias = require('alias');
+var each = require('each');
+var when = require('when');
+var is = require('is');
+
+/**
+ * Expose `Intercom` integration.
+ */
+
+var Intercom = module.exports = integration('Intercom')
+  .assumesPageview()
+  .global('Intercom')
+  .option('activator', '#IntercomDefaultWidget')
+  .option('appId', '')
+  .option('inbox', false)
+  .tag('<script src="https://static.intercomcdn.com/intercom.v1.js">');
+
+/**
+ * Initialize.
+ *
+ * http://docs.intercom.io/
+ * http://docs.intercom.io/#IntercomJS
+ *
+ * @param {Object} page
+ */
+
+Intercom.prototype.initialize = function(page){
+  var self = this;
+  this.load(function(){
+    when(function(){ return self.loaded(); }, self.ready);
+  });
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+Intercom.prototype.loaded = function(){
+  return is.fn(window.Intercom);
+};
+
+/**
+ * Page.
+ *
+ * @param {Page} page
+ */
+
+Intercom.prototype.page = function(page){
+  window.Intercom('update');
+};
+
+/**
+ * Identify.
+ *
+ * http://docs.intercom.io/#IntercomJS
+ *
+ * @param {Identify} identify
+ */
+
+Intercom.prototype.identify = function(identify){
+  var traits = identify.traits({ userId: 'user_id' });
+  var activator = this.options.activator;
+  var opts = identify.options(this.name);
+  var companyCreated = identify.companyCreated();
+  var created = identify.created();
+  var email = identify.email();
+  var name = identify.name();
+  var id = identify.userId();
+  var group = this.analytics.group();
+
+  if (!id && !traits.email) return; // one is required
+
+  traits.app_id = this.options.appId;
+
+  // intercom requires `company` to be an object. default it with group traits
+  // so that we guarantee an `id` is there, since they require it
+  if (null != traits.company && !is.object(traits.company)) delete traits.company;
+  if (traits.company) defaults(traits.company, group.traits());
+
+  // name
+  if (name) traits.name = name;
+
+  // handle dates
+  if (created) {
+    del(traits, 'created');
+    del(traits, 'createdAt');
+    traits.created_at = created;
+  }
+  if (companyCreated) {
+    del(traits.company, 'created');
+    del(traits.company, 'createdAt');
+    traits.company.created_at = companyCreated;
+  }
+
+  // convert dates
+  traits = convertDates(traits, formatDate);
+
+  // handle options
+  if (opts.increments) traits.increments = opts.increments;
+  if (opts.userHash) traits.user_hash = opts.userHash;
+  if (opts.user_hash) traits.user_hash = opts.user_hash;
+
+  // Intercom, will force the widget to appear
+  // if the selector is #IntercomDefaultWidget
+  // so no need to check inbox, just need to check
+  // that the selector isn't #IntercomDefaultWidget.
+  if ('#IntercomDefaultWidget' != activator) {
+    traits.widget = { activator: activator };
+  }
+
+  var method = this._id !== id ? 'boot': 'update';
+  this._id = id; // cache for next time
+
+  window.Intercom(method, traits);
+};
+
+/**
+ * Group.
+ *
+ * @param {Group} group
+ */
+
+Intercom.prototype.group = function(group){
+  var props = group.properties();
+  props = alias(props, { createdAt: 'created' });
+  props = alias(props, { created: 'created_at' });
+  var id = group.groupId();
+  if (id) props.id = id;
+  window.Intercom('update', { company: props });
 };
 
 /**
@@ -11805,15 +13216,28 @@ function formatDate(date) {
   return Math.floor(date / 1000);
 }
 
+<<<<<<< HEAD
+}, {"analytics.js-integration":88,"indexof":116,"is":91}],
+52: [function(require, module, exports) {
+=======
 }, {"analytics.js-integration":88,"convert-dates":163,"defaults":157,"obj-case":92,"is-email":154,"load-script":128,"is-empty":122,"alias":162,"each":4,"when":131,"is":91}],
 50: [function(require, module, exports) {
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 /**
  * Module dependencies.
  */
 
 var integration = require('analytics.js-integration');
+<<<<<<< HEAD
+var push = require('global-queue')('_kmq');
+var Track = require('facade').Track;
+var alias = require('alias');
+var each = require('each');
+var is = require('is');
+=======
 var clone = require('clone');
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 /**
  * Expose `Keen IO` integration.
@@ -11831,6 +13255,92 @@ var Keen = module.exports = integration('Keen IO')
   .option('trackNamedPages', true)
   .option('trackAllPages', false)
   .option('trackCategorizedPages', true)
+<<<<<<< HEAD
+  .option('prefixProperties', true)
+  .tag('library', '<script src="//scripts.kissmetrics.com/{{ apiKey }}.2.js">');
+
+/**
+ * Check if browser is mobile, for kissmetrics.
+ *
+ * http://support.kissmetrics.com/how-tos/browser-detection.html#mobile-vs-non-mobile
+ */
+
+exports.isMobile = navigator.userAgent.match(/Android/i)
+  || navigator.userAgent.match(/BlackBerry/i)
+  || navigator.userAgent.match(/iPhone|iPod/i)
+  || navigator.userAgent.match(/iPad/i)
+  || navigator.userAgent.match(/Opera Mini/i)
+  || navigator.userAgent.match(/IEMobile/i);
+
+/**
+ * Initialize.
+ *
+ * http://support.kissmetrics.com/apis/javascript
+ *
+ * @param {Object} page
+ */
+
+KISSmetrics.prototype.initialize = function(page){
+  var self = this;
+  window._kmq = [];
+  if (exports.isMobile) push('set', { 'Mobile Session': 'Yes' });
+
+  this.load('library', function(){
+    self.trackPage(page);
+    self.ready();
+  });
+};
+
+/**
+ * Loaded?
+ *
+ * @return {Boolean}
+ */
+
+KISSmetrics.prototype.loaded = function(){
+  return is.object(window.KM);
+};
+
+/**
+ * Page.
+ *
+ * @param {Page} page
+ */
+
+KISSmetrics.prototype.page = function(page){
+  if (!window.KM_SKIP_PAGE_VIEW) window.KM.pageView();
+  this.trackPage(page);
+};
+
+/**
+ * Track page.
+ *
+ * @param {Page} page
+ */
+
+KISSmetrics.prototype.trackPage = function(page){
+  var category = page.category();
+  var name = page.fullName();
+  var opts = this.options;
+
+  // named pages
+  if (name && opts.trackNamedPages) {
+    this.track(page.track(name));
+  }
+
+  // categorized pages
+  if (category && opts.trackCategorizedPages) {
+    this.track(page.track(category));
+  }
+};
+
+/**
+ * Identify.
+ *
+ * @param {Identify} identify
+ */
+
+=======
   .tag('<script src="//d26b395fwzu5fz.cloudfront.net/3.0.7/{{ lib }}.min.js">');
 
 /**
@@ -12196,6 +13706,7 @@ KISSmetrics.prototype.trackPage = function(page){
  * @param {Identify} identify
  */
 
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 KISSmetrics.prototype.identify = function(identify){
   var traits = identify.traits();
   var id = identify.userId();
@@ -16824,7 +18335,6 @@ var _analytics = window.analytics;
 var after = require('after');
 var bind = require('bind');
 var callback = require('callback');
-var canonical = require('canonical');
 var clone = require('clone');
 var cookie = require('./cookie');
 var debug = require('debug');
@@ -16837,11 +18347,15 @@ var isEmail = require('is-email');
 var isMeta = require('is-meta');
 var newDate = require('new-date');
 var on = require('event').bind;
+var pageDefaults = require('./pageDefaults');
+var pick = require('pick');
 var prevent = require('prevent');
 var querystring = require('querystring');
+var normalize = require('./normalize');
 var size = require('object').length;
+var keys = require('object').keys;
+var memory = require('./memory');
 var store = require('./store');
-var url = require('url');
 var user = require('./user');
 var Facade = require('facade');
 var Identify = Facade.Identify;
@@ -16857,11 +18371,12 @@ var Page = Facade.Page;
 exports = module.exports = Analytics;
 
 /**
- * Expose `cookie`
+ * Expose storage.
  */
 
 exports.cookie = cookie;
 exports.store = store;
+exports.memory = memory;
 
 /**
  * Initialize a new `Analytics` instance.
@@ -16874,14 +18389,12 @@ function Analytics () {
   this._readied = false;
   this._timeout = 300;
   this._user = user; // BACKWARDS COMPATIBILITY
+  this.log = debug('analytics.js');
   bind.all(this);
 
   var self = this;
   this.on('initialize', function(settings, options){
     if (options.initialPageview) self.page();
-  });
-
-  this.on('initialize', function(){
     self._parseQuery();
   });
 }
@@ -16946,6 +18459,7 @@ Analytics.prototype.initialize = function (settings, options) {
   each(settings, function (name, opts) {
     var Integration = self.Integrations[name];
     var integration = new Integration(clone(opts));
+    self.log('initialize %o - %o', name, opts);
     self.add(integration);
   });
 
@@ -17017,18 +18531,17 @@ Analytics.prototype.identify = function (id, traits, options, fn) {
   if (is.fn(traits)) fn = traits, options = null, traits = null;
   if (is.object(id)) options = traits, traits = id, id = user.id();
 
-
   // clone traits before we manipulate so we don't do anything uncouth, and take
   // from `user` so that we carryover anonymous traits
   user.identify(id, traits);
-  id = user.id();
-  traits = user.traits();
 
-  this._invoke('identify', message(Identify, {
+  var msg = this.normalize({
     options: options,
-    traits: traits,
-    userId: id
-  }));
+    traits: user.traits(),
+    userId: user.id(),
+  });
+
+  this._invoke('identify', new Identify(msg));
 
   // emit
   this.emit('identify', id, traits, options);
@@ -17066,14 +18579,14 @@ Analytics.prototype.group = function (id, traits, options, fn) {
 
   // grab from group again to make sure we're taking from the source
   group.identify(id, traits);
-  id = group.id();
-  traits = group.traits();
 
-  this._invoke('group', message(Group, {
+  var msg = this.normalize({
     options: options,
-    traits: traits,
-    groupId: id
-  }));
+    traits: group.traits(),
+    groupId: group.id()
+  });
+
+  this._invoke('group', new Group(msg));
 
   this.emit('group', id, traits, options);
   this._callback(fn);
@@ -17097,30 +18610,22 @@ Analytics.prototype.track = function (event, properties, options, fn) {
   // figure out if the event is archived.
   var plan = this.options.plan || {};
   var events = plan.track || {};
-  plan = events[event] || {};
 
-  if (plan.archived) {
-    this._callback(fn);
-    return;
-  }
-
-  // default integrations.
-  var ctx = clone(options || {});
-  plan.integrations = plan.integrations || {};
-
-  // if the user's plan has any integrations
-  // merge them to the call's integrations.
-  if (size(plan.integrations)) {
-    var ints = ctx.integrations || ctx.providers;
-    if (ints) defaults(ints, plan.integrations);
-    else ctx.integrations = plan.integrations;
-  }
-
-  this._invoke('track', message(Track, {
+  // normalize
+  var msg = this.normalize({
     properties: properties,
-    options: ctx,
+    options: options,
     event: event
-  }));
+  });
+
+  // plan.
+  if (plan = events[event]) {
+    this.log('plan %o - %o', event, plan);
+    if (false == plan.enabled) return this._callback(fn);
+    defaults(msg.integrations, plan.integrations || {});
+  }
+
+  this._invoke('track', new Track(msg));
 
   this.emit('track', event, properties, options);
   this._callback(fn);
@@ -17150,7 +18655,7 @@ Analytics.prototype.trackLink = function (links, event, properties) {
     on(el, 'click', function (e) {
       var ev = is.fn(event) ? event(el) : event;
       var props = is.fn(properties) ? properties(el) : properties;
-      var href = el.getAttribute('href') 
+      var href = el.getAttribute('href')
         || el.getAttributeNS('http://www.w3.org/1999/xlink', 'href')
         || el.getAttribute('xlink:href');
 
@@ -17233,26 +18738,33 @@ Analytics.prototype.page = function (category, name, properties, options, fn) {
   if (is.object(name)) options = properties, properties = name, name = null;
   if (is.string(category) && !is.string(name)) name = category, category = null;
 
-  var defs = {
-    path: canonicalPath(),
-    referrer: document.referrer,
-    title: document.title,
-    search: location.search
-  };
-
-  if (name) defs.name = name;
-  if (category) defs.category = category;
-
   properties = clone(properties) || {};
-  defaults(properties, defs);
-  properties.url = properties.url || canonicalUrl(properties.search);
+  if (name) properties.name = name;
+  if (category) properties.category = category;
 
-  this._invoke('page', message(Page, {
+  // Ensure properties has baseline spec properties.
+  // TODO: Eventually move these entirely to `options.context.page`
+  var defs = pageDefaults();
+  defaults(properties, defs);
+
+  // Mirror user overrides to `options.context.page` (but exclude custom properties)
+  // (Any page defaults get applied in `this.normalize` for consistency.)
+  // Weird, yeah--moving special props to `context.page` will fix this in the long term.
+  var overrides = pick(keys(defs), properties);
+  if (!is.empty(overrides)) {
+    options = options || {};
+    options.context = options.context || {};
+    options.context.page = overrides;
+  }
+
+  var msg = this.normalize({
     properties: properties,
     category: category,
     options: options,
     name: name
-  }));
+  });
+
+  this._invoke('page', new Page(msg));
 
   this.emit('page', category, name, properties, options);
   this._callback(fn);
@@ -17290,11 +18802,13 @@ Analytics.prototype.alias = function (to, from, options, fn) {
   if (is.fn(from)) fn = from, options = null, from = null;
   if (is.object(from)) options = from, from = null;
 
-  this._invoke('alias', message(Alias, {
+  var msg = this.normalize({
     options: options,
-    from: from,
-    to: to
-  }));
+    previousId: from,
+    userId: to
+  });
+
+  this._invoke('alias', new Alias(msg));
 
   this.emit('alias', to, from, options);
   this._callback(fn);
@@ -17434,6 +18948,24 @@ Analytics.prototype._parseQuery = function () {
 };
 
 /**
+ * Normalize the given `msg`.
+ *
+ * @param {Object} msg
+ * @return {Object}
+ */
+
+Analytics.prototype.normalize = function(msg){
+  msg = normalize(msg, keys(this._integrations));
+  if (msg.anonymousId) user.anonymousId(msg.anonymousId);
+  msg.anonymousId = user.anonymousId();
+
+  // Ensure all outgoing requests include page data in their contexts.
+  msg.context.page = defaults(msg.context.page || {}, pageDefaults());
+
+  return msg;
+};
+
+/**
  * No conflict support.
  */
 
@@ -17442,83 +18974,12 @@ Analytics.prototype.noConflict = function(){
   return this;
 };
 
-/**
- * Return the canonical path for the page.
- *
- * @return {String}
- */
 
-function canonicalPath () {
-  var canon = canonical();
-  if (!canon) return window.location.pathname;
-  var parsed = url.parse(canon);
-  return parsed.pathname;
-}
-
-/**
- * Return the canonical URL for the page concat the given `search`
- * and strip the hash.
- *
- * @param {String} search
- * @return {String}
- */
-
-function canonicalUrl (search) {
-  var canon = canonical();
-  if (canon) return ~canon.indexOf('?') ? canon : canon + search;
-  var url = window.location.href;
-  var i = url.indexOf('#');
-  return -1 == i ? url : url.slice(0, i);
-}
-
-/**
- * Create a new message with `Type` and `msg`
- *
- * the function will make sure that the `msg.options`
- * is merged to `msg` and deletes `msg.options` if it
- * has `.context / .timestamp / .integrations / .anonymousId`.
- *
- * Example:
- *
- *      message(Identify, {
- *        options: { timestamp: Date, context: Object, integrations: Object },
- *        traits: { trait: true },
- *        userId: 123
- *      });
- *
- *      // =>
- *
- *      {
- *        userId: 123,
- *        context: Object,
- *        timestamp: Date,
- *        integrations: Object
- *        traits: { trait: true }
- *      }
- *
- * @param {Function} Type
- * @param {Object} msg
- * @return {Facade}
- */
-
-function message(Type, msg){
-  var ctx = clone(msg.options || {});
-
-  if (ctx.timestamp || ctx.integrations || ctx.context || ctx.anonymousId) {
-    msg = defaults(ctx, msg);
-    delete msg.options;
-  }
-
-  if (ctx.anonymousId) {
-    user.anonymousId(ctx.anonymousId);
-  }
-
-  msg.anonymousId = user.anonymousId();
-
-  return new Type(msg);
-}
-
+<<<<<<< HEAD
 }, {"after":111,"bind":194,"callback":94,"canonical":171,"clone":95,"./cookie":195,"debug":190,"defaults":97,"each":4,"emitter":110,"./group":196,"is":91,"is-email":154,"is-meta":197,"new-date":146,"event":198,"prevent":199,"querystring":200,"object":170,"./store":201,"url":173,"./user":202,"facade":132}],
+=======
+}, {"after":111,"bind":194,"callback":94,"clone":95,"./cookie":195,"debug":190,"defaults":97,"each":4,"emitter":110,"./group":196,"is":91,"is-email":154,"is-meta":197,"new-date":146,"event":198,"./pageDefaults":199,"pick":200,"prevent":201,"querystring":202,"./normalize":203,"object":170,"./memory":204,"./store":205,"./user":206,"facade":132}],
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 194: [function(require, module, exports) {
 
 try {
@@ -17751,11 +19212,18 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
+<<<<<<< HEAD
 }, {"debug":190,"./entity":203,"inherit":204,"bind":194}],
 203: [function(require, module, exports) {
+=======
+}, {"debug":190,"./entity":207,"inherit":208,"bind":194}],
+207: [function(require, module, exports) {
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
+var debug = require('debug')('analytics:entity');
 var traverse = require('isodate-traverse');
 var defaults = require('defaults');
+var memory = require('./memory');
 var cookie = require('./cookie');
 var store = require('./store');
 var extend = require('extend');
@@ -17776,26 +19244,46 @@ module.exports = Entity;
  */
 
 function Entity(options){
-  this.protocol = window.location.protocol;
   this.options(options);
+  this.initialize();
 }
 
 /**
+ * Initialize picks the storage.
+ *
+ * Checks to see if cookies can be set
+ * otherwise fallsback to localStorage.
+ */
+
+Entity.prototype.initialize = function(){
+  cookie.set('ajs:cookies', true);
+
+  // cookies are enabled.
+  if (cookie.get('ajs:cookies')) {
+    cookie.remove('ajs:cookies');
+    this._storage = cookie;
+    return;
+  }
+
+  // localStorage is enabled.
+  if (store.enabled) {
+    this._storage = store;
+    return;
+  }
+
+  // fallback to memory storage.
+  debug('warning using memory store both cookies and localStorage are disabled');
+  this._storage = memory;
+};
+
+/**
  * Get the storage.
- *
- * When .protocol is `file:` or `chrome-extension:`
- * the method will return the localstorage (store)
- * otherwise it will return the cookie.
- *
- * @return {Object}
  */
 
 Entity.prototype.storage = function(){
-  return 'file:' == this.protocol
-    || 'chrome-extension:' == this.protocol
-    ? store
-    : cookie;
+  return this._storage;
 };
+
 
 /**
  * Get or set storage `options`.
@@ -17835,9 +19323,8 @@ Entity.prototype.id = function (id) {
  */
 
 Entity.prototype._getId = function () {
-  var storage = this.storage();
   var ret = this._options.persist
-    ? storage.get(this._options.cookie.key)
+    ? this.storage().get(this._options.cookie.key)
     : this._id;
   return ret === undefined ? null : ret;
 };
@@ -17850,9 +19337,8 @@ Entity.prototype._getId = function () {
  */
 
 Entity.prototype._setId = function (id) {
-  var storage = this.storage();
   if (this._options.persist) {
-    storage.set(this._options.cookie.key, id);
+    this.storage().set(this._options.cookie.key, id);
   } else {
     this._id = id;
   }
@@ -17972,8 +19458,78 @@ Entity.prototype.load = function () {
 };
 
 
+<<<<<<< HEAD
 }, {"isodate-traverse":142,"defaults":97,"./cookie":195,"./store":201,"extend":130,"clone":95}],
 201: [function(require, module, exports) {
+=======
+}, {"debug":190,"isodate-traverse":142,"defaults":97,"./memory":204,"./cookie":195,"./store":205,"extend":130,"clone":95}],
+204: [function(require, module, exports) {
+
+/**
+ * Module Dependencies.
+ */
+
+var clone = require('clone');
+var bind = require('bind');
+
+/**
+ * HOP.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Expose `Memory`
+ */
+
+module.exports = bind.all(new Memory);
+
+/**
+ * Initialize `Memory` store
+ */
+
+function Memory(){
+  this.store = {};
+}
+
+/**
+ * Set a `key` and `value`.
+ *
+ * @param {String} key
+ * @param {Mixed} value
+ * @return {Boolean}
+ */
+
+Memory.prototype.set = function(key, value){
+  this.store[key] = clone(value);
+  return true;
+};
+
+/**
+ * Get a `key`.
+ *
+ * @param {String} key
+ */
+
+Memory.prototype.get = function(key){
+  if (!has.call(this.store, key)) return;
+  return clone(this.store[key]);
+};
+
+/**
+ * Remove a `key`.
+ *
+ * @param {String} key
+ * @return {Boolean}
+ */
+
+Memory.prototype.remove = function(key){
+  delete this.store[key];
+  return true;
+};
+}, {"clone":95,"bind":194}],
+205: [function(require, module, exports) {
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 var bind = require('bind');
 var defaults = require('defaults');
@@ -18060,8 +19616,13 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
+<<<<<<< HEAD
 }, {"bind":194,"defaults":97,"store.js":205}],
 205: [function(require, module, exports) {
+=======
+}, {"bind":194,"defaults":97,"store.js":209}],
+209: [function(require, module, exports) {
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -18214,7 +19775,11 @@ store.enabled = !store.disabled
 
 module.exports = store;
 }, {"json":164}],
+<<<<<<< HEAD
 204: [function(require, module, exports) {
+=======
+208: [function(require, module, exports) {
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -18283,6 +19848,148 @@ exports.unbind = function(el, type, fn, capture){
 
 }, {}],
 199: [function(require, module, exports) {
+<<<<<<< HEAD
+=======
+
+/**
+ * Module dependencies.
+ */
+
+var canonical = require('canonical');
+var url = require('url');
+
+/**
+ * Return a default `options.context.page` object.
+ *
+ * https://segment.com/docs/spec/page/#properties
+ *
+ * @return {Object}
+ */
+
+function pageDefaults() {
+  return {
+    path: canonicalPath(),
+    referrer: document.referrer,
+    search: location.search,
+    title: document.title,
+    url: canonicalUrl(location.search)
+  };
+}
+
+/**
+ * Return the canonical path for the page.
+ *
+ * @return {String}
+ */
+
+function canonicalPath () {
+  var canon = canonical();
+  if (!canon) return window.location.pathname;
+  var parsed = url.parse(canon);
+  return parsed.pathname;
+}
+
+/**
+ * Return the canonical URL for the page concat the given `search`
+ * and strip the hash.
+ *
+ * @param {String} search
+ * @return {String}
+ */
+
+function canonicalUrl (search) {
+  var canon = canonical();
+  if (canon) return ~canon.indexOf('?') ? canon : canon + search;
+  var url = window.location.href;
+  var i = url.indexOf('#');
+  return -1 === i ? url : url.slice(0, i);
+}
+
+/**
+ * Exports.
+ */
+
+module.exports = pageDefaults;
+
+}, {"canonical":171,"url":173}],
+200: [function(require, module, exports) {
+'use strict';
+
+var objToString = Object.prototype.toString;
+
+// TODO: Move to lib
+var existy = function(val) {
+  return val != null;
+};
+
+// TODO: Move to lib
+var isArray = function(val) {
+  return objToString.call(val) === '[object Array]';
+};
+
+// TODO: Move to lib
+var isString = function(val) {
+   return typeof val === 'string' || objToString.call(val) === '[object String]';
+};
+
+// TODO: Move to lib
+var isObject = function(val) {
+  return val != null && typeof val === 'object';
+};
+
+/**
+ * Returns a copy of the new `object` containing only the specified properties.
+ *
+ * @name pick
+ * @api public
+ * @category Object
+ * @see {@link omit}
+ * @param {Array.<string>|string} props The property or properties to keep.
+ * @param {Object} object The object to iterate over.
+ * @return {Object} A new object containing only the specified properties from `object`.
+ * @example
+ * var person = { name: 'Tim', occupation: 'enchanter', fears: 'rabbits' };
+ *
+ * pick('name', person);
+ * //=> { name: 'Tim' }
+ *
+ * pick(['name', 'fears'], person);
+ * //=> { name: 'Tim', fears: 'rabbits' }
+ */
+
+var pick = function pick(props, object) {
+  if (!existy(object) || !isObject(object)) {
+    return {};
+  }
+
+  if (isString(props)) {
+    props = [props];
+  }
+
+  if (!isArray(props)) {
+    props = [];
+  }
+
+  var result = {};
+
+  for (var i = 0; i < props.length; i += 1) {
+    if (isString(props[i]) && props[i] in object) {
+      result[props[i]] = object[props[i]];
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Exports.
+ */
+
+module.exports = pick;
+
+}, {}],
+201: [function(require, module, exports) {
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 /**
  * prevent default on the given `e`.
@@ -18305,7 +20012,11 @@ module.exports = function(e){
 };
 
 }, {}],
+<<<<<<< HEAD
 200: [function(require, module, exports) {
+=======
+202: [function(require, module, exports) {
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 /**
  * Module dependencies.
@@ -18381,7 +20092,131 @@ exports.stringify = function(obj){
 };
 
 }, {"trim":126,"type":7}],
+<<<<<<< HEAD
 202: [function(require, module, exports) {
+=======
+203: [function(require, module, exports) {
+
+/**
+ * Module Dependencies.
+ */
+
+var debug = require('debug')('analytics.js:normalize');
+var indexof = require('component/indexof');
+var defaults = require('defaults');
+var map = require('component/map');
+var each = require('each');
+var is = require('is');
+
+/**
+ * HOP.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Expose `normalize`
+ */
+
+module.exports = normalize;
+
+/**
+ * Toplevel properties.
+ */
+
+var toplevel = [
+  'integrations',
+  'anonymousId',
+  'timestamp',
+  'context'
+];
+
+/**
+ * Normalize `msg` based on integrations `list`.
+ *
+ * @param {Object} msg
+ * @param {Array} list
+ * @return {Function}
+ */
+
+function normalize(msg, list){
+  var lower = map(list, function(s){ return s.toLowerCase(); });
+  var opts = msg.options || {};
+  var integrations = opts.integrations || {};
+  var providers = opts.providers || {};
+  var context = opts.context || {};
+  var ret = {};
+  debug('<-', msg);
+
+  // integrations.
+  each(opts, function(key, value){
+    if (!integration(key)) return;
+    if (!has.call(integrations, key)) integrations[key] = value;
+    delete opts[key];
+  });
+
+  // providers.
+  delete opts.providers;
+  each(providers, function(key, value){
+    if (!integration(key)) return;
+    if (is.object(integrations[key])) return;
+    if (has.call(integrations, key) && 'boolean' == typeof providers[key]) return;
+    integrations[key] = value;
+  });
+
+  // move all toplevel options to msg
+  // and the rest to context.
+  each(opts, function(key){
+    if (~indexof(toplevel, key)) {
+      ret[key] = opts[key];
+    } else {
+      context[key] = opts[key];
+    }
+  });
+
+  // cleanup
+  delete msg.options;
+  ret.integrations = integrations;
+  ret.context = context;
+  ret = defaults(ret, msg);
+  debug('->', ret);
+  return ret;
+
+  function integration(name){
+    return !! (~indexof(list, name)
+      || 'all' == name.toLowerCase()
+      || ~indexof(lower, name.toLowerCase()));
+  }
+}
+}, {"debug":190,"component/indexof":116,"defaults":97,"component/map":210,"each":4,"is":91}],
+210: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var toFunction = require('to-function');
+
+/**
+ * Map the given `arr` with callback `fn(val, i)`.
+ *
+ * @param {Array} arr
+ * @param {Function} fn
+ * @return {Array}
+ * @api public
+ */
+
+module.exports = function(arr, fn){
+  var ret = [];
+  fn = toFunction(fn);
+  for (var i = 0; i < arr.length; ++i) {
+    ret.push(fn(arr[i], i));
+  }
+  return ret;
+};
+}, {"to-function":174}],
+206: [function(require, module, exports) {
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 
 var debug = require('debug')('analytics:user');
 var Entity = require('./entity');
@@ -18550,11 +20385,15 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
+<<<<<<< HEAD
 }, {"debug":190,"./entity":203,"inherit":204,"bind":194,"./cookie":195,"uuid":184,"cookie":183}],
+=======
+}, {"debug":190,"./entity":207,"inherit":208,"bind":194,"./cookie":195,"uuid":184,"cookie":183}],
+>>>>>>> a2c50e504854136f15434dc1b8d31e0847d5b85f
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.6.2",
+  "version": "2.8.7",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

@@ -1,4 +1,135 @@
 
+2.8.8 / 2015-04-16
+==================
+
+  * Updating analytics.js-integrations
+  * Updating analytics.js-integrations
+
+2.8.7 / 2015-04-09
+==================
+
+  * Build updated
+  * adding pre-release hook (and make targets for hooks)
+
+2.8.6 / 2015-04-09
+==================
+
+  * Build updated
+
+2.8.5 / 2015-04-09
+==================
+
+  * Build updated
+
+2.8.4 / 2015-04-02
+==================
+
+  * Build updated
+
+2.8.3 / 2015-03-31
+==================
+
+  * Build updated
+
+2.8.2 / 2015-03-24
+==================
+
+  * Build updated
+
+2.8.1 / 2015-03-20
+==================
+
+  * Build updated
+  * adding a build phony target
+
+2.8.0 / 2015-03-07
+==================
+
+  * group: fix typo
+  * entity: add debug warning for memory store
+  * test: add fallback to memory tests
+  * entity: fallback to memory
+  * add memory store
+  * entity: fallback to localstorage when cookies are disabled
+  * tests: add localstorage fallback tests
+  * dist: rebuild
+  
+2.7.1 / 2015-03-05
+==================
+
+  * Updating analytics.js-integrations
+
+2.7.0 / 2015-03-05
+==================
+
+  * Attach page metadata to all calls as `context.page`
+
+2.6.13 / 2015-03-04
+===================
+
+  * normalize: remove trailing comma
+  * dist: rebuild to make tests pass
+  * normalize: remove redundant keys from toplevel
+
+2.6.12 / 2015-03-03
+===================
+
+  * Release 2.6.11
+  * normalize: keep traits in options
+
+2.6.11 / 2015-02-28
+==================
+
+  * normalize: keep traits in options
+
+2.6.10 / 2015-02-25
+===================
+
+  * Updating analytics.js-integrations
+
+2.6.9 / 2015-02-25
+==================
+
+  * Updating analytics.js-integrations
+
+2.6.8 / 2015-02-25
+==================
+
+  * Updating analytics.js-integrations
+
+2.6.7 / 2015-02-24
+==================
+
+  * Updating analytics.js-integrations
+  * removed duplicate .on('initialize') from analytics constructor
+
+2.6.6 / 2015-02-23
+==================
+
+  * update integrations
+
+
+2.6.5 / 2015-02-19
+==================
+
+  * analytics: less verbose logging
+  * analytics.js: cleanup plan
+  * analytics.js: add debugs
+  * normalize: dont clobber and add tests
+  * analytics: use normalize removing message()
+  * add normalize.js
+
+
+2.6.4 / 2015-02-19
+==================
+
+  * Updating analytics.js-integrations
+
+2.6.3 / 2015-02-17
+==================
+
+  * plan: .archived -> .enabled
+
 2.6.1 / 2015-02-12
 ==================
 

@@ -8,15 +8,17 @@ describe('user', function () {
   var equal = require('equals');
   var json = require('json');
   var store = Analytics.store;
+  var memory = Analytics.memory;
   var user = analytics.user();
   var rawCookie = require('cookie');
+  var sinon = require('sinon');
   var User = user.User;
 
   var cookieKey = user._options.cookie.key;
   var localStorageKey = user._options.localStorage.key;
 
-  before(function () {
-    assert.equal(location.protocol, user.protocol);
+  beforeEach(function () {
+    user = new User
     user.reset();
   });
 
@@ -28,7 +30,6 @@ describe('user', function () {
     store.remove('_sio');
     cookie.remove('_sio');
     rawCookie('_sio', null);
-    user.protocol = location.protocol;
   });
 
   describe('()', function(){
@@ -67,10 +68,15 @@ describe('user', function () {
   })
 
   describe('#id', function () {
-    describe('when file:', function(){
+    describe('when cookies are disabled', function(){
       beforeEach(function(){
-        user.protocol = 'file:';
+        sinon.stub(cookie, 'get', function(){});
+        user = new User;
       });
+
+      afterEach(function(){
+        cookie.get.restore();
+      })
 
       it('should get an id from the store', function () {
         store.set(cookieKey, 'id');
@@ -123,13 +129,20 @@ describe('user', function () {
       });
     });
 
-    describe('when chrome-extension:', function(){
+    describe('when cookies and localStorage are disabled', function(){
       beforeEach(function(){
-        user.protocol = 'chrome-extension:';
+        sinon.stub(cookie, 'get', function(){});
+        store.enabled = false;
+        user = new User;
       });
 
-      it('should get an id from the store', function () {
-        store.set(cookieKey, 'id');
+      afterEach(function(){
+        store.enabled = true;
+        cookie.get.restore();
+      })
+
+      it('should get an id from the memory', function () {
+        memory.set(cookieKey, 'id');
         assert('id' == user.id());
       });
 
@@ -139,9 +152,9 @@ describe('user', function () {
         assert('id' == user.id());
       });
 
-      it('should set an id to the store', function () {
+      it('should set an id to the memory', function () {
         user.id('id');
-        assert('id' === store.get(cookieKey));
+        assert('id' === memory.get(cookieKey));
       });
 
       it('should set the id when not persisting', function () {
@@ -169,9 +182,17 @@ describe('user', function () {
         assert.notEqual(prev, user.anonymousId());
         assert.equal(36, user.anonymousId().length);
       });
+
+      it('should not reset anonymousId if the user id changed to null', function(){
+        var prev = user.anonymousId();
+        user.id('foo');
+        user.id(null);
+        assert.equal(prev, user.anonymousId());
+        assert.equal(36, user.anonymousId().length);
+      });
     });
 
-    describe('when http:', function(){
+    describe('when cookies are enabled', function(){
       it('should get an id from the cookie', function () {
         cookie.set(cookieKey, 'id');
         assert('id' == user.id());
@@ -224,9 +245,14 @@ describe('user', function () {
       user.storage = storage;
     });
 
-    describe('when file:', function(){
+    describe('when cookies are disabled', function(){
       beforeEach(function(){
-        user.protocol = 'file:';
+        sinon.stub(cookie, 'get', function(){});
+        user = new User;
+      });
+
+      afterEach(function(){
+        cookie.get.restore();
       });
 
       it('should get an id from the store', function () {
@@ -245,19 +271,26 @@ describe('user', function () {
       });
     });
 
-    describe('when chrome-extension:', function(){
+    describe('when cookies and localStorage are disabled', function(){
       beforeEach(function(){
-        user.protocol = 'chrome-extension:';
+        sinon.stub(cookie, 'get', function(){});
+        store.enabled = false;
+        user = new User;
       });
 
-      it('should get an id from the store', function () {
-        store.set('ajs_anonymous_id', 'anon-id');
+      afterEach(function(){
+        store.enabled = true;
+        cookie.get.restore();
+      });
+
+      it('should get an id from the memory', function () {
+        memory.set('ajs_anonymous_id', 'anon-id');
         assert('anon-id' == user.anonymousId());
       });
 
-      it('should set an id to the store', function () {
+      it('should set an id to the memory', function () {
         user.anonymousId('anon-id');
-        assert('anon-id' === store.get('ajs_anonymous_id'));
+        assert('anon-id' === memory.get('ajs_anonymous_id'));
       });
 
       it('should return anonymousId using the store', function(){
@@ -266,7 +299,7 @@ describe('user', function () {
       });
     });
 
-    describe('when http:', function(){
+    describe('when cookies are enabled', function(){
       it('should get an id from the cookie', function () {
         cookie.set('ajs_anonymous_id', 'anon-id');
         assert('anon-id' == user.anonymousId());

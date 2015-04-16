@@ -8,9 +8,11 @@ describe('Analytics', function () {
   var bind = require('event').bind;
   var cookie = Analytics.cookie;
   var equal = require('equals');
+  var extend = require('extend');
   var group = analytics.group();
   var is = require('is');
   var jQuery = require('jquery');
+  var pageDefaults = require('../lib/pageDefaults');
   var sinon = require('sinon');
   var store = Analytics.store;
   var tick = require('next-tick');
@@ -24,6 +26,7 @@ describe('Analytics', function () {
   var Page = Facade.Page;
 
   var analytics;
+  var contextPage;
   var Test;
   var settings;
 
@@ -33,6 +36,8 @@ describe('Analytics', function () {
         key: 'key'
       }
     };
+
+    contextPage = pageDefaults();
   });
 
   beforeEach(function () {
@@ -406,17 +411,6 @@ describe('Analytics', function () {
       el.parentNode.removeChild(el);
     });
 
-    it('should append querystring to canonical url', function(){
-      var el = document.createElement('link');
-      el.rel = 'canonical';
-      el.href = 'baz.com';
-      head.appendChild(el);
-      analytics.page({ search: '?querystring' });
-      var page = analytics._invoke.args[0][1];
-      assert('baz.com?querystring' == page.properties().url);
-      el.parentNode.removeChild(el);
-    })
-
     it('should accept (category, name, properties, options, callback)', function (done) {
       defaults.category = 'category';
       defaults.name = 'name';
@@ -538,14 +532,27 @@ describe('Analytics', function () {
       assert.equal('id', page.obj.anonymousId);
     });
 
+    it('should include context.page', function(){
+      analytics.page();
+      var page = analytics._invoke.args[0][1];
+      assert.deepEqual(page.context(), { page: defaults });
+    });
+
+    it('should accept context.traits', function(){
+      analytics.page({ prop: true }, { traits: { trait: true } });
+      var page = analytics._invoke.args[0][1];
+      assert.deepEqual(page.context(), {
+        page: defaults,
+        traits: { trait: true }
+      });
+    });
+
     it('should emit page', function (done) {
-      defaults.category = 'category';
-      defaults.name = 'name';
       analytics.once('page', function (category, name, props, opts) {
         assert('category' === category);
         assert('name' === name);
-        assert(equal(opts, {}));
-        assert(equal(props, defaults));
+        assert.deepEqual(opts, { context: { page: defaults } });
+        assert.deepEqual(props, extend(defaults, { category: 'category', name: 'name' }));
         done();
       });
       analytics.page('category', 'name', {}, {});
@@ -554,6 +561,7 @@ describe('Analytics', function () {
 
   describe('#pageview', function () {
     beforeEach(function () {
+      analytics.initialize();
       sinon.spy(analytics, 'page');
     });
 
@@ -745,6 +753,22 @@ describe('Analytics', function () {
       var identify = analytics._invoke.args[0][1];
       assert.deepEqual(app, identify.obj.context.app);
     });
+
+    it('should include context.page', function(){
+      analytics.identify(1);
+      var identify = analytics._invoke.args[0][1];
+      assert.deepEqual(identify.context(), { page: contextPage });
+    });
+
+    it('should accept context.traits', function(){
+      analytics.identify(1, { trait: 1 }, { traits: { trait: true } });
+      var identify = analytics._invoke.args[0][1];
+      assert.deepEqual(identify.traits(), { trait: 1, id: 1 });
+      assert.deepEqual(identify.context(), {
+        page: contextPage,
+        traits: { trait: true }
+      });
+    });
   });
 
   describe('#user', function () {
@@ -909,6 +933,22 @@ describe('Analytics', function () {
       var group = analytics._invoke.args[0][1];
       assert.deepEqual(app, group.obj.context.app);
     });
+
+    it('should include context.page', function(){
+      analytics.group(1);
+      var group = analytics._invoke.args[0][1];
+      assert.deepEqual(group.context(), { page: contextPage });
+    });
+
+    it('should accept context.traits', function(){
+      analytics.group(1, { trait: 1 }, { traits: { trait: true } });
+      var group = analytics._invoke.args[0][1];
+      assert.deepEqual(group.traits(), { trait: 1, id: 1 });
+      assert.deepEqual(group.context(), {
+        page: contextPage,
+        traits: { trait: true }
+      });
+    });
   });
 
   describe('#track', function () {
@@ -1007,30 +1047,30 @@ describe('Analytics', function () {
       assert.deepEqual(app, track.obj.context.app);
     });
 
-    it('should not call #_invoke if the event is archived', function(){
+    it('should not call #_invoke if the event is disabled', function(){
       analytics.options.plan = {
         track: {
-          event: { archived: true }
+          event: { enabled: false }
         }
       };
       analytics.track('event');
       assert(!analytics._invoke.called);
     });
 
-    it('should call #_invoke if the event is not archived', function(){
+    it('should call #_invoke if the event is enabled', function(){
       analytics.options.plan = {
         track: {
-          event: { archived: false }
+          event: { enabled: true }
         }
       };
       analytics.track('event');
       assert(analytics._invoke.called);
     });
 
-    it('should call the callback even if the event is archived', function(done){
+    it('should call the callback even if the event is disabled', function(done){
       analytics.options.plan = {
         track: {
-          event: { archived: true }
+          event: { enabled: false }
         }
       };
       assert(!analytics._invoke.called);
@@ -1059,7 +1099,23 @@ describe('Analytics', function () {
       analytics.track('event', {}, { campaign: {} });
       var msg = analytics._invoke.args[0][1];
       assert.deepEqual({}, msg.proxy('context.campaign'));
-    })
+    });
+
+    it('should include context.page', function(){
+      analytics.track('event');
+      var track = analytics._invoke.args[0][1];
+      assert.deepEqual(track.context(), { page: contextPage });
+    });
+
+    it('should accept context.traits', function(){
+      analytics.track('event', { prop: 1 }, { traits: { trait: true } });
+      var track = analytics._invoke.args[0][1];
+      assert.deepEqual(track.properties(), { prop: 1 });
+      assert.deepEqual(track.context(), {
+        page: contextPage,
+        traits: { trait: true }
+      });
+    });
   });
 
   describe('#trackLink', function () {
@@ -1348,6 +1404,12 @@ describe('Analytics', function () {
         assert('object' == typeof alias.options());
         done();
       });
+    });
+
+    it('should include context.page', function(){
+      analytics.alias();
+      var alias = analytics._invoke.args[0][1];
+      assert.deepEqual(alias.context(), { page: contextPage });
     });
 
     it('should emit alias', function (done) {

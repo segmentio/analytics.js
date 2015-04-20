@@ -12430,6 +12430,7 @@ var clone = require('clone');
 var each = require('each');
 var Identify = require('facade').Identify;
 var when = require('when');
+var tick = require('next-tick');
 
 /**
  * Expose `LiveChat` integration.
@@ -12443,7 +12444,17 @@ var LiveChat = module.exports = integration('LiveChat')
   .global('LC_Invite')
   .option('group', 0)
   .option('license', '')
+  .option('listen', false)
   .tag('<script src="//cdn.livechatinc.com/tracking.js">');
+
+/**
+ * The context for this integration.
+ */
+
+var integration = {
+  name: 'livechat',
+  version: '1.0.0'
+};
 
 /**
  * Initialize.
@@ -12466,11 +12477,16 @@ LiveChat.prototype.initialize = function(page){
     name: identify.name(),
     email: identify.email()
   };
+  // listen is not an option we need from clone
+  delete window.__lc.listen;
 
   this.load(function(){
     when(function(){
       return self.loaded();
-    }, self.ready);
+    }, function(){
+      if (self.options.listen) self.attachListeners();
+      tick(self.ready);
+    });
   });
 };
 
@@ -12482,6 +12498,40 @@ LiveChat.prototype.initialize = function(page){
 
 LiveChat.prototype.loaded = function(){
   return !!(window.LC_API && window.LC_Invite);
+};
+
+/**
+ * Listen for chat events.
+ */
+
+LiveChat.prototype.attachListeners = function(){
+  var self = this;
+  window.LC_API = window.LC_API || {};
+  window.LC_API.on_chat_started = function(data){
+    self.analytics.track(
+      'Live Chat Conversation Started',
+      { agentName: data.agent_name },
+      { context: { integration: integration }
+    });
+  };
+  window.LC_API.on_message = function(data){
+    if (data.user_type === 'visitor') {
+      self.analytics.track(
+        'Live Chat Message Sent',
+        {},
+        { context: { integration: integration }
+      });
+    } else {
+      self.analytics.track(
+        'Live Chat Message Received',
+        { agentName: data.agent_name, agentUsername: data.agent_login },
+        { context: { integration: integration }
+      });
+    }
+  };
+  window.LC_API.on_chat_ended = function(){
+    self.analytics.track('Live Chat Conversation Ended');
+  };
 };
 
 /**
@@ -12510,7 +12560,7 @@ function convert(traits){
   return arr;
 }
 
-}, {"analytics.js-integration":88,"clone":95,"each":4,"facade":132,"when":131}],
+}, {"analytics.js-integration":88,"clone":95,"each":4,"facade":132,"when":131,"next-tick":103}],
 55: [function(require, module, exports) {
 
 /**
@@ -13313,7 +13363,17 @@ var Olark = module.exports = integration('Olark')
   .option('page', true)
   .option('siteId', '')
   .option('groupId', '')
+  .option('listen', false)
   .option('track', false);
+
+/**
+ * The context for this integration.
+ */
+
+var integration = {
+  name: 'olark',
+  version: '1.0.0'
+};
 
 /**
  * Initialize.
@@ -13337,6 +13397,9 @@ Olark.prototype.initialize = function(page){
   // keep track of the widget's open state
   api('box.onExpand', function(){ self._open = true; });
   api('box.onShrink', function(){ self._open = false; });
+
+  // record events
+  if (this.options.listen) this.attachListeners();
 };
 
 /**
@@ -13347,6 +13410,38 @@ Olark.prototype.initialize = function(page){
 
 Olark.prototype.loaded = function(){
   return !! window.olark;
+};
+
+/**
+ * Listen for events.
+ */
+
+Olark.prototype.attachListeners = function(){
+  var self = this;
+
+  api('chat.onBeginConversation', function(){
+    self.analytics.track(
+      'Live Chat Conversation Started',
+      {},
+      { context: { integration: integration }}
+    );
+  });
+
+  api('chat.onMessageToOperator', function(event){
+    self.analytics.track(
+      'Live Chat Message Sent',
+      {},
+      { context: { integration: integration }}
+    );
+  });
+
+  api('chat.onMessageToVisitor', function(event){
+    self.analytics.track(
+      'Live Chat Message Received',
+      {},
+      { context: { integration: integration }}
+    );
+  });
 };
 
 /**
@@ -15777,6 +15872,7 @@ Sentry.prototype.identify = function(identify){
 
 var integration = require('analytics.js-integration');
 var is = require('is');
+var tick = require('next-tick');
 
 /**
  * Expose `SnapEngage` integration.
@@ -15785,8 +15881,19 @@ var is = require('is');
 var SnapEngage = module.exports = integration('SnapEngage')
   .assumesPageview()
   .global('SnapABug')
+  .global('SnapEngage')
   .option('apiKey', '')
+  .option('listen', false)
   .tag('<script src="//www.snapengage.com/cdn/js/{{ apiKey }}.js">');
+
+/**
+ * Integration object for root events.
+ */
+
+var integration = {
+  name: 'snapengage',
+  version: '1.0.0'
+};
 
 /**
  * Initialize.
@@ -15797,7 +15904,11 @@ var SnapEngage = module.exports = integration('SnapEngage')
  */
 
 SnapEngage.prototype.initialize = function(page){
-  this.load(this.ready);
+  var self = this;
+  this.load(function(){
+    if (self.options.listen) self.attachListeners();
+    tick(self.ready);
+  });
 };
 
 /**
@@ -15807,7 +15918,39 @@ SnapEngage.prototype.initialize = function(page){
  */
 
 SnapEngage.prototype.loaded = function(){
-  return is.object(window.SnapABug);
+  return is.object(window.SnapABug) && is.object(window.SnapEngage);
+};
+
+/**
+ * Listen for events.
+ */
+
+SnapEngage.prototype.attachListeners = function(){
+  var self = this;
+
+  window.SnapEngage.setCallback('StartChat', function(email, message, type){
+    self.analytics.track('Live Chat Conversation Started',
+      {},
+      { context: { integration: integration } });
+  });
+
+  window.SnapEngage.setCallback('ChatMessageReceived', function(agent, message){
+    self.analytics.track('Live Chat Message Received',
+      { agentUsername: agent },
+      { context: { integration: integration } });
+  });
+
+  window.SnapEngage.setCallback('ChatMessageSent', function(message){
+    self.analytics.track('Live Chat Message Sent',
+      {},
+      { context: { integration: integration }});
+  });
+
+  window.SnapEngage.setCallback('Close', function(type, status){
+    self.analytics.track('Live Chat Conversation Ended',
+      {},
+      { context: { integration: integration }});
+  });
 };
 
 /**
@@ -15822,7 +15965,7 @@ SnapEngage.prototype.identify = function(identify){
   window.SnapABug.setUserEmail(email);
 };
 
-}, {"analytics.js-integration":88,"is":91}],
+}, {"analytics.js-integration":88,"is":91,"next-tick":103}],
 77: [function(require, module, exports) {
 
 /**
@@ -16196,13 +16339,24 @@ var Userlike = module.exports = integration('Userlike')
   .global('userlikeConfig')
   .global('userlikeData')
   .option('secretKey', '')
+  .option('listen', false)
   .tag('<script src="//userlike-cdn-widgets.s3-eu-west-1.amazonaws.com/{{ secretKey }}.js">');
+
+/**
+ * The context for this integration.
+ */
+
+var integration = {
+  name: 'userlike',
+  version: '1.0.0'
+};
 
 /**
  * Initialize.
  *
  * @param {Object} page
  */
+
 Userlike.prototype.initialize = function(page){
   var self = this;
   var user = this.analytics.user();
@@ -16218,14 +16372,11 @@ Userlike.prototype.initialize = function(page){
     email: identify.email()
   };
 
-  if (!window.userlikeData)
-    window.userlikeData = {
-      custom:{}
-    }
-
+  if (!window.userlikeData) window.userlikeData = { custom: {} };
   window.userlikeData.custom.segmentio = segment_base_info;
 
   this.load(function(){
+    if (self.options.listen) self.attachListeners();
     self.ready();
   });
 };
@@ -16235,8 +16386,51 @@ Userlike.prototype.initialize = function(page){
  *
  * @return {Boolean}
  */
+
 Userlike.prototype.loaded = function(){
   return !! (window.userlikeConfig && window.userlikeData);
+};
+
+/**
+ * Listen for chat events.
+ *
+ * TODO: As of 4/17/2015, Userlike doesn't give access to the message body in events.
+ * Revisit this/send it when they do.
+ *
+ */
+
+Userlike.prototype.attachListeners = function(){
+  var self = this;
+  window.userlikeTrackingEvent = function(eventName, globalCtx, sessionCtx){
+    if (eventName === 'chat_started') {
+      self.analytics.track(
+        'Live Chat Conversation Started',
+        { agentId: sessionCtx.operator_id, agentName: sessionCtx.operator_name },
+        { context: { integration: integration }
+      });
+    }
+    if (eventName === 'message_operator_terminating') {
+      self.analytics.track(
+        'Live Chat Message Sent',
+        { agentId: sessionCtx.operator_id, agentName: sessionCtx.operator_name },
+        { context: { integration: integration }
+      });
+    }
+    if (eventName === 'message_client_terminating') {
+      self.analytics.track(
+        'Live Chat Message Received',
+        { agentId: sessionCtx.operator_id, agentName: sessionCtx.operator_name },
+        { context: { integration: integration }
+      });
+    }
+    if (eventName === 'chat_quit') {
+      self.analytics.track(
+        'Live Chat Conversation Ended',
+        { agentId: sessionCtx.operator_id, agentName: sessionCtx.operator_name },
+        { context: { integration: integration }
+      });
+    }
+  };
 };
 
 }, {"analytics.js-integration":88,"facade":132,"clone":95}],
@@ -18912,7 +19106,7 @@ module.exports.User = User;
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.8.8",
+  "version": "2.8.9",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

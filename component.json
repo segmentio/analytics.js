@@ -37,7 +37,7 @@
     "segmentio/json": "1.0.0",
     "segmentio/new-date": "0.3.x",
     "segmentio/store.js": "2.0.0",
-    "segmentio/top-domain": "1.0.0",
+    "segmentio/top-domain": "2.0.0",
     "visionmedia/debug": "0.7.x",
     "yields/prevent": "0.0.2",
     "gjohnson/uuid": "0.0.1"

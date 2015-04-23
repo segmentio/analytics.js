@@ -18040,7 +18040,7 @@ function domain(url){
 
     cookie(cname, 1, opts);
     if (cookie(cname)) {
-      cookie(cname, null);
+      cookie(cname, null, opts);
       return domain
     }
   }

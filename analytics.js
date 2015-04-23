@@ -17884,6 +17884,7 @@ Cookie.prototype.options = function (options) {
   options = options || {};
 
   var domain = '.' + topDomain(window.location.href);
+  if ('.' == domain) domain = null;
 
   this._options = defaults(options, {
     maxage: 31536000000, // default to a year
@@ -17974,7 +17975,112 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"debug":191,"bind":195,"cookie":184,"clone":96,"defaults":98,"json":165,"top-domain":125}],
+}, {"debug":191,"bind":195,"cookie":184,"clone":96,"defaults":98,"json":165,"top-domain":208}],
+208: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var parse = require('url').parse;
+var cookie = require('cookie');
+
+/**
+ * Expose `domain`
+ */
+
+exports = module.exports = domain;
+
+/**
+ * Expose `cookie` for testing.
+ */
+
+exports.cookie = cookie;
+
+/**
+ * Get the top domain.
+ *
+ * The function constructs the levels of domain
+ * and attempts to set a global cookie on each one
+ * when it succeeds it returns the top level domain.
+ *
+ * The method returns an empty string when the hostname
+ * is an ip or `localhost`.
+ *
+ * Example levels:
+ *
+ *      domain.levels('http://www.google.co.uk');
+ *      // => ["co.uk", "google.co.uk", "www.google.co.uk"]
+ * 
+ * Example:
+ * 
+ *      domain('http://localhost:3000/baz');
+ *      // => ''
+ *      domain('http://dev:3000/baz');
+ *      // => ''
+ *      domain('http://127.0.0.1:3000/baz');
+ *      // => ''
+ *      domain('http://segment.io/baz');
+ *      // => 'segment.io'
+ * 
+ * @param {String} url
+ * @return {String}
+ * @api public
+ */
+
+function domain(url){
+  var cookie = exports.cookie;
+  var levels = exports.levels(url);
+
+  // Lookup the real top level one.
+  for (var i = 0; i < levels.length; ++i) {
+    var cname = '__tld__';
+    var domain = levels[i];
+    var opts = { domain: '.' + domain };
+
+    cookie(cname, 1, opts);
+    if (cookie(cname)) {
+      cookie(cname, null, opts);
+      return domain
+    }
+  }
+
+  return '';
+};
+
+/**
+ * Levels returns all levels of the given url.
+ *
+ * @param {String} url
+ * @return {Array}
+ * @api public
+ */
+
+domain.levels = function(url){
+  var host = parse(url).hostname;
+  var parts = host.split('.');
+  var last = parts[parts.length-1];
+  var levels = [];
+
+  // Ip address.
+  if (4 == parts.length && parseInt(last, 10) == last) {
+    return levels;
+  }
+
+  // Localhost.
+  if (1 >= parts.length) {
+    return levels;
+  }
+
+  // Create levels.
+  for (var i = parts.length-2; 0 <= i; --i) {
+    levels.push(parts.slice(i).join('.'));
+  }
+
+  return levels;
+};
+
+}, {"url":128,"cookie":184}],
 197: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:group');
@@ -18031,8 +18137,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":191,"./entity":208,"inherit":209,"bind":195}],
-208: [function(require, module, exports) {
+}, {"debug":191,"./entity":209,"inherit":210,"bind":195}],
+209: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:entity');
 var traverse = require('isodate-traverse');
@@ -18425,8 +18531,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":195,"defaults":98,"store.js":210}],
-210: [function(require, module, exports) {
+}, {"bind":195,"defaults":98,"store.js":211}],
+211: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -18579,7 +18685,7 @@ store.enabled = !store.disabled
 
 module.exports = store;
 }, {"json":165}],
-209: [function(require, module, exports) {
+210: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -18978,8 +19084,8 @@ function normalize(msg, list){
       || ~indexof(lower, name.toLowerCase()));
   }
 }
-}, {"debug":191,"component/indexof":117,"defaults":98,"component/map":211,"each":4,"is":92}],
-211: [function(require, module, exports) {
+}, {"debug":191,"component/indexof":117,"defaults":98,"component/map":212,"each":4,"is":92}],
+212: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -19174,11 +19280,11 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":191,"./entity":208,"inherit":209,"bind":195,"./cookie":196,"uuid":185,"cookie":184}],
+}, {"debug":191,"./entity":209,"inherit":210,"bind":195,"./cookie":196,"uuid":185,"cookie":184}],
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.8.10",
+  "version": "2.8.11",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

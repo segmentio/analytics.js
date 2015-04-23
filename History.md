@@ -1,4 +1,11 @@
 
+2.8.12 / 2015-04-23
+===================
+
+  * deps: bump top-domain for test cookie deletion fix
+  * cookie: bump top-domain to v2 to catch all top domains
+
+
 2.8.10 / 2015-04-20
 ===================
 

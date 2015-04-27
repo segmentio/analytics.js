@@ -1167,10 +1167,10 @@ describe('Analytics', function () {
       assert(!analytics.track.called);
     });
 
-    it('should send an event and properties', function () {
-      analytics.trackLink(link, 'event', { property: true });
+    it('should send an event, properties, and options', function () {
+      analytics.trackLink(link, 'event', { property: true }, { options: true });
       trigger(link, 'click');
-      assert(analytics.track.calledWith('event', { property: true }));
+      assert(analytics.track.calledWith('event', { property: true }, { options: true }));
     });
 
     it('should accept an event function', function () {
@@ -1291,10 +1291,10 @@ describe('Analytics', function () {
       assert(!analytics.track.called);
     });
 
-    it('should send an event and properties', function () {
-      analytics.trackForm(form, 'event', { property: true });
+    it('should send an event, properties, and options', function () {
+      analytics.trackForm(form, 'event', { property: true }, { options: true });
       submit.click();
-      assert(analytics.track.calledWith('event', { property: true }));
+      assert(analytics.track.calledWith('event', { property: true }, { options: true }));
     });
 
     it('should accept an event function', function () {

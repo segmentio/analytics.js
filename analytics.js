@@ -13716,6 +13716,7 @@ Optimizely.prototype.replay = function(){
 }, {"analytics.js-integration":90,"global-queue":160,"callback":96,"next-tick":105,"bind":103,"each":4,"is-empty":124,"foldl":168}],
 65: [function(require, module, exports) {
 var integration = require('analytics.js-integration');
+var omit = require('omit');
 
 var Outbound = module.exports = integration('Outbound')
   .global('outbound')
@@ -13759,32 +13760,23 @@ Outbound.prototype.loaded = function(){
 };
 
 Outbound.prototype.identify = function(identify){
-  var firstLevelAttributes = ['user_id', 'first_name', 'last_name', 'email', 'phone_number', 'apns', 'gcm'];
-  var allAttributes = identify.traits();
+  var traits = identify.traits();
   var userAttributes = {
-    attributes: {}
+    user_id: traits.id,
+    attributes: omit(['id', 'email', 'phone', 'firstName', 'lastName'], traits),
+    email: traits.email,
+    phone_number: traits.phone,
+    first_name: traits.firstName,
+    last_name: traits.lastName
   };
-  for (var attr in allAttributes){
-    for (var i = 0; i < firstLevelAttributes.length; i++){
-      if (firstLevelAttributes[i] === attr){
-        userAttributes[attr] = allAttributes[attr];
-        delete userAttributes.attributes[attr];
-        break;
-      } else if (attr === "id") {
-        delete userAttributes.attributes[attr];
-      } else {
-        userAttributes.attributes[attr] = allAttributes[attr];
-      }
-    }
-  }
-  outbound.identify(identify.userId(), userAttributes);
+  outbound.identify(userAttributes.user_id, userAttributes);
 };
 
 Outbound.prototype.track = function(track){
   window.outbound.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":90}],
+}, {"analytics.js-integration":90,"omit":178}],
 66: [function(require, module, exports) {
 
 /**

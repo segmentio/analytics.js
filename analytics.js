@@ -13765,9 +13765,9 @@ Outbound.prototype.identify = function(identify){
     user_id: traits.id,
     attributes: omit(['id', 'email', 'phone', 'firstName', 'lastName'], traits),
     email: traits.email,
-    phone_number: traits.phone,
-    first_name: traits.firstName,
-    last_name: traits.lastName
+    phoneNumber: traits.phone,
+    firstName: traits.firstName,
+    lastName: traits.lastName
   };
   outbound.identify(userAttributes.user_id, userAttributes);
 };

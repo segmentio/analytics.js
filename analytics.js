@@ -11356,7 +11356,7 @@ HubSpot.prototype.loaded = function(){
  */
 
 HubSpot.prototype.page = function(page){
-  push('_trackPageview');
+  push('trackPageView');
 };
 
 /**
@@ -13741,17 +13741,6 @@ Outbound.prototype.initialize = function(page){
       window.outbound[key] = window.outbound.factory(key);
   }
 
-  if (!document.getElementById('outbound-js')) {
-      // Create an async script element based on your key.
-      var script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.id = 'outbound-js';
-      script.async = true;
-      script.src = '//cdn.outbound.io/pub-3e2b0899b2c81c6f0c59342d1ff057c3.js';
-      // Insert our script next to the first script element.
-      var first = document.getElementsByTagName('script')[0];
-      first.parentNode.insertBefore(script, first);
-  }
   this.load(this.ready);
 };
 
@@ -13760,16 +13749,22 @@ Outbound.prototype.loaded = function(){
 };
 
 Outbound.prototype.identify = function(identify){
-  var traits = identify.traits();
-  var userAttributes = {
-    user_id: traits.id,
-    attributes: omit(['id', 'email', 'phone', 'firstName', 'lastName'], traits),
-    email: traits.email,
-    phoneNumber: traits.phone,
-    firstName: traits.firstName,
-    lastName: traits.lastName
+  var traitsToOmit = [
+    'id', 'userId',
+    'email',
+    'phone',
+    'firstName',
+    'lastName'
+  ];
+  var userId = identify.userId();
+  var attributes = {
+    attributes: omit(traitsToOmit, identify.traits()),
+    email: identify.email(),
+    phoneNumber: identify.phone(),
+    firstName: identify.firstName(),
+    lastName: identify.lastName()
   };
-  outbound.identify(userAttributes.user_id, userAttributes);
+  outbound.identify(userId, attributes);
 };
 
 Outbound.prototype.track = function(track){
@@ -18265,7 +18260,141 @@ domain.levels = function(url){
   return levels;
 };
 
-}, {"url":129,"cookie":185}],
+}, {"url":129,"cookie":210}],
+210: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var debug = require('debug')('cookie');
+
+/**
+ * Set or get cookie `name` with `value` and `options` object.
+ *
+ * @param {String} name
+ * @param {String} value
+ * @param {Object} options
+ * @return {Mixed}
+ * @api public
+ */
+
+module.exports = function(name, value, options){
+  switch (arguments.length) {
+    case 3:
+    case 2:
+      return set(name, value, options);
+    case 1:
+      return get(name);
+    default:
+      return all();
+  }
+};
+
+/**
+ * Set cookie `name` to `value`.
+ *
+ * @param {String} name
+ * @param {String} value
+ * @param {Object} options
+ * @api private
+ */
+
+function set(name, value, options) {
+  options = options || {};
+  var str = encode(name) + '=' + encode(value);
+
+  if (null == value) options.maxage = -1;
+
+  if (options.maxage) {
+    options.expires = new Date(+new Date + options.maxage);
+  }
+
+  if (options.path) str += '; path=' + options.path;
+  if (options.domain) str += '; domain=' + options.domain;
+  if (options.expires) str += '; expires=' + options.expires.toUTCString();
+  if (options.secure) str += '; secure';
+
+  document.cookie = str;
+}
+
+/**
+ * Return all cookies.
+ *
+ * @return {Object}
+ * @api private
+ */
+
+function all() {
+  var str;
+  try {
+    str = document.cookie;
+  } catch (err) {
+    if (typeof console !== 'undefined' && typeof console.error === 'function') {
+      console.error(err.stack || err);
+    }
+    return {};
+  }
+  return parse(str);
+}
+
+/**
+ * Get cookie `name`.
+ *
+ * @param {String} name
+ * @return {String}
+ * @api private
+ */
+
+function get(name) {
+  return all()[name];
+}
+
+/**
+ * Parse cookie `str`.
+ *
+ * @param {String} str
+ * @return {Object}
+ * @api private
+ */
+
+function parse(str) {
+  var obj = {};
+  var pairs = str.split(/ *; */);
+  var pair;
+  if ('' == pairs[0]) return obj;
+  for (var i = 0; i < pairs.length; ++i) {
+    pair = pairs[i].split('=');
+    obj[decode(pair[0])] = decode(pair[1]);
+  }
+  return obj;
+}
+
+/**
+ * Encode.
+ */
+
+function encode(value){
+  try {
+    return encodeURIComponent(value);
+  } catch (e) {
+    debug('error `encode(%o)` - %o', value, e)
+  }
+}
+
+/**
+ * Decode.
+ */
+
+function decode(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch (e) {
+    debug('error `decode(%o)` - %o', value, e)
+  }
+}
+
+}, {"debug":192}],
 198: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:group');
@@ -18322,8 +18451,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":192,"./entity":210,"inherit":211,"bind":196}],
-210: [function(require, module, exports) {
+}, {"debug":192,"./entity":211,"inherit":212,"bind":196}],
+211: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:entity');
 var traverse = require('isodate-traverse');
@@ -18716,8 +18845,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":196,"defaults":99,"store.js":212}],
-212: [function(require, module, exports) {
+}, {"bind":196,"defaults":99,"store.js":213}],
+213: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -18870,7 +18999,7 @@ store.enabled = !store.disabled
 
 module.exports = store;
 }, {"json":166}],
-211: [function(require, module, exports) {
+212: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -19269,8 +19398,8 @@ function normalize(msg, list){
       || ~indexof(lower, name.toLowerCase()));
   }
 }
-}, {"debug":192,"component/indexof":118,"defaults":99,"component/map":213,"each":4,"is":93}],
-213: [function(require, module, exports) {
+}, {"debug":192,"component/indexof":118,"defaults":99,"component/map":214,"each":4,"is":93}],
+214: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -19465,7 +19594,7 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":192,"./entity":210,"inherit":211,"bind":196,"./cookie":197,"uuid":186,"cookie":185}],
+}, {"debug":192,"./entity":211,"inherit":212,"bind":196,"./cookie":197,"uuid":186,"cookie":185}],
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",

@@ -13647,6 +13647,7 @@ Optimizely.prototype.roots = function(){
   if (!window.optimizely) return; // in case the snippet isnt on the page
 
   var data = window.optimizely.data;
+  if (!data) return;
   var allExperiments = data.experiments;
   if (!data || !data.state || !allExperiments) return;
   var variationNamesMap = data.state.variationNamesMap;

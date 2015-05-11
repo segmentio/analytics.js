@@ -16,16 +16,20 @@ SRC = $(wildcard lib/*.js)
 BUILD = build.js
 
 #
-# Task args.
+# Task arguments.
 #
 
-PORT ?= 0
 BROWSER ?= ie:9
+
+PORT ?= 0
+
+DUO_ARGS = --stdout
+
 DUOT_ARGS = \
-	-p test/server \
-	-R spec \
-	-P $(PORT) \
-	-c "make build.js"
+	--pathname test/server \
+	--reporter spec \
+	--port $(PORT) \
+	--commands "make build.js"
 
 #
 # Git hooks.
@@ -70,16 +74,16 @@ hooks: $(HOOKS)
 
 # Build analytics.js.
 analytics.js: node_modules $(SRC) package.json
-	@$(DUO) --standalone analytics lib/index.js > $@
+	@$(DUO) $(DUO_ARGS) --standalone analytics lib/index.js > $@
 
 # Build minified analytics.js.
 analytics.min.js: analytics.js
-	@$(UGLIFYJS) $< --output $@
+	@$(UGLIFYJS) $< > $@
 
 # Target for build files.
 # TODO: Document this one better
-$(BUILD): $(TESTS) analytics.js analytics.min.js
-	@$(DUO) --development test/tests.js > $(BUILD)
+$(BUILD): analytics.js analytics.min.js $(TESTS)
+	@$(DUO) $(DUO_ARGS) --development test/tests.js > $(BUILD)
 
 # $(BUILD) shortcut.
 build: $(BUILD)

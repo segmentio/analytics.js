@@ -1,18 +1,35 @@
+#
+# Binaries.
+#
+
+BINS = ./node_modules/.bin
+DUO = $(BINS)/duo
+DUOT = $(BINS)/duo-test
+UGLIFYJS = $(BINS)/uglifyjs
 
 #
-# Task args.
+# Files.
 #
 
-PORT ?= 0
-BROWSER ?= ie:9
 TESTS = $(wildcard test/*.js)
 SRC = $(wildcard lib/*.js)
-MINIFY = $(BINS)/uglifyjs
-PID = test/server/pid.txt
-BINS = node_modules/.bin
 BUILD = build.js
-DUO = $(BINS)/duo
-DUOT = $(BINS)/duo-test -p test/server -R spec -P $(PORT) -c "make build.js"
+
+#
+# Task arguments.
+#
+
+BROWSER ?= ie:9
+
+PORT ?= 0
+
+DUO_ARGS = --stdout
+
+DUOT_ARGS = \
+	--pathname test/server \
+	--reporter spec \
+	--port $(PORT) \
+	--commands "make build.js"
 
 #
 # Git hooks.
@@ -21,98 +38,82 @@ DUOT = $(BINS)/duo-test -p test/server -R spec -P $(PORT) -c "make build.js"
 HOOKS := $(addprefix .git/hooks/, $(notdir $(wildcard bin/hooks/*)))
 
 #
-# Default target.
+# Chore tasks.
 #
 
-default: test
-
-#
-# Clean.
-#
-
-clean:
-	@rm -rf components $(BUILD)
-	@rm -f analytics.js analytics.min.js
-	@rm -rf npm-debug.log
-
-clean-deps:
-	@rm -rf node_modules
-
-clean-hooks:
-	@rm $(HOOKS)
-
-#
-# Test with phantomjs.
-#
-
-test: $(BUILD)
-	@$(DUOT) phantomjs
-
-#
-# Test with saucelabs
-#
-
-test-sauce: $(BUILD)
-	@$(DUOT) saucelabs \
-		--browsers $(BROWSER) \
-		--title analytics.js
-
-#
-# Test in the browser.
-#
-# On the link press `cmd + doubleclick`.
-#
-
-test-browser: $(BUILD)
-	@$(DUOT) browser
-
-#
-# Phony targets.
-#
-
-.PHONY: clean
-.PHONY: test
-.PHONY: test-browser
-.PHONY: test-coverage
-.PHONY: test-sauce
-
-#
-# Target for `analytics.js` file.
-#
-
-analytics.js: node_modules $(SRC) package.json
-	@$(DUO) --standalone analytics lib/index.js > $@
-
-analytics.min.js: analytics.js
-	@$(MINIFY) $< --output $@
-
-#
-# Target for `node_modules` folder.
-#
-
-node_modules: package.json
+# Install node dependencies.
+node_modules: package.json $(wildcard node_modules/*/package.json)
 	@npm install
 
+# Remove temporary/built files.
+clean:
+	@rm -rf $(BUILD) *.log analytics.js analytics.min.js components
+.PHONY: clean
+
+# Remove temporary/built files and vendor dependencies.
+distclean: clean
+	@rm -rf components node_modules
+.PHONY: distclean
+
+# Remove git hooks.
+clean-hooks:
+	@rm $(HOOKS)
+.PHONY: clean-hooks
+
+# Install an individual Git hook.
+.git/hooks/%: bin/hooks/%
+	@ln -s $(abspath $<) $@
+
+# Install all Git hooks.
+hooks: $(HOOKS)
+.PHONY: hooks
+
 #
+# Build tasks.
+#
+
+# Build analytics.js.
+analytics.js: node_modules $(SRC) package.json
+	@$(DUO) $(DUO_ARGS) --standalone analytics lib/index.js > $@
+
+# Build minified analytics.js.
+analytics.min.js: analytics.js
+	@$(UGLIFYJS) $< > $@
+
 # Target for build files.
-#
+# TODO: Document this one better
+$(BUILD): analytics.js analytics.min.js $(TESTS)
+	@$(DUO) $(DUO_ARGS) --development test/tests.js > $(BUILD)
 
-$(BUILD): $(TESTS) analytics.js analytics.min.js
-	@$(DUO) --development test/tests.js > $(BUILD)
-
-#
-# Phony build target
-#
-
+# $(BUILD) shortcut.
 build: $(BUILD)
 .PHONY: build
 
 #
-# Git hooks.
+# Test tasks.
 #
 
-hooks: $(HOOKS)
-.PHONY: hooks
+# Test locally in PhantomJS.
+test: $(BUILD)
+	@$(DUOT) $(DUOT_ARGS) phantomjs
+.PHONY: test
+.DEFAULT_GOAL = test
 
-.git/hooks/%: bin/hooks/%
-	@ln -s $(abspath $<) $@
+# Test locally in the browser.
+test-browser: $(BUILD)
+	@$(DUOT) browser
+.PHONY: test-browser
+
+# Test with Sauce Labs.
+test-sauce: $(BUILD)
+	@$(DUOT) $(DUOT_ARGS) saucelabs \
+		--browsers $(BROWSER) \
+		--title analytics.js
+.PHONY: test-sauce
+
+#
+# Deprecated/legacy tasks.
+#
+
+clean-deps: distclean
+.PHONY: clean-deps

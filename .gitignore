@@ -1,4 +1,5 @@
-node_modules/
-test/server/pid.txt
-components
+*.log
+*.tmp
 build.js
+components/
+node_modules/

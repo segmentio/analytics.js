@@ -15,7 +15,8 @@
   "dependencies": {},
   "devDependencies": {
     "duo": "0.8",
-    "duo-test": "0.3",
+    "duo-test": "^0.4.0",
+    "phantomjs": "^1.9.16",
     "uglify-js": ">= 1.3.4"
   },
   "scripts": {

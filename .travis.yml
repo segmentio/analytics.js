@@ -1,7 +1,7 @@
 language: node_js
 script: make test-sauce
 node_js:
-- '0.11.13'
+- '0.12'
 env:
   global:
   - secure: LoNu6uwsubuGa63PgPfXDlNSOdJ7PdPlk3hgadnAdYpskrDtg4op7uNREpf6ZYbJEKHmCMfgN7bqPEakw3Lnfw0f+HAteJmRdc2TJ6Ntq+ZF8H7hDdD7vWx6PUOK2VuDyNNRkWj1Imxm4ZF+TCgItdNFVjn8RifwVqsXIgCZPLs=

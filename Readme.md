@@ -22,7 +22,7 @@ Looking to add support for a new integration? Take a look at the [analytics.js-i
 
 If you're looking to work on integrations-specific logic, take a look at [`analytics.js-integrations`](https://github.com/segmentio/analytics.js-integrations). 
 
-To get started with development make sure you are running node `0.11`, clone the repository and then inside of it run:
+To get started with development make sure you are running node `0.12`, clone the repository and then inside of it run:
 
     $ make
 

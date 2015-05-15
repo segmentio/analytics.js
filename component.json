@@ -21,11 +21,12 @@
     "component/object": "0.0.3",
     "component/querystring": "1.3.0",
     "component/url": "0.1.0",
+    "gjohnson/uuid": "0.0.1",
     "ianstormtaylor/bind": "0.0.2",
     "ianstormtaylor/callback": "0.0.1",
     "ianstormtaylor/is": "0.1.0",
-    "ndhoule/pick": "1.0.1",
     "matthewp/keys": "0.0.3",
+    "ndhoule/pick": "1.0.1",
     "segmentio/after": "0.0.1",
     "segmentio/analytics.js-integrations": "1.3.x",
     "segmentio/canonical": "0.0.1",
@@ -39,20 +40,17 @@
     "segmentio/store.js": "2.0.0",
     "segmentio/top-domain": "2.0.1",
     "visionmedia/debug": "0.7.x",
-    "yields/prevent": "0.0.2",
-    "gjohnson/uuid": "0.0.1"
+    "yields/prevent": "0.0.2"
   },
   "development": {
-    "yields/coverage": "*",
-    "component/jquery": "*",
-    "component/assert": "*",
-    "ianstormtaylor/trigger-event": "*",
+    "component/jquery": "^1.0.0",
+    "component/assert": "^0.5.0",
+    "ianstormtaylor/trigger-event": "^0.1.0",
     "segmentio/analytics.js-integration": "*",
-    "jkroso/equals": "*",
-    "segmentio/protocol": "*",
+    "jkroso/equals": "^1.0.0",
+    "segmentio/protocol": "^0.0.2",
     "ianstormtaylor/sinon": "duo",
-    "segmentio/when": "*",
-    "timoxley/next-tick": "*",
-    "yields/gravy": "*"
+    "timoxley/next-tick": "^0.0.2",
+    "yields/gravy": "^0.2.0"
   }
 }

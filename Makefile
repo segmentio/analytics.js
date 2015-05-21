@@ -98,18 +98,18 @@ lint: node_modules
 .PHONY: lint
 
 # Test locally in PhantomJS.
-test: $(BUILD)
+test: node_modules lint $(BUILD)
 	@$(DUOT) $(DUOT_ARGS) phantomjs
 .PHONY: test
 .DEFAULT_GOAL = test
 
 # Test locally in the browser.
-test-browser: $(BUILD)
+test-browser: node_modules lint $(BUILD)
 	@$(DUOT) $(DUOT_ARGS) browser
 .PHONY: test-browser
 
 # Test with Sauce Labs.
-test-sauce: $(BUILD)
+test-sauce: node_modules lint $(BUILD)
 	@$(DUOT) $(DUOT_ARGS) saucelabs \
 		--browsers $(BROWSER) \
 		--title analytics.js

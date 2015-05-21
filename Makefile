@@ -5,6 +5,7 @@
 BINS = ./node_modules/.bin
 DUO = $(BINS)/duo
 DUOT = $(BINS)/duo-test
+ESLINT = $(BINS)/eslint
 UGLIFYJS = $(BINS)/uglifyjs
 
 #
@@ -90,6 +91,11 @@ build: $(BUILD)
 #
 # Test tasks.
 #
+
+# Lint JavaScript source.
+lint: node_modules
+	@$(ESLINT) $(SRC) $(TESTS)
+.PHONY: lint
 
 # Test locally in PhantomJS.
 test: $(BUILD)

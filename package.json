@@ -26,6 +26,8 @@
   "devDependencies": {
     "duo": "0.8",
     "duo-test": "^0.4.0",
+    "eslint": "^0.21.2",
+    "eslint-config-segment": "^1.0.7",
     "phantomjs": "^1.9.16",
     "uglify-js": ">= 1.3.4"
   }

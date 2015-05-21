@@ -25,7 +25,6 @@
     "ianstormtaylor/bind": "0.0.2",
     "ianstormtaylor/callback": "0.0.1",
     "ianstormtaylor/is": "0.1.0",
-    "matthewp/keys": "0.0.3",
     "ndhoule/includes": "1.0.0",
     "ndhoule/pick": "1.0.1",
     "segmentio/after": "0.0.1",
@@ -48,10 +47,8 @@
     "component/assert": "^0.5.0",
     "ianstormtaylor/trigger-event": "^0.1.0",
     "segmentio/analytics.js-integration": "*",
-    "jkroso/equals": "^1.0.0",
     "segmentio/protocol": "^0.0.2",
     "ianstormtaylor/sinon": "duo",
-    "timoxley/next-tick": "^0.0.2",
-    "yields/gravy": "^0.2.0"
+    "timoxley/next-tick": "^0.0.2"
   }
 }

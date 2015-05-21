@@ -1,10 +1,9 @@
 
-describe('normalize', function(){
+var assert = require('assert');
+var normalize = require('../lib/normalize');
 
-  var normalize = require('../lib/normalize');
+describe('normalize', function(){
   var list = ['Segment', 'KISSmetrics'];
-  var user = require('../lib/user');
-  var assert = require('assert');
   var opts;
   var msg;
 
@@ -33,8 +32,8 @@ describe('normalize', function(){
       opts.context = { context: 1 };
 
       var out = normalize(msg, list);
-      assert.equal(out.timestamp.getTime(), date.getTime());
-      assert.equal(out.anonymousId, 'anonymous-id');
+      assert(out.timestamp.getTime() === date.getTime());
+      assert(out.anonymousId === 'anonymous-id');
       assert.deepEqual(out.integrations, { foo: 1 });
       assert.deepEqual(out.context, { context: 1 });
     });

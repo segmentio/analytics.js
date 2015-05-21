@@ -46,7 +46,7 @@ node_modules: package.json $(wildcard node_modules/*/package.json)
 
 # Remove temporary/built files.
 clean:
-	@rm -rf $(BUILD) *.log analytics.js analytics.min.js components
+	@rm -rf $(BUILD) *.log analytics.js analytics.min.js
 .PHONY: clean
 
 # Remove temporary/built files and vendor dependencies.

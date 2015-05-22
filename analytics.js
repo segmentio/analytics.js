@@ -1150,41 +1150,51 @@ exports.track = function(track){};
 /* eslint-enable no-unused-vars */
 
 /**
- * Get events that match `str`.
- *
- * Examples:
- *
- *    events = { my_event: 'a4991b88' }
- *    .map(events, 'My Event');
- *    // => ["a4991b88"]
- *    .map(events, 'whatever');
- *    // => []
- *
- *    events = [{ key: 'my event', value: '9b5eb1fa' }]
- *    .map(events, 'my_event');
- *    // => ["9b5eb1fa"]
- *    .map(events, 'whatever');
- *    // => []
+ * Get events that match `event`.
  *
  * @api public
- * @param {string} event
- * @return {Array}
+ * @param {Object|Object[]} events An object or array of objects pulled from
+ * settings.mapping.
+ * @param {string} event The name of the event whose metdata we're looking for.
+ * @return {Array} An array of settings that match the input `event` name.
+ * @example
+ * var events = { my_event: 'a4991b88' };
+ * .map(events, 'My Event');
+ * // => ["a4991b88"]
+ * .map(events, 'whatever');
+ * // => []
+ *
+ * var events = [{ key: 'my event', value: '9b5eb1fa' }];
+ * .map(events, 'my_event');
+ * // => ["9b5eb1fa"]
+ * .map(events, 'whatever');
+ * // => []
  */
 
-exports.map = function(obj, event){
+exports.map = function(events, event){
   var normalizedEvent = normalize(event);
 
-  return foldl(function(acc, val, key) {
-    if (type(obj) === 'array') {
-      key = val[key];
+  return foldl(function(matchingEvents, val, key, events) {
+    // If true, this is a `mixed` value, which is structured like so:
+    //     { key: 'testEvent', value: { event: 'testEvent', someValue: 'xyz' } }
+    // We need to extract the key, which we use to match against
+    // `normalizedEvent`, and return `value` as part of `matchingEvents` if that
+    // match succeds.
+    if (type(events) === 'array') {
+      // If there's no key attached to this event mapping (unusual), skip this
+      // item.
+      if (!val.key) return matchingEvents;
+      // Extract the key and value from the `mixed` object.
+      key = val.key;
+      val = val.value;
     }
 
-    if (key && normalize(key) === normalizedEvent) {
-      acc.push(val);
+    if (normalize(key) === normalizedEvent) {
+      matchingEvents.push(val);
     }
 
-    return acc;
-  }, [], obj);
+    return matchingEvents;
+  }, [], events);
 };
 
 /**
@@ -19833,7 +19843,7 @@ module.exports.User = User;
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.8.20",
+  "version": "2.8.21",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

@@ -1,8 +1,15 @@
 
+2.8.20 / 2015-05-22
+===================
+
+ * Update build
+ * Clean up Makefile
+
 2.8.19 / 2015-05-16
 ===================
 
-
+ * Pin all dependencies
+ * Bump Node.js engine dependency to 0.12
 
 2.8.18 / 2015-05-14
 ===================

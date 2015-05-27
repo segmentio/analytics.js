@@ -344,6 +344,7 @@ module.exports = [
   require('./lib/snapengage'),
   require('./lib/spinnakr'),
   require('./lib/supporthero'),
+  require('./lib/taplytics'),
   require('./lib/tapstream'),
   require('./lib/trakio'),
   require('./lib/twitter-ads'),
@@ -353,10 +354,11 @@ module.exports = [
   require('./lib/visual-website-optimizer'),
   require('./lib/webengage'),
   require('./lib/woopra'),
+  require('./lib/wootric'),
   require('./lib/yandex-metrica')
 ];
 
-}, {"./lib/adroll":8,"./lib/adwords":9,"./lib/alexa":10,"./lib/amplitude":11,"./lib/appcues":12,"./lib/atatus":13,"./lib/autosend":14,"./lib/awesm":15,"./lib/bing-ads":16,"./lib/blueshift":17,"./lib/bronto":18,"./lib/bugherd":19,"./lib/bugsnag":20,"./lib/chameleon":21,"./lib/chartbeat":22,"./lib/clicktale":23,"./lib/clicky":24,"./lib/comscore":25,"./lib/crazy-egg":26,"./lib/curebit":27,"./lib/customerio":28,"./lib/drip":29,"./lib/errorception":30,"./lib/evergage":31,"./lib/extole":32,"./lib/facebook-conversion-tracking":33,"./lib/foxmetrics":34,"./lib/frontleaf":35,"./lib/fullstory":36,"./lib/gauges":37,"./lib/get-satisfaction":38,"./lib/google-analytics":39,"./lib/google-tag-manager":40,"./lib/gosquared":41,"./lib/heap":42,"./lib/hellobar":43,"./lib/hittail":44,"./lib/hubspot":45,"./lib/improvely":46,"./lib/insidevault":47,"./lib/inspectlet":48,"./lib/intercom":49,"./lib/keen-io":50,"./lib/kenshoo":51,"./lib/kissmetrics":52,"./lib/klaviyo":53,"./lib/livechat":54,"./lib/lucky-orange":55,"./lib/lytics":56,"./lib/mixpanel":57,"./lib/mojn":58,"./lib/mouseflow":59,"./lib/mousestats":60,"./lib/navilytics":61,"./lib/nudgespot":62,"./lib/olark":63,"./lib/optimizely":64,"./lib/outbound":65,"./lib/perfect-audience":66,"./lib/pingdom":67,"./lib/piwik":68,"./lib/preact":69,"./lib/qualaroo":70,"./lib/quantcast":71,"./lib/rollbar":72,"./lib/saasquatch":73,"./lib/satismeter":74,"./lib/segmentio":75,"./lib/sentry":76,"./lib/snapengage":77,"./lib/spinnakr":78,"./lib/supporthero":79,"./lib/tapstream":80,"./lib/trakio":81,"./lib/twitter-ads":82,"./lib/userlike":83,"./lib/uservoice":84,"./lib/vero":85,"./lib/visual-website-optimizer":86,"./lib/webengage":87,"./lib/woopra":88,"./lib/yandex-metrica":89}],
+}, {"./lib/adroll":8,"./lib/adwords":9,"./lib/alexa":10,"./lib/amplitude":11,"./lib/appcues":12,"./lib/atatus":13,"./lib/autosend":14,"./lib/awesm":15,"./lib/bing-ads":16,"./lib/blueshift":17,"./lib/bronto":18,"./lib/bugherd":19,"./lib/bugsnag":20,"./lib/chameleon":21,"./lib/chartbeat":22,"./lib/clicktale":23,"./lib/clicky":24,"./lib/comscore":25,"./lib/crazy-egg":26,"./lib/curebit":27,"./lib/customerio":28,"./lib/drip":29,"./lib/errorception":30,"./lib/evergage":31,"./lib/extole":32,"./lib/facebook-conversion-tracking":33,"./lib/foxmetrics":34,"./lib/frontleaf":35,"./lib/fullstory":36,"./lib/gauges":37,"./lib/get-satisfaction":38,"./lib/google-analytics":39,"./lib/google-tag-manager":40,"./lib/gosquared":41,"./lib/heap":42,"./lib/hellobar":43,"./lib/hittail":44,"./lib/hubspot":45,"./lib/improvely":46,"./lib/insidevault":47,"./lib/inspectlet":48,"./lib/intercom":49,"./lib/keen-io":50,"./lib/kenshoo":51,"./lib/kissmetrics":52,"./lib/klaviyo":53,"./lib/livechat":54,"./lib/lucky-orange":55,"./lib/lytics":56,"./lib/mixpanel":57,"./lib/mojn":58,"./lib/mouseflow":59,"./lib/mousestats":60,"./lib/navilytics":61,"./lib/nudgespot":62,"./lib/olark":63,"./lib/optimizely":64,"./lib/outbound":65,"./lib/perfect-audience":66,"./lib/pingdom":67,"./lib/piwik":68,"./lib/preact":69,"./lib/qualaroo":70,"./lib/quantcast":71,"./lib/rollbar":72,"./lib/saasquatch":73,"./lib/satismeter":74,"./lib/segmentio":75,"./lib/sentry":76,"./lib/snapengage":77,"./lib/spinnakr":78,"./lib/supporthero":79,"./lib/taplytics":80,"./lib/tapstream":81,"./lib/trakio":82,"./lib/twitter-ads":83,"./lib/userlike":84,"./lib/uservoice":85,"./lib/vero":86,"./lib/visual-website-optimizer":87,"./lib/webengage":88,"./lib/woopra":89,"./lib/wootric":90,"./lib/yandex-metrica":91}],
 8: [function(require, module, exports) {
 
 /**
@@ -371,21 +373,16 @@ var is = require('is');
 var del = require('obj-case').del;
 
 /**
- * HOP
- */
-
-var has = Object.prototype.hasOwnProperty;
-
-/**
  * Expose `AdRoll` integration.
  */
 
 var AdRoll = module.exports = integration('AdRoll')
   .assumesPageview()
+  .global('__adroll')
   .global('__adroll_loaded')
   .global('adroll_adv_id')
-  .global('adroll_pix_id')
   .global('adroll_custom_data')
+  .global('adroll_pix_id')
   .option('advId', '')
   .option('pixId', '')
   .tag('http', '<script src="http://a.adroll.com/j/roundtrip.js">')
@@ -398,10 +395,10 @@ var AdRoll = module.exports = integration('AdRoll')
  * http://support.adroll.com/getting-started-in-4-easy-steps/#step-one
  * http://support.adroll.com/enhanced-conversion-tracking/
  *
- * @param {Object} page
+ * @api public
  */
 
-AdRoll.prototype.initialize = function(page){
+AdRoll.prototype.initialize = function(){
   window.adroll_adv_id = this.options.advId;
   window.adroll_pix_id = this.options.pixId;
   window.__adroll_loaded = true;
@@ -412,11 +409,12 @@ AdRoll.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 AdRoll.prototype.loaded = function(){
-  return window.__adroll;
+  return !!window.__adroll;
 };
 
 /**
@@ -424,6 +422,7 @@ AdRoll.prototype.loaded = function(){
  *
  * http://support.adroll.com/segmenting-clicks/
  *
+ * @api public
  * @param {Page} page
  */
 
@@ -435,6 +434,7 @@ AdRoll.prototype.page = function(page){
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -454,11 +454,11 @@ AdRoll.prototype.track = function(track){
   if (productId) data.product_id = productId;
   if (sku) data.sku = sku;
   if (total) data.adroll_conversion_value_in_dollars = total;
-  del(customProps, "revenue");
-  del(customProps, "total");
-  del(customProps, "orderId");
-  del(customProps, "id");
-  del(customProps, "sku");
+  del(customProps, 'revenue');
+  del(customProps, 'total');
+  del(customProps, 'orderId');
+  del(customProps, 'id');
+  del(customProps, 'sku');
   if (!is.empty(customProps)) data.adroll_custom_data = customProps;
 
   each(events, function(event){
@@ -475,8 +475,8 @@ AdRoll.prototype.track = function(track){
   }
 };
 
-}, {"analytics.js-integration":90,"to-snake-case":91,"use-https":92,"each":4,"is":93,"obj-case":94}],
-90: [function(require, module, exports) {
+}, {"analytics.js-integration":92,"to-snake-case":93,"use-https":94,"each":4,"is":95,"obj-case":96}],
+92: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -540,8 +540,8 @@ function createIntegration(name){
 
 module.exports = createIntegration;
 
-}, {"bind":95,"clone":96,"debug":97,"defaults":98,"extend":99,"slug":100,"./protos":101,"./statics":102}],
-95: [function(require, module, exports) {
+}, {"bind":97,"clone":98,"debug":99,"defaults":100,"extend":101,"slug":102,"./protos":103,"./statics":104}],
+97: [function(require, module, exports) {
 
 var bind = require('bind')
   , bindAll = require('bind-all');
@@ -582,8 +582,8 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":103,"bind-all":104}],
-103: [function(require, module, exports) {
+}, {"bind":105,"bind-all":106}],
+105: [function(require, module, exports) {
 /**
  * Slice reference.
  */
@@ -609,7 +609,7 @@ module.exports = function(obj, fn){
 };
 
 }, {}],
-104: [function(require, module, exports) {
+106: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -626,8 +626,8 @@ module.exports = function (obj) {
   }
   return obj;
 };
-}, {"bind":103,"type":7}],
-96: [function(require, module, exports) {
+}, {"bind":105,"type":7}],
+98: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -689,15 +689,15 @@ function clone(obj){
 }
 
 }, {"type":7}],
-97: [function(require, module, exports) {
+99: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":105,"./debug":106}],
-105: [function(require, module, exports) {
+}, {"./lib/debug":107,"./debug":108}],
+107: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -847,7 +847,7 @@ function coerce(val) {
 }
 
 }, {}],
-106: [function(require, module, exports) {
+108: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -987,7 +987,7 @@ try {
 } catch(e){}
 
 }, {}],
-98: [function(require, module, exports) {
+100: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -1016,7 +1016,7 @@ var defaults = function (dest, src, recursive) {
 module.exports = defaults;
 
 }, {}],
-99: [function(require, module, exports) {
+101: [function(require, module, exports) {
 
 module.exports = function extend (object) {
     // Takes an unlimited number of extenders.
@@ -1033,7 +1033,7 @@ module.exports = function extend (object) {
     return object;
 };
 }, {}],
-100: [function(require, module, exports) {
+102: [function(require, module, exports) {
 
 /**
  * Generate a slug from the given `str`.
@@ -1059,7 +1059,7 @@ module.exports = function (str, options) {
 };
 
 }, {}],
-101: [function(require, module, exports) {
+103: [function(require, module, exports) {
 /* global setInterval:true setTimeout:true */
 
 /**
@@ -1485,8 +1485,8 @@ function render(template, locals){
   }, {}, template.attrs);
 }
 
-}, {"emitter":107,"after":108,"each":109,"analytics-events":110,"fmt":111,"foldl":112,"load-iframe":113,"load-script":114,"to-no-case":115,"next-tick":116,"type":117}],
-107: [function(require, module, exports) {
+}, {"emitter":109,"after":110,"each":111,"analytics-events":112,"fmt":113,"foldl":114,"load-iframe":115,"load-script":116,"to-no-case":117,"next-tick":118,"type":119}],
+109: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -1652,8 +1652,8 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-}, {"indexof":118}],
-118: [function(require, module, exports) {
+}, {"indexof":120}],
+120: [function(require, module, exports) {
 module.exports = function(arr, obj){
   if (arr.indexOf) return arr.indexOf(obj);
   for (var i = 0; i < arr.length; ++i) {
@@ -1662,7 +1662,7 @@ module.exports = function(arr, obj){
   return -1;
 };
 }, {}],
-108: [function(require, module, exports) {
+110: [function(require, module, exports) {
 
 module.exports = function after (times, func) {
   // After 0, really?
@@ -1676,7 +1676,7 @@ module.exports = function after (times, func) {
   };
 };
 }, {}],
-109: [function(require, module, exports) {
+111: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -1767,8 +1767,8 @@ function array(obj, fn, ctx) {
   }
 }
 
-}, {"type":117,"component-type":117,"to-function":119}],
-117: [function(require, module, exports) {
+}, {"type":119,"component-type":119,"to-function":121}],
+119: [function(require, module, exports) {
 
 /**
  * toString ref.
@@ -1803,7 +1803,7 @@ module.exports = function(val){
 };
 
 }, {}],
-119: [function(require, module, exports) {
+121: [function(require, module, exports) {
 
 /**
  * Module Dependencies
@@ -1957,8 +1957,8 @@ function stripNested (prop, str, val) {
   });
 }
 
-}, {"props":120,"component-props":120}],
-120: [function(require, module, exports) {
+}, {"props":122,"component-props":122}],
+122: [function(require, module, exports) {
 /**
  * Global Names
  */
@@ -2046,7 +2046,7 @@ function prefixed(str) {
 }
 
 }, {}],
-110: [function(require, module, exports) {
+112: [function(require, module, exports) {
 
 module.exports = {
   removedProduct: /^[ _]?removed[ _]?product[ _]?$/i,
@@ -2066,7 +2066,7 @@ module.exports = {
 };
 
 }, {}],
-111: [function(require, module, exports) {
+113: [function(require, module, exports) {
 
 /**
  * toString.
@@ -2111,7 +2111,7 @@ function fmt(str){
 }
 
 }, {}],
-112: [function(require, module, exports) {
+114: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -2169,8 +2169,8 @@ var foldl = function foldl(iterator, accumulator, collection) {
 
 module.exports = foldl;
 
-}, {"each":121}],
-121: [function(require, module, exports) {
+}, {"each":123}],
+123: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -2312,8 +2312,8 @@ var each = function each(iterator, collection) {
 
 module.exports = each;
 
-}, {"keys":122}],
-122: [function(require, module, exports) {
+}, {"keys":124}],
+124: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -2493,7 +2493,7 @@ module.exports = function keys(source) {
 };
 
 }, {}],
-113: [function(require, module, exports) {
+115: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -2555,8 +2555,8 @@ module.exports = function loadIframe(options, fn){
   // give it an ID or attributes.
   return iframe;
 };
-}, {"script-onload":123,"next-tick":116,"type":7}],
-123: [function(require, module, exports) {
+}, {"script-onload":125,"next-tick":118,"type":7}],
+125: [function(require, module, exports) {
 
 // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
 
@@ -2612,7 +2612,7 @@ function attach(el, fn){
 }
 
 }, {}],
-116: [function(require, module, exports) {
+118: [function(require, module, exports) {
 "use strict"
 
 if (typeof setImmediate == 'function') {
@@ -2648,7 +2648,7 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 }
 
 }, {}],
-114: [function(require, module, exports) {
+116: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -2709,8 +2709,8 @@ module.exports = function loadScript(options, fn){
   // give it an ID or attributes.
   return script;
 };
-}, {"script-onload":123,"next-tick":116,"type":7}],
-115: [function(require, module, exports) {
+}, {"script-onload":125,"next-tick":118,"type":7}],
+117: [function(require, module, exports) {
 
 /**
  * Expose `toNoCase`.
@@ -2783,7 +2783,7 @@ function uncamelize (string) {
   });
 }
 }, {}],
-102: [function(require, module, exports) {
+104: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -2947,8 +2947,8 @@ function objectify(str) {
   };
 }
 
-}, {"emitter":107,"domify":124,"each":109,"includes":125}],
-124: [function(require, module, exports) {
+}, {"emitter":109,"domify":126,"each":111,"includes":127}],
+126: [function(require, module, exports) {
 
 /**
  * Expose `parse`.
@@ -3059,7 +3059,7 @@ function parse(html, doc) {
 }
 
 }, {}],
-125: [function(require, module, exports) {
+127: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -3149,8 +3149,8 @@ var includes = function includes(searchElement, collection) {
 
 module.exports = includes;
 
-}, {"each":121}],
-91: [function(require, module, exports) {
+}, {"each":123}],
+93: [function(require, module, exports) {
 var toSpace = require('to-space-case');
 
 
@@ -3173,8 +3173,8 @@ function toSnakeCase (string) {
   return toSpace(string).replace(/\s/g, '_');
 }
 
-}, {"to-space-case":126}],
-126: [function(require, module, exports) {
+}, {"to-space-case":128}],
+128: [function(require, module, exports) {
 
 var clean = require('to-no-case');
 
@@ -3199,8 +3199,8 @@ function toSpaceCase (string) {
     return match ? ' ' + match : '';
   });
 }
-}, {"to-no-case":127}],
-127: [function(require, module, exports) {
+}, {"to-no-case":129}],
+129: [function(require, module, exports) {
 
 /**
  * Expose `toNoCase`.
@@ -3276,7 +3276,7 @@ function uncamelize (string) {
   });
 }
 }, {}],
-92: [function(require, module, exports) {
+94: [function(require, module, exports) {
 
 /**
  * Protocol.
@@ -3315,7 +3315,7 @@ function check () {
   );
 }
 }, {}],
-93: [function(require, module, exports) {
+95: [function(require, module, exports) {
 
 var isEmpty = require('is-empty');
 
@@ -3391,8 +3391,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":128,"type":7,"component-type":7}],
-128: [function(require, module, exports) {
+}, {"is-empty":130,"type":7,"component-type":7}],
+130: [function(require, module, exports) {
 
 /**
  * Expose `isEmpty`.
@@ -3423,7 +3423,7 @@ function isEmpty (val) {
   return true;
 }
 }, {}],
-94: [function(require, module, exports) {
+96: [function(require, module, exports) {
 
 var identity = function(_){ return _; };
 
@@ -3584,15 +3584,8 @@ function isFunction(val) {
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var domify = require('domify');
 var each = require('each');
-
-/**
- * HOP
- */
-
-var has = Object.prototype.hasOwnProperty;
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `AdWords`.
@@ -3605,9 +3598,8 @@ var AdWords = module.exports = integration('AdWords')
   .mapping('events');
 
 /**
- * Load.
+ * Initialize.
  *
- * @param {Function} fn
  * @api public
  */
 
@@ -3618,12 +3610,12 @@ AdWords.prototype.initialize = function(){
 /**
  * Loaded.
  *
- * @return {Boolean}
- * @api public
+ * @api private
+ * @return {boolean}
  */
 
 AdWords.prototype.loaded = function(){
-  return !! document.body;
+  return !!document.body;
 };
 
 /**
@@ -3634,10 +3626,11 @@ AdWords.prototype.loaded = function(){
  * https://developers.google.com/adwords-remarketing-tag/asynchronous/
  * https://developers.google.com/adwords-remarketing-tag/parameters
  *
+ * @api public
  * @param {Page} page
  */
 
-AdWords.prototype.page = function(page){
+AdWords.prototype.page = function(){
   var remarketing = !!this.options.remarketing;
   var id = this.options.conversionId;
   var props = {};
@@ -3651,8 +3644,8 @@ AdWords.prototype.page = function(page){
 /**
  * Track.
  *
- * @param {Track}
  * @api public
+ * @param {Track}
  */
 
 AdWords.prototype.track = function(track){
@@ -3661,7 +3654,7 @@ AdWords.prototype.track = function(track){
   var revenue = track.revenue() || 0;
   each(events, function(label){
     var props = track.properties();
-    delete props.revenue
+    delete props.revenue;
     window.google_trackConversion({
       google_conversion_id: id,
       google_custom_params: props,
@@ -3675,7 +3668,7 @@ AdWords.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":90,"domify":124,"each":4}],
+}, {"each":4,"analytics.js-integration":92}],
 10: [function(require, module, exports) {
 
 /**
@@ -3699,10 +3692,10 @@ var Alexa = module.exports = integration('Alexa')
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-Alexa.prototype.initialize = function(page){
+Alexa.prototype.initialize = function(){
   var self = this;
   window._atrk_opts = {
     atrk_acct: this.options.account,
@@ -3718,14 +3711,15 @@ Alexa.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Alexa.prototype.loaded = function(){
-  return !! window.atrk;
+  return !!window.atrk;
 };
 
-}, {"analytics.js-integration":90}],
+}, {"analytics.js-integration":92}],
 11: [function(require, module, exports) {
 
 /**
@@ -3733,14 +3727,13 @@ Alexa.prototype.loaded = function(){
  */
 
 var integration = require('analytics.js-integration');
-var utm = require('utm-params');
-var top = require('top-domain');
+var topDomain = require('top-domain');
 
 /**
- * UMD ?
+ * UMD?
  */
 
-var umd = 'function' == typeof define && define.amd;
+var umd = typeof window.define === 'function' && window.define.amd;
 
 /**
  * Source.
@@ -3766,13 +3759,13 @@ var Amplitude = module.exports = integration('Amplitude')
  *
  * https://github.com/amplitude/Amplitude-Javascript
  *
- * @param {Object} page
+ * @api public
  */
 
-Amplitude.prototype.initialize = function(page){
-  // jscs:disable
+Amplitude.prototype.initialize = function(){
+  /* eslint-disable */
   (function(e,t){var r=e.amplitude||{};r._q=[];function a(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)))}}var i=["init","logEvent","logRevenue","setUserId","setUserProperties","setOptOut","setVersionName","setDomain","setDeviceId","setGlobalUserProperties"];for(var o=0;o<i.length;o++){a(i[o])}e.amplitude=r})(window,document);
-  // jscs:enable
+  /* eslint-enable */
 
   this.setDomain(window.location.href);
   window.amplitude.init(this.options.apiKey, null, {
@@ -3796,21 +3789,22 @@ Amplitude.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Amplitude.prototype.loaded = function(){
-  return !! (window.amplitude && window.amplitude.options);
+  return !!(window.amplitude && window.amplitude.options);
 };
 
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
 Amplitude.prototype.page = function(page){
-  var properties = page.properties();
   var category = page.category();
   var name = page.fullName();
   var opts = this.options;
@@ -3834,6 +3828,7 @@ Amplitude.prototype.page = function(page){
 /**
  * Identify.
  *
+ * @api public
  * @param {Facade} identify
  */
 
@@ -3847,6 +3842,7 @@ Amplitude.prototype.identify = function(identify){
 /**
  * Track.
  *
+ * @api public
  * @param {Track} event
  */
 
@@ -3865,167 +3861,30 @@ Amplitude.prototype.track = function(track){
 };
 
 /**
- * Set domain name to root domain
+ * Set domain name to root domain in Amplitude.
  *
- * @param {String} href
+ * @api private
+ * @param {string} href
  */
 
 Amplitude.prototype.setDomain = function(href){
-  var domain = top(href);
+  var domain = topDomain(href);
   window.amplitude.setDomain(domain);
 };
 
 /**
- * Override device ID
+ * Override device ID in Amplitude.
  *
- * @param {String} deviceId
+ * @api private
+ * @param {string} deviceId
  */
 
 Amplitude.prototype.setDeviceId = function(deviceId){
   if (deviceId) window.amplitude.setDeviceId(deviceId);
 };
 
-}, {"analytics.js-integration":90,"utm-params":129,"top-domain":130}],
-129: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var parse = require('querystring').parse;
-
-/**
- * Expose `utm`
- */
-
-module.exports = utm;
-
-/**
- * Get all utm params from the given `querystring`
- *
- * @param {String} query
- * @return {Object}
- * @api private
- */
-
-function utm(query){
-  if ('?' == query.charAt(0)) query = query.substring(1);
-  var query = query.replace(/\?/g, '&');
-  var params = parse(query);
-  var param;
-  var ret = {};
-
-  for (var key in params) {
-    if (~key.indexOf('utm_')) {
-      param = key.substr(4);
-      if ('campaign' == param) param = 'name';
-      ret[param] = params[key];
-    }
-  }
-
-  return ret;
-}
-
-}, {"querystring":131}],
+}, {"analytics.js-integration":92,"top-domain":131}],
 131: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var encode = encodeURIComponent;
-var decode = decodeURIComponent;
-var trim = require('trim');
-var type = require('type');
-
-var pattern = /(\w+)\[(\d+)\]/
-
-/**
- * Parse the given query `str`.
- *
- * @param {String} str
- * @return {Object}
- * @api public
- */
-
-exports.parse = function(str){
-  if ('string' != typeof str) return {};
-
-  str = trim(str);
-  if ('' == str) return {};
-  if ('?' == str.charAt(0)) str = str.slice(1);
-
-  var obj = {};
-  var pairs = str.split('&');
-  for (var i = 0; i < pairs.length; i++) {
-    var parts = pairs[i].split('=');
-    var key = decode(parts[0]);
-    var m;
-
-    if (m = pattern.exec(key)) {
-      obj[m[1]] = obj[m[1]] || [];
-      obj[m[1]][m[2]] = decode(parts[1]);
-      continue;
-    }
-
-    obj[parts[0]] = null == parts[1]
-      ? ''
-      : decode(parts[1]);
-  }
-
-  return obj;
-};
-
-/**
- * Stringify the given `obj`.
- *
- * @param {Object} obj
- * @return {String}
- * @api public
- */
-
-exports.stringify = function(obj){
-  if (!obj) return '';
-  var pairs = [];
-
-  for (var key in obj) {
-    var value = obj[key];
-
-    if ('array' == type(value)) {
-      for (var i = 0; i < value.length; ++i) {
-        pairs.push(encode(key + '[' + i + ']') + '=' + encode(value[i]));
-      }
-      continue;
-    }
-
-    pairs.push(encode(key) + '=' + encode(obj[key]));
-  }
-
-  return pairs.join('&');
-};
-
-}, {"trim":132,"type":7}],
-132: [function(require, module, exports) {
-
-exports = module.exports = trim;
-
-function trim(str){
-  if (str.trim) return str.trim();
-  return str.replace(/^\s*|\s*$/g, '');
-}
-
-exports.left = function(str){
-  if (str.trimLeft) return str.trimLeft();
-  return str.replace(/^\s*/, '');
-};
-
-exports.right = function(str){
-  if (str.trimRight) return str.trimRight();
-  return str.replace(/\s*$/, '');
-};
-
-}, {}],
-130: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4073,8 +3932,8 @@ function domain(url){
   return match ? match[0] : '';
 };
 
-}, {"url":133}],
-133: [function(require, module, exports) {
+}, {"url":132}],
+132: [function(require, module, exports) {
 
 /**
  * Parse the given `url`.
@@ -4166,13 +4025,14 @@ function port (protocol){
  */
 
 var integration = require('analytics.js-integration');
-var load = require('load-script');
 var is = require('is');
+var load = require('load-script');
 
 /**
  * Expose plugin.
  */
 
+// FIXME: Is this still necessary? I believe this API was deprecated
 module.exports = exports = function(analytics){
   analytics.addIntegration(Appcues);
 };
@@ -4191,7 +4051,7 @@ var Appcues = exports.Integration = integration('Appcues')
  *
  * http://appcues.com/docs/
  *
- * @param {Object}
+ * @api public
  */
 
 Appcues.prototype.initialize = function(){
@@ -4201,7 +4061,8 @@ Appcues.prototype.initialize = function(){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Appcues.prototype.loaded = function(){
@@ -4211,12 +4072,13 @@ Appcues.prototype.loaded = function(){
 /**
  * Load the Appcues library.
  *
+ * @api private
  * @param {Function} callback
  */
 
 Appcues.prototype.load = function(callback){
   var id = this.options.appcuesId || 'appcues';
-  var script = load('//fast.appcues.com/' + id + '.js', callback);
+  load('//fast.appcues.com/' + id + '.js', callback);
 };
 
 /**
@@ -4224,6 +4086,7 @@ Appcues.prototype.load = function(callback){
  *
  * http://appcues.com/docs#identify
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -4231,8 +4094,8 @@ Appcues.prototype.identify = function(identify){
   window.Appcues.identify(identify.userId(), identify.traits());
 };
 
-}, {"analytics.js-integration":90,"load-script":134,"is":93}],
-134: [function(require, module, exports) {
+}, {"analytics.js-integration":92,"is":95,"load-script":133}],
+133: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4293,7 +4156,7 @@ module.exports = function loadScript(options, fn){
   // give it an ID or attributes.
   return script;
 };
-}, {"script-onload":123,"next-tick":116,"type":7}],
+}, {"script-onload":125,"next-tick":118,"type":7}],
 13: [function(require, module, exports) {
 
 /**
@@ -4317,14 +4180,15 @@ var Atatus = module.exports = integration('Atatus')
  *
  * https://www.atatus.com/docs.html
  *
- * @param {Object} page
+ * @api public
  */
 
-Atatus.prototype.initialize = function(page){
+Atatus.prototype.initialize = function(){
   var self = this;
 
   this.load(function(){
-    // Configure Atatus and install default handler to capture uncaught exceptions
+    // Configure Atatus and install default handler to capture uncaught
+    // exceptions
     window.atatus.config(self.options.apiKey).install();
     self.ready();
   });
@@ -4333,7 +4197,8 @@ Atatus.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Atatus.prototype.loaded = function(){
@@ -4343,6 +4208,7 @@ Atatus.prototype.loaded = function(){
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -4350,7 +4216,7 @@ Atatus.prototype.identify = function(identify){
   window.atatus.setCustomData({ person: identify.traits() });
 };
 
-}, {"analytics.js-integration":90,"is":93}],
+}, {"analytics.js-integration":92,"is":95}],
 14: [function(require, module, exports) {
 
 /**
@@ -4373,24 +4239,26 @@ var Autosend = module.exports = integration('Autosend')
  *
  * http://autosend.io/faq/install-autosend-using-javascript/
  *
- * @param {Object} page
+ * @api public
  */
 
-Autosend.prototype.initialize = function(page){
-
+Autosend.prototype.initialize = function(){
   window._autosend = window._autosend || [];
+  /* eslint-disable */
   (function(){var a,b,c;a=function(f){return function(){window._autosend.push([f].concat(Array.prototype.slice.call(arguments,0))); }; }; b=["identify", "track", "cb"];for (c=0;c<b.length;c++){window._autosend[b[c]]=a(b[c]); } })();
+  /* eslint-enable */
   this.load(this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Autosend.prototype.loaded = function(){
-  return !! (window._autosend);
+  return !!window._autosend;
 };
 
 /**
@@ -4398,6 +4266,7 @@ Autosend.prototype.loaded = function(){
  *
  * http://autosend.io/faq/install-autosend-using-javascript/
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -4415,6 +4284,7 @@ Autosend.prototype.identify = function(identify){
  *
  * http://autosend.io/faq/install-autosend-using-javascript/
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -4422,15 +4292,15 @@ Autosend.prototype.track = function(track){
   window._autosend.track(track.event());
 };
 
-}, {"analytics.js-integration":90}],
+}, {"analytics.js-integration":92}],
 15: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var each = require('each');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `Awesm` integration.
@@ -4448,10 +4318,10 @@ var Awesm = module.exports = integration('awe.sm')
  *
  * http://developers.awe.sm/guides/javascript/
  *
- * @param {Object} page
+ * @api public
  */
 
-Awesm.prototype.initialize = function(page){
+Awesm.prototype.initialize = function(){
   window.AWESM = { api_key: this.options.apiKey };
   this.load(this.ready);
 };
@@ -4459,16 +4329,18 @@ Awesm.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Awesm.prototype.loaded = function(){
-  return !! (window.AWESM && window.AWESM._exists);
+  return !!(window.AWESM && window.AWESM._exists);
 };
 
 /**
  * Track.
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -4480,7 +4352,7 @@ Awesm.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":90,"each":4}],
+}, {"each":4,"analytics.js-integration":92}],
 16: [function(require, module, exports) {
 
 /**
@@ -4488,24 +4360,6 @@ Awesm.prototype.track = function(track){
  */
 
 var integration = require('analytics.js-integration');
-var onbody = require('on-body');
-var domify = require('domify');
-var extend = require('extend');
-var bind = require('bind');
-var when = require('when');
-var each = require('each');
-
-/**
- * HOP.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
-/**
- * Noop.
- */
-
-var noop = function(){};
 
 /**
  * Expose `Bing`.
@@ -4514,15 +4368,18 @@ var noop = function(){};
  */
 
 var Bing = module.exports = integration('Bing Ads')
+  .global('UET')
   .global('uetq')
   .option('tagId', '')
   .tag('<script src="//bat.bing.com/bat.js">');
 
 /**
- * Initialize
+ * Initialize.
  *
- * inferred from their snippet
+ * Inferred from their snippet:
  * https://gist.github.com/sperand-io/8bef4207e9c66e1aa83b
+ *
+ * @api public
  */
 
 Bing.prototype.initialize = function(){
@@ -4535,7 +4392,7 @@ Bing.prototype.initialize = function(){
       q: window.uetq
     };
 
-    window.uetq = new UET(setup);
+    window.uetq = new window.UET(setup);
     self.ready();
   });
 };
@@ -4543,29 +4400,31 @@ Bing.prototype.initialize = function(){
 /**
  * Loaded?
  *
- * Check for custom `push` method bestowed by UET constructor
- *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Bing.prototype.loaded = function(){
-  return !! (window.uetq && window.uetq.push !== Array.prototype.push);
+  return !!(window.uetq && window.uetq.push !== Array.prototype.push);
 };
 
 /**
- * Page
+ * Page.
+ *
+ * @api public
  */
 
 Bing.prototype.page = function(){
-  window.uetq.push("pageLoad");
+  window.uetq.push('pageLoad');
 };
 
 /**
- * Track
+ * Track.
  *
  * Send all events then set goals based
  * on them retroactively: http://advertise.bingads.microsoft.com/en-us/uahelp-topic?market=en&project=Bing_Ads&querytype=topic&query=HLP_BA_PROC_UET.htm
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -4576,163 +4435,20 @@ Bing.prototype.track = function(track){
   };
 
   if (track.category()) event.ec = track.category();
-  if (track.revenue()) event.ev = track.revenue();
+  if (track.revenue()) event.gv = track.revenue();
 
   window.uetq.push(event);
 };
 
-}, {"analytics.js-integration":90,"on-body":135,"domify":124,"extend":136,"bind":103,"when":137,"each":4}],
-135: [function(require, module, exports) {
-var each = require('each');
-
-
-/**
- * Cache whether `<body>` exists.
- */
-
-var body = false;
-
-
-/**
- * Callbacks to call when the body exists.
- */
-
-var callbacks = [];
-
-
-/**
- * Export a way to add handlers to be invoked once the body exists.
- *
- * @param {Function} callback  A function to call when the body exists.
- */
-
-module.exports = function onBody (callback) {
-  if (body) {
-    call(callback);
-  } else {
-    callbacks.push(callback);
-  }
-};
-
-
-/**
- * Set an interval to check for `document.body`.
- */
-
-var interval = setInterval(function () {
-  if (!document.body) return;
-  body = true;
-  each(callbacks, call);
-  clearInterval(interval);
-}, 5);
-
-
-/**
- * Call a callback, passing it the body.
- *
- * @param {Function} callback  The callback to call.
- */
-
-function call (callback) {
-  callback(document.body);
-}
-}, {"each":109}],
-136: [function(require, module, exports) {
-
-module.exports = function extend (object) {
-    // Takes an unlimited number of extenders.
-    var args = Array.prototype.slice.call(arguments, 1);
-
-    // For each extender, copy their properties on our object.
-    for (var i = 0, source; source = args[i]; i++) {
-        if (!source) continue;
-        for (var property in source) {
-            object[property] = source[property];
-        }
-    }
-
-    return object;
-};
-}, {}],
-137: [function(require, module, exports) {
-
-var callback = require('callback');
-
-
-/**
- * Expose `when`.
- */
-
-module.exports = when;
-
-
-/**
- * Loop on a short interval until `condition()` is true, then call `fn`.
- *
- * @param {Function} condition
- * @param {Function} fn
- * @param {Number} interval (optional)
- */
-
-function when (condition, fn, interval) {
-  if (condition()) return callback.async(fn);
-
-  var ref = setInterval(function () {
-    if (!condition()) return;
-    callback(fn);
-    clearInterval(ref);
-  }, interval || 10);
-}
-}, {"callback":138}],
-138: [function(require, module, exports) {
-var next = require('next-tick');
-
-
-/**
- * Expose `callback`.
- */
-
-module.exports = callback;
-
-
-/**
- * Call an `fn` back synchronously if it exists.
- *
- * @param {Function} fn
- */
-
-function callback (fn) {
-  if ('function' === typeof fn) fn();
-}
-
-
-/**
- * Call an `fn` back asynchronously if it exists. If `wait` is ommitted, the
- * `fn` will be called on next tick.
- *
- * @param {Function} fn
- * @param {Number} wait (optional)
- */
-
-callback.async = function (fn, wait) {
-  if ('function' !== typeof fn) return;
-  if (!wait) return next(fn);
-  setTimeout(fn, wait);
-};
-
-
-/**
- * Symmetry.
- */
-
-callback.sync = callback;
-
-}, {"next-tick":116}],
+}, {"analytics.js-integration":92}],
 17: [function(require, module, exports) {
+
 /**
  * Module dependencies.
  */
+
 var integration = require('analytics.js-integration');
+var foldl = require('foldl');
 
 /**
  * Expose `Blueshift` integration.
@@ -4750,14 +4466,14 @@ var Blueshift = module.exports = integration('Blueshift')
  *
  * Documentation: http://getblueshift.com/documentation
  *
- * @param {Object} page
+ * @api public
  */
 
-Blueshift.prototype.initialize = function(page){
-  window.blueshift=window.blueshift||[];
-  // jscs:disable
+Blueshift.prototype.initialize = function(){
+  window.blueshift = window.blueshift || [];
+  /* eslint-disable */
   window.blueshift.load=function(a){window._blueshiftid=a;var d=function(a){return function(){blueshift.push([a].concat(Array.prototype.slice.call(arguments,0)))}},e=["identify","track","click", "pageload", "capture", "retarget"];for(var f=0;f<e.length;f++)blueshift[e[f]]=d(e[f])};
-  // jscs:enable
+  /* eslint-enable */
   window.blueshift.load(this.options.apiKey);
 
   this.load(this.ready);
@@ -4766,76 +4482,176 @@ Blueshift.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Blueshift.prototype.loaded = function(){
-  return !! (window.blueshift && window._blueshiftid);
+  return !!(window.blueshift && window._blueshiftid);
 };
 
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
 Blueshift.prototype.page = function(page){
   if (this.options.retarget) window.blueshift.retarget();
+
   var properties = page.properties();
   properties._bsft_source = 'segment.com';
-  window.blueshift.pageload(properties);
+  properties.customer_id = page.userId();
+  properties.anonymousId = page.anonymousId();
+  properties.category = page.category();
+  properties.name = page.name();
+
+  window.blueshift.pageload(removeBlankAttributes(properties));
+};
+
+/**
+ * Trait Aliases.
+ */
+var traitAliases = {
+  created: 'created_at'
 };
 
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
 Blueshift.prototype.identify = function(identify){
-  if (!identify.userId()) return this.debug('user id required');
-  var traits = identify.traits({ created: 'created_at' });
+  if (!identify.userId() && !identify.anonymousId()) {
+    return this.debug('user id required');
+  }
+  var traits = identify.traits(traitAliases);
   traits._bsft_source = 'segment.com';
-  window.blueshift.identify(traits);
-};
+  traits.customer_id = identify.userId();
+  traits.anonymousId = identify.anonymousId();
 
-/**
- * Group.
- *
- * @param {Group} group
- */
-
-Blueshift.prototype.group = function(group){
-  var traits = group.traits({ created: 'created_at' });
-  traits._bsft_source = 'segment.com';
-  window.blueshift.track('group', traits);
+  window.blueshift.identify(removeBlankAttributes(traits));
 };
 
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
 Blueshift.prototype.track = function(track){
   var properties = track.properties();
   properties._bsft_source = 'segment.com';
-  window.blueshift.track(track.event(), properties);
+  properties.customer_id = track.userId();
+  properties.anonymousId = track.anonymousId();
+
+  window.blueshift.track(track.event(), removeBlankAttributes(properties));
 };
 
-}, {"analytics.js-integration":90}],
+/**
+ * Alias.
+ *
+ * @param {Alias} alias
+ */
+
+Blueshift.prototype.alias = function(alias){
+  window.blueshift.track('alias', removeBlankAttributes({
+    _bsft_source: 'segment.com',
+    customer_id: alias.userId(),
+    previous_customer_id: alias.previousId(),
+    anonymousId: alias.anonymousId()
+  }));
+};
+
+/**
+ * Filters null/undefined values from an object, returning a new object.
+ *
+ * @api private
+ * @param {Object} obj
+ * @return {Object}
+ */
+
+function removeBlankAttributes(obj){
+  return foldl(function(results, val, key){
+    if (val !== null && val !== undefined) results[key] = val;
+    return results;
+  }, {}, obj);
+}
+
+}, {"analytics.js-integration":92,"foldl":134}],
+134: [function(require, module, exports) {
+'use strict';
+
+/**
+ * Module dependencies.
+ */
+
+var each = require('each');
+
+/**
+ * Reduces all the values in a collection down into a single value. Does so by iterating through the
+ * collection from left to right, repeatedly calling an `iterator` function and passing to it four
+ * arguments: `(accumulator, value, index, collection)`.
+ *
+ * Returns the final return value of the `iterator` function.
+ *
+ * @name foldl
+ * @api public
+ * @param {Function} iterator The function to invoke per iteration.
+ * @param {*} accumulator The initial accumulator value, passed to the first invocation of `iterator`.
+ * @param {Array|Object} collection The collection to iterate over.
+ * @return {*} The return value of the final call to `iterator`.
+ * @example
+ * foldl(function(total, n) {
+ *   return total + n;
+ * }, 0, [1, 2, 3]);
+ * //=> 6
+ *
+ * var phonebook = { bob: '555-111-2345', tim: '655-222-6789', sheila: '655-333-1298' };
+ *
+ * foldl(function(results, phoneNumber) {
+ *  if (phoneNumber[0] === '6') {
+ *    return results.concat(phoneNumber);
+ *  }
+ *  return results;
+ * }, [], phonebook);
+ * // => ['655-222-6789', '655-333-1298']
+ */
+
+var foldl = function foldl(iterator, accumulator, collection) {
+  if (typeof iterator !== 'function') {
+    throw new TypeError('Expected a function but received a ' + typeof iterator);
+  }
+
+  each(function(val, i, collection) {
+    accumulator = iterator(accumulator, val, i, collection);
+  }, collection);
+
+  return accumulator;
+};
+
+/**
+ * Exports.
+ */
+
+module.exports = foldl;
+
+}, {"each":123}],
 18: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var Identify = require('facade').Identify;
 var Track = require('facade').Track;
-var pixel = require('load-pixel')('http://app.bronto.com/public/');
-var qs = require('querystring');
 var each = require('each');
+var integration = require('analytics.js-integration');
+var qs = require('querystring');
 
 /**
  * Expose `Bronto` integration.
@@ -4854,10 +4670,10 @@ var Bronto = module.exports = integration('Bronto')
  * http://bronto.com/product-blog/features/using-conversion-tracking-private-domain#.Ut_Vk2T8KqB
  * http://bronto.com/product-blog/features/javascript-conversion-tracking-setup-and-reporting#.Ut_VhmT8KqB
  *
- * @param {Object} page
+ * @api public
  */
 
-Bronto.prototype.initialize = function(page){
+Bronto.prototype.initialize = function(){
   var self = this;
   var params = qs.parse(window.location.search);
   if (!params._bta_tid && !params._bta_c) {
@@ -4874,7 +4690,8 @@ Bronto.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Bronto.prototype.loaded = function(){
@@ -4890,14 +4707,13 @@ Bronto.prototype.loaded = function(){
  * gets linked to the contact record in Bronto even if the user
  * does not have a tracking cookie.
  *
- * @param {Track} track
  * @api private
+ * @param {Track} track
  */
 
 Bronto.prototype.completedOrder = function(track){
   var user = this.analytics.user();
   var products = track.products();
-  var props = track.properties();
   var items = [];
   var identify = new Identify({
     userId: user.id(),
@@ -4912,7 +4728,7 @@ Bronto.prototype.completedOrder = function(track){
       item_id: track.id() || track.sku(),
       desc: product.description || track.name(),
       quantity: track.quantity(),
-      amount: track.price(),
+      amount: track.price()
     });
   });
 
@@ -4920,15 +4736,14 @@ Bronto.prototype.completedOrder = function(track){
   this.bta.addOrder({
     order_id: track.orderId(),
     email: email,
-    // they recommend not putting in a date
-    // because it needs to be formatted correctly
-    // YYYY-MM-DDTHH:MM:SS
+    // they recommend not putting in a date because it needs to be formatted
+    // correctly: YYYY-MM-DDTHH:MM:SS
     items: items
   });
 };
 
-}, {"analytics.js-integration":90,"facade":139,"load-pixel":140,"querystring":141,"each":4}],
-139: [function(require, module, exports) {
+}, {"facade":135,"each":4,"analytics.js-integration":92,"querystring":136}],
+135: [function(require, module, exports) {
 
 var Facade = require('./facade');
 
@@ -4949,8 +4764,8 @@ Facade.Track = require('./track');
 Facade.Page = require('./page');
 Facade.Screen = require('./screen');
 
-}, {"./facade":142,"./alias":143,"./group":144,"./identify":145,"./track":146,"./page":147,"./screen":148}],
-142: [function(require, module, exports) {
+}, {"./facade":137,"./alias":138,"./group":139,"./identify":140,"./track":141,"./page":142,"./screen":143}],
+137: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var isEnabled = require('./is-enabled');
@@ -5260,8 +5075,8 @@ function transform(obj){
   return cloned;
 }
 
-}, {"isodate-traverse":149,"./is-enabled":150,"./utils":151,"./address":152,"obj-case":94,"new-date":153}],
-149: [function(require, module, exports) {
+}, {"isodate-traverse":144,"./is-enabled":145,"./utils":146,"./address":147,"obj-case":96,"new-date":148}],
+144: [function(require, module, exports) {
 
 var is = require('is');
 var isodate = require('isodate');
@@ -5333,8 +5148,8 @@ function array (arr, strict) {
   return arr;
 }
 
-}, {"is":154,"isodate":155,"each":4}],
-154: [function(require, module, exports) {
+}, {"is":149,"isodate":150,"each":4}],
+149: [function(require, module, exports) {
 
 var isEmpty = require('is-empty');
 
@@ -5410,8 +5225,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":128,"type":7,"component-type":7}],
-155: [function(require, module, exports) {
+}, {"is-empty":130,"type":7,"component-type":7}],
+150: [function(require, module, exports) {
 
 /**
  * Matcher, slightly modified from:
@@ -5483,7 +5298,7 @@ exports.is = function (string, strict) {
   return matcher.test(string);
 };
 }, {}],
-150: [function(require, module, exports) {
+145: [function(require, module, exports) {
 
 /**
  * A few integrations are disabled by default. They must be explicitly
@@ -5505,7 +5320,7 @@ module.exports = function (integration) {
   return ! disabled[integration];
 };
 }, {}],
-151: [function(require, module, exports) {
+146: [function(require, module, exports) {
 
 /**
  * TODO: use component symlink, everywhere ?
@@ -5521,8 +5336,8 @@ try {
   exports.type = require('type-component');
 }
 
-}, {"inherit":156,"clone":157,"type":7}],
-156: [function(require, module, exports) {
+}, {"inherit":151,"clone":152,"type":7}],
+151: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -5531,7 +5346,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-157: [function(require, module, exports) {
+152: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -5591,7 +5406,7 @@ function clone(obj){
 }
 
 }, {"component-type":7,"type":7}],
-152: [function(require, module, exports) {
+147: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -5629,8 +5444,8 @@ module.exports = function(proto){
   }
 };
 
-}, {"obj-case":94}],
-153: [function(require, module, exports) {
+}, {"obj-case":96}],
+148: [function(require, module, exports) {
 
 var is = require('is');
 var isodate = require('isodate');
@@ -5670,8 +5485,8 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
-}, {"is":158,"isodate":155,"./milliseconds":159,"./seconds":160}],
-158: [function(require, module, exports) {
+}, {"is":153,"isodate":150,"./milliseconds":154,"./seconds":155}],
+153: [function(require, module, exports) {
 
 var isEmpty = require('is-empty')
   , typeOf = require('type');
@@ -5742,8 +5557,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":128,"type":7}],
-159: [function(require, module, exports) {
+}, {"is-empty":130,"type":7}],
+154: [function(require, module, exports) {
 
 /**
  * Matcher.
@@ -5776,7 +5591,7 @@ exports.parse = function (millis) {
   return new Date(millis);
 };
 }, {}],
-160: [function(require, module, exports) {
+155: [function(require, module, exports) {
 
 /**
  * Matcher.
@@ -5809,7 +5624,7 @@ exports.parse = function (seconds) {
   return new Date(millis);
 };
 }, {}],
-143: [function(require, module, exports) {
+138: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -5880,8 +5695,8 @@ Alias.prototype.userId = function(){
     || this.field('to');
 };
 
-}, {"./utils":151,"./facade":142}],
-144: [function(require, module, exports) {
+}, {"./utils":146,"./facade":137}],
+139: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6010,8 +5825,8 @@ Group.prototype.properties = function(){
     || {};
 };
 
-}, {"./utils":151,"./address":152,"is-email":161,"new-date":153,"./facade":142}],
-161: [function(require, module, exports) {
+}, {"./utils":146,"./address":147,"is-email":156,"new-date":148,"./facade":137}],
+156: [function(require, module, exports) {
 
 /**
  * Expose `isEmail`.
@@ -6038,7 +5853,7 @@ function isEmail (string) {
   return matcher.test(string);
 }
 }, {}],
-145: [function(require, module, exports) {
+140: [function(require, module, exports) {
 
 var address = require('./address');
 var Facade = require('./facade');
@@ -6288,8 +6103,28 @@ Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.gender = Facade.proxy('traits.gender');
 Identify.prototype.birthday = Facade.proxy('traits.birthday');
 
-}, {"./address":152,"./facade":142,"is-email":161,"new-date":153,"./utils":151,"obj-case":94,"trim":132}],
-146: [function(require, module, exports) {
+}, {"./address":147,"./facade":137,"is-email":156,"new-date":148,"./utils":146,"obj-case":96,"trim":157}],
+157: [function(require, module, exports) {
+
+exports = module.exports = trim;
+
+function trim(str){
+  if (str.trim) return str.trim();
+  return str.replace(/^\s*|\s*$/g, '');
+}
+
+exports.left = function(str){
+  if (str.trimLeft) return str.trimLeft();
+  return str.replace(/^\s*/, '');
+};
+
+exports.right = function(str){
+  if (str.trimRight) return str.trimRight();
+  return str.replace(/\s*$/, '');
+};
+
+}, {}],
+141: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var clone = require('./utils').clone;
@@ -6579,8 +6414,8 @@ function currency(val) {
   if (!isNaN(val)) return val;
 }
 
-}, {"./utils":151,"./facade":142,"./identify":145,"is-email":161,"obj-case":94}],
-147: [function(require, module, exports) {
+}, {"./utils":146,"./facade":137,"./identify":140,"is-email":156,"obj-case":96}],
+142: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Facade = require('./facade');
@@ -6705,8 +6540,8 @@ Page.prototype.track = function(name){
   });
 };
 
-}, {"./utils":151,"./facade":142,"./track":146}],
-148: [function(require, module, exports) {
+}, {"./utils":146,"./facade":137,"./track":141}],
+143: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Page = require('./page');
@@ -6782,103 +6617,8 @@ Screen.prototype.track = function(name){
   });
 };
 
-}, {"./utils":151,"./page":147,"./track":146}],
-140: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var stringify = require('querystring').stringify;
-var sub = require('substitute');
-
-/**
- * Factory function to create a pixel loader.
- *
- * @param {String} path
- * @return {Function}
- * @api public
- */
-
-module.exports = function(path){
-  return function(query, obj, fn){
-    if ('function' == typeof obj) fn = obj, obj = {};
-    obj = obj || {};
-    fn = fn || function(){};
-    var url = sub(path, obj);
-    var img = new Image;
-    img.onerror = error(fn, 'failed to load pixel', img);
-    img.onload = function(){ fn(); };
-    query = stringify(query);
-    if (query) query = '?' + query;
-    img.src = url + query;
-    img.width = 1;
-    img.height = 1;
-    return img;
-  };
-};
-
-/**
- * Create an error handler.
- *
- * @param {Fucntion} fn
- * @param {String} message
- * @param {Image} img
- * @return {Function}
- * @api private
- */
-
-function error(fn, message, img){
-  return function(e){
-    e = e || window.event;
-    var err = new Error(message);
-    err.event = e;
-    err.source = img;
-    fn(err);
-  };
-}
-
-}, {"querystring":131,"substitute":162}],
-162: [function(require, module, exports) {
-
-/**
- * Expose `substitute`
- */
-
-module.exports = substitute;
-
-/**
- * Type.
- */
-
-var type = Object.prototype.toString;
-
-/**
- * Substitute `:prop` with the given `obj` in `str`
- *
- * @param {String} str
- * @param {Object or Array} obj
- * @param {RegExp} expr
- * @return {String}
- * @api public
- */
-
-function substitute(str, obj, expr){
-  if (!obj) throw new TypeError('expected an object');
-  expr = expr || /:(\w+)/g;
-  return str.replace(expr, function(_, prop){
-    switch (type.call(obj)) {
-      case '[object Object]':
-        return null != obj[prop] ? obj[prop] : _;
-      case '[object Array]':
-        var val = obj.shift();
-        return null != val ? val : _;
-    }
-  });
-}
-
-}, {}],
-141: [function(require, module, exports) {
+}, {"./utils":146,"./page":142,"./track":141}],
+136: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6953,7 +6693,7 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":132,"type":7}],
+}, {"trim":157,"type":7}],
 19: [function(require, module, exports) {
 
 /**
@@ -6980,11 +6720,11 @@ var BugHerd = module.exports = integration('BugHerd')
  *
  * http://support.bugherd.com/home
  *
- * @param {Object} page
+ * @api public
  */
 
-BugHerd.prototype.initialize = function(page){
-  window.BugHerdConfig = { feedback: { hide: !this.options.showFeedbackTab }};
+BugHerd.prototype.initialize = function(){
+  window.BugHerdConfig = { feedback: { hide: !this.options.showFeedbackTab } };
   var ready = this.ready;
   this.load(function(){
     tick(ready);
@@ -6994,14 +6734,15 @@ BugHerd.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 BugHerd.prototype.loaded = function(){
-  return !! window._bugHerd;
+  return !!window._bugHerd;
 };
 
-}, {"analytics.js-integration":90,"next-tick":116}],
+}, {"analytics.js-integration":92,"next-tick":118}],
 20: [function(require, module, exports) {
 
 /**
@@ -7011,13 +6752,12 @@ BugHerd.prototype.loaded = function(){
 var integration = require('analytics.js-integration');
 var is = require('is');
 var extend = require('extend');
-var onError = require('on-error');
 
 /**
  * UMD ?
  */
 
-var umd = 'function' == typeof define && define.amd;
+var umd = typeof window.define === 'function' && window.define.amd;
 
 /**
  * Source.
@@ -7039,10 +6779,10 @@ var Bugsnag = module.exports = integration('Bugsnag')
  *
  * https://bugsnag.com/docs/notifiers/js
  *
- * @param {Object} page
+ * @api public
  */
 
-Bugsnag.prototype.initialize = function(page){
+Bugsnag.prototype.initialize = function(){
   var self = this;
 
   if (umd) {
@@ -7063,7 +6803,8 @@ Bugsnag.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Bugsnag.prototype.loaded = function(){
@@ -7073,6 +6814,7 @@ Bugsnag.prototype.loaded = function(){
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -7081,63 +6823,32 @@ Bugsnag.prototype.identify = function(identify){
   extend(window.Bugsnag.metaData, identify.traits());
 };
 
-}, {"analytics.js-integration":90,"is":93,"extend":136,"on-error":163}],
-163: [function(require, module, exports) {
+}, {"analytics.js-integration":92,"is":95,"extend":158}],
+158: [function(require, module, exports) {
 
-/**
- * Expose `onError`.
- */
+module.exports = function extend (object) {
+    // Takes an unlimited number of extenders.
+    var args = Array.prototype.slice.call(arguments, 1);
 
-module.exports = onError;
+    // For each extender, copy their properties on our object.
+    for (var i = 0, source; source = args[i]; i++) {
+        if (!source) continue;
+        for (var property in source) {
+            object[property] = source[property];
+        }
+    }
 
-
-/**
- * Callbacks.
- */
-
-var callbacks = [];
-
-
-/**
- * Preserve existing handler.
- */
-
-if ('function' == typeof window.onerror) callbacks.push(window.onerror);
-
-
-/**
- * Bind to `window.onerror`.
- */
-
-window.onerror = handler;
-
-
-/**
- * Error handler.
- */
-
-function handler () {
-  for (var i = 0, fn; fn = callbacks[i]; i++) fn.apply(this, arguments);
-}
-
-
-/**
- * Call a `fn` on `window.onerror`.
- *
- * @param {Function} fn
- */
-
-function onError (fn) {
-  callbacks.push(fn);
-  if (window.onerror != handler) {
-    callbacks.push(window.onerror);
-    window.onerror = handler;
-  }
-}
+    return object;
+};
 }, {}],
 21: [function(require, module, exports) {
-var integration = require('analytics.js-integration'),
-  each = require('each');
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
+var each = require('each');
 
 /**
  * Expose `Chameleon` integration.
@@ -7154,11 +6865,13 @@ var Chameleon = module.exports = integration('Chameleon')
 /**
  * Initialize Chameleon.
  *
- * @param {Facade} page
+ * @api public
  */
 
-Chameleon.prototype.initialize = function(page){
-  var chmln=window.chmln||(window.chmln={}),names='setup alias track set'.split(' ');for (var i=0;i<names.length;i++){(function(){var t=chmln[names[i]+'_a']=[];chmln[names[i]]=function(){t.push(arguments);};})() }
+Chameleon.prototype.initialize = function(){
+  /* eslint-disable */
+  (window.chmln={}),names='setup alias track set'.split(' ');for (var i=0;i<names.length;i++){(function(){var t=chmln[names[i]+'_a']=[];chmln[names[i]]=function(){t.push(arguments);};})() };
+  /* eslint-enable */
 
   this.ready();
   this.load();
@@ -7167,7 +6880,8 @@ Chameleon.prototype.initialize = function(page){
 /**
  * Has the Chameleon library been loaded yet?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Chameleon.prototype.loaded = function(){
@@ -7177,6 +6891,7 @@ Chameleon.prototype.loaded = function(){
 /**
  * Identify a user.
  *
+ * @api public
  * @param {Facade} identify
  */
 
@@ -7192,6 +6907,7 @@ Chameleon.prototype.identify = function(identify){
 /**
  * Associate the current user with a group of users.
  *
+ * @api public
  * @param {Facade} group
  */
 
@@ -7199,10 +6915,10 @@ Chameleon.prototype.group = function(group){
   var options = {};
 
   each(group.traits(), function(key, value){
-    options['group:'+key] = value;
+    options['group:' + key] = value;
   });
 
-  options['group:id'] =  group.groupId();
+  options['group:id'] = group.groupId();
 
   window.chmln.set(options);
 };
@@ -7229,15 +6945,15 @@ Chameleon.prototype.alias = function(alias){
   window.chmln.alias({ from: fromId, to: alias.userId() });
 };
 
-}, {"analytics.js-integration":90,"each":4}],
+}, {"analytics.js-integration":92,"each":4}],
 22: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var defaults = require('defaults');
+var integration = require('analytics.js-integration');
 var onBody = require('on-body');
 
 /**
@@ -7258,10 +6974,10 @@ var Chartbeat = module.exports = integration('Chartbeat')
  *
  * http://chartbeat.com/docs/configuration_variables/
  *
- * @param {Object} page
+ * @api public
  */
 
-Chartbeat.prototype.initialize = function(page){
+Chartbeat.prototype.initialize = function(){
   var self = this;
 
   window._sf_async_config = window._sf_async_config || {};
@@ -7279,11 +6995,12 @@ Chartbeat.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Chartbeat.prototype.loaded = function(){
-  return !! window.pSUPERFLY;
+  return !!window.pSUPERFLY;
 };
 
 /**
@@ -7291,6 +7008,7 @@ Chartbeat.prototype.loaded = function(){
  *
  * http://chartbeat.com/docs/handling_virtual_page_changes/
  *
+ * @api public
  * @param {Page} page
  */
 
@@ -7304,8 +7022,8 @@ Chartbeat.prototype.page = function(page){
   window.pSUPERFLY.virtualPage(props.path, name || props.title);
 };
 
-}, {"analytics.js-integration":90,"defaults":164,"on-body":135}],
-164: [function(require, module, exports) {
+}, {"defaults":159,"analytics.js-integration":92,"on-body":160}],
+159: [function(require, module, exports) {
 /**
  * Expose `defaults`.
  */
@@ -7322,6 +7040,61 @@ function defaults (dest, defaults) {
 };
 
 }, {}],
+160: [function(require, module, exports) {
+var each = require('each');
+
+
+/**
+ * Cache whether `<body>` exists.
+ */
+
+var body = false;
+
+
+/**
+ * Callbacks to call when the body exists.
+ */
+
+var callbacks = [];
+
+
+/**
+ * Export a way to add handlers to be invoked once the body exists.
+ *
+ * @param {Function} callback  A function to call when the body exists.
+ */
+
+module.exports = function onBody (callback) {
+  if (body) {
+    call(callback);
+  } else {
+    callbacks.push(callback);
+  }
+};
+
+
+/**
+ * Set an interval to check for `document.body`.
+ */
+
+var interval = setInterval(function () {
+  if (!document.body) return;
+  body = true;
+  each(callbacks, call);
+  clearInterval(interval);
+}, 5);
+
+
+/**
+ * Call a callback, passing it the body.
+ *
+ * @param {Function} callback  The callback to call.
+ */
+
+function call (callback) {
+  callback(document.body);
+}
+}, {"each":111}],
 23: [function(require, module, exports) {
 
 /**
@@ -7333,8 +7106,8 @@ var domify = require('domify');
 var each = require('each');
 var integration = require('analytics.js-integration');
 var is = require('is');
-var useHttps = require('use-https');
 var onBody = require('on-body');
+var useHttps = require('use-https');
 
 /**
  * Expose `ClickTale` integration.
@@ -7359,10 +7132,10 @@ var ClickTale = module.exports = integration('ClickTale')
  *
  * http://wiki.clicktale.com/Article/JavaScript_API
  *
- * @param {Object} page
+ * @api public
  */
 
-ClickTale.prototype.initialize = function(page){
+ClickTale.prototype.initialize = function(){
   var self = this;
   window.WRInitTime = date.getTime();
 
@@ -7388,7 +7161,8 @@ ClickTale.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 ClickTale.prototype.loaded = function(){
@@ -7401,6 +7175,7 @@ ClickTale.prototype.loaded = function(){
  * http://wiki.clicktale.com/Article/ClickTaleTag#ClickTaleSetUID
  * http://wiki.clicktale.com/Article/ClickTaleTag#ClickTaleField
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -7417,6 +7192,7 @@ ClickTale.prototype.identify = function(identify){
  *
  * http://wiki.clicktale.com/Article/ClickTaleTag#ClickTaleEvent
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -7424,8 +7200,8 @@ ClickTale.prototype.track = function(track){
   window.ClickTaleEvent(track.event());
 };
 
-}, {"load-date":165,"domify":124,"each":4,"analytics.js-integration":90,"is":93,"use-https":92,"on-body":135}],
-165: [function(require, module, exports) {
+}, {"load-date":161,"domify":126,"each":4,"analytics.js-integration":92,"is":95,"on-body":160,"use-https":94}],
+161: [function(require, module, exports) {
 
 
 /*
@@ -7471,10 +7247,10 @@ var Clicky = module.exports = integration('Clicky')
  *
  * http://clicky.com/help/customization
  *
- * @param {Object} page
+ * @api public
  */
 
-Clicky.prototype.initialize = function(page){
+Clicky.prototype.initialize = function(){
   var user = this.analytics.user();
   window.clicky_site_ids = window.clicky_site_ids || [this.options.siteId];
   this.identify(new Identify({
@@ -7487,7 +7263,8 @@ Clicky.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Clicky.prototype.loaded = function(){
@@ -7499,12 +7276,12 @@ Clicky.prototype.loaded = function(){
  *
  * http://clicky.com/help/customization#/help/custom/manual
  *
+ * @api public
  * @param {Page} page
  */
 
 Clicky.prototype.page = function(page){
   var properties = page.properties();
-  var category = page.category();
   var name = page.fullName();
   window.clicky.log(properties.path, name || properties.title);
 };
@@ -7512,7 +7289,8 @@ Clicky.prototype.page = function(page){
 /**
  * Identify.
  *
- * @param {Identify} id (optional)
+ * @api public
+ * @param {Identify} [id]
  */
 
 Clicky.prototype.identify = function(identify){
@@ -7534,6 +7312,7 @@ Clicky.prototype.identify = function(identify){
  *
  * http://clicky.com/help/customization#/help/custom/manual
  *
+ * @api public
  * @param {Track} event
  */
 
@@ -7541,7 +7320,7 @@ Clicky.prototype.track = function(track){
   window.clicky.goal(track.event(), track.revenue());
 };
 
-}, {"facade":139,"extend":136,"analytics.js-integration":90,"is":93}],
+}, {"facade":135,"extend":158,"analytics.js-integration":92,"is":95}],
 25: [function(require, module, exports) {
 
 /**
@@ -7567,36 +7346,38 @@ var Comscore = module.exports = integration('comScore')
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-Comscore.prototype.initialize = function(page){
+Comscore.prototype.initialize = function(){
   window._comscore = window._comscore || [this.options];
-  var name = useHttps() ? 'https' : 'http';
-  this.load(name, this.ready);
+  var tagName = useHttps() ? 'https' : 'http';
+  this.load(tagName, this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Comscore.prototype.loaded = function(){
-  return !! window.COMSCORE;
+  return !!window.COMSCORE;
 };
 
 /**
- * Page
+ * Page.
  *
+ * @api public
  * @param {Object} page
  */
 
-Comscore.prototype.page = function(page){
+Comscore.prototype.page = function(){
   window.COMSCORE.beacon(this.options);
 };
 
-}, {"analytics.js-integration":90,"use-https":92}],
+}, {"analytics.js-integration":92,"use-https":94}],
 26: [function(require, module, exports) {
 
 /**
@@ -7613,47 +7394,48 @@ var CrazyEgg = module.exports = integration('Crazy Egg')
   .assumesPageview()
   .global('CE2')
   .option('accountNumber', '')
-  .tag('<script src="//dnn506yrbagrg.cloudfront.net/pages/scripts/{{ path }}.js?{{ cache }}">');
+  .tag('<script src="//dnn506yrbagrg.cloudfront.net/pages/scripts/{{ path }}.js?{{ cacheBuster }}">');
 
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-CrazyEgg.prototype.initialize = function(page){
+CrazyEgg.prototype.initialize = function(){
   var number = this.options.accountNumber;
-  var path = number.slice(0,4) + '/' + number.slice(4);
-  var cache = Math.floor(new Date().getTime() / 3600000);
-  this.load({ path: path, cache: cache }, this.ready);
+  var path = number.slice(0, 4) + '/' + number.slice(4);
+  var cacheBuster = Math.floor(new Date().getTime() / 3600000);
+  this.load({ path: path, cacheBuster: cacheBuster }, this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 CrazyEgg.prototype.loaded = function(){
-  return !! window.CE2;
+  return !!window.CE2;
 };
 
-}, {"analytics.js-integration":90}],
+}, {"analytics.js-integration":92}],
 27: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var push = require('global-queue')('_curebitq');
 var Identify = require('facade').Identify;
-var throttle = require('throttle');
 var Track = require('facade').Track;
-var iso = require('to-iso-string');
-var clone = require('clone');
-var each = require('each');
 var bind = require('bind');
+var each = require('each');
+var integration = require('analytics.js-integration');
+var iso = require('to-iso-string');
+var push = require('global-queue')('_curebitq');
+var throttle = require('throttle');
+var when = require('when');
 
 /**
  * Expose `Curebit` integration.
@@ -7662,25 +7444,25 @@ var bind = require('bind');
 var Curebit = module.exports = integration('Curebit')
   .global('_curebitq')
   .global('curebit')
-  .option('siteId', '')
-  .option('iframeWidth', '100%')
-  .option('iframeHeight', '480')
-  .option('iframeBorder', 0)
-  .option('iframeId', 'curebit_integration')
-  .option('responsive', true)
-  .option('device', '')
-  .option('insertIntoId', '')
   .option('campaigns', {})
+  .option('device', '')
+  .option('iframeBorder', 0)
+  .option('iframeHeight', '480')
+  .option('iframeId', 'curebit_integration')
+  .option('iframeWidth', '100%')
+  .option('insertIntoId', '')
+  .option('responsive', true)
   .option('server', 'https://www.curebit.com')
+  .option('siteId', '')
   .tag('<script src="//d2jjzw81hqbuqv.cloudfront.net/integration/curebit-1.0.min.js">');
 
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-Curebit.prototype.initialize = function(page){
+Curebit.prototype.initialize = function(){
   push('init', { site_id: this.options.siteId, server: this.options.server });
   this.load(this.ready);
 
@@ -7691,7 +7473,8 @@ Curebit.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Curebit.prototype.loaded = function(){
@@ -7710,14 +7493,14 @@ Curebit.prototype.loaded = function(){
  * This is throttled to prevent accidentally drawing the iframe multiple times,
  * from multiple `.page()` calls. The `250` is from the curebit script.
  *
+ * @api private
  * @param {String} url
  * @param {String} id
  * @param {Function} fn
- * @api private
  */
 
+// FIXME: Is this deprecated? Seems unused
 Curebit.prototype.injectIntoId = function(url, id, fn){
-  var server = this.options.server;
   when(function(){
     return document.getElementById(id);
   }, function(){
@@ -7732,10 +7515,11 @@ Curebit.prototype.injectIntoId = function(url, id, fn){
 /**
  * Campaign tags.
  *
+ * @api public
  * @param {Page} page
  */
 
-Curebit.prototype.page = function(page){
+Curebit.prototype.page = function(){
   var user = this.analytics.user();
   var campaigns = this.options.campaigns;
   var path = window.location.pathname;
@@ -7782,6 +7566,7 @@ Curebit.prototype.page = function(page){
  *
  * https://www.curebit.com/docs/ecommerce/custom
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -7804,7 +7589,7 @@ Curebit.prototype.completedOrder = function(track){
       image_url: product.image,
       price: track.price(),
       title: track.name(),
-      url: product.url,
+      url: product.url
     });
   });
 
@@ -7821,71 +7606,8 @@ Curebit.prototype.completedOrder = function(track){
   });
 };
 
-}, {"analytics.js-integration":90,"global-queue":166,"facade":139,"throttle":167,"to-iso-string":168,"clone":96,"each":4,"bind":103}],
-166: [function(require, module, exports) {
-
-/**
- * Expose `generate`.
- */
-
-module.exports = generate;
-
-
-/**
- * Generate a global queue pushing method with `name`.
- *
- * @param {String} name
- * @param {Object} options
- *   @property {Boolean} wrap
- * @return {Function}
- */
-
-function generate (name, options) {
-  options = options || {};
-
-  return function (args) {
-    args = [].slice.call(arguments);
-    window[name] || (window[name] = []);
-    options.wrap === false
-      ? window[name].push.apply(window[name], args)
-      : window[name].push(args);
-  };
-}
-}, {}],
-167: [function(require, module, exports) {
-
-/**
- * Module exports.
- */
-
-module.exports = throttle;
-
-/**
- * Returns a new function that, when invoked, invokes `func` at most one time per
- * `wait` milliseconds.
- *
- * @param {Function} func The `Function` instance to wrap.
- * @param {Number} wait The minimum number of milliseconds that must elapse in between `func` invokations.
- * @return {Function} A new function that wraps the `func` function passed in.
- * @api public
- */
-
-function throttle (func, wait) {
-  var rtn; // return value
-  var last = 0; // last invokation timestamp
-  return function throttled () {
-    var now = new Date().getTime();
-    var delta = now - last;
-    if (delta >= wait) {
-      rtn = func.apply(this, arguments);
-      last = now;
-    }
-    return rtn;
-  };
-}
-
-}, {}],
-168: [function(require, module, exports) {
+}, {"facade":135,"bind":105,"each":4,"analytics.js-integration":92,"to-iso-string":162,"global-queue":163,"throttle":164,"when":165}],
+162: [function(require, module, exports) {
 
 /**
  * Expose `toIsoString`.
@@ -7927,15 +7649,152 @@ function pad (number) {
   return n.length === 1 ? '0' + n : n;
 }
 }, {}],
+163: [function(require, module, exports) {
+
+/**
+ * Expose `generate`.
+ */
+
+module.exports = generate;
+
+
+/**
+ * Generate a global queue pushing method with `name`.
+ *
+ * @param {String} name
+ * @param {Object} options
+ *   @property {Boolean} wrap
+ * @return {Function}
+ */
+
+function generate (name, options) {
+  options = options || {};
+
+  return function (args) {
+    args = [].slice.call(arguments);
+    window[name] || (window[name] = []);
+    options.wrap === false
+      ? window[name].push.apply(window[name], args)
+      : window[name].push(args);
+  };
+}
+}, {}],
+164: [function(require, module, exports) {
+
+/**
+ * Module exports.
+ */
+
+module.exports = throttle;
+
+/**
+ * Returns a new function that, when invoked, invokes `func` at most one time per
+ * `wait` milliseconds.
+ *
+ * @param {Function} func The `Function` instance to wrap.
+ * @param {Number} wait The minimum number of milliseconds that must elapse in between `func` invokations.
+ * @return {Function} A new function that wraps the `func` function passed in.
+ * @api public
+ */
+
+function throttle (func, wait) {
+  var rtn; // return value
+  var last = 0; // last invokation timestamp
+  return function throttled () {
+    var now = new Date().getTime();
+    var delta = now - last;
+    if (delta >= wait) {
+      rtn = func.apply(this, arguments);
+      last = now;
+    }
+    return rtn;
+  };
+}
+
+}, {}],
+165: [function(require, module, exports) {
+
+var callback = require('callback');
+
+
+/**
+ * Expose `when`.
+ */
+
+module.exports = when;
+
+
+/**
+ * Loop on a short interval until `condition()` is true, then call `fn`.
+ *
+ * @param {Function} condition
+ * @param {Function} fn
+ * @param {Number} interval (optional)
+ */
+
+function when (condition, fn, interval) {
+  if (condition()) return callback.async(fn);
+
+  var ref = setInterval(function () {
+    if (!condition()) return;
+    callback(fn);
+    clearInterval(ref);
+  }, interval || 10);
+}
+}, {"callback":166}],
+166: [function(require, module, exports) {
+var next = require('next-tick');
+
+
+/**
+ * Expose `callback`.
+ */
+
+module.exports = callback;
+
+
+/**
+ * Call an `fn` back synchronously if it exists.
+ *
+ * @param {Function} fn
+ */
+
+function callback (fn) {
+  if ('function' === typeof fn) fn();
+}
+
+
+/**
+ * Call an `fn` back asynchronously if it exists. If `wait` is ommitted, the
+ * `fn` will be called on next tick.
+ *
+ * @param {Function} fn
+ * @param {Number} wait (optional)
+ */
+
+callback.async = function (fn, wait) {
+  if ('function' !== typeof fn) return;
+  if (!wait) return next(fn);
+  setTimeout(fn, wait);
+};
+
+
+/**
+ * Symmetry.
+ */
+
+callback.sync = callback;
+
+}, {"next-tick":118}],
 28: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
+var Identify = require('facade').Identify;
 var alias = require('alias');
 var convertDates = require('convert-dates');
-var Identify = require('facade').Identify;
 var integration = require('analytics.js-integration');
 
 /**
@@ -7952,23 +7811,26 @@ var Customerio = module.exports = integration('Customer.io')
  *
  * http://customer.io/docs/api/javascript.html
  *
- * @param {Object} page
+ * @api public
  */
 
-Customerio.prototype.initialize = function(page){
+Customerio.prototype.initialize = function(){
   window._cio = window._cio || [];
+  /* eslint-disable */
   (function(){var a,b,c; a = function(f){return function(){window._cio.push([f].concat(Array.prototype.slice.call(arguments,0))); }; }; b = ['identify', 'track']; for (c = 0; c < b.length; c++) {window._cio[b[c]] = a(b[c]); } })();
+  /* eslint-enable */
   this.load(this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Customerio.prototype.loaded = function(){
-  return (!! window._cio) && (window._cio.push !== Array.prototype.push);
+  return !!(window._cio && window._cio.push !== Array.prototype.push);
 };
 
 /**
@@ -7976,6 +7838,7 @@ Customerio.prototype.loaded = function(){
  *
  * http://customer.io/docs/api/javascript.html#section-Identify_customers
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -7990,6 +7853,7 @@ Customerio.prototype.identify = function(identify){
 /**
  * Group.
  *
+ * @api public
  * @param {Group} group
  */
 
@@ -8012,6 +7876,7 @@ Customerio.prototype.group = function(group){
  *
  * http://customer.io/docs/api/javascript.html#section-Track_a_custom_event
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -8024,16 +7889,17 @@ Customerio.prototype.track = function(track){
 /**
  * Convert a date to the format Customer.io supports.
  *
+ * @api private
  * @param {Date} date
- * @return {Number}
+ * @return {number}
  */
 
 function convertDate(date){
   return Math.floor(date.getTime() / 1000);
 }
 
-}, {"alias":169,"convert-dates":170,"facade":139,"analytics.js-integration":90}],
-169: [function(require, module, exports) {
+}, {"facade":135,"alias":167,"convert-dates":168,"analytics.js-integration":92}],
+167: [function(require, module, exports) {
 
 var type = require('type');
 
@@ -8096,8 +7962,8 @@ function aliasByFunction (obj, convert) {
   for (var key in obj) output[convert(key)] = obj[key];
   return output;
 }
-}, {"type":7,"clone":157}],
-170: [function(require, module, exports) {
+}, {"type":7,"clone":152}],
+168: [function(require, module, exports) {
 
 var is = require('is');
 
@@ -8132,17 +7998,15 @@ function convertDates (obj, convert) {
   }
   return obj;
 }
-}, {"is":93,"clone":96}],
+}, {"is":95,"clone":98}],
 29: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var alias = require('alias');
 var integration = require('analytics.js-integration');
 var is = require('is');
-var load = require('load-script');
 var push = require('global-queue')('_dcq');
 
 /**
@@ -8152,8 +8016,8 @@ var push = require('global-queue')('_dcq');
 var Drip = module.exports = integration('Drip')
   .assumesPageview()
   .global('_dc')
-  .global('_dcqi')
   .global('_dcq')
+  .global('_dcqi')
   .global('_dcs')
   .option('account', '')
   .tag('<script src="//tag.getdrip.com/{{ account }}.js">');
@@ -8161,10 +8025,10 @@ var Drip = module.exports = integration('Drip')
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-Drip.prototype.initialize = function(page){
+Drip.prototype.initialize = function(){
   window._dcq = window._dcq || [];
   window._dcs = window._dcs || {};
   window._dcs.account = this.options.account;
@@ -8174,7 +8038,8 @@ Drip.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Drip.prototype.loaded = function(){
@@ -8184,6 +8049,7 @@ Drip.prototype.loaded = function(){
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -8198,6 +8064,7 @@ Drip.prototype.track = function(track){
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -8205,7 +8072,7 @@ Drip.prototype.identify = function(identify){
   push('identify', identify.traits());
 };
 
-}, {"alias":169,"analytics.js-integration":90,"is":93,"load-script":134,"global-queue":166}],
+}, {"analytics.js-integration":92,"is":95,"global-queue":163}],
 30: [function(require, module, exports) {
 
 /**
@@ -8233,10 +8100,10 @@ var Errorception = module.exports = integration('Errorception')
  *
  * https://github.com/amplitude/Errorception-Javascript
  *
- * @param {Object} page
+ * @api public
  */
 
-Errorception.prototype.initialize = function(page){
+Errorception.prototype.initialize = function(){
   window._errs = window._errs || [this.options.projectId];
   onError(push);
   this.load(this.ready);
@@ -8245,11 +8112,12 @@ Errorception.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Errorception.prototype.loaded = function(){
-  return !! (window._errs && window._errs.push !== Array.prototype.push);
+  return !!(window._errs && window._errs.push !== Array.prototype.push);
 };
 
 /**
@@ -8257,6 +8125,7 @@ Errorception.prototype.loaded = function(){
  *
  * http://blog.errorception.com/2012/11/capture-custom-data-with-your-errors.html
  *
+ * @api public
  * @param {Object} identify
  */
 
@@ -8268,7 +8137,60 @@ Errorception.prototype.identify = function(identify){
   extend(window._errs.meta, traits);
 };
 
-}, {"extend":136,"analytics.js-integration":90,"on-error":163,"global-queue":166}],
+}, {"extend":158,"analytics.js-integration":92,"on-error":169,"global-queue":163}],
+169: [function(require, module, exports) {
+
+/**
+ * Expose `onError`.
+ */
+
+module.exports = onError;
+
+
+/**
+ * Callbacks.
+ */
+
+var callbacks = [];
+
+
+/**
+ * Preserve existing handler.
+ */
+
+if ('function' == typeof window.onerror) callbacks.push(window.onerror);
+
+
+/**
+ * Bind to `window.onerror`.
+ */
+
+window.onerror = handler;
+
+
+/**
+ * Error handler.
+ */
+
+function handler () {
+  for (var i = 0, fn; fn = callbacks[i]; i++) fn.apply(this, arguments);
+}
+
+
+/**
+ * Call a `fn` on `window.onerror`.
+ *
+ * @param {Function} fn
+ */
+
+function onError (fn) {
+  callbacks.push(fn);
+  if (window.onerror != handler) {
+    callbacks.push(window.onerror);
+    window.onerror = handler;
+  }
+}
+}, {}],
 31: [function(require, module, exports) {
 
 /**
@@ -8280,7 +8202,7 @@ var integration = require('analytics.js-integration');
 var push = require('global-queue')('_aaq');
 
 /**
- * Expose `Evergage` integration.integration.
+ * Expose `Evergage` integration.
  */
 
 var Evergage = module.exports = integration('Evergage')
@@ -8293,10 +8215,10 @@ var Evergage = module.exports = integration('Evergage')
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-Evergage.prototype.initialize = function(page){
+Evergage.prototype.initialize = function(){
   var account = this.options.account;
   var dataset = this.options.dataset;
 
@@ -8311,16 +8233,18 @@ Evergage.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Evergage.prototype.loaded = function(){
-  return !! (window._aaq && window._aaq.push !== Array.prototype.push);
+  return !!(window._aaq && window._aaq.push !== Array.prototype.push);
 };
 
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
@@ -8339,6 +8263,7 @@ Evergage.prototype.page = function(page){
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -8361,6 +8286,7 @@ Evergage.prototype.identify = function(identify){
 /**
  * Group.
  *
+ * @api public
  * @param {Group} group
  */
 
@@ -8378,6 +8304,7 @@ Evergage.prototype.group = function(group){
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -8385,7 +8312,7 @@ Evergage.prototype.track = function(track){
   push('trackAction', track.event(), track.properties());
 };
 
-}, {"each":4,"analytics.js-integration":90,"global-queue":166}],
+}, {"each":4,"analytics.js-integration":92,"global-queue":163}],
 32: [function(require, module, exports) {
 'use strict';
 
@@ -8413,6 +8340,7 @@ var Extole = module.exports = integration('Extole')
 /**
 * Initialize.
 *
+* @api public
 * @param {Object} page
 */
 
@@ -8424,7 +8352,8 @@ Extole.prototype.initialize = function(){
 /**
 * Loaded?
 *
-* @return {Boolean}
+* @api private
+* @return {boolean}
 */
 
 Extole.prototype.loaded = function(){
@@ -8434,6 +8363,7 @@ Extole.prototype.loaded = function(){
 /**
 * Track.
 *
+* @api public
 * @param {Track} track
 */
 
@@ -8469,9 +8399,8 @@ Extole.prototype.track = function(track){
  * @param {HTMLElement} conversionTag An Extole conversion tag.
  */
 
-// TODO: If I understand Extole's lib correctly, this is sometimes async,
-// sometimes sync. Should probably refactor this into more predictable/sane
-// behavior
+// FIXME: If I understand Extole's lib correctly, this is sometimes async,
+// sometimes sync. Refactor this into more predictable/sane behavior.
 Extole.prototype._registerConversion = function(conversionTag){
   if (window.extole.main && window.extole.main.fireConversion) {
     return window.extole.main.fireConversion(conversionTag);
@@ -8485,13 +8414,14 @@ Extole.prototype._registerConversion = function(conversionTag){
 };
 
 /**
- * formatConversionParams. Formats details from a Segment track event into a
- * data format Extole can accept.
+ * Formats details from a Segment track event into a data format Extole can
+ * accept.
  *
+ * @api private
  * @param {string} event
  * @param {string} email
  * @param {string|number} userId
- * @param {Object} properties The result of calling `track.properties()`.
+ * @param {Object} properties track.properties().
  * @return {Object}
  */
 
@@ -8522,8 +8452,8 @@ Extole.prototype._createConversionTag = function(conversion){
   return domify('<script type="extole/conversion">' + json.stringify(conversion) + '</script>');
 };
 
-}, {"bind":103,"domify":124,"each":4,"extend":136,"analytics.js-integration":90,"json":171}],
-171: [function(require, module, exports) {
+}, {"bind":105,"domify":126,"each":4,"extend":158,"analytics.js-integration":92,"json":170}],
+170: [function(require, module, exports) {
 
 var json = window.JSON || {};
 var stringify = json.stringify;
@@ -8533,8 +8463,8 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":172}],
-172: [function(require, module, exports) {
+}, {"json-fallback":171}],
+171: [function(require, module, exports) {
 /*
     json2.js
     2014-02-04
@@ -9030,15 +8960,9 @@ module.exports = parse && stringify
  * Module dependencies.
  */
 
+var each = require('each');
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('_fbq');
-var each = require('each');
-
-/**
- * HOP
- */
-
-var has = Object.prototype.hasOwnProperty;
 
 /**
  * Expose `Facebook`
@@ -9055,10 +8979,10 @@ var Facebook = module.exports = integration('Facebook Conversion Tracking')
  *
  * https://developers.facebook.com/docs/ads-for-websites/conversion-pixel-code-migration
  *
- * @param {Object} page
+ * @api public
  */
 
-Facebook.prototype.initialize = function(page){
+Facebook.prototype.initialize = function(){
   window._fbq = window._fbq || [];
   this.load(this.ready);
   window._fbq.loaded = true;
@@ -9067,29 +8991,31 @@ Facebook.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Facebook.prototype.loaded = function(){
-  return !! (window._fbq && window._fbq.loaded);
+  return !!(window._fbq && window._fbq.loaded);
 };
 
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
 Facebook.prototype.page = function(page){
-  var name = page.fullName();
-  this.track(page.track(name));
-}
+  this.track(page.track(page.fullName()));
+};
 
 /**
  * Track.
  *
  * https://developers.facebook.com/docs/reference/ads-api/custom-audience-website-faq/#fbpixel
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -9101,23 +9027,23 @@ Facebook.prototype.track = function(track){
 
   each(events, function(event){
     push('track', event, {
-      value: String(revenue.toFixed(2)),
-      currency: self.options.currency
+      currency: self.options.currency,
+      value: revenue.toFixed(2)
     });
   });
 };
 
-}, {"analytics.js-integration":90,"global-queue":166,"each":4}],
+}, {"each":4,"analytics.js-integration":92,"global-queue":163}],
 34: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var push = require('global-queue')('_fxm');
-var integration = require('analytics.js-integration');
 var Track = require('facade').Track;
 var each = require('each');
+var integration = require('analytics.js-integration');
+var push = require('global-queue')('_fxm');
 
 /**
  * Expose `FoxMetrics` integration.
@@ -9134,10 +9060,10 @@ var FoxMetrics = module.exports = integration('FoxMetrics')
  *
  * http://foxmetrics.com/documentation/apijavascript
  *
- * @param {Object} page
+ * @api public
  */
 
-FoxMetrics.prototype.initialize = function(page){
+FoxMetrics.prototype.initialize = function(){
   window._fxm = window._fxm || [];
   this.load(this.ready);
 };
@@ -9149,12 +9075,13 @@ FoxMetrics.prototype.initialize = function(page){
  */
 
 FoxMetrics.prototype.loaded = function(){
-  return !! (window._fxm && window._fxm.appId);
+  return !!(window._fxm && window._fxm.appId);
 };
 
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
@@ -9162,21 +9089,24 @@ FoxMetrics.prototype.page = function(page){
   var properties = page.proxy('properties');
   var category = page.category();
   var name = page.name();
-  this._category = category; // store for later
+  // store for later
+  // TODO: Why? Document me
+  this._category = category;
 
   push(
     '_fxm.pages.view',
-    properties.title,   // title
-    name,               // name
-    category,           // category
-    properties.url,     // url
-    properties.referrer // referrer
+    properties.title,
+    name,
+    category,
+    properties.url,
+    properties.referrer
   );
 };
 
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -9187,20 +9117,25 @@ FoxMetrics.prototype.identify = function(identify){
 
   push(
     '_fxm.visitor.profile',
-    id,                    // user id
-    identify.firstName(), // first name
-    identify.lastName(),  // last name
-    identify.email(),     // email
-    identify.address(),   // address
-    undefined,            // social
-    undefined,            // partners
-    identify.traits()     // attributes
+    id,
+    identify.firstName(),
+    identify.lastName(),
+    identify.email(),
+    identify.address(),
+    // social
+    // TODO: Why is this `undefined`? Document
+    undefined,
+    // partners
+    // TODO: Why is this `undefined`? Document
+    undefined,
+    identify.traits()
   );
 };
 
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -9213,8 +9148,8 @@ FoxMetrics.prototype.track = function(track){
 /**
  * Viewed product.
  *
- * @param {Track} track
  * @api private
+ * @param {Track} track
  */
 
 FoxMetrics.prototype.viewedProduct = function(track){
@@ -9224,8 +9159,8 @@ FoxMetrics.prototype.viewedProduct = function(track){
 /**
  * Removed product.
  *
- * @param {Track} track
  * @api private
+ * @param {Track} track
  */
 
 FoxMetrics.prototype.removedProduct = function(track){
@@ -9235,8 +9170,8 @@ FoxMetrics.prototype.removedProduct = function(track){
 /**
  * Added product.
  *
- * @param {Track} track
  * @api private
+ * @param {Track} track
  */
 
 FoxMetrics.prototype.addedProduct = function(track){
@@ -9246,8 +9181,8 @@ FoxMetrics.prototype.addedProduct = function(track){
 /**
  * Completed Order.
  *
- * @param {Track} track
  * @api private
+ * @param {Track} track
  */
 
 FoxMetrics.prototype.completedOrder = function(track){
@@ -9281,10 +9216,10 @@ FoxMetrics.prototype.completedOrder = function(track){
  * Track ecommerce `event` with `track`
  * with optional `arr` to append.
  *
- * @param {String} event
+ * @api private
+ * @param {string} event
  * @param {Track} track
  * @param {Array} arr
- * @api private
  */
 
 function ecommerce(event, track, arr){
@@ -9296,17 +9231,23 @@ function ecommerce(event, track, arr){
   ].concat(arr || []));
 }
 
-}, {"global-queue":166,"analytics.js-integration":90,"facade":139,"each":4}],
+}, {"facade":135,"each":4,"analytics.js-integration":92,"global-queue":163}],
 35: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var bind = require('bind');
-var when = require('when');
+var each = require('each');
+var integration = require('analytics.js-integration');
 var is = require('is');
+
+/**
+ * hasOwnProperty reference.
+ */
+
+var has = Object.prototype.hasOwnProperty;
 
 /**
  * Expose `Frontleaf` integration.
@@ -9316,10 +9257,10 @@ var Frontleaf = module.exports = integration('Frontleaf')
   .global('_fl')
   .global('_flBaseUrl')
   .option('baseUrl', 'https://api.frontleaf.com')
-  .option('token', '')
   .option('stream', '')
-  .option('trackNamedPages', false)
+  .option('token', '')
   .option('trackCategorizedPages', false)
+  .option('trackNamedPages', false)
   .tag('<script id="_fl" src="{{ baseUrl }}/lib/tracker.js">');
 
 /**
@@ -9327,23 +9268,24 @@ var Frontleaf = module.exports = integration('Frontleaf')
  *
  * http://docs.frontleaf.com/#/technical-implementation/tracking-customers/tracking-beacon
  *
- * @param {Object} page
+ * @api public
  */
 
-Frontleaf.prototype.initialize = function(page){
+Frontleaf.prototype.initialize = function(){
   window._fl = window._fl || [];
   window._flBaseUrl = window._flBaseUrl || this.options.baseUrl;
   this._push('setApiToken', this.options.token);
   this._push('setStream', this.options.stream);
-  var loaded = bind(this, this.loaded);
-  var ready = this.ready;
+  // TODO: Do we need this to be bound?
+  bind(this, this.loaded);
   this.load({ baseUrl: window._flBaseUrl }, this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Frontleaf.prototype.loaded = function(){
@@ -9353,6 +9295,7 @@ Frontleaf.prototype.loaded = function(){
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -9370,6 +9313,7 @@ Frontleaf.prototype.identify = function(identify){
 /**
  * Group.
  *
+ * @api public
  * @param {Group} group
  */
 
@@ -9387,6 +9331,7 @@ Frontleaf.prototype.group = function(group){
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
@@ -9409,6 +9354,7 @@ Frontleaf.prototype.page = function(page){
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -9420,9 +9366,9 @@ Frontleaf.prototype.track = function(track){
 /**
  * Push a command onto the global Frontleaf queue.
  *
+ * @api private
  * @param {String} command
  * @return {Object} args
- * @api private
  */
 
 Frontleaf.prototype._push = function(command){
@@ -9433,9 +9379,9 @@ Frontleaf.prototype._push = function(command){
 /**
  * Clean all nested objects and arrays.
  *
+ * @api private
  * @param {Object} obj
  * @return {Object}
- * @api private
  */
 
 function clean(obj){
@@ -9443,28 +9389,31 @@ function clean(obj){
 
   // Remove traits/properties that are already represented
   // outside of the data container
-  var excludeKeys = ["id","name","firstName","lastName"];
-  var len = excludeKeys.length;
-  for (var i = 0; i < len; i++) {
-    clear(obj, excludeKeys[i]);
-  }
+  // TODO: Refactor into `omit` call
+  var excludeKeys = ['id', 'name', 'firstName', 'lastName'];
+  each(excludeKeys, function(omitKey){
+    clear(obj, omitKey);
+  });
 
   // Flatten nested hierarchy, preserving arrays
   obj = flatten(obj);
 
   // Discard nulls, represent arrays as comma-separated strings
+  // FIXME: This also discards `undefined`s. Is that OK?
   for (var key in obj) {
-    var val = obj[key];
-    if (null == val) {
-      continue;
-    }
+    if (has.call(obj, key)) {
+      var val = obj[key];
+      if (val == null) {
+        continue;
+      }
 
-    if (is.array(val)) {
-      ret[key] = val.toString();
-      continue;
-    }
+      if (is.array(val)) {
+        ret[key] = val.toString();
+        continue;
+      }
 
-    ret[key] = val;
+      ret[key] = val;
+    }
   }
 
   return ret;
@@ -9473,9 +9422,9 @@ function clean(obj){
 /**
  * Remove a property from an object if set.
  *
+ * @api private
  * @param {Object} obj
  * @param {String} key
- * @api private
  */
 
 function clear(obj, key){
@@ -9490,9 +9439,9 @@ function clear(obj, key){
  *
  * Based on https://github.com/hughsk/flat
  *
+ * @api private
  * @param {Object} source
  * @return {Object}
- * @api private
  */
 
 function flatten(source){
@@ -9500,14 +9449,16 @@ function flatten(source){
 
   function step(object, prev){
     for (var key in object) {
-      var value = object[key];
-      var newKey = prev ? prev + ' ' + key : key;
+      if (has.call(object, key)) {
+        var value = object[key];
+        var newKey = prev ? prev + ' ' + key : key;
 
-      if (!is.array(value) && is.object(value)) {
-        return step(value, newKey);
+        if (!is.array(value) && is.object(value)) {
+          return step(value, newKey);
+        }
+
+        output[newKey] = value;
       }
-
-      output[newKey] = value;
     }
   }
 
@@ -9516,17 +9467,17 @@ function flatten(source){
   return output;
 }
 
-}, {"analytics.js-integration":90,"bind":103,"when":137,"is":93}],
+}, {"bind":105,"each":4,"analytics.js-integration":92,"is":95}],
 36: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var foldl = require('foldl');
-var is = require('is');
 var camel = require('to-camel-case');
+var foldl = require('foldl');
 var integration = require('analytics.js-integration');
+var is = require('is');
 
 /**
  * Expose `FullStory` integration.
@@ -9537,7 +9488,7 @@ var integration = require('analytics.js-integration');
 var FullStory = module.exports = integration('FullStory')
   .option('org', '')
   .option('debug', false)
-  .tag('<script src="https://www.fullstory.com/s/fs.js"></script>')
+  .tag('<script src="https://www.fullstory.com/s/fs.js"></script>');
 
 /**
  * Initialize.
@@ -9549,15 +9500,15 @@ FullStory.prototype.initialize = function(){
   window._fs_host = 'www.fullstory.com';
   window._fs_org = this.options.org;
 
+  /* eslint-disable */
   (function(m,n,e,t,l,o,g,y){
     g=m[e]=function(a,b){g.q?g.q.push([a,b]):g._api(a,b);};g.q=[];
-    // jscs:disable
     g.identify=function(i,v){g(l,{uid:i});if(v)g(l,v)};g.setUserVars=function(v){FS(l,v)};
-    // jscs:enable
     g.setSessionVars=function(v){FS('session',v)};g.setPageVars=function(v){FS('page',v)};
     self.ready();
     self.load();
   })(window,document,'FS','script','user');
+  /* eslint-enable */
 };
 
 /**
@@ -9567,7 +9518,7 @@ FullStory.prototype.initialize = function(){
  */
 
 FullStory.prototype.loaded = function(){
-  return !! window.FS;
+  return !!window.FS;
 };
 
 /**
@@ -9591,17 +9542,17 @@ FullStory.prototype.identify = function(identify){
 /**
 * Convert to FullStory format.
 *
-* @param {String} trait
-* @param {Property} value
+* @param {string} trait
+* @param {*} value
 */
 
-function convert (trait, value) {
-  trait = camel(trait);
-  if (is.string(value)) return trait += '_str';
-  if (isInt(value)) return trait += '_int';
-  if (isFloat(value)) return trait += '_real';
-  if (is.date(value)) return trait += '_date';
-  if (is.boolean(value)) return trait += '_bool';
+function convert(key, value){
+  key = camel(key);
+  if (is.string(value)) return key + '_str';
+  if (isInt(value)) return key + '_int';
+  if (isFloat(value)) return key + '_real';
+  if (is.date(value)) return key + '_date';
+  if (is.boolean(value)) return key + '_bool';
 }
 
 /**
@@ -9609,7 +9560,7 @@ function convert (trait, value) {
  */
 
 function isFloat(n) {
-  return n === +n && n !== (n|0);
+  return n === +n && n !== (n | 0);
 }
 
 /**
@@ -9617,69 +9568,11 @@ function isFloat(n) {
  */
 
 function isInt(n) {
-  return n === +n && n === (n|0);
+  return n === +n && n === (n | 0);
 }
 
-}, {"foldl":173,"is":93,"to-camel-case":174,"analytics.js-integration":90}],
-173: [function(require, module, exports) {
-'use strict';
-
-/**
- * Module dependencies.
- */
-
-var each = require('each');
-
-/**
- * Reduces all the values in a collection down into a single value. Does so by iterating through the
- * collection from left to right, repeatedly calling an `iterator` function and passing to it four
- * arguments: `(accumulator, value, index, collection)`.
- *
- * Returns the final return value of the `iterator` function.
- *
- * @name foldl
- * @api public
- * @param {Function} iterator The function to invoke per iteration.
- * @param {*} accumulator The initial accumulator value, passed to the first invocation of `iterator`.
- * @param {Array|Object} collection The collection to iterate over.
- * @return {*} The return value of the final call to `iterator`.
- * @example
- * foldl(function(total, n) {
- *   return total + n;
- * }, 0, [1, 2, 3]);
- * //=> 6
- *
- * var phonebook = { bob: '555-111-2345', tim: '655-222-6789', sheila: '655-333-1298' };
- *
- * foldl(function(results, phoneNumber) {
- *  if (phoneNumber[0] === '6') {
- *    return results.concat(phoneNumber);
- *  }
- *  return results;
- * }, [], phonebook);
- * // => ['655-222-6789', '655-333-1298']
- */
-
-var foldl = function foldl(iterator, accumulator, collection) {
-  if (typeof iterator !== 'function') {
-    throw new TypeError('Expected a function but received a ' + typeof iterator);
-  }
-
-  each(function(val, i, collection) {
-    accumulator = iterator(accumulator, val, i, collection);
-  }, collection);
-
-  return accumulator;
-};
-
-/**
- * Exports.
- */
-
-module.exports = foldl;
-
-}, {"each":121}],
-174: [function(require, module, exports) {
+}, {"to-camel-case":172,"foldl":134,"analytics.js-integration":92,"is":95}],
+172: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
 
@@ -9704,7 +9597,7 @@ function toCamelCase (string) {
     return letter.toUpperCase();
   });
 }
-}, {"to-space-case":126}],
+}, {"to-space-case":128}],
 37: [function(require, module, exports) {
 
 /**
@@ -9729,10 +9622,10 @@ var Gauges = module.exports = integration('Gauges')
  *
  * http://get.gaug.es/documentation/tracking/
  *
- * @param {Object} page
+ * @api public
  */
 
-Gauges.prototype.initialize = function(page){
+Gauges.prototype.initialize = function(){
   window._gauges = window._gauges || [];
   this.load(this.ready);
 };
@@ -9740,24 +9633,26 @@ Gauges.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Gauges.prototype.loaded = function(){
-  return !! (window._gauges && window._gauges.push !== Array.prototype.push);
+  return !!(window._gauges && window._gauges.push !== Array.prototype.push);
 };
 
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
-Gauges.prototype.page = function(page){
+Gauges.prototype.page = function(){
   push('track');
 };
 
-}, {"analytics.js-integration":90,"global-queue":166}],
+}, {"analytics.js-integration":92,"global-queue":163}],
 38: [function(require, module, exports) {
 
 /**
@@ -9782,10 +9677,10 @@ var GetSatisfaction = module.exports = integration('Get Satisfaction')
  *
  * https://console.getsatisfaction.com/start/101022?signup=true#engage
  *
- * @param {Object} page
+ * @api public
  */
 
-GetSatisfaction.prototype.initialize = function(page){
+GetSatisfaction.prototype.initialize = function(){
   var self = this;
   var widget = this.options.widgetId;
   var div = document.createElement('div');
@@ -9802,37 +9697,32 @@ GetSatisfaction.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 GetSatisfaction.prototype.loaded = function(){
-  return !! window.GSFN;
+  return !!window.GSFN;
 };
 
-}, {"analytics.js-integration":90,"on-body":135}],
+}, {"analytics.js-integration":92,"on-body":160}],
 39: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var push = require('global-queue')('_gaq');
-var length = require('object').length;
-var canonical = require('canonical');
-var useHttps = require('use-https');
 var Track = require('facade').Track;
-var callback = require('callback');
 var defaults = require('defaults');
-var load = require('load-script');
-var keys = require('object').keys;
-var select = require('select');
 var dot = require('obj-case');
 var each = require('each');
-var type = require('type');
-var url = require('url');
+var integration = require('analytics.js-integration');
 var is = require('is');
-var group;
+var keys = require('object').keys;
+var len = require('object').length;
+var push = require('global-queue')('_gaq');
+var select = require('select');
+var useHttps = require('use-https');
 var user;
 
 /**
@@ -9841,7 +9731,6 @@ var user;
 
 module.exports = exports = function(analytics){
   analytics.addIntegration(GA);
-  group = analytics.group();
   user = analytics.user();
 };
 
@@ -9860,20 +9749,20 @@ var GA = exports.Integration = integration('Google Analytics')
   .global('GoogleAnalyticsObject')
   .option('anonymizeIp', false)
   .option('classic', false)
+  .option('dimensions', {})
   .option('domain', 'auto')
   .option('doubleClick', false)
   .option('enhancedEcommerce', false)
   .option('enhancedLinkAttribution', false)
-  .option('nonInteraction', false)
   .option('ignoredReferrers', null)
   .option('includeSearch', false)
-  .option('siteSpeedSampleRate', 1)
-  .option('trackingId', '')
-  .option('trackNamedPages', true)
-  .option('trackCategorizedPages', true)
-  .option('sendUserId', false)
   .option('metrics', {})
-  .option('dimensions', {})
+  .option('nonInteraction', false)
+  .option('sendUserId', false)
+  .option('siteSpeedSampleRate', 1)
+  .option('trackCategorizedPages', true)
+  .option('trackNamedPages', true)
+  .option('trackingId', '')
   .tag('library', '<script src="//www.google-analytics.com/analytics.js">')
   .tag('double click', '<script src="//stats.g.doubleclick.net/dc.js">')
   .tag('http', '<script src="http://www.google-analytics.com/ga.js">')
@@ -9890,7 +9779,6 @@ GA.on('construct', function(integration){
     integration.page = integration.pageClassic;
     integration.track = integration.trackClassic;
     integration.completedOrder = integration.completedOrderClassic;
-
   } else if (integration.options.enhancedEcommerce) {
     integration.viewedProduct = integration.viewedProductEnhanced;
     integration.clickedProduct = integration.clickedProductEnhanced;
@@ -9927,7 +9815,8 @@ GA.prototype.initialize = function(){
   if (window.location.hostname === 'localhost') opts.domain = 'none';
 
   window.ga('create', opts.trackingId, {
-    cookieDomain: opts.domain || GA.prototype.defaults.domain, // to protect against empty string
+    // Fall back on default to protect against empty string
+    cookieDomain: opts.domain || GA.prototype.defaults.domain,
     siteSpeedSampleRate: opts.siteSpeedSampleRate,
     allowLinker: true
   });
@@ -9948,7 +9837,7 @@ GA.prototype.initialize = function(){
 
   // custom dimensions & metrics
   var custom = metrics(user.traits(), opts);
-  if (length(custom)) window.ga('set', custom);
+  if (len(custom)) window.ga('set', custom);
 
   this.load('library', this.ready);
 };
@@ -9960,7 +9849,7 @@ GA.prototype.initialize = function(){
  */
 
 GA.prototype.loaded = function(){
-  return !! window.gaplugins;
+  return !!window.gaplugins;
 };
 
 /**
@@ -9969,7 +9858,7 @@ GA.prototype.loaded = function(){
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/pages
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/single-page-applications#multiple-hits
  *
- *
+ * @api public
  * @param {Page} page
  */
 
@@ -9984,7 +9873,9 @@ GA.prototype.page = function(page){
   var pageTitle = name || props.title;
   var track;
 
-  this._category = category; // store for later
+  // store for later
+  // TODO: Why? Document this better
+  this._category = category;
 
   pageview.page = pagePath;
   pageview.title = pageTitle;
@@ -9998,7 +9889,7 @@ GA.prototype.page = function(page){
 
   // custom dimensions and metrics
   var custom = metrics(props, opts);
-  if (length(custom)) window.ga('set', custom);
+  if (len(custom)) window.ga('set', custom);
 
   // set
   window.ga('set', { page: pagePath, title: pageTitle });
@@ -10022,21 +9913,21 @@ GA.prototype.page = function(page){
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} event
  */
 
 GA.prototype.identify = function(identify){
   var opts = this.options;
 
-  //set userId
   if (opts.sendUserId && identify.userId()) {
     window.ga('set', 'userId', identify.userId());
   }
 
-  //set dimensions
+  // Set dimensions
   var custom = metrics(user.traits(), opts);
-  if (length(custom)) window.ga('set', custom);
- };
+  if (len(custom)) window.ga('set', custom);
+};
 
 /**
  * Track.
@@ -10057,7 +9948,7 @@ GA.prototype.track = function(track, options){
 
   // custom dimensions & metrics
   var custom = metrics(props, interfaceOpts);
-  if (length(custom)) window.ga('set', custom);
+  if (len(custom)) window.ga('set', custom);
 
   var payload = {
     eventAction: track.event(),
@@ -10138,7 +10029,6 @@ GA.prototype.completedOrder = function(track){
 GA.prototype.initializeClassic = function(){
   var opts = this.options;
   var anonymize = opts.anonymizeIp;
-  var db = opts.doubleClick;
   var domain = opts.domain;
   var enhanced = opts.enhancedLinkAttribution;
   var ignore = opts.ignoredReferrers;
@@ -10153,7 +10043,7 @@ GA.prototype.initializeClassic = function(){
   if (sample) push('_setSiteSpeedSampleRate', sample);
 
   if (enhanced) {
-    var protocol = 'https:' === document.location.protocol ? 'https:' : 'http:';
+    var protocol = document.location.protocol === 'https:' ? 'https:' : 'http:';
     var pluginUrl = protocol + '//www.google-analytics.com/plugins/ga/inpage_linkid.js';
     push('_require', 'inpage_linkid', pluginUrl);
   }
@@ -10180,7 +10070,7 @@ GA.prototype.initializeClassic = function(){
  */
 
 GA.prototype.loadedClassic = function(){
-  return !! (window._gaq && window._gaq.push !== Array.prototype.push);
+  return !!(window._gaq && window._gaq.push !== Array.prototype.push);
 };
 
 /**
@@ -10192,7 +10082,6 @@ GA.prototype.loadedClassic = function(){
  */
 
 GA.prototype.pageClassic = function(page){
-  var opts = page.options(this.name);
   var category = page.category();
   var props = page.properties();
   var name = page.fullName();
@@ -10286,6 +10175,7 @@ GA.prototype.completedOrderClassic = function(track){
  *
  * @param {Object} properties
  * @param {Object} options
+ * @return {string|undefined}
  */
 
 function path(properties, options) {
@@ -10334,7 +10224,7 @@ function metrics(obj, data){
     var name = names[i];
     var key = metrics[name] || dimensions[name];
     var value = dot(obj, name) || obj[name];
-    if (null == value) continue;
+    if (value == null) continue;
     ret[key] = value;
   }
 
@@ -10343,6 +10233,8 @@ function metrics(obj, data){
 
 /**
  * Loads ec.js (unless already loaded)
+ *
+ * @param {Track} track
  */
 
 GA.prototype.loadEnhancedEcommerce = function(track){
@@ -10357,12 +10249,15 @@ GA.prototype.loadEnhancedEcommerce = function(track){
 
 /**
  * Pushes an event and all previously set EE data to GA.
+ *
+ * @api private
+ * @param {Track} track
  */
 
 GA.prototype.pushEnhancedEcommerce = function(track){
   // Send a custom non-interaction event to ensure all EE data is pushed.
   // Without doing this we'd need to require page display after setting EE data.
-  ga('send', 'event', track.category() || 'EnhancedEcommerce', track.event(), { nonInteraction: 1 });
+  window.ga('send', 'event', track.category() || 'EnhancedEcommerce', track.event(), { nonInteraction: 1 });
 };
 
 /**
@@ -10370,6 +10265,7 @@ GA.prototype.pushEnhancedEcommerce = function(track){
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#checkout-steps
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10383,6 +10279,7 @@ GA.prototype.startedOrderEnhanced = function(track){
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#checkout-steps
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10396,6 +10293,7 @@ GA.prototype.updatedOrderEnhanced = function(track){
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#checkout-steps
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10411,7 +10309,7 @@ GA.prototype.viewedCheckoutStepEnhanced = function(track){
     enhancedEcommerceTrackProduct(productTrack);
   });
 
-  window.ga('ec:setAction','checkout', {
+  window.ga('ec:setAction', 'checkout', {
     step: props.step || 1,
     option: options || undefined
   });
@@ -10424,6 +10322,7 @@ GA.prototype.viewedCheckoutStepEnhanced = function(track){
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#checkout-options
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10449,6 +10348,7 @@ GA.prototype.completedCheckoutStepEnhanced = function(track){
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#measuring-transactions
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10485,6 +10385,7 @@ GA.prototype.completedOrderEnhanced = function(track){
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#measuring-refunds
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10518,6 +10419,7 @@ GA.prototype.refundedOrderEnhanced = function(track){
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#add-remove-cart
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10532,6 +10434,7 @@ GA.prototype.addedProductEnhanced = function(track){
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#add-remove-cart
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10546,6 +10449,7 @@ GA.prototype.removedProductEnhanced = function(track){
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#product-detail-view
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10560,6 +10464,7 @@ GA.prototype.viewedProductEnhanced = function(track){
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#measuring-actions
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10578,6 +10483,7 @@ GA.prototype.clickedProductEnhanced = function(track){
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#measuring-promo-impressions
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10599,6 +10505,7 @@ GA.prototype.viewedPromotionEnhanced = function(track){
  *
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce#measuring-promo-clicks
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10612,7 +10519,7 @@ GA.prototype.clickedPromotionEnhanced = function(track){
     creative: props.creative,
     position: props.position
   });
-  ga('ec:setAction', 'promo_click', {});
+  window.ga('ec:setAction', 'promo_click', {});
   this.pushEnhancedEcommerce(track);
 };
 
@@ -10621,6 +10528,7 @@ GA.prototype.clickedPromotionEnhanced = function(track){
  *
  * Simple helper so that we don't repeat `ec:addProduct` everywhere.
  *
+ * @api private
  * @param {Track} track
  */
 
@@ -10642,6 +10550,7 @@ function enhancedEcommerceTrackProduct(track){
 /**
  * Set `action` on `track` with `data`.
  *
+ * @api private
  * @param {Track} track
  * @param {String} action
  * @param {Object} data
@@ -10655,8 +10564,9 @@ function enhancedEcommerceProductAction(track, action, data){
 /**
  * Extracts checkout options.
  *
+ * @api private
  * @param {Object} props
- * @return {Null|String}
+ * @return {string|null}
  */
 
 function extractCheckoutOptions(props){
@@ -10673,6 +10583,7 @@ function extractCheckoutOptions(props){
 /**
  * Creates a track out of product properties.
  *
+ * @api private
  * @param {Track} track
  * @param {Object} properties
  * @return {Track}
@@ -10683,8 +10594,8 @@ function createProductTrack(track, properties) {
   return new Track({ properties: properties });
 }
 
-}, {"analytics.js-integration":90,"global-queue":166,"object":175,"canonical":176,"use-https":92,"facade":139,"callback":138,"defaults":164,"load-script":134,"select":177,"obj-case":94,"each":4,"type":117,"url":178,"is":93}],
-175: [function(require, module, exports) {
+}, {"facade":135,"defaults":159,"obj-case":96,"each":4,"analytics.js-integration":92,"is":95,"object":173,"global-queue":163,"select":174,"use-https":94}],
+173: [function(require, module, exports) {
 
 /**
  * HOP ref.
@@ -10770,15 +10681,7 @@ exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
 }, {}],
-176: [function(require, module, exports) {
-module.exports = function canonical () {
-  var tags = document.getElementsByTagName('link');
-  for (var i = 0, tag; tag = tags[i]; i++) {
-    if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
-  }
-};
-}, {}],
-177: [function(require, module, exports) {
+174: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -10808,8 +10711,8 @@ module.exports = function(arr, fn){
   return ret;
 };
 
-}, {"to-function":179}],
-179: [function(require, module, exports) {
+}, {"to-function":175}],
+175: [function(require, module, exports) {
 
 /**
  * Module Dependencies
@@ -10963,82 +10866,15 @@ function stripNested (prop, str, val) {
   });
 }
 
-}, {"props":120,"component-props":120}],
-178: [function(require, module, exports) {
-
-/**
- * Parse the given `url`.
- *
- * @param {String} str
- * @return {Object}
- * @api public
- */
-
-exports.parse = function(url){
-  var a = document.createElement('a');
-  a.href = url;
-  return {
-    href: a.href,
-    host: a.host,
-    port: a.port,
-    hash: a.hash,
-    hostname: a.hostname,
-    pathname: a.pathname,
-    protocol: a.protocol,
-    search: a.search,
-    query: a.search.slice(1)
-  }
-};
-
-/**
- * Check if `url` is absolute.
- *
- * @param {String} url
- * @return {Boolean}
- * @api public
- */
-
-exports.isAbsolute = function(url){
-  if (0 == url.indexOf('//')) return true;
-  if (~url.indexOf('://')) return true;
-  return false;
-};
-
-/**
- * Check if `url` is relative.
- *
- * @param {String} url
- * @return {Boolean}
- * @api public
- */
-
-exports.isRelative = function(url){
-  return ! exports.isAbsolute(url);
-};
-
-/**
- * Check if `url` is cross domain.
- *
- * @param {String} url
- * @return {Boolean}
- * @api public
- */
-
-exports.isCrossDomain = function(url){
-  url = exports.parse(url);
-  return url.hostname != location.hostname
-    || url.port != location.port
-    || url.protocol != location.protocol;
-};
-}, {}],
+}, {"props":122,"component-props":122}],
 40: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var push = require('global-queue')('dataLayer', { wrap: false });
 var integration = require('analytics.js-integration');
+var push = require('global-queue')('dataLayer', { wrap: false });
 
 /**
  * Expose `GTM`.
@@ -11058,37 +10894,36 @@ var GTM = module.exports = integration('Google Tag Manager')
  *
  * https://developers.google.com/tag-manager
  *
- * @param {Object} page
+ * @api public
  */
 
 GTM.prototype.initialize = function(){
-  push({ 'gtm.start': +new Date, event: 'gtm.js' });
+  push({ 'gtm.start': Number(new Date()), event: 'gtm.js' });
   this.load(this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 GTM.prototype.loaded = function(){
-  return !! (window.dataLayer && [].push != window.dataLayer.push);
+  return !!(window.dataLayer && Array.prototype.push !== window.dataLayer.push);
 };
 
 /**
  * Page.
  *
- * @param {Page} page
  * @api public
+ * @param {Page} page
  */
 
 GTM.prototype.page = function(page){
   var category = page.category();
-  var props = page.properties();
   var name = page.fullName();
   var opts = this.options;
-  var track;
 
   // all
   if (opts.trackAllPages) {
@@ -11111,8 +10946,8 @@ GTM.prototype.page = function(page){
  *
  * https://developers.google.com/tag-manager/devguide#events
  *
- * @param {Track} track
  * @api public
+ * @param {Track} track
  */
 
 GTM.prototype.track = function(track){
@@ -11121,23 +10956,19 @@ GTM.prototype.track = function(track){
   push(props);
 };
 
-}, {"global-queue":166,"analytics.js-integration":90}],
+}, {"analytics.js-integration":92,"global-queue":163}],
 41: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var Identify = require('facade').Identify;
 var Track = require('facade').Track;
-var callback = require('callback');
-var load = require('load-script');
-var onBody = require('on-body');
 var each = require('each');
-var is = require('is');
-var pick = require('pick');
+var integration = require('analytics.js-integration');
 var omit = require('omit');
+var pick = require('pick');
 
 /**
  * Expose `GoSquared` integration.
@@ -11146,13 +10977,13 @@ var omit = require('omit');
 var GoSquared = module.exports = integration('GoSquared')
   .assumesPageview()
   .global('_gs')
-  .option('apiSecret', '')
   .option('anonymizeIP', false)
+  .option('apiSecret', '')
   .option('cookieDomain', null)
-  .option('useCookies', true)
   .option('trackHash', false)
   .option('trackLocal', false)
   .option('trackParams', true)
+  .option('useCookies', true)
   .tag('<script src="//d1l6p2sc9645hc.cloudfront.net/tracker.js">');
 
 /**
@@ -11161,18 +10992,18 @@ var GoSquared = module.exports = integration('GoSquared')
  * https://www.gosquared.com/developer/tracker
  * Options: https://www.gosquared.com/developer/tracker/configuration
  *
- * @param {Object} page
+ * @api public
  */
 
-GoSquared.prototype.initialize = function(page){
+GoSquared.prototype.initialize = function(){
   var self = this;
   var options = this.options;
   var user = this.analytics.user();
   push(options.apiSecret);
 
   each(options, function(name, value){
-    if ('apiSecret' == name) return;
-    if (null == value) return;
+    if (name === 'apiSecret') return;
+    if (value == null) return;
     push('set', name, value);
   });
 
@@ -11185,13 +11016,15 @@ GoSquared.prototype.initialize = function(page){
 };
 
 /**
- * Loaded? (checks if the tracker version is set)
+ * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 GoSquared.prototype.loaded = function(){
-  return !! (window._gs && window._gs.v);
+  // If the tracker version is set, the library has loaded
+  return !!(window._gs && window._gs.v);
 };
 
 /**
@@ -11205,7 +11038,7 @@ GoSquared.prototype.loaded = function(){
 GoSquared.prototype.page = function(page){
   var props = page.properties();
   var name = page.fullName();
-  push('track', props.path, name || props.title)
+  push('track', props.path, name || props.title);
 };
 
 /**
@@ -11282,8 +11115,8 @@ GoSquared.prototype.track = function(track){
  *
  * https://www.gosquared.com/docs/tracking/ecommerce
  *
- * @param {Track} track
  * @api private
+ * @param {Track} track
  */
 
 GoSquared.prototype.completedOrder = function(track){
@@ -11296,9 +11129,9 @@ GoSquared.prototype.completedOrder = function(track){
       category: track.category(),
       quantity: track.quantity(),
       price: track.price(),
-      name: track.name(),
+      name: track.name()
     });
-  })
+  });
 
   push('transaction', track.orderId(), {
     revenue: track.total(),
@@ -11309,46 +11142,20 @@ GoSquared.prototype.completedOrder = function(track){
 /**
  * Push to `_gs.q`.
  *
- * @param {...} args
  * @api private
+ * @param {...*} args
  */
 
 function push(){
-  var _gs = window._gs = window._gs || function(){
-    (_gs.q = _gs.q || []).push(arguments);
+  window._gs = window._gs || function(){
+    window._gs.q.push(arguments);
   };
-  _gs.apply(null, arguments);
+  window._gs.q = window._gs.q || [];
+  window._gs.apply(null, arguments);
 }
 
-}, {"analytics.js-integration":90,"facade":139,"callback":138,"load-script":134,"on-body":135,"each":4,"is":93,"pick":180,"omit":181}],
-180: [function(require, module, exports) {
-
-/**
- * Expose `pick`.
- */
-
-module.exports = pick;
-
-/**
- * Pick keys from an `obj`.
- *
- * @param {Object} obj
- * @param {Strings} keys...
- * @return {Object}
- */
-
-function pick(obj){
-  var keys = [].slice.call(arguments, 1);
-  var ret = {};
-
-  for (var i = 0, key; key = keys[i]; i++) {
-    if (key in obj) ret[key] = obj[key];
-  }
-
-  return ret;
-}
-}, {}],
-181: [function(require, module, exports) {
+}, {"facade":135,"each":4,"analytics.js-integration":92,"omit":176,"pick":177}],
+176: [function(require, module, exports) {
 /**
  * Expose `omit`.
  */
@@ -11376,6 +11183,33 @@ function omit(keys, object){
   return ret;
 }
 }, {}],
+177: [function(require, module, exports) {
+
+/**
+ * Expose `pick`.
+ */
+
+module.exports = pick;
+
+/**
+ * Pick keys from an `obj`.
+ *
+ * @param {Object} obj
+ * @param {Strings} keys...
+ * @return {Object}
+ */
+
+function pick(obj){
+  var keys = [].slice.call(arguments, 1);
+  var ret = {};
+
+  for (var i = 0, key; key = keys[i]; i++) {
+    if (key in obj) ret[key] = obj[key];
+  }
+
+  return ret;
+}
+}, {}],
 42: [function(require, module, exports) {
 
 /**
@@ -11383,7 +11217,7 @@ function omit(keys, object){
  */
 
 var integration = require('analytics.js-integration');
-var alias = require('alias');
+var each = require('each');
 
 /**
  * Expose `Heap` integration.
@@ -11399,10 +11233,10 @@ var Heap = module.exports = integration('Heap')
  *
  * https://heapanalytics.com/docs/installation#web
  *
- * @param {Object} page
+ * @api public
  */
 
-Heap.prototype.initialize = function(page){
+Heap.prototype.initialize = function(){
   window.heap = window.heap || [];
   window.heap.load = function(appid, config){
     window.heap.appid = appid;
@@ -11410,14 +11244,14 @@ Heap.prototype.initialize = function(page){
 
     var methodFactory = function(type){
       return function(){
-        heap.push([type].concat(Array.prototype.slice.call(arguments, 0)));
+        window.heap.push([type].concat(Array.prototype.slice.call(arguments, 0)));
       };
     };
 
-    var methods = ['clearEventProperties', 'identify', 'setEventProperties', 'track', 'unsetEventProperty'];
-    for (var i = 0; i < methods.length; i++) {
-      heap[methods[i]] = methodFactory(methods[i]);
-    }
+    var heapMethods = ['clearEventProperties', 'identify', 'setEventProperties', 'track', 'unsetEventProperty'];
+    each(heapMethods, function(method){
+      window.heap[method] = methodFactory(method);
+    });
   };
 
   window.heap.load(this.options.appId);
@@ -11427,11 +11261,12 @@ Heap.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Heap.prototype.loaded = function(){
-  return (window.heap && window.heap.appid);
+  return !!(window.heap && window.heap.appid);
 };
 
 /**
@@ -11439,6 +11274,7 @@ Heap.prototype.loaded = function(){
  *
  * https://heapanalytics.com/docs#identify
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -11454,6 +11290,7 @@ Heap.prototype.identify = function(identify){
  *
  * https://heapanalytics.com/docs#track
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -11461,7 +11298,7 @@ Heap.prototype.track = function(track){
   window.heap.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":90,"alias":169}],
+}, {"analytics.js-integration":92,"each":4}],
 43: [function(require, module, exports) {
 
 /**
@@ -11485,10 +11322,10 @@ var Hellobar = module.exports = integration('Hello Bar')
  *
  * https://s3.amazonaws.com/scripts.hellobar.com/bb900665a3090a79ee1db98c3af21ea174bbc09f.js
  *
- * @param {Object} page
+ * @api public
  */
 
-Hellobar.prototype.initialize = function(page){
+Hellobar.prototype.initialize = function(){
   window._hbq = window._hbq || [];
   this.load(this.ready);
 };
@@ -11496,14 +11333,15 @@ Hellobar.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Hellobar.prototype.loaded = function(){
-  return !! (window._hbq && window._hbq.push !== Array.prototype.push);
+  return !!(window._hbq && window._hbq.push !== Array.prototype.push);
 };
 
-}, {"analytics.js-integration":90}],
+}, {"analytics.js-integration":92}],
 44: [function(require, module, exports) {
 
 /**
@@ -11526,33 +11364,34 @@ var HitTail = module.exports = integration('HitTail')
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-HitTail.prototype.initialize = function(page){
+HitTail.prototype.initialize = function(){
   this.load(this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 HitTail.prototype.loaded = function(){
   return is.fn(window.htk);
 };
 
-}, {"analytics.js-integration":90,"is":93}],
+}, {"analytics.js-integration":92,"is":95}],
 45: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
+var convert = require('convert-dates');
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('_hsq');
-var convert = require('convert-dates');
 
 /**
  * Expose `HubSpot` integration.
@@ -11562,46 +11401,46 @@ var HubSpot = module.exports = integration('HubSpot')
   .assumesPageview()
   .global('_hsq')
   .option('portalId', null)
-  .tag('<script id="hs-analytics" src="https://js.hs-analytics.net/analytics/{{ cache }}/{{ portalId }}.js">');
+  .tag('<script id="hs-analytics" src="https://js.hs-analytics.net/analytics/{{ cacheBuster }}/{{ portalId }}.js">');
 
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-HubSpot.prototype.initialize = function(page){
+HubSpot.prototype.initialize = function(){
   window._hsq = [];
-  var cache = Math.ceil(new Date() / 300000) * 300000;
-  this.load({ cache: cache }, this.ready);
+  var cacheBuster = Math.ceil(new Date() / 300000) * 300000;
+  this.load({ cacheBuster: cacheBuster }, this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 HubSpot.prototype.loaded = function(){
-  return !! (window._hsq && window._hsq.push !== Array.prototype.push);
+  return !!(window._hsq && window._hsq.push !== Array.prototype.push);
 };
 
 /**
  * Page.
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @api public
+ * @param {Page} page
  */
 
-HubSpot.prototype.page = function(page){
+HubSpot.prototype.page = function(){
   push('trackPageView');
 };
 
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -11615,6 +11454,7 @@ HubSpot.prototype.identify = function(identify){
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -11627,6 +11467,7 @@ HubSpot.prototype.track = function(track){
 /**
  * Convert all the dates in the HubSpot properties to millisecond times
  *
+ * @api private
  * @param {Object} properties
  */
 
@@ -11634,7 +11475,7 @@ function convertDates(properties){
   return convert(properties, function(date){ return date.getTime(); });
 }
 
-}, {"analytics.js-integration":90,"global-queue":166,"convert-dates":170}],
+}, {"convert-dates":168,"analytics.js-integration":92,"global-queue":163}],
 46: [function(require, module, exports) {
 
 /**
@@ -11642,7 +11483,6 @@ function convertDates(properties){
  */
 
 var integration = require('analytics.js-integration');
-var alias = require('alias');
 
 /**
  * Expose `Improvely` integration.
@@ -11661,12 +11501,15 @@ var Improvely = module.exports = integration('Improvely')
  *
  * http://www.improvely.com/docs/landing-page-code
  *
- * @param {Object} page
+ * @api public
  */
 
-Improvely.prototype.initialize = function(page){
+Improvely.prototype.initialize = function(){
+  // Shim out the Improvely library/globals.
   window._improvely = [];
+  /* eslint-disable */
   window.improvely = { init: function(e, t){ window._improvely.push(["init", e, t]); }, goal: function(e){ window._improvely.push(["goal", e]); }, label: function(e){ window._improvely.push(["label", e]); }};
+  /* eslint-enable */
 
   var domain = this.options.domain;
   var id = this.options.projectId;
@@ -11677,11 +11520,12 @@ Improvely.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Improvely.prototype.loaded = function(){
-  return !! (window.improvely && window.improvely.identify);
+  return !!(window.improvely && window.improvely.identify);
 };
 
 /**
@@ -11689,6 +11533,7 @@ Improvely.prototype.loaded = function(){
  *
  * http://www.improvely.com/docs/labeling-visitors
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -11702,6 +11547,7 @@ Improvely.prototype.identify = function(identify){
  *
  * http://www.improvely.com/docs/conversion-code
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -11711,24 +11557,16 @@ Improvely.prototype.track = function(track){
   window.improvely.goal(props);
 };
 
-}, {"analytics.js-integration":90,"alias":169}],
+}, {"analytics.js-integration":92}],
 47: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
+var each = require('each');
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('_iva');
-var Track = require('facade').Track;
-var each = require('each');
-var is = require('is');
-
-/**
- * HOP.
- */
-
-var has = Object.prototype.hasOwnProperty;
 
 /**
  * Expose `InsideVault` integration.
@@ -11744,10 +11582,10 @@ var InsideVault = module.exports = integration('InsideVault')
 /**
  * Initialize.
  *
- * @param page
+ * @api public
  */
 
-InsideVault.prototype.initialize = function(page){
+InsideVault.prototype.initialize = function(){
   var domain = this.options.domain;
   window._iva = window._iva || [];
   push('setClientId', this.options.clientId);
@@ -11760,16 +11598,18 @@ InsideVault.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 InsideVault.prototype.loaded = function(){
-  return !! (window._iva && window._iva.push !== Array.prototype.push);
+  return !!(window._iva && window._iva.push !== Array.prototype.push);
 };
 
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -11783,7 +11623,7 @@ InsideVault.prototype.identify = function(identify){
  * @param {Page} page
  */
 
-InsideVault.prototype.page = function(page){
+InsideVault.prototype.page = function(){
   // they want every landing page to send a "click" event.
   push('trackEvent', 'click');
 };
@@ -11804,13 +11644,13 @@ InsideVault.prototype.track = function(track){
   each(events, function(event){
     // 'sale' is a special event that will be routed to a table that is deprecated on InsideVault's end.
     // They don't want a generic 'sale' event to go to their deprecated table.
-    if (event != 'sale') {
+    if (event !== 'sale') {
       push('trackEvent', event, value, eventId);
     }
   });
 };
 
-}, {"analytics.js-integration":90,"global-queue":166,"facade":139,"each":4,"is":93}],
+}, {"each":4,"analytics.js-integration":92,"global-queue":163}],
 48: [function(require, module, exports) {
 
 /**
@@ -11819,8 +11659,6 @@ InsideVault.prototype.track = function(track){
 
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('__insp');
-var alias = require('alias');
-var clone = require('clone');
 
 /**
  * Expose `Inspectlet` integration.
@@ -11838,10 +11676,10 @@ var Inspectlet = module.exports = integration('Inspectlet')
  *
  * https://www.inspectlet.com/dashboard/embedcode/1492461759/initial
  *
- * @param {Object} page
+ * @api public
  */
 
-Inspectlet.prototype.initialize = function(page){
+Inspectlet.prototype.initialize = function(){
   push('wid', this.options.wid);
   this.load(this.ready);
 };
@@ -11849,11 +11687,12 @@ Inspectlet.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Inspectlet.prototype.loaded = function(){
-  return !! (window.__insp_ && window.__insp);
+  return !!(window.__insp_ && window.__insp);
 };
 
 /**
@@ -11861,6 +11700,7 @@ Inspectlet.prototype.loaded = function(){
  *
  * http://www.inspectlet.com/docs#tagging
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -11876,6 +11716,7 @@ Inspectlet.prototype.identify = function(identify){
  *
  * http://www.inspectlet.com/docs/tags
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -11888,6 +11729,7 @@ Inspectlet.prototype.track = function(track){
  *
  * http://www.inspectlet.com/docs/tags
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -11895,21 +11737,18 @@ Inspectlet.prototype.page = function(){
   push('virtualPage');
 };
 
-}, {"analytics.js-integration":90,"global-queue":166,"alias":169,"clone":96}],
+}, {"analytics.js-integration":92,"global-queue":163}],
 49: [function(require, module, exports) {
+
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var alias = require('alias');
 var convertDates = require('convert-dates');
 var defaults = require('defaults');
 var del = require('obj-case').del;
-var isEmail = require('is-email');
-var load = require('load-script');
-var empty = require('is-empty');
-var alias = require('alias');
-var each = require('each');
+var integration = require('analytics.js-integration');
 var is = require('is');
 
 /**
@@ -11928,18 +11767,24 @@ var Intercom = module.exports = integration('Intercom')
  * http://docs.intercom.io/
  * http://docs.intercom.io/#IntercomJS
  *
- * @param {Object} page
+ * @api public
  */
 
-Intercom.prototype.initialize = function(page){
-  initialize();
+Intercom.prototype.initialize = function(){
+  // Shim out the Intercom library.
+  window.Intercom = function(){
+    window.Intercom.q.push(arguments);
+  };
+  window.Intercom.q = [];
+
   this.load(this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Intercom.prototype.loaded = function(){
@@ -11949,6 +11794,7 @@ Intercom.prototype.loaded = function(){
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
@@ -11961,6 +11807,7 @@ Intercom.prototype.page = function(){
  *
  * http://docs.intercom.io/#IntercomJS
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -11969,7 +11816,6 @@ Intercom.prototype.identify = function(identify){
   var opts = identify.options(this.name);
   var companyCreated = identify.companyCreated();
   var created = identify.created();
-  var email = identify.email();
   var name = identify.name();
   var id = identify.userId();
   var group = this.analytics.group();
@@ -12018,6 +11864,7 @@ Intercom.prototype.identify = function(identify){
 /**
  * Group.
  *
+ * @api public
  * @param {Group} group
  */
 
@@ -12033,6 +11880,7 @@ Intercom.prototype.group = function(group){
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -12043,6 +11891,7 @@ Intercom.prototype.track = function(track){
 /**
  * Boots or updates, as appropriate.
  *
+ * @api private
  * @param {Object} options
  */
 
@@ -12052,10 +11901,9 @@ Intercom.prototype.bootOrUpdate = function(options){
   var activator = this.options.activator;
   options.app_id = this.options.appId;
 
-  // Intercom, will force the widget to appear
-  // if the selector is #IntercomDefaultWidget
-  // so no need to check inbox, just need to check
-  // that the selector isn't #IntercomDefaultWidget.
+  // Intercom, will force the widget to appear if the selector is
+  // #IntercomDefaultWidget so no need to check inbox, just need to check that
+  // the selector isn't #IntercomDefaultWidget.
   if (activator !== '#IntercomDefaultWidget') {
     options.widget = { activator: activator };
   }
@@ -12067,8 +11915,9 @@ Intercom.prototype.bootOrUpdate = function(options){
 /**
  * Format a date to Intercom's liking.
  *
+ * @api private
  * @param {Date} date
- * @return {Number}
+ * @return {number}
  */
 
 function formatDate(date){
@@ -12076,25 +11925,16 @@ function formatDate(date){
 }
 
 /**
- * Initialize the Intercom call queue.
- */
-
-function initialize(){
-  window.Intercom = function(){
-    window.Intercom.q.push(arguments);
-  };
-  window.Intercom.q = [];
-}
-
-/**
- * Push a call onto the queue.
+ * Push a call onto the Intercom queue.
+ *
+ * @api private
  */
 
 function api(){
   window.Intercom.apply(window.Intercom, arguments);
 }
 
-}, {"analytics.js-integration":90,"convert-dates":170,"defaults":164,"obj-case":94,"is-email":161,"load-script":134,"is-empty":128,"alias":169,"each":4,"is":93}],
+}, {"alias":167,"convert-dates":168,"defaults":159,"obj-case":96,"analytics.js-integration":92,"is":95}],
 50: [function(require, module, exports) {
 
 /**
@@ -12110,48 +11950,40 @@ var clone = require('clone');
 
 var Keen = module.exports = integration('Keen IO')
   .global('Keen')
+  .option('ipAddon', false)
   .option('projectId', '')
   .option('readKey', '')
-  .option('writeKey', '')
-  .option('ipAddon', false)
-  .option('uaAddon', false)
-  .option('urlAddon', false)
   .option('referrerAddon', false)
-  .option('trackNamedPages', true)
   .option('trackAllPages', false)
   .option('trackCategorizedPages', true)
+  .option('trackNamedPages', true)
+  .option('uaAddon', false)
+  .option('urlAddon', false)
+  .option('writeKey', '')
   .tag('<script src="//d26b395fwzu5fz.cloudfront.net/3.0.7/{{ lib }}.min.js">');
 
 /**
  * Initialize.
  *
  * https://keen.io/docs/
+ *
+ * @api public
  */
 
 Keen.prototype.initialize = function(){
+  /**
+   * Shim out the Keen client library.
+   *
+   * To update the library, grab the most up-to-date embed code from Keen's
+   * JS library readme (https://github.com/keen/keen-js) and remove any of the
+   * script loading/appending business. Next, update the script tag above with
+   * the new client library URL.
+   */
+  /* eslint-disable */
+  !(function(a,b){if(void 0===b[a]){b["_"+a]={},b[a]=function(c){b["_"+a].clients=b["_"+a].clients||{},b["_"+a].clients[c.projectId]=this,this._config=c},b[a].ready=function(c){b["_"+a].ready=b["_"+a].ready||[],b["_"+a].ready.push(c)};for(var c=["addEvent","setGlobalProperties","trackExternalLink","on"],d=0;d<c.length;d++){var e=c[d],f=function(a){return function(){return this["_"+a]=this["_"+a]||[],this["_"+a].push(arguments),this}};b[a].prototype[e]=f(e)}}})("Keen",window);
+  /* eslint-enable */
+
   var options = this.options;
-  !(function(a,b){
-    if (void 0===b[a]){
-      b["_"+a]={},
-      b[a]=function(c){
-        b["_"+a].clients=b["_"+a].clients||{},
-        b["_"+a].clients[c.projectId]=this,
-        this._config=c
-      },
-      b[a].ready=function(c){
-        b["_"+a].ready=b["_"+a].ready||[],b["_"+a].ready.push(c)
-      };
-      for (var c=["addEvent","setGlobalProperties","trackExternalLink","on"],d=0;d<c.length;d++){
-        var e=c[d],
-        f=function(a){
-          return function(){
-            return this["_"+a]=this["_"+a]||[],this["_"+a].push(arguments),this
-          }
-        };
-        b[a].prototype[e]=f(e)
-      }
-    }
-  })("Keen",window);
   this.client = new window.Keen({
     projectId: options.projectId,
     writeKey: options.writeKey,
@@ -12166,7 +11998,8 @@ Keen.prototype.initialize = function(){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Keen.prototype.loaded = function(){
@@ -12176,12 +12009,12 @@ Keen.prototype.loaded = function(){
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
 Keen.prototype.page = function(page){
   var category = page.category();
-  var props = page.properties();
   var name = page.fullName();
   var opts = this.options;
 
@@ -12211,6 +12044,7 @@ Keen.prototype.page = function(page){
  * enabled by the settings in order to include the plugins, or else
  * Keen will reject the request.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -12230,6 +12064,7 @@ Keen.prototype.identify = function(identify){
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -12242,6 +12077,7 @@ Keen.prototype.track = function(track){
 /**
  * Attach addons to `obj` with `msg`.
  *
+ * @api private
  * @param {Object} obj
  * @param {Facade} msg
  */
@@ -12296,15 +12132,15 @@ Keen.prototype.addons = function(obj, msg){
   };
 };
 
-}, {"analytics.js-integration":90,"clone":96}],
+}, {"analytics.js-integration":92,"clone":98}],
 51: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
+var includes = require('includes');
 var integration = require('analytics.js-integration');
-var indexof = require('indexof');
 var is = require('is');
 
 /**
@@ -12314,8 +12150,8 @@ var is = require('is');
 var Kenshoo = module.exports = integration('Kenshoo')
   .global('k_trackevent')
   .option('cid', '')
-  .option('subdomain', '')
   .option('events', [])
+  .option('subdomain', '')
   .tag('<script src="//{{ subdomain }}.xg4ken.com/media/getpx.php?cid={{ cid }}">');
 
 /**
@@ -12323,17 +12159,18 @@ var Kenshoo = module.exports = integration('Kenshoo')
  *
  * See https://gist.github.com/justinboyle/7875832
  *
- * @param {Object} page
+ * @api public
  */
 
-Kenshoo.prototype.initialize = function(page){
+Kenshoo.prototype.initialize = function(){
   this.load(this.ready);
 };
 
 /**
- * Loaded? (checks if the tracking function is set)
+ * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Kenshoo.prototype.loaded = function(){
@@ -12343,20 +12180,20 @@ Kenshoo.prototype.loaded = function(){
 /**
  * Track.
  *
- * Only tracks events if they are listed in the events array option.
+ * FIXME: Only tracks events if they are listed in the events array option.
  * We've asked for docs a few times but no go :/
  *
  * https://github.com/jorgegorka/the_tracker/blob/master/lib/the_tracker/trackers/kenshoo.rb
  *
+ * @api public
  * @param {Track} event
  */
 
 Kenshoo.prototype.track = function(track){
   var events = this.options.events;
-  var traits = track.traits();
   var event = track.event();
   var revenue = track.revenue() || 0;
-  if (!~indexof(events, event)) return;
+  if (!includes(event, events)) return;
 
   var params = [
     'id=' + this.options.cid,
@@ -12366,7 +12203,8 @@ Kenshoo.prototype.track = function(track){
     'promoCode=' + track.coupon(),
     'valueCurrency=' + track.currency(),
 
-    // Live tracking fields. Ignored for now (until we get documentation).
+    // Live tracking fields.
+    // FIXME: Ignored for now (until we get documentation).
     'GCID=',
     'kw=',
     'product='
@@ -12375,19 +12213,17 @@ Kenshoo.prototype.track = function(track){
   window.k_trackevent(params, this.options.subdomain);
 };
 
-}, {"analytics.js-integration":90,"indexof":118,"is":93}],
+}, {"includes":127,"analytics.js-integration":92,"is":95}],
 52: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var push = require('global-queue')('_kmq');
-var Track = require('facade').Track;
-var alias = require('alias');
 var each = require('each');
+var integration = require('analytics.js-integration');
 var is = require('is');
+var push = require('global-queue')('_kmq');
 
 /**
  * Expose `KISSmetrics` integration.
@@ -12395,13 +12231,13 @@ var is = require('is');
 
 var KISSmetrics = module.exports = integration('KISSmetrics')
   .assumesPageview()
-  .global('_kmq')
   .global('KM')
   .global('_kmil')
+  .global('_kmq')
   .option('apiKey', '')
-  .option('trackNamedPages', true)
-  .option('trackCategorizedPages', true)
   .option('prefixProperties', true)
+  .option('trackCategorizedPages', true)
+  .option('trackNamedPages', true)
   .tag('library', '<script src="//scripts.kissmetrics.com/{{ apiKey }}.2.js">');
 
 /**
@@ -12412,10 +12248,10 @@ var KISSmetrics = module.exports = integration('KISSmetrics')
 
 exports.isMobile = navigator.userAgent.match(/Android/i)
   || navigator.userAgent.match(/BlackBerry/i)
-  || navigator.userAgent.match(/iPhone|iPod/i)
-  || navigator.userAgent.match(/iPad/i)
+  || navigator.userAgent.match(/IEMobile/i)
   || navigator.userAgent.match(/Opera Mini/i)
-  || navigator.userAgent.match(/IEMobile/i);
+  || navigator.userAgent.match(/iPad/i)
+  || navigator.userAgent.match(/iPhone|iPod/i);
 
 /**
  * Initialize.
@@ -12563,7 +12399,7 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"analytics.js-integration":90,"global-queue":166,"facade":139,"alias":169,"each":4,"is":93}],
+}, {"each":4,"analytics.js-integration":92,"is":95,"global-queue":163}],
 53: [function(require, module, exports) {
 
 /**
@@ -12573,13 +12409,12 @@ function prefix(event, properties){
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('_learnq');
 var tick = require('next-tick');
-var alias = require('alias');
 
 /**
  * Trait aliases.
  */
 
-var aliases = {
+var traitAliases = {
   id: '$id',
   email: '$email',
   firstName: '$first_name',
@@ -12603,10 +12438,10 @@ var Klaviyo = module.exports = integration('Klaviyo')
  *
  * https://www.klaviyo.com/docs/getting-started
  *
- * @param {Object} page
+ * @api public
  */
 
-Klaviyo.prototype.initialize = function(page){
+Klaviyo.prototype.initialize = function(){
   var self = this;
   push('account', this.options.apiKey);
   this.load(function(){
@@ -12617,21 +12452,23 @@ Klaviyo.prototype.initialize = function(page){
 /**
  * Loaded?
  *
+ * @api public
  * @return {Boolean}
  */
 
 Klaviyo.prototype.loaded = function(){
-  return !! (window._learnq && window._learnq.push !== Array.prototype.push);
+  return !!(window._learnq && window._learnq.push !== Array.prototype.push);
 };
 
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
 Klaviyo.prototype.identify = function(identify){
-  var traits = identify.traits(aliases);
+  var traits = identify.traits(traitAliases);
   if (!traits.$id && !traits.$email) return;
   push('identify', traits);
 };
@@ -12660,19 +12497,19 @@ Klaviyo.prototype.track = function(track){
   }));
 };
 
-}, {"analytics.js-integration":90,"global-queue":166,"next-tick":116,"alias":169}],
+}, {"analytics.js-integration":92,"global-queue":163,"next-tick":118}],
 54: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
+var Identify = require('facade').Identify;
 var clone = require('clone');
 var each = require('each');
-var Identify = require('facade').Identify;
-var when = require('when');
+var integration = require('analytics.js-integration');
 var tick = require('next-tick');
+var when = require('when');
 
 /**
  * Expose `LiveChat` integration.
@@ -12680,10 +12517,10 @@ var tick = require('next-tick');
 
 var LiveChat = module.exports = integration('LiveChat')
   .assumesPageview()
-  .global('__lc')
-  .global('__lc_inited')
   .global('LC_API')
   .global('LC_Invite')
+  .global('__lc')
+  .global('__lc_inited')
   .option('group', 0)
   .option('license', '')
   .option('listen', false)
@@ -12693,7 +12530,7 @@ var LiveChat = module.exports = integration('LiveChat')
  * The context for this integration.
  */
 
-var integration = {
+var integrationContext = {
   name: 'livechat',
   version: '1.0.0'
 };
@@ -12703,10 +12540,10 @@ var integration = {
  *
  * http://www.livechatinc.com/api/javascript-api
  *
- * @param {Object} page
+ * @api public
  */
 
-LiveChat.prototype.initialize = function(page){
+LiveChat.prototype.initialize = function(){
   var self = this;
   var user = this.analytics.user();
   var identify = new Identify({
@@ -12735,7 +12572,8 @@ LiveChat.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api public
+ * @return {boolean}
  */
 
 LiveChat.prototype.loaded = function(){
@@ -12743,48 +12581,54 @@ LiveChat.prototype.loaded = function(){
 };
 
 /**
- * Listen for chat events.
- */
-
-LiveChat.prototype.attachListeners = function(){
-  var self = this;
-  window.LC_API = window.LC_API || {};
-  window.LC_API.on_chat_started = function(data){
-    self.analytics.track(
-      'Live Chat Conversation Started',
-      { agentName: data.agent_name },
-      { context: { integration: integration }
-    });
-  };
-  window.LC_API.on_message = function(data){
-    if (data.user_type === 'visitor') {
-      self.analytics.track(
-        'Live Chat Message Sent',
-        {},
-        { context: { integration: integration }
-      });
-    } else {
-      self.analytics.track(
-        'Live Chat Message Received',
-        { agentName: data.agent_name, agentUsername: data.agent_login },
-        { context: { integration: integration }
-      });
-    }
-  };
-  window.LC_API.on_chat_ended = function(){
-    self.analytics.track('Live Chat Conversation Ended');
-  };
-};
-
-/**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
 LiveChat.prototype.identify = function(identify){
   var traits = identify.traits({ userId: 'User ID' });
   window.LC_API.set_custom_variables(convert(traits));
+};
+
+/**
+ * Listen for chat events.
+ *
+ * @api private
+ */
+
+LiveChat.prototype.attachListeners = function(){
+  var self = this;
+  window.LC_API = window.LC_API || {};
+
+  window.LC_API.on_chat_started = function(data){
+    self.analytics.track(
+      'Live Chat Conversation Started',
+      { agentName: data.agent_name },
+      { context: { integration: integrationContext }
+    });
+  };
+
+  window.LC_API.on_message = function(data){
+    if (data.user_type === 'visitor') {
+      self.analytics.track(
+        'Live Chat Message Sent',
+        {},
+        { context: { integration: integrationContext }
+      });
+    } else {
+      self.analytics.track(
+        'Live Chat Message Received',
+        { agentName: data.agent_name, agentUsername: data.agent_login },
+        { context: { integration: integrationContext }
+      });
+    }
+  };
+
+  window.LC_API.on_chat_ended = function(){
+    self.analytics.track('Live Chat Conversation Ended');
+  };
 };
 
 /**
@@ -12802,15 +12646,15 @@ function convert(traits){
   return arr;
 }
 
-}, {"analytics.js-integration":90,"clone":96,"each":4,"facade":139,"when":137,"next-tick":116}],
+}, {"facade":135,"clone":98,"each":4,"analytics.js-integration":92,"next-tick":118,"when":165}],
 55: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var Identify = require('facade').Identify;
+var integration = require('analytics.js-integration');
 var useHttps = require('use-https');
 
 /**
@@ -12825,36 +12669,39 @@ var LuckyOrange = module.exports = integration('Lucky Orange')
   .global('__wtw_lucky_is_segment_io')
   .global('__wtw_custom_user_data')
   .option('siteId', null)
-  .tag('http', '<script src="http://www.luckyorange.com/w.js?{{ cache }}">')
-  .tag('https', '<script src="https://ssl.luckyorange.com/w.js?{{ cache }}">');
+  .tag('http', '<script src="http://www.luckyorange.com/w.js?{{ cacheBuster }}">')
+  .tag('https', '<script src="https://ssl.luckyorange.com/w.js?{{ cacheBuster }}">');
 
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-LuckyOrange.prototype.initialize = function(page){
-  var user = this.analytics.user();
-  window._loq || (window._loq = []);
+LuckyOrange.prototype.initialize = function(){
+  if (!window._loq) window._loq = [];
   window.__wtw_lucky_site_id = this.options.siteId;
+
+  var user = this.analytics.user();
   this.identify(new Identify({
     traits: user.traits(),
     userId: user.id()
   }));
-  var cache = Math.floor(new Date().getTime() / 60000);
-  var name = useHttps() ? 'https' : 'http';
-  this.load(name, { cache: cache }, this.ready);
+
+  var cacheBuster = Math.floor(new Date().getTime() / 60000);
+  var tagName = useHttps() ? 'https' : 'http';
+  this.load(tagName, { cacheBuster: cacheBuster }, this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 LuckyOrange.prototype.loaded = function(){
-  return !! window.__wtw_watcher_added;
+  return !!window.__wtw_watcher_added;
 };
 
 /**
@@ -12866,21 +12713,21 @@ LuckyOrange.prototype.loaded = function(){
 LuckyOrange.prototype.identify = function(identify){
   var traits = identify.traits();
   var email = identify.email();
+  if (email) traits.email = email;
   var name = identify.name();
   if (name) traits.name = name;
-  if (email) traits.email = email;
   window.__wtw_custom_user_data = traits;
 };
 
-}, {"analytics.js-integration":90,"facade":139,"use-https":92}],
+}, {"facade":135,"analytics.js-integration":92,"use-https":94}],
 56: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var alias = require('alias');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `Lytics` integration.
@@ -12908,28 +12755,32 @@ var aliases = {
  *
  * http://admin.lytics.io/doc#jstag
  *
- * @param {Object} page
+ * @api public
  */
 
-Lytics.prototype.initialize = function(page){
+Lytics.prototype.initialize = function(){
   var options = alias(this.options, aliases);
+  /* eslint-disable */
   window.jstag = (function(){var t = { _q: [], _c: options, ts: (new Date()).getTime() }; t.send = function(){this._q.push(['ready', 'send', Array.prototype.slice.call(arguments)]); return this; }; return t; })();
+  /* eslint-enable */
   this.load(this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Lytics.prototype.loaded = function(){
-  return !! (window.jstag && window.jstag.bind);
+  return !!(window.jstag && window.jstag.bind);
 };
 
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
@@ -12940,6 +12791,7 @@ Lytics.prototype.page = function(page){
 /**
  * Idenfity.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -12951,9 +12803,8 @@ Lytics.prototype.identify = function(identify){
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @api public
+ * @param {Track} track
  */
 
 Lytics.prototype.track = function(track){
@@ -12962,7 +12813,7 @@ Lytics.prototype.track = function(track){
   window.jstag.send(props);
 };
 
-}, {"analytics.js-integration":90,"alias":169}],
+}, {"alias":167,"analytics.js-integration":92}],
 57: [function(require, module, exports) {
 
 /**
@@ -12970,13 +12821,13 @@ Lytics.prototype.track = function(track){
  */
 
 var alias = require('alias');
-var clone = require('clone');
 var dates = require('convert-dates');
+var del = require('obj-case').del;
+var each = require('each');
+var includes = require('includes');
 var integration = require('analytics.js-integration');
 var is = require('is');
 var iso = require('to-iso-string');
-var indexof = require('indexof');
-var del = require('obj-case').del;
 var some = require('some');
 
 /**
@@ -13013,10 +12864,14 @@ var optionsAliases = {
  *
  * https://mixpanel.com/help/reference/javascript#installing
  * https://mixpanel.com/help/reference/javascript-full-api-reference#mixpanel.init
+ *
+ * @api public
  */
 
 Mixpanel.prototype.initialize = function(){
+  /* eslint-disable */
   (function(c, a){window.mixpanel = a; var b, d, h, e; a._i = []; a.init = function(b, c, f){function d(a, b){var c = b.split('.'); 2 == c.length && (a = a[c[0]], b = c[1]); a[b] = function(){a.push([b].concat(Array.prototype.slice.call(arguments, 0))); }; } var g = a; 'undefined' !== typeof f ? g = a[f] = [] : f = 'mixpanel'; g.people = g.people || []; h = ['disable', 'track', 'track_pageview', 'track_links', 'track_forms', 'register', 'register_once', 'unregister', 'identify', 'alias', 'name_tag', 'set_config', 'people.set', 'people.increment', 'people.track_charge', 'people.append']; for (e = 0; e < h.length; e++) d(g, h[e]); a._i.push([b, c, f]); }; a.__SV = 1.2; })(document, window.mixpanel || []);
+  /* eslint-enable */
   this.options.increments = lowercase(this.options.increments);
   var options = alias(this.options, optionsAliases);
   window.mixpanel.init(options.token, options);
@@ -13026,11 +12881,12 @@ Mixpanel.prototype.initialize = function(){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Mixpanel.prototype.loaded = function(){
-  return !! (window.mixpanel && window.mixpanel.config);
+  return !!(window.mixpanel && window.mixpanel.config);
 };
 
 /**
@@ -13038,10 +12894,8 @@ Mixpanel.prototype.loaded = function(){
  *
  * https://mixpanel.com/help/reference/javascript-full-api-reference#mixpanel.track_pageview
  *
- * @param {String} category (optional)
- * @param {String} name (optional)
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @api public
+ * @param {Page} page
  */
 
 Mixpanel.prototype.page = function(page){
@@ -13087,6 +12941,7 @@ var traitAliases = {
  * https://mixpanel.com/help/reference/javascript#user-identity
  * https://mixpanel.com/help/reference/javascript#storing-user-profiles
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -13115,6 +12970,7 @@ Mixpanel.prototype.identify = function(identify){
  * https://mixpanel.com/help/reference/javascript#sending-events
  * https://mixpanel.com/help/reference/javascript#tracking-revenue
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -13133,15 +12989,14 @@ Mixpanel.prototype.track = function(track){
   delete props.token;
 
   // convert arrays of objects to length, since mixpanel doesn't support object arrays
-  for (var key in props) {
-    var val = props[key];
+  each(props, function(key, val){
     if (is.array(val) && some(val, is.object)) props[key] = val.length;
-  }
+  });
 
   // increment properties in mixpanel people
-  if (people && ~indexof(increments, increment)) {
+  if (people && includes(increment, increments)) {
     window.mixpanel.people.increment(track.event());
-    window.mixpanel.people.set('Last ' + track.event(), new Date);
+    window.mixpanel.people.set('Last ' + track.event(), new Date());
   }
 
   // track the event
@@ -13160,6 +13015,7 @@ Mixpanel.prototype.track = function(track){
  * https://mixpanel.com/help/reference/javascript#user-identity
  * https://mixpanel.com/help/reference/javascript-full-api-reference#mixpanel.alias
  *
+ * @api public
  * @param {Alias} alias
  */
 
@@ -13176,9 +13032,9 @@ Mixpanel.prototype.alias = function(alias){
 /**
  * Lowercase the given `arr`.
  *
+ * @api private
  * @param {Array} arr
  * @return {Array}
- * @api private
  */
 
 function lowercase(arr){
@@ -13191,8 +13047,8 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":169,"clone":96,"convert-dates":170,"analytics.js-integration":90,"is":93,"to-iso-string":168,"indexof":118,"obj-case":94,"some":182}],
-182: [function(require, module, exports) {
+}, {"alias":167,"convert-dates":168,"obj-case":96,"each":4,"includes":127,"analytics.js-integration":92,"is":95,"to-iso-string":162,"some":178}],
+178: [function(require, module, exports) {
 
 /**
  * some
@@ -13232,23 +13088,24 @@ module.exports = function (arr, fn) {
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var bind = require('bind');
-var when = require('when');
+var integration = require('analytics.js-integration');
 var is = require('is');
+var when = require('when');
 
 /**
  * Expose `Mojn`
  */
 
 var Mojn = module.exports = integration('Mojn')
-  .option('customerCode', '')
   .global('_mojnTrack')
+  .option('customerCode', '')
   .tag('<script src="https://track.idtargeting.com/{{ customerCode }}/track.js">');
 
 /**
  * Initialize.
  *
+ * @api public
  * @param {Object} page
  */
 
@@ -13265,7 +13122,8 @@ Mojn.prototype.initialize = function(){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Mojn.prototype.loaded = function(){
@@ -13276,44 +13134,50 @@ Mojn.prototype.loaded = function(){
  * Identify.
  *
  * @param {Identify} identify
+ * @return {Element|undefined}
  */
 
 Mojn.prototype.identify = function(identify){
   var email = identify.email();
   if (!email) return;
+  // TODO: Replace with a tag?
   var img = new Image();
-  img.src = '//matcher.idtargeting.com/identify.gif?cid=' + this.options.customerCode + '&_mjnctid='+email;
+  img.src = '//matcher.idtargeting.com/identify.gif?cid=' + this.options.customerCode + '&_mjnctid=' + email;
   img.width = 1;
   img.height = 1;
+  // FIXME: Why does this have a return value?
   return img;
 };
 
 /**
  * Track.
  *
+ * @api public
  * @param {Track} event
+ * @return {string}
  */
 
 Mojn.prototype.track = function(track){
   var properties = track.properties();
   var revenue = properties.revenue;
+  if (!revenue) return;
   var currency = properties.currency || '';
   var conv = currency + revenue;
-  if (!revenue) return;
   window._mojnTrack.push({ conv: conv });
+  // FIXME: Why does this have a return value?
   return conv;
 };
 
-}, {"analytics.js-integration":90,"bind":103,"when":137,"is":93}],
+}, {"bind":105,"analytics.js-integration":92,"is":95,"when":165}],
 59: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var push = require('global-queue')('_mfq');
-var integration = require('analytics.js-integration');
 var each = require('each');
+var integration = require('analytics.js-integration');
+var push = require('global-queue')('_mfq');
 
 /**
  * Expose `Mouseflow`.
@@ -13321,8 +13185,9 @@ var each = require('each');
 
 var Mouseflow = module.exports = integration('Mouseflow')
   .assumesPageview()
-  .global('mouseflow')
   .global('_mfq')
+  .global('mouseflow')
+  .global('mouseflowHtmlDelay')
   .option('apiKey', '')
   .option('mouseflowHtmlDelay', 0)
   .tag('<script src="//cdn.mouseflow.com/projects/{{ apiKey }}.js">');
@@ -13330,10 +13195,10 @@ var Mouseflow = module.exports = integration('Mouseflow')
 /**
  * Initalize.
  *
- * @param {Object} page
+ * @api public
  */
 
-Mouseflow.prototype.initialize = function(page){
+Mouseflow.prototype.initialize = function(){
   window.mouseflowHtmlDelay = this.options.mouseflowHtmlDelay;
   this.load(this.ready);
 };
@@ -13341,11 +13206,12 @@ Mouseflow.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Mouseflow.prototype.loaded = function(){
-  return !! window.mouseflow;
+  return !!window.mouseflow;
 };
 
 /**
@@ -13353,13 +13219,14 @@ Mouseflow.prototype.loaded = function(){
  *
  * http://mouseflow.zendesk.com/entries/22528817-Single-page-websites
  *
+ * @api public
  * @param {Page} page
  */
 
-Mouseflow.prototype.page = function(page){
+Mouseflow.prototype.page = function(){
   if (!window.mouseflow) return;
-  if ('function' != typeof mouseflow.newPageView) return;
-  mouseflow.newPageView();
+  if (typeof window.mouseflow.newPageView !== 'function') return;
+  window.mouseflow.newPageView();
 };
 
 /**
@@ -13367,6 +13234,7 @@ Mouseflow.prototype.page = function(page){
  *
  * http://mouseflow.zendesk.com/entries/24643603-Custom-Variables-Tagging
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -13379,6 +13247,7 @@ Mouseflow.prototype.identify = function(identify){
  *
  * http://mouseflow.zendesk.com/entries/24643603-Custom-Variables-Tagging
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -13391,6 +13260,7 @@ Mouseflow.prototype.track = function(track){
 /**
  * Push each key and value in the given `obj` onto the queue.
  *
+ * @api private
  * @param {Object} obj
  */
 
@@ -13400,17 +13270,17 @@ function set(obj){
   });
 }
 
-}, {"global-queue":166,"analytics.js-integration":90,"each":4}],
+}, {"each":4,"analytics.js-integration":92,"global-queue":163}],
 60: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var useHttps = require('use-https');
 var each = require('each');
+var integration = require('analytics.js-integration');
 var is = require('is');
+var useHttps = require('use-https');
 
 /**
  * Expose `MouseStats` integration.
@@ -13421,29 +13291,30 @@ var MouseStats = module.exports = integration('MouseStats')
   .global('msaa')
   .global('MouseStatsVisitorPlaybacks')
   .option('accountNumber', '')
-  .tag('http', '<script src="http://www2.mousestats.com/js/{{ path }}.js?{{ cache }}">')
-  .tag('https', '<script src="https://ssl.mousestats.com/js/{{ path }}.js?{{ cache }}">');
+  .tag('http', '<script src="http://www2.mousestats.com/js/{{ path }}.js?{{ cacheBuster }}">')
+  .tag('https', '<script src="https://ssl.mousestats.com/js/{{ path }}.js?{{ cacheBuster }}">');
 
 /**
  * Initialize.
  *
  * http://www.mousestats.com/docs/pages/allpages
  *
- * @param {Object} page
+ * @api public
  */
 
-MouseStats.prototype.initialize = function(page){
-  var number = this.options.accountNumber;
-  var path = number.slice(0,1) + '/' + number.slice(1,2) + '/' + number;
-  var cache = Math.floor(new Date().getTime() / 60000);
-  var name = useHttps() ? 'https' : 'http';
-  this.load(name, { path: path, cache: cache }, this.ready);
+MouseStats.prototype.initialize = function(){
+  var accountNumber = this.options.accountNumber;
+  var path = accountNumber.slice(0, 1) + '/' + accountNumber.slice(1, 2) + '/' + accountNumber;
+  var cacheBuster = Math.floor(new Date().getTime() / 60000);
+  var tagName = useHttps() ? 'https' : 'http';
+  this.load(tagName, { path: path, cacheBuster: cacheBuster }, this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 MouseStats.prototype.loaded = function(){
@@ -13455,6 +13326,7 @@ MouseStats.prototype.loaded = function(){
  *
  * http://www.mousestats.com/docs/wiki/7/how-to-add-custom-data-to-visitor-playbacks
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -13464,7 +13336,7 @@ MouseStats.prototype.identify = function(identify){
   });
 };
 
-}, {"analytics.js-integration":90,"use-https":92,"each":4,"is":93}],
+}, {"each":4,"analytics.js-integration":92,"is":95,"use-https":94}],
 61: [function(require, module, exports) {
 
 /**
@@ -13490,10 +13362,10 @@ var Navilytics = module.exports = integration('Navilytics')
  *
  * https://www.navilytics.com/member/code_settings
  *
- * @param {Object} page
+ * @api public
  */
 
-Navilytics.prototype.initialize = function(page){
+Navilytics.prototype.initialize = function(){
   window.__nls = window.__nls || [];
   this.load(this.ready);
 };
@@ -13501,11 +13373,12 @@ Navilytics.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Navilytics.prototype.loaded = function(){
-  return !! (window.__nls && [].push != window.__nls.push);
+  return !!(window.__nls && Array.prototype.push !== window.__nls.push);
 };
 
 /**
@@ -13520,19 +13393,15 @@ Navilytics.prototype.track = function(track){
   push('tagRecording', track.event());
 };
 
-}, {"analytics.js-integration":90,"global-queue":166}],
+}, {"analytics.js-integration":92,"global-queue":163}],
 62: [function(require, module, exports) {
-var integration = require('analytics.js-integration');
-var alias = require('alias');
-var Identify = require('facade').Identify;
 
 /**
- * Expose `plugin`.
+ * Module dependencies.
  */
 
-/*module.exports = exports = function(analytics){
-  analytics.addIntegration(Nudgespot);
-};*/
+var alias = require('alias');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `Nudgespot` integration.
@@ -13540,31 +13409,41 @@ var Identify = require('facade').Identify;
 
 var Nudgespot = module.exports = integration('Nudgespot')
   .assumesPageview()
-  .option('clientApiKey', '')
   .global('nudgespot')
+  .option('clientApiKey', '')
   .tag('<script id="nudgespot" src="//cdn.nudgespot.com/nudgespot.js">');
 
 /**
  * Initialize Nudgespot.
+ *
+ * @api public
  */
 
-Nudgespot.prototype.initialize = function(page){
+Nudgespot.prototype.initialize = function(){
   window.nudgespot = window.nudgespot || [];
+  /* eslint-disable */
   window.nudgespot.init = function(n, t){function f(n,m){var a=m.split('.');2==a.length&&(n=n[a[0]],m=a[1]);n[m]=function(){n.push([m].concat(Array.prototype.slice.call(arguments,0)))}}n._version=0.1;n._globals=[t];n.people=n.people||[];n.params=n.params||[];m="track register unregister identify set_config people.delete people.create people.update people.create_property people.tag people.remove_Tag".split(" ");for (var i=0;i<m.length;i++)f(n,m[i])};
+  /* eslint-enable */
   window.nudgespot.init(window.nudgespot, this.options.clientApiKey);
   this.load(this.ready);
 };
 
 /**
  * Has the Nudgespot library been loaded yet?
+ *
+ * @api private
+ * @return {boolean}
  */
 
 Nudgespot.prototype.loaded = function(){
-  return (!! window.nudgespot) && (window.nudgespot.push !== Array.prototype.push);
+  return !!(window.nudgespot && window.nudgespot.push !== Array.prototype.push);
 };
 
 /**
  * Identify a user.
+ *
+ * @api public
+ * @param {Identify} identify
  */
 
 Nudgespot.prototype.identify = function(identify){
@@ -13576,22 +13455,24 @@ Nudgespot.prototype.identify = function(identify){
 
 /**
  * Track an event.
+ *
+ * @api public
+ * @param {Track} track
  */
 
 Nudgespot.prototype.track = function(track){
-  var properties = track.properties();
-  window.nudgespot.track(track.event(), properties);
+  window.nudgespot.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":90,"alias":169,"facade":139}],
+}, {"alias":167,"analytics.js-integration":92}],
 63: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var https = require('use-https');
+var integration = require('analytics.js-integration');
 var tick = require('next-tick');
 
 /**
@@ -13601,18 +13482,18 @@ var tick = require('next-tick');
 var Olark = module.exports = integration('Olark')
   .assumesPageview()
   .global('olark')
+  .option('groupId', '')
   .option('identify', true)
+  .option('listen', false)
   .option('page', true)
   .option('siteId', '')
-  .option('groupId', '')
-  .option('listen', false)
   .option('track', false);
 
 /**
  * The context for this integration.
  */
 
-var integration = {
+var integrationContext = {
   name: 'olark',
   version: '1.0.0'
 };
@@ -13623,10 +13504,10 @@ var integration = {
  * http://www.olark.com/documentation
  * https://www.olark.com/documentation/javascript/api.chat.setOperatorGroup
  *
- * @param {Facade} page
+ * @api public
  */
 
-Olark.prototype.initialize = function(page){
+Olark.prototype.initialize = function(){
   var self = this;
   this.load(function(){
     tick(self.ready);
@@ -13645,58 +13526,29 @@ Olark.prototype.initialize = function(page){
 };
 
 /**
- * Loaded?
- *
- * @return {Boolean}
- */
-
-Olark.prototype.loaded = function(){
-  return !! window.olark;
-};
-
-/**
- * Listen for events.
- */
-
-Olark.prototype.attachListeners = function(){
-  var self = this;
-
-  api('chat.onBeginConversation', function(){
-    self.analytics.track(
-      'Live Chat Conversation Started',
-      {},
-      { context: { integration: integration }}
-    );
-  });
-
-  api('chat.onMessageToOperator', function(event){
-    self.analytics.track(
-      'Live Chat Message Sent',
-      {},
-      { context: { integration: integration }}
-    );
-  });
-
-  api('chat.onMessageToVisitor', function(event){
-    self.analytics.track(
-      'Live Chat Message Received',
-      {},
-      { context: { integration: integration }}
-    );
-  });
-};
-
-/**
  * Load.
  *
+ * @api private
  * @param {Function} callback
  */
 
 Olark.prototype.load = function(callback){
-  var el = document.getElementById('olark');
+  /* eslint-disable */
   window.olark||(function(c){var f=window,d=document,l=https()?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while (q--) {(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={ 0:+new Date() };a.P=function(u){a.p[u]=new Date()-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return ["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if (!m) {return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if (/MSIE[ ]+6/.test(navigator.userAgent)) {b.src="javascript:false"}b.allowTransparency="true";v[j](b);try {b.contentWindow[g].open()}catch (w) {c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try {var t=b.contentWindow[g];t.write(p());t.close()}catch (x) {b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({ loader: "static.olark.com/jsclient/loader0.js", name:"olark", methods:["configure","extend","declare","identify"] });
+  /* eslint-enable */
   window.olark.identify(this.options.siteId);
   callback();
+};
+
+/**
+ * Loaded?
+ *
+ * @api private
+ * @return {boolean}
+ */
+
+Olark.prototype.loaded = function(){
+  return !!window.olark;
 };
 
 /**
@@ -13745,6 +13597,7 @@ Olark.prototype.identify = function(identify){
 /**
  * Track.
  *
+ * @api public
  * @param {Facade} track
  */
 
@@ -13754,10 +13607,47 @@ Olark.prototype.track = function(track){
 };
 
 /**
+ * Listen for events.
+ */
+
+Olark.prototype.attachListeners = function(){
+  var self = this;
+
+  api('chat.onBeginConversation', function(){
+    self.analytics.track(
+      'Live Chat Conversation Started',
+      {},
+      { context: { integration: integrationContext }}
+    );
+  });
+
+  // Callback accepts `event`
+  // TODO: We might eventually send information about the event through Segment
+  api('chat.onMessageToOperator', function(){
+    self.analytics.track(
+      'Live Chat Message Sent',
+      {},
+      { context: { integration: integrationContext }}
+    );
+  });
+
+  // Callback accepts `event`
+  // TODO: We might eventually send information about the event through Segment
+  api('chat.onMessageToVisitor', function(){
+    self.analytics.track(
+      'Live Chat Message Received',
+      {},
+      { context: { integration: integrationContext }}
+    );
+  });
+};
+
+/**
  * Send a notification `message` to the operator, only when a chat is active and
  * when the chat is open.
  *
- * @param {String} message
+ * @api private
+ * @param {string} message
  */
 
 Olark.prototype.notify = function(message){
@@ -13775,7 +13665,8 @@ Olark.prototype.notify = function(message){
 /**
  * Helper for Olark API calls.
  *
- * @param {String} action
+ * @api private
+ * @param {string} action
  * @param {Object} value
  */
 
@@ -13783,37 +13674,34 @@ function api(action, value) {
   window.olark('api.' + action, value);
 }
 
-}, {"analytics.js-integration":90,"use-https":92,"next-tick":116}],
+}, {"use-https":94,"analytics.js-integration":92,"next-tick":118}],
 64: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
+var each = require('each');
+var foldl = require('foldl');
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('optimizely');
-var callback = require('callback');
 var tick = require('next-tick');
-var bind = require('bind');
-var each = require('each');
-var isEmpty = require('is-empty');
-var foldl = require('foldl');
 
 /**
  * Expose `Optimizely` integration.
  */
 
 var Optimizely = module.exports = integration('Optimizely')
-  .option('variations', true)
   .option('listen', false)
+  .option('trackCategorizedPages', true)
   .option('trackNamedPages', true)
-  .option('trackCategorizedPages', true);
+  .option('variations', true);
 
 /**
  * The name and version for this integration.
  */
 
-var integration = {
+var integrationContext = {
   name: 'optimizely',
   version: '1.0.0'
 };
@@ -13822,6 +13710,8 @@ var integration = {
  * Initialize.
  *
  * https://www.optimizely.com/docs/api#function-calls
+ *
+ * @api public
  */
 
 Optimizely.prototype.initialize = function(){
@@ -13844,6 +13734,7 @@ Optimizely.prototype.initialize = function(){
  *
  * https://www.optimizely.com/docs/api#track-event
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -13858,6 +13749,7 @@ Optimizely.prototype.track = function(track){
  *
  * https://www.optimizely.com/docs/api#track-event
  *
+ * @api public
  * @param {Page} page
  */
 
@@ -13881,10 +13773,16 @@ Optimizely.prototype.page = function(page){
  * Send experiment data as track events to Segment
  *
  * https://www.optimizely.com/docs/api#data-object
+ *
+ * @api private
  */
 
 Optimizely.prototype.roots = function(){
-  if (!window.optimizely) return; // in case the snippet isnt on the page
+  // In case the snippet isn't on the page
+  //
+  // FIXME: Under what conditions does this happen? Sounds like we should fix
+  // our #loaded method?
+  if (!window.optimizely) return;
 
   var data = window.optimizely.data;
   if (!data) return;
@@ -13901,21 +13799,48 @@ Optimizely.prototype.roots = function(){
     self.analytics.track(
       'Experiment Viewed',
       props,
-      { context: { integration: integration } }
+      { context: { integration: integrationContext } }
     );
   });
 };
 
 /**
- * Retrieves active experiments
+ * Replay experiment data as traits to other enabled providers.
  *
+ * https://www.optimizely.com/docs/api#data-object
+ *
+ * @api private
+ */
+
+Optimizely.prototype.replay = function(){
+  // In case the snippet isn't on the page
+  //
+  // FIXME: Under what conditions does this happen? Sounds like we should fix
+  // our #loaded method?
+  if (!window.optimizely) return;
+
+  var data = window.optimizely.data;
+  if (!data || !data.experiments || !data.state) return;
+
+  var traits = foldl(function(traits, variation, experimentId){
+    var experiment = data.experiments[experimentId].name;
+    traits['Experiment: ' + experiment] = variation;
+    return traits;
+  }, {}, data.state.variationNamesMap);
+
+  this.analytics.identify(traits);
+};
+
+/**
+ * Retrieves active experiments.
+ *
+ * @api private
  * @param {Object} state
  * @param {Object} allExperiments
  */
 
-function getExperiments(activeExperimentIds, variationNamesMap, variationIdsMap,
-  allExperiments) {
-
+// FIXME: This should accept an options object rather than all these parameters
+function getExperiments(activeExperimentIds, variationNamesMap, variationIdsMap, allExperiments){
   return foldl(function(results, experimentId){
     var experiment = allExperiments[experimentId];
     if (experiment) {
@@ -13928,70 +13853,83 @@ function getExperiments(activeExperimentIds, variationNamesMap, variationIdsMap,
     }
     return results;
   }, [], activeExperimentIds);
-};
+}
+
+}, {"each":4,"foldl":134,"analytics.js-integration":92,"global-queue":163,"next-tick":118}],
+65: [function(require, module, exports) {
 
 /**
- * Replay experiment data as traits to other enabled providers.
- *
- * https://www.optimizely.com/docs/api#data-object
+ * Module dependencies.
  */
 
-Optimizely.prototype.replay = function(){
-  if (!window.optimizely) return; // in case the snippet isnt on the page
-
-  var data = window.optimizely.data;
-  if (!data || !data.experiments || !data.state) return;
-
-  var experiments = data.experiments;
-  var map = data.state.variationNamesMap;
-  var traits = {};
-
-  each(map, function(experimentId, variation){
-    var experiment = experiments[experimentId].name;
-    traits['Experiment: ' + experiment] = variation;
-  });
-
-  this.analytics.identify(traits);
-};
-
-}, {"analytics.js-integration":90,"global-queue":166,"callback":138,"next-tick":116,"bind":103,"each":4,"is-empty":128,"foldl":173}],
-65: [function(require, module, exports) {
 var integration = require('analytics.js-integration');
 var omit = require('omit');
+
+/**
+ * Expose `Outbound` integration.
+ */
 
 var Outbound = module.exports = integration('Outbound')
   .global('outbound')
   .option('publicApiKey', '')
   .tag('<script src="//cdn.outbound.io/{{ publicApiKey }}.js">');
 
-Outbound.prototype.initialize = function(page){
+/**
+ * Initialize.
+ *
+ * @api public
+ */
+
+Outbound.prototype.initialize = function(){
   window.outbound = window.outbound || [];
-  window.outbound.methods = ['identify', 'track', 'registerApnsToken', 'registerGcmToken', 'disableApnsToken', 'disableGcmToken'];
+  window.outbound.methods = [
+    'identify',
+    'track',
+    'registerApnsToken',
+    'registerGcmToken',
+    'disableApnsToken',
+    'disableGcmToken'
+  ];
 
   window.outbound.factory = function(method){
-      return function(){
-          var args = Array.prototype.slice.call(arguments);
-          args.unshift(method);
-          window.outbound.push(args);
-          return window.outbound;
-      };
+    return function(){
+      var args = Array.prototype.slice.call(arguments);
+      args.unshift(method);
+      window.outbound.push(args);
+      return window.outbound;
+    };
   };
 
   for (var i = 0; i < window.outbound.methods.length; i++) {
-      var key = window.outbound.methods[i];
-      window.outbound[key] = window.outbound.factory(key);
+    var key = window.outbound.methods[i];
+    window.outbound[key] = window.outbound.factory(key);
   }
 
   this.load(this.ready);
 };
 
+/**
+ * Loaded?
+ *
+ * @api private
+ * @return {boolean}
+ */
+
 Outbound.prototype.loaded = function(){
   return window.outbound;
 };
 
+/**
+ * Identify.
+ *
+ * @api public
+ * @param {Identify} identify
+ */
+
 Outbound.prototype.identify = function(identify){
   var traitsToOmit = [
-    'id', 'userId',
+    'id',
+    'userId',
     'email',
     'phone',
     'firstName',
@@ -14005,18 +13943,32 @@ Outbound.prototype.identify = function(identify){
     firstName: identify.firstName(),
     lastName: identify.lastName()
   };
-  outbound.identify(userId, attributes);
+  window.outbound.identify(userId, attributes);
 };
+
+/**
+ * Track.
+ *
+ * @api public
+ * @param {Track} track
+ */
 
 Outbound.prototype.track = function(track){
   window.outbound.track(track.event(), track.properties(), track.timestamp());
 };
 
+/**
+ * Alias.
+ *
+ * @api public
+ * @param {Alias} alias
+ */
+
 Outbound.prototype.alias = function(alias){
   window.outbound.identify(alias.userId(), { previousId: alias.previousId() });
 };
 
-}, {"analytics.js-integration":90,"omit":181}],
+}, {"analytics.js-integration":92,"omit":176}],
 66: [function(require, module, exports) {
 
 /**
@@ -14041,10 +13993,10 @@ var PerfectAudience = module.exports = integration('Perfect Audience')
  *
  * http://support.perfectaudience.com/knowledgebase/articles/212490-visitor-tracking-api
  *
- * @param {Object} page
+ * @api public
  */
 
-PerfectAudience.prototype.initialize = function(page){
+PerfectAudience.prototype.initialize = function(){
   window._pq = window._pq || [];
   this.load(this.ready);
 };
@@ -14052,11 +14004,12 @@ PerfectAudience.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 PerfectAudience.prototype.loaded = function(){
-  return !! (window._pq && window._pq.push);
+  return !!(window._pq && window._pq.push);
 };
 
 /**
@@ -14064,6 +14017,7 @@ PerfectAudience.prototype.loaded = function(){
  *
  * http://support.perfectaudience.com/knowledgebase/articles/212490-visitor-tracking-api
  *
+ * @api public
  * @param {Track} event
  */
 
@@ -14090,7 +14044,8 @@ PerfectAudience.prototype.track = function(track){
  *
  * http://support.perfectaudience.com/knowledgebase/articles/212490-visitor-tracking-api
  *
- * @param {Track} event
+ * @api private
+ * @param {Track} track
  */
 
 PerfectAudience.prototype.viewedProduct = function(track){
@@ -14104,7 +14059,8 @@ PerfectAudience.prototype.viewedProduct = function(track){
  *
  * http://support.perfectaudience.com/knowledgebase/articles/212490-visitor-tracking-api
  *
- * @param {Track} event
+ * @api private
+ * @param {Track} track
  */
 
 PerfectAudience.prototype.completedOrder = function(track){
@@ -14116,16 +14072,16 @@ PerfectAudience.prototype.completedOrder = function(track){
   push('track', track.event(), props);
 };
 
-}, {"analytics.js-integration":90,"global-queue":166}],
+}, {"analytics.js-integration":92,"global-queue":163}],
 67: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
+var date = require('load-date');
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('_prum');
-var date = require('load-date');
 
 /**
  * Expose `Pingdom` integration.
@@ -14141,38 +14097,38 @@ var Pingdom = module.exports = integration('Pingdom')
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-Pingdom.prototype.initialize = function(page){
+Pingdom.prototype.initialize = function(){
   window._prum = window._prum || [];
   push('id', this.options.id);
   push('mark', 'firstbyte', date.getTime());
-  var self = this;
   this.load(this.ready);
 };
 
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Pingdom.prototype.loaded = function(){
-  return !! (window._prum && window._prum.push !== Array.prototype.push);
+  return !!(window._prum && window._prum.push !== Array.prototype.push);
 };
 
-}, {"analytics.js-integration":90,"global-queue":166,"load-date":165}],
+}, {"load-date":161,"analytics.js-integration":92,"global-queue":163}],
 68: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var push = require('global-queue')('_paq');
 var each = require('each');
+var integration = require('analytics.js-integration');
 var is = require('is');
+var push = require('global-queue')('_paq');
 
 /**
  * Expose `Piwik` integration.
@@ -14190,6 +14146,8 @@ var Piwik = module.exports = integration('Piwik')
  * Initialize.
  *
  * http://piwik.org/docs/javascript-tracking/#toc-asynchronous-tracking
+ *
+ * @api public
  */
 
 Piwik.prototype.initialize = function(){
@@ -14201,26 +14159,30 @@ Piwik.prototype.initialize = function(){
 };
 
 /**
- * Check if Piwik is loaded
+ * Check if Piwik is loaded.
+ *
+ * @api private
  */
 
 Piwik.prototype.loaded = function(){
-  return !! (window._paq && window._paq.push != [].push);
+  return !!(window._paq && window._paq.push !== Array.prototype.push);
 };
 
 /**
  * Page
  *
+ * @api public
  * @param {Page} page
  */
 
-Piwik.prototype.page = function(page){
+Piwik.prototype.page = function(){
   push('trackPageView');
 };
 
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -14252,17 +14214,16 @@ Piwik.prototype.track = function(track){
   push('trackEvent', category, action, name, value);
 };
 
-}, {"analytics.js-integration":90,"global-queue":166,"each":4,"is":93}],
+}, {"each":4,"analytics.js-integration":92,"is":95,"global-queue":163}],
 69: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var convertDates = require('convert-dates');
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_preactq');
-var alias = require('alias');
 
 /**
  * Expose `Preact` integration.
@@ -14280,10 +14241,11 @@ var Preact = module.exports = integration('Preact')
  *
  * http://www.preact.io/api/javascript
  *
+ * @api public
  * @param {Object} page
  */
 
-Preact.prototype.initialize = function(page){
+Preact.prototype.initialize = function(){
   window._preactq = window._preactq || [];
   window._lnq = window._lnq || [];
   push('_setCode', this.options.projectCode);
@@ -14293,16 +14255,18 @@ Preact.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Preact.prototype.loaded = function(){
-  return !! (window._preactq && window._preactq.push !== Array.prototype.push);
+  return !!(window._preactq && window._preactq.push !== Array.prototype.push);
 };
 
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -14321,9 +14285,8 @@ Preact.prototype.identify = function(identify){
 /**
  * Group.
  *
- * @param {String} id
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @api public
+ * @param {Group} group
  */
 
 Preact.prototype.group = function(group){
@@ -14334,6 +14297,7 @@ Preact.prototype.group = function(group){
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -14360,14 +14324,14 @@ Preact.prototype.track = function(track){
  * Convert a `date` to a format Preact supports.
  *
  * @param {Date} date
- * @return {Number}
+ * @return {number}
  */
 
 function convertDate(date){
   return Math.floor(date / 1000);
 }
 
-}, {"analytics.js-integration":90,"convert-dates":170,"global-queue":166,"alias":169}],
+}, {"convert-dates":168,"analytics.js-integration":92,"global-queue":163}],
 70: [function(require, module, exports) {
 
 /**
@@ -14396,10 +14360,11 @@ var Qualaroo = module.exports = integration('Qualaroo')
 /**
  * Initialize.
  *
+ * @api public
  * @param {Object} page
  */
 
-Qualaroo.prototype.initialize = function(page){
+Qualaroo.prototype.initialize = function(){
   window._kiq = window._kiq || [];
   var loaded = bind(this, this.loaded);
   var ready = this.ready;
@@ -14411,11 +14376,12 @@ Qualaroo.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Qualaroo.prototype.loaded = function(){
-  return !! (window._kiq && window._kiq.push !== Array.prototype.push);
+  return !!(window._kiq && window._kiq.push !== Array.prototype.push);
 };
 
 /**
@@ -14424,6 +14390,7 @@ Qualaroo.prototype.loaded = function(){
  * http://help.qualaroo.com/customer/portal/articles/731085-identify-survey-nudge-takers
  * http://help.qualaroo.com/customer/portal/articles/731091-set-additional-user-properties
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -14439,9 +14406,8 @@ Qualaroo.prototype.identify = function(identify){
 /**
  * Track.
  *
- * @param {String} event
- * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * @api public
+ * @param {Track} track
  */
 
 Qualaroo.prototype.track = function(track){
@@ -14452,18 +14418,17 @@ Qualaroo.prototype.track = function(track){
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"analytics.js-integration":90,"global-queue":166,"facade":139,"bind":103,"when":137}],
+}, {"analytics.js-integration":92,"global-queue":163,"facade":135,"bind":105,"when":165}],
 71: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var push = require('global-queue')('_qevents', { wrap: false });
 var integration = require('analytics.js-integration');
-var useHttps = require('use-https');
-var is = require('is');
+var push = require('global-queue')('_qevents', { wrap: false });
 var reduce = require('reduce');
+var useHttps = require('use-https');
 
 /**
  * Expose `Quantcast` integration.
@@ -14484,6 +14449,7 @@ var Quantcast = module.exports = integration('Quantcast')
  * https://www.quantcast.com/learning-center/guides/using-the-quantcast-asynchronous-tag/
  * https://www.quantcast.com/help/cross-platform-audience-measurement-guide/
  *
+ * @api public
  * @param {Page} page
  */
 
@@ -14508,11 +14474,12 @@ Quantcast.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Quantcast.prototype.loaded = function(){
-  return !! window.__qc;
+  return !!window.__qc;
 };
 
 /**
@@ -14520,19 +14487,20 @@ Quantcast.prototype.loaded = function(){
  *
  * https://cloudup.com/cBRRFAfq6mf
  *
+ * @api public
  * @param {Page} page
  */
 
 Quantcast.prototype.page = function(page){
   var category = page.category();
   var name = page.name();
-  var customLabels = page.proxy('properties.label')
+  var customLabels = page.proxy('properties.label');
   var labels = this._labels('page', category, name, customLabels);
 
   var settings = {
     event: 'refresh',
     labels: labels,
-    qacct: this.options.pCode,
+    qacct: this.options.pCode
   };
   var user = this.analytics.user();
   if (user.id()) settings.uid = user.id();
@@ -14544,7 +14512,8 @@ Quantcast.prototype.page = function(page){
  *
  * https://www.quantcast.com/help/cross-platform-audience-measurement-guide/
  *
- * @param {String} id (optional)
+ * @api public
+ * @param {string} [id]
  */
 
 Quantcast.prototype.identify = function(identify){
@@ -14562,6 +14531,7 @@ Quantcast.prototype.identify = function(identify){
  *
  * https://cloudup.com/cBRRFAfq6mf
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -14579,7 +14549,7 @@ Quantcast.prototype.track = function(track){
   };
 
   var user = this.analytics.user();
-  if (null != revenue) settings.revenue = (revenue+''); // convert to string
+  if (revenue != null) settings.revenue = String(revenue);
   if (orderId) settings.orderid = orderId;
   if (user.id()) settings.uid = user.id();
   push(settings);
@@ -14588,14 +14558,14 @@ Quantcast.prototype.track = function(track){
 /**
  * Completed Order.
  *
- * @param {Track} track
  * @api private
+ * @param {Track} track
  */
 
 Quantcast.prototype.completedOrder = function(track){
   var name = track.event();
   var revenue = track.total();
-  var customLabels = track.proxy('properties.label')
+  var customLabels = track.proxy('properties.label');
   var labels = this._labels('event', name, customLabels);
   var category = track.category();
   var repeat = track.proxy('properties.repeat');
@@ -14604,14 +14574,15 @@ Quantcast.prototype.completedOrder = function(track){
     labels += ',' + this._labels('pcat', category);
   }
 
-  if ('boolean' == typeof repeat) {
+  if (typeof repeat === 'boolean') {
     labels += ',_fp.customer.' + (repeat ? 'repeat' : 'new');
   }
 
   var settings = {
-    event: 'refresh', // the example Quantcast sent has completed order send refresh not click
+    // the example Quantcast sent has completed order send refresh not click
+    event: 'refresh',
     labels: labels,
-    revenue: (revenue+''), // convert to string
+    revenue: String(revenue),
     orderid: track.orderId(),
     qacct: this.options.pCode
   };
@@ -14631,17 +14602,17 @@ Quantcast.prototype.completedOrder = function(track){
  *    labels('event', 'my event');
  *    // => "_fp.event.my event"
  *
- * @param {String} type
- * @param {String} ...
- * @return {String}
  * @api private
+ * @param {string} type
+ * @param {...string} args
+ * @return {string}
  */
 
 Quantcast.prototype._labels = function(type){
   var args = Array.prototype.slice.call(arguments, 1);
   var advertise = this.options.advertise;
 
-  if (advertise && 'page' == type) type = 'event';
+  if (advertise && type === 'page') type = 'event';
   if (advertise) type = '_fp.' + type;
 
   var separator = advertise ? ' ' : '.';
@@ -14655,8 +14626,8 @@ Quantcast.prototype._labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"global-queue":166,"analytics.js-integration":90,"use-https":92,"is":93,"reduce":183}],
-183: [function(require, module, exports) {
+}, {"analytics.js-integration":92,"global-queue":163,"reduce":179,"use-https":94}],
+179: [function(require, module, exports) {
 
 /**
  * Reduce `arr` with `fn`.
@@ -14688,8 +14659,8 @@ module.exports = function(arr, fn, initial){
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var extend = require('extend');
+var integration = require('analytics.js-integration');
 var is = require('is');
 
 /**
@@ -14706,10 +14677,10 @@ var RollbarIntegration = module.exports = integration('Rollbar')
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-RollbarIntegration.prototype.initialize = function(page){
+RollbarIntegration.prototype.initialize = function(){
   var _rollbarConfig = this.config = {
     accessToken: this.options.accessToken,
     captureUncaught: this.options.captureUncaught,
@@ -14717,25 +14688,27 @@ RollbarIntegration.prototype.initialize = function(page){
       environment: this.options.environment
     }
   };
-  // jscs:disable
+  /* eslint-disable */
   (function(a,b){function c(b){this.shimId=++h,this.notifier=null,this.parentShim=b,this.logger=function(){},a.console&&void 0===a.console.shimId&&(this.logger=a.console.log)}function d(b,c,d){a._rollbarWrappedError&&(d[4]||(d[4]=a._rollbarWrappedError),d[5]||(d[5]=a._rollbarWrappedError._rollbarContext),a._rollbarWrappedError=null),b.uncaughtError.apply(b,d),c&&c.apply(a,d)}function e(b){var d=c;return g(function(){if(this.notifier)return this.notifier[b].apply(this.notifier,arguments);var c=this,e="scope"===b;e&&(c=new d(this));var f=Array.prototype.slice.call(arguments,0),g={shim:c,method:b,args:f,ts:new Date};return a._rollbarShimQueue.push(g),e?c:void 0})}function f(a,b){if(b.hasOwnProperty&&b.hasOwnProperty("addEventListener")){var c=b.addEventListener;b.addEventListener=function(b,d,e){c.call(this,b,a.wrap(d),e)};var d=b.removeEventListener;b.removeEventListener=function(a,b,c){d.call(this,a,b&&b._wrapped?b._wrapped:b,c)}}}function g(a,b){return b=b||this.logger,function(){try{return a.apply(this,arguments)}catch(c){b("Rollbar internal error:",c)}}}var h=0;c.init=function(a,b){var e=b.globalAlias||"Rollbar";if("object"==typeof a[e])return a[e];a._rollbarShimQueue=[],a._rollbarWrappedError=null,b=b||{};var h=new c;return g(function(){if(h.configure(b),b.captureUncaught){var c=a.onerror;a.onerror=function(){var a=Array.prototype.slice.call(arguments,0);d(h,c,a)};var g,i,j="EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload".split(",");for(g=0;g<j.length;++g)i=j[g],a[i]&&a[i].prototype&&f(h,a[i].prototype)}return a[e]=h,h},h.logger)()},c.prototype.loadFull=function(a,b,c,d,e){var f=g(function(){var a=b.createElement("script"),e=b.getElementsByTagName("script")[0];a.src=d.rollbarJsUrl,a.async=!c,a.onload=h,e.parentNode.insertBefore(a,e)},this.logger),h=g(function(){var b;if(void 0===a._rollbarPayloadQueue){var c,d,f,g;for(b=new Error("rollbar.js did not load");c=a._rollbarShimQueue.shift();)for(f=c.args,g=0;g<f.length;++g)if(d=f[g],"function"==typeof d){d(b);break}}"function"==typeof e&&e(b)},this.logger);g(function(){c?f():a.addEventListener?a.addEventListener("load",f,!1):a.attachEvent("onload",f)},this.logger)()},c.prototype.wrap=function(b,c){try{var d;if(d="function"==typeof c?c:function(){return c||{}},"function"!=typeof b)return b;if(b._isWrap)return b;if(!b._wrapped){b._wrapped=function(){try{return b.apply(this,arguments)}catch(c){throw c._rollbarContext=d(),c._rollbarContext._wrappedSource=b.toString(),a._rollbarWrappedError=c,c}},b._wrapped._isWrap=!0;for(var e in b)b.hasOwnProperty(e)&&(b._wrapped[e]=b[e])}return b._wrapped}catch(f){return b}};for(var i="log,debug,info,warn,warning,error,critical,global,configure,scope,uncaughtError".split(","),j=0;j<i.length;++j)c.prototype[i[j]]=e(i[j]);var k="//d37gvrvc0wt4s1.cloudfront.net/js/v1.1/rollbar.min.js";_rollbarConfig.rollbarJsUrl=_rollbarConfig.rollbarJsUrl||k;var l=c.init(a,_rollbarConfig);})(window,document);
-  // jscs:enable
+  /* eslint-enable */
   this.load(this.ready);
 };
 
 /**
  * Loaded?
  *
+ * @api private
  * @return {Boolean}
  */
 
 RollbarIntegration.prototype.loaded = function(){
-  return is.object(window.Rollbar) && null == window.Rollbar.shimId;
+  return is.object(window.Rollbar) && window.Rollbar.shimId == null;
 };
 
 /**
  * Load.
  *
+ * @api public
  * @param {Function} callback
  */
 
@@ -14746,8 +14719,10 @@ RollbarIntegration.prototype.load = function(callback){
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
+
 RollbarIntegration.prototype.identify = function(identify){
   // do stuff with `id` or `traits`
   if (!this.options.identify) return;
@@ -14762,7 +14737,7 @@ RollbarIntegration.prototype.identify = function(identify){
   rollbar.configure({ payload: { person: person }});
 };
 
-}, {"analytics.js-integration":90,"extend":136,"is":93}],
+}, {"extend":158,"analytics.js-integration":92,"is":95}],
 73: [function(require, module, exports) {
 
 /**
@@ -14784,10 +14759,10 @@ var SaaSquatch = module.exports = integration('SaaSquatch')
 /**
  * Initialize.
  *
- * @param {Page} page
+ * @api public
  */
 
-SaaSquatch.prototype.initialize = function(page){
+SaaSquatch.prototype.initialize = function(){
   window._sqh = window._sqh || [];
   this.load(this.ready);
 };
@@ -14795,16 +14770,18 @@ SaaSquatch.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 SaaSquatch.prototype.loaded = function(){
-  return window._sqh && window._sqh.push != [].push;
+  return window._sqh && window._sqh.push !== Array.prototype.push;
 };
 
 /**
  * Identify.
  *
+ * @api public
  * @param {Facade} identify
  */
 
@@ -14828,12 +14805,12 @@ SaaSquatch.prototype.identify = function(identify){
     last_name: identify.lastName(),
     user_image: identify.avatar(),
     email: email,
-    user_id: id,
+    user_id: id
   };
 
   if (accountId) init.account_id = accountId;
   if (paymentProviderId) init.payment_provider_id = paymentProviderId;
-  if (init.payment_provider_id == "null") init.payment_provider_id = null;
+  if (init.payment_provider_id === 'null') init.payment_provider_id = null;
   if (accountStatus) init.account_status = accountStatus;
   if (referralCode) init.referral_code = referralCode;
   if (opts.checksum) init.checksum = opts.checksum;
@@ -14847,12 +14824,12 @@ SaaSquatch.prototype.identify = function(identify){
 /**
  * Group.
  *
+ * @api public
  * @param {Group} group
  */
 
 SaaSquatch.prototype.group = function(group){
   var sqh = window._sqh;
-  var props = group.properties();
   var id = group.groupId();
   var image = group.proxy('traits.referralImage') || this.options.referralImage;
   var opts = group.options(this.name);
@@ -14873,7 +14850,7 @@ SaaSquatch.prototype.group = function(group){
   this.load();
 };
 
-}, {"analytics.js-integration":90}],
+}, {"analytics.js-integration":92}],
 74: [function(require, module, exports) {
 
 /**
@@ -14895,10 +14872,10 @@ var SatisMeter = module.exports = integration('SatisMeter')
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-SatisMeter.prototype.initialize = function(page){
+SatisMeter.prototype.initialize = function(){
   var self = this;
   this.load(function(){
     when(function(){ return self.loaded(); }, self.ready);
@@ -14908,7 +14885,8 @@ SatisMeter.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 SatisMeter.prototype.loaded = function(){
@@ -14918,17 +14896,17 @@ SatisMeter.prototype.loaded = function(){
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
 SatisMeter.prototype.identify = function(identify){
   var traits = identify.traits();
-
   traits.token = this.options.token;
-
   traits.user = {
     id: identify.userId()
   };
+
   if (identify.name()) {
     traits.user.name = identify.name();
   }
@@ -14948,32 +14926,33 @@ SatisMeter.prototype.identify = function(identify){
   window.satismeter(traits);
 };
 
-}, {"analytics.js-integration":90,"when":137}],
+}, {"analytics.js-integration":92,"when":165}],
 75: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
+var ads = require('ad-params');
+var clone = require('clone');
+var cookie = require('cookie');
+var extend = require('extend');
 var integration = require('analytics.js-integration');
+var json = require('segmentio/json@1.0.0');
 var localstorage = require('store');
 var protocol = require('protocol');
-var utm = require('utm-params');
-var ads = require('ad-params');
 var send = require('send-json');
-var cookie = require('cookie');
-var clone = require('clone');
+var topDomain = require('top-domain');
+var utm = require('utm-params');
 var uuid = require('uuid');
-var top = require('top-domain');
-var extend = require('extend');
-var json = require('segmentio/json@1.0.0');
 
 /**
  * Cookie options
  */
 
-var options = {
-  maxage: 31536000000, // 1y
+var cookieOptions = {
+  // 1 year
+  maxage: 31536000000,
   secure: false,
   path: '/'
 };
@@ -14992,10 +14971,7 @@ var Segment = exports = module.exports = integration('Segment.io')
  */
 
 exports.storage = function(){
-  return 'file:' == protocol()
-    || 'chrome-extension:' == protocol()
-    ? localstorage
-    : cookie;
+  return protocol() === 'file:' || protocol() === 'chrome-extension:' ? localstorage : cookie;
 };
 
 /**
@@ -15009,10 +14985,10 @@ exports.global = window;
  *
  * https://github.com/segmentio/segmentio/blob/master/modules/segmentjs/segment.js/v1/segment.js
  *
- * @param {Object} page
+ * @api public
  */
 
-Segment.prototype.initialize = function(page){
+Segment.prototype.initialize = function(){
   var self = this;
   this.ready();
   this.analytics.on('invoke', function(msg){
@@ -15027,7 +15003,8 @@ Segment.prototype.initialize = function(page){
 /**
  * Loaded.
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Segment.prototype.loaded = function(){
@@ -15037,6 +15014,7 @@ Segment.prototype.loaded = function(){
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
@@ -15047,6 +15025,7 @@ Segment.prototype.onpage = function(page){
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -15057,6 +15036,7 @@ Segment.prototype.onidentify = function(identify){
 /**
  * Group.
  *
+ * @api public
  * @param {Group} group
  */
 
@@ -15065,20 +15045,25 @@ Segment.prototype.ongroup = function(group){
 };
 
 /**
- * Track.
+ * ontrack.
  *
+ * TODO: Document this.
+ *
+ * @api private
  * @param {Track} track
  */
 
 Segment.prototype.ontrack = function(track){
   var json = track.json();
-  delete json.traits; // TODO: figure out why we need traits.
+  // TODO: figure out why we need traits.
+  delete json.traits;
   this.send('/t', json);
 };
 
 /**
  * Alias.
  *
+ * @api public
  * @param {Alias} alias
  */
 
@@ -15095,8 +15080,8 @@ Segment.prototype.onalias = function(alias){
 /**
  * Normalize the given `msg`.
  *
- * @param {Object} msg
  * @api private
+ * @param {Object} msg
  */
 
 Segment.prototype.normalize = function(msg){
@@ -15122,16 +15107,16 @@ Segment.prototype.normalize = function(msg){
 /**
  * Send `obj` to `path`.
  *
- * @param {String} path
+ * @api private
+ * @param {string} path
  * @param {Object} obj
  * @param {Function} fn
- * @api private
  */
 
 Segment.prototype.send = function(path, msg, fn){
   var url = scheme() + '//api.segment.io/v1' + path;
   var headers = { 'Content-Type': 'text/plain' };
-  var fn = fn || noop;
+  fn = fn || noop;
   var self = this;
 
   // msg
@@ -15149,8 +15134,9 @@ Segment.prototype.send = function(path, msg, fn){
 /**
  * Gets/sets cookies on the appropriate domain.
  *
- * @param {String} name
- * @param {Mixed} val
+ * @api private
+ * @param {string} name
+ * @param {*} val
  */
 
 Segment.prototype.cookie = function(name, val){
@@ -15158,10 +15144,10 @@ Segment.prototype.cookie = function(name, val){
   if (arguments.length === 1) return store(name);
   var global = exports.global;
   var href = global.location.href;
-  var domain = '.' + top(href);
-  if ('.' == domain) domain = '';
+  var domain = '.' + topDomain(href);
+  if (domain === '.') domain = '';
   this.debug('store domain %s -> %s', href, domain);
-  var opts = clone(options);
+  var opts = clone(cookieOptions);
   opts.domain = domain;
   this.debug('store %s, %s, %o', name, val, opts);
   store(name, val, opts);
@@ -15176,9 +15162,9 @@ Segment.prototype.cookie = function(name, val){
  *
  * TODO: remove.
  *
+ * @api private
  * @param {Object} query
  * @param {Object} ctx
- * @api private
  */
 
 Segment.prototype.referrerId = function(query, ctx){
@@ -15193,7 +15179,7 @@ Segment.prototype.referrerId = function(query, ctx){
   if (!ad) return;
   ctx.referrer = extend(ctx.referrer || {}, ad);
   this.cookie('s:context.referrer', json.stringify(ad));
-}
+};
 
 /**
  * Get the scheme.
@@ -15202,220 +15188,22 @@ Segment.prototype.referrerId = function(query, ctx){
  * if the protocol is `http:` and
  * `https:` for other protocols.
  *
- * @return {String}
+ * @api private
+ * @return {string}
  */
 
 function scheme(){
-  return 'http:' == protocol()
-    ? 'http:'
-    : 'https:';
+  return protocol() === 'http:' ? 'http:' : 'https:';
 }
 
 /**
- * Noop
+ * Noop.
  */
 
 function noop(){}
 
-}, {"analytics.js-integration":90,"store":184,"protocol":185,"utm-params":129,"ad-params":186,"send-json":187,"cookie":188,"clone":96,"uuid":189,"top-domain":130,"extend":136,"segmentio/json@1.0.0":171}],
-184: [function(require, module, exports) {
-
-/**
- * dependencies.
- */
-
-var unserialize = require('unserialize');
-var each = require('each');
-var storage;
-
-/**
- * Safari throws when a user
- * blocks access to cookies / localstorage.
- */
-
-try {
-  storage = window.localStorage;
-} catch (e) {
-  storage = null;
-}
-
-/**
- * Expose `store`
- */
-
-module.exports = store;
-
-/**
- * Store the given `key`, `val`.
- *
- * @param {String|Object} key
- * @param {Mixed} value
- * @return {Mixed}
- * @api public
- */
-
-function store(key, value){
-  var length = arguments.length;
-  if (0 == length) return all();
-  if (2 <= length) return set(key, value);
-  if (1 != length) return;
-  if (null == key) return storage.clear();
-  if ('string' == typeof key) return get(key);
-  if ('object' == typeof key) return each(key, set);
-}
-
-/**
- * supported flag.
- */
-
-store.supported = !! storage;
-
-/**
- * Set `key` to `val`.
- *
- * @param {String} key
- * @param {Mixed} val
- */
-
-function set(key, val){
-  return null == val
-    ? storage.removeItem(key)
-    : storage.setItem(key, JSON.stringify(val));
-}
-
-/**
- * Get `key`.
- *
- * @param {String} key
- * @return {Mixed}
- */
-
-function get(key){
-  return unserialize(storage.getItem(key));
-}
-
-/**
- * Get all.
- *
- * @return {Object}
- */
-
-function all(){
-  var len = storage.length;
-  var ret = {};
-  var key;
-
-  while (0 <= --len) {
-    key = storage.key(len);
-    ret[key] = get(key);
-  }
-
-  return ret;
-}
-
-}, {"unserialize":190,"each":109}],
-190: [function(require, module, exports) {
-
-/**
- * Unserialize the given "stringified" javascript.
- * 
- * @param {String} val
- * @return {Mixed}
- */
-
-module.exports = function(val){
-  try {
-    return JSON.parse(val);
-  } catch (e) {
-    return val || undefined;
-  }
-};
-
-}, {}],
-185: [function(require, module, exports) {
-
-/**
- * Convenience alias
- */
-
-var define = Object.defineProperty;
-
-
-/**
- *  The base protocol
- */
-
-var initialProtocol = window.location.protocol;
-
-/**
- * Fallback mocked protocol in case Object.defineProperty doesn't exist.
- */
-
-var mockedProtocol;
-
-
-module.exports = function (protocol) {
-  if (arguments.length === 0) return get();
-  else return set(protocol);
-};
-
-
-/**
- * Sets the protocol to be http:
- */
-
-module.exports.http = function () {
-  set('http:');
-};
-
-
-/**
- * Sets the protocol to be https:
- */
-
-module.exports.https = function () {
-  set('https:');
-};
-
-
-/**
- * Reset to the initial protocol.
- */
-
-module.exports.reset = function () {
-  set(initialProtocol);
-};
-
-
-/**
- * Gets the current protocol, using the fallback and then the native protocol.
- *
- * @return {String} protocol
- */
-
-function get () {
-  return mockedProtocol || window.location.protocol;
-}
-
-
-/**
- * Sets the protocol
- *
- * @param {String} protocol
- */
-
-function set (protocol) {
-  try {
-    define(window.location, 'protocol', {
-      get: function () { return protocol; }
-    });
-  } catch (err) {
-    mockedProtocol = protocol;
-  }
-}
-
-}, {}],
-186: [function(require, module, exports) {
+}, {"ad-params":180,"clone":98,"cookie":181,"extend":158,"analytics.js-integration":92,"segmentio/json@1.0.0":170,"store":182,"protocol":183,"send-json":184,"top-domain":131,"utm-params":185,"uuid":186}],
+180: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15458,290 +15246,219 @@ function ads(query){
     }
   }
 }
-}, {"querystring":131}],
+}, {"querystring":187}],
 187: [function(require, module, exports) {
+
 /**
  * Module dependencies.
  */
 
-var encode = require('base64-encode');
-var cors = require('has-cors');
-var jsonp = require('jsonp');
-var JSON = require('json');
+var encode = encodeURIComponent;
+var decode = decodeURIComponent;
+var trim = require('trim');
+var type = require('type');
+
+var pattern = /(\w+)\[(\d+)\]/
 
 /**
- * Expose `send`
- */
-
-exports = module.exports = cors
-  ? json
-  : base64;
-
-/**
- * Expose `callback`
- */
-
-exports.callback = 'callback';
-
-/**
- * Expose `prefix`
- */
-
-exports.prefix = 'data';
-
-/**
- * Expose `json`.
- */
-
-exports.json = json;
-
-/**
- * Expose `base64`.
- */
-
-exports.base64 = base64;
-
-/**
- * Expose `type`
- */
-
-exports.type = cors
-  ? 'xhr'
-  : 'jsonp';
-
-/**
- * Send the given `obj` to `url` with `fn(err, req)`.
+ * Parse the given query `str`.
  *
- * @param {String} url
+ * @param {String} str
+ * @return {Object}
+ * @api public
+ */
+
+exports.parse = function(str){
+  if ('string' != typeof str) return {};
+
+  str = trim(str);
+  if ('' == str) return {};
+  if ('?' == str.charAt(0)) str = str.slice(1);
+
+  var obj = {};
+  var pairs = str.split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var parts = pairs[i].split('=');
+    var key = decode(parts[0]);
+    var m;
+
+    if (m = pattern.exec(key)) {
+      obj[m[1]] = obj[m[1]] || [];
+      obj[m[1]][m[2]] = decode(parts[1]);
+      continue;
+    }
+
+    obj[parts[0]] = null == parts[1]
+      ? ''
+      : decode(parts[1]);
+  }
+
+  return obj;
+};
+
+/**
+ * Stringify the given `obj`.
+ *
  * @param {Object} obj
- * @param {Object} headers
- * @param {Function} fn
+ * @return {String}
+ * @api public
+ */
+
+exports.stringify = function(obj){
+  if (!obj) return '';
+  var pairs = [];
+
+  for (var key in obj) {
+    var value = obj[key];
+
+    if ('array' == type(value)) {
+      for (var i = 0; i < value.length; ++i) {
+        pairs.push(encode(key + '[' + i + ']') + '=' + encode(value[i]));
+      }
+      continue;
+    }
+
+    pairs.push(encode(key) + '=' + encode(obj[key]));
+  }
+
+  return pairs.join('&');
+};
+
+}, {"trim":157,"type":7}],
+181: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var debug = require('debug')('cookie');
+
+/**
+ * Set or get cookie `name` with `value` and `options` object.
+ *
+ * @param {String} name
+ * @param {String} value
+ * @param {Object} options
+ * @return {Mixed}
+ * @api public
+ */
+
+module.exports = function(name, value, options){
+  switch (arguments.length) {
+    case 3:
+    case 2:
+      return set(name, value, options);
+    case 1:
+      return get(name);
+    default:
+      return all();
+  }
+};
+
+/**
+ * Set cookie `name` to `value`.
+ *
+ * @param {String} name
+ * @param {String} value
+ * @param {Object} options
  * @api private
  */
 
-function json(url, obj, headers, fn){
-  if (3 == arguments.length) fn = headers, headers = {};
+function set(name, value, options) {
+  options = options || {};
+  var str = encode(name) + '=' + encode(value);
 
-  var req = new XMLHttpRequest;
-  req.onerror = fn;
-  req.onreadystatechange = done;
-  req.open('POST', url, true);
-  for (var k in headers) req.setRequestHeader(k, headers[k]);
-  req.send(JSON.stringify(obj));
+  if (null == value) options.maxage = -1;
 
-  function done(){
-    if (4 == req.readyState) return fn(null, req);
+  if (options.maxage) {
+    options.expires = new Date(+new Date + options.maxage);
   }
+
+  if (options.path) str += '; path=' + options.path;
+  if (options.domain) str += '; domain=' + options.domain;
+  if (options.expires) str += '; expires=' + options.expires.toUTCString();
+  if (options.secure) str += '; secure';
+
+  document.cookie = str;
 }
 
 /**
- * Send the given `obj` to `url` with `fn(err, req)`.
+ * Return all cookies.
  *
- * @param {String} url
- * @param {Object} obj
- * @param {Function} fn
+ * @return {Object}
  * @api private
  */
 
-function base64(url, obj, _, fn){
-  if (3 == arguments.length) fn = _;
-  var prefix = exports.prefix;
-  obj = encode(JSON.stringify(obj));
-  obj = encodeURIComponent(obj);
-  url += '?' + prefix + '=' + obj;
-  jsonp(url, { param: exports.callback }, function(err, obj){
-    if (err) return fn(err);
-    fn(null, {
-      url: url,
-      body: obj
-    });
-  });
+function all() {
+  return parse(document.cookie);
 }
 
-}, {"base64-encode":191,"has-cors":192,"jsonp":193,"json":171}],
-191: [function(require, module, exports) {
-var utf8Encode = require('utf8-encode');
-var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-
-module.exports = encode;
-function encode(input) {
-    var output = "";
-    var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
-    var i = 0;
-
-    input = utf8Encode(input);
-
-    while (i < input.length) {
-
-        chr1 = input.charCodeAt(i++);
-        chr2 = input.charCodeAt(i++);
-        chr3 = input.charCodeAt(i++);
-
-        enc1 = chr1 >> 2;
-        enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
-        enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
-        enc4 = chr3 & 63;
-
-        if (isNaN(chr2)) {
-            enc3 = enc4 = 64;
-        } else if (isNaN(chr3)) {
-            enc4 = 64;
-        }
-
-        output = output +
-            keyStr.charAt(enc1) + keyStr.charAt(enc2) +
-            keyStr.charAt(enc3) + keyStr.charAt(enc4);
-
-    }
-
-    return output;
-}
-}, {"utf8-encode":194}],
-194: [function(require, module, exports) {
-module.exports = encode;
-
-function encode(string) {
-    string = string.replace(/\r\n/g, "\n");
-    var utftext = "";
-
-    for (var n = 0; n < string.length; n++) {
-
-        var c = string.charCodeAt(n);
-
-        if (c < 128) {
-            utftext += String.fromCharCode(c);
-        }
-        else if ((c > 127) && (c < 2048)) {
-            utftext += String.fromCharCode((c >> 6) | 192);
-            utftext += String.fromCharCode((c & 63) | 128);
-        }
-        else {
-            utftext += String.fromCharCode((c >> 12) | 224);
-            utftext += String.fromCharCode(((c >> 6) & 63) | 128);
-            utftext += String.fromCharCode((c & 63) | 128);
-        }
-
-    }
-
-    return utftext;
-}
-}, {}],
-192: [function(require, module, exports) {
-
 /**
- * Module exports.
+ * Get cookie `name`.
  *
- * Logic borrowed from Modernizr:
- *
- *   - https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cors.js
+ * @param {String} name
+ * @return {String}
+ * @api private
  */
 
-try {
-  module.exports = typeof XMLHttpRequest !== 'undefined' &&
-    'withCredentials' in new XMLHttpRequest();
-} catch (err) {
-  // if XMLHttp support is disabled in IE then it will throw
-  // when trying to create
-  module.exports = false;
+function get(name) {
+  return all()[name];
 }
 
-}, {}],
-193: [function(require, module, exports) {
 /**
- * Module dependencies
- */
-
-var debug = require('debug')('jsonp');
-
-/**
- * Module exports.
- */
-
-module.exports = jsonp;
-
-/**
- * Callback index.
- */
-
-var count = 0;
-
-/**
- * Noop function.
- */
-
-function noop(){}
-
-/**
- * JSONP handler
+ * Parse cookie `str`.
  *
- * Options:
- *  - param {String} qs parameter (`callback`)
- *  - timeout {Number} how long after a timeout error is emitted (`60000`)
- *
- * @param {String} url
- * @param {Object|Function} optional options / callback
- * @param {Function} optional callback
+ * @param {String} str
+ * @return {Object}
+ * @api private
  */
 
-function jsonp(url, opts, fn){
-  if ('function' == typeof opts) {
-    fn = opts;
-    opts = {};
+function parse(str) {
+  var obj = {};
+  var pairs = str.split(/ *; */);
+  var pair;
+  if ('' == pairs[0]) return obj;
+  for (var i = 0; i < pairs.length; ++i) {
+    pair = pairs[i].split('=');
+    obj[decode(pair[0])] = decode(pair[1]);
   }
-  if (!opts) opts = {};
-
-  var prefix = opts.prefix || '__jp';
-  var param = opts.param || 'callback';
-  var timeout = null != opts.timeout ? opts.timeout : 60000;
-  var enc = encodeURIComponent;
-  var target = document.getElementsByTagName('script')[0] || document.head;
-  var script;
-  var timer;
-
-  // generate a unique id for this request
-  var id = prefix + (count++);
-
-  if (timeout) {
-    timer = setTimeout(function(){
-      cleanup();
-      if (fn) fn(new Error('Timeout'));
-    }, timeout);
-  }
-
-  function cleanup(){
-    script.parentNode.removeChild(script);
-    window[id] = noop;
-  }
-
-  window[id] = function(data){
-    debug('jsonp got', data);
-    if (timer) clearTimeout(timer);
-    cleanup();
-    if (fn) fn(null, data);
-  };
-
-  // add qs component
-  url += (~url.indexOf('?') ? '&' : '?') + param + '=' + enc(id);
-  url = url.replace('?&', '?');
-
-  debug('jsonp req "%s"', url);
-
-  // create script
-  script = document.createElement('script');
-  script.src = url;
-  target.parentNode.insertBefore(script, target);
+  return obj;
 }
 
-}, {"debug":195}],
-195: [function(require, module, exports) {
+/**
+ * Encode.
+ */
+
+function encode(value){
+  try {
+    return encodeURIComponent(value);
+  } catch (e) {
+    debug('error `encode(%o)` - %o', value, e)
+  }
+}
+
+/**
+ * Decode.
+ */
+
+function decode(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch (e) {
+    debug('error `decode(%o)` - %o', value, e)
+  }
+}
+
+}, {"debug":188}],
+188: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":196,"./debug":197}],
-196: [function(require, module, exports) {
+}, {"./lib/debug":189,"./debug":190}],
+189: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15891,7 +15608,7 @@ function coerce(val) {
 }
 
 }, {}],
-197: [function(require, module, exports) {
+190: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -16031,132 +15748,519 @@ try {
 } catch(e){}
 
 }, {}],
-188: [function(require, module, exports) {
+182: [function(require, module, exports) {
+
+/**
+ * dependencies.
+ */
+
+var unserialize = require('unserialize');
+var each = require('each');
+var storage;
+
+/**
+ * Safari throws when a user
+ * blocks access to cookies / localstorage.
+ */
+
+try {
+  storage = window.localStorage;
+} catch (e) {
+  storage = null;
+}
+
+/**
+ * Expose `store`
+ */
+
+module.exports = store;
+
+/**
+ * Store the given `key`, `val`.
+ *
+ * @param {String|Object} key
+ * @param {Mixed} value
+ * @return {Mixed}
+ * @api public
+ */
+
+function store(key, value){
+  var length = arguments.length;
+  if (0 == length) return all();
+  if (2 <= length) return set(key, value);
+  if (1 != length) return;
+  if (null == key) return storage.clear();
+  if ('string' == typeof key) return get(key);
+  if ('object' == typeof key) return each(key, set);
+}
+
+/**
+ * supported flag.
+ */
+
+store.supported = !! storage;
+
+/**
+ * Set `key` to `val`.
+ *
+ * @param {String} key
+ * @param {Mixed} val
+ */
+
+function set(key, val){
+  return null == val
+    ? storage.removeItem(key)
+    : storage.setItem(key, JSON.stringify(val));
+}
+
+/**
+ * Get `key`.
+ *
+ * @param {String} key
+ * @return {Mixed}
+ */
+
+function get(key){
+  return unserialize(storage.getItem(key));
+}
+
+/**
+ * Get all.
+ *
+ * @return {Object}
+ */
+
+function all(){
+  var len = storage.length;
+  var ret = {};
+  var key;
+
+  while (0 <= --len) {
+    key = storage.key(len);
+    ret[key] = get(key);
+  }
+
+  return ret;
+}
+
+}, {"unserialize":191,"each":111}],
+191: [function(require, module, exports) {
+
+/**
+ * Unserialize the given "stringified" javascript.
+ * 
+ * @param {String} val
+ * @return {Mixed}
+ */
+
+module.exports = function(val){
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    return val || undefined;
+  }
+};
+
+}, {}],
+183: [function(require, module, exports) {
+
+/**
+ * Convenience alias
+ */
+
+var define = Object.defineProperty;
+
+
+/**
+ *  The base protocol
+ */
+
+var initialProtocol = window.location.protocol;
+
+/**
+ * Fallback mocked protocol in case Object.defineProperty doesn't exist.
+ */
+
+var mockedProtocol;
+
+
+module.exports = function (protocol) {
+  if (arguments.length === 0) return get();
+  else return set(protocol);
+};
+
+
+/**
+ * Sets the protocol to be http:
+ */
+
+module.exports.http = function () {
+  set('http:');
+};
+
+
+/**
+ * Sets the protocol to be https:
+ */
+
+module.exports.https = function () {
+  set('https:');
+};
+
+
+/**
+ * Reset to the initial protocol.
+ */
+
+module.exports.reset = function () {
+  set(initialProtocol);
+};
+
+
+/**
+ * Gets the current protocol, using the fallback and then the native protocol.
+ *
+ * @return {String} protocol
+ */
+
+function get () {
+  return mockedProtocol || window.location.protocol;
+}
+
+
+/**
+ * Sets the protocol
+ *
+ * @param {String} protocol
+ */
+
+function set (protocol) {
+  try {
+    define(window.location, 'protocol', {
+      get: function () { return protocol; }
+    });
+  } catch (err) {
+    mockedProtocol = protocol;
+  }
+}
+
+}, {}],
+184: [function(require, module, exports) {
+/**
+ * Module dependencies.
+ */
+
+var encode = require('base64-encode');
+var cors = require('has-cors');
+var jsonp = require('jsonp');
+var JSON = require('json');
+
+/**
+ * Expose `send`
+ */
+
+exports = module.exports = cors
+  ? json
+  : base64;
+
+/**
+ * Expose `callback`
+ */
+
+exports.callback = 'callback';
+
+/**
+ * Expose `prefix`
+ */
+
+exports.prefix = 'data';
+
+/**
+ * Expose `json`.
+ */
+
+exports.json = json;
+
+/**
+ * Expose `base64`.
+ */
+
+exports.base64 = base64;
+
+/**
+ * Expose `type`
+ */
+
+exports.type = cors
+  ? 'xhr'
+  : 'jsonp';
+
+/**
+ * Send the given `obj` to `url` with `fn(err, req)`.
+ *
+ * @param {String} url
+ * @param {Object} obj
+ * @param {Object} headers
+ * @param {Function} fn
+ * @api private
+ */
+
+function json(url, obj, headers, fn){
+  if (3 == arguments.length) fn = headers, headers = {};
+
+  var req = new XMLHttpRequest;
+  req.onerror = fn;
+  req.onreadystatechange = done;
+  req.open('POST', url, true);
+  for (var k in headers) req.setRequestHeader(k, headers[k]);
+  req.send(JSON.stringify(obj));
+
+  function done(){
+    if (4 == req.readyState) return fn(null, req);
+  }
+}
+
+/**
+ * Send the given `obj` to `url` with `fn(err, req)`.
+ *
+ * @param {String} url
+ * @param {Object} obj
+ * @param {Function} fn
+ * @api private
+ */
+
+function base64(url, obj, _, fn){
+  if (3 == arguments.length) fn = _;
+  var prefix = exports.prefix;
+  obj = encode(JSON.stringify(obj));
+  obj = encodeURIComponent(obj);
+  url += '?' + prefix + '=' + obj;
+  jsonp(url, { param: exports.callback }, function(err, obj){
+    if (err) return fn(err);
+    fn(null, {
+      url: url,
+      body: obj
+    });
+  });
+}
+
+}, {"base64-encode":192,"has-cors":193,"jsonp":194,"json":170}],
+192: [function(require, module, exports) {
+var utf8Encode = require('utf8-encode');
+var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+
+module.exports = encode;
+function encode(input) {
+    var output = "";
+    var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+    var i = 0;
+
+    input = utf8Encode(input);
+
+    while (i < input.length) {
+
+        chr1 = input.charCodeAt(i++);
+        chr2 = input.charCodeAt(i++);
+        chr3 = input.charCodeAt(i++);
+
+        enc1 = chr1 >> 2;
+        enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+        enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+        enc4 = chr3 & 63;
+
+        if (isNaN(chr2)) {
+            enc3 = enc4 = 64;
+        } else if (isNaN(chr3)) {
+            enc4 = 64;
+        }
+
+        output = output +
+            keyStr.charAt(enc1) + keyStr.charAt(enc2) +
+            keyStr.charAt(enc3) + keyStr.charAt(enc4);
+
+    }
+
+    return output;
+}
+}, {"utf8-encode":195}],
+195: [function(require, module, exports) {
+module.exports = encode;
+
+function encode(string) {
+    string = string.replace(/\r\n/g, "\n");
+    var utftext = "";
+
+    for (var n = 0; n < string.length; n++) {
+
+        var c = string.charCodeAt(n);
+
+        if (c < 128) {
+            utftext += String.fromCharCode(c);
+        }
+        else if ((c > 127) && (c < 2048)) {
+            utftext += String.fromCharCode((c >> 6) | 192);
+            utftext += String.fromCharCode((c & 63) | 128);
+        }
+        else {
+            utftext += String.fromCharCode((c >> 12) | 224);
+            utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+            utftext += String.fromCharCode((c & 63) | 128);
+        }
+
+    }
+
+    return utftext;
+}
+}, {}],
+193: [function(require, module, exports) {
+
+/**
+ * Module exports.
+ *
+ * Logic borrowed from Modernizr:
+ *
+ *   - https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cors.js
+ */
+
+try {
+  module.exports = typeof XMLHttpRequest !== 'undefined' &&
+    'withCredentials' in new XMLHttpRequest();
+} catch (err) {
+  // if XMLHttp support is disabled in IE then it will throw
+  // when trying to create
+  module.exports = false;
+}
+
+}, {}],
+194: [function(require, module, exports) {
+/**
+ * Module dependencies
+ */
+
+var debug = require('debug')('jsonp');
+
+/**
+ * Module exports.
+ */
+
+module.exports = jsonp;
+
+/**
+ * Callback index.
+ */
+
+var count = 0;
+
+/**
+ * Noop function.
+ */
+
+function noop(){}
+
+/**
+ * JSONP handler
+ *
+ * Options:
+ *  - param {String} qs parameter (`callback`)
+ *  - timeout {Number} how long after a timeout error is emitted (`60000`)
+ *
+ * @param {String} url
+ * @param {Object|Function} optional options / callback
+ * @param {Function} optional callback
+ */
+
+function jsonp(url, opts, fn){
+  if ('function' == typeof opts) {
+    fn = opts;
+    opts = {};
+  }
+  if (!opts) opts = {};
+
+  var prefix = opts.prefix || '__jp';
+  var param = opts.param || 'callback';
+  var timeout = null != opts.timeout ? opts.timeout : 60000;
+  var enc = encodeURIComponent;
+  var target = document.getElementsByTagName('script')[0] || document.head;
+  var script;
+  var timer;
+
+  // generate a unique id for this request
+  var id = prefix + (count++);
+
+  if (timeout) {
+    timer = setTimeout(function(){
+      cleanup();
+      if (fn) fn(new Error('Timeout'));
+    }, timeout);
+  }
+
+  function cleanup(){
+    script.parentNode.removeChild(script);
+    window[id] = noop;
+  }
+
+  window[id] = function(data){
+    debug('jsonp got', data);
+    if (timer) clearTimeout(timer);
+    cleanup();
+    if (fn) fn(null, data);
+  };
+
+  // add qs component
+  url += (~url.indexOf('?') ? '&' : '?') + param + '=' + enc(id);
+  url = url.replace('?&', '?');
+
+  debug('jsonp req "%s"', url);
+
+  // create script
+  script = document.createElement('script');
+  script.src = url;
+  target.parentNode.insertBefore(script, target);
+}
+
+}, {"debug":188}],
+185: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var debug = require('debug')('cookie');
+var parse = require('querystring').parse;
 
 /**
- * Set or get cookie `name` with `value` and `options` object.
- *
- * @param {String} name
- * @param {String} value
- * @param {Object} options
- * @return {Mixed}
- * @api public
+ * Expose `utm`
  */
 
-module.exports = function(name, value, options){
-  switch (arguments.length) {
-    case 3:
-    case 2:
-      return set(name, value, options);
-    case 1:
-      return get(name);
-    default:
-      return all();
-  }
-};
+module.exports = utm;
 
 /**
- * Set cookie `name` to `value`.
+ * Get all utm params from the given `querystring`
  *
- * @param {String} name
- * @param {String} value
- * @param {Object} options
- * @api private
- */
-
-function set(name, value, options) {
-  options = options || {};
-  var str = encode(name) + '=' + encode(value);
-
-  if (null == value) options.maxage = -1;
-
-  if (options.maxage) {
-    options.expires = new Date(+new Date + options.maxage);
-  }
-
-  if (options.path) str += '; path=' + options.path;
-  if (options.domain) str += '; domain=' + options.domain;
-  if (options.expires) str += '; expires=' + options.expires.toUTCString();
-  if (options.secure) str += '; secure';
-
-  document.cookie = str;
-}
-
-/**
- * Return all cookies.
- *
+ * @param {String} query
  * @return {Object}
  * @api private
  */
 
-function all() {
-  return parse(document.cookie);
-}
+function utm(query){
+  if ('?' == query.charAt(0)) query = query.substring(1);
+  var query = query.replace(/\?/g, '&');
+  var params = parse(query);
+  var param;
+  var ret = {};
 
-/**
- * Get cookie `name`.
- *
- * @param {String} name
- * @return {String}
- * @api private
- */
-
-function get(name) {
-  return all()[name];
-}
-
-/**
- * Parse cookie `str`.
- *
- * @param {String} str
- * @return {Object}
- * @api private
- */
-
-function parse(str) {
-  var obj = {};
-  var pairs = str.split(/ *; */);
-  var pair;
-  if ('' == pairs[0]) return obj;
-  for (var i = 0; i < pairs.length; ++i) {
-    pair = pairs[i].split('=');
-    obj[decode(pair[0])] = decode(pair[1]);
+  for (var key in params) {
+    if (~key.indexOf('utm_')) {
+      param = key.substr(4);
+      if ('campaign' == param) param = 'name';
+      ret[param] = params[key];
+    }
   }
-  return obj;
+
+  return ret;
 }
 
-/**
- * Encode.
- */
-
-function encode(value){
-  try {
-    return encodeURIComponent(value);
-  } catch (e) {
-    debug('error `encode(%o)` - %o', value, e)
-  }
-}
-
-/**
- * Decode.
- */
-
-function decode(value) {
-  try {
-    return decodeURIComponent(value);
-  } catch (e) {
-    debug('error `decode(%o)` - %o', value, e)
-  }
-}
-
-}, {"debug":195}],
-189: [function(require, module, exports) {
+}, {"querystring":187}],
+186: [function(require, module, exports) {
 
 /**
  * Taken straight from jed's gist: https://gist.github.com/982883
@@ -16201,6 +16305,7 @@ var is = require('is');
 
 var Sentry = module.exports = integration('Sentry')
   .global('Raven')
+  .global('RavenConfig')
   .option('config', '')
   .tag('<script src="//cdn.ravenjs.com/1.1.16/native/raven.min.js">');
 
@@ -16209,6 +16314,8 @@ var Sentry = module.exports = integration('Sentry')
  *
  * http://raven-js.readthedocs.org/en/latest/config/index.html
  * https://github.com/getsentry/raven-js/blob/1.1.16/src/raven.js#L734-L741
+ *
+ * @api public
  */
 
 Sentry.prototype.initialize = function(){
@@ -16220,7 +16327,8 @@ Sentry.prototype.initialize = function(){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Sentry.prototype.loaded = function(){
@@ -16230,6 +16338,7 @@ Sentry.prototype.loaded = function(){
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -16237,7 +16346,7 @@ Sentry.prototype.identify = function(identify){
   window.Raven.setUser(identify.traits());
 };
 
-}, {"analytics.js-integration":90,"is":93}],
+}, {"analytics.js-integration":92,"is":95}],
 77: [function(require, module, exports) {
 
 /**
@@ -16264,7 +16373,7 @@ var SnapEngage = module.exports = integration('SnapEngage')
  * Integration object for root events.
  */
 
-var integration = {
+var integrationContext = {
   name: 'snapengage',
   version: '1.0.0'
 };
@@ -16274,10 +16383,10 @@ var integration = {
  *
  * http://help.snapengage.com/installation-guide-getting-started-in-a-snap/
  *
- * @param {Object} page
+ * @api public
  */
 
-SnapEngage.prototype.initialize = function(page){
+SnapEngage.prototype.initialize = function(){
   var self = this;
   this.load(function(){
     if (self.options.listen) self.attachListeners();
@@ -16288,7 +16397,8 @@ SnapEngage.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 SnapEngage.prototype.loaded = function(){
@@ -16296,40 +16406,9 @@ SnapEngage.prototype.loaded = function(){
 };
 
 /**
- * Listen for events.
- */
-
-SnapEngage.prototype.attachListeners = function(){
-  var self = this;
-
-  window.SnapEngage.setCallback('StartChat', function(email, message, type){
-    self.analytics.track('Live Chat Conversation Started',
-      {},
-      { context: { integration: integration } });
-  });
-
-  window.SnapEngage.setCallback('ChatMessageReceived', function(agent, message){
-    self.analytics.track('Live Chat Message Received',
-      { agentUsername: agent },
-      { context: { integration: integration } });
-  });
-
-  window.SnapEngage.setCallback('ChatMessageSent', function(message){
-    self.analytics.track('Live Chat Message Sent',
-      {},
-      { context: { integration: integration }});
-  });
-
-  window.SnapEngage.setCallback('Close', function(type, status){
-    self.analytics.track('Live Chat Conversation Ended',
-      {},
-      { context: { integration: integration }});
-  });
-};
-
-/**
  * Identify.
  *
+ * @api private
  * @param {Identify} identify
  */
 
@@ -16339,15 +16418,59 @@ SnapEngage.prototype.identify = function(identify){
   window.SnapABug.setUserEmail(email);
 };
 
-}, {"analytics.js-integration":90,"is":93,"next-tick":116}],
+/**
+ * Listen for events.
+ *
+ * https://developer.snapengage.com/javascript-api/setcallback/
+ *
+ * @api private
+ */
+
+SnapEngage.prototype.attachListeners = function(){
+  var self = this;
+
+  // Callback is passed `email, message, type`
+  // TODO: Eventually this might pass information about the chat to Segment
+  window.SnapEngage.setCallback('StartChat', function(){
+    self.analytics.track('Live Chat Conversation Started',
+      {},
+      { context: { integration: integrationContext } });
+  });
+
+  // Callback is passed `agent, message`
+  // TODO: Eventually this might pass information about the message to Segment
+  window.SnapEngage.setCallback('ChatMessageReceived', function(agent){
+    self.analytics.track('Live Chat Message Received',
+      { agentUsername: agent },
+      { context: { integration: integrationContext } });
+  });
+
+  // Callback is passed `message`
+  // TODO: Eventually this might pass information about the message to Segment
+  window.SnapEngage.setCallback('ChatMessageSent', function(){
+    self.analytics.track('Live Chat Message Sent',
+      {},
+      { context: { integration: integrationContext }});
+  });
+
+  // Callback is passed `type, status`
+  // TODO: Eventually this might pass information about the status to Segment
+  window.SnapEngage.setCallback('Close', function(){
+    self.analytics.track('Live Chat Conversation Ended',
+      {},
+      { context: { integration: integrationContext }});
+  });
+};
+
+}, {"analytics.js-integration":92,"is":95,"next-tick":118}],
 78: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var bind = require('bind');
+var integration = require('analytics.js-integration');
 var when = require('when');
 
 /**
@@ -16364,10 +16487,10 @@ var Spinnakr = module.exports = integration('Spinnakr')
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-Spinnakr.prototype.initialize = function(page){
+Spinnakr.prototype.initialize = function(){
   window._spinnakr_site_id = this.options.siteId;
   var loaded = bind(this, this.loaded);
   var ready = this.ready;
@@ -16379,14 +16502,15 @@ Spinnakr.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Spinnakr.prototype.loaded = function(){
-  return !! window._spinnakr;
+  return !!window._spinnakr;
 };
 
-}, {"analytics.js-integration":90,"bind":103,"when":137}],
+}, {"bind":105,"analytics.js-integration":92,"when":165}],
 79: [function(require, module, exports) {
 /**
  * Module dependencies.
@@ -16398,7 +16522,7 @@ var integration = require('analytics.js-integration');
  * Expose `SupportHero` integration.
  */
 
-var SupportHero =  module.exports = integration('SupportHero')
+var SupportHero = module.exports = integration('SupportHero')
   .assumesPageview()
   .global('supportHeroWidget')
   .option('token', '')
@@ -16408,10 +16532,10 @@ var SupportHero =  module.exports = integration('SupportHero')
 /**
  * Initialize Support Hero.
  *
- * @param {Facade} page
+ * @api public
  */
 
-SupportHero.prototype.initialize = function(page){
+SupportHero.prototype.initialize = function(){
   window.supportHeroWidget = {};
   window.supportHeroWidget.setUserId = window.supportHeroWidget.setUserId || function(){};
   window.supportHeroWidget.setUserTraits = window.supportHeroWidget.setUserTraits || function(){};
@@ -16421,31 +16545,33 @@ SupportHero.prototype.initialize = function(page){
 /**
  * Has the Support Hero library been loaded yet?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 SupportHero.prototype.loaded = function(){
-	return !! window.supportHeroWidget;
+  return !!window.supportHeroWidget;
 };
 
 /**
  * Identify a user.
  *
+ * @api public
  * @param {Facade} identify
  */
 
 SupportHero.prototype.identify = function(identify){
-	var id = identify.userId();
-	var traits = identify.traits();
-	if (id) {
-		window.supportHeroWidget.setUserId(id);
-	}
-	if (traits) {
-		window.supportHeroWidget.setUserTraits(traits);
-	}
+  var id = identify.userId();
+  var traits = identify.traits();
+  if (id) {
+    window.supportHeroWidget.setUserId(id);
+  }
+  if (traits) {
+    window.supportHeroWidget.setUserTraits(traits);
+  }
 };
 
-}, {"analytics.js-integration":90}],
+}, {"analytics.js-integration":92}],
 80: [function(require, module, exports) {
 
 /**
@@ -16453,8 +16579,138 @@ SupportHero.prototype.identify = function(identify){
  */
 
 var integration = require('analytics.js-integration');
-var slug = require('slug');
+var is = require('is');
+var keys = require('keys');
+var push = require('global-queue')('_tlq');
+
+/**
+ * Expose `Taplytics` integration.
+ */
+
+var Taplytics = module.exports = integration('Taplytics')
+  .global('_tlq')
+  .global('Taplytics')
+  .option('token', '')
+  .option('options', {})
+  .tag('<script id="taplytics" src="//cdn.taplytics.com/taplytics.min.js">')
+  .assumesPageview();
+
+/**
+ * Initialize Taplytics.
+ *
+ * @api public
+ */
+
+Taplytics.prototype.initialize = function(){
+  var options = this.options.options;
+  var token = this.options.token;
+
+  window._tlq = window._tlq || [];
+
+  push('init', token, options);
+
+  this.load(this.ready);
+};
+
+/**
+ * Has the Taplytics library been loaded yet?
+ *
+ * @api private
+ * @return {boolean}
+ */
+
+Taplytics.prototype.loaded = function(){
+  return window.Taplytics && is.object(window.Taplytics._in);
+};
+
+/**
+ * Identify.
+ *
+ * @api public
+ * @param {Facade} identify
+ */
+
+Taplytics.prototype.identify = function(identify){
+  var userId = identify.userId();
+  var attrs = identify.traits() || {};
+
+  if (userId) attrs.id = userId;
+
+  if (keys(attrs).length) {
+    push('identify', attrs);
+  }
+};
+
+/**
+ * Group.
+ *
+ * @api public
+ * @param {Facade} group
+ */
+
+Taplytics.prototype.group = function(group){
+  var attrs = {};
+  var groupId = group.groupId();
+  var traits = group.traits();
+  var user = this.analytics.user();
+  var userId = user.id();
+
+  if (groupId) attrs.groupId = groupId;
+  if (traits) attrs.groupTraits = traits;
+  if (userId) attrs.id = userId;
+
+  if (keys(attrs).length) push('identify', attrs);
+};
+
+/**
+ * Track.
+ *
+ * @api public
+ * @param {Facade} track
+ */
+
+Taplytics.prototype.track = function(track){
+  var properties = track.properties() || {};
+  var total = track.revenue() || track.total() || 0;
+
+  push('track', track.event(), total, properties);
+};
+
+/**
+* Page.
+*
+* @api public
+* @param {Facade} page
+*/
+
+Taplytics.prototype.page = function(page){
+  var category = page.category() || undefined;
+  var name = page.fullName() || undefined;
+  var properties = page.properties() || {};
+
+  push('page', category, name, properties);
+};
+
+/**
+* Reset a user and log them out.
+*
+* @api private
+*/
+
+Taplytics.prototype.reset = function(){
+  push('reset');
+};
+
+}, {"analytics.js-integration":92,"is":95,"keys":124,"global-queue":163}],
+81: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
 var push = require('global-queue')('_tsq');
+var slug = require('slug');
 
 /**
  * Expose `Tapstream` integration.
@@ -16472,10 +16728,10 @@ var Tapstream = module.exports = integration('Tapstream')
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-Tapstream.prototype.initialize = function(page){
+Tapstream.prototype.initialize = function(){
   window._tsq = window._tsq || [];
   push('setAccountName', this.options.accountName);
   this.load(this.ready);
@@ -16484,16 +16740,18 @@ Tapstream.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Tapstream.prototype.loaded = function(){
-  return !! (window._tsq && window._tsq.push !== Array.prototype.push);
+  return !!(window._tsq && window._tsq.push !== Array.prototype.push);
 };
 
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
@@ -16521,24 +16779,25 @@ Tapstream.prototype.page = function(page){
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
 Tapstream.prototype.track = function(track){
   var props = track.properties();
-  push('fireHit', slug(track.event()), [props.url]); // needs events as slugs
+  // needs events as slugs
+  push('fireHit', slug(track.event()), [props.url]);
 };
 
-}, {"analytics.js-integration":90,"slug":100,"global-queue":166}],
-81: [function(require, module, exports) {
+}, {"analytics.js-integration":92,"global-queue":163,"slug":102}],
+82: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var alias = require('alias');
-var clone = require('clone');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `Trakio` integration.
@@ -16565,15 +16824,17 @@ var optionsAliases = {
  *
  * https://docs.trak.io
  *
- * @param {Object} page
+ * @api public
  */
 
-Trakio.prototype.initialize = function(page){
+Trakio.prototype.initialize = function(){
   var options = this.options;
   window.trak = window.trak || [];
   window.trak.io = window.trak.io || {};
   window.trak.push = window.trak.push || function(){};
+  /* eslint-disable */
   window.trak.io.load = window.trak.io.load || function(e){var r = function(e){return function(){window.trak.push([e].concat(Array.prototype.slice.call(arguments,0))); }; } ,i=["initialize","identify","track","alias","channel","source","host","protocol","page_view"]; for (var s=0;s<i.length;s++) window.trak.io[i[s]]=r(i[s]); window.trak.io.initialize.apply(window.trak.io,arguments); };
+  /* eslint-enable */
   window.trak.io.load(options.token, alias(options, optionsAliases));
   this.load(this.ready);
 };
@@ -16581,11 +16842,12 @@ Trakio.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Trakio.prototype.loaded = function(){
-  return !! (window.trak && window.trak.loaded);
+  return !!(window.trak && window.trak.loaded);
 };
 
 /**
@@ -16691,21 +16953,15 @@ Trakio.prototype.alias = function(alias){
   }
 };
 
-}, {"analytics.js-integration":90,"alias":169,"clone":96}],
-82: [function(require, module, exports) {
+}, {"alias":167,"analytics.js-integration":92}],
+83: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var each = require('each');
-
-/**
- * HOP.
- */
-
-var has = Object.prototype.hasOwnProperty;
+var integration = require('analytics.js-integration');
 
 /**
  * Expose `TwitterAds`.
@@ -16719,7 +16975,7 @@ var TwitterAds = module.exports = integration('Twitter Ads')
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
 TwitterAds.prototype.initialize = function(){
@@ -16729,10 +16985,11 @@ TwitterAds.prototype.initialize = function(){
 /**
  * Page.
  *
+ * @api public
  * @param {Page} page
  */
 
-TwitterAds.prototype.page = function(page){
+TwitterAds.prototype.page = function(){
   if (this.options.page) {
     this.load({ pixelId: this.options.page });
   }
@@ -16741,6 +16998,7 @@ TwitterAds.prototype.page = function(page){
 /**
  * Track.
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -16752,16 +17010,16 @@ TwitterAds.prototype.track = function(track){
   });
 };
 
-}, {"analytics.js-integration":90,"each":4}],
-83: [function(require, module, exports) {
+}, {"each":4,"analytics.js-integration":92}],
+84: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var Identify = require('facade').Identify;
 var clone = require('clone');
+var integration = require('analytics.js-integration');
 
 /**
  * Expose Userlike integration.
@@ -16769,6 +17027,7 @@ var clone = require('clone');
 
 var Userlike = module.exports = integration('Userlike')
   .assumesPageview()
+  .global('segment_base_info')
   .global('userlikeConfig')
   .global('userlikeData')
   .option('secretKey', '')
@@ -16779,7 +17038,7 @@ var Userlike = module.exports = integration('Userlike')
  * The context for this integration.
  */
 
-var integration = {
+var integrationContext = {
   name: 'userlike',
   version: '1.0.0'
 };
@@ -16787,10 +17046,10 @@ var integration = {
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-Userlike.prototype.initialize = function(page){
+Userlike.prototype.initialize = function(){
   var self = this;
   var user = this.analytics.user();
   var identify = new Identify({
@@ -16798,6 +17057,10 @@ Userlike.prototype.initialize = function(page){
     traits: user.traits()
   });
 
+  // FIXME: Should this be a global? Waiting for answer from Userlike folks as
+  // of 5/19/2015
+  //
+  // https://github.com/thomassittig/analytics.js-integrations/commit/e8fb4c067abe7f8549d0e0153504fd24a9aa4b53
   segment_base_info = clone(this.options);
 
   segment_base_info.visitor = {
@@ -16821,7 +17084,7 @@ Userlike.prototype.initialize = function(page){
  */
 
 Userlike.prototype.loaded = function(){
-  return !! (window.userlikeConfig && window.userlikeData);
+  return !!(window.userlikeConfig && window.userlikeData);
 };
 
 /**
@@ -16829,7 +17092,6 @@ Userlike.prototype.loaded = function(){
  *
  * TODO: As of 4/17/2015, Userlike doesn't give access to the message body in events.
  * Revisit this/send it when they do.
- *
  */
 
 Userlike.prototype.attachListeners = function(){
@@ -16839,46 +17101,45 @@ Userlike.prototype.attachListeners = function(){
       self.analytics.track(
         'Live Chat Conversation Started',
         { agentId: sessionCtx.operator_id, agentName: sessionCtx.operator_name },
-        { context: { integration: integration }
+        { context: { integration: integrationContext }
       });
     }
     if (eventName === 'message_operator_terminating') {
       self.analytics.track(
         'Live Chat Message Sent',
         { agentId: sessionCtx.operator_id, agentName: sessionCtx.operator_name },
-        { context: { integration: integration }
+        { context: { integration: integrationContext }
       });
     }
     if (eventName === 'message_client_terminating') {
       self.analytics.track(
         'Live Chat Message Received',
         { agentId: sessionCtx.operator_id, agentName: sessionCtx.operator_name },
-        { context: { integration: integration }
+        { context: { integration: integrationContext }
       });
     }
     if (eventName === 'chat_quit') {
       self.analytics.track(
         'Live Chat Conversation Ended',
         { agentId: sessionCtx.operator_id, agentName: sessionCtx.operator_name },
-        { context: { integration: integration }
+        { context: { integration: integrationContext }
       });
     }
   };
 };
 
-}, {"analytics.js-integration":90,"facade":139,"clone":96}],
-84: [function(require, module, exports) {
+}, {"facade":135,"clone":98,"analytics.js-integration":92}],
+85: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
+var alias = require('alias');
+var convertDates = require('convert-dates');
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('UserVoice');
-var convertDates = require('convert-dates');
 var unix = require('to-unix-timestamp');
-var alias = require('alias');
-var clone = require('clone');
 
 /**
  * Expose `UserVoice` integration.
@@ -16900,7 +17161,7 @@ var UserVoice = module.exports = integration('UserVoice')
   .option('triggerPosition', 'bottom-right')
   .option('triggerColor', '#ffffff')
   .option('triggerBackgroundColor', 'rgba(46, 49, 51, 0.6)')
-  // BACKWARDS COMPATIBILITY: classic options
+  // BACKWARD COMPATIBILITY: classic options
   .option('classicMode', 'full')
   .option('primaryColor', '#cc6d00')
   .option('linkColor', '#007dbf')
@@ -16915,6 +17176,8 @@ var UserVoice = module.exports = integration('UserVoice')
 /**
  * When in "classic" mode, on `construct` swap all of the method to point to
  * their classic counterparts.
+ *
+ * @api private
  */
 
 UserVoice.on('construct', function(integration){
@@ -16927,18 +17190,21 @@ UserVoice.on('construct', function(integration){
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-UserVoice.prototype.initialize = function(page){
+UserVoice.prototype.initialize = function(){
   var options = this.options;
   var opts = formatOptions(options);
   push('set', opts);
   push('autoprompt', {});
+
   if (options.showWidget) {
-    options.trigger
-      ? push('addTrigger', options.trigger, opts)
-      : push('addTrigger', opts);
+    if (options.trigger) {
+      push('addTrigger', options.trigger, opts);
+    } else {
+      push('addTrigger', opts);
+    }
   }
 
   this.load(this.ready);
@@ -16947,16 +17213,18 @@ UserVoice.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 UserVoice.prototype.loaded = function(){
-  return !! (window.UserVoice && window.UserVoice.push !== Array.prototype.push);
+  return !!(window.UserVoice && window.UserVoice.push !== Array.prototype.push);
 };
 
 /**
  * Identify.
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -16969,6 +17237,7 @@ UserVoice.prototype.identify = function(identify){
 /**
  * Group.
  *
+ * @api public
  * @param {Group} group
  */
 
@@ -16981,13 +17250,13 @@ UserVoice.prototype.group = function(group){
 /**
  * Initialize (classic).
  *
- * @param {Object} options
- * @param {Function} ready
+ * @api private
  */
 
 UserVoice.prototype.initializeClassic = function(){
   var options = this.options;
-  window.showClassicWidget = showClassicWidget; // part of public api
+  // part of public api
+  window.showClassicWidget = showClassicWidget;
   if (options.showWidget) showClassicWidget('showTab', formatClassicOptions(options));
   this.load(this.ready);
 };
@@ -16995,6 +17264,7 @@ UserVoice.prototype.initializeClassic = function(){
 /**
  * Identify (classic).
  *
+ * @api private
  * @param {Identify} identify
  */
 
@@ -17005,6 +17275,7 @@ UserVoice.prototype.identifyClassic = function(identify){
 /**
  * Format the options for UserVoice.
  *
+ * @api private
  * @param {Object} options
  * @return {Object}
  */
@@ -17025,6 +17296,7 @@ function formatOptions(options){
 /**
  * Format the classic options for UserVoice.
  *
+ * @api private
  * @param {Object} options
  * @return {Object}
  */
@@ -17047,6 +17319,7 @@ function formatClassicOptions(options){
  * Show the classic version of the UserVoice widget. This method is usually part
  * of UserVoice classic's public API.
  *
+ * @api private
  * @param {String} type ('showTab' or 'showLightbox')
  * @param {Object} options (optional)
  */
@@ -17056,8 +17329,8 @@ function showClassicWidget(type, options){
   push(type, 'classic_widget', options);
 }
 
-}, {"analytics.js-integration":90,"global-queue":166,"convert-dates":170,"to-unix-timestamp":198,"alias":169,"clone":96}],
-198: [function(require, module, exports) {
+}, {"alias":167,"convert-dates":168,"analytics.js-integration":92,"global-queue":163,"to-unix-timestamp":196}],
+196: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -17077,16 +17350,15 @@ function toUnixTimestamp (date) {
   return Math.floor(date.getTime() / 1000);
 }
 }, {}],
-85: [function(require, module, exports) {
+86: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
+var cookie = require('component/cookie');
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('_veroq');
-var cookie = require('component/cookie');
-var objCase = require('obj-case');
 
 /**
  * Expose `Vero` integration.
@@ -17102,10 +17374,10 @@ var Vero = module.exports = integration('Vero')
  *
  * https://github.com/getvero/vero-api/blob/master/sections/js.md
  *
- * @param {Object} page
+ * @api public
  */
 
-Vero.prototype.initialize = function(page){
+Vero.prototype.initialize = function(){
   // clear default cookie so vero parses correctly.
   // this is for the tests.
   // basically, they have window.addEventListener('unload')
@@ -17119,11 +17391,12 @@ Vero.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Vero.prototype.loaded = function(){
-  return !! (window._veroq && window._veroq.push !== Array.prototype.push);
+  return !!(window._veroq && window._veroq.push !== Array.prototype.push);
 };
 
 /**
@@ -17131,18 +17404,21 @@ Vero.prototype.loaded = function(){
  *
  * https://www.getvero.com/knowledge-base#/questions/71768-Does-Vero-track-pageviews
  *
+ * @api public
  * @param {Page} page
  */
 
-Vero.prototype.page = function(page){
+Vero.prototype.page = function(){
   push('trackPageview');
 };
 
 /**
  * Identify.
  *
+ * https://www.getvero.com/api/http/#users
  * https://github.com/getvero/vero-api/blob/master/sections/js.md#user-identification
  *
+ * @api public
  * @param {Identify} identify
  */
 
@@ -17150,15 +17426,18 @@ Vero.prototype.identify = function(identify){
   var traits = identify.traits();
   var email = identify.email();
   var id = identify.userId();
-  if (!id || !email) return; // both required
+  // Both userId and email address are required by Vero's API
+  if (!id || !email) return;
   push('user', traits);
 };
 
 /**
  * Track.
  *
+ * https://www.getvero.com/api/http/#actions
  * https://github.com/getvero/vero-api/blob/master/sections/js.md#tracking-events
  *
+ * @api public
  * @param {Track} track
  */
 
@@ -17172,6 +17451,16 @@ Vero.prototype.track = function(track){
   }
 };
 
+/**
+ * Alias.
+ *
+ * https://www.getvero.com/api/http/#users
+ * https://github.com/getvero/vero-api/blob/master/sections/api/users.md
+ *
+ * @api public
+ * @param {Alias} alias
+ */
+
 Vero.prototype.alias = function(alias){
   var to = alias.to();
 
@@ -17182,22 +17471,26 @@ Vero.prototype.alias = function(alias){
   }
 };
 
-}, {"analytics.js-integration":90,"global-queue":166,"component/cookie":188,"obj-case":94}],
-86: [function(require, module, exports) {
+}, {"component/cookie":181,"analytics.js-integration":92,"global-queue":163}],
+87: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
+var each = require('each');
 var integration = require('analytics.js-integration');
 var tick = require('next-tick');
-var each = require('each');
 
 /**
  * Expose `VWO` integration.
  */
 
 var VWO = module.exports = integration('Visual Website Optimizer')
+  .global('_vis_opt_queue')
+  .global('_vis_opt_revenue_conversion')
+  .global('_vwo_exp')
+  .global('_vwo_exp_ids')
   .option('replay', true)
   .option('listen', false);
 
@@ -17205,7 +17498,7 @@ var VWO = module.exports = integration('Visual Website Optimizer')
  * The context for this integration.
  */
 
-var integration = {
+var integrationContext = {
   name: 'visual-website-optimizer',
   version: '1.0.0'
 };
@@ -17240,7 +17533,7 @@ VWO.prototype.initialize = function(){
 VWO.prototype.completedOrder = function(track){
   var total = track.total() || track.revenue() || 0;
   enqueue(function(){
-    _vis_opt_revenue_conversion(total);
+    window._vis_opt_revenue_conversion(total);
   });
 };
 
@@ -17275,7 +17568,7 @@ VWO.prototype.roots = function(){
           experimentId: experimentId,
           variationName: variationName
         },
-        { context: { integration: integration }}
+        { context: { integration: integrationContext }}
       );
     });
   });
@@ -17352,8 +17645,9 @@ function variation(id){
   var variationId = experiment.combination_chosen;
   return variationId ? experiment.comb_n[variationId] : null;
 }
-}, {"analytics.js-integration":90,"next-tick":116,"each":4}],
-87: [function(require, module, exports) {
+
+}, {"each":4,"analytics.js-integration":92,"next-tick":118}],
+88: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17378,10 +17672,10 @@ var WebEngage = module.exports = integration('WebEngage')
 /**
  * Initialize.
  *
- * @param {Object} page
+ * @api public
  */
 
-WebEngage.prototype.initialize = function(page){
+WebEngage.prototype.initialize = function(){
   var _weq = window._weq = window._weq || {};
   _weq['webengage.licenseCode'] = this.options.licenseCode;
   _weq['webengage.widgetVersion'] = this.options.widgetVersion;
@@ -17392,26 +17686,24 @@ WebEngage.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 WebEngage.prototype.loaded = function(){
-  return !! window.webengage;
+  return !!window.webengage;
 };
 
-}, {"analytics.js-integration":90,"use-https":92}],
-88: [function(require, module, exports) {
+}, {"analytics.js-integration":92,"use-https":94}],
+89: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
-var snake = require('to-snake-case');
-var isEmail = require('is-email');
-var extend = require('extend');
 var each = require('each');
-var type = require('type');
+var integration = require('analytics.js-integration');
+var toSnakeCase = require('to-snake-case');
 
 /**
  * Expose `Woopra` integration.
@@ -17439,17 +17731,18 @@ var Woopra = module.exports = integration('Woopra')
  * Initialize.
  *
  * http://www.woopra.com/docs/setup/javascript-tracking/
- *
- * @param {Object} page
  */
 
-Woopra.prototype.initialize = function(page){
+Woopra.prototype.initialize = function(){
+  /* eslint-disable */
   (function(){var i, s, z, w = window, d = document, a = arguments, q = 'script', f = ['config', 'track', 'identify', 'visit', 'push', 'call'], c = function(){var i, self = this; self._e = []; for (i = 0; i < f.length; i++){(function(f){self[f] = function(){self._e.push([f].concat(Array.prototype.slice.call(arguments, 0))); return self; }; })(f[i]); } }; w._w = w._w || {}; for (i = 0; i < a.length; i++){ w._w[a[i]] = w[a[i]] = w[a[i]] || new c(); } })('woopra');
+  /* eslint-enable */
+
   this.load(this.ready);
   each(this.options, function(key, value){
-    key = snake(key);
-    if (null == value) return;
-    if ('' === value) return;
+    key = toSnakeCase(key);
+    if (value == null) return;
+    if (value === '') return;
     window.woopra.config(key, value);
   });
 };
@@ -17461,7 +17754,7 @@ Woopra.prototype.initialize = function(page){
  */
 
 Woopra.prototype.loaded = function(){
-  return !! (window.woopra && window.woopra.loaded);
+  return !!(window.woopra && window.woopra.loaded);
 };
 
 /**
@@ -17486,7 +17779,8 @@ Woopra.prototype.page = function(page){
 Woopra.prototype.identify = function(identify){
   var traits = identify.traits();
   if (identify.name()) traits.name = identify.name();
-  window.woopra.identify(traits).push(); // `push` sends it off async
+  // `push` sends it off async
+  window.woopra.identify(traits).push();
 };
 
 /**
@@ -17499,16 +17793,118 @@ Woopra.prototype.track = function(track){
   window.woopra.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":90,"to-snake-case":91,"is-email":161,"extend":136,"each":4,"type":117}],
-89: [function(require, module, exports) {
+}, {"each":4,"analytics.js-integration":92,"to-snake-case":93}],
+90: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
 var integration = require('analytics.js-integration');
-var tick = require('next-tick');
+var omit = require('omit');
+
+/**
+ * Expose `Wootric` integration.
+ */
+
+var Wootric = module.exports = integration('Wootric')
+  .assumesPageview()
+  .option('accountToken', '')
+  .global('wootricSettings')
+  .global('wootric_survey_immediately')
+  .global('wootric')
+  .tag('library', '<script src="//d27j601g4x0gd5.cloudfront.net/segmentioSnippet.js"></script>')
+  .tag('pixel', '<img src="//d8myem934l1zi.cloudfront.net/pixel.gif?account_token={{ accountToken }}&email={{ email }}&created_at={{ createdAt }}&url={{ url }}&random={{ cacheBuster }}">');
+
+/**
+ * Initialize Wootric.
+ *
+ * @api public
+ */
+
+Wootric.prototype.initialize = function(){
+  // We use this to keep track of the last page that Wootric has tracked to
+  // ensure we don't accidentally send a duplicate page call
+  this.lastPageTracked = null;
+  window.wootricSettings = window.wootricSettings || {};
+  window.wootricSettings.account_token = this.options.accountToken;
+
+  var self = this;
+  this.load('library', function(){
+    self.ready();
+  });
+};
+
+/**
+ * Has the Wootric library been loaded yet?
+ *
+ * @api private
+ * @return {boolean}
+ */
+
+Wootric.prototype.loaded = function(){
+  // We are always ready since we are just setting a global variable in initialize
+  return !!window.wootric;
+};
+
+/**
+ * Identify a user.
+ *
+ * @api public
+ * @param {Facade} identify
+ */
+
+Wootric.prototype.identify = function(identify){
+  var traits = identify.traits();
+  var email = identify.email();
+  var createdAt = identify.created();
+  var language = traits.language;
+
+  if (createdAt && createdAt.getTime) window.wootricSettings.created_at = createdAt.getTime();
+  if (language) window.wootricSettings.language = language;
+  window.wootricSettings.email = email;
+  // Set the rest of the traits as properties
+  window.wootricSettings.properties = omit(['created', 'createdAt', 'email'], traits);
+
+  window.wootric('run');
+};
+
+/**
+ * Page.
+ *
+ * @api public
+ * @param {Page} page
+ */
+
+Wootric.prototype.page = function(page){
+  // Only track page if we haven't already tracked it
+  if (this.lastPageTracked === window.location){
+    return;
+  }
+
+  // Set this page as the last page tracked
+  this.lastPageTracked = window.location;
+
+  var wootricSettings = window.wootricSettings;
+  this.load('pixel', {
+    accountToken: this.options.accountToken,
+    email: encodeURIComponent(wootricSettings.email),
+    createdAt: wootricSettings.created_at,
+    url: encodeURIComponent(page.url()),
+    cacheBuster: Math.random()
+  });
+};
+
+}, {"analytics.js-integration":92,"omit":176}],
+91: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
 var bind = require('bind');
+var integration = require('analytics.js-integration');
+var tick = require('next-tick');
 var when = require('when');
 
 /**
@@ -17530,10 +17926,10 @@ var Yandex = module.exports = integration('Yandex Metrica')
  * http://api.yandex.com/metrika/
  * https://metrica.yandex.com/22522351?step=2#tab=code
  *
- * @param {Object} page
+ * @api public
  */
 
-Yandex.prototype.initialize = function(page){
+Yandex.prototype.initialize = function(){
   var id = this.options.counterId;
   var clickmap = this.options.clickmap;
   var webvisor = this.options.webvisor;
@@ -17558,16 +17954,18 @@ Yandex.prototype.initialize = function(page){
 /**
  * Loaded?
  *
- * @return {Boolean}
+ * @api private
+ * @return {boolean}
  */
 
 Yandex.prototype.loaded = function(){
-  return !! (window.Ya && window.Ya.Metrika);
+  return !!(window.Ya && window.Ya.Metrika);
 };
 
 /**
  * Push a new callback on the global Yandex queue.
  *
+ * @api private
  * @param {Function} callback
  */
 
@@ -17576,7 +17974,7 @@ function push(callback){
   window.yandex_metrika_callbacks.push(callback);
 }
 
-}, {"analytics.js-integration":90,"next-tick":116,"bind":103,"when":137}],
+}, {"bind":105,"analytics.js-integration":92,"next-tick":118,"when":165}],
 3: [function(require, module, exports) {
 
 var _analytics = window.analytics;
@@ -18223,8 +18621,8 @@ Analytics.prototype.noConflict = function(){
 };
 
 
-}, {"after":108,"bind":199,"callback":138,"clone":96,"./cookie":200,"debug":195,"defaults":98,"each":4,"emitter":107,"./group":201,"is":93,"is-email":161,"is-meta":202,"new-date":153,"event":203,"./pageDefaults":204,"pick":205,"prevent":206,"querystring":207,"./normalize":208,"object":175,"./memory":209,"./store":210,"./user":211,"facade":139}],
-199: [function(require, module, exports) {
+}, {"after":110,"bind":197,"callback":166,"clone":98,"./cookie":198,"debug":188,"defaults":100,"each":4,"emitter":109,"./group":199,"is":95,"is-email":156,"is-meta":200,"new-date":148,"event":201,"./pageDefaults":202,"pick":203,"prevent":204,"querystring":205,"./normalize":206,"object":173,"./memory":207,"./store":208,"./user":209,"facade":135}],
+197: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -18270,8 +18668,8 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":103,"bind-all":104}],
-200: [function(require, module, exports) {
+}, {"bind":105,"bind-all":106}],
+198: [function(require, module, exports) {
 
 var debug = require('debug')('analytics.js:cookie');
 var bind = require('bind');
@@ -18400,8 +18798,8 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"debug":195,"bind":199,"cookie":188,"clone":96,"defaults":98,"json":171,"top-domain":212}],
-212: [function(require, module, exports) {
+}, {"debug":188,"bind":197,"cookie":181,"clone":98,"defaults":100,"json":170,"top-domain":210}],
+210: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -18505,8 +18903,8 @@ domain.levels = function(url){
   return levels;
 };
 
-}, {"url":133,"cookie":213}],
-213: [function(require, module, exports) {
+}, {"url":132,"cookie":211}],
+211: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -18639,8 +19037,8 @@ function decode(value) {
   }
 }
 
-}, {"debug":195}],
-201: [function(require, module, exports) {
+}, {"debug":188}],
+199: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:group');
 var Entity = require('./entity');
@@ -18696,8 +19094,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":195,"./entity":214,"inherit":215,"bind":199}],
-214: [function(require, module, exports) {
+}, {"debug":188,"./entity":212,"inherit":213,"bind":197}],
+212: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:entity');
 var traverse = require('isodate-traverse');
@@ -18937,8 +19335,8 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"debug":195,"isodate-traverse":149,"defaults":98,"./memory":209,"./cookie":200,"./store":210,"extend":136,"clone":96}],
-209: [function(require, module, exports) {
+}, {"debug":188,"isodate-traverse":144,"defaults":100,"./memory":207,"./cookie":198,"./store":208,"extend":158,"clone":98}],
+207: [function(require, module, exports) {
 
 /**
  * Module Dependencies.
@@ -19002,8 +19400,8 @@ Memory.prototype.remove = function(key){
   delete this.store[key];
   return true;
 };
-}, {"clone":96,"bind":199}],
-210: [function(require, module, exports) {
+}, {"clone":98,"bind":197}],
+208: [function(require, module, exports) {
 
 var bind = require('bind');
 var defaults = require('defaults');
@@ -19090,8 +19488,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":199,"defaults":98,"store.js":216}],
-216: [function(require, module, exports) {
+}, {"bind":197,"defaults":100,"store.js":214}],
+214: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -19243,8 +19641,8 @@ try {
 store.enabled = !store.disabled
 
 module.exports = store;
-}, {"json":171}],
-215: [function(require, module, exports) {
+}, {"json":170}],
+213: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -19253,7 +19651,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-202: [function(require, module, exports) {
+200: [function(require, module, exports) {
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
 
@@ -19269,7 +19667,7 @@ module.exports = function isMeta (e) {
     return false;
 };
 }, {}],
-203: [function(require, module, exports) {
+201: [function(require, module, exports) {
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -19312,7 +19710,7 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 }, {}],
-204: [function(require, module, exports) {
+202: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -19374,8 +19772,16 @@ function canonicalUrl (search) {
 
 module.exports = pageDefaults;
 
-}, {"canonical":176,"url":178}],
-205: [function(require, module, exports) {
+}, {"canonical":215,"url":132}],
+215: [function(require, module, exports) {
+module.exports = function canonical () {
+  var tags = document.getElementsByTagName('link');
+  for (var i = 0, tag; tag = tags[i]; i++) {
+    if ('canonical' == tag.getAttribute('rel')) return tag.getAttribute('href');
+  }
+};
+}, {}],
+203: [function(require, module, exports) {
 'use strict';
 
 var objToString = Object.prototype.toString;
@@ -19451,7 +19857,7 @@ var pick = function pick(props, object) {
 module.exports = pick;
 
 }, {}],
-206: [function(require, module, exports) {
+204: [function(require, module, exports) {
 
 /**
  * prevent default on the given `e`.
@@ -19474,7 +19880,7 @@ module.exports = function(e){
 };
 
 }, {}],
-207: [function(require, module, exports) {
+205: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -19549,8 +19955,8 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":132,"type":7}],
-208: [function(require, module, exports) {
+}, {"trim":157,"type":7}],
+206: [function(require, module, exports) {
 
 /**
  * Module Dependencies.
@@ -19643,8 +20049,8 @@ function normalize(msg, list){
       || ~indexof(lower, name.toLowerCase()));
   }
 }
-}, {"debug":195,"component/indexof":118,"defaults":98,"component/map":217,"each":4,"is":93}],
-217: [function(require, module, exports) {
+}, {"debug":188,"component/indexof":120,"defaults":100,"component/map":216,"each":4,"is":95}],
+216: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -19669,8 +20075,8 @@ module.exports = function(arr, fn){
   }
   return ret;
 };
-}, {"to-function":179}],
-211: [function(require, module, exports) {
+}, {"to-function":175}],
+209: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:user');
 var Entity = require('./entity');
@@ -19839,11 +20245,11 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":195,"./entity":214,"inherit":215,"bind":199,"./cookie":200,"uuid":189,"cookie":188}],
+}, {"debug":188,"./entity":212,"inherit":213,"bind":197,"./cookie":198,"uuid":186,"cookie":181}],
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.8.21",
+  "version": "2.8.22",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

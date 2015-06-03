@@ -4,7 +4,6 @@
   "rules": {
     "global-strict": 0,
     "max-len": 0,
-    "new-cap": [2, { "capIsNewExceptions": ["Emitter"] }],
     "strict": 0
   },
 

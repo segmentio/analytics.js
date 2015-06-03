@@ -144,7 +144,7 @@ var plugins = require('./integrations.js');
  * Expose the integrations, using their own `name` from their `prototype`.
  */
 
-each(plugins, function(plugin){
+each(plugins, function(plugin) {
   var name = (plugin.Integration || plugin).prototype.name;
   exports[name] = plugin;
 });
@@ -294,6 +294,7 @@ module.exports = [
   require('./lib/curebit'),
   require('./lib/customerio'),
   require('./lib/drip'),
+  require('./lib/elevio'),
   require('./lib/errorception'),
   require('./lib/evergage'),
   require('./lib/extole'),
@@ -337,6 +338,7 @@ module.exports = [
   require('./lib/qualaroo'),
   require('./lib/quantcast'),
   require('./lib/rollbar'),
+  require('./lib/route'),
   require('./lib/saasquatch'),
   require('./lib/satismeter'),
   require('./lib/segmentio'),
@@ -358,7 +360,7 @@ module.exports = [
   require('./lib/yandex-metrica')
 ];
 
-}, {"./lib/adroll":8,"./lib/adwords":9,"./lib/alexa":10,"./lib/amplitude":11,"./lib/appcues":12,"./lib/atatus":13,"./lib/autosend":14,"./lib/awesm":15,"./lib/bing-ads":16,"./lib/blueshift":17,"./lib/bronto":18,"./lib/bugherd":19,"./lib/bugsnag":20,"./lib/chameleon":21,"./lib/chartbeat":22,"./lib/clicktale":23,"./lib/clicky":24,"./lib/comscore":25,"./lib/crazy-egg":26,"./lib/curebit":27,"./lib/customerio":28,"./lib/drip":29,"./lib/errorception":30,"./lib/evergage":31,"./lib/extole":32,"./lib/facebook-conversion-tracking":33,"./lib/foxmetrics":34,"./lib/frontleaf":35,"./lib/fullstory":36,"./lib/gauges":37,"./lib/get-satisfaction":38,"./lib/google-analytics":39,"./lib/google-tag-manager":40,"./lib/gosquared":41,"./lib/heap":42,"./lib/hellobar":43,"./lib/hittail":44,"./lib/hubspot":45,"./lib/improvely":46,"./lib/insidevault":47,"./lib/inspectlet":48,"./lib/intercom":49,"./lib/keen-io":50,"./lib/kenshoo":51,"./lib/kissmetrics":52,"./lib/klaviyo":53,"./lib/livechat":54,"./lib/lucky-orange":55,"./lib/lytics":56,"./lib/mixpanel":57,"./lib/mojn":58,"./lib/mouseflow":59,"./lib/mousestats":60,"./lib/navilytics":61,"./lib/nudgespot":62,"./lib/olark":63,"./lib/optimizely":64,"./lib/outbound":65,"./lib/perfect-audience":66,"./lib/pingdom":67,"./lib/piwik":68,"./lib/preact":69,"./lib/qualaroo":70,"./lib/quantcast":71,"./lib/rollbar":72,"./lib/saasquatch":73,"./lib/satismeter":74,"./lib/segmentio":75,"./lib/sentry":76,"./lib/snapengage":77,"./lib/spinnakr":78,"./lib/supporthero":79,"./lib/taplytics":80,"./lib/tapstream":81,"./lib/trakio":82,"./lib/twitter-ads":83,"./lib/userlike":84,"./lib/uservoice":85,"./lib/vero":86,"./lib/visual-website-optimizer":87,"./lib/webengage":88,"./lib/woopra":89,"./lib/wootric":90,"./lib/yandex-metrica":91}],
+}, {"./lib/adroll":8,"./lib/adwords":9,"./lib/alexa":10,"./lib/amplitude":11,"./lib/appcues":12,"./lib/atatus":13,"./lib/autosend":14,"./lib/awesm":15,"./lib/bing-ads":16,"./lib/blueshift":17,"./lib/bronto":18,"./lib/bugherd":19,"./lib/bugsnag":20,"./lib/chameleon":21,"./lib/chartbeat":22,"./lib/clicktale":23,"./lib/clicky":24,"./lib/comscore":25,"./lib/crazy-egg":26,"./lib/curebit":27,"./lib/customerio":28,"./lib/drip":29,"./lib/elevio":30,"./lib/errorception":31,"./lib/evergage":32,"./lib/extole":33,"./lib/facebook-conversion-tracking":34,"./lib/foxmetrics":35,"./lib/frontleaf":36,"./lib/fullstory":37,"./lib/gauges":38,"./lib/get-satisfaction":39,"./lib/google-analytics":40,"./lib/google-tag-manager":41,"./lib/gosquared":42,"./lib/heap":43,"./lib/hellobar":44,"./lib/hittail":45,"./lib/hubspot":46,"./lib/improvely":47,"./lib/insidevault":48,"./lib/inspectlet":49,"./lib/intercom":50,"./lib/keen-io":51,"./lib/kenshoo":52,"./lib/kissmetrics":53,"./lib/klaviyo":54,"./lib/livechat":55,"./lib/lucky-orange":56,"./lib/lytics":57,"./lib/mixpanel":58,"./lib/mojn":59,"./lib/mouseflow":60,"./lib/mousestats":61,"./lib/navilytics":62,"./lib/nudgespot":63,"./lib/olark":64,"./lib/optimizely":65,"./lib/outbound":66,"./lib/perfect-audience":67,"./lib/pingdom":68,"./lib/piwik":69,"./lib/preact":70,"./lib/qualaroo":71,"./lib/quantcast":72,"./lib/rollbar":73,"./lib/route":74,"./lib/saasquatch":75,"./lib/satismeter":76,"./lib/segmentio":77,"./lib/sentry":78,"./lib/snapengage":79,"./lib/spinnakr":80,"./lib/supporthero":81,"./lib/taplytics":82,"./lib/tapstream":83,"./lib/trakio":84,"./lib/twitter-ads":85,"./lib/userlike":86,"./lib/uservoice":87,"./lib/vero":88,"./lib/visual-website-optimizer":89,"./lib/webengage":90,"./lib/woopra":91,"./lib/wootric":92,"./lib/yandex-metrica":93}],
 8: [function(require, module, exports) {
 
 /**
@@ -398,7 +400,7 @@ var AdRoll = module.exports = integration('AdRoll')
  * @api public
  */
 
-AdRoll.prototype.initialize = function(){
+AdRoll.prototype.initialize = function() {
   window.adroll_adv_id = this.options.advId;
   window.adroll_pix_id = this.options.pixId;
   window.__adroll_loaded = true;
@@ -413,7 +415,7 @@ AdRoll.prototype.initialize = function(){
  * @return {boolean}
  */
 
-AdRoll.prototype.loaded = function(){
+AdRoll.prototype.loaded = function() {
   return !!window.__adroll;
 };
 
@@ -426,7 +428,7 @@ AdRoll.prototype.loaded = function(){
  * @param {Page} page
  */
 
-AdRoll.prototype.page = function(page){
+AdRoll.prototype.page = function(page) {
   var name = page.fullName();
   this.track(page.track(name));
 };
@@ -438,7 +440,7 @@ AdRoll.prototype.page = function(page){
  * @param {Track} track
  */
 
-AdRoll.prototype.track = function(track){
+AdRoll.prototype.track = function(track) {
   var event = track.event();
   var user = this.analytics.user();
   var events = this.events(event);
@@ -461,7 +463,7 @@ AdRoll.prototype.track = function(track){
   del(customProps, 'sku');
   if (!is.empty(customProps)) data.adroll_custom_data = customProps;
 
-  each(events, function(event){
+  each(events, function(event) {
     // the adroll interface only allows for
     // segment names which are snake cased.
     data.adroll_segments = snake(event);
@@ -475,8 +477,8 @@ AdRoll.prototype.track = function(track){
   }
 };
 
-}, {"analytics.js-integration":92,"to-snake-case":93,"use-https":94,"each":4,"is":95,"obj-case":96}],
-92: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"to-snake-case":95,"use-https":96,"each":4,"is":97,"obj-case":98}],
+94: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -540,8 +542,8 @@ function createIntegration(name){
 
 module.exports = createIntegration;
 
-}, {"bind":97,"clone":98,"debug":99,"defaults":100,"extend":101,"slug":102,"./protos":103,"./statics":104}],
-97: [function(require, module, exports) {
+}, {"bind":99,"clone":100,"debug":101,"defaults":102,"extend":103,"slug":104,"./protos":105,"./statics":106}],
+99: [function(require, module, exports) {
 
 var bind = require('bind')
   , bindAll = require('bind-all');
@@ -582,8 +584,8 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":105,"bind-all":106}],
-105: [function(require, module, exports) {
+}, {"bind":107,"bind-all":108}],
+107: [function(require, module, exports) {
 /**
  * Slice reference.
  */
@@ -609,7 +611,7 @@ module.exports = function(obj, fn){
 };
 
 }, {}],
-106: [function(require, module, exports) {
+108: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -626,8 +628,8 @@ module.exports = function (obj) {
   }
   return obj;
 };
-}, {"bind":105,"type":7}],
-98: [function(require, module, exports) {
+}, {"bind":107,"type":7}],
+100: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -689,15 +691,15 @@ function clone(obj){
 }
 
 }, {"type":7}],
-99: [function(require, module, exports) {
+101: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":107,"./debug":108}],
-107: [function(require, module, exports) {
+}, {"./lib/debug":109,"./debug":110}],
+109: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -847,7 +849,7 @@ function coerce(val) {
 }
 
 }, {}],
-108: [function(require, module, exports) {
+110: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -987,7 +989,7 @@ try {
 } catch(e){}
 
 }, {}],
-100: [function(require, module, exports) {
+102: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -1016,7 +1018,7 @@ var defaults = function (dest, src, recursive) {
 module.exports = defaults;
 
 }, {}],
-101: [function(require, module, exports) {
+103: [function(require, module, exports) {
 
 module.exports = function extend (object) {
     // Takes an unlimited number of extenders.
@@ -1033,7 +1035,7 @@ module.exports = function extend (object) {
     return object;
 };
 }, {}],
-102: [function(require, module, exports) {
+104: [function(require, module, exports) {
 
 /**
  * Generate a slug from the given `str`.
@@ -1059,7 +1061,7 @@ module.exports = function (str, options) {
 };
 
 }, {}],
-103: [function(require, module, exports) {
+105: [function(require, module, exports) {
 /* global setInterval:true setTimeout:true */
 
 /**
@@ -1485,8 +1487,8 @@ function render(template, locals){
   }, {}, template.attrs);
 }
 
-}, {"emitter":109,"after":110,"each":111,"analytics-events":112,"fmt":113,"foldl":114,"load-iframe":115,"load-script":116,"to-no-case":117,"next-tick":118,"type":119}],
-109: [function(require, module, exports) {
+}, {"emitter":111,"after":112,"each":113,"analytics-events":114,"fmt":115,"foldl":116,"load-iframe":117,"load-script":118,"to-no-case":119,"next-tick":120,"type":121}],
+111: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -1652,8 +1654,8 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-}, {"indexof":120}],
-120: [function(require, module, exports) {
+}, {"indexof":122}],
+122: [function(require, module, exports) {
 module.exports = function(arr, obj){
   if (arr.indexOf) return arr.indexOf(obj);
   for (var i = 0; i < arr.length; ++i) {
@@ -1662,7 +1664,7 @@ module.exports = function(arr, obj){
   return -1;
 };
 }, {}],
-110: [function(require, module, exports) {
+112: [function(require, module, exports) {
 
 module.exports = function after (times, func) {
   // After 0, really?
@@ -1676,7 +1678,7 @@ module.exports = function after (times, func) {
   };
 };
 }, {}],
-111: [function(require, module, exports) {
+113: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -1767,8 +1769,8 @@ function array(obj, fn, ctx) {
   }
 }
 
-}, {"type":119,"component-type":119,"to-function":121}],
-119: [function(require, module, exports) {
+}, {"type":121,"component-type":121,"to-function":123}],
+121: [function(require, module, exports) {
 
 /**
  * toString ref.
@@ -1803,7 +1805,7 @@ module.exports = function(val){
 };
 
 }, {}],
-121: [function(require, module, exports) {
+123: [function(require, module, exports) {
 
 /**
  * Module Dependencies
@@ -1957,8 +1959,8 @@ function stripNested (prop, str, val) {
   });
 }
 
-}, {"props":122,"component-props":122}],
-122: [function(require, module, exports) {
+}, {"props":124,"component-props":124}],
+124: [function(require, module, exports) {
 /**
  * Global Names
  */
@@ -2046,7 +2048,7 @@ function prefixed(str) {
 }
 
 }, {}],
-112: [function(require, module, exports) {
+114: [function(require, module, exports) {
 
 module.exports = {
   removedProduct: /^[ _]?removed[ _]?product[ _]?$/i,
@@ -2066,7 +2068,7 @@ module.exports = {
 };
 
 }, {}],
-113: [function(require, module, exports) {
+115: [function(require, module, exports) {
 
 /**
  * toString.
@@ -2111,7 +2113,7 @@ function fmt(str){
 }
 
 }, {}],
-114: [function(require, module, exports) {
+116: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -2169,8 +2171,8 @@ var foldl = function foldl(iterator, accumulator, collection) {
 
 module.exports = foldl;
 
-}, {"each":123}],
-123: [function(require, module, exports) {
+}, {"each":125}],
+125: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -2312,8 +2314,8 @@ var each = function each(iterator, collection) {
 
 module.exports = each;
 
-}, {"keys":124}],
-124: [function(require, module, exports) {
+}, {"keys":126}],
+126: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -2493,7 +2495,7 @@ module.exports = function keys(source) {
 };
 
 }, {}],
-115: [function(require, module, exports) {
+117: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -2555,8 +2557,8 @@ module.exports = function loadIframe(options, fn){
   // give it an ID or attributes.
   return iframe;
 };
-}, {"script-onload":125,"next-tick":118,"type":7}],
-125: [function(require, module, exports) {
+}, {"script-onload":127,"next-tick":120,"type":7}],
+127: [function(require, module, exports) {
 
 // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
 
@@ -2612,7 +2614,7 @@ function attach(el, fn){
 }
 
 }, {}],
-118: [function(require, module, exports) {
+120: [function(require, module, exports) {
 "use strict"
 
 if (typeof setImmediate == 'function') {
@@ -2648,7 +2650,7 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 }
 
 }, {}],
-116: [function(require, module, exports) {
+118: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -2709,8 +2711,8 @@ module.exports = function loadScript(options, fn){
   // give it an ID or attributes.
   return script;
 };
-}, {"script-onload":125,"next-tick":118,"type":7}],
-117: [function(require, module, exports) {
+}, {"script-onload":127,"next-tick":120,"type":7}],
+119: [function(require, module, exports) {
 
 /**
  * Expose `toNoCase`.
@@ -2783,7 +2785,7 @@ function uncamelize (string) {
   });
 }
 }, {}],
-104: [function(require, module, exports) {
+106: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -2947,8 +2949,8 @@ function objectify(str) {
   };
 }
 
-}, {"emitter":109,"domify":126,"each":111,"includes":127}],
-126: [function(require, module, exports) {
+}, {"emitter":111,"domify":128,"each":113,"includes":129}],
+128: [function(require, module, exports) {
 
 /**
  * Expose `parse`.
@@ -3059,7 +3061,7 @@ function parse(html, doc) {
 }
 
 }, {}],
-127: [function(require, module, exports) {
+129: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -3149,8 +3151,8 @@ var includes = function includes(searchElement, collection) {
 
 module.exports = includes;
 
-}, {"each":123}],
-93: [function(require, module, exports) {
+}, {"each":125}],
+95: [function(require, module, exports) {
 var toSpace = require('to-space-case');
 
 
@@ -3173,8 +3175,8 @@ function toSnakeCase (string) {
   return toSpace(string).replace(/\s/g, '_');
 }
 
-}, {"to-space-case":128}],
-128: [function(require, module, exports) {
+}, {"to-space-case":130}],
+130: [function(require, module, exports) {
 
 var clean = require('to-no-case');
 
@@ -3199,8 +3201,8 @@ function toSpaceCase (string) {
     return match ? ' ' + match : '';
   });
 }
-}, {"to-no-case":129}],
-129: [function(require, module, exports) {
+}, {"to-no-case":131}],
+131: [function(require, module, exports) {
 
 /**
  * Expose `toNoCase`.
@@ -3276,7 +3278,7 @@ function uncamelize (string) {
   });
 }
 }, {}],
-94: [function(require, module, exports) {
+96: [function(require, module, exports) {
 
 /**
  * Protocol.
@@ -3315,7 +3317,7 @@ function check () {
   );
 }
 }, {}],
-95: [function(require, module, exports) {
+97: [function(require, module, exports) {
 
 var isEmpty = require('is-empty');
 
@@ -3391,8 +3393,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":130,"type":7,"component-type":7}],
-130: [function(require, module, exports) {
+}, {"is-empty":132,"type":7,"component-type":7}],
+132: [function(require, module, exports) {
 
 /**
  * Expose `isEmpty`.
@@ -3423,7 +3425,7 @@ function isEmpty (val) {
   return true;
 }
 }, {}],
-96: [function(require, module, exports) {
+98: [function(require, module, exports) {
 
 var identity = function(_){ return _; };
 
@@ -3603,7 +3605,7 @@ var AdWords = module.exports = integration('AdWords')
  * @api public
  */
 
-AdWords.prototype.initialize = function(){
+AdWords.prototype.initialize = function() {
   this.load(this.ready);
 };
 
@@ -3614,7 +3616,7 @@ AdWords.prototype.initialize = function(){
  * @return {boolean}
  */
 
-AdWords.prototype.loaded = function(){
+AdWords.prototype.loaded = function() {
   return !!document.body;
 };
 
@@ -3630,7 +3632,7 @@ AdWords.prototype.loaded = function(){
  * @param {Page} page
  */
 
-AdWords.prototype.page = function(){
+AdWords.prototype.page = function() {
   var remarketing = !!this.options.remarketing;
   var id = this.options.conversionId;
   var props = {};
@@ -3648,11 +3650,11 @@ AdWords.prototype.page = function(){
  * @param {Track}
  */
 
-AdWords.prototype.track = function(track){
+AdWords.prototype.track = function(track) {
   var id = this.options.conversionId;
   var events = this.events(track.event());
   var revenue = track.revenue() || 0;
-  each(events, function(label){
+  each(events, function(label) {
     var props = track.properties();
     delete props.revenue;
     window.google_trackConversion({
@@ -3668,7 +3670,7 @@ AdWords.prototype.track = function(track){
   });
 };
 
-}, {"each":4,"analytics.js-integration":92}],
+}, {"each":4,"analytics.js-integration":94}],
 10: [function(require, module, exports) {
 
 /**
@@ -3695,14 +3697,14 @@ var Alexa = module.exports = integration('Alexa')
  * @api public
  */
 
-Alexa.prototype.initialize = function(){
+Alexa.prototype.initialize = function() {
   var self = this;
   window._atrk_opts = {
     atrk_acct: this.options.account,
     domain: this.options.domain,
     dynamic: this.options.dynamic
   };
-  this.load(function(){
+  this.load(function() {
     window.atrk();
     self.ready();
   });
@@ -3715,11 +3717,11 @@ Alexa.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Alexa.prototype.loaded = function(){
+Alexa.prototype.loaded = function() {
   return !!window.atrk;
 };
 
-}, {"analytics.js-integration":92}],
+}, {"analytics.js-integration":94}],
 11: [function(require, module, exports) {
 
 /**
@@ -3762,7 +3764,7 @@ var Amplitude = module.exports = integration('Amplitude')
  * @api public
  */
 
-Amplitude.prototype.initialize = function(){
+Amplitude.prototype.initialize = function() {
   /* eslint-disable */
   (function(e,t){var r=e.amplitude||{};r._q=[];function a(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)))}}var i=["init","logEvent","logRevenue","setUserId","setUserProperties","setOptOut","setVersionName","setDomain","setDeviceId","setGlobalUserProperties"];for(var o=0;o<i.length;o++){a(i[o])}e.amplitude=r})(window,document);
   /* eslint-enable */
@@ -3774,14 +3776,14 @@ Amplitude.prototype.initialize = function(){
 
   var self = this;
   if (umd) {
-    window.require([src], function(amplitude){
+    window.require([src], function(amplitude) {
       window.amplitude = amplitude;
       self.ready();
     });
     return;
   }
 
-  this.load(function(){
+  this.load(function() {
     self.ready();
   });
 };
@@ -3793,7 +3795,7 @@ Amplitude.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Amplitude.prototype.loaded = function(){
+Amplitude.prototype.loaded = function() {
   return !!(window.amplitude && window.amplitude.options);
 };
 
@@ -3804,7 +3806,7 @@ Amplitude.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Amplitude.prototype.page = function(page){
+Amplitude.prototype.page = function(page) {
   var category = page.category();
   var name = page.fullName();
   var opts = this.options;
@@ -3832,7 +3834,7 @@ Amplitude.prototype.page = function(page){
  * @param {Facade} identify
  */
 
-Amplitude.prototype.identify = function(identify){
+Amplitude.prototype.identify = function(identify) {
   var id = identify.userId();
   var traits = identify.traits();
   if (id) window.amplitude.setUserId(id);
@@ -3846,7 +3848,7 @@ Amplitude.prototype.identify = function(identify){
  * @param {Track} event
  */
 
-Amplitude.prototype.track = function(track){
+Amplitude.prototype.track = function(track) {
   var props = track.properties();
   var event = track.event();
   var revenue = track.revenue();
@@ -3867,7 +3869,7 @@ Amplitude.prototype.track = function(track){
  * @param {string} href
  */
 
-Amplitude.prototype.setDomain = function(href){
+Amplitude.prototype.setDomain = function(href) {
   var domain = topDomain(href);
   window.amplitude.setDomain(domain);
 };
@@ -3879,12 +3881,12 @@ Amplitude.prototype.setDomain = function(href){
  * @param {string} deviceId
  */
 
-Amplitude.prototype.setDeviceId = function(deviceId){
+Amplitude.prototype.setDeviceId = function(deviceId) {
   if (deviceId) window.amplitude.setDeviceId(deviceId);
 };
 
-}, {"analytics.js-integration":92,"top-domain":131}],
-131: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"top-domain":133}],
+133: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -3932,8 +3934,8 @@ function domain(url){
   return match ? match[0] : '';
 };
 
-}, {"url":132}],
-132: [function(require, module, exports) {
+}, {"url":134}],
+134: [function(require, module, exports) {
 
 /**
  * Parse the given `url`.
@@ -4033,7 +4035,7 @@ var load = require('load-script');
  */
 
 // FIXME: Is this still necessary? I believe this API was deprecated
-module.exports = exports = function(analytics){
+module.exports = exports = function(analytics) {
   analytics.addIntegration(Appcues);
 };
 
@@ -4054,7 +4056,7 @@ var Appcues = exports.Integration = integration('Appcues')
  * @api public
  */
 
-Appcues.prototype.initialize = function(){
+Appcues.prototype.initialize = function() {
   this.load(this.ready);
 };
 
@@ -4065,7 +4067,7 @@ Appcues.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Appcues.prototype.loaded = function(){
+Appcues.prototype.loaded = function() {
   return is.object(window.Appcues);
 };
 
@@ -4076,7 +4078,7 @@ Appcues.prototype.loaded = function(){
  * @param {Function} callback
  */
 
-Appcues.prototype.load = function(callback){
+Appcues.prototype.load = function(callback) {
   var id = this.options.appcuesId || 'appcues';
   load('//fast.appcues.com/' + id + '.js', callback);
 };
@@ -4090,12 +4092,12 @@ Appcues.prototype.load = function(callback){
  * @param {Identify} identify
  */
 
-Appcues.prototype.identify = function(identify){
+Appcues.prototype.identify = function(identify) {
   window.Appcues.identify(identify.userId(), identify.traits());
 };
 
-}, {"analytics.js-integration":92,"is":95,"load-script":133}],
-133: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"is":97,"load-script":135}],
+135: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4156,7 +4158,7 @@ module.exports = function loadScript(options, fn){
   // give it an ID or attributes.
   return script;
 };
-}, {"script-onload":125,"next-tick":118,"type":7}],
+}, {"script-onload":127,"next-tick":120,"type":7}],
 13: [function(require, module, exports) {
 
 /**
@@ -4183,10 +4185,10 @@ var Atatus = module.exports = integration('Atatus')
  * @api public
  */
 
-Atatus.prototype.initialize = function(){
+Atatus.prototype.initialize = function() {
   var self = this;
 
-  this.load(function(){
+  this.load(function() {
     // Configure Atatus and install default handler to capture uncaught
     // exceptions
     window.atatus.config(self.options.apiKey).install();
@@ -4201,7 +4203,7 @@ Atatus.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Atatus.prototype.loaded = function(){
+Atatus.prototype.loaded = function() {
   return is.object(window.atatus);
 };
 
@@ -4212,11 +4214,11 @@ Atatus.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Atatus.prototype.identify = function(identify){
+Atatus.prototype.identify = function(identify) {
   window.atatus.setCustomData({ person: identify.traits() });
 };
 
-}, {"analytics.js-integration":92,"is":95}],
+}, {"analytics.js-integration":94,"is":97}],
 14: [function(require, module, exports) {
 
 /**
@@ -4242,7 +4244,7 @@ var Autosend = module.exports = integration('Autosend')
  * @api public
  */
 
-Autosend.prototype.initialize = function(){
+Autosend.prototype.initialize = function() {
   window._autosend = window._autosend || [];
   /* eslint-disable */
   (function(){var a,b,c;a=function(f){return function(){window._autosend.push([f].concat(Array.prototype.slice.call(arguments,0))); }; }; b=["identify", "track", "cb"];for (c=0;c<b.length;c++){window._autosend[b[c]]=a(b[c]); } })();
@@ -4257,7 +4259,7 @@ Autosend.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Autosend.prototype.loaded = function(){
+Autosend.prototype.loaded = function() {
   return !!window._autosend;
 };
 
@@ -4270,7 +4272,7 @@ Autosend.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Autosend.prototype.identify = function(identify){
+Autosend.prototype.identify = function(identify) {
   var id = identify.userId();
   if (!id) return;
 
@@ -4288,11 +4290,11 @@ Autosend.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Autosend.prototype.track = function(track){
+Autosend.prototype.track = function(track) {
   window._autosend.track(track.event());
 };
 
-}, {"analytics.js-integration":92}],
+}, {"analytics.js-integration":94}],
 15: [function(require, module, exports) {
 
 /**
@@ -4321,7 +4323,7 @@ var Awesm = module.exports = integration('awe.sm')
  * @api public
  */
 
-Awesm.prototype.initialize = function(){
+Awesm.prototype.initialize = function() {
   window.AWESM = { api_key: this.options.apiKey };
   this.load(this.ready);
 };
@@ -4333,7 +4335,7 @@ Awesm.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Awesm.prototype.loaded = function(){
+Awesm.prototype.loaded = function() {
   return !!(window.AWESM && window.AWESM._exists);
 };
 
@@ -4344,15 +4346,15 @@ Awesm.prototype.loaded = function(){
  * @param {Track} track
  */
 
-Awesm.prototype.track = function(track){
+Awesm.prototype.track = function(track) {
   var user = this.analytics.user();
   var goals = this.events(track.event());
-  each(goals, function(goal){
+  each(goals, function(goal) {
     window.AWESM.convert(goal, track.cents(), null, user.id());
   });
 };
 
-}, {"each":4,"analytics.js-integration":92}],
+}, {"each":4,"analytics.js-integration":94}],
 16: [function(require, module, exports) {
 
 /**
@@ -4382,11 +4384,11 @@ var Bing = module.exports = integration('Bing Ads')
  * @api public
  */
 
-Bing.prototype.initialize = function(){
+Bing.prototype.initialize = function() {
   window.uetq = window.uetq || [];
   var self = this;
 
-  self.load(function(){
+  self.load(function() {
     var setup = {
       ti: self.options.tagId,
       q: window.uetq
@@ -4404,7 +4406,7 @@ Bing.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Bing.prototype.loaded = function(){
+Bing.prototype.loaded = function() {
   return !!(window.uetq && window.uetq.push !== Array.prototype.push);
 };
 
@@ -4414,7 +4416,7 @@ Bing.prototype.loaded = function(){
  * @api public
  */
 
-Bing.prototype.page = function(){
+Bing.prototype.page = function() {
   window.uetq.push('pageLoad');
 };
 
@@ -4428,7 +4430,7 @@ Bing.prototype.page = function(){
  * @param {Track} track
  */
 
-Bing.prototype.track = function(track){
+Bing.prototype.track = function(track) {
   var event = {
     ea: 'track',
     el: track.event()
@@ -4440,7 +4442,7 @@ Bing.prototype.track = function(track){
   window.uetq.push(event);
 };
 
-}, {"analytics.js-integration":92}],
+}, {"analytics.js-integration":94}],
 17: [function(require, module, exports) {
 
 /**
@@ -4469,7 +4471,7 @@ var Blueshift = module.exports = integration('Blueshift')
  * @api public
  */
 
-Blueshift.prototype.initialize = function(){
+Blueshift.prototype.initialize = function() {
   window.blueshift = window.blueshift || [];
   /* eslint-disable */
   window.blueshift.load=function(a){window._blueshiftid=a;var d=function(a){return function(){blueshift.push([a].concat(Array.prototype.slice.call(arguments,0)))}},e=["identify","track","click", "pageload", "capture", "retarget"];for(var f=0;f<e.length;f++)blueshift[e[f]]=d(e[f])};
@@ -4486,7 +4488,7 @@ Blueshift.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Blueshift.prototype.loaded = function(){
+Blueshift.prototype.loaded = function() {
   return !!(window.blueshift && window._blueshiftid);
 };
 
@@ -4497,7 +4499,7 @@ Blueshift.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Blueshift.prototype.page = function(page){
+Blueshift.prototype.page = function(page) {
   if (this.options.retarget) window.blueshift.retarget();
 
   var properties = page.properties();
@@ -4524,7 +4526,7 @@ var traitAliases = {
  * @param {Identify} identify
  */
 
-Blueshift.prototype.identify = function(identify){
+Blueshift.prototype.identify = function(identify) {
   if (!identify.userId() && !identify.anonymousId()) {
     return this.debug('user id required');
   }
@@ -4543,7 +4545,7 @@ Blueshift.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Blueshift.prototype.track = function(track){
+Blueshift.prototype.track = function(track) {
   var properties = track.properties();
   properties._bsft_source = 'segment.com';
   properties.customer_id = track.userId();
@@ -4558,7 +4560,7 @@ Blueshift.prototype.track = function(track){
  * @param {Alias} alias
  */
 
-Blueshift.prototype.alias = function(alias){
+Blueshift.prototype.alias = function(alias) {
   window.blueshift.track('alias', removeBlankAttributes({
     _bsft_source: 'segment.com',
     customer_id: alias.userId(),
@@ -4575,15 +4577,15 @@ Blueshift.prototype.alias = function(alias){
  * @return {Object}
  */
 
-function removeBlankAttributes(obj){
-  return foldl(function(results, val, key){
+function removeBlankAttributes(obj) {
+  return foldl(function(results, val, key) {
     if (val !== null && val !== undefined) results[key] = val;
     return results;
   }, {}, obj);
 }
 
-}, {"analytics.js-integration":92,"foldl":134}],
-134: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"foldl":136}],
+136: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -4640,7 +4642,7 @@ var foldl = function foldl(iterator, accumulator, collection) {
 
 module.exports = foldl;
 
-}, {"each":123}],
+}, {"each":125}],
 18: [function(require, module, exports) {
 
 /**
@@ -4673,13 +4675,13 @@ var Bronto = module.exports = integration('Bronto')
  * @api public
  */
 
-Bronto.prototype.initialize = function(){
+Bronto.prototype.initialize = function() {
   var self = this;
   var params = qs.parse(window.location.search);
   if (!params._bta_tid && !params._bta_c) {
     this.debug('missing tracking URL parameters `_bta_tid` and `_bta_c`.');
   }
-  this.load(function(){
+  this.load(function() {
     var opts = self.options;
     self.bta = new window.__bta(opts.siteId);
     if (opts.host) self.bta.setHost(opts.host);
@@ -4694,7 +4696,7 @@ Bronto.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Bronto.prototype.loaded = function(){
+Bronto.prototype.loaded = function() {
   return this.bta;
 };
 
@@ -4711,7 +4713,7 @@ Bronto.prototype.loaded = function(){
  * @param {Track} track
  */
 
-Bronto.prototype.completedOrder = function(track){
+Bronto.prototype.completedOrder = function(track) {
   var user = this.analytics.user();
   var products = track.products();
   var items = [];
@@ -4722,7 +4724,7 @@ Bronto.prototype.completedOrder = function(track){
   var email = identify.email();
 
   // items
-  each(products, function(product){
+  each(products, function(product) {
     var track = new Track({ properties: product });
     items.push({
       item_id: track.id() || track.sku(),
@@ -4742,8 +4744,8 @@ Bronto.prototype.completedOrder = function(track){
   });
 };
 
-}, {"facade":135,"each":4,"analytics.js-integration":92,"querystring":136}],
-135: [function(require, module, exports) {
+}, {"facade":137,"each":4,"analytics.js-integration":94,"querystring":138}],
+137: [function(require, module, exports) {
 
 var Facade = require('./facade');
 
@@ -4764,8 +4766,8 @@ Facade.Track = require('./track');
 Facade.Page = require('./page');
 Facade.Screen = require('./screen');
 
-}, {"./facade":137,"./alias":138,"./group":139,"./identify":140,"./track":141,"./page":142,"./screen":143}],
-137: [function(require, module, exports) {
+}, {"./facade":139,"./alias":140,"./group":141,"./identify":142,"./track":143,"./page":144,"./screen":145}],
+139: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var isEnabled = require('./is-enabled');
@@ -5075,8 +5077,8 @@ function transform(obj){
   return cloned;
 }
 
-}, {"isodate-traverse":144,"./is-enabled":145,"./utils":146,"./address":147,"obj-case":96,"new-date":148}],
-144: [function(require, module, exports) {
+}, {"isodate-traverse":146,"./is-enabled":147,"./utils":148,"./address":149,"obj-case":98,"new-date":150}],
+146: [function(require, module, exports) {
 
 var is = require('is');
 var isodate = require('isodate');
@@ -5148,8 +5150,8 @@ function array (arr, strict) {
   return arr;
 }
 
-}, {"is":149,"isodate":150,"each":4}],
-149: [function(require, module, exports) {
+}, {"is":151,"isodate":152,"each":4}],
+151: [function(require, module, exports) {
 
 var isEmpty = require('is-empty');
 
@@ -5225,8 +5227,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":130,"type":7,"component-type":7}],
-150: [function(require, module, exports) {
+}, {"is-empty":132,"type":7,"component-type":7}],
+152: [function(require, module, exports) {
 
 /**
  * Matcher, slightly modified from:
@@ -5298,7 +5300,7 @@ exports.is = function (string, strict) {
   return matcher.test(string);
 };
 }, {}],
-145: [function(require, module, exports) {
+147: [function(require, module, exports) {
 
 /**
  * A few integrations are disabled by default. They must be explicitly
@@ -5320,7 +5322,7 @@ module.exports = function (integration) {
   return ! disabled[integration];
 };
 }, {}],
-146: [function(require, module, exports) {
+148: [function(require, module, exports) {
 
 /**
  * TODO: use component symlink, everywhere ?
@@ -5336,8 +5338,8 @@ try {
   exports.type = require('type-component');
 }
 
-}, {"inherit":151,"clone":152,"type":7}],
-151: [function(require, module, exports) {
+}, {"inherit":153,"clone":154,"type":7}],
+153: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -5346,7 +5348,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-152: [function(require, module, exports) {
+154: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -5406,7 +5408,7 @@ function clone(obj){
 }
 
 }, {"component-type":7,"type":7}],
-147: [function(require, module, exports) {
+149: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -5444,8 +5446,8 @@ module.exports = function(proto){
   }
 };
 
-}, {"obj-case":96}],
-148: [function(require, module, exports) {
+}, {"obj-case":98}],
+150: [function(require, module, exports) {
 
 var is = require('is');
 var isodate = require('isodate');
@@ -5485,8 +5487,8 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
-}, {"is":153,"isodate":150,"./milliseconds":154,"./seconds":155}],
-153: [function(require, module, exports) {
+}, {"is":155,"isodate":152,"./milliseconds":156,"./seconds":157}],
+155: [function(require, module, exports) {
 
 var isEmpty = require('is-empty')
   , typeOf = require('type');
@@ -5557,8 +5559,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":130,"type":7}],
-154: [function(require, module, exports) {
+}, {"is-empty":132,"type":7}],
+156: [function(require, module, exports) {
 
 /**
  * Matcher.
@@ -5591,7 +5593,7 @@ exports.parse = function (millis) {
   return new Date(millis);
 };
 }, {}],
-155: [function(require, module, exports) {
+157: [function(require, module, exports) {
 
 /**
  * Matcher.
@@ -5624,7 +5626,7 @@ exports.parse = function (seconds) {
   return new Date(millis);
 };
 }, {}],
-138: [function(require, module, exports) {
+140: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -5695,8 +5697,8 @@ Alias.prototype.userId = function(){
     || this.field('to');
 };
 
-}, {"./utils":146,"./facade":137}],
-139: [function(require, module, exports) {
+}, {"./utils":148,"./facade":139}],
+141: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -5825,8 +5827,8 @@ Group.prototype.properties = function(){
     || {};
 };
 
-}, {"./utils":146,"./address":147,"is-email":156,"new-date":148,"./facade":137}],
-156: [function(require, module, exports) {
+}, {"./utils":148,"./address":149,"is-email":158,"new-date":150,"./facade":139}],
+158: [function(require, module, exports) {
 
 /**
  * Expose `isEmail`.
@@ -5853,7 +5855,7 @@ function isEmail (string) {
   return matcher.test(string);
 }
 }, {}],
-140: [function(require, module, exports) {
+142: [function(require, module, exports) {
 
 var address = require('./address');
 var Facade = require('./facade');
@@ -6103,8 +6105,8 @@ Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.gender = Facade.proxy('traits.gender');
 Identify.prototype.birthday = Facade.proxy('traits.birthday');
 
-}, {"./address":147,"./facade":137,"is-email":156,"new-date":148,"./utils":146,"obj-case":96,"trim":157}],
-157: [function(require, module, exports) {
+}, {"./address":149,"./facade":139,"is-email":158,"new-date":150,"./utils":148,"obj-case":98,"trim":159}],
+159: [function(require, module, exports) {
 
 exports = module.exports = trim;
 
@@ -6124,7 +6126,7 @@ exports.right = function(str){
 };
 
 }, {}],
-141: [function(require, module, exports) {
+143: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var clone = require('./utils').clone;
@@ -6414,8 +6416,8 @@ function currency(val) {
   if (!isNaN(val)) return val;
 }
 
-}, {"./utils":146,"./facade":137,"./identify":140,"is-email":156,"obj-case":96}],
-142: [function(require, module, exports) {
+}, {"./utils":148,"./facade":139,"./identify":142,"is-email":158,"obj-case":98}],
+144: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Facade = require('./facade');
@@ -6540,8 +6542,8 @@ Page.prototype.track = function(name){
   });
 };
 
-}, {"./utils":146,"./facade":137,"./track":141}],
-143: [function(require, module, exports) {
+}, {"./utils":148,"./facade":139,"./track":143}],
+145: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Page = require('./page');
@@ -6617,8 +6619,8 @@ Screen.prototype.track = function(name){
   });
 };
 
-}, {"./utils":146,"./page":142,"./track":141}],
-136: [function(require, module, exports) {
+}, {"./utils":148,"./page":144,"./track":143}],
+138: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6693,7 +6695,7 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":157,"type":7}],
+}, {"trim":159,"type":7}],
 19: [function(require, module, exports) {
 
 /**
@@ -6723,10 +6725,10 @@ var BugHerd = module.exports = integration('BugHerd')
  * @api public
  */
 
-BugHerd.prototype.initialize = function(){
+BugHerd.prototype.initialize = function() {
   window.BugHerdConfig = { feedback: { hide: !this.options.showFeedbackTab } };
   var ready = this.ready;
-  this.load(function(){
+  this.load(function() {
     tick(ready);
   });
 };
@@ -6738,11 +6740,11 @@ BugHerd.prototype.initialize = function(){
  * @return {boolean}
  */
 
-BugHerd.prototype.loaded = function(){
+BugHerd.prototype.loaded = function() {
   return !!window._bugHerd;
 };
 
-}, {"analytics.js-integration":92,"next-tick":118}],
+}, {"analytics.js-integration":94,"next-tick":120}],
 20: [function(require, module, exports) {
 
 /**
@@ -6782,11 +6784,11 @@ var Bugsnag = module.exports = integration('Bugsnag')
  * @api public
  */
 
-Bugsnag.prototype.initialize = function(){
+Bugsnag.prototype.initialize = function() {
   var self = this;
 
   if (umd) {
-    window.require([src], function(bugsnag){
+    window.require([src], function(bugsnag) {
       bugsnag.apiKey = self.options.apiKey;
       window.Bugsnag = bugsnag;
       self.ready();
@@ -6794,7 +6796,7 @@ Bugsnag.prototype.initialize = function(){
     return;
   }
 
-  this.load(function(){
+  this.load(function() {
     window.Bugsnag.apiKey = self.options.apiKey;
     self.ready();
   });
@@ -6807,7 +6809,7 @@ Bugsnag.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Bugsnag.prototype.loaded = function(){
+Bugsnag.prototype.loaded = function() {
   return is.object(window.Bugsnag);
 };
 
@@ -6818,13 +6820,13 @@ Bugsnag.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Bugsnag.prototype.identify = function(identify){
+Bugsnag.prototype.identify = function(identify) {
   window.Bugsnag.metaData = window.Bugsnag.metaData || {};
   extend(window.Bugsnag.metaData, identify.traits());
 };
 
-}, {"analytics.js-integration":92,"is":95,"extend":158}],
-158: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"is":97,"extend":160}],
+160: [function(require, module, exports) {
 
 module.exports = function extend (object) {
     // Takes an unlimited number of extenders.
@@ -6868,7 +6870,7 @@ var Chameleon = module.exports = integration('Chameleon')
  * @api public
  */
 
-Chameleon.prototype.initialize = function(){
+Chameleon.prototype.initialize = function() {
   /* eslint-disable */
   (window.chmln={}),names='setup alias track set'.split(' ');for (var i=0;i<names.length;i++){(function(){var t=chmln[names[i]+'_a']=[];chmln[names[i]]=function(){t.push(arguments);};})() };
   /* eslint-enable */
@@ -6884,7 +6886,7 @@ Chameleon.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Chameleon.prototype.loaded = function(){
+Chameleon.prototype.loaded = function() {
   return !!window.chmln;
 };
 
@@ -6895,7 +6897,7 @@ Chameleon.prototype.loaded = function(){
  * @param {Facade} identify
  */
 
-Chameleon.prototype.identify = function(identify){
+Chameleon.prototype.identify = function(identify) {
   var options = identify.traits();
 
   options.uid = options.id || identify.userId() || identify.anonymousId();
@@ -6911,10 +6913,10 @@ Chameleon.prototype.identify = function(identify){
  * @param {Facade} group
  */
 
-Chameleon.prototype.group = function(group){
+Chameleon.prototype.group = function(group) {
   var options = {};
 
-  each(group.traits(), function(key, value){
+  each(group.traits(), function(key, value) {
     options['group:' + key] = value;
   });
 
@@ -6929,7 +6931,7 @@ Chameleon.prototype.group = function(group){
  * @param {Facade} track
  */
 
-Chameleon.prototype.track = function(track){
+Chameleon.prototype.track = function(track) {
   window.chmln.track(track.event(), track.properties());
 };
 
@@ -6939,13 +6941,13 @@ Chameleon.prototype.track = function(track){
  * @param {Facade} alias
  */
 
-Chameleon.prototype.alias = function(alias){
+Chameleon.prototype.alias = function(alias) {
   var fromId = alias.previousId() || alias.anonymousId();
 
   window.chmln.alias({ from: fromId, to: alias.userId() });
 };
 
-}, {"analytics.js-integration":92,"each":4}],
+}, {"analytics.js-integration":94,"each":4}],
 22: [function(require, module, exports) {
 
 /**
@@ -6977,14 +6979,14 @@ var Chartbeat = module.exports = integration('Chartbeat')
  * @api public
  */
 
-Chartbeat.prototype.initialize = function(){
+Chartbeat.prototype.initialize = function() {
   var self = this;
 
   window._sf_async_config = window._sf_async_config || {};
   window._sf_async_config.useCanonical = true;
   defaults(window._sf_async_config, this.options);
 
-  onBody(function(){
+  onBody(function() {
     window._sf_endpt = new Date().getTime();
     // Note: Chartbeat depends on document.body existing so the script does
     // not load until that is confirmed. Otherwise it may trigger errors.
@@ -6999,7 +7001,7 @@ Chartbeat.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Chartbeat.prototype.loaded = function(){
+Chartbeat.prototype.loaded = function() {
   return !!window.pSUPERFLY;
 };
 
@@ -7012,7 +7014,7 @@ Chartbeat.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Chartbeat.prototype.page = function(page){
+Chartbeat.prototype.page = function(page) {
   var category = page.category();
   if (category) window._sf_async_config.sections = category;
   var author = page.proxy('properties.author');
@@ -7022,8 +7024,8 @@ Chartbeat.prototype.page = function(page){
   window.pSUPERFLY.virtualPage(props.path, name || props.title);
 };
 
-}, {"defaults":159,"analytics.js-integration":92,"on-body":160}],
-159: [function(require, module, exports) {
+}, {"defaults":161,"analytics.js-integration":94,"on-body":162}],
+161: [function(require, module, exports) {
 /**
  * Expose `defaults`.
  */
@@ -7040,7 +7042,7 @@ function defaults (dest, defaults) {
 };
 
 }, {}],
-160: [function(require, module, exports) {
+162: [function(require, module, exports) {
 var each = require('each');
 
 
@@ -7094,7 +7096,7 @@ var interval = setInterval(function () {
 function call (callback) {
   callback(document.body);
 }
-}, {"each":111}],
+}, {"each":113}],
 23: [function(require, module, exports) {
 
 /**
@@ -7135,11 +7137,11 @@ var ClickTale = module.exports = integration('ClickTale')
  * @api public
  */
 
-ClickTale.prototype.initialize = function(){
+ClickTale.prototype.initialize = function() {
   var self = this;
   window.WRInitTime = date.getTime();
 
-  onBody(function(body){
+  onBody(function(body) {
     body.appendChild(domify('<div id="ClickTaleDiv" style="display: none;">'));
   });
 
@@ -7148,7 +7150,7 @@ ClickTale.prototype.initialize = function(){
   if (useHttps() && !https) return this.debug('https option required');
   var src = useHttps() ? https : http;
 
-  this.load({ src: src }, function(){
+  this.load({ src: src }, function() {
     window.ClickTale(
       self.options.projectId,
       self.options.recordingRatio,
@@ -7165,7 +7167,7 @@ ClickTale.prototype.initialize = function(){
  * @return {boolean}
  */
 
-ClickTale.prototype.loaded = function(){
+ClickTale.prototype.loaded = function() {
   return is.fn(window.ClickTale);
 };
 
@@ -7179,10 +7181,10 @@ ClickTale.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-ClickTale.prototype.identify = function(identify){
+ClickTale.prototype.identify = function(identify) {
   var id = identify.userId();
   window.ClickTaleSetUID(id);
-  each(identify.traits(), function(key, value){
+  each(identify.traits(), function(key, value) {
     window.ClickTaleField(key, value);
   });
 };
@@ -7196,12 +7198,12 @@ ClickTale.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-ClickTale.prototype.track = function(track){
+ClickTale.prototype.track = function(track) {
   window.ClickTaleEvent(track.event());
 };
 
-}, {"load-date":161,"domify":126,"each":4,"analytics.js-integration":92,"is":95,"on-body":160,"use-https":94}],
-161: [function(require, module, exports) {
+}, {"load-date":163,"domify":128,"each":4,"analytics.js-integration":94,"is":97,"on-body":162,"use-https":96}],
+163: [function(require, module, exports) {
 
 
 /*
@@ -7250,7 +7252,7 @@ var Clicky = module.exports = integration('Clicky')
  * @api public
  */
 
-Clicky.prototype.initialize = function(){
+Clicky.prototype.initialize = function() {
   var user = this.analytics.user();
   window.clicky_site_ids = window.clicky_site_ids || [this.options.siteId];
   this.identify(new Identify({
@@ -7267,7 +7269,7 @@ Clicky.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Clicky.prototype.loaded = function(){
+Clicky.prototype.loaded = function() {
   return is.object(window.clicky);
 };
 
@@ -7280,7 +7282,7 @@ Clicky.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Clicky.prototype.page = function(page){
+Clicky.prototype.page = function(page) {
   var properties = page.properties();
   var name = page.fullName();
   window.clicky.log(properties.path, name || properties.title);
@@ -7293,7 +7295,7 @@ Clicky.prototype.page = function(page){
  * @param {Identify} [id]
  */
 
-Clicky.prototype.identify = function(identify){
+Clicky.prototype.identify = function(identify) {
   window.clicky_custom = window.clicky_custom || {};
   window.clicky_custom.session = window.clicky_custom.session || {};
   var traits = identify.traits();
@@ -7316,11 +7318,11 @@ Clicky.prototype.identify = function(identify){
  * @param {Track} event
  */
 
-Clicky.prototype.track = function(track){
+Clicky.prototype.track = function(track) {
   window.clicky.goal(track.event(), track.revenue());
 };
 
-}, {"facade":135,"extend":158,"analytics.js-integration":92,"is":95}],
+}, {"facade":137,"extend":160,"analytics.js-integration":94,"is":97}],
 25: [function(require, module, exports) {
 
 /**
@@ -7349,7 +7351,7 @@ var Comscore = module.exports = integration('comScore')
  * @api public
  */
 
-Comscore.prototype.initialize = function(){
+Comscore.prototype.initialize = function() {
   window._comscore = window._comscore || [this.options];
   var tagName = useHttps() ? 'https' : 'http';
   this.load(tagName, this.ready);
@@ -7362,7 +7364,7 @@ Comscore.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Comscore.prototype.loaded = function(){
+Comscore.prototype.loaded = function() {
   return !!window.COMSCORE;
 };
 
@@ -7373,11 +7375,11 @@ Comscore.prototype.loaded = function(){
  * @param {Object} page
  */
 
-Comscore.prototype.page = function(){
+Comscore.prototype.page = function() {
   window.COMSCORE.beacon(this.options);
 };
 
-}, {"analytics.js-integration":92,"use-https":94}],
+}, {"analytics.js-integration":94,"use-https":96}],
 26: [function(require, module, exports) {
 
 /**
@@ -7402,7 +7404,7 @@ var CrazyEgg = module.exports = integration('Crazy Egg')
  * @api public
  */
 
-CrazyEgg.prototype.initialize = function(){
+CrazyEgg.prototype.initialize = function() {
   var number = this.options.accountNumber;
   var path = number.slice(0, 4) + '/' + number.slice(4);
   var cacheBuster = Math.floor(new Date().getTime() / 3600000);
@@ -7416,11 +7418,11 @@ CrazyEgg.prototype.initialize = function(){
  * @return {boolean}
  */
 
-CrazyEgg.prototype.loaded = function(){
+CrazyEgg.prototype.loaded = function() {
   return !!window.CE2;
 };
 
-}, {"analytics.js-integration":92}],
+}, {"analytics.js-integration":94}],
 27: [function(require, module, exports) {
 
 /**
@@ -7462,7 +7464,7 @@ var Curebit = module.exports = integration('Curebit')
  * @api public
  */
 
-Curebit.prototype.initialize = function(){
+Curebit.prototype.initialize = function() {
   push('init', { site_id: this.options.siteId, server: this.options.server });
   this.load(this.ready);
 
@@ -7477,7 +7479,7 @@ Curebit.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Curebit.prototype.loaded = function(){
+Curebit.prototype.loaded = function() {
   return !!window.curebit;
 };
 
@@ -7500,10 +7502,10 @@ Curebit.prototype.loaded = function(){
  */
 
 // FIXME: Is this deprecated? Seems unused
-Curebit.prototype.injectIntoId = function(url, id, fn){
-  when(function(){
+Curebit.prototype.injectIntoId = function(url, id, fn) {
+  when(function() {
     return document.getElementById(id);
-  }, function(){
+  }, function() {
     var script = document.createElement('script');
     script.src = url;
     var parent = document.getElementById(id);
@@ -7519,7 +7521,7 @@ Curebit.prototype.injectIntoId = function(url, id, fn){
  * @param {Page} page
  */
 
-Curebit.prototype.page = function(){
+Curebit.prototype.page = function() {
   var user = this.analytics.user();
   var campaigns = this.options.campaigns;
   var path = window.location.pathname;
@@ -7570,7 +7572,7 @@ Curebit.prototype.page = function(){
  * @param {Track} track
  */
 
-Curebit.prototype.completedOrder = function(track){
+Curebit.prototype.completedOrder = function(track) {
   var user = this.analytics.user();
   var orderId = track.orderId();
   var products = track.products();
@@ -7581,7 +7583,7 @@ Curebit.prototype.completedOrder = function(track){
     userId: user.id()
   });
 
-  each(products, function(product){
+  each(products, function(product) {
     var track = new Track({ properties: product });
     items.push({
       product_id: track.id() || track.sku(),
@@ -7606,8 +7608,8 @@ Curebit.prototype.completedOrder = function(track){
   });
 };
 
-}, {"facade":135,"bind":105,"each":4,"analytics.js-integration":92,"to-iso-string":162,"global-queue":163,"throttle":164,"when":165}],
-162: [function(require, module, exports) {
+}, {"facade":137,"bind":107,"each":4,"analytics.js-integration":94,"to-iso-string":164,"global-queue":165,"throttle":166,"when":167}],
+164: [function(require, module, exports) {
 
 /**
  * Expose `toIsoString`.
@@ -7649,7 +7651,7 @@ function pad (number) {
   return n.length === 1 ? '0' + n : n;
 }
 }, {}],
-163: [function(require, module, exports) {
+165: [function(require, module, exports) {
 
 /**
  * Expose `generate`.
@@ -7679,7 +7681,7 @@ function generate (name, options) {
   };
 }
 }, {}],
-164: [function(require, module, exports) {
+166: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -7712,7 +7714,7 @@ function throttle (func, wait) {
 }
 
 }, {}],
-165: [function(require, module, exports) {
+167: [function(require, module, exports) {
 
 var callback = require('callback');
 
@@ -7741,8 +7743,8 @@ function when (condition, fn, interval) {
     clearInterval(ref);
   }, interval || 10);
 }
-}, {"callback":166}],
-166: [function(require, module, exports) {
+}, {"callback":168}],
+168: [function(require, module, exports) {
 var next = require('next-tick');
 
 
@@ -7785,7 +7787,7 @@ callback.async = function (fn, wait) {
 
 callback.sync = callback;
 
-}, {"next-tick":118}],
+}, {"next-tick":120}],
 28: [function(require, module, exports) {
 
 /**
@@ -7814,7 +7816,7 @@ var Customerio = module.exports = integration('Customer.io')
  * @api public
  */
 
-Customerio.prototype.initialize = function(){
+Customerio.prototype.initialize = function() {
   window._cio = window._cio || [];
   /* eslint-disable */
   (function(){var a,b,c; a = function(f){return function(){window._cio.push([f].concat(Array.prototype.slice.call(arguments,0))); }; }; b = ['identify', 'track']; for (c = 0; c < b.length; c++) {window._cio[b[c]] = a(b[c]); } })();
@@ -7829,7 +7831,7 @@ Customerio.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Customerio.prototype.loaded = function(){
+Customerio.prototype.loaded = function() {
   return !!(window._cio && window._cio.push !== Array.prototype.push);
 };
 
@@ -7842,7 +7844,7 @@ Customerio.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Customerio.prototype.identify = function(identify){
+Customerio.prototype.identify = function(identify) {
   if (!identify.userId()) return this.debug('user id required');
   var traits = identify.traits({ createdAt: 'created' });
   traits = alias(traits, { created: 'created_at' });
@@ -7857,11 +7859,11 @@ Customerio.prototype.identify = function(identify){
  * @param {Group} group
  */
 
-Customerio.prototype.group = function(group){
+Customerio.prototype.group = function(group) {
   var traits = group.traits();
   var user = this.analytics.user();
 
-  traits = alias(traits, function(trait){
+  traits = alias(traits, function(trait) {
     return 'Group ' + trait;
   });
 
@@ -7880,7 +7882,7 @@ Customerio.prototype.group = function(group){
  * @param {Track} track
  */
 
-Customerio.prototype.track = function(track){
+Customerio.prototype.track = function(track) {
   var properties = track.properties();
   properties = convertDates(properties, convertDate);
   window._cio.track(track.event(), properties);
@@ -7894,12 +7896,12 @@ Customerio.prototype.track = function(track){
  * @return {number}
  */
 
-function convertDate(date){
+function convertDate(date) {
   return Math.floor(date.getTime() / 1000);
 }
 
-}, {"facade":135,"alias":167,"convert-dates":168,"analytics.js-integration":92}],
-167: [function(require, module, exports) {
+}, {"facade":137,"alias":169,"convert-dates":170,"analytics.js-integration":94}],
+169: [function(require, module, exports) {
 
 var type = require('type');
 
@@ -7962,8 +7964,8 @@ function aliasByFunction (obj, convert) {
   for (var key in obj) output[convert(key)] = obj[key];
   return output;
 }
-}, {"type":7,"clone":152}],
-168: [function(require, module, exports) {
+}, {"type":7,"clone":154}],
+170: [function(require, module, exports) {
 
 var is = require('is');
 
@@ -7998,7 +8000,7 @@ function convertDates (obj, convert) {
   }
   return obj;
 }
-}, {"is":95,"clone":98}],
+}, {"is":97,"clone":100}],
 29: [function(require, module, exports) {
 
 /**
@@ -8028,7 +8030,7 @@ var Drip = module.exports = integration('Drip')
  * @api public
  */
 
-Drip.prototype.initialize = function(){
+Drip.prototype.initialize = function() {
   window._dcq = window._dcq || [];
   window._dcs = window._dcs || {};
   window._dcs.account = this.options.account;
@@ -8042,7 +8044,7 @@ Drip.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Drip.prototype.loaded = function(){
+Drip.prototype.loaded = function() {
   return is.object(window._dc);
 };
 
@@ -8053,7 +8055,7 @@ Drip.prototype.loaded = function(){
  * @param {Track} track
  */
 
-Drip.prototype.track = function(track){
+Drip.prototype.track = function(track) {
   var props = track.properties();
   var cents = track.cents();
   if (cents) props.value = cents;
@@ -8068,12 +8070,71 @@ Drip.prototype.track = function(track){
  * @param {Identify} identify
  */
 
-Drip.prototype.identify = function(identify){
+Drip.prototype.identify = function(identify) {
   push('identify', identify.traits());
 };
 
-}, {"analytics.js-integration":92,"is":95,"global-queue":163}],
+}, {"analytics.js-integration":94,"is":97,"global-queue":165}],
 30: [function(require, module, exports) {
+var integration = require('analytics.js-integration');
+var tick = require('next-tick');
+
+/**
+ * Expose `Elevio` integration.
+ */
+
+var Elevio = module.exports = integration('Elevio')
+  .assumesPageview()
+  .option('accountId', '')
+  .global('_elev')
+  .tag('<script src="//static.elev.io/js/v3.js">');
+
+/**
+ * Initialize elevio.
+ */
+
+Elevio.prototype.initialize = function() {
+  var self = this;
+  window._elev = window._elev || {};
+  window._elev.account_id = this.options.accountId;
+  window._elev.segment = true;
+  this.load(function() {
+    tick(self.ready);
+  });
+};
+
+/**
+ * Has the elevio library been loaded yet?
+ *
+ * @return {Boolean}
+ */
+
+Elevio.prototype.loaded = function() {
+  return !!window._elev;
+};
+
+/**
+ * Identify a user.
+ *
+ * @param {Facade} identify
+ */
+
+Elevio.prototype.identify = function(identify) {
+  var name = identify.name();
+  var email = identify.email();
+  var plan = identify.proxy('traits.plan');
+
+  var user = {};
+  user.via = 'segment';
+  if (email) user.email = email;
+  if (name) user.name = name;
+  if (plan) user.plan = [plan];
+
+  window._elev.user = user;
+};
+
+}, {"analytics.js-integration":94,"next-tick":120}],
+31: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -8103,7 +8164,7 @@ var Errorception = module.exports = integration('Errorception')
  * @api public
  */
 
-Errorception.prototype.initialize = function(){
+Errorception.prototype.initialize = function() {
   window._errs = window._errs || [this.options.projectId];
   onError(push);
   this.load(this.ready);
@@ -8116,7 +8177,7 @@ Errorception.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Errorception.prototype.loaded = function(){
+Errorception.prototype.loaded = function() {
   return !!(window._errs && window._errs.push !== Array.prototype.push);
 };
 
@@ -8129,7 +8190,7 @@ Errorception.prototype.loaded = function(){
  * @param {Object} identify
  */
 
-Errorception.prototype.identify = function(identify){
+Errorception.prototype.identify = function(identify) {
   if (!this.options.meta) return;
   var traits = identify.traits();
   window._errs = window._errs || [];
@@ -8137,8 +8198,8 @@ Errorception.prototype.identify = function(identify){
   extend(window._errs.meta, traits);
 };
 
-}, {"extend":158,"analytics.js-integration":92,"on-error":169,"global-queue":163}],
-169: [function(require, module, exports) {
+}, {"extend":160,"analytics.js-integration":94,"on-error":171,"global-queue":165}],
+171: [function(require, module, exports) {
 
 /**
  * Expose `onError`.
@@ -8191,7 +8252,7 @@ function onError (fn) {
   }
 }
 }, {}],
-31: [function(require, module, exports) {
+32: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -8218,7 +8279,7 @@ var Evergage = module.exports = integration('Evergage')
  * @api public
  */
 
-Evergage.prototype.initialize = function(){
+Evergage.prototype.initialize = function() {
   var account = this.options.account;
   var dataset = this.options.dataset;
 
@@ -8237,7 +8298,7 @@ Evergage.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Evergage.prototype.loaded = function(){
+Evergage.prototype.loaded = function() {
   return !!(window._aaq && window._aaq.push !== Array.prototype.push);
 };
 
@@ -8248,12 +8309,12 @@ Evergage.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Evergage.prototype.page = function(page){
+Evergage.prototype.page = function(page) {
   var props = page.properties();
   var name = page.name();
   if (name) push('namePage', name);
 
-  each(props, function(key, value){
+  each(props, function(key, value) {
     push('setCustomField', key, value, 'page');
   });
 
@@ -8267,7 +8328,7 @@ Evergage.prototype.page = function(page){
  * @param {Identify} identify
  */
 
-Evergage.prototype.identify = function(identify){
+Evergage.prototype.identify = function(identify) {
   var id = identify.userId();
   if (!id) return;
 
@@ -8278,7 +8339,7 @@ Evergage.prototype.identify = function(identify){
     name: 'userName'
   });
 
-  each(traits, function(key, value){
+  each(traits, function(key, value) {
     push('setUserField', key, value, 'page');
   });
 };
@@ -8290,13 +8351,13 @@ Evergage.prototype.identify = function(identify){
  * @param {Group} group
  */
 
-Evergage.prototype.group = function(group){
+Evergage.prototype.group = function(group) {
   var props = group.traits();
   var id = group.groupId();
   if (!id) return;
 
   push('setCompany', id);
-  each(props, function(key, value){
+  each(props, function(key, value) {
     push('setAccountField', key, value, 'page');
   });
 };
@@ -8308,12 +8369,12 @@ Evergage.prototype.group = function(group){
  * @param {Track} track
  */
 
-Evergage.prototype.track = function(track){
+Evergage.prototype.track = function(track) {
   push('trackAction', track.event(), track.properties());
 };
 
-}, {"each":4,"analytics.js-integration":92,"global-queue":163}],
-32: [function(require, module, exports) {
+}, {"each":4,"analytics.js-integration":94,"global-queue":165}],
+33: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -8344,7 +8405,7 @@ var Extole = module.exports = integration('Extole')
 * @param {Object} page
 */
 
-Extole.prototype.initialize = function(){
+Extole.prototype.initialize = function() {
   if (this.loaded()) return this.ready();
   this.load('main', bind(this, this.ready));
 };
@@ -8356,7 +8417,7 @@ Extole.prototype.initialize = function(){
 * @return {boolean}
 */
 
-Extole.prototype.loaded = function(){
+Extole.prototype.loaded = function() {
   return !!window.extole;
 };
 
@@ -8367,7 +8428,7 @@ Extole.prototype.loaded = function(){
 * @param {Track} track
 */
 
-Extole.prototype.track = function(track){
+Extole.prototype.track = function(track) {
   var user = this.analytics.user();
   var traits = user.traits();
   var userId = user.id();
@@ -8384,7 +8445,7 @@ Extole.prototype.track = function(track){
     return this.debug('No events found for %s', event);
   }
 
-  each(extoleEvents, bind(this, function(extoleEvent){
+  each(extoleEvents, bind(this, function(extoleEvent) {
     this._registerConversion(this._createConversionTag({
       type: extoleEvent,
       params: this._formatConversionParams(event, email, userId, track.properties())
@@ -8401,13 +8462,13 @@ Extole.prototype.track = function(track){
 
 // FIXME: If I understand Extole's lib correctly, this is sometimes async,
 // sometimes sync. Refactor this into more predictable/sane behavior.
-Extole.prototype._registerConversion = function(conversionTag){
+Extole.prototype._registerConversion = function(conversionTag) {
   if (window.extole.main && window.extole.main.fireConversion) {
     return window.extole.main.fireConversion(conversionTag);
   }
 
   if (window.extole.initializeGo) {
-    window.extole.initializeGo().andWhenItsReady(function(){
+    window.extole.initializeGo().andWhenItsReady(function() {
       window.extole.main.fireConversion(conversionTag);
     });
   }
@@ -8425,7 +8486,7 @@ Extole.prototype._registerConversion = function(conversionTag){
  * @return {Object}
  */
 
-Extole.prototype._formatConversionParams = function(event, email, userId, properties){
+Extole.prototype._formatConversionParams = function(event, email, userId, properties) {
   var total;
 
   if (properties.total) {
@@ -8448,12 +8509,12 @@ Extole.prototype._formatConversionParams = function(event, email, userId, proper
  * @return {HTMLElement}
  */
 
-Extole.prototype._createConversionTag = function(conversion){
+Extole.prototype._createConversionTag = function(conversion) {
   return domify('<script type="extole/conversion">' + json.stringify(conversion) + '</script>');
 };
 
-}, {"bind":105,"domify":126,"each":4,"extend":158,"analytics.js-integration":92,"json":170}],
-170: [function(require, module, exports) {
+}, {"bind":107,"domify":128,"each":4,"extend":160,"analytics.js-integration":94,"json":172}],
+172: [function(require, module, exports) {
 
 var json = window.JSON || {};
 var stringify = json.stringify;
@@ -8463,8 +8524,8 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":171}],
-171: [function(require, module, exports) {
+}, {"json-fallback":173}],
+173: [function(require, module, exports) {
 /*
     json2.js
     2014-02-04
@@ -8954,7 +9015,7 @@ module.exports = parse && stringify
 }());
 
 }, {}],
-33: [function(require, module, exports) {
+34: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -8982,7 +9043,7 @@ var Facebook = module.exports = integration('Facebook Conversion Tracking')
  * @api public
  */
 
-Facebook.prototype.initialize = function(){
+Facebook.prototype.initialize = function() {
   window._fbq = window._fbq || [];
   this.load(this.ready);
   window._fbq.loaded = true;
@@ -8995,7 +9056,7 @@ Facebook.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Facebook.prototype.loaded = function(){
+Facebook.prototype.loaded = function() {
   return !!(window._fbq && window._fbq.loaded);
 };
 
@@ -9006,7 +9067,7 @@ Facebook.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Facebook.prototype.page = function(page){
+Facebook.prototype.page = function(page) {
   this.track(page.track(page.fullName()));
 };
 
@@ -9019,13 +9080,13 @@ Facebook.prototype.page = function(page){
  * @param {Track} track
  */
 
-Facebook.prototype.track = function(track){
+Facebook.prototype.track = function(track) {
   var event = track.event();
   var events = this.events(event);
   var revenue = track.revenue() || 0;
   var self = this;
 
-  each(events, function(event){
+  each(events, function(event) {
     push('track', event, {
       currency: self.options.currency,
       value: revenue.toFixed(2)
@@ -9033,8 +9094,8 @@ Facebook.prototype.track = function(track){
   });
 };
 
-}, {"each":4,"analytics.js-integration":92,"global-queue":163}],
-34: [function(require, module, exports) {
+}, {"each":4,"analytics.js-integration":94,"global-queue":165}],
+35: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9063,7 +9124,7 @@ var FoxMetrics = module.exports = integration('FoxMetrics')
  * @api public
  */
 
-FoxMetrics.prototype.initialize = function(){
+FoxMetrics.prototype.initialize = function() {
   window._fxm = window._fxm || [];
   this.load(this.ready);
 };
@@ -9074,7 +9135,7 @@ FoxMetrics.prototype.initialize = function(){
  * @return {Boolean}
  */
 
-FoxMetrics.prototype.loaded = function(){
+FoxMetrics.prototype.loaded = function() {
   return !!(window._fxm && window._fxm.appId);
 };
 
@@ -9085,7 +9146,7 @@ FoxMetrics.prototype.loaded = function(){
  * @param {Page} page
  */
 
-FoxMetrics.prototype.page = function(page){
+FoxMetrics.prototype.page = function(page) {
   var properties = page.proxy('properties');
   var category = page.category();
   var name = page.name();
@@ -9110,7 +9171,7 @@ FoxMetrics.prototype.page = function(page){
  * @param {Identify} identify
  */
 
-FoxMetrics.prototype.identify = function(identify){
+FoxMetrics.prototype.identify = function(identify) {
   var id = identify.userId();
 
   if (!id) return;
@@ -9139,7 +9200,7 @@ FoxMetrics.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-FoxMetrics.prototype.track = function(track){
+FoxMetrics.prototype.track = function(track) {
   var props = track.properties();
   var category = this._category || props.category;
   push(track.event(), category, props);
@@ -9152,7 +9213,7 @@ FoxMetrics.prototype.track = function(track){
  * @param {Track} track
  */
 
-FoxMetrics.prototype.viewedProduct = function(track){
+FoxMetrics.prototype.viewedProduct = function(track) {
   ecommerce('productview', track);
 };
 
@@ -9163,7 +9224,7 @@ FoxMetrics.prototype.viewedProduct = function(track){
  * @param {Track} track
  */
 
-FoxMetrics.prototype.removedProduct = function(track){
+FoxMetrics.prototype.removedProduct = function(track) {
   ecommerce('removecartitem', track);
 };
 
@@ -9174,7 +9235,7 @@ FoxMetrics.prototype.removedProduct = function(track){
  * @param {Track} track
  */
 
-FoxMetrics.prototype.addedProduct = function(track){
+FoxMetrics.prototype.addedProduct = function(track) {
   ecommerce('cartitem', track);
 };
 
@@ -9185,7 +9246,7 @@ FoxMetrics.prototype.addedProduct = function(track){
  * @param {Track} track
  */
 
-FoxMetrics.prototype.completedOrder = function(track){
+FoxMetrics.prototype.completedOrder = function(track) {
   var orderId = track.orderId();
 
   // transaction
@@ -9202,7 +9263,7 @@ FoxMetrics.prototype.completedOrder = function(track){
   );
 
   // items
-  each(track.products(), function(product){
+  each(track.products(), function(product) {
     var track = new Track({ properties: product });
     ecommerce('purchaseitem', track, [
       track.quantity(),
@@ -9222,7 +9283,7 @@ FoxMetrics.prototype.completedOrder = function(track){
  * @param {Array} arr
  */
 
-function ecommerce(event, track, arr){
+function ecommerce(event, track, arr) {
   push.apply(null, [
     '_fxm.ecommerce.' + event,
     track.id() || track.sku(),
@@ -9231,8 +9292,8 @@ function ecommerce(event, track, arr){
   ].concat(arr || []));
 }
 
-}, {"facade":135,"each":4,"analytics.js-integration":92,"global-queue":163}],
-35: [function(require, module, exports) {
+}, {"facade":137,"each":4,"analytics.js-integration":94,"global-queue":165}],
+36: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9271,7 +9332,7 @@ var Frontleaf = module.exports = integration('Frontleaf')
  * @api public
  */
 
-Frontleaf.prototype.initialize = function(){
+Frontleaf.prototype.initialize = function() {
   window._fl = window._fl || [];
   window._flBaseUrl = window._flBaseUrl || this.options.baseUrl;
   this._push('setApiToken', this.options.token);
@@ -9288,7 +9349,7 @@ Frontleaf.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Frontleaf.prototype.loaded = function(){
+Frontleaf.prototype.loaded = function() {
   return is.array(window._fl) && window._fl.ready === true;
 };
 
@@ -9299,7 +9360,7 @@ Frontleaf.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Frontleaf.prototype.identify = function(identify){
+Frontleaf.prototype.identify = function(identify) {
   var userId = identify.userId();
   if (userId) {
     this._push('setUser', {
@@ -9317,7 +9378,7 @@ Frontleaf.prototype.identify = function(identify){
  * @param {Group} group
  */
 
-Frontleaf.prototype.group = function(group){
+Frontleaf.prototype.group = function(group) {
   var groupId = group.groupId();
   if (groupId) {
     this._push('setAccount', {
@@ -9335,7 +9396,7 @@ Frontleaf.prototype.group = function(group){
  * @param {Page} page
  */
 
-Frontleaf.prototype.page = function(page){
+Frontleaf.prototype.page = function(page) {
   var category = page.category();
   var name = page.fullName();
   var opts = this.options;
@@ -9358,7 +9419,7 @@ Frontleaf.prototype.page = function(page){
  * @param {Track} track
  */
 
-Frontleaf.prototype.track = function(track){
+Frontleaf.prototype.track = function(track) {
   var event = track.event();
   this._push('event', event, clean(track.properties()));
 };
@@ -9371,9 +9432,9 @@ Frontleaf.prototype.track = function(track){
  * @return {Object} args
  */
 
-Frontleaf.prototype._push = function(command){
+Frontleaf.prototype._push = function(command) {
   var args = [].slice.call(arguments, 1);
-  window._fl.push(function(t){ t[command].apply(command, args); });
+  window._fl.push(function(t) { t[command].apply(command, args); });
 };
 
 /**
@@ -9384,14 +9445,14 @@ Frontleaf.prototype._push = function(command){
  * @return {Object}
  */
 
-function clean(obj){
+function clean(obj) {
   var ret = {};
 
   // Remove traits/properties that are already represented
   // outside of the data container
   // TODO: Refactor into `omit` call
   var excludeKeys = ['id', 'name', 'firstName', 'lastName'];
-  each(excludeKeys, function(omitKey){
+  each(excludeKeys, function(omitKey) {
     clear(obj, omitKey);
   });
 
@@ -9427,7 +9488,7 @@ function clean(obj){
  * @param {String} key
  */
 
-function clear(obj, key){
+function clear(obj, key) {
   if (obj.hasOwnProperty(key)) {
     delete obj[key];
   }
@@ -9444,10 +9505,10 @@ function clear(obj, key){
  * @return {Object}
  */
 
-function flatten(source){
+function flatten(source) {
   var output = {};
 
-  function step(object, prev){
+  function step(object, prev) {
     for (var key in object) {
       if (has.call(object, key)) {
         var value = object[key];
@@ -9467,8 +9528,8 @@ function flatten(source){
   return output;
 }
 
-}, {"bind":105,"each":4,"analytics.js-integration":92,"is":95}],
-36: [function(require, module, exports) {
+}, {"bind":107,"each":4,"analytics.js-integration":94,"is":97}],
+37: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9494,7 +9555,7 @@ var FullStory = module.exports = integration('FullStory')
  * Initialize.
  */
 
-FullStory.prototype.initialize = function(){
+FullStory.prototype.initialize = function() {
   var self = this;
   window._fs_debug = this.options.debug;
   window._fs_host = 'www.fullstory.com';
@@ -9517,7 +9578,7 @@ FullStory.prototype.initialize = function(){
  * @return {Boolean}
  */
 
-FullStory.prototype.loaded = function(){
+FullStory.prototype.loaded = function() {
   return !!window.FS;
 };
 
@@ -9527,11 +9588,11 @@ FullStory.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-FullStory.prototype.identify = function(identify){
+FullStory.prototype.identify = function(identify) {
   var id = identify.userId() || identify.anonymousId();
   var traits = identify.traits({ name: 'displayName' });
 
-  var newTraits = foldl(function(results, value, key){
+  var newTraits = foldl(function(results, value, key) {
     if (key !== 'id') results[key === 'displayName' || key === 'email' ? key : convert(key, value)] = value;
     return results;
   }, {}, traits);
@@ -9546,7 +9607,7 @@ FullStory.prototype.identify = function(identify){
 * @param {*} value
 */
 
-function convert(key, value){
+function convert(key, value) {
   key = camel(key);
   if (is.string(value)) return key + '_str';
   if (isInt(value)) return key + '_int';
@@ -9571,8 +9632,8 @@ function isInt(n) {
   return n === +n && n === (n | 0);
 }
 
-}, {"to-camel-case":172,"foldl":134,"analytics.js-integration":92,"is":95}],
-172: [function(require, module, exports) {
+}, {"to-camel-case":174,"foldl":136,"analytics.js-integration":94,"is":97}],
+174: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
 
@@ -9597,8 +9658,8 @@ function toCamelCase (string) {
     return letter.toUpperCase();
   });
 }
-}, {"to-space-case":128}],
-37: [function(require, module, exports) {
+}, {"to-space-case":130}],
+38: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9625,7 +9686,7 @@ var Gauges = module.exports = integration('Gauges')
  * @api public
  */
 
-Gauges.prototype.initialize = function(){
+Gauges.prototype.initialize = function() {
   window._gauges = window._gauges || [];
   this.load(this.ready);
 };
@@ -9637,7 +9698,7 @@ Gauges.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Gauges.prototype.loaded = function(){
+Gauges.prototype.loaded = function() {
   return !!(window._gauges && window._gauges.push !== Array.prototype.push);
 };
 
@@ -9648,12 +9709,12 @@ Gauges.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Gauges.prototype.page = function(){
+Gauges.prototype.page = function() {
   push('track');
 };
 
-}, {"analytics.js-integration":92,"global-queue":163}],
-38: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"global-queue":165}],
+39: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9680,15 +9741,15 @@ var GetSatisfaction = module.exports = integration('Get Satisfaction')
  * @api public
  */
 
-GetSatisfaction.prototype.initialize = function(){
+GetSatisfaction.prototype.initialize = function() {
   var self = this;
   var widget = this.options.widgetId;
   var div = document.createElement('div');
   var id = div.id = 'getsat-widget-' + widget;
-  onBody(function(body){ body.appendChild(div); });
+  onBody(function(body) { body.appendChild(div); });
 
   // usually the snippet is sync, so wait for it before initializing the tab
-  this.load(function(){
+  this.load(function() {
     window.GSFN.loadWidget(widget, { containerId: id });
     self.ready();
   });
@@ -9701,12 +9762,12 @@ GetSatisfaction.prototype.initialize = function(){
  * @return {boolean}
  */
 
-GetSatisfaction.prototype.loaded = function(){
+GetSatisfaction.prototype.loaded = function() {
   return !!window.GSFN;
 };
 
-}, {"analytics.js-integration":92,"on-body":160}],
-39: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"on-body":162}],
+40: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9729,7 +9790,7 @@ var user;
  * Expose plugin.
  */
 
-module.exports = exports = function(analytics){
+module.exports = exports = function(analytics) {
   analytics.addIntegration(GA);
   user = analytics.user();
 };
@@ -9772,7 +9833,7 @@ var GA = exports.Integration = integration('Google Analytics')
  * On `construct` swap any config-based methods to the proper implementation.
  */
 
-GA.on('construct', function(integration){
+GA.on('construct', function(integration) {
   if (integration.options.classic) {
     integration.initialize = integration.initializeClassic;
     integration.loaded = integration.loadedClassic;
@@ -9801,12 +9862,12 @@ GA.on('construct', function(integration){
  * https://developers.google.com/analytics/devguides/collection/analyticsjs/advanced
  */
 
-GA.prototype.initialize = function(){
+GA.prototype.initialize = function() {
   var opts = this.options;
 
   // setup the tracker globals
   window.GoogleAnalyticsObject = 'ga';
-  window.ga = window.ga || function(){
+  window.ga = window.ga || function() {
     window.ga.q = window.ga.q || [];
     window.ga.q.push(arguments);
   };
@@ -9848,7 +9909,7 @@ GA.prototype.initialize = function(){
  * @return {Boolean}
  */
 
-GA.prototype.loaded = function(){
+GA.prototype.loaded = function() {
   return !!window.gaplugins;
 };
 
@@ -9862,7 +9923,7 @@ GA.prototype.loaded = function(){
  * @param {Page} page
  */
 
-GA.prototype.page = function(page){
+GA.prototype.page = function(page) {
   var category = page.category();
   var props = page.properties();
   var name = page.fullName();
@@ -9917,7 +9978,7 @@ GA.prototype.page = function(page){
  * @param {Identify} event
  */
 
-GA.prototype.identify = function(identify){
+GA.prototype.identify = function(identify) {
   var opts = this.options;
 
   if (opts.sendUserId && identify.userId()) {
@@ -9938,7 +9999,7 @@ GA.prototype.identify = function(identify){
  * @param {Track} event
  */
 
-GA.prototype.track = function(track, options){
+GA.prototype.track = function(track, options) {
   var contextOpts = track.options(this.name);
   var interfaceOpts = this.options;
   var opts = defaults(options || {}, contextOpts);
@@ -9977,7 +10038,7 @@ GA.prototype.track = function(track, options){
  * @api private
  */
 
-GA.prototype.completedOrder = function(track){
+GA.prototype.completedOrder = function(track) {
   var total = track.total() || track.revenue() || 0;
   var orderId = track.orderId();
   var products = track.products();
@@ -10003,7 +10064,7 @@ GA.prototype.completedOrder = function(track){
   });
 
   // add products
-  each(products, function(product){
+  each(products, function(product) {
     var productTrack = createProductTrack(track, product);
     window.ga('ecommerce:addItem', {
       category: productTrack.category(),
@@ -10026,7 +10087,7 @@ GA.prototype.completedOrder = function(track){
  * https://developers.google.com/analytics/devguides/collection/gajs/methods/gaJSApiBasicConfiguration
  */
 
-GA.prototype.initializeClassic = function(){
+GA.prototype.initializeClassic = function() {
   var opts = this.options;
   var anonymize = opts.anonymizeIp;
   var domain = opts.domain;
@@ -10050,7 +10111,7 @@ GA.prototype.initializeClassic = function(){
 
   if (ignore) {
     if (!is.array(ignore)) ignore = [ignore];
-    each(ignore, function(domain){
+    each(ignore, function(domain) {
       push('_addIgnoredRef', domain);
     });
   }
@@ -10069,7 +10130,7 @@ GA.prototype.initializeClassic = function(){
  * @return {Boolean}
  */
 
-GA.prototype.loadedClassic = function(){
+GA.prototype.loadedClassic = function() {
   return !!(window._gaq && window._gaq.push !== Array.prototype.push);
 };
 
@@ -10081,7 +10142,7 @@ GA.prototype.loadedClassic = function(){
  * @param {Page} page
  */
 
-GA.prototype.pageClassic = function(page){
+GA.prototype.pageClassic = function(page) {
   var category = page.category();
   var props = page.properties();
   var name = page.fullName();
@@ -10110,7 +10171,7 @@ GA.prototype.pageClassic = function(page){
  * @param {Track} track
  */
 
-GA.prototype.trackClassic = function(track, options){
+GA.prototype.trackClassic = function(track, options) {
   var opts = options || track.options(this.name);
   var props = track.properties();
   var revenue = track.revenue();
@@ -10132,7 +10193,7 @@ GA.prototype.trackClassic = function(track, options){
  * @api private
  */
 
-GA.prototype.completedOrderClassic = function(track){
+GA.prototype.completedOrderClassic = function(track) {
   var total = track.total() || track.revenue() || 0;
   var orderId = track.orderId();
   var products = track.products() || [];
@@ -10154,7 +10215,7 @@ GA.prototype.completedOrderClassic = function(track){
     track.country());
 
   // add items
-  each(products, function(product){
+  each(products, function(product) {
     var track = new Track({ properties: product });
     push('_addItem',
       orderId,
@@ -10214,7 +10275,7 @@ function formatValue(value) {
  * @api private
  */
 
-function metrics(obj, data){
+function metrics(obj, data) {
   var dimensions = data.dimensions;
   var metrics = data.metrics;
   var names = keys(metrics).concat(keys(dimensions));
@@ -10237,7 +10298,7 @@ function metrics(obj, data){
  * @param {Track} track
  */
 
-GA.prototype.loadEnhancedEcommerce = function(track){
+GA.prototype.loadEnhancedEcommerce = function(track) {
   if (!this.enhancedEcommerceLoaded) {
     window.ga('require', 'ec');
     this.enhancedEcommerceLoaded = true;
@@ -10254,7 +10315,7 @@ GA.prototype.loadEnhancedEcommerce = function(track){
  * @param {Track} track
  */
 
-GA.prototype.pushEnhancedEcommerce = function(track){
+GA.prototype.pushEnhancedEcommerce = function(track) {
   // Send a custom non-interaction event to ensure all EE data is pushed.
   // Without doing this we'd need to require page display after setting EE data.
   window.ga('send', 'event', track.category() || 'EnhancedEcommerce', track.event(), { nonInteraction: 1 });
@@ -10269,7 +10330,7 @@ GA.prototype.pushEnhancedEcommerce = function(track){
  * @param {Track} track
  */
 
-GA.prototype.startedOrderEnhanced = function(track){
+GA.prototype.startedOrderEnhanced = function(track) {
   // same as viewed checkout step #1
   this.viewedCheckoutStep(track);
 };
@@ -10283,7 +10344,7 @@ GA.prototype.startedOrderEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.updatedOrderEnhanced = function(track){
+GA.prototype.updatedOrderEnhanced = function(track) {
   // Same event as started order - will override
   this.startedOrderEnhanced(track);
 };
@@ -10297,14 +10358,14 @@ GA.prototype.updatedOrderEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.viewedCheckoutStepEnhanced = function(track){
+GA.prototype.viewedCheckoutStepEnhanced = function(track) {
   var products = track.products();
   var props = track.properties();
   var options = extractCheckoutOptions(props);
 
   this.loadEnhancedEcommerce(track);
 
-  each(products, function(product){
+  each(products, function(product) {
     var productTrack = createProductTrack(track, product);
     enhancedEcommerceTrackProduct(productTrack);
   });
@@ -10326,7 +10387,7 @@ GA.prototype.viewedCheckoutStepEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.completedCheckoutStepEnhanced = function(track){
+GA.prototype.completedCheckoutStepEnhanced = function(track) {
   var props = track.properties();
   var options = extractCheckoutOptions(props);
 
@@ -10352,7 +10413,7 @@ GA.prototype.completedCheckoutStepEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.completedOrderEnhanced = function(track){
+GA.prototype.completedOrderEnhanced = function(track) {
   var total = track.total() || track.revenue() || 0;
   var orderId = track.orderId();
   var products = track.products();
@@ -10363,7 +10424,7 @@ GA.prototype.completedOrderEnhanced = function(track){
 
   this.loadEnhancedEcommerce(track);
 
-  each(products, function(product){
+  each(products, function(product) {
     var productTrack = createProductTrack(track, product);
     enhancedEcommerceTrackProduct(productTrack);
   });
@@ -10389,7 +10450,7 @@ GA.prototype.completedOrderEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.refundedOrderEnhanced = function(track){
+GA.prototype.refundedOrderEnhanced = function(track) {
   var orderId = track.orderId();
   var products = track.products();
 
@@ -10399,7 +10460,7 @@ GA.prototype.refundedOrderEnhanced = function(track){
   this.loadEnhancedEcommerce(track);
 
   // Without any products it's a full refund
-  each(products, function(product){
+  each(products, function(product) {
     var track = new Track({ properties: product });
     window.ga('ec:addProduct', {
       id: track.id() || track.sku(),
@@ -10423,7 +10484,7 @@ GA.prototype.refundedOrderEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.addedProductEnhanced = function(track){
+GA.prototype.addedProductEnhanced = function(track) {
   this.loadEnhancedEcommerce(track);
   enhancedEcommerceProductAction(track, 'add');
   this.pushEnhancedEcommerce(track);
@@ -10438,7 +10499,7 @@ GA.prototype.addedProductEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.removedProductEnhanced = function(track){
+GA.prototype.removedProductEnhanced = function(track) {
   this.loadEnhancedEcommerce(track);
   enhancedEcommerceProductAction(track, 'remove');
   this.pushEnhancedEcommerce(track);
@@ -10453,7 +10514,7 @@ GA.prototype.removedProductEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.viewedProductEnhanced = function(track){
+GA.prototype.viewedProductEnhanced = function(track) {
   this.loadEnhancedEcommerce(track);
   enhancedEcommerceProductAction(track, 'detail');
   this.pushEnhancedEcommerce(track);
@@ -10468,7 +10529,7 @@ GA.prototype.viewedProductEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.clickedProductEnhanced = function(track){
+GA.prototype.clickedProductEnhanced = function(track) {
   var props = track.properties();
 
   this.loadEnhancedEcommerce(track);
@@ -10487,7 +10548,7 @@ GA.prototype.clickedProductEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.viewedPromotionEnhanced = function(track){
+GA.prototype.viewedPromotionEnhanced = function(track) {
   var props = track.properties();
 
   this.loadEnhancedEcommerce(track);
@@ -10509,7 +10570,7 @@ GA.prototype.viewedPromotionEnhanced = function(track){
  * @param {Track} track
  */
 
-GA.prototype.clickedPromotionEnhanced = function(track){
+GA.prototype.clickedPromotionEnhanced = function(track) {
   var props = track.properties();
 
   this.loadEnhancedEcommerce(track);
@@ -10532,7 +10593,7 @@ GA.prototype.clickedPromotionEnhanced = function(track){
  * @param {Track} track
  */
 
-function enhancedEcommerceTrackProduct(track){
+function enhancedEcommerceTrackProduct(track) {
   var props = track.properties();
 
   window.ga('ec:addProduct', {
@@ -10556,7 +10617,7 @@ function enhancedEcommerceTrackProduct(track){
  * @param {Object} data
  */
 
-function enhancedEcommerceProductAction(track, action, data){
+function enhancedEcommerceProductAction(track, action, data) {
   enhancedEcommerceTrackProduct(track);
   window.ga('ec:setAction', action, data || {});
 }
@@ -10569,14 +10630,14 @@ function enhancedEcommerceProductAction(track, action, data){
  * @return {string|null}
  */
 
-function extractCheckoutOptions(props){
+function extractCheckoutOptions(props) {
   var options = [
     props.paymentMethod,
     props.shippingMethod
   ];
 
   // Remove all nulls, empty strings, zeroes, and join with commas.
-  var valid = select(options, function(e){return e; });
+  var valid = select(options, function(e) {return e; });
   return valid.length > 0 ? valid.join(', ') : null;
 }
 
@@ -10594,8 +10655,8 @@ function createProductTrack(track, properties) {
   return new Track({ properties: properties });
 }
 
-}, {"facade":135,"defaults":159,"obj-case":96,"each":4,"analytics.js-integration":92,"is":95,"object":173,"global-queue":163,"select":174,"use-https":94}],
-173: [function(require, module, exports) {
+}, {"facade":137,"defaults":161,"obj-case":98,"each":4,"analytics.js-integration":94,"is":97,"object":175,"global-queue":165,"select":176,"use-https":96}],
+175: [function(require, module, exports) {
 
 /**
  * HOP ref.
@@ -10681,7 +10742,7 @@ exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
 }, {}],
-174: [function(require, module, exports) {
+176: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -10711,8 +10772,8 @@ module.exports = function(arr, fn){
   return ret;
 };
 
-}, {"to-function":175}],
-175: [function(require, module, exports) {
+}, {"to-function":177}],
+177: [function(require, module, exports) {
 
 /**
  * Module Dependencies
@@ -10866,8 +10927,8 @@ function stripNested (prop, str, val) {
   });
 }
 
-}, {"props":122,"component-props":122}],
-40: [function(require, module, exports) {
+}, {"props":124,"component-props":124}],
+41: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -10897,7 +10958,7 @@ var GTM = module.exports = integration('Google Tag Manager')
  * @api public
  */
 
-GTM.prototype.initialize = function(){
+GTM.prototype.initialize = function() {
   push({ 'gtm.start': Number(new Date()), event: 'gtm.js' });
   this.load(this.ready);
 };
@@ -10909,7 +10970,7 @@ GTM.prototype.initialize = function(){
  * @return {boolean}
  */
 
-GTM.prototype.loaded = function(){
+GTM.prototype.loaded = function() {
   return !!(window.dataLayer && Array.prototype.push !== window.dataLayer.push);
 };
 
@@ -10920,7 +10981,7 @@ GTM.prototype.loaded = function(){
  * @param {Page} page
  */
 
-GTM.prototype.page = function(page){
+GTM.prototype.page = function(page) {
   var category = page.category();
   var name = page.fullName();
   var opts = this.options;
@@ -10950,14 +11011,14 @@ GTM.prototype.page = function(page){
  * @param {Track} track
  */
 
-GTM.prototype.track = function(track){
+GTM.prototype.track = function(track) {
   var props = track.properties();
   props.event = track.event();
   push(props);
 };
 
-}, {"analytics.js-integration":92,"global-queue":163}],
-41: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"global-queue":165}],
+42: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -10995,13 +11056,13 @@ var GoSquared = module.exports = integration('GoSquared')
  * @api public
  */
 
-GoSquared.prototype.initialize = function(){
+GoSquared.prototype.initialize = function() {
   var self = this;
   var options = this.options;
   var user = this.analytics.user();
   push(options.apiSecret);
 
-  each(options, function(name, value){
+  each(options, function(name, value) {
     if (name === 'apiSecret') return;
     if (value == null) return;
     push('set', name, value);
@@ -11022,7 +11083,7 @@ GoSquared.prototype.initialize = function(){
  * @return {boolean}
  */
 
-GoSquared.prototype.loaded = function(){
+GoSquared.prototype.loaded = function() {
   // If the tracker version is set, the library has loaded
   return !!(window._gs && window._gs.v);
 };
@@ -11035,7 +11096,7 @@ GoSquared.prototype.loaded = function(){
  * @param {Page} page
  */
 
-GoSquared.prototype.page = function(page){
+GoSquared.prototype.page = function(page) {
   var props = page.properties();
   var name = page.fullName();
   push('track', props.path, name || props.title);
@@ -11049,7 +11110,7 @@ GoSquared.prototype.page = function(page){
  * @param {Identify} identify
  */
 
-GoSquared.prototype.identify = function(identify){
+GoSquared.prototype.identify = function(identify) {
   var traits = identify.traits({
     createdAt: 'created_at',
     firstName: 'first_name',
@@ -11090,12 +11151,6 @@ GoSquared.prototype.identify = function(identify){
   } else {
     push('properties', props);
   }
-
-  var email = identify.email();
-  var username = identify.username();
-
-  var name = email || username || id;
-  if (name) push('set', 'visitorName', name);
 };
 
 /**
@@ -11106,7 +11161,7 @@ GoSquared.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-GoSquared.prototype.track = function(track){
+GoSquared.prototype.track = function(track) {
   push('event', track.event(), track.properties());
 };
 
@@ -11119,11 +11174,11 @@ GoSquared.prototype.track = function(track){
  * @param {Track} track
  */
 
-GoSquared.prototype.completedOrder = function(track){
+GoSquared.prototype.completedOrder = function(track) {
   var products = track.products();
   var items = [];
 
-  each(products, function(product){
+  each(products, function(product) {
     var track = new Track({ properties: product });
     items.push({
       category: track.category(),
@@ -11146,16 +11201,16 @@ GoSquared.prototype.completedOrder = function(track){
  * @param {...*} args
  */
 
-function push(){
-  window._gs = window._gs || function(){
+function push() {
+  window._gs = window._gs || function() {
     window._gs.q.push(arguments);
   };
   window._gs.q = window._gs.q || [];
   window._gs.apply(null, arguments);
 }
 
-}, {"facade":135,"each":4,"analytics.js-integration":92,"omit":176,"pick":177}],
-176: [function(require, module, exports) {
+}, {"facade":137,"each":4,"analytics.js-integration":94,"omit":178,"pick":179}],
+178: [function(require, module, exports) {
 /**
  * Expose `omit`.
  */
@@ -11183,7 +11238,7 @@ function omit(keys, object){
   return ret;
 }
 }, {}],
-177: [function(require, module, exports) {
+179: [function(require, module, exports) {
 
 /**
  * Expose `pick`.
@@ -11210,7 +11265,7 @@ function pick(obj){
   return ret;
 }
 }, {}],
-42: [function(require, module, exports) {
+43: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11236,20 +11291,20 @@ var Heap = module.exports = integration('Heap')
  * @api public
  */
 
-Heap.prototype.initialize = function(){
+Heap.prototype.initialize = function() {
   window.heap = window.heap || [];
-  window.heap.load = function(appid, config){
+  window.heap.load = function(appid, config) {
     window.heap.appid = appid;
     window.heap.config = config;
 
-    var methodFactory = function(type){
-      return function(){
+    var methodFactory = function(type) {
+      return function() {
         window.heap.push([type].concat(Array.prototype.slice.call(arguments, 0)));
       };
     };
 
     var heapMethods = ['clearEventProperties', 'identify', 'setEventProperties', 'track', 'unsetEventProperty'];
-    each(heapMethods, function(method){
+    each(heapMethods, function(method) {
       window.heap[method] = methodFactory(method);
     });
   };
@@ -11265,7 +11320,7 @@ Heap.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Heap.prototype.loaded = function(){
+Heap.prototype.loaded = function() {
   return !!(window.heap && window.heap.appid);
 };
 
@@ -11278,7 +11333,7 @@ Heap.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Heap.prototype.identify = function(identify){
+Heap.prototype.identify = function(identify) {
   var traits = identify.traits({ email: '_email' });
   var id = identify.userId();
   if (id) traits.handle = id;
@@ -11294,12 +11349,12 @@ Heap.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Heap.prototype.track = function(track){
+Heap.prototype.track = function(track) {
   window.heap.track(track.event(), track.properties());
 };
 
-}, {"analytics.js-integration":92,"each":4}],
-43: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"each":4}],
+44: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11325,7 +11380,7 @@ var Hellobar = module.exports = integration('Hello Bar')
  * @api public
  */
 
-Hellobar.prototype.initialize = function(){
+Hellobar.prototype.initialize = function() {
   window._hbq = window._hbq || [];
   this.load(this.ready);
 };
@@ -11337,12 +11392,12 @@ Hellobar.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Hellobar.prototype.loaded = function(){
+Hellobar.prototype.loaded = function() {
   return !!(window._hbq && window._hbq.push !== Array.prototype.push);
 };
 
-}, {"analytics.js-integration":92}],
-44: [function(require, module, exports) {
+}, {"analytics.js-integration":94}],
+45: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11367,7 +11422,7 @@ var HitTail = module.exports = integration('HitTail')
  * @api public
  */
 
-HitTail.prototype.initialize = function(){
+HitTail.prototype.initialize = function() {
   this.load(this.ready);
 };
 
@@ -11378,12 +11433,12 @@ HitTail.prototype.initialize = function(){
  * @return {boolean}
  */
 
-HitTail.prototype.loaded = function(){
+HitTail.prototype.loaded = function() {
   return is.fn(window.htk);
 };
 
-}, {"analytics.js-integration":92,"is":95}],
-45: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"is":97}],
+46: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11409,7 +11464,7 @@ var HubSpot = module.exports = integration('HubSpot')
  * @api public
  */
 
-HubSpot.prototype.initialize = function(){
+HubSpot.prototype.initialize = function() {
   window._hsq = [];
   var cacheBuster = Math.ceil(new Date() / 300000) * 300000;
   this.load({ cacheBuster: cacheBuster }, this.ready);
@@ -11422,7 +11477,7 @@ HubSpot.prototype.initialize = function(){
  * @return {boolean}
  */
 
-HubSpot.prototype.loaded = function(){
+HubSpot.prototype.loaded = function() {
   return !!(window._hsq && window._hsq.push !== Array.prototype.push);
 };
 
@@ -11433,7 +11488,7 @@ HubSpot.prototype.loaded = function(){
  * @param {Page} page
  */
 
-HubSpot.prototype.page = function(){
+HubSpot.prototype.page = function() {
   push('trackPageView');
 };
 
@@ -11444,7 +11499,7 @@ HubSpot.prototype.page = function(){
  * @param {Identify} identify
  */
 
-HubSpot.prototype.identify = function(identify){
+HubSpot.prototype.identify = function(identify) {
   if (!identify.email()) return;
   var traits = identify.traits();
   traits = convertDates(traits);
@@ -11458,7 +11513,7 @@ HubSpot.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-HubSpot.prototype.track = function(track){
+HubSpot.prototype.track = function(track) {
   var props = track.properties();
   props = convertDates(props);
   push('trackEvent', track.event(), props);
@@ -11471,12 +11526,12 @@ HubSpot.prototype.track = function(track){
  * @param {Object} properties
  */
 
-function convertDates(properties){
-  return convert(properties, function(date){ return date.getTime(); });
+function convertDates(properties) {
+  return convert(properties, function(date) { return date.getTime(); });
 }
 
-}, {"convert-dates":168,"analytics.js-integration":92,"global-queue":163}],
-46: [function(require, module, exports) {
+}, {"convert-dates":170,"analytics.js-integration":94,"global-queue":165}],
+47: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11504,7 +11559,7 @@ var Improvely = module.exports = integration('Improvely')
  * @api public
  */
 
-Improvely.prototype.initialize = function(){
+Improvely.prototype.initialize = function() {
   // Shim out the Improvely library/globals.
   window._improvely = [];
   /* eslint-disable */
@@ -11524,7 +11579,7 @@ Improvely.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Improvely.prototype.loaded = function(){
+Improvely.prototype.loaded = function() {
   return !!(window.improvely && window.improvely.identify);
 };
 
@@ -11537,7 +11592,7 @@ Improvely.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Improvely.prototype.identify = function(identify){
+Improvely.prototype.identify = function(identify) {
   var id = identify.userId();
   if (id) window.improvely.label(id);
 };
@@ -11551,14 +11606,14 @@ Improvely.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Improvely.prototype.track = function(track){
+Improvely.prototype.track = function(track) {
   var props = track.properties({ revenue: 'amount' });
   props.type = track.event();
   window.improvely.goal(props);
 };
 
-}, {"analytics.js-integration":92}],
-47: [function(require, module, exports) {
+}, {"analytics.js-integration":94}],
+48: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11585,7 +11640,7 @@ var InsideVault = module.exports = integration('InsideVault')
  * @api public
  */
 
-InsideVault.prototype.initialize = function(){
+InsideVault.prototype.initialize = function() {
   var domain = this.options.domain;
   window._iva = window._iva || [];
   push('setClientId', this.options.clientId);
@@ -11602,7 +11657,7 @@ InsideVault.prototype.initialize = function(){
  * @return {boolean}
  */
 
-InsideVault.prototype.loaded = function(){
+InsideVault.prototype.loaded = function() {
   return !!(window._iva && window._iva.push !== Array.prototype.push);
 };
 
@@ -11613,7 +11668,7 @@ InsideVault.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-InsideVault.prototype.identify = function(identify){
+InsideVault.prototype.identify = function(identify) {
   push('setUserId', identify.anonymousId());
 };
 
@@ -11623,7 +11678,7 @@ InsideVault.prototype.identify = function(identify){
  * @param {Page} page
  */
 
-InsideVault.prototype.page = function(){
+InsideVault.prototype.page = function() {
   // they want every landing page to send a "click" event.
   push('trackEvent', 'click');
 };
@@ -11636,12 +11691,12 @@ InsideVault.prototype.page = function(){
  * @param {Track} track
  */
 
-InsideVault.prototype.track = function(track){
+InsideVault.prototype.track = function(track) {
   var user = this.analytics.user();
   var events = this.events(track.event());
   var value = track.revenue() || track.value() || 0;
   var eventId = track.orderId() || user.anonymousId() || '';
-  each(events, function(event){
+  each(events, function(event) {
     // 'sale' is a special event that will be routed to a table that is deprecated on InsideVault's end.
     // They don't want a generic 'sale' event to go to their deprecated table.
     if (event !== 'sale') {
@@ -11650,8 +11705,8 @@ InsideVault.prototype.track = function(track){
   });
 };
 
-}, {"each":4,"analytics.js-integration":92,"global-queue":163}],
-48: [function(require, module, exports) {
+}, {"each":4,"analytics.js-integration":94,"global-queue":165}],
+49: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11679,7 +11734,7 @@ var Inspectlet = module.exports = integration('Inspectlet')
  * @api public
  */
 
-Inspectlet.prototype.initialize = function(){
+Inspectlet.prototype.initialize = function() {
   push('wid', this.options.wid);
   this.load(this.ready);
 };
@@ -11691,7 +11746,7 @@ Inspectlet.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Inspectlet.prototype.loaded = function(){
+Inspectlet.prototype.loaded = function() {
   return !!(window.__insp_ && window.__insp);
 };
 
@@ -11704,7 +11759,7 @@ Inspectlet.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Inspectlet.prototype.identify = function(identify){
+Inspectlet.prototype.identify = function(identify) {
   var traits = identify.traits({ id: 'userid' });
   var email = identify.email();
   if (email) push('identify', email);
@@ -11720,7 +11775,7 @@ Inspectlet.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Inspectlet.prototype.track = function(track){
+Inspectlet.prototype.track = function(track) {
   push('tagSession', track.event());
 };
 
@@ -11733,12 +11788,12 @@ Inspectlet.prototype.track = function(track){
  * @param {Track} track
  */
 
-Inspectlet.prototype.page = function(){
+Inspectlet.prototype.page = function() {
   push('virtualPage');
 };
 
-}, {"analytics.js-integration":92,"global-queue":163}],
-49: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"global-queue":165}],
+50: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11770,9 +11825,9 @@ var Intercom = module.exports = integration('Intercom')
  * @api public
  */
 
-Intercom.prototype.initialize = function(){
+Intercom.prototype.initialize = function() {
   // Shim out the Intercom library.
-  window.Intercom = function(){
+  window.Intercom = function() {
     window.Intercom.q.push(arguments);
   };
   window.Intercom.q = [];
@@ -11787,7 +11842,7 @@ Intercom.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Intercom.prototype.loaded = function(){
+Intercom.prototype.loaded = function() {
   return is.fn(window.Intercom);
 };
 
@@ -11798,7 +11853,7 @@ Intercom.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Intercom.prototype.page = function(){
+Intercom.prototype.page = function() {
   this.bootOrUpdate();
 };
 
@@ -11811,7 +11866,7 @@ Intercom.prototype.page = function(){
  * @param {Identify} identify
  */
 
-Intercom.prototype.identify = function(identify){
+Intercom.prototype.identify = function(identify) {
   var traits = identify.traits({ userId: 'user_id' });
   var opts = identify.options(this.name);
   var companyCreated = identify.companyCreated();
@@ -11868,7 +11923,7 @@ Intercom.prototype.identify = function(identify){
  * @param {Group} group
  */
 
-Intercom.prototype.group = function(group){
+Intercom.prototype.group = function(group) {
   var props = group.properties();
   props = alias(props, { createdAt: 'created' });
   props = alias(props, { created: 'created_at' });
@@ -11884,7 +11939,7 @@ Intercom.prototype.group = function(group){
  * @param {Track} track
  */
 
-Intercom.prototype.track = function(track){
+Intercom.prototype.track = function(track) {
   api('trackEvent', track.event(), track.properties());
 };
 
@@ -11895,7 +11950,7 @@ Intercom.prototype.track = function(track){
  * @param {Object} options
  */
 
-Intercom.prototype.bootOrUpdate = function(options){
+Intercom.prototype.bootOrUpdate = function(options) {
   options = options || {};
   var method = this.booted === true ? 'update' : 'boot';
   var activator = this.options.activator;
@@ -11920,7 +11975,7 @@ Intercom.prototype.bootOrUpdate = function(options){
  * @return {number}
  */
 
-function formatDate(date){
+function formatDate(date) {
   return Math.floor(date / 1000);
 }
 
@@ -11930,12 +11985,12 @@ function formatDate(date){
  * @api private
  */
 
-function api(){
+function api() {
   window.Intercom.apply(window.Intercom, arguments);
 }
 
-}, {"alias":167,"convert-dates":168,"defaults":159,"obj-case":96,"analytics.js-integration":92,"is":95}],
-50: [function(require, module, exports) {
+}, {"alias":169,"convert-dates":170,"defaults":161,"obj-case":98,"analytics.js-integration":94,"is":97}],
+51: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11970,7 +12025,7 @@ var Keen = module.exports = integration('Keen IO')
  * @api public
  */
 
-Keen.prototype.initialize = function(){
+Keen.prototype.initialize = function() {
   /**
    * Shim out the Keen client library.
    *
@@ -12002,7 +12057,7 @@ Keen.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Keen.prototype.loaded = function(){
+Keen.prototype.loaded = function() {
   return !!(window.Keen && window.Keen.prototype.configure);
 };
 
@@ -12013,7 +12068,7 @@ Keen.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Keen.prototype.page = function(page){
+Keen.prototype.page = function(page) {
   var category = page.category();
   var name = page.fullName();
   var opts = this.options;
@@ -12048,7 +12103,7 @@ Keen.prototype.page = function(page){
  * @param {Identify} identify
  */
 
-Keen.prototype.identify = function(identify){
+Keen.prototype.identify = function(identify) {
   var traits = identify.traits();
   var id = identify.userId();
   var user = {};
@@ -12056,7 +12111,7 @@ Keen.prototype.identify = function(identify){
   if (traits) user.traits = traits;
   var props = { user: user };
   this.addons(props, identify);
-  this.client.setGlobalProperties(function(){
+  this.client.setGlobalProperties(function() {
     return clone(props);
   });
 };
@@ -12068,7 +12123,7 @@ Keen.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Keen.prototype.track = function(track){
+Keen.prototype.track = function(track) {
   var props = track.properties();
   this.addons(props, track);
   this.client.addEvent(track.event(), props);
@@ -12082,7 +12137,7 @@ Keen.prototype.track = function(track){
  * @param {Facade} msg
  */
 
-Keen.prototype.addons = function(obj, msg){
+Keen.prototype.addons = function(obj, msg) {
   var options = this.options;
   var addons = [];
 
@@ -12132,8 +12187,8 @@ Keen.prototype.addons = function(obj, msg){
   };
 };
 
-}, {"analytics.js-integration":92,"clone":98}],
-51: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"clone":100}],
+52: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12162,7 +12217,7 @@ var Kenshoo = module.exports = integration('Kenshoo')
  * @api public
  */
 
-Kenshoo.prototype.initialize = function(){
+Kenshoo.prototype.initialize = function() {
   this.load(this.ready);
 };
 
@@ -12173,7 +12228,7 @@ Kenshoo.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Kenshoo.prototype.loaded = function(){
+Kenshoo.prototype.loaded = function() {
   return is.fn(window.k_trackevent);
 };
 
@@ -12189,7 +12244,7 @@ Kenshoo.prototype.loaded = function(){
  * @param {Track} event
  */
 
-Kenshoo.prototype.track = function(track){
+Kenshoo.prototype.track = function(track) {
   var events = this.options.events;
   var event = track.event();
   var revenue = track.revenue() || 0;
@@ -12213,8 +12268,8 @@ Kenshoo.prototype.track = function(track){
   window.k_trackevent(params, this.options.subdomain);
 };
 
-}, {"includes":127,"analytics.js-integration":92,"is":95}],
-52: [function(require, module, exports) {
+}, {"includes":129,"analytics.js-integration":94,"is":97}],
+53: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12261,12 +12316,12 @@ exports.isMobile = navigator.userAgent.match(/Android/i)
  * @param {Object} page
  */
 
-KISSmetrics.prototype.initialize = function(page){
+KISSmetrics.prototype.initialize = function(page) {
   var self = this;
   window._kmq = [];
   if (exports.isMobile) push('set', { 'Mobile Session': 'Yes' });
 
-  this.load('library', function(){
+  this.load('library', function() {
     self.trackPage(page);
     self.ready();
   });
@@ -12278,7 +12333,7 @@ KISSmetrics.prototype.initialize = function(page){
  * @return {Boolean}
  */
 
-KISSmetrics.prototype.loaded = function(){
+KISSmetrics.prototype.loaded = function() {
   return is.object(window.KM);
 };
 
@@ -12288,7 +12343,7 @@ KISSmetrics.prototype.loaded = function(){
  * @param {Page} page
  */
 
-KISSmetrics.prototype.page = function(page){
+KISSmetrics.prototype.page = function(page) {
   if (!window.KM_SKIP_PAGE_VIEW) window.KM.pageView();
   this.trackPage(page);
 };
@@ -12299,7 +12354,7 @@ KISSmetrics.prototype.page = function(page){
  * @param {Page} page
  */
 
-KISSmetrics.prototype.trackPage = function(page){
+KISSmetrics.prototype.trackPage = function(page) {
   var category = page.category();
   var name = page.fullName();
   var opts = this.options;
@@ -12321,7 +12376,7 @@ KISSmetrics.prototype.trackPage = function(page){
  * @param {Identify} identify
  */
 
-KISSmetrics.prototype.identify = function(identify){
+KISSmetrics.prototype.identify = function(identify) {
   var traits = identify.traits();
   var id = identify.userId();
   if (id) push('identify', id);
@@ -12334,7 +12389,7 @@ KISSmetrics.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-KISSmetrics.prototype.track = function(track){
+KISSmetrics.prototype.track = function(track) {
   var mapping = { revenue: 'Billing Amount' };
   var event = track.event();
   var properties = track.properties(mapping);
@@ -12348,7 +12403,7 @@ KISSmetrics.prototype.track = function(track){
  * @param {Alias} to
  */
 
-KISSmetrics.prototype.alias = function(alias){
+KISSmetrics.prototype.alias = function(alias) {
   push('alias', alias.to(), alias.from());
 };
 
@@ -12359,7 +12414,7 @@ KISSmetrics.prototype.alias = function(alias){
  * @api private
  */
 
-KISSmetrics.prototype.completedOrder = function(track){
+KISSmetrics.prototype.completedOrder = function(track) {
   var products = track.products();
   var event = track.event();
 
@@ -12367,9 +12422,9 @@ KISSmetrics.prototype.completedOrder = function(track){
   push('record', event, prefix(event, track.properties()));
 
   // items
-  window._kmq.push(function(){
+  window._kmq.push(function() {
     var km = window.KM;
-    each(products, function(product, i){
+    each(products, function(product, i) {
       var item = prefix(event, product);
       item._t = km.ts() + i;
       item._d = 1;
@@ -12387,9 +12442,9 @@ KISSmetrics.prototype.completedOrder = function(track){
  * @api private
  */
 
-function prefix(event, properties){
+function prefix(event, properties) {
   var prefixed = {};
-  each(properties, function(key, val){
+  each(properties, function(key, val) {
     if (key === 'Billing Amount') {
       prefixed[key] = val;
     } else {
@@ -12399,8 +12454,8 @@ function prefix(event, properties){
   return prefixed;
 }
 
-}, {"each":4,"analytics.js-integration":92,"is":95,"global-queue":163}],
-53: [function(require, module, exports) {
+}, {"each":4,"analytics.js-integration":94,"is":97,"global-queue":165}],
+54: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12441,10 +12496,10 @@ var Klaviyo = module.exports = integration('Klaviyo')
  * @api public
  */
 
-Klaviyo.prototype.initialize = function(){
+Klaviyo.prototype.initialize = function() {
   var self = this;
   push('account', this.options.apiKey);
-  this.load(function(){
+  this.load(function() {
     tick(self.ready);
   });
 };
@@ -12456,7 +12511,7 @@ Klaviyo.prototype.initialize = function(){
  * @return {Boolean}
  */
 
-Klaviyo.prototype.loaded = function(){
+Klaviyo.prototype.loaded = function() {
   return !!(window._learnq && window._learnq.push !== Array.prototype.push);
 };
 
@@ -12467,7 +12522,7 @@ Klaviyo.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Klaviyo.prototype.identify = function(identify){
+Klaviyo.prototype.identify = function(identify) {
   var traits = identify.traits(traitAliases);
   if (!traits.$id && !traits.$email) return;
   push('identify', traits);
@@ -12479,7 +12534,7 @@ Klaviyo.prototype.identify = function(identify){
  * @param {Group} group
  */
 
-Klaviyo.prototype.group = function(group){
+Klaviyo.prototype.group = function(group) {
   var props = group.properties();
   if (!props.name) return;
   push('identify', { $organization: props.name });
@@ -12491,14 +12546,14 @@ Klaviyo.prototype.group = function(group){
  * @param {Track} track
  */
 
-Klaviyo.prototype.track = function(track){
+Klaviyo.prototype.track = function(track) {
   push('track', track.event(), track.properties({
     revenue: '$value'
   }));
 };
 
-}, {"analytics.js-integration":92,"global-queue":163,"next-tick":118}],
-54: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"global-queue":165,"next-tick":120}],
+55: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12543,7 +12598,7 @@ var integrationContext = {
  * @api public
  */
 
-LiveChat.prototype.initialize = function(){
+LiveChat.prototype.initialize = function() {
   var self = this;
   var user = this.analytics.user();
   var identify = new Identify({
@@ -12559,10 +12614,10 @@ LiveChat.prototype.initialize = function(){
   // listen is not an option we need from clone
   delete window.__lc.listen;
 
-  this.load(function(){
-    when(function(){
+  this.load(function() {
+    when(function() {
       return self.loaded();
-    }, function(){
+    }, function() {
       if (self.options.listen) self.attachListeners();
       tick(self.ready);
     });
@@ -12576,7 +12631,7 @@ LiveChat.prototype.initialize = function(){
  * @return {boolean}
  */
 
-LiveChat.prototype.loaded = function(){
+LiveChat.prototype.loaded = function() {
   return !!(window.LC_API && window.LC_Invite);
 };
 
@@ -12587,7 +12642,7 @@ LiveChat.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-LiveChat.prototype.identify = function(identify){
+LiveChat.prototype.identify = function(identify) {
   var traits = identify.traits({ userId: 'User ID' });
   window.LC_API.set_custom_variables(convert(traits));
 };
@@ -12598,11 +12653,11 @@ LiveChat.prototype.identify = function(identify){
  * @api private
  */
 
-LiveChat.prototype.attachListeners = function(){
+LiveChat.prototype.attachListeners = function() {
   var self = this;
   window.LC_API = window.LC_API || {};
 
-  window.LC_API.on_chat_started = function(data){
+  window.LC_API.on_chat_started = function(data) {
     self.analytics.track(
       'Live Chat Conversation Started',
       { agentName: data.agent_name },
@@ -12610,7 +12665,7 @@ LiveChat.prototype.attachListeners = function(){
     });
   };
 
-  window.LC_API.on_message = function(data){
+  window.LC_API.on_message = function(data) {
     if (data.user_type === 'visitor') {
       self.analytics.track(
         'Live Chat Message Sent',
@@ -12626,7 +12681,7 @@ LiveChat.prototype.attachListeners = function(){
     }
   };
 
-  window.LC_API.on_chat_ended = function(){
+  window.LC_API.on_chat_ended = function() {
     self.analytics.track('Live Chat Conversation Ended');
   };
 };
@@ -12638,16 +12693,16 @@ LiveChat.prototype.attachListeners = function(){
  * @return {Array}
  */
 
-function convert(traits){
+function convert(traits) {
   var arr = [];
-  each(traits, function(key, value){
+  each(traits, function(key, value) {
     arr.push({ name: key, value: value });
   });
   return arr;
 }
 
-}, {"facade":135,"clone":98,"each":4,"analytics.js-integration":92,"next-tick":118,"when":165}],
-55: [function(require, module, exports) {
+}, {"facade":137,"clone":100,"each":4,"analytics.js-integration":94,"next-tick":120,"when":167}],
+56: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12678,7 +12733,7 @@ var LuckyOrange = module.exports = integration('Lucky Orange')
  * @api public
  */
 
-LuckyOrange.prototype.initialize = function(){
+LuckyOrange.prototype.initialize = function() {
   if (!window._loq) window._loq = [];
   window.__wtw_lucky_site_id = this.options.siteId;
 
@@ -12700,7 +12755,7 @@ LuckyOrange.prototype.initialize = function(){
  * @return {boolean}
  */
 
-LuckyOrange.prototype.loaded = function(){
+LuckyOrange.prototype.loaded = function() {
   return !!window.__wtw_watcher_added;
 };
 
@@ -12710,7 +12765,7 @@ LuckyOrange.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-LuckyOrange.prototype.identify = function(identify){
+LuckyOrange.prototype.identify = function(identify) {
   var traits = identify.traits();
   var email = identify.email();
   if (email) traits.email = email;
@@ -12719,8 +12774,8 @@ LuckyOrange.prototype.identify = function(identify){
   window.__wtw_custom_user_data = traits;
 };
 
-}, {"facade":135,"analytics.js-integration":92,"use-https":94}],
-56: [function(require, module, exports) {
+}, {"facade":137,"analytics.js-integration":94,"use-https":96}],
+57: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12758,7 +12813,7 @@ var aliases = {
  * @api public
  */
 
-Lytics.prototype.initialize = function(){
+Lytics.prototype.initialize = function() {
   var options = alias(this.options, aliases);
   /* eslint-disable */
   window.jstag = (function(){var t = { _q: [], _c: options, ts: (new Date()).getTime() }; t.send = function(){this._q.push(['ready', 'send', Array.prototype.slice.call(arguments)]); return this; }; return t; })();
@@ -12773,7 +12828,7 @@ Lytics.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Lytics.prototype.loaded = function(){
+Lytics.prototype.loaded = function() {
   return !!(window.jstag && window.jstag.bind);
 };
 
@@ -12784,7 +12839,7 @@ Lytics.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Lytics.prototype.page = function(page){
+Lytics.prototype.page = function(page) {
   window.jstag.send(page.properties());
 };
 
@@ -12795,7 +12850,7 @@ Lytics.prototype.page = function(page){
  * @param {Identify} identify
  */
 
-Lytics.prototype.identify = function(identify){
+Lytics.prototype.identify = function(identify) {
   var traits = identify.traits({ userId: '_uid' });
   window.jstag.send(traits);
 };
@@ -12807,14 +12862,14 @@ Lytics.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Lytics.prototype.track = function(track){
+Lytics.prototype.track = function(track) {
   var props = track.properties();
   props._e = track.event();
   window.jstag.send(props);
 };
 
-}, {"alias":167,"analytics.js-integration":92}],
-57: [function(require, module, exports) {
+}, {"alias":169,"analytics.js-integration":94}],
+58: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12868,7 +12923,7 @@ var optionsAliases = {
  * @api public
  */
 
-Mixpanel.prototype.initialize = function(){
+Mixpanel.prototype.initialize = function() {
   /* eslint-disable */
   (function(c, a){window.mixpanel = a; var b, d, h, e; a._i = []; a.init = function(b, c, f){function d(a, b){var c = b.split('.'); 2 == c.length && (a = a[c[0]], b = c[1]); a[b] = function(){a.push([b].concat(Array.prototype.slice.call(arguments, 0))); }; } var g = a; 'undefined' !== typeof f ? g = a[f] = [] : f = 'mixpanel'; g.people = g.people || []; h = ['disable', 'track', 'track_pageview', 'track_links', 'track_forms', 'register', 'register_once', 'unregister', 'identify', 'alias', 'name_tag', 'set_config', 'people.set', 'people.increment', 'people.track_charge', 'people.append']; for (e = 0; e < h.length; e++) d(g, h[e]); a._i.push([b, c, f]); }; a.__SV = 1.2; })(document, window.mixpanel || []);
   /* eslint-enable */
@@ -12885,7 +12940,7 @@ Mixpanel.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Mixpanel.prototype.loaded = function(){
+Mixpanel.prototype.loaded = function() {
   return !!(window.mixpanel && window.mixpanel.config);
 };
 
@@ -12898,7 +12953,7 @@ Mixpanel.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Mixpanel.prototype.page = function(page){
+Mixpanel.prototype.page = function(page) {
   var category = page.category();
   var name = page.fullName();
   var opts = this.options;
@@ -12945,7 +13000,7 @@ var traitAliases = {
  * @param {Identify} identify
  */
 
-Mixpanel.prototype.identify = function(identify){
+Mixpanel.prototype.identify = function(identify) {
   var username = identify.username();
   var email = identify.email();
   var id = identify.userId();
@@ -12974,7 +13029,7 @@ Mixpanel.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Mixpanel.prototype.track = function(track){
+Mixpanel.prototype.track = function(track) {
   var increments = this.options.increments;
   var increment = track.event().toLowerCase();
   var people = this.options.people;
@@ -12989,7 +13044,7 @@ Mixpanel.prototype.track = function(track){
   delete props.token;
 
   // convert arrays of objects to length, since mixpanel doesn't support object arrays
-  each(props, function(key, val){
+  each(props, function(key, val) {
     if (is.array(val) && some(val, is.object)) props[key] = val.length;
   });
 
@@ -13019,7 +13074,7 @@ Mixpanel.prototype.track = function(track){
  * @param {Alias} alias
  */
 
-Mixpanel.prototype.alias = function(alias){
+Mixpanel.prototype.alias = function(alias) {
   var mp = window.mixpanel;
   var to = alias.to();
   if (mp.get_distinct_id && mp.get_distinct_id() === to) return;
@@ -13037,7 +13092,7 @@ Mixpanel.prototype.alias = function(alias){
  * @return {Array}
  */
 
-function lowercase(arr){
+function lowercase(arr) {
   var ret = new Array(arr.length);
 
   for (var i = 0; i < arr.length; ++i) {
@@ -13047,8 +13102,8 @@ function lowercase(arr){
   return ret;
 }
 
-}, {"alias":167,"convert-dates":168,"obj-case":96,"each":4,"includes":127,"analytics.js-integration":92,"is":95,"to-iso-string":162,"some":178}],
-178: [function(require, module, exports) {
+}, {"alias":169,"convert-dates":170,"obj-case":98,"each":4,"includes":129,"analytics.js-integration":94,"is":97,"to-iso-string":164,"some":180}],
+180: [function(require, module, exports) {
 
 /**
  * some
@@ -13082,7 +13137,7 @@ module.exports = function (arr, fn) {
 };
 
 }, {}],
-58: [function(require, module, exports) {
+59: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13109,12 +13164,12 @@ var Mojn = module.exports = integration('Mojn')
  * @param {Object} page
  */
 
-Mojn.prototype.initialize = function(){
+Mojn.prototype.initialize = function() {
   window._mojnTrack = window._mojnTrack || [];
   window._mojnTrack.push({ cid: this.options.customerCode });
   var loaded = bind(this, this.loaded);
   var ready = this.ready;
-  this.load(function(){
+  this.load(function() {
     when(loaded, ready);
   });
 };
@@ -13126,7 +13181,7 @@ Mojn.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Mojn.prototype.loaded = function(){
+Mojn.prototype.loaded = function() {
   return is.object(window._mojnTrack);
 };
 
@@ -13137,7 +13192,7 @@ Mojn.prototype.loaded = function(){
  * @return {Element|undefined}
  */
 
-Mojn.prototype.identify = function(identify){
+Mojn.prototype.identify = function(identify) {
   var email = identify.email();
   if (!email) return;
   // TODO: Replace with a tag?
@@ -13157,7 +13212,7 @@ Mojn.prototype.identify = function(identify){
  * @return {string}
  */
 
-Mojn.prototype.track = function(track){
+Mojn.prototype.track = function(track) {
   var properties = track.properties();
   var revenue = properties.revenue;
   if (!revenue) return;
@@ -13168,8 +13223,8 @@ Mojn.prototype.track = function(track){
   return conv;
 };
 
-}, {"bind":105,"analytics.js-integration":92,"is":95,"when":165}],
-59: [function(require, module, exports) {
+}, {"bind":107,"analytics.js-integration":94,"is":97,"when":167}],
+60: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13198,7 +13253,7 @@ var Mouseflow = module.exports = integration('Mouseflow')
  * @api public
  */
 
-Mouseflow.prototype.initialize = function(){
+Mouseflow.prototype.initialize = function() {
   window.mouseflowHtmlDelay = this.options.mouseflowHtmlDelay;
   this.load(this.ready);
 };
@@ -13210,7 +13265,7 @@ Mouseflow.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Mouseflow.prototype.loaded = function(){
+Mouseflow.prototype.loaded = function() {
   return !!window.mouseflow;
 };
 
@@ -13223,7 +13278,7 @@ Mouseflow.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Mouseflow.prototype.page = function(){
+Mouseflow.prototype.page = function() {
   if (!window.mouseflow) return;
   if (typeof window.mouseflow.newPageView !== 'function') return;
   window.mouseflow.newPageView();
@@ -13238,7 +13293,7 @@ Mouseflow.prototype.page = function(){
  * @param {Identify} identify
  */
 
-Mouseflow.prototype.identify = function(identify){
+Mouseflow.prototype.identify = function(identify) {
   set(identify.traits());
 };
 
@@ -13251,7 +13306,7 @@ Mouseflow.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Mouseflow.prototype.track = function(track){
+Mouseflow.prototype.track = function(track) {
   var props = track.properties();
   props.event = track.event();
   set(props);
@@ -13264,14 +13319,14 @@ Mouseflow.prototype.track = function(track){
  * @param {Object} obj
  */
 
-function set(obj){
-  each(obj, function(key, value){
+function set(obj) {
+  each(obj, function(key, value) {
     push('setVariable', key, value);
   });
 }
 
-}, {"each":4,"analytics.js-integration":92,"global-queue":163}],
-60: [function(require, module, exports) {
+}, {"each":4,"analytics.js-integration":94,"global-queue":165}],
+61: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13302,7 +13357,7 @@ var MouseStats = module.exports = integration('MouseStats')
  * @api public
  */
 
-MouseStats.prototype.initialize = function(){
+MouseStats.prototype.initialize = function() {
   var accountNumber = this.options.accountNumber;
   var path = accountNumber.slice(0, 1) + '/' + accountNumber.slice(1, 2) + '/' + accountNumber;
   var cacheBuster = Math.floor(new Date().getTime() / 60000);
@@ -13317,7 +13372,7 @@ MouseStats.prototype.initialize = function(){
  * @return {boolean}
  */
 
-MouseStats.prototype.loaded = function(){
+MouseStats.prototype.loaded = function() {
   return is.array(window.MouseStatsVisitorPlaybacks);
 };
 
@@ -13330,14 +13385,14 @@ MouseStats.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-MouseStats.prototype.identify = function(identify){
-  each(identify.traits(), function(key, value){
+MouseStats.prototype.identify = function(identify) {
+  each(identify.traits(), function(key, value) {
     window.MouseStatsVisitorPlaybacks.customVariable(key, value);
   });
 };
 
-}, {"each":4,"analytics.js-integration":92,"is":95,"use-https":94}],
-61: [function(require, module, exports) {
+}, {"each":4,"analytics.js-integration":94,"is":97,"use-https":96}],
+62: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13365,7 +13420,7 @@ var Navilytics = module.exports = integration('Navilytics')
  * @api public
  */
 
-Navilytics.prototype.initialize = function(){
+Navilytics.prototype.initialize = function() {
   window.__nls = window.__nls || [];
   this.load(this.ready);
 };
@@ -13377,7 +13432,7 @@ Navilytics.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Navilytics.prototype.loaded = function(){
+Navilytics.prototype.loaded = function() {
   return !!(window.__nls && Array.prototype.push !== window.__nls.push);
 };
 
@@ -13389,12 +13444,12 @@ Navilytics.prototype.loaded = function(){
  * @param {Track} track
  */
 
-Navilytics.prototype.track = function(track){
+Navilytics.prototype.track = function(track) {
   push('tagRecording', track.event());
 };
 
-}, {"analytics.js-integration":92,"global-queue":163}],
-62: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"global-queue":165}],
+63: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13419,7 +13474,7 @@ var Nudgespot = module.exports = integration('Nudgespot')
  * @api public
  */
 
-Nudgespot.prototype.initialize = function(){
+Nudgespot.prototype.initialize = function() {
   window.nudgespot = window.nudgespot || [];
   /* eslint-disable */
   window.nudgespot.init = function(n, t){function f(n,m){var a=m.split('.');2==a.length&&(n=n[a[0]],m=a[1]);n[m]=function(){n.push([m].concat(Array.prototype.slice.call(arguments,0)))}}n._version=0.1;n._globals=[t];n.people=n.people||[];n.params=n.params||[];m="track register unregister identify set_config people.delete people.create people.update people.create_property people.tag people.remove_Tag".split(" ");for (var i=0;i<m.length;i++)f(n,m[i])};
@@ -13435,7 +13490,7 @@ Nudgespot.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Nudgespot.prototype.loaded = function(){
+Nudgespot.prototype.loaded = function() {
   return !!(window.nudgespot && window.nudgespot.push !== Array.prototype.push);
 };
 
@@ -13446,7 +13501,7 @@ Nudgespot.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Nudgespot.prototype.identify = function(identify){
+Nudgespot.prototype.identify = function(identify) {
   if (!identify.userId()) return this.debug('user id required');
   var traits = identify.traits({ createdAt: 'created' });
   traits = alias(traits, { created: 'created_at' });
@@ -13460,12 +13515,12 @@ Nudgespot.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Nudgespot.prototype.track = function(track){
+Nudgespot.prototype.track = function(track) {
   window.nudgespot.track(track.event(), track.properties());
 };
 
-}, {"alias":167,"analytics.js-integration":92}],
-63: [function(require, module, exports) {
+}, {"alias":169,"analytics.js-integration":94}],
+64: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13507,9 +13562,9 @@ var integrationContext = {
  * @api public
  */
 
-Olark.prototype.initialize = function(){
+Olark.prototype.initialize = function() {
   var self = this;
-  this.load(function(){
+  this.load(function() {
     tick(self.ready);
   });
 
@@ -13518,8 +13573,8 @@ Olark.prototype.initialize = function(){
   if (groupId) api('chat.setOperatorGroup', { group: groupId });
 
   // keep track of the widget's open state
-  api('box.onExpand', function(){ self._open = true; });
-  api('box.onShrink', function(){ self._open = false; });
+  api('box.onExpand', function() { self._open = true; });
+  api('box.onShrink', function() { self._open = false; });
 
   // record events
   if (this.options.listen) this.attachListeners();
@@ -13532,7 +13587,7 @@ Olark.prototype.initialize = function(){
  * @param {Function} callback
  */
 
-Olark.prototype.load = function(callback){
+Olark.prototype.load = function(callback) {
   /* eslint-disable */
   window.olark||(function(c){var f=window,d=document,l=https()?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while (q--) {(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={ 0:+new Date() };a.P=function(u){a.p[u]=new Date()-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return ["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if (!m) {return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if (/MSIE[ ]+6/.test(navigator.userAgent)) {b.src="javascript:false"}b.allowTransparency="true";v[j](b);try {b.contentWindow[g].open()}catch (w) {c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try {var t=b.contentWindow[g];t.write(p());t.close()}catch (x) {b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({ loader: "static.olark.com/jsclient/loader0.js", name:"olark", methods:["configure","extend","declare","identify"] });
   /* eslint-enable */
@@ -13547,7 +13602,7 @@ Olark.prototype.load = function(callback){
  * @return {boolean}
  */
 
-Olark.prototype.loaded = function(){
+Olark.prototype.loaded = function() {
   return !!window.olark;
 };
 
@@ -13557,7 +13612,7 @@ Olark.prototype.loaded = function(){
  * @param {Facade} page
  */
 
-Olark.prototype.page = function(page){
+Olark.prototype.page = function(page) {
   if (!this.options.page) return;
   var props = page.properties();
   var name = page.fullName();
@@ -13573,7 +13628,7 @@ Olark.prototype.page = function(page){
  * @param {Facade} identify
  */
 
-Olark.prototype.identify = function(identify){
+Olark.prototype.identify = function(identify) {
   if (!this.options.identify) return;
 
   var username = identify.username();
@@ -13601,7 +13656,7 @@ Olark.prototype.identify = function(identify){
  * @param {Facade} track
  */
 
-Olark.prototype.track = function(track){
+Olark.prototype.track = function(track) {
   if (!this.options.track) return;
   this.notify('visitor triggered "' + track.event() + '"');
 };
@@ -13610,34 +13665,34 @@ Olark.prototype.track = function(track){
  * Listen for events.
  */
 
-Olark.prototype.attachListeners = function(){
+Olark.prototype.attachListeners = function() {
   var self = this;
 
-  api('chat.onBeginConversation', function(){
+  api('chat.onBeginConversation', function() {
     self.analytics.track(
       'Live Chat Conversation Started',
       {},
-      { context: { integration: integrationContext }}
+      { context: { integration: integrationContext } }
     );
   });
 
   // Callback accepts `event`
   // TODO: We might eventually send information about the event through Segment
-  api('chat.onMessageToOperator', function(){
+  api('chat.onMessageToOperator', function() {
     self.analytics.track(
       'Live Chat Message Sent',
       {},
-      { context: { integration: integrationContext }}
+      { context: { integration: integrationContext } }
     );
   });
 
   // Callback accepts `event`
   // TODO: We might eventually send information about the event through Segment
-  api('chat.onMessageToVisitor', function(){
+  api('chat.onMessageToVisitor', function() {
     self.analytics.track(
       'Live Chat Message Received',
       {},
-      { context: { integration: integrationContext }}
+      { context: { integration: integrationContext } }
     );
   });
 };
@@ -13650,13 +13705,13 @@ Olark.prototype.attachListeners = function(){
  * @param {string} message
  */
 
-Olark.prototype.notify = function(message){
+Olark.prototype.notify = function(message) {
   if (!this._open) return;
 
   // lowercase since olark does
   message = message.toLowerCase();
 
-  api('visitor.getDetails', function(data){
+  api('visitor.getDetails', function(data) {
     if (!data || !data.isConversing) return;
     api('chat.sendNotificationToOperator', { body: message });
   });
@@ -13674,8 +13729,8 @@ function api(action, value) {
   window.olark('api.' + action, value);
 }
 
-}, {"use-https":94,"analytics.js-integration":92,"next-tick":118}],
-64: [function(require, module, exports) {
+}, {"use-https":96,"analytics.js-integration":94,"next-tick":120}],
+65: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13714,15 +13769,15 @@ var integrationContext = {
  * @api public
  */
 
-Optimizely.prototype.initialize = function(){
+Optimizely.prototype.initialize = function() {
   var self = this;
   if (this.options.variations) {
-    tick(function(){
+    tick(function() {
       self.replay();
     });
   }
   if (this.options.listen) {
-    tick(function(){
+    tick(function() {
       self.roots();
     });
   }
@@ -13738,7 +13793,7 @@ Optimizely.prototype.initialize = function(){
  * @param {Track} track
  */
 
-Optimizely.prototype.track = function(track){
+Optimizely.prototype.track = function(track) {
   var props = track.properties();
   if (props.revenue) props.revenue *= 100;
   push('trackEvent', track.event(), props);
@@ -13753,7 +13808,7 @@ Optimizely.prototype.track = function(track){
  * @param {Page} page
  */
 
-Optimizely.prototype.page = function(page){
+Optimizely.prototype.page = function(page) {
   var category = page.category();
   var name = page.fullName();
   var opts = this.options;
@@ -13777,7 +13832,7 @@ Optimizely.prototype.page = function(page){
  * @api private
  */
 
-Optimizely.prototype.roots = function(){
+Optimizely.prototype.roots = function() {
   // In case the snippet isn't on the page
   //
   // FIXME: Under what conditions does this happen? Sounds like we should fix
@@ -13788,14 +13843,15 @@ Optimizely.prototype.roots = function(){
   if (!data) return;
   var allExperiments = data.experiments;
   if (!data || !data.state || !allExperiments) return;
-  var variationNamesMap = data.state.variationNamesMap;
-  var variationIdsMap = data.state.variationIdsMap;
-  var activeExperimentIds = data.state.activeExperiments;
-  var activeExperiments = getExperiments(activeExperimentIds, variationNamesMap,
-    variationIdsMap, allExperiments);
+  var activeExperiments = getExperiments({
+    variationNamesMap: data.state.variationNamesMap,
+    variationIdsMap: data.state.variationIdsMap,
+    activeExperimentIds: data.state.activeExperiments,
+    allExperiments: allExperiments
+  });
   var self = this;
 
-  each(activeExperiments, function(props){
+  each(activeExperiments, function(props) {
     self.analytics.track(
       'Experiment Viewed',
       props,
@@ -13812,7 +13868,7 @@ Optimizely.prototype.roots = function(){
  * @api private
  */
 
-Optimizely.prototype.replay = function(){
+Optimizely.prototype.replay = function() {
   // In case the snippet isn't on the page
   //
   // FIXME: Under what conditions does this happen? Sounds like we should fix
@@ -13822,7 +13878,7 @@ Optimizely.prototype.replay = function(){
   var data = window.optimizely.data;
   if (!data || !data.experiments || !data.state) return;
 
-  var traits = foldl(function(traits, variation, experimentId){
+  var traits = foldl(function(traits, variation, experimentId) {
     var experiment = data.experiments[experimentId].name;
     traits['Experiment: ' + experiment] = variation;
     return traits;
@@ -13835,28 +13891,26 @@ Optimizely.prototype.replay = function(){
  * Retrieves active experiments.
  *
  * @api private
- * @param {Object} state
- * @param {Object} allExperiments
+ * @param {Object} options
  */
 
-// FIXME: This should accept an options object rather than all these parameters
-function getExperiments(activeExperimentIds, variationNamesMap, variationIdsMap, allExperiments){
-  return foldl(function(results, experimentId){
-    var experiment = allExperiments[experimentId];
+function getExperiments(options) {
+  return foldl(function(results, experimentId) {
+    var experiment = options.allExperiments[experimentId];
     if (experiment) {
       results.push({
-        variationName: variationNamesMap[experimentId],
-        variationId: variationIdsMap[experimentId],
+        variationName: options.variationNamesMap[experimentId],
+        variationId: options.variationIdsMap[experimentId][0],
         experimentId: experimentId,
         experimentName: experiment.name
       });
     }
     return results;
-  }, [], activeExperimentIds);
+  }, [], options.activeExperimentIds);
 }
 
-}, {"each":4,"foldl":134,"analytics.js-integration":92,"global-queue":163,"next-tick":118}],
-65: [function(require, module, exports) {
+}, {"each":4,"foldl":136,"analytics.js-integration":94,"global-queue":165,"next-tick":120}],
+66: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13880,7 +13934,7 @@ var Outbound = module.exports = integration('Outbound')
  * @api public
  */
 
-Outbound.prototype.initialize = function(){
+Outbound.prototype.initialize = function() {
   window.outbound = window.outbound || [];
   window.outbound.methods = [
     'identify',
@@ -13891,8 +13945,8 @@ Outbound.prototype.initialize = function(){
     'disableGcmToken'
   ];
 
-  window.outbound.factory = function(method){
-    return function(){
+  window.outbound.factory = function(method) {
+    return function() {
       var args = Array.prototype.slice.call(arguments);
       args.unshift(method);
       window.outbound.push(args);
@@ -13915,7 +13969,7 @@ Outbound.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Outbound.prototype.loaded = function(){
+Outbound.prototype.loaded = function() {
   return window.outbound;
 };
 
@@ -13926,7 +13980,7 @@ Outbound.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Outbound.prototype.identify = function(identify){
+Outbound.prototype.identify = function(identify) {
   var traitsToOmit = [
     'id',
     'userId',
@@ -13953,7 +14007,7 @@ Outbound.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Outbound.prototype.track = function(track){
+Outbound.prototype.track = function(track) {
   window.outbound.track(track.event(), track.properties(), track.timestamp());
 };
 
@@ -13964,12 +14018,12 @@ Outbound.prototype.track = function(track){
  * @param {Alias} alias
  */
 
-Outbound.prototype.alias = function(alias){
+Outbound.prototype.alias = function(alias) {
   window.outbound.identify(alias.userId(), { previousId: alias.previousId() });
 };
 
-}, {"analytics.js-integration":92,"omit":176}],
-66: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"omit":178}],
+67: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13996,7 +14050,7 @@ var PerfectAudience = module.exports = integration('Perfect Audience')
  * @api public
  */
 
-PerfectAudience.prototype.initialize = function(){
+PerfectAudience.prototype.initialize = function() {
   window._pq = window._pq || [];
   this.load(this.ready);
 };
@@ -14008,7 +14062,7 @@ PerfectAudience.prototype.initialize = function(){
  * @return {boolean}
  */
 
-PerfectAudience.prototype.loaded = function(){
+PerfectAudience.prototype.loaded = function() {
   return !!(window._pq && window._pq.push);
 };
 
@@ -14021,7 +14075,7 @@ PerfectAudience.prototype.loaded = function(){
  * @param {Track} event
  */
 
-PerfectAudience.prototype.track = function(track){
+PerfectAudience.prototype.track = function(track) {
   var total = track.total() || track.revenue();
   var orderId = track.orderId();
   var props = {};
@@ -14048,7 +14102,7 @@ PerfectAudience.prototype.track = function(track){
  * @param {Track} track
  */
 
-PerfectAudience.prototype.viewedProduct = function(track){
+PerfectAudience.prototype.viewedProduct = function(track) {
   var product = track.id() || track.sku();
   push('track', track.event());
   push('trackProduct', product);
@@ -14063,7 +14117,7 @@ PerfectAudience.prototype.viewedProduct = function(track){
  * @param {Track} track
  */
 
-PerfectAudience.prototype.completedOrder = function(track){
+PerfectAudience.prototype.completedOrder = function(track) {
   var total = track.total() || track.revenue();
   var orderId = track.orderId();
   var props = {};
@@ -14072,8 +14126,8 @@ PerfectAudience.prototype.completedOrder = function(track){
   push('track', track.event(), props);
 };
 
-}, {"analytics.js-integration":92,"global-queue":163}],
-67: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"global-queue":165}],
+68: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14100,7 +14154,7 @@ var Pingdom = module.exports = integration('Pingdom')
  * @api public
  */
 
-Pingdom.prototype.initialize = function(){
+Pingdom.prototype.initialize = function() {
   window._prum = window._prum || [];
   push('id', this.options.id);
   push('mark', 'firstbyte', date.getTime());
@@ -14114,12 +14168,12 @@ Pingdom.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Pingdom.prototype.loaded = function(){
+Pingdom.prototype.loaded = function() {
   return !!(window._prum && window._prum.push !== Array.prototype.push);
 };
 
-}, {"load-date":161,"analytics.js-integration":92,"global-queue":163}],
-68: [function(require, module, exports) {
+}, {"load-date":163,"analytics.js-integration":94,"global-queue":165}],
+69: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14150,7 +14204,7 @@ var Piwik = module.exports = integration('Piwik')
  * @api public
  */
 
-Piwik.prototype.initialize = function(){
+Piwik.prototype.initialize = function() {
   window._paq = window._paq || [];
   push('setSiteId', this.options.siteId);
   push('setTrackerUrl', this.options.url + '/piwik.php');
@@ -14164,7 +14218,7 @@ Piwik.prototype.initialize = function(){
  * @api private
  */
 
-Piwik.prototype.loaded = function(){
+Piwik.prototype.loaded = function() {
   return !!(window._paq && window._paq.push !== Array.prototype.push);
 };
 
@@ -14175,7 +14229,7 @@ Piwik.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Piwik.prototype.page = function(){
+Piwik.prototype.page = function() {
   push('trackPageView');
 };
 
@@ -14186,7 +14240,7 @@ Piwik.prototype.page = function(){
  * @param {Track} track
  */
 
-Piwik.prototype.track = function(track){
+Piwik.prototype.track = function(track) {
   var goals = this.goals(track.event());
   var revenue = track.revenue();
   var category = track.category() || 'All';
@@ -14201,21 +14255,21 @@ Piwik.prototype.track = function(track){
     customVariables = {};
   }
 
-  for (var i = 1; i <= this.options.customVariableLimit; i += 1){
+  for (var i = 1; i <= this.options.customVariableLimit; i += 1) {
     if (customVariables[i]) {
       push('setCustomVariable', i.toString(), customVariables[i][0], customVariables[i][1], 'page');
     }
   }
 
-  each(goals, function(goal){
+  each(goals, function(goal) {
     push('trackGoal', goal, revenue);
   });
 
   push('trackEvent', category, action, name, value);
 };
 
-}, {"each":4,"analytics.js-integration":92,"is":95,"global-queue":163}],
-69: [function(require, module, exports) {
+}, {"each":4,"analytics.js-integration":94,"is":97,"global-queue":165}],
+70: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14245,7 +14299,7 @@ var Preact = module.exports = integration('Preact')
  * @param {Object} page
  */
 
-Preact.prototype.initialize = function(){
+Preact.prototype.initialize = function() {
   window._preactq = window._preactq || [];
   window._lnq = window._lnq || [];
   push('_setCode', this.options.projectCode);
@@ -14259,7 +14313,7 @@ Preact.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Preact.prototype.loaded = function(){
+Preact.prototype.loaded = function() {
   return !!(window._preactq && window._preactq.push !== Array.prototype.push);
 };
 
@@ -14270,7 +14324,7 @@ Preact.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Preact.prototype.identify = function(identify){
+Preact.prototype.identify = function(identify) {
   if (!identify.userId()) return;
   var traits = identify.traits({ created: 'created_at' });
   traits = convertDates(traits, convertDate);
@@ -14289,7 +14343,7 @@ Preact.prototype.identify = function(identify){
  * @param {Group} group
  */
 
-Preact.prototype.group = function(group){
+Preact.prototype.group = function(group) {
   if (!group.groupId()) return;
   push('_setAccount', group.traits());
 };
@@ -14301,7 +14355,7 @@ Preact.prototype.group = function(group){
  * @param {Track} track
  */
 
-Preact.prototype.track = function(track){
+Preact.prototype.track = function(track) {
   var props = track.properties();
   var revenue = track.revenue();
   var event = track.event();
@@ -14327,12 +14381,12 @@ Preact.prototype.track = function(track){
  * @return {number}
  */
 
-function convertDate(date){
+function convertDate(date) {
   return Math.floor(date / 1000);
 }
 
-}, {"convert-dates":168,"analytics.js-integration":92,"global-queue":163}],
-70: [function(require, module, exports) {
+}, {"convert-dates":170,"analytics.js-integration":94,"global-queue":165}],
+71: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14364,11 +14418,11 @@ var Qualaroo = module.exports = integration('Qualaroo')
  * @param {Object} page
  */
 
-Qualaroo.prototype.initialize = function(){
+Qualaroo.prototype.initialize = function() {
   window._kiq = window._kiq || [];
   var loaded = bind(this, this.loaded);
   var ready = this.ready;
-  this.load(function(){
+  this.load(function() {
     when(loaded, ready);
   });
 };
@@ -14380,7 +14434,7 @@ Qualaroo.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Qualaroo.prototype.loaded = function(){
+Qualaroo.prototype.loaded = function() {
   return !!(window._kiq && window._kiq.push !== Array.prototype.push);
 };
 
@@ -14394,7 +14448,7 @@ Qualaroo.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Qualaroo.prototype.identify = function(identify){
+Qualaroo.prototype.identify = function(identify) {
   var traits = identify.traits();
   var id = identify.userId();
   var email = identify.email();
@@ -14410,7 +14464,7 @@ Qualaroo.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Qualaroo.prototype.track = function(track){
+Qualaroo.prototype.track = function(track) {
   if (!this.options.track) return;
   var event = track.event();
   var traits = {};
@@ -14418,8 +14472,8 @@ Qualaroo.prototype.track = function(track){
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"analytics.js-integration":92,"global-queue":163,"facade":135,"bind":105,"when":165}],
-71: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"global-queue":165,"facade":137,"bind":107,"when":167}],
+72: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14453,7 +14507,7 @@ var Quantcast = module.exports = integration('Quantcast')
  * @param {Page} page
  */
 
-Quantcast.prototype.initialize = function(page){
+Quantcast.prototype.initialize = function(page) {
   window._qevents = window._qevents || [];
 
   var opts = this.options;
@@ -14478,7 +14532,7 @@ Quantcast.prototype.initialize = function(page){
  * @return {boolean}
  */
 
-Quantcast.prototype.loaded = function(){
+Quantcast.prototype.loaded = function() {
   return !!window.__qc;
 };
 
@@ -14491,7 +14545,7 @@ Quantcast.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Quantcast.prototype.page = function(page){
+Quantcast.prototype.page = function(page) {
   var category = page.category();
   var name = page.name();
   var customLabels = page.proxy('properties.label');
@@ -14516,7 +14570,7 @@ Quantcast.prototype.page = function(page){
  * @param {string} [id]
  */
 
-Quantcast.prototype.identify = function(identify){
+Quantcast.prototype.identify = function(identify) {
   // edit the initial quantcast settings
   // TODO: could be done in a cleaner way
   var id = identify.userId();
@@ -14535,7 +14589,7 @@ Quantcast.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Quantcast.prototype.track = function(track){
+Quantcast.prototype.track = function(track) {
   var name = track.event();
   var revenue = track.revenue();
   var orderId = track.orderId();
@@ -14562,7 +14616,7 @@ Quantcast.prototype.track = function(track){
  * @param {Track} track
  */
 
-Quantcast.prototype.completedOrder = function(track){
+Quantcast.prototype.completedOrder = function(track) {
   var name = track.event();
   var revenue = track.total();
   var customLabels = track.proxy('properties.label');
@@ -14608,7 +14662,7 @@ Quantcast.prototype.completedOrder = function(track){
  * @return {string}
  */
 
-Quantcast.prototype._labels = function(type){
+Quantcast.prototype._labels = function(type) {
   var args = Array.prototype.slice.call(arguments, 1);
   var advertise = this.options.advertise;
 
@@ -14616,7 +14670,7 @@ Quantcast.prototype._labels = function(type){
   if (advertise) type = '_fp.' + type;
 
   var separator = advertise ? ' ' : '.';
-  var ret = reduce(args, function(ret, arg){
+  var ret = reduce(args, function(ret, arg) {
     if (arg != null) {
       ret.push(String(arg).replace(/, /g, ','));
     }
@@ -14626,8 +14680,8 @@ Quantcast.prototype._labels = function(type){
   return [type, ret].join('.');
 };
 
-}, {"analytics.js-integration":92,"global-queue":163,"reduce":179,"use-https":94}],
-179: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"global-queue":165,"reduce":181,"use-https":96}],
+181: [function(require, module, exports) {
 
 /**
  * Reduce `arr` with `fn`.
@@ -14653,7 +14707,7 @@ module.exports = function(arr, fn, initial){
   return curr;
 };
 }, {}],
-72: [function(require, module, exports) {
+73: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14680,7 +14734,7 @@ var RollbarIntegration = module.exports = integration('Rollbar')
  * @api public
  */
 
-RollbarIntegration.prototype.initialize = function(){
+RollbarIntegration.prototype.initialize = function() {
   var _rollbarConfig = this.config = {
     accessToken: this.options.accessToken,
     captureUncaught: this.options.captureUncaught,
@@ -14701,7 +14755,7 @@ RollbarIntegration.prototype.initialize = function(){
  * @return {Boolean}
  */
 
-RollbarIntegration.prototype.loaded = function(){
+RollbarIntegration.prototype.loaded = function() {
   return is.object(window.Rollbar) && window.Rollbar.shimId == null;
 };
 
@@ -14712,7 +14766,7 @@ RollbarIntegration.prototype.loaded = function(){
  * @param {Function} callback
  */
 
-RollbarIntegration.prototype.load = function(callback){
+RollbarIntegration.prototype.load = function(callback) {
   window.Rollbar.loadFull(window, document, true, this.config, callback);
 };
 
@@ -14723,7 +14777,7 @@ RollbarIntegration.prototype.load = function(callback){
  * @param {Identify} identify
  */
 
-RollbarIntegration.prototype.identify = function(identify){
+RollbarIntegration.prototype.identify = function(identify) {
   // do stuff with `id` or `traits`
   if (!this.options.identify) return;
 
@@ -14734,11 +14788,84 @@ RollbarIntegration.prototype.identify = function(identify){
   var rollbar = window.Rollbar;
   var person = { id: uid };
   extend(person, identify.traits());
-  rollbar.configure({ payload: { person: person }});
+  rollbar.configure({ payload: { person: person } });
 };
 
-}, {"extend":158,"analytics.js-integration":92,"is":95}],
-73: [function(require, module, exports) {
+}, {"extend":160,"analytics.js-integration":94,"is":97}],
+74: [function(require, module, exports) {
+
+var integration = require('analytics.js-integration');
+
+/**
+ * Expose `Route` integration.
+ */
+
+var Route = module.exports = integration('Route')
+  .global('_rq')
+  .global('_route')
+  .option('organizationId', '')
+  .tag('<script id="rtracker" data-organization-id="{{ organizationId }}" src="//www.routecdn.com/tracker/route-tracker-min.js">');
+
+/**
+ * Initialize Route.
+ *
+ * @api public
+ */
+
+Route.prototype.initialize = function() {
+  window._rq = window._rq || [];
+  window._route = window._route || [];
+  window._route.methods = ['identify', 'track', 'trackById'];
+  window._route.factory = function(method) {
+    return function() {
+      var args = Array.prototype.slice.call(arguments);
+      args.unshift(method);
+      window._rq.push(args);
+      return window._rq;
+    };
+  };
+  for (var i = 0; i < window._route.methods.length; i++) {
+    var key = window._route.methods[i];
+    window._route[key] = window._route.factory(key);
+  }
+  this.load(this.ready);
+};
+
+/**
+ * Has the Route library been loaded yet?
+ *
+ * @api private
+ * @return {Boolean}
+ */
+
+Route.prototype.loaded = function() {
+  return window._rq && window._rq.push !== Array.prototype.push;
+};
+
+/**
+ * Identify a user.
+ *
+ * @api public
+ * @param {Track} identify
+ */
+
+Route.prototype.identify = function(identify) {
+  window._route.identify(identify.traits());
+};
+
+/**
+ * Track an event.
+ *
+ * @api public
+ * @param {Track} track
+ */
+
+Route.prototype.track = function(track) {
+  window._route.track(track.event());
+};
+
+}, {"analytics.js-integration":94}],
+75: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14762,7 +14889,7 @@ var SaaSquatch = module.exports = integration('SaaSquatch')
  * @api public
  */
 
-SaaSquatch.prototype.initialize = function(){
+SaaSquatch.prototype.initialize = function() {
   window._sqh = window._sqh || [];
   this.load(this.ready);
 };
@@ -14774,7 +14901,7 @@ SaaSquatch.prototype.initialize = function(){
  * @return {boolean}
  */
 
-SaaSquatch.prototype.loaded = function(){
+SaaSquatch.prototype.loaded = function() {
   return window._sqh && window._sqh.push !== Array.prototype.push;
 };
 
@@ -14785,7 +14912,7 @@ SaaSquatch.prototype.loaded = function(){
  * @param {Facade} identify
  */
 
-SaaSquatch.prototype.identify = function(identify){
+SaaSquatch.prototype.identify = function(identify) {
   var sqh = window._sqh;
   var accountId = identify.proxy('traits.accountId');
   var paymentProviderId = identify.proxy('traits.paymentProviderId');
@@ -14828,7 +14955,7 @@ SaaSquatch.prototype.identify = function(identify){
  * @param {Group} group
  */
 
-SaaSquatch.prototype.group = function(group){
+SaaSquatch.prototype.group = function(group) {
   var sqh = window._sqh;
   var id = group.groupId();
   var image = group.proxy('traits.referralImage') || this.options.referralImage;
@@ -14850,8 +14977,8 @@ SaaSquatch.prototype.group = function(group){
   this.load();
 };
 
-}, {"analytics.js-integration":92}],
-74: [function(require, module, exports) {
+}, {"analytics.js-integration":94}],
+76: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14875,10 +15002,10 @@ var SatisMeter = module.exports = integration('SatisMeter')
  * @api public
  */
 
-SatisMeter.prototype.initialize = function(){
+SatisMeter.prototype.initialize = function() {
   var self = this;
-  this.load(function(){
-    when(function(){ return self.loaded(); }, self.ready);
+  this.load(function() {
+    when(function() { return self.loaded(); }, self.ready);
   });
 };
 
@@ -14889,7 +15016,7 @@ SatisMeter.prototype.initialize = function(){
  * @return {boolean}
  */
 
-SatisMeter.prototype.loaded = function(){
+SatisMeter.prototype.loaded = function() {
   return !!window.satismeter;
 };
 
@@ -14900,7 +15027,7 @@ SatisMeter.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-SatisMeter.prototype.identify = function(identify){
+SatisMeter.prototype.identify = function(identify) {
   var traits = identify.traits();
   traits.token = this.options.token;
   traits.user = {
@@ -14926,8 +15053,8 @@ SatisMeter.prototype.identify = function(identify){
   window.satismeter(traits);
 };
 
-}, {"analytics.js-integration":92,"when":165}],
-75: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"when":167}],
+77: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -14970,7 +15097,7 @@ var Segment = exports = module.exports = integration('Segment.io')
  * @return {Function}
  */
 
-exports.storage = function(){
+exports.storage = function() {
   return protocol() === 'file:' || protocol() === 'chrome-extension:' ? localstorage : cookie;
 };
 
@@ -14988,10 +15115,10 @@ exports.global = window;
  * @api public
  */
 
-Segment.prototype.initialize = function(){
+Segment.prototype.initialize = function() {
   var self = this;
   this.ready();
-  this.analytics.on('invoke', function(msg){
+  this.analytics.on('invoke', function(msg) {
     var action = msg.action();
     var listener = 'on' + msg.action();
     self.debug('%s %o', action, msg);
@@ -15007,7 +15134,7 @@ Segment.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Segment.prototype.loaded = function(){
+Segment.prototype.loaded = function() {
   return true;
 };
 
@@ -15018,7 +15145,7 @@ Segment.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Segment.prototype.onpage = function(page){
+Segment.prototype.onpage = function(page) {
   this.send('/p', page.json());
 };
 
@@ -15029,7 +15156,7 @@ Segment.prototype.onpage = function(page){
  * @param {Identify} identify
  */
 
-Segment.prototype.onidentify = function(identify){
+Segment.prototype.onidentify = function(identify) {
   this.send('/i', identify.json());
 };
 
@@ -15040,7 +15167,7 @@ Segment.prototype.onidentify = function(identify){
  * @param {Group} group
  */
 
-Segment.prototype.ongroup = function(group){
+Segment.prototype.ongroup = function(group) {
   this.send('/g', group.json());
 };
 
@@ -15053,7 +15180,7 @@ Segment.prototype.ongroup = function(group){
  * @param {Track} track
  */
 
-Segment.prototype.ontrack = function(track){
+Segment.prototype.ontrack = function(track) {
   var json = track.json();
   // TODO: figure out why we need traits.
   delete json.traits;
@@ -15067,7 +15194,7 @@ Segment.prototype.ontrack = function(track){
  * @param {Alias} alias
  */
 
-Segment.prototype.onalias = function(alias){
+Segment.prototype.onalias = function(alias) {
   var json = alias.json();
   var user = this.analytics.user();
   json.previousId = json.previousId || json.from || user.id() || user.anonymousId();
@@ -15084,7 +15211,7 @@ Segment.prototype.onalias = function(alias){
  * @param {Object} msg
  */
 
-Segment.prototype.normalize = function(msg){
+Segment.prototype.normalize = function(msg) {
   this.debug('normalize %o', msg);
   var user = this.analytics.user();
   var global = exports.global;
@@ -15113,7 +15240,7 @@ Segment.prototype.normalize = function(msg){
  * @param {Function} fn
  */
 
-Segment.prototype.send = function(path, msg, fn){
+Segment.prototype.send = function(path, msg, fn) {
   var url = scheme() + '//api.segment.io/v1' + path;
   var headers = { 'Content-Type': 'text/plain' };
   fn = fn || noop;
@@ -15123,7 +15250,7 @@ Segment.prototype.send = function(path, msg, fn){
   msg = this.normalize(msg);
 
   // send
-  send(url, msg, headers, function(err, res){
+  send(url, msg, headers, function(err, res) {
     self.debug('sent %O, received %O', msg, arguments);
     if (err) return fn(err);
     res.url = url;
@@ -15139,7 +15266,7 @@ Segment.prototype.send = function(path, msg, fn){
  * @param {*} val
  */
 
-Segment.prototype.cookie = function(name, val){
+Segment.prototype.cookie = function(name, val) {
   var store = Segment.storage();
   if (arguments.length === 1) return store(name);
   var global = exports.global;
@@ -15167,7 +15294,7 @@ Segment.prototype.cookie = function(name, val){
  * @param {Object} ctx
  */
 
-Segment.prototype.referrerId = function(query, ctx){
+Segment.prototype.referrerId = function(query, ctx) {
   var stored = this.cookie('s:context.referrer');
   var ad;
 
@@ -15192,7 +15319,7 @@ Segment.prototype.referrerId = function(query, ctx){
  * @return {string}
  */
 
-function scheme(){
+function scheme() {
   return protocol() === 'http:' ? 'http:' : 'https:';
 }
 
@@ -15200,10 +15327,10 @@ function scheme(){
  * Noop.
  */
 
-function noop(){}
+function noop() {}
 
-}, {"ad-params":180,"clone":98,"cookie":181,"extend":158,"analytics.js-integration":92,"segmentio/json@1.0.0":170,"store":182,"protocol":183,"send-json":184,"top-domain":131,"utm-params":185,"uuid":186}],
-180: [function(require, module, exports) {
+}, {"ad-params":182,"clone":100,"cookie":183,"extend":160,"analytics.js-integration":94,"segmentio/json@1.0.0":172,"store":184,"protocol":185,"send-json":186,"top-domain":133,"utm-params":187,"uuid":188}],
+182: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15246,8 +15373,8 @@ function ads(query){
     }
   }
 }
-}, {"querystring":187}],
-187: [function(require, module, exports) {
+}, {"querystring":189}],
+189: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15324,8 +15451,8 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":157,"type":7}],
-181: [function(require, module, exports) {
+}, {"trim":159,"type":7}],
+183: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15449,16 +15576,16 @@ function decode(value) {
   }
 }
 
-}, {"debug":188}],
-188: [function(require, module, exports) {
+}, {"debug":190}],
+190: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":189,"./debug":190}],
-189: [function(require, module, exports) {
+}, {"./lib/debug":191,"./debug":192}],
+191: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -15608,7 +15735,7 @@ function coerce(val) {
 }
 
 }, {}],
-190: [function(require, module, exports) {
+192: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -15748,7 +15875,7 @@ try {
 } catch(e){}
 
 }, {}],
-182: [function(require, module, exports) {
+184: [function(require, module, exports) {
 
 /**
  * dependencies.
@@ -15843,8 +15970,8 @@ function all(){
   return ret;
 }
 
-}, {"unserialize":191,"each":111}],
-191: [function(require, module, exports) {
+}, {"unserialize":193,"each":113}],
+193: [function(require, module, exports) {
 
 /**
  * Unserialize the given "stringified" javascript.
@@ -15862,7 +15989,7 @@ module.exports = function(val){
 };
 
 }, {}],
-183: [function(require, module, exports) {
+185: [function(require, module, exports) {
 
 /**
  * Convenience alias
@@ -15945,7 +16072,7 @@ function set (protocol) {
 }
 
 }, {}],
-184: [function(require, module, exports) {
+186: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -16044,8 +16171,8 @@ function base64(url, obj, _, fn){
   });
 }
 
-}, {"base64-encode":192,"has-cors":193,"jsonp":194,"json":170}],
-192: [function(require, module, exports) {
+}, {"base64-encode":194,"has-cors":195,"jsonp":196,"json":172}],
+194: [function(require, module, exports) {
 var utf8Encode = require('utf8-encode');
 var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
 
@@ -16082,8 +16209,8 @@ function encode(input) {
 
     return output;
 }
-}, {"utf8-encode":195}],
-195: [function(require, module, exports) {
+}, {"utf8-encode":197}],
+197: [function(require, module, exports) {
 module.exports = encode;
 
 function encode(string) {
@@ -16112,7 +16239,7 @@ function encode(string) {
     return utftext;
 }
 }, {}],
-193: [function(require, module, exports) {
+195: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -16132,7 +16259,7 @@ try {
 }
 
 }, {}],
-194: [function(require, module, exports) {
+196: [function(require, module, exports) {
 /**
  * Module dependencies
  */
@@ -16218,8 +16345,8 @@ function jsonp(url, opts, fn){
   target.parentNode.insertBefore(script, target);
 }
 
-}, {"debug":188}],
-185: [function(require, module, exports) {
+}, {"debug":190}],
+187: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16259,8 +16386,8 @@ function utm(query){
   return ret;
 }
 
-}, {"querystring":187}],
-186: [function(require, module, exports) {
+}, {"querystring":189}],
+188: [function(require, module, exports) {
 
 /**
  * Taken straight from jed's gist: https://gist.github.com/982883
@@ -16290,7 +16417,7 @@ module.exports = function uuid(a){
       )
 };
 }, {}],
-76: [function(require, module, exports) {
+78: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16318,7 +16445,7 @@ var Sentry = module.exports = integration('Sentry')
  * @api public
  */
 
-Sentry.prototype.initialize = function(){
+Sentry.prototype.initialize = function() {
   var dsn = this.options.config;
   window.RavenConfig = { dsn: dsn };
   this.load(this.ready);
@@ -16331,7 +16458,7 @@ Sentry.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Sentry.prototype.loaded = function(){
+Sentry.prototype.loaded = function() {
   return is.object(window.Raven);
 };
 
@@ -16342,12 +16469,12 @@ Sentry.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-Sentry.prototype.identify = function(identify){
+Sentry.prototype.identify = function(identify) {
   window.Raven.setUser(identify.traits());
 };
 
-}, {"analytics.js-integration":92,"is":95}],
-77: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"is":97}],
+79: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16386,9 +16513,9 @@ var integrationContext = {
  * @api public
  */
 
-SnapEngage.prototype.initialize = function(){
+SnapEngage.prototype.initialize = function() {
   var self = this;
-  this.load(function(){
+  this.load(function() {
     if (self.options.listen) self.attachListeners();
     tick(self.ready);
   });
@@ -16401,7 +16528,7 @@ SnapEngage.prototype.initialize = function(){
  * @return {boolean}
  */
 
-SnapEngage.prototype.loaded = function(){
+SnapEngage.prototype.loaded = function() {
   return is.object(window.SnapABug) && is.object(window.SnapEngage);
 };
 
@@ -16412,7 +16539,7 @@ SnapEngage.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-SnapEngage.prototype.identify = function(identify){
+SnapEngage.prototype.identify = function(identify) {
   var email = identify.email();
   if (!email) return;
   window.SnapABug.setUserEmail(email);
@@ -16426,12 +16553,12 @@ SnapEngage.prototype.identify = function(identify){
  * @api private
  */
 
-SnapEngage.prototype.attachListeners = function(){
+SnapEngage.prototype.attachListeners = function() {
   var self = this;
 
   // Callback is passed `email, message, type`
   // TODO: Eventually this might pass information about the chat to Segment
-  window.SnapEngage.setCallback('StartChat', function(){
+  window.SnapEngage.setCallback('StartChat', function() {
     self.analytics.track('Live Chat Conversation Started',
       {},
       { context: { integration: integrationContext } });
@@ -16439,7 +16566,7 @@ SnapEngage.prototype.attachListeners = function(){
 
   // Callback is passed `agent, message`
   // TODO: Eventually this might pass information about the message to Segment
-  window.SnapEngage.setCallback('ChatMessageReceived', function(agent){
+  window.SnapEngage.setCallback('ChatMessageReceived', function(agent) {
     self.analytics.track('Live Chat Message Received',
       { agentUsername: agent },
       { context: { integration: integrationContext } });
@@ -16447,23 +16574,23 @@ SnapEngage.prototype.attachListeners = function(){
 
   // Callback is passed `message`
   // TODO: Eventually this might pass information about the message to Segment
-  window.SnapEngage.setCallback('ChatMessageSent', function(){
+  window.SnapEngage.setCallback('ChatMessageSent', function() {
     self.analytics.track('Live Chat Message Sent',
       {},
-      { context: { integration: integrationContext }});
+      { context: { integration: integrationContext } });
   });
 
   // Callback is passed `type, status`
   // TODO: Eventually this might pass information about the status to Segment
-  window.SnapEngage.setCallback('Close', function(){
+  window.SnapEngage.setCallback('Close', function() {
     self.analytics.track('Live Chat Conversation Ended',
       {},
-      { context: { integration: integrationContext }});
+      { context: { integration: integrationContext } });
   });
 };
 
-}, {"analytics.js-integration":92,"is":95,"next-tick":118}],
-78: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"is":97,"next-tick":120}],
+80: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16490,11 +16617,11 @@ var Spinnakr = module.exports = integration('Spinnakr')
  * @api public
  */
 
-Spinnakr.prototype.initialize = function(){
+Spinnakr.prototype.initialize = function() {
   window._spinnakr_site_id = this.options.siteId;
   var loaded = bind(this, this.loaded);
   var ready = this.ready;
-  this.load(function(){
+  this.load(function() {
     when(loaded, ready);
   });
 };
@@ -16506,12 +16633,12 @@ Spinnakr.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Spinnakr.prototype.loaded = function(){
+Spinnakr.prototype.loaded = function() {
   return !!window._spinnakr;
 };
 
-}, {"bind":105,"analytics.js-integration":92,"when":165}],
-79: [function(require, module, exports) {
+}, {"bind":107,"analytics.js-integration":94,"when":167}],
+81: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -16535,10 +16662,10 @@ var SupportHero = module.exports = integration('SupportHero')
  * @api public
  */
 
-SupportHero.prototype.initialize = function(){
+SupportHero.prototype.initialize = function() {
   window.supportHeroWidget = {};
-  window.supportHeroWidget.setUserId = window.supportHeroWidget.setUserId || function(){};
-  window.supportHeroWidget.setUserTraits = window.supportHeroWidget.setUserTraits || function(){};
+  window.supportHeroWidget.setUserId = window.supportHeroWidget.setUserId || function() {};
+  window.supportHeroWidget.setUserTraits = window.supportHeroWidget.setUserTraits || function() {};
   this.load(this.ready);
 };
 
@@ -16549,7 +16676,7 @@ SupportHero.prototype.initialize = function(){
  * @return {boolean}
  */
 
-SupportHero.prototype.loaded = function(){
+SupportHero.prototype.loaded = function() {
   return !!window.supportHeroWidget;
 };
 
@@ -16560,7 +16687,7 @@ SupportHero.prototype.loaded = function(){
  * @param {Facade} identify
  */
 
-SupportHero.prototype.identify = function(identify){
+SupportHero.prototype.identify = function(identify) {
   var id = identify.userId();
   var traits = identify.traits();
   if (id) {
@@ -16571,8 +16698,8 @@ SupportHero.prototype.identify = function(identify){
   }
 };
 
-}, {"analytics.js-integration":92}],
-80: [function(require, module, exports) {
+}, {"analytics.js-integration":94}],
+82: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16601,7 +16728,7 @@ var Taplytics = module.exports = integration('Taplytics')
  * @api public
  */
 
-Taplytics.prototype.initialize = function(){
+Taplytics.prototype.initialize = function() {
   var options = this.options.options;
   var token = this.options.token;
 
@@ -16619,7 +16746,7 @@ Taplytics.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Taplytics.prototype.loaded = function(){
+Taplytics.prototype.loaded = function() {
   return window.Taplytics && is.object(window.Taplytics._in);
 };
 
@@ -16630,7 +16757,7 @@ Taplytics.prototype.loaded = function(){
  * @param {Facade} identify
  */
 
-Taplytics.prototype.identify = function(identify){
+Taplytics.prototype.identify = function(identify) {
   var userId = identify.userId();
   var attrs = identify.traits() || {};
 
@@ -16648,7 +16775,7 @@ Taplytics.prototype.identify = function(identify){
  * @param {Facade} group
  */
 
-Taplytics.prototype.group = function(group){
+Taplytics.prototype.group = function(group) {
   var attrs = {};
   var groupId = group.groupId();
   var traits = group.traits();
@@ -16669,7 +16796,7 @@ Taplytics.prototype.group = function(group){
  * @param {Facade} track
  */
 
-Taplytics.prototype.track = function(track){
+Taplytics.prototype.track = function(track) {
   var properties = track.properties() || {};
   var total = track.revenue() || track.total() || 0;
 
@@ -16683,7 +16810,7 @@ Taplytics.prototype.track = function(track){
 * @param {Facade} page
 */
 
-Taplytics.prototype.page = function(page){
+Taplytics.prototype.page = function(page) {
   var category = page.category() || undefined;
   var name = page.fullName() || undefined;
   var properties = page.properties() || {};
@@ -16697,12 +16824,12 @@ Taplytics.prototype.page = function(page){
 * @api private
 */
 
-Taplytics.prototype.reset = function(){
+Taplytics.prototype.reset = function() {
   push('reset');
 };
 
-}, {"analytics.js-integration":92,"is":95,"keys":124,"global-queue":163}],
-81: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"is":97,"keys":126,"global-queue":165}],
+83: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16731,7 +16858,7 @@ var Tapstream = module.exports = integration('Tapstream')
  * @api public
  */
 
-Tapstream.prototype.initialize = function(){
+Tapstream.prototype.initialize = function() {
   window._tsq = window._tsq || [];
   push('setAccountName', this.options.accountName);
   this.load(this.ready);
@@ -16744,7 +16871,7 @@ Tapstream.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Tapstream.prototype.loaded = function(){
+Tapstream.prototype.loaded = function() {
   return !!(window._tsq && window._tsq.push !== Array.prototype.push);
 };
 
@@ -16755,7 +16882,7 @@ Tapstream.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Tapstream.prototype.page = function(page){
+Tapstream.prototype.page = function(page) {
   var category = page.category();
   var opts = this.options;
   var name = page.fullName();
@@ -16783,14 +16910,14 @@ Tapstream.prototype.page = function(page){
  * @param {Track} track
  */
 
-Tapstream.prototype.track = function(track){
+Tapstream.prototype.track = function(track) {
   var props = track.properties();
   // needs events as slugs
   push('fireHit', slug(track.event()), [props.url]);
 };
 
-}, {"analytics.js-integration":92,"global-queue":163,"slug":102}],
-82: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"global-queue":165,"slug":104}],
+84: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16827,11 +16954,11 @@ var optionsAliases = {
  * @api public
  */
 
-Trakio.prototype.initialize = function(){
+Trakio.prototype.initialize = function() {
   var options = this.options;
   window.trak = window.trak || [];
   window.trak.io = window.trak.io || {};
-  window.trak.push = window.trak.push || function(){};
+  window.trak.push = window.trak.push || function() {};
   /* eslint-disable */
   window.trak.io.load = window.trak.io.load || function(e){var r = function(e){return function(){window.trak.push([e].concat(Array.prototype.slice.call(arguments,0))); }; } ,i=["initialize","identify","track","alias","channel","source","host","protocol","page_view"]; for (var s=0;s<i.length;s++) window.trak.io[i[s]]=r(i[s]); window.trak.io.initialize.apply(window.trak.io,arguments); };
   /* eslint-enable */
@@ -16846,7 +16973,7 @@ Trakio.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Trakio.prototype.loaded = function(){
+Trakio.prototype.loaded = function() {
   return !!(window.trak && window.trak.loaded);
 };
 
@@ -16856,7 +16983,7 @@ Trakio.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Trakio.prototype.page = function(page){
+Trakio.prototype.page = function(page) {
   var category = page.category();
   var props = page.properties();
   var name = page.fullName();
@@ -16894,7 +17021,7 @@ var traitAliases = {
  * @param {Identify} identify
  */
 
-Trakio.prototype.identify = function(identify){
+Trakio.prototype.identify = function(identify) {
   var traits = identify.traits(traitAliases);
   var id = identify.userId();
 
@@ -16922,7 +17049,7 @@ Trakio.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Trakio.prototype.track = function(track){
+Trakio.prototype.track = function(track) {
   var properties = track.properties();
   var channel = track.proxy('properties.channel');
   if (channel) {
@@ -16939,7 +17066,7 @@ Trakio.prototype.track = function(track){
  * @param {Alias} alias
  */
 
-Trakio.prototype.alias = function(alias){
+Trakio.prototype.alias = function(alias) {
   if (!window.trak.io.distinct_id) return;
   var from = alias.from();
   var to = alias.to();
@@ -16953,8 +17080,8 @@ Trakio.prototype.alias = function(alias){
   }
 };
 
-}, {"alias":167,"analytics.js-integration":92}],
-83: [function(require, module, exports) {
+}, {"alias":169,"analytics.js-integration":94}],
+85: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -16978,7 +17105,7 @@ var TwitterAds = module.exports = integration('Twitter Ads')
  * @api public
  */
 
-TwitterAds.prototype.initialize = function(){
+TwitterAds.prototype.initialize = function() {
   this.ready();
 };
 
@@ -16989,7 +17116,7 @@ TwitterAds.prototype.initialize = function(){
  * @param {Page} page
  */
 
-TwitterAds.prototype.page = function(){
+TwitterAds.prototype.page = function() {
   if (this.options.page) {
     this.load({ pixelId: this.options.page });
   }
@@ -17002,16 +17129,16 @@ TwitterAds.prototype.page = function(){
  * @param {Track} track
  */
 
-TwitterAds.prototype.track = function(track){
+TwitterAds.prototype.track = function(track) {
   var events = this.events(track.event());
   var self = this;
-  each(events, function(pixelId){
+  each(events, function(pixelId) {
     self.load({ pixelId: pixelId });
   });
 };
 
-}, {"each":4,"analytics.js-integration":92}],
-84: [function(require, module, exports) {
+}, {"each":4,"analytics.js-integration":94}],
+86: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17049,7 +17176,7 @@ var integrationContext = {
  * @api public
  */
 
-Userlike.prototype.initialize = function(){
+Userlike.prototype.initialize = function() {
   var self = this;
   var user = this.analytics.user();
   var identify = new Identify({
@@ -17071,7 +17198,7 @@ Userlike.prototype.initialize = function(){
   if (!window.userlikeData) window.userlikeData = { custom: {} };
   window.userlikeData.custom.segmentio = segment_base_info;
 
-  this.load(function(){
+  this.load(function() {
     if (self.options.listen) self.attachListeners();
     self.ready();
   });
@@ -17083,7 +17210,7 @@ Userlike.prototype.initialize = function(){
  * @return {Boolean}
  */
 
-Userlike.prototype.loaded = function(){
+Userlike.prototype.loaded = function() {
   return !!(window.userlikeConfig && window.userlikeData);
 };
 
@@ -17094,9 +17221,9 @@ Userlike.prototype.loaded = function(){
  * Revisit this/send it when they do.
  */
 
-Userlike.prototype.attachListeners = function(){
+Userlike.prototype.attachListeners = function() {
   var self = this;
-  window.userlikeTrackingEvent = function(eventName, globalCtx, sessionCtx){
+  window.userlikeTrackingEvent = function(eventName, globalCtx, sessionCtx) {
     if (eventName === 'chat_started') {
       self.analytics.track(
         'Live Chat Conversation Started',
@@ -17128,8 +17255,8 @@ Userlike.prototype.attachListeners = function(){
   };
 };
 
-}, {"facade":135,"clone":98,"analytics.js-integration":92}],
-85: [function(require, module, exports) {
+}, {"facade":137,"clone":100,"analytics.js-integration":94}],
+87: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17180,7 +17307,7 @@ var UserVoice = module.exports = integration('UserVoice')
  * @api private
  */
 
-UserVoice.on('construct', function(integration){
+UserVoice.on('construct', function(integration) {
   if (!integration.options.classic) return;
   integration.group = undefined;
   integration.identify = integration.identifyClassic;
@@ -17193,7 +17320,7 @@ UserVoice.on('construct', function(integration){
  * @api public
  */
 
-UserVoice.prototype.initialize = function(){
+UserVoice.prototype.initialize = function() {
   var options = this.options;
   var opts = formatOptions(options);
   push('set', opts);
@@ -17217,7 +17344,7 @@ UserVoice.prototype.initialize = function(){
  * @return {boolean}
  */
 
-UserVoice.prototype.loaded = function(){
+UserVoice.prototype.loaded = function() {
   return !!(window.UserVoice && window.UserVoice.push !== Array.prototype.push);
 };
 
@@ -17228,7 +17355,7 @@ UserVoice.prototype.loaded = function(){
  * @param {Identify} identify
  */
 
-UserVoice.prototype.identify = function(identify){
+UserVoice.prototype.identify = function(identify) {
   var traits = identify.traits({ created: 'created_at' });
   traits = convertDates(traits, unix);
   push('identify', traits);
@@ -17241,7 +17368,7 @@ UserVoice.prototype.identify = function(identify){
  * @param {Group} group
  */
 
-UserVoice.prototype.group = function(group){
+UserVoice.prototype.group = function(group) {
   var traits = group.traits({ created: 'created_at' });
   traits = convertDates(traits, unix);
   push('identify', { account: traits });
@@ -17253,7 +17380,7 @@ UserVoice.prototype.group = function(group){
  * @api private
  */
 
-UserVoice.prototype.initializeClassic = function(){
+UserVoice.prototype.initializeClassic = function() {
   var options = this.options;
   // part of public api
   window.showClassicWidget = showClassicWidget;
@@ -17268,7 +17395,7 @@ UserVoice.prototype.initializeClassic = function(){
  * @param {Identify} identify
  */
 
-UserVoice.prototype.identifyClassic = function(identify){
+UserVoice.prototype.identifyClassic = function(identify) {
   push('setCustomFields', identify.traits());
 };
 
@@ -17280,7 +17407,7 @@ UserVoice.prototype.identifyClassic = function(identify){
  * @return {Object}
  */
 
-function formatOptions(options){
+function formatOptions(options) {
   return alias(options, {
     forumId: 'forum_id',
     accentColor: 'accent_color',
@@ -17301,7 +17428,7 @@ function formatOptions(options){
  * @return {Object}
  */
 
-function formatClassicOptions(options){
+function formatClassicOptions(options) {
   return alias(options, {
     forumId: 'forum_id',
     classicMode: 'mode',
@@ -17324,13 +17451,13 @@ function formatClassicOptions(options){
  * @param {Object} options (optional)
  */
 
-function showClassicWidget(type, options){
+function showClassicWidget(type, options) {
   type = type || 'showLightbox';
   push(type, 'classic_widget', options);
 }
 
-}, {"alias":167,"convert-dates":168,"analytics.js-integration":92,"global-queue":163,"to-unix-timestamp":196}],
-196: [function(require, module, exports) {
+}, {"alias":169,"convert-dates":170,"analytics.js-integration":94,"global-queue":165,"to-unix-timestamp":198}],
+198: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -17350,7 +17477,7 @@ function toUnixTimestamp (date) {
   return Math.floor(date.getTime() / 1000);
 }
 }, {}],
-86: [function(require, module, exports) {
+88: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17377,7 +17504,7 @@ var Vero = module.exports = integration('Vero')
  * @api public
  */
 
-Vero.prototype.initialize = function(){
+Vero.prototype.initialize = function() {
   // clear default cookie so vero parses correctly.
   // this is for the tests.
   // basically, they have window.addEventListener('unload')
@@ -17395,7 +17522,7 @@ Vero.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Vero.prototype.loaded = function(){
+Vero.prototype.loaded = function() {
   return !!(window._veroq && window._veroq.push !== Array.prototype.push);
 };
 
@@ -17408,7 +17535,7 @@ Vero.prototype.loaded = function(){
  * @param {Page} page
  */
 
-Vero.prototype.page = function(){
+Vero.prototype.page = function() {
   push('trackPageview');
 };
 
@@ -17422,7 +17549,7 @@ Vero.prototype.page = function(){
  * @param {Identify} identify
  */
 
-Vero.prototype.identify = function(identify){
+Vero.prototype.identify = function(identify) {
   var traits = identify.traits();
   var email = identify.email();
   var id = identify.userId();
@@ -17441,7 +17568,7 @@ Vero.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Vero.prototype.track = function(track){
+Vero.prototype.track = function(track) {
   var regex = /[uU]nsubscribe/;
 
   if (track.event().match(regex)) {
@@ -17461,7 +17588,7 @@ Vero.prototype.track = function(track){
  * @param {Alias} alias
  */
 
-Vero.prototype.alias = function(alias){
+Vero.prototype.alias = function(alias) {
   var to = alias.to();
 
   if (alias.from()) {
@@ -17471,8 +17598,8 @@ Vero.prototype.alias = function(alias){
   }
 };
 
-}, {"component/cookie":181,"analytics.js-integration":92,"global-queue":163}],
-87: [function(require, module, exports) {
+}, {"component/cookie":183,"analytics.js-integration":94,"global-queue":165}],
+89: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17509,15 +17636,15 @@ var integrationContext = {
  * http://v2.visualwebsiteoptimizer.com/tools/get_tracking_code.php
  */
 
-VWO.prototype.initialize = function(){
+VWO.prototype.initialize = function() {
   var self = this;
   if (this.options.replay) {
-    tick(function(){
+    tick(function() {
       self.replay();
     });
   }
   if (this.options.listen) {
-    tick(function(){
+    tick(function() {
       self.roots();
     });
   }
@@ -17530,9 +17657,9 @@ VWO.prototype.initialize = function(){
  * https://vwo.com/knowledge/vwo-revenue-tracking-goal
  */
 
-VWO.prototype.completedOrder = function(track){
+VWO.prototype.completedOrder = function(track) {
   var total = track.total() || track.revenue() || 0;
-  enqueue(function(){
+  enqueue(function() {
     window._vis_opt_revenue_conversion(total);
   });
 };
@@ -17543,10 +17670,10 @@ VWO.prototype.completedOrder = function(track){
  * the integrations are fully initialized.
  */
 
-VWO.prototype.replay = function(){
+VWO.prototype.replay = function() {
   var analytics = this.analytics;
 
-  experiments(function(err, traits){
+  experiments(function(err, traits) {
     if (traits) analytics.identify(traits);
   });
 };
@@ -17557,18 +17684,18 @@ VWO.prototype.replay = function(){
  * the integrations are fully initialized.
  */
 
-VWO.prototype.roots = function(){
+VWO.prototype.roots = function() {
   var analytics = this.analytics;
 
-  rootExperiments(function(err, data){
-    each(data, function(experimentId, variationName){
+  rootExperiments(function(err, data) {
+    each(data, function(experimentId, variationName) {
       analytics.track(
         'Experiment Viewed',
         {
           experimentId: experimentId,
           variationName: variationName
         },
-        { context: { integration: integrationContext }}
+        { context: { integration: integrationContext } }
       );
     });
   });
@@ -17583,12 +17710,12 @@ VWO.prototype.roots = function(){
  * @return {Object}
  */
 
-function rootExperiments(fn){
-  enqueue(function(){
+function rootExperiments(fn) {
+  enqueue(function() {
     var data = {};
     var experimentIds = window._vwo_exp_ids;
     if (!experimentIds) return fn();
-    each(experimentIds, function(experimentId){
+    each(experimentIds, function(experimentId) {
       var variationName = variation(experimentId);
       if (variationName) data[experimentId] = variationName;
     });
@@ -17605,12 +17732,12 @@ function rootExperiments(fn){
  * @return {Object}
  */
 
-function experiments(fn){
-  enqueue(function(){
+function experiments(fn) {
+  enqueue(function() {
     var data = {};
     var ids = window._vwo_exp_ids;
     if (!ids) return fn();
-    each(ids, function(id){
+    each(ids, function(id) {
       var name = variation(id);
       if (name) data['Experiment: ' + id] = name;
     });
@@ -17624,7 +17751,7 @@ function experiments(fn){
  * @param {Function} fn
  */
 
-function enqueue(fn){
+function enqueue(fn) {
   window._vis_opt_queue = window._vis_opt_queue || [];
   window._vis_opt_queue.push(fn);
 }
@@ -17638,7 +17765,7 @@ function enqueue(fn){
  * @return {String}
  */
 
-function variation(id){
+function variation(id) {
   var experiments = window._vwo_exp;
   if (!experiments) return null;
   var experiment = experiments[id];
@@ -17646,8 +17773,8 @@ function variation(id){
   return variationId ? experiment.comb_n[variationId] : null;
 }
 
-}, {"each":4,"analytics.js-integration":92,"next-tick":118}],
-88: [function(require, module, exports) {
+}, {"each":4,"analytics.js-integration":94,"next-tick":120}],
+90: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17675,7 +17802,7 @@ var WebEngage = module.exports = integration('WebEngage')
  * @api public
  */
 
-WebEngage.prototype.initialize = function(){
+WebEngage.prototype.initialize = function() {
   var _weq = window._weq = window._weq || {};
   _weq['webengage.licenseCode'] = this.options.licenseCode;
   _weq['webengage.widgetVersion'] = this.options.widgetVersion;
@@ -17690,12 +17817,12 @@ WebEngage.prototype.initialize = function(){
  * @return {boolean}
  */
 
-WebEngage.prototype.loaded = function(){
+WebEngage.prototype.loaded = function() {
   return !!window.webengage;
 };
 
-}, {"analytics.js-integration":92,"use-https":94}],
-89: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"use-https":96}],
+91: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17733,13 +17860,13 @@ var Woopra = module.exports = integration('Woopra')
  * http://www.woopra.com/docs/setup/javascript-tracking/
  */
 
-Woopra.prototype.initialize = function(){
+Woopra.prototype.initialize = function() {
   /* eslint-disable */
   (function(){var i, s, z, w = window, d = document, a = arguments, q = 'script', f = ['config', 'track', 'identify', 'visit', 'push', 'call'], c = function(){var i, self = this; self._e = []; for (i = 0; i < f.length; i++){(function(f){self[f] = function(){self._e.push([f].concat(Array.prototype.slice.call(arguments, 0))); return self; }; })(f[i]); } }; w._w = w._w || {}; for (i = 0; i < a.length; i++){ w._w[a[i]] = w[a[i]] = w[a[i]] || new c(); } })('woopra');
   /* eslint-enable */
 
   this.load(this.ready);
-  each(this.options, function(key, value){
+  each(this.options, function(key, value) {
     key = toSnakeCase(key);
     if (value == null) return;
     if (value === '') return;
@@ -17753,7 +17880,7 @@ Woopra.prototype.initialize = function(){
  * @return {Boolean}
  */
 
-Woopra.prototype.loaded = function(){
+Woopra.prototype.loaded = function() {
   return !!(window.woopra && window.woopra.loaded);
 };
 
@@ -17763,7 +17890,7 @@ Woopra.prototype.loaded = function(){
  * @param {String} category (optional)
  */
 
-Woopra.prototype.page = function(page){
+Woopra.prototype.page = function(page) {
   var props = page.properties();
   var name = page.fullName();
   if (name) props.title = name;
@@ -17776,7 +17903,7 @@ Woopra.prototype.page = function(page){
  * @param {Identify} identify
  */
 
-Woopra.prototype.identify = function(identify){
+Woopra.prototype.identify = function(identify) {
   var traits = identify.traits();
   if (identify.name()) traits.name = identify.name();
   // `push` sends it off async
@@ -17789,12 +17916,12 @@ Woopra.prototype.identify = function(identify){
  * @param {Track} track
  */
 
-Woopra.prototype.track = function(track){
+Woopra.prototype.track = function(track) {
   window.woopra.track(track.event(), track.properties());
 };
 
-}, {"each":4,"analytics.js-integration":92,"to-snake-case":93}],
-90: [function(require, module, exports) {
+}, {"each":4,"analytics.js-integration":94,"to-snake-case":95}],
+92: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17822,7 +17949,7 @@ var Wootric = module.exports = integration('Wootric')
  * @api public
  */
 
-Wootric.prototype.initialize = function(){
+Wootric.prototype.initialize = function() {
   // We use this to keep track of the last page that Wootric has tracked to
   // ensure we don't accidentally send a duplicate page call
   this.lastPageTracked = null;
@@ -17830,7 +17957,7 @@ Wootric.prototype.initialize = function(){
   window.wootricSettings.account_token = this.options.accountToken;
 
   var self = this;
-  this.load('library', function(){
+  this.load('library', function() {
     self.ready();
   });
 };
@@ -17842,7 +17969,7 @@ Wootric.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Wootric.prototype.loaded = function(){
+Wootric.prototype.loaded = function() {
   // We are always ready since we are just setting a global variable in initialize
   return !!window.wootric;
 };
@@ -17854,7 +17981,7 @@ Wootric.prototype.loaded = function(){
  * @param {Facade} identify
  */
 
-Wootric.prototype.identify = function(identify){
+Wootric.prototype.identify = function(identify) {
   var traits = identify.traits();
   var email = identify.email();
   var createdAt = identify.created();
@@ -17876,9 +18003,9 @@ Wootric.prototype.identify = function(identify){
  * @param {Page} page
  */
 
-Wootric.prototype.page = function(page){
+Wootric.prototype.page = function(page) {
   // Only track page if we haven't already tracked it
-  if (this.lastPageTracked === window.location){
+  if (this.lastPageTracked === window.location) {
     return;
   }
 
@@ -17895,8 +18022,8 @@ Wootric.prototype.page = function(page){
   });
 };
 
-}, {"analytics.js-integration":92,"omit":176}],
-91: [function(require, module, exports) {
+}, {"analytics.js-integration":94,"omit":178}],
+93: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17929,12 +18056,12 @@ var Yandex = module.exports = integration('Yandex Metrica')
  * @api public
  */
 
-Yandex.prototype.initialize = function(){
+Yandex.prototype.initialize = function() {
   var id = this.options.counterId;
   var clickmap = this.options.clickmap;
   var webvisor = this.options.webvisor;
 
-  push(function(){
+  push(function() {
     window['yaCounter' + id] = new window.Ya.Metrika({
       id: id,
       clickmap: clickmap,
@@ -17944,8 +18071,8 @@ Yandex.prototype.initialize = function(){
 
   var loaded = bind(this, this.loaded);
   var ready = this.ready;
-  this.load(function(){
-    when(loaded, function(){
+  this.load(function() {
+    when(loaded, function() {
       tick(ready);
     });
   });
@@ -17958,7 +18085,7 @@ Yandex.prototype.initialize = function(){
  * @return {boolean}
  */
 
-Yandex.prototype.loaded = function(){
+Yandex.prototype.loaded = function() {
   return !!(window.Ya && window.Ya.Metrika);
 };
 
@@ -17969,12 +18096,12 @@ Yandex.prototype.loaded = function(){
  * @param {Function} callback
  */
 
-function push(callback){
+function push(callback) {
   window.yandex_metrika_callbacks = window.yandex_metrika_callbacks || [];
   window.yandex_metrika_callbacks.push(callback);
 }
 
-}, {"bind":105,"analytics.js-integration":92,"next-tick":118,"when":165}],
+}, {"bind":107,"analytics.js-integration":94,"next-tick":120,"when":167}],
 3: [function(require, module, exports) {
 
 var _analytics = window.analytics;
@@ -18621,8 +18748,8 @@ Analytics.prototype.noConflict = function(){
 };
 
 
-}, {"after":110,"bind":197,"callback":166,"clone":98,"./cookie":198,"debug":188,"defaults":100,"each":4,"emitter":109,"./group":199,"is":95,"is-email":156,"is-meta":200,"new-date":148,"event":201,"./pageDefaults":202,"pick":203,"prevent":204,"querystring":205,"./normalize":206,"object":173,"./memory":207,"./store":208,"./user":209,"facade":135}],
-197: [function(require, module, exports) {
+}, {"after":112,"bind":199,"callback":168,"clone":100,"./cookie":200,"debug":190,"defaults":102,"each":4,"emitter":111,"./group":201,"is":97,"is-email":158,"is-meta":202,"new-date":150,"event":203,"./pageDefaults":204,"pick":205,"prevent":206,"querystring":207,"./normalize":208,"object":175,"./memory":209,"./store":210,"./user":211,"facade":137}],
+199: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -18668,8 +18795,8 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":105,"bind-all":106}],
-198: [function(require, module, exports) {
+}, {"bind":107,"bind-all":108}],
+200: [function(require, module, exports) {
 
 var debug = require('debug')('analytics.js:cookie');
 var bind = require('bind');
@@ -18798,8 +18925,8 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"debug":188,"bind":197,"cookie":181,"clone":98,"defaults":100,"json":170,"top-domain":210}],
-210: [function(require, module, exports) {
+}, {"debug":190,"bind":199,"cookie":183,"clone":100,"defaults":102,"json":172,"top-domain":212}],
+212: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -18903,8 +19030,8 @@ domain.levels = function(url){
   return levels;
 };
 
-}, {"url":132,"cookie":211}],
-211: [function(require, module, exports) {
+}, {"url":134,"cookie":213}],
+213: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -19037,8 +19164,8 @@ function decode(value) {
   }
 }
 
-}, {"debug":188}],
-199: [function(require, module, exports) {
+}, {"debug":190}],
+201: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:group');
 var Entity = require('./entity');
@@ -19094,8 +19221,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"debug":188,"./entity":212,"inherit":213,"bind":197}],
-212: [function(require, module, exports) {
+}, {"debug":190,"./entity":214,"inherit":215,"bind":199}],
+214: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:entity');
 var traverse = require('isodate-traverse');
@@ -19335,8 +19462,8 @@ Entity.prototype.load = function () {
 };
 
 
-}, {"debug":188,"isodate-traverse":144,"defaults":100,"./memory":207,"./cookie":198,"./store":208,"extend":158,"clone":98}],
-207: [function(require, module, exports) {
+}, {"debug":190,"isodate-traverse":146,"defaults":102,"./memory":209,"./cookie":200,"./store":210,"extend":160,"clone":100}],
+209: [function(require, module, exports) {
 
 /**
  * Module Dependencies.
@@ -19400,8 +19527,8 @@ Memory.prototype.remove = function(key){
   delete this.store[key];
   return true;
 };
-}, {"clone":98,"bind":197}],
-208: [function(require, module, exports) {
+}, {"clone":100,"bind":199}],
+210: [function(require, module, exports) {
 
 var bind = require('bind');
 var defaults = require('defaults');
@@ -19488,8 +19615,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":197,"defaults":100,"store.js":214}],
-214: [function(require, module, exports) {
+}, {"bind":199,"defaults":102,"store.js":216}],
+216: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -19641,8 +19768,8 @@ try {
 store.enabled = !store.disabled
 
 module.exports = store;
-}, {"json":170}],
-213: [function(require, module, exports) {
+}, {"json":172}],
+215: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -19651,7 +19778,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-200: [function(require, module, exports) {
+202: [function(require, module, exports) {
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
 
@@ -19667,7 +19794,7 @@ module.exports = function isMeta (e) {
     return false;
 };
 }, {}],
-201: [function(require, module, exports) {
+203: [function(require, module, exports) {
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -19710,7 +19837,7 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 }, {}],
-202: [function(require, module, exports) {
+204: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -19772,8 +19899,8 @@ function canonicalUrl (search) {
 
 module.exports = pageDefaults;
 
-}, {"canonical":215,"url":132}],
-215: [function(require, module, exports) {
+}, {"canonical":217,"url":134}],
+217: [function(require, module, exports) {
 module.exports = function canonical () {
   var tags = document.getElementsByTagName('link');
   for (var i = 0, tag; tag = tags[i]; i++) {
@@ -19781,7 +19908,7 @@ module.exports = function canonical () {
   }
 };
 }, {}],
-203: [function(require, module, exports) {
+205: [function(require, module, exports) {
 'use strict';
 
 var objToString = Object.prototype.toString;
@@ -19857,7 +19984,7 @@ var pick = function pick(props, object) {
 module.exports = pick;
 
 }, {}],
-204: [function(require, module, exports) {
+206: [function(require, module, exports) {
 
 /**
  * prevent default on the given `e`.
@@ -19880,7 +20007,7 @@ module.exports = function(e){
 };
 
 }, {}],
-205: [function(require, module, exports) {
+207: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -19955,8 +20082,8 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":157,"type":7}],
-206: [function(require, module, exports) {
+}, {"trim":159,"type":7}],
+208: [function(require, module, exports) {
 
 /**
  * Module Dependencies.
@@ -20049,8 +20176,8 @@ function normalize(msg, list){
       || ~indexof(lower, name.toLowerCase()));
   }
 }
-}, {"debug":188,"component/indexof":120,"defaults":100,"component/map":216,"each":4,"is":95}],
-216: [function(require, module, exports) {
+}, {"debug":190,"component/indexof":122,"defaults":102,"component/map":218,"each":4,"is":97}],
+218: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -20075,8 +20202,8 @@ module.exports = function(arr, fn){
   }
   return ret;
 };
-}, {"to-function":175}],
-209: [function(require, module, exports) {
+}, {"to-function":177}],
+211: [function(require, module, exports) {
 
 var debug = require('debug')('analytics:user');
 var Entity = require('./entity');
@@ -20245,7 +20372,7 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":188,"./entity":212,"inherit":213,"bind":197,"./cookie":198,"uuid":186,"cookie":181}],
+}, {"debug":190,"./entity":214,"inherit":215,"bind":199,"./cookie":200,"uuid":188,"cookie":183}],
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",

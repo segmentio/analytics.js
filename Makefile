@@ -5,6 +5,7 @@
 BINS = ./node_modules/.bin
 DUO = $(BINS)/duo
 DUOT = $(BINS)/duo-test
+ESLINT = $(BINS)/eslint
 UGLIFYJS = $(BINS)/uglifyjs
 
 #
@@ -45,7 +46,7 @@ node_modules: package.json $(wildcard node_modules/*/package.json)
 
 # Remove temporary/built files.
 clean:
-	@rm -rf $(BUILD) *.log analytics.js analytics.min.js components
+	@rm -rf $(BUILD) *.log analytics.js analytics.min.js
 .PHONY: clean
 
 # Remove temporary/built files and vendor dependencies.
@@ -91,19 +92,24 @@ build: $(BUILD)
 # Test tasks.
 #
 
+# Lint JavaScript source.
+lint: node_modules
+	@$(ESLINT) $(SRC) $(TESTS)
+.PHONY: lint
+
 # Test locally in PhantomJS.
-test: $(BUILD)
+test: node_modules lint $(BUILD)
 	@$(DUOT) $(DUOT_ARGS) phantomjs
 .PHONY: test
 .DEFAULT_GOAL = test
 
 # Test locally in the browser.
-test-browser: $(BUILD)
+test-browser: node_modules lint $(BUILD)
 	@$(DUOT) $(DUOT_ARGS) browser
 .PHONY: test-browser
 
 # Test with Sauce Labs.
-test-sauce: $(BUILD)
+test-sauce: node_modules lint $(BUILD)
 	@$(DUOT) $(DUOT_ARGS) saucelabs \
 		--browsers $(BROWSER) \
 		--title analytics.js

@@ -1,4 +1,10 @@
 
+2.9.1 / 2015-06-11
+==================
+
+ * Remove deprecated analytics.js-integrations dependency
+ * Update build
+
 2.9.0 / 2015-06-11
 ==================
 

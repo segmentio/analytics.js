@@ -1,4 +1,12 @@
 
+2.9.0 / 2015-06-11
+==================
+
+ * Pull integrations from individual repositories, located in the [segment-integrations GitHub organization](https://github.com/segment-integrations/). This change should be unnoticeable from a user perspective, but has huge benefits in that excluding integrations from custom builds is now much, much easier, and one integration's test failures will no longer prevent another integration's tests from running.
+  
+  A noteworthy part of this change: All integrations are now pulled into Analytics.js in `component.json`, using an explicit version number.
+In the future this part of the build process is very likely to change to be more of an automatic process, but for now--baby steps.
+
 2.8.25 / 2015-06-03
 ===================
 

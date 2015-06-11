@@ -24,7 +24,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "duo": "0.8",
+    "duo": "^0.12.0",
     "duo-test": "^0.4.0",
     "eslint": "0.x",
     "eslint-config-segment": "^1.0.7",

@@ -73,7 +73,7 @@ hooks: $(HOOKS)
 
 # Build analytics.js.
 analytics.js: node_modules $(SRC) package.json
-	@$(DUO) --standalone analytics lib/index.js > $@
+	@$(DUO) --stdout --standalone analytics lib/index.js > $@
 
 # Build minified analytics.js.
 analytics.min.js: analytics.js
@@ -82,7 +82,7 @@ analytics.min.js: analytics.js
 # Target for build files.
 # TODO: Document this one better
 $(BUILD): analytics.js analytics.min.js $(TESTS)
-	@$(DUO) --development test/tests.js > $(BUILD)
+	@$(DUO) --stdout --development test/tests.js > $(BUILD)
 
 # $(BUILD) shortcut.
 build: $(BUILD)

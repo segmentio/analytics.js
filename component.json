@@ -13,7 +13,7 @@
   "dependencies": {
     "avetisk/defaults": "0.0.4",
     "component/clone": "0.1.0",
-    "component/cookie": "1.1.1",
+    "component/cookie": "1.1.2",
     "component/each": "0.0.1",
     "component/emitter": "1.1.0",
     "component/event": "0.1.1",

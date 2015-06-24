@@ -302,7 +302,7 @@ var Astronomer = exports.Integration = integration('astronomer')
   .option('trackAllPages', false)
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true)
-  .tag('library', '<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.28.min.js"></script>');
+  .tag('library', '<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.33.min.js"></script>');
 
 /**
  * Initialize astronomer.
@@ -315,21 +315,26 @@ Astronomer.prototype.initialize = function(page){
   this.load('library', function() {
 
     // Configure AWS with credentials initailized with
-    var credentials = new window.AWS.CognitoIdentityCredentials({
-      IdentityPoolId: self.options.identityPoolId,
-      IdentityId: self.options.identityId,
-      Logins: {
-          "astronomer.io": self.options.token
-      }
+    // var credentials = new window.AWS.CognitoIdentityCredentials({
+    //   IdentityPoolId: self.options.identityPoolId,
+    //   IdentityId: self.options.identityId,
+    //   Logins: {
+    //       "astronomer.io": self.options.token
+    //   }
+    // });
+
+    var credentials = new window.AWS.WebIdentityCredentials({
+      RoleArn: "arn:aws:iam::213824691356:role/AstronomerAuthenticatedProducer",
+      WebIdentityToken: self.options.token
     });
 
     window.AWS.config.region = self.options.region;
     window.AWS.config.credentials = credentials;
 
-    // window.AWS.config.credentials.get(function(err) {
-    //   if (err) console.log(err.stack); // credentials not loaded
-    //   else console.log("Access Key:", window.AWS.config.credentials.accessKeyId);
-    // });
+    window.AWS.config.credentials.get(function(err) {
+      if (err) console.log(err.stack);
+      else console.log("Access Key:", window.AWS.config.credentials.accessKeyId);
+    });
 
     // Setup global kinesis object
     window.__astronomer = {};

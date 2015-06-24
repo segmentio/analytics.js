@@ -279,14 +279,15 @@ module.exports = [
 
 }, {"./lib/astronomer":8}],
 8: [function(require, module, exports) {
-
 var integration = require('analytics.js-integration');
+var each = require('each');
 
 /**
  * Expose `plugin`.
  */
 
 module.exports = exports = function(analytics){
+  window._astq = window._astq || [];
   analytics.addIntegration(Astronomer);
 };
 
@@ -295,14 +296,15 @@ module.exports = exports = function(analytics){
  */
 
 var Astronomer = exports.Integration = integration('astronomer')
-  .global('AWS')
-  .global('__astronomer')
-  .option('accessKeyId', null)
-  .option('secretAccessKey', null)
+  .global('_astronomer')
+  .global('_astq')
+  .option('appId', null)
+  .option('token', null)
+  .option('region', null)
   .option('trackAllPages', false)
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true)
-  .tag('library', '<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.33.min.js"></script>');
+  .tag('library', '<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.33.min.js">');
 
 /**
  * Initialize astronomer.
@@ -315,14 +317,6 @@ Astronomer.prototype.initialize = function(page){
   this.load('library', function() {
 
     // Configure AWS with credentials initailized with
-    // var credentials = new window.AWS.CognitoIdentityCredentials({
-    //   IdentityPoolId: self.options.identityPoolId,
-    //   IdentityId: self.options.identityId,
-    //   Logins: {
-    //       "astronomer.io": self.options.token
-    //   }
-    // });
-
     var credentials = new window.AWS.WebIdentityCredentials({
       RoleArn: "arn:aws:iam::213824691356:role/AstronomerAuthenticatedProducer",
       WebIdentityToken: self.options.token
@@ -332,16 +326,25 @@ Astronomer.prototype.initialize = function(page){
     window.AWS.config.credentials = credentials;
 
     window.AWS.config.credentials.get(function(err) {
-      if (err) console.log(err.stack);
-      else console.log("Access Key:", window.AWS.config.credentials.accessKeyId);
+      if (err) {
+        console.error(err);
+      } else {
+        // Ready for events
+        self.ready();
+
+        // If any events have been placed in the queue, replay them now
+        while (window._astq.length > 0) {
+          var item = window._astq.shift();
+          var method = item.shift();
+          if (analytics[method]) analytics[method].apply(analytics, item);
+        }
+
+      }
     });
 
     // Setup global kinesis object
-    window.__astronomer = {};
-    window.__astronomer.kinesis = new window.AWS.Kinesis();
-
-    // Ready for events
-    self.ready();
+    window._astronomer = {};
+    window._astronomer.kinesis = new window.AWS.Kinesis();
   });
 };
 
@@ -352,7 +355,7 @@ Astronomer.prototype.initialize = function(page){
  */
 
 Astronomer.prototype.loaded = function(){
-  return !! window.AWS && window.AWS.config;
+  return !!((((window.AWS) || {}).config || {}).credentials || {}).accessKeyId
 };
 /**
  * Trigger a page view.
@@ -391,8 +394,8 @@ Astronomer.prototype.page = function(page){
 Astronomer.prototype.identify = function(identify){
   var id = identify.userId();
   var traits = identify.traits();
-  window.__astronomer.userId = id;
-  window.__astronomer.userProperties = traits;
+  window._astronomer.userId = id;
+  window._astronomer.userProperties = traits;
 };
 
 /**
@@ -404,8 +407,8 @@ Astronomer.prototype.identify = function(identify){
 Astronomer.prototype.group = function(group){
   var id = group.groupId();
   var traits = group.traits();
-  window.__astronomer.groupId = id;
-  window.__astronomer.groupProperties = traits;
+  window._astronomer.groupId = id;
+  window._astronomer.groupProperties = traits;
 };
 
 /**
@@ -418,18 +421,18 @@ Astronomer.prototype.track = function(track){
   var record = JSON.stringify({
     'event': track.event(),
     'properties': track.properties(),
-    'userId': window.__astronomer.userId,
-    'traits': window.__astronomer.userProperties
+    'userId': window._astronomer.userId,
+    'traits': window._astronomer.userProperties
   });
 
   var params = {
     Data: record,
     StreamName: 'astronomer',
-    PartitionKey: 'astronomer-test'
+    PartitionKey: this.options.appId
   };
 
   console.log(params);
-  window.__astronomer.kinesis.putRecord(params, function(error, data) {
+  window._astronomer.kinesis.putRecord(params, function(error, data) {
     if (error) {
       console.error(error);
     }
@@ -437,7 +440,7 @@ Astronomer.prototype.track = function(track){
 
 };
 
-}, {"analytics.js-integration":9}],
+}, {"analytics.js-integration":9,"each":4}],
 9: [function(require, module, exports) {
 
 /**

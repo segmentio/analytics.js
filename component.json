@@ -28,7 +28,7 @@
     "matthewp/keys": "0.0.3",
     "ndhoule/pick": "1.0.1",
     "segmentio/after": "0.0.1",
-    "usercycle/analytics.js-integrations": "redtwo",
+    "astronomerio/analytics.js-integrations": "astronomer",
     "segmentio/canonical": "0.0.1",
     "segmentio/extend": "0.0.1",
     "segmentio/facade": "1.x",

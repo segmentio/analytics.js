@@ -426,7 +426,6 @@ Astronomer.prototype.track = function(track){
     Data: record,
     StreamName: 'astronomer',
     PartitionKey: 'astronomer-test'
-    // PartitionKey: 'user-' + Math.floor(Math.random() * 5)
   };
 
   console.log(params);
@@ -6906,162 +6905,7 @@ module.exports = function(arr, fn){
   }
   return ret;
 };
-}, {"to-function":84}],
-84: [function(require, module, exports) {
-
-/**
- * Module Dependencies
- */
-
-var expr;
-try {
-  expr = require('props');
-} catch(e) {
-  expr = require('component-props');
-}
-
-/**
- * Expose `toFunction()`.
- */
-
-module.exports = toFunction;
-
-/**
- * Convert `obj` to a `Function`.
- *
- * @param {Mixed} obj
- * @return {Function}
- * @api private
- */
-
-function toFunction(obj) {
-  switch ({}.toString.call(obj)) {
-    case '[object Object]':
-      return objectToFunction(obj);
-    case '[object Function]':
-      return obj;
-    case '[object String]':
-      return stringToFunction(obj);
-    case '[object RegExp]':
-      return regexpToFunction(obj);
-    default:
-      return defaultToFunction(obj);
-  }
-}
-
-/**
- * Default to strict equality.
- *
- * @param {Mixed} val
- * @return {Function}
- * @api private
- */
-
-function defaultToFunction(val) {
-  return function(obj){
-    return val === obj;
-  };
-}
-
-/**
- * Convert `re` to a function.
- *
- * @param {RegExp} re
- * @return {Function}
- * @api private
- */
-
-function regexpToFunction(re) {
-  return function(obj){
-    return re.test(obj);
-  };
-}
-
-/**
- * Convert property `str` to a function.
- *
- * @param {String} str
- * @return {Function}
- * @api private
- */
-
-function stringToFunction(str) {
-  // immediate such as "> 20"
-  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
-
-  // properties such as "name.first" or "age > 18" or "age > 18 && age < 36"
-  return new Function('_', 'return ' + get(str));
-}
-
-/**
- * Convert `object` to a function.
- *
- * @param {Object} object
- * @return {Function}
- * @api private
- */
-
-function objectToFunction(obj) {
-  var match = {};
-  for (var key in obj) {
-    match[key] = typeof obj[key] === 'string'
-      ? defaultToFunction(obj[key])
-      : toFunction(obj[key]);
-  }
-  return function(val){
-    if (typeof val !== 'object') return false;
-    for (var key in match) {
-      if (!(key in val)) return false;
-      if (!match[key](val[key])) return false;
-    }
-    return true;
-  };
-}
-
-/**
- * Built the getter function. Supports getter style functions
- *
- * @param {String} str
- * @return {String}
- * @api private
- */
-
-function get(str) {
-  var props = expr(str);
-  if (!props.length) return '_.' + str;
-
-  var val, i, prop;
-  for (i = 0; i < props.length; i++) {
-    prop = props[i];
-    val = '_.' + prop;
-    val = "('function' == typeof " + val + " ? " + val + "() : " + val + ")";
-
-    // mimic negative lookbehind to avoid problems with nested properties
-    str = stripNested(prop, str, val);
-  }
-
-  return str;
-}
-
-/**
- * Mimic negative lookbehind to avoid problems with nested properties.
- *
- * See: http://blog.stevenlevithan.com/archives/mimic-lookbehind-javascript
- *
- * @param {String} prop
- * @param {String} str
- * @param {String} val
- * @return {String}
- * @api private
- */
-
-function stripNested (prop, str, val) {
-  return str.replace(new RegExp('(\\.)?' + prop, 'g'), function($0, $1) {
-    return $1 ? $0 : val;
-  });
-}
-
-}, {"props":35,"component-props":35}],
+}, {"to-function":34}],
 56: [function(require, module, exports) {
 
 /**
@@ -7317,8 +7161,8 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"debug":44,"./entity":69,"inherit":70,"bind":41,"./cookie":43,"uuid":85,"cookie":61}],
-85: [function(require, module, exports) {
+}, {"debug":44,"./entity":69,"inherit":70,"bind":41,"./cookie":43,"uuid":84,"cookie":61}],
+84: [function(require, module, exports) {
 
 /**
  * Taken straight from jed's gist: https://gist.github.com/982883
@@ -7369,8 +7213,8 @@ Facade.Track = require('./track');
 Facade.Page = require('./page');
 Facade.Screen = require('./screen');
 
-}, {"./facade":86,"./alias":87,"./group":88,"./identify":89,"./track":90,"./page":91,"./screen":92}],
-86: [function(require, module, exports) {
+}, {"./facade":85,"./alias":86,"./group":87,"./identify":88,"./track":89,"./page":90,"./screen":91}],
+85: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var isEnabled = require('./is-enabled');
@@ -7680,8 +7524,8 @@ function transform(obj){
   return cloned;
 }
 
-}, {"isodate-traverse":71,"./is-enabled":93,"./utils":94,"./address":95,"obj-case":96,"new-date":49}],
-93: [function(require, module, exports) {
+}, {"isodate-traverse":71,"./is-enabled":92,"./utils":93,"./address":94,"obj-case":95,"new-date":49}],
+92: [function(require, module, exports) {
 
 /**
  * A few integrations are disabled by default. They must be explicitly
@@ -7703,7 +7547,7 @@ module.exports = function (integration) {
   return ! disabled[integration];
 };
 }, {}],
-94: [function(require, module, exports) {
+93: [function(require, module, exports) {
 
 /**
  * TODO: use component symlink, everywhere ?
@@ -7719,8 +7563,8 @@ try {
   exports.type = require('type-component');
 }
 
-}, {"inherit":97,"clone":98,"type":7}],
-97: [function(require, module, exports) {
+}, {"inherit":96,"clone":97,"type":7}],
+96: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -7729,7 +7573,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-98: [function(require, module, exports) {
+97: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -7789,7 +7633,7 @@ function clone(obj){
 }
 
 }, {"component-type":7,"type":7}],
-95: [function(require, module, exports) {
+94: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -7827,8 +7671,8 @@ module.exports = function(proto){
   }
 };
 
-}, {"obj-case":96}],
-96: [function(require, module, exports) {
+}, {"obj-case":95}],
+95: [function(require, module, exports) {
 
 var identity = function(_){ return _; };
 
@@ -7983,7 +7827,7 @@ function isFunction(val) {
 }
 
 }, {}],
-87: [function(require, module, exports) {
+86: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -8054,8 +7898,8 @@ Alias.prototype.userId = function(){
     || this.field('to');
 };
 
-}, {"./utils":94,"./facade":86}],
-88: [function(require, module, exports) {
+}, {"./utils":93,"./facade":85}],
+87: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -8184,8 +8028,8 @@ Group.prototype.properties = function(){
     || {};
 };
 
-}, {"./utils":94,"./address":95,"is-email":47,"new-date":49,"./facade":86}],
-89: [function(require, module, exports) {
+}, {"./utils":93,"./address":94,"is-email":47,"new-date":49,"./facade":85}],
+88: [function(require, module, exports) {
 
 var address = require('./address');
 var Facade = require('./facade');
@@ -8435,8 +8279,8 @@ Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.gender = Facade.proxy('traits.gender');
 Identify.prototype.birthday = Facade.proxy('traits.birthday');
 
-}, {"./address":95,"./facade":86,"is-email":47,"new-date":49,"./utils":94,"obj-case":96,"trim":82}],
-90: [function(require, module, exports) {
+}, {"./address":94,"./facade":85,"is-email":47,"new-date":49,"./utils":93,"obj-case":95,"trim":82}],
+89: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var clone = require('./utils').clone;
@@ -8726,8 +8570,8 @@ function currency(val) {
   if (!isNaN(val)) return val;
 }
 
-}, {"./utils":94,"./facade":86,"./identify":89,"is-email":47,"obj-case":96}],
-91: [function(require, module, exports) {
+}, {"./utils":93,"./facade":85,"./identify":88,"is-email":47,"obj-case":95}],
+90: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Facade = require('./facade');
@@ -8852,8 +8696,8 @@ Page.prototype.track = function(name){
   });
 };
 
-}, {"./utils":94,"./facade":86,"./track":90}],
-92: [function(require, module, exports) {
+}, {"./utils":93,"./facade":85,"./track":89}],
+91: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Page = require('./page');
@@ -8929,7 +8773,7 @@ Screen.prototype.track = function(name){
   });
 };
 
-}, {"./utils":94,"./page":91,"./track":90}],
+}, {"./utils":93,"./page":90,"./track":89}],
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",

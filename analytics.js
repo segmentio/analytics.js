@@ -299,6 +299,8 @@ var Astronomer = exports.Integration = integration('astronomer')
   .global('_astronomer')
   .global('_astq')
   .option('appId', null)
+  .option('streamName', null)
+  .option('roleArn', null)
   .option('token', null)
   .option('region', null)
   .option('trackAllPages', false)
@@ -318,7 +320,7 @@ Astronomer.prototype.initialize = function(page){
 
     // Configure AWS with credentials initailized with
     var credentials = new window.AWS.WebIdentityCredentials({
-      RoleArn: "arn:aws:iam::213824691356:role/AstronomerAuthenticatedProducer",
+      RoleArn: self.options.roleArn,
       WebIdentityToken: self.options.token
     });
 
@@ -422,16 +424,16 @@ Astronomer.prototype.track = function(track){
     'event': track.event(),
     'properties': track.properties(),
     'userId': window._astronomer.userId,
+    'anonymousId': analytics.user().anonymousId(),
     'traits': window._astronomer.userProperties
   });
 
   var params = {
     Data: record,
-    StreamName: 'astronomer',
+    StreamName: this.options.streamName,
     PartitionKey: this.options.appId
   };
 
-  console.log(params);
   window._astronomer.kinesis.putRecord(params, function(error, data) {
     if (error) {
       console.error(error);

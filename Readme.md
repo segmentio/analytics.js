@@ -1,51 +1,39 @@
 # Analytics.js [![Build Status][ci-badge]][ci-link]
 
-The hassle-free way to integrate analytics into any web application. 
+Analytics.js makes it easy to collect customer data and send it to many different tools using a single, unified API.
 
-Analytics.js is the open-source library that powers [Segment](https://segment.io). Segment is a hosted solution that gives you an interface by which to edit all of your settings, instead of having to write any code. It also extends the same functionality of Analytics.js to your [mobile apps](https://segment.io/libraries) and your [servers](https://segment.io/libraries).
+Analytics.js is open source and is one of the libraries that powers [Segment](https://segment.com), the managed, hassle-free way to collect customer data in the browser and beyond.
+
+For our mobile and server-side data collection libraries, check out our [libraries][] page.
 
 ## Documentation
 
-First read the [Analytics.js QuickStart](https://segment.io/docs/tutorials/quickstart-analytics.js). For more detail check out the [Analytics.js Library Reference](https://segment.io/docs/libraries/analytics.js).
+First, read the [Analytics.js QuickStart][], which contains installation instructions and a brief overview of what Analytics.js does and how it works.
 
-## Integrations
+For more detail on the Analytics.js API, check out the [Analytics.js Library Reference][].
 
-Looking to add support for a new integration, or modify an existing one? Take a look at the [segment-integrations](https://github.com/segment-integrations) organization, where all of the integration-specific code is stored. We love pull requests!
+## Contributing
 
-## Development
+This repository houses a pre-built, open-source version of analytics.js. The core logic of analytics.js is broken out into individual repositories:
 
-To get started with development, make sure you are running node `0.12`, clone the repository and then inside of it run:
+- To report an issue with analytics.js itself, head over to [analytics.js-core][], where the core analytics.js logic is maintained.
+- To report an issue with an integration. head over to the [analytics.js-integrations][] organization, where we keep each integration in its own repository.
 
-```bash
-$ make
-```
-
-That will build the `analytics.js` file, downloading all of the dependencies required to build it automatically. Then, edit as you please, and when you are ready to test run:
-
-```bash
-$ make test
-```
-
-That will build the latest version of `analytics.js`, lint all of the Javascript code, and run the specific tests automatically.
-
-If you'd prefer to use the browser's developer tools, you can use:
-
-```bash
-$ make test-browser
-```
-
-Once your tests pass, you're ready to file a pull request!
+If you're not sure where to open an issue, feel free to open an issue against this repository or email <friends@segment.com> and we'll help point you in the right direction.
 
 ## License
 
-Copyright &copy; 2014 Segment &lt;friends@segment.io&gt;
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Released under the [MIT license](License.md).
 
 
-[ci-link]: https://travis-ci.org/segmentio/analytics.js
+
+[analytics.js library reference]: https://segment.io/docs/libraries/analytics.js
+[analytics.js quickstart]: https://segment.io/docs/tutorials/quickstart-analytics.js
+[analytics.js-core]: https://github.com/segmentio/analytics.js-core
+[analytics.js-integrations]: https://github.com/segment-integrations?query=analytics.js-integration
 [ci-badge]: https://travis-ci.org/segmentio/analytics.js.png?branch=master
+[ci-link]: https://travis-ci.org/segmentio/analytics.js
+[integrations]: https://segment.com/integrations
+[libraries]: https://segment.io/libraries
+[nodejs.org]: https://nodejs.org/
+[spec]: https://segment.com/docs/spec/

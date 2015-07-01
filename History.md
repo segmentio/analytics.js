@@ -1,4 +1,11 @@
 
+2.10.0 / 2015-06-30
+===================
+
+ * Move core library out to segmentio/analytics.js-core
+   
+   This repository is now purely a build repository for Analytics.js. For analytics.js's core library, see [segmentio/analytics.js-core](https://github.com/segmentio/analytics.js-core); for integrations, see the [segment-integrations](https://github.com/segment-integrations) organization.
+
 2.9.1 / 2015-06-11
 ==================
 

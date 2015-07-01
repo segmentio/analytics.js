@@ -106,10 +106,10 @@ var Integrations = require('./integrations');
 var each = require('each');
 
 /**
- * Initialize the `analytics` singleton.
+ * Expose the `analytics` singleton.
  */
 
-var analytics = new Analytics();
+var analytics = module.exports = exports = new Analytics();
 
 /**
  * Expose require.
@@ -130,12 +130,6 @@ exports.VERSION = require('../bower.json').version;
 each(Integrations, function(name, Integration) {
   analytics.use(Integration);
 });
-
-/**
- * Expose `analytics`.
- */
-
-module.exports = analytics;
 
 }, {"segmentio/analytics.js-core":2,"./integrations":3,"each":4,"../bower.json":5}],
 2: [function(require, module, exports) {
@@ -20312,7 +20306,7 @@ function push(callback) {
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.9.1",
+  "version": "2.10.1",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

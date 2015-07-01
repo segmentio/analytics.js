@@ -1,7 +1,7 @@
 {
   "name": "analytics.js",
   "author": "Segment.io <friends@segment.io>",
-  "version": "2.9.1",
+  "version": "2.10.0",
   "license": "MIT",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "keywords": [
@@ -15,8 +15,7 @@
     "type": "git"
   },
   "engines": {
-    "node": ">=0.12.0",
-    "npm": ">=2.7.0"
+    "node": ">=0.12.0"
   },
   "main": "analytics.js",
   "scripts": {
@@ -25,10 +24,8 @@
   "dependencies": {},
   "devDependencies": {
     "duo": "^0.12.0",
-    "duo-test": "^0.4.0",
     "eslint": "0.x",
     "eslint-config-segment": "^1.0.7",
-    "phantomjs": "^1.9.16",
     "uglify-js": ">= 1.3.4"
   }
 }

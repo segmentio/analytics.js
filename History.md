@@ -1,8 +1,61 @@
 
+2.10.0 / 2015-06-30
+===================
+
+ * Move core library out to segmentio/analytics.js-core
+   
+   This repository is now purely a build repository for Analytics.js. For analytics.js's core library, see [segmentio/analytics.js-core](https://github.com/segmentio/analytics.js-core); for integrations, see the [segment-integrations](https://github.com/segment-integrations) organization.
+
+2.9.1 / 2015-06-11
+==================
+
+ * Remove deprecated analytics.js-integrations dependency
+ * Update build
+
+2.9.0 / 2015-06-11
+==================
+
+ * Pull integrations from individual repositories, located in the [segment-integrations GitHub organization](https://github.com/segment-integrations/). This change should be unnoticeable from a user perspective, but has huge benefits in that excluding integrations from custom builds is now much, much easier, and one integration's test failures will no longer prevent another integration's tests from running.
+  
+  A noteworthy part of this change: All integrations are now pulled into Analytics.js in `component.json`, using an explicit version number.
+In the future this part of the build process is very likely to change to be more of an automatic process, but for now--baby steps.
+
+2.8.25 / 2015-06-03
+===================
+
+ * Update build (for real this time)
+
+2.8.24 / 2015-06-03
+===================
+
+ * Update build
+
+2.8.23 / 2015-05-27
+===================
+
+ * Update component/url dependency to 0.2.0
+
+2.8.22 / 2015-05-22
+===================
+
+ * Update build
+
+2.8.21 / 2015-05-22
+===================
+
+ * Update build
+
+2.8.20 / 2015-05-22
+===================
+
+ * Update build
+ * Clean up Makefile
+
 2.8.19 / 2015-05-16
 ===================
 
-
+ * Pin all dependencies
+ * Bump Node.js engine dependency to 0.12
 
 2.8.18 / 2015-05-14
 ===================

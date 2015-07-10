@@ -1,5 +1,5 @@
-This repo should be kept in sync with upstream segment version.  The only thing we change here is component.json.  The dependency for `analytics.js-integrations` should point to our fork on github (astronomer branch).
+This repo should be kept in sync with upstream segment version.  The only thing we change here is component.json and integrations.js.  The dependency for `analytics.js-integration-astronomer` should point to our github integration repo.
 
 To Build:
--   Make sure our fork of `analytics.js-integrations` `astronomer` branch is up to date.
+-   Make sure our integration master branch is up to date.
 -   `make clean && make build`

@@ -7080,6 +7080,7 @@ Astronomer.prototype.initialize = function() {
       self.load('library', callback);
     },
     function auth(callback) {
+      console.log('Authenticating with ' + credentialServer);
       request
         .get('/api/v1/applications/credentials/' + appId)
         .use(prefix(credentialServer))

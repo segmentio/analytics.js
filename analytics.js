@@ -7118,10 +7118,8 @@ Astronomer.prototype.ensureKinesisConfig = function(callback) {
  * @return {Boolean} If expired
  */
 Astronomer.prototype.expired = function() {
-  var expireTime = (((self.kinesis || {}).config || {}).credentials || {}).expireTime;
-  var a = !expireTime || expireTime.getTime() <= Date.now();
-  console.log(a);
-  return a;
+  var expireTime = (((this.kinesis || {}).config || {}).credentials || {}).expireTime;
+  return !expireTime || expireTime.getTime() <= Date.now();
 };
 
 /**
@@ -7139,7 +7137,9 @@ Astronomer.prototype.putRecord = function(record, callback) {
     };
 
     kinesis.putRecord(params, function(err, data) {
-      console.log(err, params);
+      if (err) {
+        console.log(err);
+      }
       callback();
     });
   });
@@ -7150,7 +7150,6 @@ Astronomer.prototype.putRecord = function(record, callback) {
  * @param {Function} callback Callback passing in response
  */
 Astronomer.prototype.requestConfig = function(callback) {
-  console.log('configging');
   request.get('/api/v1/applications/credentials/' + this.options.appId)
     .use(prefix(this.options.credentialServer))
     .end(callback);

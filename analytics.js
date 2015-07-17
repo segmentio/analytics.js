@@ -7046,86 +7046,139 @@ var integration = require('analytics.js-integration');
 var request = require('visionmedia/superagent');
 var prefix = require('johntron/superagent-prefix');
 var async = require('caolan/async');
+window._astq = window._astq || [];
 
 /**
  * Expose `Astronomer` integration.
  */
-
-window._astq = window._astq || [];
-
 var Astronomer = module.exports = exports = integration('astronomer')
-  .global('_astronomer')
   .global('_astq')
   .option('appId', null)
   .option('credentialServer', 'https://app.astronomer.io:443')
+  .option('credentialsExpiration', 900)
   .option('trackAllPages', false)
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true)
-  .tag('library', '<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.33.min.js">');
+  .tag('aws', '<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.33.min.js">');
 
 /**
  * Initialize astronomer.
- *
- * @param {Facade} page
+ * @param {Facade} page The page object
  */
-
 Astronomer.prototype.initialize = function() {
   var self = this;
-  var appId = self.options.appId;
-  var credentialServer = self.options.credentialServer;
-  window._astronomer = {};
+  // Hold user data
+  self.props = {};
+  // The kinesis service object
+  self.kinesis = null;
+  // Need concurrency 1 here to prevent multiple auth requests simultaneously
+  self.queue = async.queue(self.putRecord.bind(self), 1);
+  // Load aws sdk, then signal ready
+  self.load('aws', function() {
+    self.ready();
+    self.replay();
+  });
 
-  async.waterfall([
-    function load(callback) {
-      self.load('library', callback);
-    },
-    function auth(callback) {
-      console.log('Authenticating with ' + credentialServer);
-      request
-        .get('/api/v1/applications/credentials/' + appId)
-        .use(prefix(credentialServer))
-        .end(callback);
-    },
-    function aws(result, callback) {
-      var credentials = new window.AWS.WebIdentityCredentials({
-        RoleArn: result.body.roleArn,
-        WebIdentityToken: result.body.credentials.Token
-      });
+  console.log('Using config server ' + self.options.credentialServer);
+};
 
-      window.AWS.config.region = result.body.region;
-      window.AWS.config.credentials = credentials;
-      window._astronomer.config = result.body;
-      window._astronomer.kinesis = new window.AWS.Kinesis();
-      window.AWS.config.credentials.get(callback);
-    },
-    function dequeue(callback) {
-      self.ready();
-      // If any events have been placed in the queue, replay them now
-      while (window._astq.length > 0) {
-        var item = window._astq.shift();
-        var method = item.shift();
-        if (analytics[method]) analytics[method].apply(analytics, item);
-      }
+/**
+ * Authenticate with our server
+ * @param {Function} callback Callback
+ */
+Astronomer.prototype.ensureKinesisConfig = function(callback) {
+  var self = this;
+
+  if (!self.expired()) {
+    callback(self.config, self.kinesis);
+    return;
+  }
+
+  // Request fresh config (token)
+  self.requestConfig(function(err, response) {
+    // Update global config object
+    self.config = response.body;
+
+    // Assign kinesis service object to new one with fresh config
+    self.kinesis = new window.AWS.Kinesis({
+      region: self.config.region,
+      credentials: new window.AWS.WebIdentityCredentials({
+        RoleArn: self.config.roleArn,
+        WebIdentityToken: self.config.credentials.Token,
+        DurationSeconds: self.options.credentialsExpiration
+      })
+    });
+
+    callback(self.config, self.kinesis);
+  });
+};
+
+/**
+ * Check credentials on kinesis service object
+ * @return {Boolean} If expired
+ */
+Astronomer.prototype.expired = function() {
+  var expireTime = (((self.kinesis || {}).config || {}).credentials || {}).expireTime;
+  var a = !expireTime || expireTime.getTime() <= Date.now();
+  console.log(a);
+  return a;
+};
+
+/**
+ * Worker handler function
+ * @param {Object} record Record to put to kinesis
+ * @param {Function} callback Function to callback to queue
+ */
+Astronomer.prototype.putRecord = function(record, callback) {
+  var self = this;
+  self.ensureKinesisConfig(function(config, kinesis) {
+    var params = {
+      Data: record,
+      StreamName: config.streamName,
+      PartitionKey: self.options.appId
+    };
+
+    kinesis.putRecord(params, function(err, data) {
+      console.log(err, params);
       callback();
-    }
-  ]);
+    });
+  });
+};
+
+/**
+ * Request new configuration from server, including fresh token
+ * @param {Function} callback Callback passing in response
+ */
+Astronomer.prototype.requestConfig = function(callback) {
+  console.log('configging');
+  request.get('/api/v1/applications/credentials/' + this.options.appId)
+    .use(prefix(this.options.credentialServer))
+    .end(callback);
+};
+
+/**
+ * Replay the events that have been queued prior to initialization
+ */
+Astronomer.prototype.replay = function() {
+  while (window._astq.length > 0) {
+    var item = window._astq.shift();
+    var method = item.shift();
+    if (analytics[method]) analytics[method].apply(analytics, item);
+  }
 };
 
 /**
  * Has the astronomer library been loaded yet?
- *
  * @return {Boolean}
  */
-
 Astronomer.prototype.loaded = function() {
   return !!((((window.AWS) || {}).config || {}).credentials || {}).accessKeyId;
 };
+
 /**
  * Trigger a page view.
- *
- * @param {Facade} identify
+ * @param {Facade} page A page object
  */
-
 Astronomer.prototype.page = function(page) {
   var category = page.category();
   var props = page.properties();
@@ -7150,56 +7203,40 @@ Astronomer.prototype.page = function(page) {
 
 /**
  * Identify a user.
- *
- * @param {Facade} identify
+ * @param {Facade} identify An identify object
  */
-
 Astronomer.prototype.identify = function(identify) {
   var id = identify.userId();
   var traits = identify.traits();
-  window._astronomer.userId = id;
-  window._astronomer.userProperties = traits;
+  this.props.userId = id;
+  this.props.userProperties = traits;
 };
 
 /**
  * Associate the current user with a group of users.
- *
- * @param {Facade} group
+ * @param {Facade} group A group object
  */
-
 Astronomer.prototype.group = function(group) {
   var id = group.groupId();
   var traits = group.traits();
-  window._astronomer.groupId = id;
-  window._astronomer.groupProperties = traits;
+  this.props.groupId = id;
+  this.props.groupProperties = traits;
 };
 
 /**
  * Track an event.
- *
- * @param {Facade} track
+ * @param {Facade} track A track object
  */
-
 Astronomer.prototype.track = function(track) {
   var record = JSON.stringify({
     event: track.event(),
     properties: track.properties(),
-    userId: window._astronomer.userId,
     anonymousId: analytics.user().anonymousId(),
-    traits: window._astronomer.userProperties
+    userId: this.props.userId,
+    traits: this.props.userProperties
   });
 
-  var params = {
-    Data: record,
-    StreamName: window._astronomer.config.streamName,
-    PartitionKey: this.options.appId
-  };
-
-  window._astronomer.kinesis.putRecord(params, function(error, data) {
-    if (error) {
-      console.error(error);
-    }
-  });
+  this.queue.push(record);
 };
 
 }, {"analytics.js-integration":80,"visionmedia/superagent":81,"johntron/superagent-prefix":82,"caolan/async":83}],

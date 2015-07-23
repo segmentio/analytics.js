@@ -7046,6 +7046,7 @@ var integration = require('analytics.js-integration');
 var request = require('visionmedia/superagent');
 var prefix = require('johntron/superagent-prefix');
 var async = require('caolan/async');
+var uuid = require('uuid');
 window._astq = window._astq || [];
 
 /**
@@ -7078,8 +7079,6 @@ Astronomer.prototype.initialize = function() {
     self.ready();
     self.replay();
   });
-
-  console.log('Using config server ' + self.options.credentialServer);
 };
 
 /**
@@ -7090,26 +7089,30 @@ Astronomer.prototype.ensureKinesisConfig = function(callback) {
   var self = this;
 
   if (!self.expired()) {
-    callback(self.config, self.kinesis);
+    callback(null, { config: self.config, kinesis: self.kinesis });
     return;
   }
 
   // Request fresh config (token)
   self.requestConfig(function(err, response) {
+    if (err) { return callback(err); }
+
     // Update global config object
     self.config = response.body;
 
-    // Assign kinesis service object to new one with fresh config
-    self.kinesis = new window.AWS.Kinesis({
+    var params = {
       region: self.config.region,
       credentials: new window.AWS.WebIdentityCredentials({
         RoleArn: self.config.roleArn,
         WebIdentityToken: self.config.credentials.Token,
         DurationSeconds: self.options.credentialsExpiration
       })
-    });
+    };
 
-    callback(self.config, self.kinesis);
+    // Assign kinesis service object to new one with fresh config
+    self.kinesis = new window.AWS.Kinesis(params);
+
+    callback(null, { config: self.config, kinesis: self.kinesis });
   });
 };
 
@@ -7129,14 +7132,19 @@ Astronomer.prototype.expired = function() {
  */
 Astronomer.prototype.putRecord = function(record, callback) {
   var self = this;
-  self.ensureKinesisConfig(function(config, kinesis) {
+  self.ensureKinesisConfig(function(err, config) {
+    if (err) {
+      console.error('Error retrieving config.');
+      return callback();
+    }
+
     var params = {
-      Data: record,
-      StreamName: config.streamName,
+      Data: JSON.stringify(record),
+      StreamName: config.config.streamName,
       PartitionKey: self.options.appId
     };
 
-    kinesis.putRecord(params, function(err, data) {
+    config.kinesis.putRecord(params, function(err, data) {
       if (err) {
         console.log(err);
       }
@@ -7179,25 +7187,7 @@ Astronomer.prototype.loaded = function() {
  * @param {Facade} page A page object
  */
 Astronomer.prototype.page = function(page) {
-  var category = page.category();
-  var props = page.properties();
-  var name = page.fullName();
-  var opts = this.options;
-
-  // all pages
-  if (opts.trackAllPages) {
-    this.track(page.track());
-  }
-
-  // named pages
-  if (name && opts.trackNamedPages) {
-    this.track(page.track(name));
-  }
-
-  // categorized pages
-  // if (category && opts.trackCategorizedPages) {
-  //   this.track(page.track(category));
-  // }
+  this.push(page.json());
 };
 
 /**
@@ -7205,10 +7195,7 @@ Astronomer.prototype.page = function(page) {
  * @param {Facade} identify An identify object
  */
 Astronomer.prototype.identify = function(identify) {
-  var id = identify.userId();
-  var traits = identify.traits();
-  this.props.userId = id;
-  this.props.userProperties = traits;
+  this.push(identify.json());
 };
 
 /**
@@ -7216,10 +7203,7 @@ Astronomer.prototype.identify = function(identify) {
  * @param {Facade} group A group object
  */
 Astronomer.prototype.group = function(group) {
-  var id = group.groupId();
-  var traits = group.traits();
-  this.props.groupId = id;
-  this.props.groupProperties = traits;
+  this.push(group.json());
 };
 
 /**
@@ -7227,18 +7211,47 @@ Astronomer.prototype.group = function(group) {
  * @param {Facade} track A track object
  */
 Astronomer.prototype.track = function(track) {
-  var record = JSON.stringify({
-    event: track.event(),
-    properties: track.properties(),
-    anonymousId: analytics.user().anonymousId(),
-    userId: this.props.userId,
-    traits: this.props.userProperties
-  });
-
-  this.queue.push(record);
+  this.push(track.json());
 };
 
-}, {"analytics.js-integration":80,"visionmedia/superagent":81,"johntron/superagent-prefix":82,"caolan/async":83}],
+/**
+ * Alais a user.
+ * @param {Alias} alias An alias object
+ */
+Astronomer.prototype.alias = function(alias) {
+  var json = alias.json();
+  var user = this.analytics.user();
+  json.previousId = json.previousId || json.from || user.id() || user.anonymousId();
+  json.userId = json.userId || json.to;
+  delete json.from;
+  delete json.to;
+  this.push(json);
+};
+
+/**
+ * Push a message to the outgoing queue.
+ * @param {Object} msg JSON
+ */
+Astronomer.prototype.push = function(msg) {
+  msg = this.normalize(msg);
+  this.queue.push(msg);
+};
+
+/**
+ * Normalize a given msg.
+ * @param {Object} msg JSON
+ * @return {Object} msg Normalized JSON
+ */
+Astronomer.prototype.normalize = function(msg) {
+  var user = this.analytics.user();
+  msg.userId = msg.userId || user.id();
+  msg.anonymousId = user.anonymousId();
+  msg.messageId = uuid();
+  msg.sentAt = new Date();
+  return msg;
+};
+
+}, {"analytics.js-integration":80,"visionmedia/superagent":81,"johntron/superagent-prefix":82,"caolan/async":83,"uuid":78}],
 80: [function(require, module, exports) {
 
 /**
@@ -10425,6 +10438,15 @@ module.exports = function (prefix) {
 
     var async = {};
     function noop() {}
+    function identity(v) {
+        return v;
+    }
+    function toBool(v) {
+        return !!v;
+    }
+    function notId(v) {
+        return !v;
+    }
 
     // global on the server, window in the browser
     var previous_async;
@@ -10446,20 +10468,18 @@ module.exports = function (prefix) {
     };
 
     function only_once(fn) {
-        var called = false;
         return function() {
-            if (called) throw new Error("Callback was already called.");
-            called = true;
+            if (fn === null) throw new Error("Callback was already called.");
             fn.apply(this, arguments);
+            fn = null;
         };
     }
 
     function _once(fn) {
-        var called = false;
         return function() {
-            if (called) return;
-            called = true;
+            if (fn === null) return;
             fn.apply(this, arguments);
+            fn = null;
         };
     }
 
@@ -10523,6 +10543,13 @@ module.exports = function (prefix) {
         });
     }
 
+    function _indexOf(arr, item) {
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i] === item) return i;
+        }
+        return -1;
+    }
+
     var _keys = Object.keys || function (obj) {
         var keys = [];
         for (var k in obj) {
@@ -10553,21 +10580,30 @@ module.exports = function (prefix) {
         }
     }
 
-    function _baseSlice(arr, start) {
-        start = start || 0;
-        var index = -1;
-        var length = arr.length;
-
-        if (start) {
-            length -= start;
-            length = length < 0 ? 0 : length;
-        }
-        var result = Array(length);
-
-        while (++index < length) {
-            result[index] = arr[index + start];
-        }
-        return result;
+    // Similar to ES6's rest param (http://ariya.ofilabs.com/2013/03/es6-and-rest-parameter.html)
+    // This accumulates the arguments passed into an array, after a given index.
+    // From underscore.js (https://github.com/jashkenas/underscore/pull/2140).
+    function _restParam(func, startIndex) {
+        startIndex = startIndex == null ? func.length - 1 : +startIndex;
+        return function() {
+            var length = Math.max(arguments.length - startIndex, 0);
+            var rest = Array(length);
+            for (var index = 0; index < length; index++) {
+                rest[index] = arguments[index + startIndex];
+            }
+            switch (startIndex) {
+                case 0: return func.call(this, rest);
+                case 1: return func.call(this, arguments[0], rest);
+                case 2: return func.call(this, arguments[0], arguments[1], rest);
+            }
+            // Currently unused but handle cases outside of the switch statement:
+            // var args = Array(startIndex + 1);
+            // for (index = 0; index < startIndex; index++) {
+            //     args[index] = arguments[index];
+            // }
+            // args[startIndex] = rest;
+            // return func.apply(this, args);
+        };
     }
 
     function _withoutIndex(iterator) {
@@ -10581,38 +10617,22 @@ module.exports = function (prefix) {
     //// nextTick implementation with browser-compatible fallback ////
 
     // capture the global reference to guard against fakeTimer mocks
-    var _setImmediate;
-    if (typeof setImmediate === 'function') {
-        _setImmediate = setImmediate;
-    }
+    var _setImmediate = typeof setImmediate === 'function' && setImmediate;
 
-    if (typeof process === 'undefined' || !(process.nextTick)) {
-        if (_setImmediate) {
-            async.nextTick = function (fn) {
-                // not a direct alias for IE10 compatibility
-                _setImmediate(fn);
-            };
-            async.setImmediate = async.nextTick;
-        }
-        else {
-            async.nextTick = function (fn) {
-                setTimeout(fn, 0);
-            };
-            async.setImmediate = async.nextTick;
-        }
-    }
-    else {
+    var _delay = _setImmediate ? function(fn) {
+        // not a direct alias for IE10 compatibility
+        _setImmediate(fn);
+    } : function(fn) {
+        setTimeout(fn, 0);
+    };
+
+    if (typeof process === 'object' && typeof process.nextTick === 'function') {
         async.nextTick = process.nextTick;
-        if (_setImmediate) {
-            async.setImmediate = function (fn) {
-              // not a direct alias for IE10 compatibility
-                _setImmediate(fn);
-            };
-        }
-        else {
-            async.setImmediate = async.nextTick;
-        }
+    } else {
+        async.nextTick = _delay;
     }
+    async.setImmediate = _setImmediate ? _delay : async.nextTick;
+
 
     async.forEach =
     async.each = function (arr, iterator, callback) {
@@ -10744,8 +10764,8 @@ module.exports = function (prefix) {
             return fn(async.eachOf, obj, iterator, callback);
         };
     }
-    function doParallelLimit(limit, fn) {
-        return function (obj, iterator, callback) {
+    function doParallelLimit(fn) {
+        return function (obj, limit, iterator, callback) {
             return fn(_eachOfLimit(limit), obj, iterator, callback);
         };
     }
@@ -10770,13 +10790,7 @@ module.exports = function (prefix) {
 
     async.map = doParallel(_asyncMap);
     async.mapSeries = doSeries(_asyncMap);
-    async.mapLimit = function (arr, limit, iterator, callback) {
-        return _mapLimit(limit)(arr, iterator, callback);
-    };
-
-    function _mapLimit(limit) {
-        return doParallelLimit(limit, _asyncMap);
-    }
+    async.mapLimit = doParallelLimit(_asyncMap);
 
     // reduce only has a series version, as doing reduce in parallel won't
     // work in many situations.
@@ -10795,21 +10809,16 @@ module.exports = function (prefix) {
 
     async.foldr =
     async.reduceRight = function (arr, memo, iterator, callback) {
-        var reversed = _map(arr, function (x) {
-            return x;
-        }).reverse();
+        var reversed = _map(arr, identity).reverse();
         async.reduce(reversed, memo, iterator, callback);
     };
 
     function _filter(eachfn, arr, iterator, callback) {
         var results = [];
-        arr = _map(arr, function (x, i) {
-            return {index: i, value: x};
-        });
         eachfn(arr, function (x, index, callback) {
-            iterator(x.value, function (v) {
+            iterator(x, function (v) {
                 if (v) {
-                    results.push(x);
+                    results.push({index: index, value: x});
                 }
                 callback();
             });
@@ -10825,6 +10834,9 @@ module.exports = function (prefix) {
     async.select =
     async.filter = doParallel(_filter);
 
+    async.selectLimit =
+    async.filterLimit = doParallelLimit(_filter);
+
     async.selectSeries =
     async.filterSeries = doSeries(_filter);
 
@@ -10836,55 +10848,49 @@ module.exports = function (prefix) {
         }, callback);
     }
     async.reject = doParallel(_reject);
+    async.rejectLimit = doParallelLimit(_reject);
     async.rejectSeries = doSeries(_reject);
 
-    function _detect(eachfn, arr, iterator, main_callback) {
-        eachfn(arr, function (x, index, callback) {
-            iterator(x, function (result) {
-                if (result) {
-                    main_callback(x);
-                    main_callback = noop;
-                }
-                else {
+    function _createTester(eachfn, check, getResult) {
+        return function(arr, limit, iterator, cb) {
+            function done() {
+                if (cb) cb(getResult(false, void 0));
+            }
+            function iteratee(x, _, callback) {
+                if (!cb) return callback();
+                iterator(x, function (v) {
+                    if (cb && check(v)) {
+                        cb(getResult(true, x));
+                        cb = iterator = false;
+                    }
                     callback();
-                }
-            });
-        }, function () {
-            main_callback();
-        });
+                });
+            }
+            if (arguments.length > 3) {
+                eachfn(arr, limit, iteratee, done);
+            } else {
+                cb = iterator;
+                iterator = limit;
+                eachfn(arr, iteratee, done);
+            }
+        };
     }
-    async.detect = doParallel(_detect);
-    async.detectSeries = doSeries(_detect);
 
     async.any =
-    async.some = function (arr, iterator, main_callback) {
-        async.eachOf(arr, function (x, _, callback) {
-            iterator(x, function (v) {
-                if (v) {
-                    main_callback(true);
-                    main_callback = noop;
-                }
-                callback();
-            });
-        }, function () {
-            main_callback(false);
-        });
-    };
+    async.some = _createTester(async.eachOf, toBool, identity);
+
+    async.someLimit = _createTester(async.eachOfLimit, toBool, identity);
 
     async.all =
-    async.every = function (arr, iterator, main_callback) {
-        async.eachOf(arr, function (x, _, callback) {
-            iterator(x, function (v) {
-                if (!v) {
-                    main_callback(false);
-                    main_callback = noop;
-                }
-                callback();
-            });
-        }, function () {
-            main_callback(true);
-        });
-    };
+    async.every = _createTester(async.eachOf, notId, notId);
+
+    async.everyLimit = _createTester(async.eachOfLimit, notId, notId);
+
+    function _findGetResult(v, x) {
+        return x;
+    }
+    async.detect = _createTester(async.eachOf, identity, _findGetResult);
+    async.detectSeries = _createTester(async.eachOfSeries, identity, _findGetResult);
 
     async.sortBy = function (arr, iterator, callback) {
         async.map(arr, function (x, callback) {
@@ -10929,12 +10935,8 @@ module.exports = function (prefix) {
             listeners.unshift(fn);
         }
         function removeListener(fn) {
-            for (var i = 0; i < listeners.length; i += 1) {
-                if (listeners[i] === fn) {
-                    listeners.splice(i, 1);
-                    return;
-                }
-            }
+            var idx = _indexOf(listeners, fn);
+            if (idx >= 0) listeners.splice(idx, 1);
         }
         function taskComplete() {
             remainingTasks--;
@@ -10951,15 +10953,14 @@ module.exports = function (prefix) {
 
         _arrayEach(keys, function (k) {
             var task = _isArray(tasks[k]) ? tasks[k]: [tasks[k]];
-            function taskCallback(err) {
-                var args = _baseSlice(arguments, 1);
+            var taskCallback = _restParam(function(err, args) {
                 if (args.length <= 1) {
                     args = args[0];
                 }
                 if (err) {
                     var safeResults = {};
-                    _arrayEach(_keys(results), function(rkey) {
-                        safeResults[rkey] = results[rkey];
+                    _forEachOf(results, function(val, rkey) {
+                        safeResults[rkey] = val;
                     });
                     safeResults[k] = args;
                     callback(err, safeResults);
@@ -10968,8 +10969,8 @@ module.exports = function (prefix) {
                     results[k] = args;
                     async.setImmediate(taskComplete);
                 }
-            }
-            var requires = task.slice(0, Math.abs(task.length - 1)) || [];
+            });
+            var requires = task.slice(0, task.length - 1);
             // prevent dead-locks
             var len = requires.length;
             var dep;
@@ -10977,7 +10978,7 @@ module.exports = function (prefix) {
                 if (!(dep = tasks[requires[len]])) {
                     throw new Error('Has inexistant dependency');
                 }
-                if (_isArray(dep) && !!~dep.indexOf(k)) {
+                if (_isArray(dep) && _indexOf(dep, k) >= 0) {
                     throw new Error('Has cyclic dependencies');
                 }
             }
@@ -11003,53 +11004,40 @@ module.exports = function (prefix) {
 
 
 
-    async.retry = function(/*[times,] task [, callback]*/) {
+    async.retry = function(times, task, callback) {
         var DEFAULT_TIMES = 5;
         var DEFAULT_INTERVAL = 0;
 
         var attempts = [];
 
         var opts = {
-          times: DEFAULT_TIMES,
-          interval: DEFAULT_INTERVAL
+            times: DEFAULT_TIMES,
+            interval: DEFAULT_INTERVAL
         };
 
         function parseTimes(acc, t){
-          if(typeof t === 'number'){
-            acc.times = parseInt(t, 10) || DEFAULT_TIMES;
-          } else if(typeof t === 'object'){
-            acc.times = parseInt(t.times, 10) || DEFAULT_TIMES;
-            acc.interval = parseInt(t.interval, 10) || DEFAULT_INTERVAL;
-          } else {
-            throw new Error('Unsupported argument type for \'times\': ' + typeof(t));
-          }
+            if(typeof t === 'number'){
+                acc.times = parseInt(t, 10) || DEFAULT_TIMES;
+            } else if(typeof t === 'object'){
+                acc.times = parseInt(t.times, 10) || DEFAULT_TIMES;
+                acc.interval = parseInt(t.interval, 10) || DEFAULT_INTERVAL;
+            } else {
+                throw new Error('Unsupported argument type for \'times\': ' + typeof(t));
+            }
         }
 
-        switch(arguments.length){
-            case 1: {
-              opts.task = arguments[0];
-              break;
-            }
-            case 2 : {
-              if(typeof arguments[0] === 'number' || typeof arguments[0] === 'object'){
-                parseTimes(opts, arguments[0]);
-                opts.task = arguments[1];
-              } else {
-                opts.task = arguments[0];
-                opts.callback = arguments[1];
-              }
-              break;
-            }
-            case 3: {
-              parseTimes(opts, arguments[0]);
-              opts.task = arguments[1];
-              opts.callback = arguments[2];
-              break;
-            }
-            default: {
-              throw new Error('Invalid arguments - must be either (task), (task, callback), (times, task) or (times, task, callback)');
-            }
-          }
+        var length = arguments.length;
+        if (length < 1 || length > 3) {
+            throw new Error('Invalid arguments - must be either (task), (task, callback), (times, task) or (times, task, callback)');
+        } else if (length <= 2 && typeof times === 'function') {
+            callback = task;
+            task = times;
+        }
+        if (typeof times !== 'function') {
+            parseTimes(opts, times);
+        }
+        opts.callback = callback;
+        opts.task = task;
 
         function wrappedTask(wrappedCallback, wrappedResults) {
             function retryAttempt(task, finalAttempt) {
@@ -11061,11 +11049,11 @@ module.exports = function (prefix) {
             }
 
             function retryInterval(interval){
-              return function(seriesCallback){
-                setTimeout(function(){
-                  seriesCallback(null);
-                }, interval);
-              };
+                return function(seriesCallback){
+                    setTimeout(function(){
+                        seriesCallback(null);
+                    }, interval);
+                };
             }
 
             while (opts.times) {
@@ -11073,7 +11061,7 @@ module.exports = function (prefix) {
                 var finalAttempt = !(opts.times-=1);
                 attempts.push(retryAttempt(opts.task, finalAttempt));
                 if(!finalAttempt && opts.interval > 0){
-                  attempts.push(retryInterval(opts.interval));
+                    attempts.push(retryInterval(opts.interval));
                 }
             }
 
@@ -11097,12 +11085,11 @@ module.exports = function (prefix) {
             return callback();
         }
         function wrapIterator(iterator) {
-            return function (err) {
+            return _restParam(function (err, args) {
                 if (err) {
-                    callback.apply(null, arguments);
+                    callback.apply(null, [err].concat(args));
                 }
                 else {
-                    var args = _baseSlice(arguments, 1);
                     var next = iterator.next();
                     if (next) {
                         args.push(wrapIterator(next));
@@ -11112,7 +11099,7 @@ module.exports = function (prefix) {
                     }
                     ensureAsync(iterator).apply(null, args);
                 }
-            };
+            });
         }
         wrapIterator(async.iterator(tasks))();
     };
@@ -11122,14 +11109,13 @@ module.exports = function (prefix) {
         var results = _isArrayLike(tasks) ? [] : {};
 
         eachfn(tasks, function (task, key, callback) {
-            task(function (err) {
-                var args = _baseSlice(arguments, 1);
+            task(_restParam(function (err, args) {
                 if (args.length <= 1) {
                     args = args[0];
                 }
                 results[key] = args;
                 callback(err);
-            });
+            }));
         }, function (err) {
             callback(err, results);
         });
@@ -11143,22 +11129,8 @@ module.exports = function (prefix) {
         _parallel(_eachOfLimit(limit), tasks, callback);
     };
 
-    async.series = function (tasks, callback) {
-        callback = callback || noop;
-        var results = _isArrayLike(tasks) ? [] : {};
-
-        async.eachOfSeries(tasks, function (task, key, callback) {
-            task(function (err) {
-                var args = _baseSlice(arguments, 1);
-                if (args.length <= 1) {
-                    args = args[0];
-                }
-                results[key] = args;
-                callback(err);
-            });
-        }, function (err) {
-            callback(err, results);
-        });
+    async.series = function(tasks, callback) {
+        _parallel(async.eachOfSeries, tasks, callback);
     };
 
     async.iterator = function (tasks) {
@@ -11177,14 +11149,13 @@ module.exports = function (prefix) {
         return makeCallback(0);
     };
 
-    async.apply = function (fn) {
-        var args = _baseSlice(arguments, 1);
-        return function () {
+    async.apply = _restParam(function (fn, args) {
+        return _restParam(function (callArgs) {
             return fn.apply(
-                null, args.concat(_baseSlice(arguments))
+                null, args.concat(callArgs)
             );
-        };
-    };
+        });
+    });
 
     function _concat(eachfn, arr, fn, callback) {
         var result = [];
@@ -11203,105 +11174,74 @@ module.exports = function (prefix) {
     async.whilst = function (test, iterator, callback) {
         callback = callback || noop;
         if (test()) {
-            iterator(function (err) {
+            var next = _restParam(function(err, args) {
                 if (err) {
-                    return callback(err);
+                    callback(err);
+                } else if (test.apply(this, args)) {
+                    iterator(next);
+                } else {
+                    callback(null);
                 }
-                async.whilst(test, iterator, callback);
             });
-        }
-        else {
+            iterator(next);
+        } else {
             callback(null);
         }
     };
 
     async.doWhilst = function (iterator, test, callback) {
-        callback = callback || noop;
-        iterator(function (err) {
-            if (err) {
-                return callback(err);
-            }
-            var args = _baseSlice(arguments, 1);
-            if (test.apply(null, args)) {
-                async.doWhilst(iterator, test, callback);
-            }
-            else {
-                callback(null);
-            }
-        });
+        var calls = 0;
+        return async.whilst(function() {
+            return ++calls <= 1 || test.apply(this, arguments);
+        }, iterator, callback);
     };
 
     async.until = function (test, iterator, callback) {
-        callback = callback || noop;
-        if (!test()) {
-            iterator(function (err) {
-                if (err) {
-                    return callback(err);
-                }
-                async.until(test, iterator, callback);
-            });
-        }
-        else {
-            callback(null);
-        }
+        return async.whilst(function() {
+            return !test.apply(this, arguments);
+        }, iterator, callback);
     };
 
     async.doUntil = function (iterator, test, callback) {
-        callback = callback || noop;
-        iterator(function (err) {
-            if (err) {
-                return callback(err);
-            }
-            var args = _baseSlice(arguments, 1);
-            if (!test.apply(null, args)) {
-                async.doUntil(iterator, test, callback);
-            }
-            else {
-                callback(null);
-            }
-        });
+        return async.doWhilst(iterator, function() {
+            return !test.apply(this, arguments);
+        }, callback);
     };
 
     async.during = function (test, iterator, callback) {
         callback = callback || noop;
-        test(function(err, truth) {
+
+        var next = _restParam(function(err, args) {
             if (err) {
-                return callback(err);
-            }
-            if (truth) {
-                iterator(function (err) {
-                    if (err) {
-                        return callback(err);
-                    }
-                    async.during(test, iterator, callback);
-                });
-            }
-            else {
-                callback(null);
+                callback(err);
+            } else {
+                args.push(check);
+                test.apply(this, args);
             }
         });
+
+        var check = function(err, truth) {
+            if (err) {
+                callback(err);
+            } else if (truth) {
+                iterator(next);
+            } else {
+                callback(null);
+            }
+        };
+
+        test(check);
     };
 
     async.doDuring = function (iterator, test, callback) {
-        callback = callback || noop;
-        iterator(function (err) {
-            if (err) {
-                return callback(err);
+        var calls = 0;
+        async.during(function(next) {
+            if (calls++ < 1) {
+                next(null, true);
+            } else {
+                test.apply(this, arguments);
             }
-            var args = _baseSlice(arguments, 1);
-            args.push(function (err, truth) {
-                if (err) {
-                   return callback(err);
-                }
-                if (truth) {
-                    async.doDuring(iterator, test, callback);
-                }
-                else {
-                    callback(null);
-                }
-            });
-            test.apply(null, args);
-        });
+        }, iterator, callback);
     };
 
     function _queue(worker, concurrency, payload) {
@@ -11322,7 +11262,7 @@ module.exports = function (prefix) {
             if(data.length === 0 && q.idle()) {
                 // call drain immediately if there are no tasks
                 return async.setImmediate(function() {
-                   q.drain();
+                    q.drain();
                 });
             }
             _arrayEach(data, function(task) {
@@ -11438,17 +11378,17 @@ module.exports = function (prefix) {
         }
 
         function _binarySearch(sequence, item, compare) {
-          var beg = -1,
-              end = sequence.length - 1;
-          while (beg < end) {
-              var mid = beg + ((end - beg + 1) >>> 1);
-              if (compare(item, sequence[mid]) >= 0) {
-                  beg = mid;
-              } else {
-                  end = mid - 1;
-              }
-          }
-          return beg;
+            var beg = -1,
+                end = sequence.length - 1;
+            while (beg < end) {
+                var mid = beg + ((end - beg + 1) >>> 1);
+                if (compare(item, sequence[mid]) >= 0) {
+                    beg = mid;
+                } else {
+                    end = mid - 1;
+                }
+            }
+            return beg;
         }
 
         function _insert(q, data, priority, callback) {
@@ -11500,10 +11440,8 @@ module.exports = function (prefix) {
     };
 
     function _console_fn(name) {
-        return function (fn) {
-            var args = _baseSlice(arguments, 1);
-            fn.apply(null, args.concat([function (err) {
-                var args = _baseSlice(arguments, 1);
+        return _restParam(function (fn, args) {
+            fn.apply(null, args.concat([_restParam(function (err, args) {
                 if (typeof console !== 'undefined') {
                     if (err) {
                         if (console.error) {
@@ -11516,8 +11454,8 @@ module.exports = function (prefix) {
                         });
                     }
                 }
-            }]));
-        };
+            })]));
+        });
     }
     async.log = _console_fn('log');
     async.dir = _console_fn('dir');
@@ -11528,11 +11466,8 @@ module.exports = function (prefix) {
     async.memoize = function (fn, hasher) {
         var memo = {};
         var queues = {};
-        hasher = hasher || function (x) {
-            return x;
-        };
-        function memoized() {
-            var args = _baseSlice(arguments);
+        hasher = hasher || identity;
+        var memoized = _restParam(function memoized(args) {
             var callback = args.pop();
             var key = hasher.apply(null, args);
             if (key in memo) {
@@ -11545,16 +11480,16 @@ module.exports = function (prefix) {
             }
             else {
                 queues[key] = [callback];
-                fn.apply(null, args.concat([function () {
-                    memo[key] = _baseSlice(arguments);
+                fn.apply(null, args.concat([_restParam(function (args) {
+                    memo[key] = args;
                     var q = queues[key];
                     delete queues[key];
                     for (var i = 0, l = q.length; i < l; i++) {
-                      q[i].apply(null, arguments);
+                        q[i].apply(null, args);
                     }
-                }]));
+                })]));
             }
-        }
+        });
         memoized.memo = memo;
         memoized.unmemoized = fn;
         return memoized;
@@ -11580,11 +11515,10 @@ module.exports = function (prefix) {
 
     async.seq = function (/* functions... */) {
         var fns = arguments;
-        return function () {
+        return _restParam(function (args) {
             var that = this;
-            var args = _baseSlice(arguments);
 
-            var callback = args.slice(-1)[0];
+            var callback = args[args.length - 1];
             if (typeof callback == 'function') {
                 args.pop();
             } else {
@@ -11592,16 +11526,14 @@ module.exports = function (prefix) {
             }
 
             async.reduce(fns, args, function (newargs, fn, cb) {
-                fn.apply(that, newargs.concat([function () {
-                    var err = arguments[0];
-                    var nextargs = _baseSlice(arguments, 1);
+                fn.apply(that, newargs.concat([_restParam(function (err, nextargs) {
                     cb(err, nextargs);
-                }]));
+                })]));
             },
             function (err, results) {
                 callback.apply(that, [err].concat(results));
             });
-        };
+        });
     };
 
     async.compose = function (/* functions... */) {
@@ -11609,33 +11541,27 @@ module.exports = function (prefix) {
     };
 
 
-    function _applyEach(eachfn, fns /*args...*/) {
-        function go() {
-            var that = this;
-            var args = _baseSlice(arguments);
-            var callback = args.pop();
-            return eachfn(fns, function (fn, _, cb) {
-                fn.apply(that, args.concat([cb]));
-            },
-            callback);
-        }
-        if (arguments.length > 2) {
-            var args = _baseSlice(arguments, 2);
-            return go.apply(this, args);
-        }
-        else {
-            return go;
-        }
+    function _applyEach(eachfn) {
+        return _restParam(function(fns, args) {
+            var go = _restParam(function(args) {
+                var that = this;
+                var callback = args.pop();
+                return eachfn(fns, function (fn, _, cb) {
+                    fn.apply(that, args.concat([cb]));
+                },
+                callback);
+            });
+            if (args.length) {
+                return go.apply(this, args);
+            }
+            else {
+                return go;
+            }
+        });
     }
 
-    async.applyEach = function (/*fns, args...*/) {
-        var args = _baseSlice(arguments);
-        return _applyEach.apply(null, [async.eachOf].concat(args));
-    };
-    async.applyEachSeries = function (/*fns, args...*/) {
-        var args = _baseSlice(arguments);
-        return _applyEach.apply(null, [async.eachOfSeries].concat(args));
-    };
+    async.applyEach = _applyEach(async.eachOf);
+    async.applyEachSeries = _applyEach(async.eachOfSeries);
 
 
     async.forever = function (fn, callback) {
@@ -11651,8 +11577,7 @@ module.exports = function (prefix) {
     };
 
     function ensureAsync(fn) {
-        return function (/*...args, callback*/) {
-            var args = _baseSlice(arguments);
+        return _restParam(function (args) {
             var callback = args.pop();
             args.push(function () {
                 var innerArgs = arguments;
@@ -11667,22 +11592,21 @@ module.exports = function (prefix) {
             var sync = true;
             fn.apply(this, args);
             sync = false;
-        };
+        });
     }
 
     async.ensureAsync = ensureAsync;
 
-    async.constant = function constant(/*values...*/) {
-        var args = [null].concat(_baseSlice(arguments));
+    async.constant = _restParam(function(values) {
+        var args = [null].concat(values);
         return function (callback) {
             return callback.apply(this, args);
         };
-    };
+    });
 
     async.wrapSync =
     async.asyncify = function asyncify(func) {
-        return function (/*args..., callback*/) {
-            var args = _baseSlice(arguments);
+        return _restParam(function (args) {
             var callback = args.pop();
             var result;
             try {
@@ -11690,8 +11614,17 @@ module.exports = function (prefix) {
             } catch (e) {
                 return callback(e);
             }
-            callback(null, result);
-        };
+            // if result is Promise object
+            if (typeof result !== 'undefined' && typeof result.then === "function") {
+                result.then(function(value) {
+                    callback(null, value);
+                }).catch(function(err) {
+                    callback(err.message ? err : new Error(err));
+                });
+            } else {
+                callback(null, result);
+            }
+        });
     };
 
     // Node.js

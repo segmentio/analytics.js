@@ -13,6 +13,6 @@
   "dependencies": {
     "component/each": "0.0.1",
     "segmentio/analytics.js-core": "^2.10.0",
-    "astronomerio/analytics.js-integration-astronomer": "queue"
+    "astronomerio/analytics.js-integration-astronomer": "dev"
   }
 }

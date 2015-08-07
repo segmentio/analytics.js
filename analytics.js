@@ -6738,10 +6738,42 @@ module.exports = function(e){
  * Module dependencies.
  */
 
-var encode = encodeURIComponent;
-var decode = decodeURIComponent;
 var trim = require('trim');
 var type = require('type');
+
+var pattern = /(\w+)\[(\d+)\]/
+
+/**
+ * Safely encode the given string
+ * 
+ * @param {String} str
+ * @return {String}
+ * @api private
+ */
+
+var encode = function(str) {
+  try {
+    return encodeURIComponent(str);
+  } catch (e) {
+    return str;
+  }
+};
+
+/**
+ * Safely decode the string
+ * 
+ * @param {String} str
+ * @return {String}
+ * @api private
+ */
+
+var decode = function(str) {
+  try {
+    return decodeURIComponent(str.replace(/\+/g, ' '));
+  } catch (e) {
+    return str;
+  }
+}
 
 /**
  * Parse the given query `str`.
@@ -6765,7 +6797,7 @@ exports.parse = function(str){
     var key = decode(parts[0]);
     var m;
 
-    if (m = /(\w+)\[(\d+)\]/.exec(key)) {
+    if (m = pattern.exec(key)) {
       obj[m[1]] = obj[m[1]] || [];
       obj[m[1]][m[2]] = decode(parts[1]);
       continue;
@@ -7248,6 +7280,7 @@ Astronomer.prototype.normalize = function(msg) {
   msg.anonymousId = user.anonymousId();
   msg.messageId = uuid();
   msg.sentAt = new Date();
+  msg.appId = this.options.appId;
   return msg;
 };
 
@@ -9589,7 +9622,7 @@ function Request(method, url) {
     new_err.response = res;
     new_err.status = res.status;
 
-    self.callback(err || new_err, res);
+    self.callback(new_err, res);
   });
 }
 
@@ -10062,7 +10095,8 @@ Request.prototype.end = function(fn){
   // body
   if ('GET' != this.method && 'HEAD' != this.method && 'string' != typeof data && !isHost(data)) {
     // serialize stuff
-    var serialize = request.serialize[this.getHeader('Content-Type')];
+    var contentType = this.getHeader('Content-Type');
+    var serialize = request.serialize[contentType ? contentType.split(';')[0] : ''];
     if (serialize) data = serialize(data);
   }
 
@@ -10077,6 +10111,20 @@ Request.prototype.end = function(fn){
   xhr.send(data);
   return this;
 };
+
+/**
+ * Faux promise support
+ *
+ * @param {Function} fulfill
+ * @param {Function} reject
+ * @return {Request}
+ */
+
+Request.prototype.then = function (fulfill, reject) {
+  return this.end(function(err, res) {
+    err ? reject(err) : fulfill(res);
+  });
+}
 
 /**
  * Expose `Request`.

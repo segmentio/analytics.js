@@ -20411,7 +20411,7 @@ function push(callback) {
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",
-  "version": "2.10.1",
+  "version": "2.11.0",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

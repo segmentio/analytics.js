@@ -1,7 +1,7 @@
 (function umd(require){
-  if ('object' == typeof exports) {
+  if (typeof exports === 'object') {
     module.exports = require('1');
-  } else if ('function' == typeof define && (define.amd || define.cmd)) {
+  } else if (typeof define === 'function' && (define.amd || define.cmd)) {
     define(function(){ return require('1'); });
   } else {
     this['analytics'] = require('1');
@@ -18,11 +18,10 @@
    * Require `name`.
    *
    * @param {String} name
-   * @param {Boolean} jumped
    * @api public
    */
 
-  function require(name, jumped){
+  function require(name){
     if (cache[name]) return cache[name].exports;
     if (modules[name]) return call(name, require);
     throw new Error('cannot find module "' + name + '"');
@@ -38,21 +37,26 @@
    */
 
   function call(id, require){
-    var m = { exports: {} };
+    var m = cache[id] = { exports: {} };
     var mod = modules[id];
     var name = mod[2];
     var fn = mod[0];
+    var threw = true;
 
-    fn.call(m.exports, function(req){
-      var dep = modules[id][1][req];
-      return require(dep || req);
-    }, m, m.exports, outer, modules, cache, entries);
-
-    // store to cache after successful resolve
-    cache[id] = m;
-
-    // expose as `name`.
-    if (name) cache[name] = cache[id];
+    try {
+      fn.call(m.exports, function(req){
+        var dep = modules[id][1][req];
+        return require(dep || req);
+      }, m, m.exports, outer, modules, cache, entries);
+      threw = false;
+    } finally {
+      if (threw) {
+        delete cache[id];
+      } else if (name) {
+        // expose as 'name'.
+        cache[name] = cache[id];
+      }
+    }
 
     return cache[id].exports;
   }
@@ -101,7 +105,7 @@
  * (C) 2015 Segment.io Inc.
  */
 
-var Analytics = require('segmentio/analytics.js-core');
+var analytics = require('segmentio/analytics.js-core');
 var Integrations = require('./integrations');
 var each = require('each');
 
@@ -109,7 +113,7 @@ var each = require('each');
  * Expose the `analytics` singleton.
  */
 
-var analytics = module.exports = exports = new Analytics();
+module.exports = exports = analytics;
 
 /**
  * Expose require.
@@ -6734,10 +6738,42 @@ module.exports = function(e){
  * Module dependencies.
  */
 
-var encode = encodeURIComponent;
-var decode = decodeURIComponent;
 var trim = require('trim');
 var type = require('type');
+
+var pattern = /(\w+)\[(\d+)\]/
+
+/**
+ * Safely encode the given string
+ * 
+ * @param {String} str
+ * @return {String}
+ * @api private
+ */
+
+var encode = function(str) {
+  try {
+    return encodeURIComponent(str);
+  } catch (e) {
+    return str;
+  }
+};
+
+/**
+ * Safely decode the string
+ * 
+ * @param {String} str
+ * @return {String}
+ * @api private
+ */
+
+var decode = function(str) {
+  try {
+    return decodeURIComponent(str.replace(/\+/g, ' '));
+  } catch (e) {
+    return str;
+  }
+}
 
 /**
  * Parse the given query `str`.
@@ -6761,7 +6797,7 @@ exports.parse = function(str){
     var key = decode(parts[0]);
     var m;
 
-    if (m = /(\w+)\[(\d+)\]/.exec(key)) {
+    if (m = pattern.exec(key)) {
       obj[m[1]] = obj[m[1]] || [];
       obj[m[1]][m[2]] = decode(parts[1]);
       continue;
@@ -18027,85 +18063,7 @@ function ads(query){
     }
   }
 }
-}, {"querystring":212}],
-212: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var encode = encodeURIComponent;
-var decode = decodeURIComponent;
-var trim = require('trim');
-var type = require('type');
-
-var pattern = /(\w+)\[(\d+)\]/
-
-/**
- * Parse the given query `str`.
- *
- * @param {String} str
- * @return {Object}
- * @api public
- */
-
-exports.parse = function(str){
-  if ('string' != typeof str) return {};
-
-  str = trim(str);
-  if ('' == str) return {};
-  if ('?' == str.charAt(0)) str = str.slice(1);
-
-  var obj = {};
-  var pairs = str.split('&');
-  for (var i = 0; i < pairs.length; i++) {
-    var parts = pairs[i].split('=');
-    var key = decode(parts[0]);
-    var m;
-
-    if (m = pattern.exec(key)) {
-      obj[m[1]] = obj[m[1]] || [];
-      obj[m[1]][m[2]] = decode(parts[1]);
-      continue;
-    }
-
-    obj[parts[0]] = null == parts[1]
-      ? ''
-      : decode(parts[1]);
-  }
-
-  return obj;
-};
-
-/**
- * Stringify the given `obj`.
- *
- * @param {Object} obj
- * @return {String}
- * @api public
- */
-
-exports.stringify = function(obj){
-  if (!obj) return '';
-  var pairs = [];
-
-  for (var key in obj) {
-    var value = obj[key];
-
-    if ('array' == type(value)) {
-      for (var i = 0; i < value.length; ++i) {
-        pairs.push(encode(key + '[' + i + ']') + '=' + encode(value[i]));
-      }
-      continue;
-    }
-
-    pairs.push(encode(key) + '=' + encode(obj[key]));
-  }
-
-  return pairs.join('&');
-};
-
-}, {"trim":54,"type":47}],
+}, {"querystring":27}],
 208: [function(require, module, exports) {
 
 /**
@@ -18201,8 +18159,8 @@ function all(){
   return ret;
 }
 
-}, {"unserialize":213,"each":176}],
-213: [function(require, module, exports) {
+}, {"unserialize":212,"each":176}],
+212: [function(require, module, exports) {
 
 /**
  * Unserialize the given "stringified" javascript.
@@ -18402,8 +18360,8 @@ function base64(url, obj, _, fn){
   });
 }
 
-}, {"base64-encode":214,"has-cors":215,"jsonp":216,"json":59}],
-214: [function(require, module, exports) {
+}, {"base64-encode":213,"has-cors":214,"jsonp":215,"json":59}],
+213: [function(require, module, exports) {
 var utf8Encode = require('utf8-encode');
 var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
 
@@ -18440,8 +18398,8 @@ function encode(input) {
 
     return output;
 }
-}, {"utf8-encode":217}],
-217: [function(require, module, exports) {
+}, {"utf8-encode":216}],
+216: [function(require, module, exports) {
 module.exports = encode;
 
 function encode(string) {
@@ -18470,7 +18428,7 @@ function encode(string) {
     return utftext;
 }
 }, {}],
-215: [function(require, module, exports) {
+214: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -18490,7 +18448,7 @@ try {
 }
 
 }, {}],
-216: [function(require, module, exports) {
+215: [function(require, module, exports) {
 /**
  * Module dependencies
  */
@@ -18617,7 +18575,7 @@ function utm(query){
   return ret;
 }
 
-}, {"querystring":212}],
+}, {"querystring":27}],
 149: [function(require, module, exports) {
 
 /**
@@ -19657,8 +19615,8 @@ function showClassicWidget(type, options) {
   push(type, 'classic_widget', options);
 }
 
-}, {"alias":198,"convert-dates":199,"analytics.js-integration":165,"global-queue":195,"to-unix-timestamp":218}],
-218: [function(require, module, exports) {
+}, {"alias":198,"convert-dates":199,"analytics.js-integration":165,"global-queue":195,"to-unix-timestamp":217}],
+217: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.

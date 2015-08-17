@@ -40,6 +40,7 @@
     "segment-integrations/analytics.js-integration-evergage": "1.0.0",
     "segment-integrations/analytics.js-integration-extole": "1.0.0",
     "segment-integrations/analytics.js-integration-facebook-conversion-tracking": "1.0.0",
+    "segment-integrations/analytics.js-integration-facebook-custom-audiences": "1.0.0",
     "segment-integrations/analytics.js-integration-foxmetrics": "1.0.0",
     "segment-integrations/analytics.js-integration-frontleaf": "1.0.0",
     "segment-integrations/analytics.js-integration-fullstory": "1.0.1",

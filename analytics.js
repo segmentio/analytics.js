@@ -7116,7 +7116,8 @@ var cookieOptions = {
 
 var Astronomer = exports = module.exports = integration('astronomer')
   .option('appId', '')
-  .option('endpoint', 'https://api.astronomer.io/v1');
+  .option('endpoint', 'https://api.astronomer.io/v1')
+  .option('streamName', '');
 
 /**
  * Get the store.
@@ -7267,6 +7268,11 @@ Astronomer.prototype.normalize = function(msg) {
 
 Astronomer.prototype.send = function(path, msg, fn) {
   var url = this.options.endpoint + path;
+  if (this.options.streamName) {
+    var queryString = '?streamName=' + this.options.streamName;
+    url += queryString;
+  }
+
   var headers = { 'Content-Type': 'application/json' };
   fn = fn || noop;
   var self = this;

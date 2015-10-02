@@ -181,6 +181,7 @@ var cookie = require('./cookie');
 var debug = require('debug');
 var defaults = require('defaults');
 var each = require('each');
+var foldl = require('foldl');
 var group = require('./group');
 var is = require('is');
 var isMeta = require('is-meta');
@@ -233,7 +234,7 @@ function Analytics() {
   var self = this;
   this.on('initialize', function(settings, options){
     if (options.initialPageview) self.page();
-    self._parseQuery();
+    self._parseQuery(window.location.search);
   });
 }
 
@@ -787,17 +788,44 @@ Analytics.prototype.reset = function(){
 /**
  * Parse the query string for callable methods.
  *
+ * @param {String} query
  * @return {Analytics}
  * @api private
  */
 
-Analytics.prototype._parseQuery = function() {
-  // Identify and track any `ajs_uid` and `ajs_event` parameters in the URL.
-  var q = querystring.parse(window.location.search);
-  if (q.ajs_uid) this.identify(q.ajs_uid);
-  if (q.ajs_event) this.track(q.ajs_event);
+Analytics.prototype._parseQuery = function(query) {
+  // Parse querystring to an object
+  var q = querystring.parse(query);
+  // Create traits and properties objects, populate from querysting params
+  var traits = pickPrefix('ajs_trait_', q);
+  var props = pickPrefix('ajs_prop_', q);
+  // Trigger based on callable parameters in the URL
+  if (q.ajs_uid) this.identify(q.ajs_uid, traits);
+  if (q.ajs_event) this.track(q.ajs_event, props);
   if (q.ajs_aid) user.anonymousId(q.ajs_aid);
   return this;
+
+  /**
+   * Create a shallow copy of an input object containing only the properties
+   * whose keys are specified by a prefix, stripped of that prefix
+   *
+   * @param {String} prefix
+   * @param {Object} object
+   * @return {Object}
+   * @api private
+   */
+
+  function pickPrefix(prefix, object) {
+    var length = prefix.length;
+    var sub;
+    return foldl(function(acc, val, key) {
+      if (key.substr(0, length) === prefix) {
+        sub = key.substr(length);
+        acc[sub] = val;
+      }
+      return acc;
+    }, {}, object);
+  }
 };
 
 /**
@@ -827,8 +855,7 @@ Analytics.prototype.noConflict = function(){
   return this;
 };
 
-
-}, {"emitter":8,"facade":9,"after":10,"bind":11,"callback":12,"clone":13,"./cookie":14,"debug":15,"defaults":16,"each":4,"./group":17,"is":18,"is-meta":19,"object":20,"./memory":21,"./normalize":22,"event":23,"./pageDefaults":24,"pick":25,"prevent":26,"querystring":27,"./store":28,"./user":29}],
+}, {"emitter":8,"facade":9,"after":10,"bind":11,"callback":12,"clone":13,"./cookie":14,"debug":15,"defaults":16,"each":4,"foldl":17,"./group":18,"is":19,"is-meta":20,"object":21,"./memory":22,"./normalize":23,"event":24,"./pageDefaults":25,"pick":26,"prevent":27,"querystring":28,"./store":29,"./user":30}],
 8: [function(require, module, exports) {
 
 /**
@@ -995,8 +1022,8 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-}, {"indexof":30}],
-30: [function(require, module, exports) {
+}, {"indexof":31}],
+31: [function(require, module, exports) {
 module.exports = function(arr, obj){
   if (arr.indexOf) return arr.indexOf(obj);
   for (var i = 0; i < arr.length; ++i) {
@@ -1026,8 +1053,8 @@ Facade.Track = require('./track');
 Facade.Page = require('./page');
 Facade.Screen = require('./screen');
 
-}, {"./facade":31,"./alias":32,"./group":33,"./identify":34,"./track":35,"./page":36,"./screen":37}],
-31: [function(require, module, exports) {
+}, {"./facade":32,"./alias":33,"./group":34,"./identify":35,"./track":36,"./page":37,"./screen":38}],
+32: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var isEnabled = require('./is-enabled');
@@ -1338,8 +1365,8 @@ function transform(obj){
   return cloned;
 }
 
-}, {"isodate-traverse":38,"./is-enabled":39,"./utils":40,"./address":41,"obj-case":42,"new-date":43}],
-38: [function(require, module, exports) {
+}, {"isodate-traverse":39,"./is-enabled":40,"./utils":41,"./address":42,"obj-case":43,"new-date":44}],
+39: [function(require, module, exports) {
 
 var is = require('is');
 var isodate = require('isodate');
@@ -1411,8 +1438,8 @@ function array (arr, strict) {
   return arr;
 }
 
-}, {"is":44,"isodate":45,"each":4}],
-44: [function(require, module, exports) {
+}, {"is":45,"isodate":46,"each":4}],
+45: [function(require, module, exports) {
 
 var isEmpty = require('is-empty');
 
@@ -1488,8 +1515,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":46,"type":47,"component-type":47}],
-46: [function(require, module, exports) {
+}, {"is-empty":47,"type":48,"component-type":48}],
+47: [function(require, module, exports) {
 
 /**
  * Expose `isEmpty`.
@@ -1520,7 +1547,7 @@ function isEmpty (val) {
   return true;
 }
 }, {}],
-47: [function(require, module, exports) {
+48: [function(require, module, exports) {
 /**
  * toString ref.
  */
@@ -1549,6 +1576,8 @@ module.exports = function(val){
   if (val !== val) return 'nan';
   if (val && val.nodeType === 1) return 'element';
 
+  if (typeof Buffer != 'undefined' && Buffer.isBuffer(val)) return 'buffer';
+
   val = val.valueOf
     ? val.valueOf()
     : Object.prototype.valueOf.apply(val)
@@ -1557,7 +1586,7 @@ module.exports = function(val){
 };
 
 }, {}],
-45: [function(require, module, exports) {
+46: [function(require, module, exports) {
 
 /**
  * Matcher, slightly modified from:
@@ -1706,8 +1735,8 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
-}, {"type":47}],
-39: [function(require, module, exports) {
+}, {"type":48}],
+40: [function(require, module, exports) {
 
 /**
  * A few integrations are disabled by default. They must be explicitly
@@ -1729,7 +1758,7 @@ module.exports = function (integration) {
   return ! disabled[integration];
 };
 }, {}],
-40: [function(require, module, exports) {
+41: [function(require, module, exports) {
 
 /**
  * TODO: use component symlink, everywhere ?
@@ -1745,8 +1774,8 @@ try {
   exports.type = require('type-component');
 }
 
-}, {"inherit":48,"clone":49,"type":47}],
-48: [function(require, module, exports) {
+}, {"inherit":49,"clone":50,"type":48}],
+49: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -1755,7 +1784,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-49: [function(require, module, exports) {
+50: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -1814,8 +1843,8 @@ function clone(obj){
   }
 }
 
-}, {"component-type":47,"type":47}],
-41: [function(require, module, exports) {
+}, {"component-type":48,"type":48}],
+42: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -1853,8 +1882,8 @@ module.exports = function(proto){
   }
 };
 
-}, {"obj-case":42}],
-42: [function(require, module, exports) {
+}, {"obj-case":43}],
+43: [function(require, module, exports) {
 
 var identity = function(_){ return _; };
 
@@ -2009,7 +2038,7 @@ function isFunction(val) {
 }
 
 }, {}],
-43: [function(require, module, exports) {
+44: [function(require, module, exports) {
 
 var is = require('is');
 var isodate = require('isodate');
@@ -2049,8 +2078,8 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
-}, {"is":50,"isodate":45,"./milliseconds":51,"./seconds":52}],
-50: [function(require, module, exports) {
+}, {"is":51,"isodate":46,"./milliseconds":52,"./seconds":53}],
+51: [function(require, module, exports) {
 
 var isEmpty = require('is-empty')
   , typeOf = require('type');
@@ -2121,8 +2150,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":46,"type":47}],
-51: [function(require, module, exports) {
+}, {"is-empty":47,"type":48}],
+52: [function(require, module, exports) {
 
 /**
  * Matcher.
@@ -2155,7 +2184,7 @@ exports.parse = function (millis) {
   return new Date(millis);
 };
 }, {}],
-52: [function(require, module, exports) {
+53: [function(require, module, exports) {
 
 /**
  * Matcher.
@@ -2188,7 +2217,7 @@ exports.parse = function (seconds) {
   return new Date(millis);
 };
 }, {}],
-32: [function(require, module, exports) {
+33: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -2259,8 +2288,8 @@ Alias.prototype.userId = function(){
     || this.field('to');
 };
 
-}, {"./utils":40,"./facade":31}],
-33: [function(require, module, exports) {
+}, {"./utils":41,"./facade":32}],
+34: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -2389,8 +2418,8 @@ Group.prototype.properties = function(){
     || {};
 };
 
-}, {"./utils":40,"./address":41,"is-email":53,"new-date":43,"./facade":31}],
-53: [function(require, module, exports) {
+}, {"./utils":41,"./address":42,"is-email":54,"new-date":44,"./facade":32}],
+54: [function(require, module, exports) {
 
 /**
  * Expose `isEmail`.
@@ -2417,7 +2446,7 @@ function isEmail (string) {
   return matcher.test(string);
 }
 }, {}],
-34: [function(require, module, exports) {
+35: [function(require, module, exports) {
 
 var address = require('./address');
 var Facade = require('./facade');
@@ -2667,8 +2696,8 @@ Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.gender = Facade.proxy('traits.gender');
 Identify.prototype.birthday = Facade.proxy('traits.birthday');
 
-}, {"./address":41,"./facade":31,"is-email":53,"new-date":43,"./utils":40,"obj-case":42,"trim":54}],
-54: [function(require, module, exports) {
+}, {"./address":42,"./facade":32,"is-email":54,"new-date":44,"./utils":41,"obj-case":43,"trim":55}],
+55: [function(require, module, exports) {
 
 exports = module.exports = trim;
 
@@ -2688,7 +2717,7 @@ exports.right = function(str){
 };
 
 }, {}],
-35: [function(require, module, exports) {
+36: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var clone = require('./utils').clone;
@@ -2978,8 +3007,8 @@ function currency(val) {
   if (!isNaN(val)) return val;
 }
 
-}, {"./utils":40,"./facade":31,"./identify":34,"is-email":53,"obj-case":42}],
-36: [function(require, module, exports) {
+}, {"./utils":41,"./facade":32,"./identify":35,"is-email":54,"obj-case":43}],
+37: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Facade = require('./facade');
@@ -3117,8 +3146,8 @@ Page.prototype.track = function(name){
   });
 };
 
-}, {"./utils":40,"./facade":31,"./track":35}],
-37: [function(require, module, exports) {
+}, {"./utils":41,"./facade":32,"./track":36}],
+38: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Page = require('./page');
@@ -3194,7 +3223,7 @@ Screen.prototype.track = function(name){
   });
 };
 
-}, {"./utils":40,"./page":36,"./track":35}],
+}, {"./utils":41,"./page":37,"./track":36}],
 10: [function(require, module, exports) {
 
 module.exports = function after (times, func) {
@@ -3255,8 +3284,8 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":55,"bind-all":56}],
-55: [function(require, module, exports) {
+}, {"bind":56,"bind-all":57}],
+56: [function(require, module, exports) {
 /**
  * Slice reference.
  */
@@ -3282,7 +3311,7 @@ module.exports = function(obj, fn){
 };
 
 }, {}],
-56: [function(require, module, exports) {
+57: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -3299,7 +3328,7 @@ module.exports = function (obj) {
   }
   return obj;
 };
-}, {"bind":55,"type":47}],
+}, {"bind":56,"type":48}],
 12: [function(require, module, exports) {
 var next = require('next-tick');
 
@@ -3343,8 +3372,8 @@ callback.async = function (fn, wait) {
 
 callback.sync = callback;
 
-}, {"next-tick":57}],
-57: [function(require, module, exports) {
+}, {"next-tick":58}],
+58: [function(require, module, exports) {
 "use strict"
 
 if (typeof setImmediate == 'function') {
@@ -3441,7 +3470,7 @@ function clone(obj){
   }
 }
 
-}, {"type":47}],
+}, {"type":48}],
 14: [function(require, module, exports) {
 
 /**
@@ -3576,8 +3605,8 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"bind":11,"clone":13,"cookie":58,"debug":15,"defaults":16,"json":59,"top-domain":60}],
-58: [function(require, module, exports) {
+}, {"bind":11,"clone":13,"cookie":59,"debug":15,"defaults":16,"json":60,"top-domain":61}],
+59: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -3709,8 +3738,8 @@ if ('undefined' == typeof window) {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":61,"./debug":62}],
-61: [function(require, module, exports) {
+}, {"./lib/debug":62,"./debug":63}],
+62: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -3860,7 +3889,7 @@ function coerce(val) {
 }
 
 }, {}],
-62: [function(require, module, exports) {
+63: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -4029,7 +4058,7 @@ var defaults = function (dest, src, recursive) {
 module.exports = defaults;
 
 }, {}],
-59: [function(require, module, exports) {
+60: [function(require, module, exports) {
 
 var json = window.JSON || {};
 var stringify = json.stringify;
@@ -4039,8 +4068,8 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":63}],
-63: [function(require, module, exports) {
+}, {"json-fallback":64}],
+64: [function(require, module, exports) {
 /*
     json2.js
     2014-02-04
@@ -4530,7 +4559,7 @@ module.exports = parse && stringify
 }());
 
 }, {}],
-60: [function(require, module, exports) {
+61: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4634,8 +4663,8 @@ domain.levels = function(url){
   return levels;
 };
 
-}, {"url":64,"cookie":65}],
-64: [function(require, module, exports) {
+}, {"url":65,"cookie":66}],
+65: [function(require, module, exports) {
 
 /**
  * Parse the given `url`.
@@ -4720,7 +4749,7 @@ function port (protocol){
 }
 
 }, {}],
-65: [function(require, module, exports) {
+66: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4855,6 +4884,388 @@ function decode(value) {
 
 }, {"debug":15}],
 17: [function(require, module, exports) {
+'use strict';
+
+/**
+ * Module dependencies.
+ */
+
+// XXX: Hacky fix for Duo not supporting scoped modules
+var each; try { each = require('@ndhoule/each'); } catch(e) { each = require('each'); }
+
+/**
+ * Reduces all the values in a collection down into a single value. Does so by iterating through the
+ * collection from left to right, repeatedly calling an `iterator` function and passing to it four
+ * arguments: `(accumulator, value, index, collection)`.
+ *
+ * Returns the final return value of the `iterator` function.
+ *
+ * @name foldl
+ * @api public
+ * @param {Function} iterator The function to invoke per iteration.
+ * @param {*} accumulator The initial accumulator value, passed to the first invocation of `iterator`.
+ * @param {Array|Object} collection The collection to iterate over.
+ * @return {*} The return value of the final call to `iterator`.
+ * @example
+ * foldl(function(total, n) {
+ *   return total + n;
+ * }, 0, [1, 2, 3]);
+ * //=> 6
+ *
+ * var phonebook = { bob: '555-111-2345', tim: '655-222-6789', sheila: '655-333-1298' };
+ *
+ * foldl(function(results, phoneNumber) {
+ *  if (phoneNumber[0] === '6') {
+ *    return results.concat(phoneNumber);
+ *  }
+ *  return results;
+ * }, [], phonebook);
+ * // => ['655-222-6789', '655-333-1298']
+ */
+
+var foldl = function foldl(iterator, accumulator, collection) {
+  if (typeof iterator !== 'function') {
+    throw new TypeError('Expected a function but received a ' + typeof iterator);
+  }
+
+  each(function(val, i, collection) {
+    accumulator = iterator(accumulator, val, i, collection);
+  }, collection);
+
+  return accumulator;
+};
+
+/**
+ * Exports.
+ */
+
+module.exports = foldl;
+
+}, {"each":67}],
+67: [function(require, module, exports) {
+'use strict';
+
+/**
+ * Module dependencies.
+ */
+
+// XXX: Hacky fix for Duo not supporting scoped modules
+var keys; try { keys = require('@ndhoule/keys'); } catch(e) { keys = require('keys'); }
+
+/**
+ * Object.prototype.toString reference.
+ */
+
+var objToString = Object.prototype.toString;
+
+/**
+ * Tests if a value is a number.
+ *
+ * @name isNumber
+ * @api private
+ * @param {*} val The value to test.
+ * @return {boolean} Returns `true` if `val` is a number, otherwise `false`.
+ */
+
+// TODO: Move to library
+var isNumber = function isNumber(val) {
+  var type = typeof val;
+  return type === 'number' || (type === 'object' && objToString.call(val) === '[object Number]');
+};
+
+/**
+ * Tests if a value is an array.
+ *
+ * @name isArray
+ * @api private
+ * @param {*} val The value to test.
+ * @return {boolean} Returns `true` if the value is an array, otherwise `false`.
+ */
+
+// TODO: Move to library
+var isArray = typeof Array.isArray === 'function' ? Array.isArray : function isArray(val) {
+  return objToString.call(val) === '[object Array]';
+};
+
+/**
+ * Tests if a value is array-like. Array-like means the value is not a function and has a numeric
+ * `.length` property.
+ *
+ * @name isArrayLike
+ * @api private
+ * @param {*} val
+ * @return {boolean}
+ */
+
+// TODO: Move to library
+var isArrayLike = function isArrayLike(val) {
+  return val != null && (isArray(val) || (val !== 'function' && isNumber(val.length)));
+};
+
+/**
+ * Internal implementation of `each`. Works on arrays and array-like data structures.
+ *
+ * @name arrayEach
+ * @api private
+ * @param {Function(value, key, collection)} iterator The function to invoke per iteration.
+ * @param {Array} array The array(-like) structure to iterate over.
+ * @return {undefined}
+ */
+
+var arrayEach = function arrayEach(iterator, array) {
+  for (var i = 0; i < array.length; i += 1) {
+    // Break iteration early if `iterator` returns `false`
+    if (iterator(array[i], i, array) === false) {
+      break;
+    }
+  }
+};
+
+/**
+ * Internal implementation of `each`. Works on objects.
+ *
+ * @name baseEach
+ * @api private
+ * @param {Function(value, key, collection)} iterator The function to invoke per iteration.
+ * @param {Object} object The object to iterate over.
+ * @return {undefined}
+ */
+
+var baseEach = function baseEach(iterator, object) {
+  var ks = keys(object);
+
+  for (var i = 0; i < ks.length; i += 1) {
+    // Break iteration early if `iterator` returns `false`
+    if (iterator(object[ks[i]], ks[i], object) === false) {
+      break;
+    }
+  }
+};
+
+/**
+ * Iterate over an input collection, invoking an `iterator` function for each element in the
+ * collection and passing to it three arguments: `(value, index, collection)`. The `iterator`
+ * function can end iteration early by returning `false`.
+ *
+ * @name each
+ * @api public
+ * @param {Function(value, key, collection)} iterator The function to invoke per iteration.
+ * @param {Array|Object|string} collection The collection to iterate over.
+ * @return {undefined} Because `each` is run only for side effects, always returns `undefined`.
+ * @example
+ * var log = console.log.bind(console);
+ *
+ * each(log, ['a', 'b', 'c']);
+ * //-> 'a', 0, ['a', 'b', 'c']
+ * //-> 'b', 1, ['a', 'b', 'c']
+ * //-> 'c', 2, ['a', 'b', 'c']
+ * //=> undefined
+ *
+ * each(log, 'tim');
+ * //-> 't', 2, 'tim'
+ * //-> 'i', 1, 'tim'
+ * //-> 'm', 0, 'tim'
+ * //=> undefined
+ *
+ * // Note: Iteration order not guaranteed across environments
+ * each(log, { name: 'tim', occupation: 'enchanter' });
+ * //-> 'tim', 'name', { name: 'tim', occupation: 'enchanter' }
+ * //-> 'enchanter', 'occupation', { name: 'tim', occupation: 'enchanter' }
+ * //=> undefined
+ */
+
+var each = function each(iterator, collection) {
+  return (isArrayLike(collection) ? arrayEach : baseEach).call(this, iterator, collection);
+};
+
+/**
+ * Exports.
+ */
+
+module.exports = each;
+
+}, {"keys":68}],
+68: [function(require, module, exports) {
+'use strict';
+
+/**
+ * charAt reference.
+ */
+
+var strCharAt = String.prototype.charAt;
+
+/**
+ * Returns the character at a given index.
+ *
+ * @param {string} str
+ * @param {number} index
+ * @return {string|undefined}
+ */
+
+// TODO: Move to a library
+var charAt = function(str, index) {
+  return strCharAt.call(str, index);
+};
+
+/**
+ * hasOwnProperty reference.
+ */
+
+var hop = Object.prototype.hasOwnProperty;
+
+/**
+ * Object.prototype.toString reference.
+ */
+
+var toStr = Object.prototype.toString;
+
+/**
+ * hasOwnProperty, wrapped as a function.
+ *
+ * @name has
+ * @api private
+ * @param {*} context
+ * @param {string|number} prop
+ * @return {boolean}
+ */
+
+// TODO: Move to a library
+var has = function has(context, prop) {
+  return hop.call(context, prop);
+};
+
+/**
+ * Returns true if a value is a string, otherwise false.
+ *
+ * @name isString
+ * @api private
+ * @param {*} val
+ * @return {boolean}
+ */
+
+// TODO: Move to a library
+var isString = function isString(val) {
+  return toStr.call(val) === '[object String]';
+};
+
+/**
+ * Returns true if a value is array-like, otherwise false. Array-like means a
+ * value is not null, undefined, or a function, and has a numeric `length`
+ * property.
+ *
+ * @name isArrayLike
+ * @api private
+ * @param {*} val
+ * @return {boolean}
+ */
+
+// TODO: Move to a library
+var isArrayLike = function isArrayLike(val) {
+  return val != null && (typeof val !== 'function' && typeof val.length === 'number');
+};
+
+
+/**
+ * indexKeys
+ *
+ * @name indexKeys
+ * @api private
+ * @param {} target
+ * @param {} pred
+ * @return {Array}
+ */
+
+var indexKeys = function indexKeys(target, pred) {
+  pred = pred || has;
+  var results = [];
+
+  for (var i = 0, len = target.length; i < len; i += 1) {
+    if (pred(target, i)) {
+      results.push(String(i));
+    }
+  }
+
+  return results;
+};
+
+/**
+ * Returns an array of all the owned
+ *
+ * @name objectKeys
+ * @api private
+ * @param {*} target
+ * @param {Function} pred Predicate function used to include/exclude values from
+ * the resulting array.
+ * @return {Array}
+ */
+
+var objectKeys = function objectKeys(target, pred) {
+  pred = pred || has;
+  var results = [];
+
+
+  for (var key in target) {
+    if (pred(target, key)) {
+      results.push(String(key));
+    }
+  }
+
+  return results;
+};
+
+/**
+ * Creates an array composed of all keys on the input object. Ignores any non-enumerable properties.
+ * More permissive than the native `Object.keys` function (non-objects will not throw errors).
+ *
+ * @name keys
+ * @api public
+ * @category Object
+ * @param {Object} source The value to retrieve keys from.
+ * @return {Array} An array containing all the input `source`'s keys.
+ * @example
+ * keys({ likes: 'avocado', hates: 'pineapple' });
+ * //=> ['likes', 'pineapple'];
+ *
+ * // Ignores non-enumerable properties
+ * var hasHiddenKey = { name: 'Tim' };
+ * Object.defineProperty(hasHiddenKey, 'hidden', {
+ *   value: 'i am not enumerable!',
+ *   enumerable: false
+ * })
+ * keys(hasHiddenKey);
+ * //=> ['name'];
+ *
+ * // Works on arrays
+ * keys(['a', 'b', 'c']);
+ * //=> ['0', '1', '2']
+ *
+ * // Skips unpopulated indices in sparse arrays
+ * var arr = [1];
+ * arr[4] = 4;
+ * keys(arr);
+ * //=> ['0', '4']
+ */
+
+module.exports = function keys(source) {
+  if (source == null) {
+    return [];
+  }
+
+  // IE6-8 compatibility (string)
+  if (isString(source)) {
+    return indexKeys(source, charAt);
+  }
+
+  // IE6-8 compatibility (arguments)
+  if (isArrayLike(source)) {
+    return indexKeys(source, has);
+  }
+
+  return objectKeys(source);
+};
+
+}, {}],
+18: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4913,8 +5324,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"./entity":66,"bind":11,"debug":15,"inherit":67}],
-66: [function(require, module, exports) {
+}, {"./entity":69,"bind":11,"debug":15,"inherit":70}],
+69: [function(require, module, exports) {
 
 var clone = require('clone');
 var cookie = require('./cookie');
@@ -5153,8 +5564,8 @@ Entity.prototype.load = function() {
 };
 
 
-}, {"clone":13,"./cookie":14,"debug":15,"defaults":16,"extend":68,"./memory":21,"./store":28,"isodate-traverse":38}],
-68: [function(require, module, exports) {
+}, {"clone":13,"./cookie":14,"debug":15,"defaults":16,"extend":71,"./memory":22,"./store":29,"isodate-traverse":39}],
+71: [function(require, module, exports) {
 
 module.exports = function extend (object) {
     // Takes an unlimited number of extenders.
@@ -5171,7 +5582,7 @@ module.exports = function extend (object) {
     return object;
 };
 }, {}],
-21: [function(require, module, exports) {
+22: [function(require, module, exports) {
 /* eslint consistent-return:1 */
 
 /**
@@ -5238,7 +5649,7 @@ Memory.prototype.remove = function(key){
 };
 
 }, {"bind":11,"clone":13}],
-28: [function(require, module, exports) {
+29: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -5327,8 +5738,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":11,"defaults":16,"store.js":69}],
-69: [function(require, module, exports) {
+}, {"bind":11,"defaults":16,"store.js":72}],
+72: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -5480,8 +5891,8 @@ try {
 store.enabled = !store.disabled
 
 module.exports = store;
-}, {"json":59}],
-67: [function(require, module, exports) {
+}, {"json":60}],
+70: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -5490,7 +5901,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-18: [function(require, module, exports) {
+19: [function(require, module, exports) {
 
 var isEmpty = require('is-empty');
 
@@ -5566,8 +5977,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":46,"type":47,"component-type":47}],
-19: [function(require, module, exports) {
+}, {"is-empty":47,"type":48,"component-type":48}],
+20: [function(require, module, exports) {
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
 
@@ -5583,7 +5994,7 @@ module.exports = function isMeta (e) {
     return false;
 };
 }, {}],
-20: [function(require, module, exports) {
+21: [function(require, module, exports) {
 
 /**
  * HOP ref.
@@ -5669,7 +6080,7 @@ exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
 }, {}],
-22: [function(require, module, exports) {
+23: [function(require, module, exports) {
 
 /**
  * Module Dependencies.
@@ -5761,8 +6172,8 @@ function normalize(msg, list){
   }
 }
 
-}, {"debug":15,"defaults":16,"each":4,"includes":70,"is":18,"component/map":71}],
-70: [function(require, module, exports) {
+}, {"debug":15,"defaults":16,"each":4,"includes":73,"is":19,"component/map":74}],
+73: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -5852,331 +6263,8 @@ var includes = function includes(searchElement, collection) {
 
 module.exports = includes;
 
-}, {"each":72}],
-72: [function(require, module, exports) {
-'use strict';
-
-/**
- * Module dependencies.
- */
-
-// XXX: Hacky fix for Duo not supporting scoped modules
-var keys; try { keys = require('@ndhoule/keys'); } catch(e) { keys = require('keys'); }
-
-/**
- * Object.prototype.toString reference.
- */
-
-var objToString = Object.prototype.toString;
-
-/**
- * Tests if a value is a number.
- *
- * @name isNumber
- * @api private
- * @param {*} val The value to test.
- * @return {boolean} Returns `true` if `val` is a number, otherwise `false`.
- */
-
-// TODO: Move to library
-var isNumber = function isNumber(val) {
-  var type = typeof val;
-  return type === 'number' || (type === 'object' && objToString.call(val) === '[object Number]');
-};
-
-/**
- * Tests if a value is an array.
- *
- * @name isArray
- * @api private
- * @param {*} val The value to test.
- * @return {boolean} Returns `true` if the value is an array, otherwise `false`.
- */
-
-// TODO: Move to library
-var isArray = typeof Array.isArray === 'function' ? Array.isArray : function isArray(val) {
-  return objToString.call(val) === '[object Array]';
-};
-
-/**
- * Tests if a value is array-like. Array-like means the value is not a function and has a numeric
- * `.length` property.
- *
- * @name isArrayLike
- * @api private
- * @param {*} val
- * @return {boolean}
- */
-
-// TODO: Move to library
-var isArrayLike = function isArrayLike(val) {
-  return val != null && (isArray(val) || (val !== 'function' && isNumber(val.length)));
-};
-
-/**
- * Internal implementation of `each`. Works on arrays and array-like data structures.
- *
- * @name arrayEach
- * @api private
- * @param {Function(value, key, collection)} iterator The function to invoke per iteration.
- * @param {Array} array The array(-like) structure to iterate over.
- * @return {undefined}
- */
-
-var arrayEach = function arrayEach(iterator, array) {
-  for (var i = 0; i < array.length; i += 1) {
-    // Break iteration early if `iterator` returns `false`
-    if (iterator(array[i], i, array) === false) {
-      break;
-    }
-  }
-};
-
-/**
- * Internal implementation of `each`. Works on objects.
- *
- * @name baseEach
- * @api private
- * @param {Function(value, key, collection)} iterator The function to invoke per iteration.
- * @param {Object} object The object to iterate over.
- * @return {undefined}
- */
-
-var baseEach = function baseEach(iterator, object) {
-  var ks = keys(object);
-
-  for (var i = 0; i < ks.length; i += 1) {
-    // Break iteration early if `iterator` returns `false`
-    if (iterator(object[ks[i]], ks[i], object) === false) {
-      break;
-    }
-  }
-};
-
-/**
- * Iterate over an input collection, invoking an `iterator` function for each element in the
- * collection and passing to it three arguments: `(value, index, collection)`. The `iterator`
- * function can end iteration early by returning `false`.
- *
- * @name each
- * @api public
- * @param {Function(value, key, collection)} iterator The function to invoke per iteration.
- * @param {Array|Object|string} collection The collection to iterate over.
- * @return {undefined} Because `each` is run only for side effects, always returns `undefined`.
- * @example
- * var log = console.log.bind(console);
- *
- * each(log, ['a', 'b', 'c']);
- * //-> 'a', 0, ['a', 'b', 'c']
- * //-> 'b', 1, ['a', 'b', 'c']
- * //-> 'c', 2, ['a', 'b', 'c']
- * //=> undefined
- *
- * each(log, 'tim');
- * //-> 't', 2, 'tim'
- * //-> 'i', 1, 'tim'
- * //-> 'm', 0, 'tim'
- * //=> undefined
- *
- * // Note: Iteration order not guaranteed across environments
- * each(log, { name: 'tim', occupation: 'enchanter' });
- * //-> 'tim', 'name', { name: 'tim', occupation: 'enchanter' }
- * //-> 'enchanter', 'occupation', { name: 'tim', occupation: 'enchanter' }
- * //=> undefined
- */
-
-var each = function each(iterator, collection) {
-  return (isArrayLike(collection) ? arrayEach : baseEach).call(this, iterator, collection);
-};
-
-/**
- * Exports.
- */
-
-module.exports = each;
-
-}, {"keys":73}],
-73: [function(require, module, exports) {
-'use strict';
-
-/**
- * charAt reference.
- */
-
-var strCharAt = String.prototype.charAt;
-
-/**
- * Returns the character at a given index.
- *
- * @param {string} str
- * @param {number} index
- * @return {string|undefined}
- */
-
-// TODO: Move to a library
-var charAt = function(str, index) {
-  return strCharAt.call(str, index);
-};
-
-/**
- * hasOwnProperty reference.
- */
-
-var hop = Object.prototype.hasOwnProperty;
-
-/**
- * Object.prototype.toString reference.
- */
-
-var toStr = Object.prototype.toString;
-
-/**
- * hasOwnProperty, wrapped as a function.
- *
- * @name has
- * @api private
- * @param {*} context
- * @param {string|number} prop
- * @return {boolean}
- */
-
-// TODO: Move to a library
-var has = function has(context, prop) {
-  return hop.call(context, prop);
-};
-
-/**
- * Returns true if a value is a string, otherwise false.
- *
- * @name isString
- * @api private
- * @param {*} val
- * @return {boolean}
- */
-
-// TODO: Move to a library
-var isString = function isString(val) {
-  return toStr.call(val) === '[object String]';
-};
-
-/**
- * Returns true if a value is array-like, otherwise false. Array-like means a
- * value is not null, undefined, or a function, and has a numeric `length`
- * property.
- *
- * @name isArrayLike
- * @api private
- * @param {*} val
- * @return {boolean}
- */
-
-// TODO: Move to a library
-var isArrayLike = function isArrayLike(val) {
-  return val != null && (typeof val !== 'function' && typeof val.length === 'number');
-};
-
-
-/**
- * indexKeys
- *
- * @name indexKeys
- * @api private
- * @param {} target
- * @param {} pred
- * @return {Array}
- */
-
-var indexKeys = function indexKeys(target, pred) {
-  pred = pred || has;
-  var results = [];
-
-  for (var i = 0, len = target.length; i < len; i += 1) {
-    if (pred(target, i)) {
-      results.push(String(i));
-    }
-  }
-
-  return results;
-};
-
-/**
- * Returns an array of all the owned
- *
- * @name objectKeys
- * @api private
- * @param {*} target
- * @param {Function} pred Predicate function used to include/exclude values from
- * the resulting array.
- * @return {Array}
- */
-
-var objectKeys = function objectKeys(target, pred) {
-  pred = pred || has;
-  var results = [];
-
-
-  for (var key in target) {
-    if (pred(target, key)) {
-      results.push(String(key));
-    }
-  }
-
-  return results;
-};
-
-/**
- * Creates an array composed of all keys on the input object. Ignores any non-enumerable properties.
- * More permissive than the native `Object.keys` function (non-objects will not throw errors).
- *
- * @name keys
- * @api public
- * @category Object
- * @param {Object} source The value to retrieve keys from.
- * @return {Array} An array containing all the input `source`'s keys.
- * @example
- * keys({ likes: 'avocado', hates: 'pineapple' });
- * //=> ['likes', 'pineapple'];
- *
- * // Ignores non-enumerable properties
- * var hasHiddenKey = { name: 'Tim' };
- * Object.defineProperty(hasHiddenKey, 'hidden', {
- *   value: 'i am not enumerable!',
- *   enumerable: false
- * })
- * keys(hasHiddenKey);
- * //=> ['name'];
- *
- * // Works on arrays
- * keys(['a', 'b', 'c']);
- * //=> ['0', '1', '2']
- *
- * // Skips unpopulated indices in sparse arrays
- * var arr = [1];
- * arr[4] = 4;
- * keys(arr);
- * //=> ['0', '4']
- */
-
-module.exports = function keys(source) {
-  if (source == null) {
-    return [];
-  }
-
-  // IE6-8 compatibility (string)
-  if (isString(source)) {
-    return indexKeys(source, charAt);
-  }
-
-  // IE6-8 compatibility (arguments)
-  if (isArrayLike(source)) {
-    return indexKeys(source, has);
-  }
-
-  return objectKeys(source);
-};
-
-}, {}],
-71: [function(require, module, exports) {
+}, {"each":67}],
+74: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6201,8 +6289,8 @@ module.exports = function(arr, fn){
   }
   return ret;
 };
-}, {"to-function":74}],
-74: [function(require, module, exports) {
+}, {"to-function":75}],
+75: [function(require, module, exports) {
 
 /**
  * Module Dependencies
@@ -6356,8 +6444,8 @@ function stripNested (prop, str, val) {
   });
 }
 
-}, {"props":75,"component-props":75}],
-75: [function(require, module, exports) {
+}, {"props":76,"component-props":76}],
+76: [function(require, module, exports) {
 /**
  * Global Names
  */
@@ -6445,7 +6533,7 @@ function prefixed(str) {
 }
 
 }, {}],
-23: [function(require, module, exports) {
+24: [function(require, module, exports) {
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -6488,7 +6576,7 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 }, {}],
-24: [function(require, module, exports) {
+25: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6551,8 +6639,8 @@ function canonicalUrl(search) {
 
 module.exports = pageDefaults;
 
-}, {"canonical":76,"includes":70,"url":77}],
-76: [function(require, module, exports) {
+}, {"canonical":77,"includes":73,"url":78}],
+77: [function(require, module, exports) {
 module.exports = function canonical () {
   var tags = document.getElementsByTagName('link');
   for (var i = 0, tag; tag = tags[i]; i++) {
@@ -6560,7 +6648,7 @@ module.exports = function canonical () {
   }
 };
 }, {}],
-77: [function(require, module, exports) {
+78: [function(require, module, exports) {
 
 /**
  * Parse the given `url`.
@@ -6645,7 +6733,7 @@ function port (protocol){
 }
 
 }, {}],
-25: [function(require, module, exports) {
+26: [function(require, module, exports) {
 'use strict';
 
 var objToString = Object.prototype.toString;
@@ -6721,7 +6809,7 @@ var pick = function pick(props, object) {
 module.exports = pick;
 
 }, {}],
-26: [function(require, module, exports) {
+27: [function(require, module, exports) {
 
 /**
  * prevent default on the given `e`.
@@ -6744,7 +6832,7 @@ module.exports = function(e){
 };
 
 }, {}],
-27: [function(require, module, exports) {
+28: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6851,8 +6939,45 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":54,"type":47}],
-29: [function(require, module, exports) {
+}, {"trim":55,"type":79}],
+79: [function(require, module, exports) {
+/**
+ * toString ref.
+ */
+
+var toString = Object.prototype.toString;
+
+/**
+ * Return the type of `val`.
+ *
+ * @param {Mixed} val
+ * @return {String}
+ * @api public
+ */
+
+module.exports = function(val){
+  switch (toString.call(val)) {
+    case '[object Date]': return 'date';
+    case '[object RegExp]': return 'regexp';
+    case '[object Arguments]': return 'arguments';
+    case '[object Array]': return 'array';
+    case '[object Error]': return 'error';
+  }
+
+  if (val === null) return 'null';
+  if (val === undefined) return 'undefined';
+  if (val !== val) return 'nan';
+  if (val && val.nodeType === 1) return 'element';
+
+  val = val.valueOf
+    ? val.valueOf()
+    : Object.prototype.valueOf.apply(val)
+
+  return typeof val;
+};
+
+}, {}],
+30: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -7030,8 +7155,8 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"./entity":66,"bind":11,"./cookie":14,"debug":15,"inherit":67,"cookie":58,"uuid":78}],
-78: [function(require, module, exports) {
+}, {"./entity":69,"bind":11,"./cookie":14,"debug":15,"inherit":70,"cookie":59,"uuid":80}],
+80: [function(require, module, exports) {
 
 /**
  * Taken straight from jed's gist: https://gist.github.com/982883
@@ -7079,8 +7204,8 @@ module.exports = {
   'astronomer': require('analytics.js-integration-astronomer')
 };
 
-}, {"analytics.js-integration-astronomer":79}],
-79: [function(require, module, exports) {
+}, {"analytics.js-integration-astronomer":81}],
+81: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -7116,7 +7241,7 @@ var cookieOptions = {
 
 var Astronomer = exports = module.exports = integration('astronomer')
   .option('appId', '')
-  .option('endpoint', 'https://api.astronomer.io/v1')
+  .option('host', 'https://api.astronomer.io')
   .option('streamName', '');
 
 /**
@@ -7267,7 +7392,7 @@ Astronomer.prototype.normalize = function(msg) {
  */
 
 Astronomer.prototype.send = function(path, msg, fn) {
-  var url = this.options.endpoint + path;
+  var url = this.options.host + '/v1' + path;
   if (this.options.streamName) {
     var queryString = '?streamName=' + this.options.streamName;
     url += queryString;
@@ -7360,8 +7485,8 @@ function scheme() {
 
 function noop() {}
 
-}, {"ad-params":80,"clone":13,"cookie":58,"extend":68,"analytics.js-integration":81,"segmentio/json@1.0.0":59,"store":82,"protocol":83,"send-json":84,"top-domain":85,"utm-params":86,"uuid":78}],
-80: [function(require, module, exports) {
+}, {"ad-params":82,"clone":13,"cookie":59,"extend":71,"analytics.js-integration":83,"segmentio/json@1.0.0":60,"store":84,"protocol":85,"send-json":86,"top-domain":87,"utm-params":88,"uuid":80}],
+82: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -7404,8 +7529,8 @@ function ads(query){
     }
   }
 }
-}, {"querystring":27}],
-81: [function(require, module, exports) {
+}, {"querystring":28}],
+83: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -7469,8 +7594,8 @@ function createIntegration(name){
 
 module.exports = createIntegration;
 
-}, {"bind":87,"clone":13,"debug":88,"defaults":16,"extend":89,"slug":90,"./protos":91,"./statics":92}],
-87: [function(require, module, exports) {
+}, {"bind":89,"clone":13,"debug":90,"defaults":16,"extend":91,"slug":92,"./protos":93,"./statics":94}],
+89: [function(require, module, exports) {
 
 var bind = require('bind')
   , bindAll = require('bind-all');
@@ -7511,16 +7636,16 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":55,"bind-all":56}],
-88: [function(require, module, exports) {
+}, {"bind":56,"bind-all":57}],
+90: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":93,"./debug":94}],
-93: [function(require, module, exports) {
+}, {"./lib/debug":95,"./debug":96}],
+95: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -7670,7 +7795,7 @@ function coerce(val) {
 }
 
 }, {}],
-94: [function(require, module, exports) {
+96: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -7810,7 +7935,7 @@ try {
 } catch(e){}
 
 }, {}],
-89: [function(require, module, exports) {
+91: [function(require, module, exports) {
 
 module.exports = function extend (object) {
     // Takes an unlimited number of extenders.
@@ -7827,7 +7952,7 @@ module.exports = function extend (object) {
     return object;
 };
 }, {}],
-90: [function(require, module, exports) {
+92: [function(require, module, exports) {
 
 /**
  * Generate a slug from the given `str`.
@@ -7853,7 +7978,7 @@ module.exports = function (str, options) {
 };
 
 }, {}],
-91: [function(require, module, exports) {
+93: [function(require, module, exports) {
 /* global setInterval:true setTimeout:true */
 
 /**
@@ -8340,8 +8465,8 @@ function render(template, locals){
   }, {}, template.attrs);
 }
 
-}, {"emitter":8,"after":10,"each":95,"analytics-events":96,"fmt":97,"foldl":98,"load-iframe":99,"load-script":100,"to-no-case":101,"next-tick":57,"every":102,"is":103}],
-95: [function(require, module, exports) {
+}, {"emitter":8,"after":10,"each":97,"analytics-events":98,"fmt":99,"foldl":17,"load-iframe":100,"load-script":101,"to-no-case":102,"next-tick":58,"every":103,"is":104}],
+97: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -8432,8 +8557,8 @@ function array(obj, fn, ctx) {
   }
 }
 
-}, {"type":104,"component-type":104,"to-function":74}],
-104: [function(require, module, exports) {
+}, {"type":105,"component-type":105,"to-function":75}],
+105: [function(require, module, exports) {
 
 /**
  * toString ref.
@@ -8468,7 +8593,7 @@ module.exports = function(val){
 };
 
 }, {}],
-96: [function(require, module, exports) {
+98: [function(require, module, exports) {
 
 module.exports = {
   removedProduct: /^[ _]?removed[ _]?product[ _]?$/i,
@@ -8488,7 +8613,7 @@ module.exports = {
 };
 
 }, {}],
-97: [function(require, module, exports) {
+99: [function(require, module, exports) {
 
 /**
  * toString.
@@ -8533,66 +8658,7 @@ function fmt(str){
 }
 
 }, {}],
-98: [function(require, module, exports) {
-'use strict';
-
-/**
- * Module dependencies.
- */
-
-// XXX: Hacky fix for Duo not supporting scoped modules
-var each; try { each = require('@ndhoule/each'); } catch(e) { each = require('each'); }
-
-/**
- * Reduces all the values in a collection down into a single value. Does so by iterating through the
- * collection from left to right, repeatedly calling an `iterator` function and passing to it four
- * arguments: `(accumulator, value, index, collection)`.
- *
- * Returns the final return value of the `iterator` function.
- *
- * @name foldl
- * @api public
- * @param {Function} iterator The function to invoke per iteration.
- * @param {*} accumulator The initial accumulator value, passed to the first invocation of `iterator`.
- * @param {Array|Object} collection The collection to iterate over.
- * @return {*} The return value of the final call to `iterator`.
- * @example
- * foldl(function(total, n) {
- *   return total + n;
- * }, 0, [1, 2, 3]);
- * //=> 6
- *
- * var phonebook = { bob: '555-111-2345', tim: '655-222-6789', sheila: '655-333-1298' };
- *
- * foldl(function(results, phoneNumber) {
- *  if (phoneNumber[0] === '6') {
- *    return results.concat(phoneNumber);
- *  }
- *  return results;
- * }, [], phonebook);
- * // => ['655-222-6789', '655-333-1298']
- */
-
-var foldl = function foldl(iterator, accumulator, collection) {
-  if (typeof iterator !== 'function') {
-    throw new TypeError('Expected a function but received a ' + typeof iterator);
-  }
-
-  each(function(val, i, collection) {
-    accumulator = iterator(accumulator, val, i, collection);
-  }, collection);
-
-  return accumulator;
-};
-
-/**
- * Exports.
- */
-
-module.exports = foldl;
-
-}, {"each":72}],
-99: [function(require, module, exports) {
+100: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -8654,8 +8720,8 @@ module.exports = function loadIframe(options, fn){
   // give it an ID or attributes.
   return iframe;
 };
-}, {"script-onload":105,"next-tick":57,"type":47}],
-105: [function(require, module, exports) {
+}, {"script-onload":106,"next-tick":58,"type":48}],
+106: [function(require, module, exports) {
 
 // https://github.com/thirdpartyjs/thirdpartyjs-code/blob/master/examples/templates/02/loading-files/index.html
 
@@ -8711,7 +8777,7 @@ function attach(el, fn){
 }
 
 }, {}],
-100: [function(require, module, exports) {
+101: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -8772,8 +8838,8 @@ module.exports = function loadScript(options, fn){
   // give it an ID or attributes.
   return script;
 };
-}, {"script-onload":105,"next-tick":57,"type":47}],
-101: [function(require, module, exports) {
+}, {"script-onload":106,"next-tick":58,"type":48}],
+102: [function(require, module, exports) {
 
 /**
  * Expose `toNoCase`.
@@ -8846,7 +8912,7 @@ function uncamelize (string) {
   });
 }
 }, {}],
-102: [function(require, module, exports) {
+103: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -8898,8 +8964,8 @@ var every = function every(predicate, collection) {
 
 module.exports = every;
 
-}, {"each":72}],
-103: [function(require, module, exports) {
+}, {"each":67}],
+104: [function(require, module, exports) {
 
 var isEmpty = require('is-empty');
 
@@ -8975,8 +9041,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":46,"type":47,"component-type":47}],
-92: [function(require, module, exports) {
+}, {"is-empty":47,"type":48,"component-type":48}],
+94: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9140,8 +9206,8 @@ function objectify(str) {
   };
 }
 
-}, {"emitter":8,"domify":106,"each":95,"includes":70}],
-106: [function(require, module, exports) {
+}, {"emitter":8,"domify":107,"each":97,"includes":73}],
+107: [function(require, module, exports) {
 
 /**
  * Expose `parse`.
@@ -9252,7 +9318,7 @@ function parse(html, doc) {
 }
 
 }, {}],
-82: [function(require, module, exports) {
+84: [function(require, module, exports) {
 
 /**
  * dependencies.
@@ -9347,8 +9413,8 @@ function all(){
   return ret;
 }
 
-}, {"unserialize":107,"each":95}],
-107: [function(require, module, exports) {
+}, {"unserialize":108,"each":97}],
+108: [function(require, module, exports) {
 
 /**
  * Unserialize the given "stringified" javascript.
@@ -9366,7 +9432,7 @@ module.exports = function(val){
 };
 
 }, {}],
-83: [function(require, module, exports) {
+85: [function(require, module, exports) {
 
 /**
  * Convenience alias
@@ -9449,7 +9515,7 @@ function set (protocol) {
 }
 
 }, {}],
-84: [function(require, module, exports) {
+86: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -9548,8 +9614,8 @@ function base64(url, obj, _, fn){
   });
 }
 
-}, {"base64-encode":108,"has-cors":109,"jsonp":110,"json":59}],
-108: [function(require, module, exports) {
+}, {"base64-encode":109,"has-cors":110,"jsonp":111,"json":60}],
+109: [function(require, module, exports) {
 var utf8Encode = require('utf8-encode');
 var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
 
@@ -9586,8 +9652,8 @@ function encode(input) {
 
     return output;
 }
-}, {"utf8-encode":111}],
-111: [function(require, module, exports) {
+}, {"utf8-encode":112}],
+112: [function(require, module, exports) {
 module.exports = encode;
 
 function encode(string) {
@@ -9616,7 +9682,7 @@ function encode(string) {
     return utftext;
 }
 }, {}],
-109: [function(require, module, exports) {
+110: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -9636,7 +9702,7 @@ try {
 }
 
 }, {}],
-110: [function(require, module, exports) {
+111: [function(require, module, exports) {
 /**
  * Module dependencies
  */
@@ -9723,7 +9789,7 @@ function jsonp(url, opts, fn){
 }
 
 }, {"debug":15}],
-85: [function(require, module, exports) {
+87: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9771,8 +9837,8 @@ function domain(url){
   return match ? match[0] : '';
 };
 
-}, {"url":64}],
-86: [function(require, module, exports) {
+}, {"url":65}],
+88: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -9812,7 +9878,7 @@ function utm(query){
   return ret;
 }
 
-}, {"querystring":27}],
+}, {"querystring":28}],
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",

@@ -13,6 +13,7 @@
   "dependencies": {
     "component/each": "0.0.1",
     "segmentio/analytics.js-core": "^2.10.0",
+    "astronomerio/analytics.js-integration-astronomer": "master",
     "segment-integrations/analytics.js-integration-adroll": "1.0.0",
     "segment-integrations/analytics.js-integration-adwords": "1.0.0",
     "segment-integrations/analytics.js-integration-alexa": "1.0.0",

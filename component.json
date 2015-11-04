@@ -84,7 +84,7 @@
     "segment-integrations/analytics.js-integration-saasquatch": "1.0.0",
     "segment-integrations/analytics.js-integration-satismeter": "1.0.0",
     "segment-integrations/analytics.js-integration-segmentio": "1.0.0",
-    "segment-integrations/analytics.js-integration-sentry": "1.0.0",
+    "segment-integrations/analytics.js-integration-sentry": "1.0.3",
     "segment-integrations/analytics.js-integration-snapengage": "1.0.0",
     "segment-integrations/analytics.js-integration-spinnakr": "1.0.0",
     "segment-integrations/analytics.js-integration-supporthero": "1.0.0",

@@ -8,6 +8,14 @@ For our mobile and server-side data collection libraries, check out our [librari
 
 ## Documentation
 
+To load and initialize the library, use this snippet of code:
+
+[sample load script](http://github.com/potatopankakes/analytics.js/sample_load.html)
+
+For more detail on the Analytics.js API, check out the [Analytics.js Library Reference][].
+
+## SegmentIO-specific Documentation
+
 First, read the [Analytics.js QuickStart][], which contains installation instructions and a brief overview of what Analytics.js does and how it works.
 
 For more detail on the Analytics.js API, check out the [Analytics.js Library Reference][].

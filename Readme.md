@@ -8,9 +8,7 @@ For our mobile and server-side data collection libraries, check out our [librari
 
 ## Documentation
 
-To load and initialize the library, use this snippet of code:
-
-[sample load script](http://github.com/potatopankakes/analytics.js/sample_load.html)
+To load and initialize the library, use the script in `analytics.js/sample_load.html`.
 
 For more detail on the Analytics.js API, check out the [Analytics.js Library Reference][].
 

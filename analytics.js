@@ -7213,6 +7213,7 @@ module.exports = {
 module.exports = {
   'astronomer': require('analytics.js-integration-astronomer'),
   'doubleclick': require('analytics.js-integration-doubleclick'),
+  'retention-science': require('analytics.js-integration-retention-science'),
   'adroll': require('analytics.js-integration-adroll'),
   'adwords': require('analytics.js-integration-adwords'),
   'alexa': require('analytics.js-integration-alexa'),
@@ -7238,8 +7239,7 @@ module.exports = {
   'errorception': require('analytics.js-integration-errorception'),
   'evergage': require('analytics.js-integration-evergage'),
   'extole': require('analytics.js-integration-extole'),
-  'facebook-conversion-tracking': require('analytics.js-integration-facebook-conversion-tracking'),
-  'facebook-custom-audiences': require('analytics.js-integration-facebook-custom-audiences'),
+  'facebook-pixel': require('analytics.js-integration-facebook-pixel'),
   'foxmetrics': require('analytics.js-integration-foxmetrics'),
   'frontleaf': require('analytics.js-integration-frontleaf'),
   'fullstory': require('analytics.js-integration-fullstory'),
@@ -7301,7 +7301,7 @@ module.exports = {
   'yandex-metrica': require('analytics.js-integration-yandex-metrica')
 };
 
-}, {"analytics.js-integration-astronomer":81,"analytics.js-integration-doubleclick":82,"analytics.js-integration-adroll":83,"analytics.js-integration-adwords":84,"analytics.js-integration-alexa":85,"analytics.js-integration-amplitude":86,"analytics.js-integration-appcues":87,"analytics.js-integration-atatus":88,"analytics.js-integration-autosend":89,"analytics.js-integration-awesm":90,"analytics.js-integration-bing-ads":91,"analytics.js-integration-blueshift":92,"analytics.js-integration-bronto":93,"analytics.js-integration-bugherd":94,"analytics.js-integration-bugsnag":95,"analytics.js-integration-chameleon":96,"analytics.js-integration-chartbeat":97,"analytics.js-integration-clicky":98,"analytics.js-integration-comscore":99,"analytics.js-integration-crazy-egg":100,"analytics.js-integration-curebit":101,"analytics.js-integration-customerio":102,"analytics.js-integration-drip":103,"analytics.js-integration-elevio":104,"analytics.js-integration-errorception":105,"analytics.js-integration-evergage":106,"analytics.js-integration-extole":107,"analytics.js-integration-facebook-conversion-tracking":108,"analytics.js-integration-facebook-custom-audiences":109,"analytics.js-integration-foxmetrics":110,"analytics.js-integration-frontleaf":111,"analytics.js-integration-fullstory":112,"analytics.js-integration-gauges":113,"analytics.js-integration-get-satisfaction":114,"analytics.js-integration-google-analytics":115,"analytics.js-integration-google-tag-manager":116,"analytics.js-integration-gosquared":117,"analytics.js-integration-heap":118,"analytics.js-integration-hellobar":119,"analytics.js-integration-hittail":120,"analytics.js-integration-hubspot":121,"analytics.js-integration-improvely":122,"analytics.js-integration-insidevault":123,"analytics.js-integration-inspectlet":124,"analytics.js-integration-intercom":125,"analytics.js-integration-keen-io":126,"analytics.js-integration-kenshoo":127,"analytics.js-integration-kissmetrics":128,"analytics.js-integration-klaviyo":129,"analytics.js-integration-livechat":130,"analytics.js-integration-lucky-orange":131,"analytics.js-integration-lytics":132,"analytics.js-integration-mixpanel":133,"analytics.js-integration-mojn":134,"analytics.js-integration-mouseflow":135,"analytics.js-integration-mousestats":136,"analytics.js-integration-navilytics":137,"analytics.js-integration-nudgespot":138,"analytics.js-integration-olark":139,"analytics.js-integration-optimizely":140,"analytics.js-integration-outbound":141,"analytics.js-integration-perfect-audience":142,"analytics.js-integration-pingdom":143,"analytics.js-integration-piwik":144,"analytics.js-integration-preact":145,"analytics.js-integration-qualaroo":146,"analytics.js-integration-quantcast":147,"analytics.js-integration-rollbar":148,"analytics.js-integration-route":149,"analytics.js-integration-saasquatch":150,"analytics.js-integration-satismeter":151,"analytics.js-integration-segmentio":152,"analytics.js-integration-sentry":153,"analytics.js-integration-snapengage":154,"analytics.js-integration-spinnakr":155,"analytics.js-integration-supporthero":156,"analytics.js-integration-taplytics":157,"analytics.js-integration-tapstream":158,"analytics.js-integration-trakio":159,"analytics.js-integration-twitter-ads":160,"analytics.js-integration-userlike":161,"analytics.js-integration-uservoice":162,"analytics.js-integration-vero":163,"analytics.js-integration-visual-website-optimizer":164,"analytics.js-integration-webengage":165,"analytics.js-integration-woopra":166,"analytics.js-integration-wootric":167,"analytics.js-integration-yandex-metrica":168}],
+}, {"analytics.js-integration-astronomer":81,"analytics.js-integration-doubleclick":82,"analytics.js-integration-retention-science":83,"analytics.js-integration-adroll":84,"analytics.js-integration-adwords":85,"analytics.js-integration-alexa":86,"analytics.js-integration-amplitude":87,"analytics.js-integration-appcues":88,"analytics.js-integration-atatus":89,"analytics.js-integration-autosend":90,"analytics.js-integration-awesm":91,"analytics.js-integration-bing-ads":92,"analytics.js-integration-blueshift":93,"analytics.js-integration-bronto":94,"analytics.js-integration-bugherd":95,"analytics.js-integration-bugsnag":96,"analytics.js-integration-chameleon":97,"analytics.js-integration-chartbeat":98,"analytics.js-integration-clicky":99,"analytics.js-integration-comscore":100,"analytics.js-integration-crazy-egg":101,"analytics.js-integration-curebit":102,"analytics.js-integration-customerio":103,"analytics.js-integration-drip":104,"analytics.js-integration-elevio":105,"analytics.js-integration-errorception":106,"analytics.js-integration-evergage":107,"analytics.js-integration-extole":108,"analytics.js-integration-facebook-pixel":109,"analytics.js-integration-foxmetrics":110,"analytics.js-integration-frontleaf":111,"analytics.js-integration-fullstory":112,"analytics.js-integration-gauges":113,"analytics.js-integration-get-satisfaction":114,"analytics.js-integration-google-analytics":115,"analytics.js-integration-google-tag-manager":116,"analytics.js-integration-gosquared":117,"analytics.js-integration-heap":118,"analytics.js-integration-hellobar":119,"analytics.js-integration-hittail":120,"analytics.js-integration-hubspot":121,"analytics.js-integration-improvely":122,"analytics.js-integration-insidevault":123,"analytics.js-integration-inspectlet":124,"analytics.js-integration-intercom":125,"analytics.js-integration-keen-io":126,"analytics.js-integration-kenshoo":127,"analytics.js-integration-kissmetrics":128,"analytics.js-integration-klaviyo":129,"analytics.js-integration-livechat":130,"analytics.js-integration-lucky-orange":131,"analytics.js-integration-lytics":132,"analytics.js-integration-mixpanel":133,"analytics.js-integration-mojn":134,"analytics.js-integration-mouseflow":135,"analytics.js-integration-mousestats":136,"analytics.js-integration-navilytics":137,"analytics.js-integration-nudgespot":138,"analytics.js-integration-olark":139,"analytics.js-integration-optimizely":140,"analytics.js-integration-outbound":141,"analytics.js-integration-perfect-audience":142,"analytics.js-integration-pingdom":143,"analytics.js-integration-piwik":144,"analytics.js-integration-preact":145,"analytics.js-integration-qualaroo":146,"analytics.js-integration-quantcast":147,"analytics.js-integration-rollbar":148,"analytics.js-integration-route":149,"analytics.js-integration-saasquatch":150,"analytics.js-integration-satismeter":151,"analytics.js-integration-segmentio":152,"analytics.js-integration-sentry":153,"analytics.js-integration-snapengage":154,"analytics.js-integration-spinnakr":155,"analytics.js-integration-supporthero":156,"analytics.js-integration-taplytics":157,"analytics.js-integration-tapstream":158,"analytics.js-integration-trakio":159,"analytics.js-integration-twitter-ads":160,"analytics.js-integration-userlike":161,"analytics.js-integration-uservoice":162,"analytics.js-integration-vero":163,"analytics.js-integration-visual-website-optimizer":164,"analytics.js-integration-webengage":165,"analytics.js-integration-woopra":166,"analytics.js-integration-wootric":167,"analytics.js-integration-yandex-metrica":168}],
 81: [function(require, module, exports) {
 
 /**
@@ -9993,7 +9993,7 @@ var map = require('map');
  * Expose `DoubleClick` integration.
  */
 
-var DoubleClick = module.exports = integration('DoubleClick')
+var DoubleClick = module.exports = integration('DoubleClick Floodlight')
   .assumesPageview()
   .option('advertiserId', '')
   .option('cat', '')
@@ -10008,7 +10008,7 @@ var DoubleClick = module.exports = integration('DoubleClick')
  * @param {Facade} page
  */
 
-DoubleClick.prototype.initialize = function(page) {
+DoubleClick.prototype.initialize = function() {
   this.fire({ cat: this.options.cat, type: this.options.type });
   this.ready();
 };
@@ -10029,7 +10029,7 @@ DoubleClick.prototype.loaded = function() {
  * @param {Facade} page
  */
 
-DoubleClick.prototype.page = function(page) {
+DoubleClick.prototype.page = function() {
   // var self = this;
   // var matches = this.pages(page.url());
   // each(function(pixel) {
@@ -10047,7 +10047,7 @@ DoubleClick.prototype.track = function(track) {
   var self = this;
   var matches = this.events(track.event());
   each(function(pixel) {
-    self.fire(pixel, self.props(track));
+    self.fire(pixel, self.props(track.properties()));
   }, matches);
 };
 
@@ -10059,7 +10059,7 @@ DoubleClick.prototype.completedOrder = function(track) {
   var self = this;
   var matches = this.events(track.event());
   each(function(pixel) {
-    self.fire(pixel, self.props(track,
+    self.fire(pixel, self.props(track.properties(),
         track.orderId(), track.quantity(), track.revenue()));
   }, matches);
 };
@@ -10068,7 +10068,7 @@ DoubleClick.prototype.completedOrder = function(track) {
  * Create properties for tag.
  */
 
-DoubleClick.prototype.props = function(track, ord, qty, cost) {
+DoubleClick.prototype.props = function(props, ord, qty, cost) {
   // Defaults
   var payload = {};
   payload.src = this.options.advertiserId;
@@ -10095,7 +10095,7 @@ DoubleClick.prototype.props = function(track, ord, qty, cost) {
     }
 
     return acc;
-  }, {}, track.properties());
+  }, {}, props);
 
   return extend(payload, customs);
 };
@@ -10105,10 +10105,11 @@ DoubleClick.prototype.props = function(track, ord, qty, cost) {
  * Stringify the props.
  */
 
-DoubleClick.prototype.params = function(props) {
+DoubleClick.prototype.params = function(pixel, props) {
+  var merged = extend(pixel, props);
   return map(function(val, key) {
     return val ? key + '=' + val : key;
-  }, props).join(';') + '?';
+  }, merged).join(';');
 };
 
 /**
@@ -10117,8 +10118,8 @@ DoubleClick.prototype.params = function(props) {
 
 DoubleClick.prototype.fire = function(pixel, props) {
   var advertiserId = this.options.advertiserId;
-  var params = this.params(extend(pixel, props));
-  var src = 'http://' + advertiserId + '.fls.doubleclick.net/activityi;' + params;
+  var params = this.params(pixel, props);
+  var src = 'https://' + advertiserId + '.fls.doubleclick.net/activityi;' + params + '?';
 
   var flDiv = document.body.appendChild(document.createElement('div'));
   flDiv.setAttribute('id', 'DCLK_FLDiv1');
@@ -10226,6 +10227,130 @@ module.exports = map;
 
 }, {"each":67}],
 83: [function(require, module, exports) {
+/**
+* Module dependencies.
+*/
+
+var integration = require('analytics.js-integration');
+var foldl = require('foldl');
+var each = require('each');
+var keys = require('keys');
+var extend = require('extend');
+var includes = require('includes');
+var map = require('map');
+
+/** 
+* Expose `Retention Science` integration
+*/
+
+var RetentionScience = module.exports = integration('Retention Science')
+  .global('_rsq')
+  .option('siteId', '')
+  .option('enableOnSite')
+  .option('viewItem','')
+  .option('addToCart','')
+  .option('checkoutSuccess','')
+  .option('customEvents')
+  .mapping('pages')
+  .mapping('events')
+  .tag('<script src=//d1stxfv94hrhia.cloudfront.net/waves/v2/w.js');
+
+/**
+* Initialize Retention Science
+*
+* @param {Facade} page
+*/
+
+RetentionScience.prototype.intialize = function() {
+  window._rsq = window._rsq || [];
+  this.load(this.ready);
+};
+
+
+/**
+ * Has the Retention Science library been loaded yet?
+ *
+ * @return {Boolean}
+ */
+
+DoubleClick.prototype.loaded = function() {
+  return true;
+};
+
+
+RetentionScience.prototype.setDefaults = function(identify){
+  window._rsq.push(['_setSiteId', this.options.siteId]);
+  if (this.options.enableOnSite) {
+    window._rsq.push(['_enableOnSite']);
+  };
+  window._rsq.push(['_setUserId', identify.userId()]);
+  window._rsq.push(['_setUserEmail', identify.email()]);
+};
+
+/**
+ * Identify.
+ *
+ * @param {Identify} identify
+ */
+
+// RetentionScience.prototype.identify = function(identify) {
+// };
+
+
+
+/**
+* Track a page view
+* 
+* @param {Facade} track
+*/
+
+RetentionScience.prototype.page = function(page) {
+  this.setDefaults(page.track());
+  _rsq.push(['_track']);
+};
+
+
+
+// /**
+//  * Add To Cart.
+//  */
+
+// RetentionScience.prototype.addToCart = function(track) {
+//   var self = this;
+//   var matches = this.events(track.event());
+//   var props = track.properties();
+//   each(function(track){}
+// };
+
+
+
+
+
+// /**
+//  * Checkout Success.
+//  */
+
+// RetentionScience.prototype.checkoutSuccess = function(track) {
+//   var self = this;
+//   var matches = this.events(track.event());
+// };
+
+
+/**
+ * Track event.
+ */
+
+RetentionScience.prototype.track = function(track) {
+  this.setDefaults(track);
+  _rsq.push(['_setAction', track.event()]);
+  _rsq.push(['_setParams', track.properties()]);
+  _rsq.push(['_track']);
+};
+
+
+
+}, {"analytics.js-integration":170,"foldl":17,"each":67,"keys":68,"extend":200,"includes":73,"map":201}],
+84: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11164,7 +11289,7 @@ function check () {
   );
 }
 }, {}],
-84: [function(require, module, exports) {
+85: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11255,7 +11380,7 @@ AdWords.prototype.track = function(track) {
 };
 
 }, {"each":4,"analytics.js-integration":202}],
-85: [function(require, module, exports) {
+86: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11306,7 +11431,7 @@ Alexa.prototype.loaded = function() {
 };
 
 }, {"analytics.js-integration":202}],
-86: [function(require, module, exports) {
+87: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11470,7 +11595,7 @@ Amplitude.prototype.setDeviceId = function(deviceId) {
 };
 
 }, {"analytics.js-integration":202,"top-domain":174}],
-87: [function(require, module, exports) {
+88: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11609,7 +11734,7 @@ module.exports = function loadScript(options, fn){
   return script;
 };
 }, {"script-onload":193,"next-tick":58,"type":48}],
-88: [function(require, module, exports) {
+89: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11669,7 +11794,7 @@ Atatus.prototype.identify = function(identify) {
 };
 
 }, {"analytics.js-integration":202,"is":19}],
-89: [function(require, module, exports) {
+90: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11745,7 +11870,7 @@ Autosend.prototype.track = function(track) {
 };
 
 }, {"analytics.js-integration":202}],
-90: [function(require, module, exports) {
+91: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11805,7 +11930,7 @@ Awesm.prototype.track = function(track) {
 };
 
 }, {"each":4,"analytics.js-integration":202}],
-91: [function(require, module, exports) {
+92: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -11893,7 +12018,7 @@ Bing.prototype.track = function(track) {
 };
 
 }, {"analytics.js-integration":202}],
-92: [function(require, module, exports) {
+93: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12035,7 +12160,7 @@ function removeBlankAttributes(obj) {
 }
 
 }, {"analytics.js-integration":202,"foldl":17}],
-93: [function(require, module, exports) {
+94: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12213,7 +12338,7 @@ exports.stringify = function(obj){
 };
 
 }, {"trim":55,"type":48}],
-94: [function(require, module, exports) {
+95: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12262,7 +12387,7 @@ BugHerd.prototype.loaded = function() {
 };
 
 }, {"analytics.js-integration":202,"next-tick":58}],
-95: [function(require, module, exports) {
+96: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12343,7 +12468,7 @@ Bugsnag.prototype.identify = function(identify) {
 };
 
 }, {"analytics.js-integration":202,"is":19,"extend":71}],
-96: [function(require, module, exports) {
+97: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12448,7 +12573,7 @@ Chameleon.prototype.alias = function(alias) {
 };
 
 }, {"analytics.js-integration":202,"each":4}],
-97: [function(require, module, exports) {
+98: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12597,7 +12722,7 @@ function call (callback) {
   callback(document.body);
 }
 }, {"each":184}],
-98: [function(require, module, exports) {
+99: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12699,7 +12824,7 @@ Clicky.prototype.track = function(track) {
 };
 
 }, {"facade":9,"extend":71,"analytics.js-integration":202,"is":19}],
-99: [function(require, module, exports) {
+100: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12756,7 +12881,7 @@ Comscore.prototype.page = function() {
 };
 
 }, {"analytics.js-integration":202,"use-https":204}],
-100: [function(require, module, exports) {
+101: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12799,7 +12924,7 @@ CrazyEgg.prototype.loaded = function() {
 };
 
 }, {"analytics.js-integration":202}],
-101: [function(require, module, exports) {
+102: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13120,7 +13245,7 @@ function when (condition, fn, interval) {
   }, interval || 10);
 }
 }, {"callback":12}],
-102: [function(require, module, exports) {
+103: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13333,7 +13458,7 @@ function convertDates (obj, convert) {
   return obj;
 }
 }, {"is":19,"clone":13}],
-103: [function(require, module, exports) {
+104: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13407,7 +13532,7 @@ Drip.prototype.identify = function(identify) {
 };
 
 }, {"analytics.js-integration":202,"is":19,"global-queue":214}],
-104: [function(require, module, exports) {
+105: [function(require, module, exports) {
 var integration = require('analytics.js-integration');
 var tick = require('next-tick');
 
@@ -13466,7 +13591,7 @@ Elevio.prototype.identify = function(identify) {
 };
 
 }, {"analytics.js-integration":202,"next-tick":58}],
-105: [function(require, module, exports) {
+106: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13584,7 +13709,7 @@ function onError (fn) {
   }
 }
 }, {}],
-106: [function(require, module, exports) {
+107: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13706,7 +13831,7 @@ Evergage.prototype.track = function(track) {
 };
 
 }, {"each":4,"analytics.js-integration":202,"global-queue":214}],
-107: [function(require, module, exports) {
+108: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -13846,148 +13971,113 @@ Extole.prototype._createConversionTag = function(conversion) {
 };
 
 }, {"bind":56,"domify":194,"each":4,"extend":71,"analytics.js-integration":202,"json":60}],
-108: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var each = require('each');
-var integration = require('analytics.js-integration');
-var push = require('global-queue')('_fbq');
-
-/**
- * Expose `Facebook`
- */
-
-var Facebook = module.exports = integration('Facebook Conversion Tracking')
-  .global('_fbq')
-  .option('currency', 'USD')
-  .tag('<script src="//connect.facebook.net/en_US/fbds.js">')
-  .mapping('events');
-
-/**
- * Initialize Facebook Conversion Tracking
- *
- * https://developers.facebook.com/docs/ads-for-websites/conversion-pixel-code-migration
- *
- * @api public
- */
-
-Facebook.prototype.initialize = function() {
-  window._fbq = window._fbq || [];
-  this.load(this.ready);
-  window._fbq.loaded = true;
-};
-
-/**
- * Loaded?
- *
- * @api private
- * @return {boolean}
- */
-
-Facebook.prototype.loaded = function() {
-  return !!(window._fbq && window._fbq.loaded);
-};
-
-/**
- * Page.
- *
- * @api public
- * @param {Page} page
- */
-
-Facebook.prototype.page = function(page) {
-  this.track(page.track(page.fullName()));
-};
-
-/**
- * Track.
- *
- * https://developers.facebook.com/docs/reference/ads-api/custom-audience-website-faq/#fbpixel
- *
- * @api public
- * @param {Track} track
- */
-
-Facebook.prototype.track = function(track) {
-  var event = track.event();
-  var events = this.events(event);
-  var revenue = track.revenue() || 0;
-  var self = this;
-
-  each(events, function(event) {
-    push('track', event, {
-      currency: self.options.currency,
-      value: revenue.toFixed(2)
-    });
-  });
-};
-
-}, {"each":4,"analytics.js-integration":202,"global-queue":214}],
 109: [function(require, module, exports) {
+
 /**
  * Module dependencies.
  */
 
 var integration = require('analytics.js-integration');
-var push = require('global-queue')('_fbq');
-var reduce = require('reduce');
+var foldl = require('foldl');
+var each = require('each');
 
 /**
- * Expose `FacebookCustomAudiences`.
+ * Expose `Facebook Pixel`.
  */
 
-var FacebookCustomAudiences = module.exports = integration('Facebook Custom Audiences')
-  .global('_fbds')
-  .global('_fbq')
+var FacebookPixel = module.exports = integration('Facebook Pixel')
+  .global('fbq')
   .option('pixelId', '')
-  .option('currency', 'USD')
-  .mapping('events')
-  .tag('<script src="//connect.facebook.net/en_US/fbds.js">');
+  .mapping('standardEvents')
+  .mapping('legacyEvents')
+  .tag('<script src="//connect.facebook.net/en_US/fbevents.js">');
 
 /**
- * Initialize.
+ * Initialize Facebook Pixel.
  *
- * @api public
+ * @param {Facade} page
  */
 
-FacebookCustomAudiences.prototype.initialize = function() {
-  var pixelId = this.options.pixelId;
-  window._fbds = window._fbds || {};
-  window._fbds.pixelId = pixelId;
-  window._fbq = window._fbq || [];
-  window._fbq.push(['track', 'PixelInitialized', {}]);
+FacebookPixel.prototype.initialize = function(){
+  window.fbq = window._fbq = function() {
+    if (window.fbq.callMethod) {
+      window.fbq.callMethod.apply(window.fbq, arguments);
+    } else {
+      window.fbq.queue.push(arguments);
+    }
+  };
+  window.fbq.push = window.fbq;
+  window.fbq.loaded = true;
+  window.fbq.version = '2.0';
+  window.fbq.queue = [];
   this.load(this.ready);
+  window.fbq('init', this.options.pixelId);
 };
 
 /**
- * Loaded?
+ * Has the Facebook Pixel library been loaded yet?
  *
- * @api public
- * @return {boolean}
+ * @return {Boolean}
  */
 
-FacebookCustomAudiences.prototype.loaded = function() {
-  return !!(window._fbq && Array.prototype.push !== window._fbq.push);
+FacebookPixel.prototype.loaded = function(){
+  return !!(window.fbq && window.fbq.callMethod);
 };
 
 /**
- * Track.
+ * Trigger a page view.
  *
- * https://developers.facebook.com/docs/reference/ads-api/custom-audience-website#tagapi
- *
- * @api public
- * @param {Track} track
+ * @param {Facade} identify
  */
 
-FacebookCustomAudiences.prototype.track = function(track) {
+FacebookPixel.prototype.page = function(){
+  window.fbq('track', 'PageView');
+};
+
+/**
+ * Track an event.
+ *
+ * @param {Facade} track
+ */
+
+FacebookPixel.prototype.track = function(track){
   var event = track.event();
-  var properties = track.properties();
+  var revenue = formatRevenue(track.revenue());
 
-  // Track event
-  window._fbq.push(['track', event, properties]);
+  var payload = foldl(function(acc, val, key) {
+    if (key === 'revenue') {
+      acc.value = revenue;
+      return acc;
+    }
+
+    acc[key] = val;
+    return acc;
+  }, {}, track.properties());
+
+  var standard = this.standardEvents(event);
+  var legacy = this.legacyEvents(event);
+
+  // non-mapped events get sent as "custom events" with full
+  // tranformed payload
+  if (![].concat(standard, legacy).length) {
+    window.fbq('trackCustom', event, payload);
+    return;
+  }
+
+  // standard conversion events, mapped to one of 9 standard events
+  // send full transformed payload
+  each(function(event) {
+    window.fbq('track', event, payload);
+  }, standard);
+
+  // legacy conversion events — mapped to specific "pixelId"s
+  // send only currency and value
+  each(function(event) {
+    window.fbq('track', event, {
+      currency: track.currency(),
+      value: revenue
+    });
+  }, legacy);
 };
 
 /**
@@ -13997,11 +14087,19 @@ FacebookCustomAudiences.prototype.track = function(track) {
  * @param {Track} track category
  */
 
-FacebookCustomAudiences.prototype.viewedProductCategory = function(track) {
-  push('track', 'ViewContent', {
-    content_ids: [String(track.category() || '')],
+FacebookPixel.prototype.viewedProductCategory = function(track) {
+  window.fbq('track', 'ViewContent', {
+    content_ids: [track.category() || ''],
     content_type: 'product_group'
   });
+
+  // fall through for mapped legacy conversions
+  each(function(event) {
+    window.fbq('track', event, {
+      currency: track.currency(),
+      value: formatRevenue(track.revenue())
+    });
+  }, this.legacyEvents(track.event()));
 };
 
 /**
@@ -14011,11 +14109,23 @@ FacebookCustomAudiences.prototype.viewedProductCategory = function(track) {
  * @param {Track} track
  */
 
-FacebookCustomAudiences.prototype.viewedProduct = function(track) {
-  push('track', 'ViewContent', {
-    content_ids: [String(track.id() || track.sku() || '')],
-    content_type: 'product'
+FacebookPixel.prototype.viewedProduct = function(track) {
+  window.fbq('track', 'ViewContent', {
+    content_ids: [track.id() || track.sku() || ''],
+    content_type: 'product',
+    content_name: track.name() || '',
+    content_category: track.category() || '',
+    currency: track.currency(),
+    value: formatRevenue(track.price())
   });
+
+  // fall through for mapped legacy conversions
+  each(function(event) {
+    window.fbq('track', event, {
+      currency: track.currency(),
+      value: formatRevenue(track.revenue())
+    });
+  }, this.legacyEvents(track.event()));
 };
 
 /**
@@ -14025,11 +14135,23 @@ FacebookCustomAudiences.prototype.viewedProduct = function(track) {
  * @param {Track} track
  */
 
-FacebookCustomAudiences.prototype.addedProduct = function(track) {
-  push('track', 'AddToCart', {
-    content_ids: [String(track.id() || track.sku() || '')],
-    content_type: 'product'
+FacebookPixel.prototype.addedProduct = function(track) {
+  window.fbq('track', 'AddToCart', {
+    content_ids: [track.id() || track.sku() || ''],
+    content_type: 'product',
+    content_name: track.name() || '',
+    content_category: track.category() || '',
+    currency: track.currency(),
+    value: formatRevenue(track.price())
   });
+
+  // fall through for mapped legacy conversions
+  each(function(event) {
+    window.fbq('track', event, {
+      currency: track.currency(),
+      value: formatRevenue(track.revenue())
+    });
+  }, this.legacyEvents(track.event()));
 };
 
 /**
@@ -14039,39 +14161,45 @@ FacebookCustomAudiences.prototype.addedProduct = function(track) {
  * @param {Track} track
  */
 
-FacebookCustomAudiences.prototype.completedOrder = function(track) {
-  var content_ids = reduce(track.products() || [], [], function(ret, product) {
-    ret.push(product.id || product.sku || '');
-    return ret;
-  });
-  push('track', 'Purchase', {
+FacebookPixel.prototype.completedOrder = function(track) {
+  var key;
+  var content_ids = foldl(function(acc, product) {
+    key = product.id || product.sku;
+    if (key) acc.push(key);
+    return acc;
+  }, [], track.products() || []);
+
+  var revenue = formatRevenue(track.revenue());
+
+  window.fbq('track', 'Purchase', {
     content_ids: content_ids,
-    content_type: 'product'
+    content_type: 'product',
+    currency: track.currency(),
+    value: revenue
   });
+
+  // fall through for mapped legacy conversions
+  each(function(event) {
+    window.fbq('track', event, {
+      currency: track.currency(),
+      value: formatRevenue(track.revenue())
+    });
+  }, this.legacyEvents(track.event()));
 };
-
-}, {"analytics.js-integration":202,"global-queue":214,"reduce":220}],
-220: [function(require, module, exports) {
-
-var each = require('each');
 
 
 /**
- * Reduce an array or object.
+ * Get Revenue Formatted Correctly for FB.
  *
- * @param {Array|Object} obj
- * @param {Mixed} memo
- * @param {Function} iterator
- * @return {Mixed}
+ * @api private
+ * @param {Track} track
  */
 
-module.exports = function reduce (obj, memo, iterator) {
-  each(obj, function (a, b) {
-    memo = iterator.call(null, memo, a, b, obj);
-  });
-  return memo;
-};
-}, {"each":184}],
+function formatRevenue(revenue) {
+  return Number(revenue || 0).toFixed(2);
+}
+
+}, {"analytics.js-integration":170,"foldl":17,"each":67}],
 110: [function(require, module, exports) {
 
 /**
@@ -14609,8 +14737,8 @@ function isInt(n) {
   return n === +n && n === (n | 0);
 }
 
-}, {"to-camel-case":221,"foldl":17,"analytics.js-integration":202,"is":19}],
-221: [function(require, module, exports) {
+}, {"to-camel-case":220,"foldl":17,"analytics.js-integration":202,"is":19}],
+220: [function(require, module, exports) {
 
 var toSpace = require('to-space-case');
 
@@ -15632,8 +15760,8 @@ function createProductTrack(track, properties) {
   return new Track({ properties: properties });
 }
 
-}, {"facade":9,"defaults":211,"obj-case":43,"each":4,"analytics.js-integration":202,"is":19,"object":21,"global-queue":214,"select":222,"use-https":204}],
-222: [function(require, module, exports) {
+}, {"facade":9,"defaults":211,"obj-case":43,"each":4,"analytics.js-integration":202,"is":19,"object":21,"global-queue":214,"select":221,"use-https":204}],
+221: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -15945,8 +16073,8 @@ function push() {
   window._gs.apply(null, arguments);
 }
 
-}, {"facade":9,"each":4,"analytics.js-integration":202,"omit":223,"pick":224}],
-223: [function(require, module, exports) {
+}, {"facade":9,"each":4,"analytics.js-integration":202,"omit":222,"pick":223}],
+222: [function(require, module, exports) {
 /**
  * Expose `omit`.
  */
@@ -15974,7 +16102,7 @@ function omit(keys, object){
   return ret;
 }
 }, {}],
-224: [function(require, module, exports) {
+223: [function(require, module, exports) {
 
 /**
  * Expose `pick`.
@@ -17838,8 +17966,8 @@ function lowercase(arr) {
   return ret;
 }
 
-}, {"alias":217,"convert-dates":218,"obj-case":43,"each":4,"includes":73,"analytics.js-integration":202,"is":19,"to-iso-string":213,"some":225}],
-225: [function(require, module, exports) {
+}, {"alias":217,"convert-dates":218,"obj-case":43,"each":4,"includes":73,"analytics.js-integration":202,"is":19,"to-iso-string":213,"some":224}],
+224: [function(require, module, exports) {
 
 /**
  * some
@@ -18758,7 +18886,7 @@ Outbound.prototype.alias = function(alias) {
   window.outbound.identify(alias.userId(), { previousId: alias.previousId() });
 };
 
-}, {"analytics.js-integration":202,"omit":223}],
+}, {"analytics.js-integration":202,"omit":222}],
 142: [function(require, module, exports) {
 
 /**
@@ -18908,8 +19036,8 @@ Pingdom.prototype.loaded = function() {
   return !!(window._prum && window._prum.push !== Array.prototype.push);
 };
 
-}, {"load-date":226,"analytics.js-integration":202,"global-queue":214}],
-226: [function(require, module, exports) {
+}, {"load-date":225,"analytics.js-integration":202,"global-queue":214}],
+225: [function(require, module, exports) {
 
 
 /*
@@ -19434,8 +19562,8 @@ Quantcast.prototype._labels = function(type) {
   return [type, ret].join('.');
 };
 
-}, {"analytics.js-integration":202,"global-queue":214,"reduce":227,"use-https":204}],
-227: [function(require, module, exports) {
+}, {"analytics.js-integration":202,"global-queue":214,"reduce":226,"use-https":204}],
+226: [function(require, module, exports) {
 
 /**
  * Reduce `arr` with `fn`.
@@ -21123,8 +21251,8 @@ function showClassicWidget(type, options) {
   push(type, 'classic_widget', options);
 }
 
-}, {"alias":217,"convert-dates":218,"analytics.js-integration":202,"global-queue":214,"to-unix-timestamp":228}],
-228: [function(require, module, exports) {
+}, {"alias":217,"convert-dates":218,"analytics.js-integration":202,"global-queue":214,"to-unix-timestamp":227}],
+227: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -21689,7 +21817,7 @@ Wootric.prototype.page = function(page) {
   });
 };
 
-}, {"analytics.js-integration":202,"omit":223}],
+}, {"analytics.js-integration":202,"omit":222}],
 168: [function(require, module, exports) {
 
 /**

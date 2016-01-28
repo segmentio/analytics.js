@@ -15,7 +15,7 @@
     "segmentio/analytics.js-core": "^2.10.0",
     "astronomerio/analytics.js-integration-astronomer": "2.0.0",
     "astronomerio/analytics.js-integration-doubleclick": "1.0.2",
-    "astronomerio/analytics.js-integration-retention-science": "1.0.0",
+    "astronomerio/analytics.js-integration-retention-science": "1.0.1",
     "segment-integrations/analytics.js-integration-adroll": "1.0.0",
     "segment-integrations/analytics.js-integration-adwords": "1.0.0",
     "segment-integrations/analytics.js-integration-alexa": "1.0.0",

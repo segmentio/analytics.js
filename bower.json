@@ -1,6 +1,6 @@
 {
   "name": "analytics",
-  "version": "2.11.0+ASTRONOMER-1.0.3",
+  "version": "2.11.0+ASTRONOMER",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

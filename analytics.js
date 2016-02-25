@@ -10304,8 +10304,12 @@ Criteo.prototype.track = function(track){
  */
 
 Criteo.prototype.viewedProduct = function(track) {
-  this._addDefaults();
-  window.criteo_q.push({ event: 'viewItem', item: track.id() || track.sku() });
+  var params = this.getDefaults();
+  params.push({
+      event: 'viewItem',
+      item: track.id() || track.sku()
+  });
+  window.criteo_q.push.apply(criteo_q, params);
 };
 
 
@@ -10313,13 +10317,16 @@ Criteo.prototype.viewedProduct = function(track) {
  * Add defaults.
  */
 
-Criteo.prototype._addDefaults = function() {
-  window.criteo_q.push({ event: 'setAccount', account: this.options.accountId });
+Criteo.prototype.getDefaults = function() {
+  const params = [];
+  params.push({ event: 'setAccount', account: this.options.accountId });
 
   var email = (this.analytics.user().traits() || {}).email;
   if (email) {
-    window.criteo_q.push({ event: 'setEmail', email: email });
+    params.push({ event: 'setEmail', email: email });
   }
+
+  return params;
 };
 
 }, {"analytics.js-integration":171,"global-queue":203}],
@@ -10480,16 +10487,12 @@ RetentionScience.prototype._addDefaults = function() {
   }
 
   // UserId.
-  var userId = this.analytics.user().id();
-  if (userId) {
-    window._rsq.push(['_setUserId', userId]);
-  }
+  var userId = this.analytics.user().id() || '';
+  window._rsq.push(['_setUserId', String(userId)]);
 
   // Email.
-  var email = (this.analytics.user().traits() || {}).email;
-  if (email) {
-    window._rsq.push(['_setUserEmail', email]);
-  }
+  var email = (this.analytics.user().traits() || {}).email || '';
+  window._rsq.push(['_setUserEmail', email]);
 };
 
 

@@ -10464,12 +10464,12 @@ RetentionScience.prototype.viewedProduct = function(track) {
 RetentionScience.prototype.completedOrder = function(track) {
   this._addDefaults();
   var self = this;
-  window._rsq.push(['_addOrder', { id: track.orderId() || '', total: track.revenue() || '' }]);
+  this._push(['_addOrder', { id: track.orderId(), total: track.revenue() }]);
   each(function(product) {
     self._addRSProduct(product.id || product.sku, product.name, product.price);
   }, track.products() || []);
-  window._rsq.push(['_setAction', 'checkout_success']);
-  window._rsq.push(['_track']);
+  this._push(['_setAction', 'checkout_success']);
+  this._push(['_track']);
 };
 
 
@@ -10479,20 +10479,20 @@ RetentionScience.prototype.completedOrder = function(track) {
 
 RetentionScience.prototype._addDefaults = function() {
   // Site id.
-  window._rsq.push(['_setSiteId', this.options.siteId]);
+  this._push(['_setSiteId', this.options.siteId]);
 
   // Enable on site.
   if (this.options.enableOnSite) {
-    window._rsq.push(['_enableOnSite']);
+    this._push(['_enableOnSite']);
   }
 
   // UserId.
-  var userId = this.analytics.user().id() || '';
-  window._rsq.push(['_setUserId', String(userId)]);
+  var userId = this.analytics.user().id();
+  this._push(['_setUserId', userId]);
 
   // Email.
-  var email = (this.analytics.user().traits() || {}).email || '';
-  window._rsq.push(['_setUserEmail', email]);
+  var email = (this.analytics.user().traits() || {}).email;
+  this._push(['_setUserEmail', email]);
 };
 
 
@@ -10501,13 +10501,30 @@ RetentionScience.prototype._addDefaults = function() {
  */
 
 RetentionScience.prototype._addRSProduct = function(id, name, price) {
-  window._rsq.push(['_addItem', {
-    id: id || '',
-    name: name || '',
-    price: price || ''
-  }]);
+  this._push(['_addItem', { id: id, name: name, price: price }]);
 };
 
+
+RetentionScience.prototype._push = function(arr) {
+    var event = arr.slice(0, 1);
+
+    if (arr.length > 1) {
+        var param = arr[1];
+        var paramType = Object.prototype.toString.call(param);
+        if (paramType === '[object Object]') {
+          var stringed = {};
+          each(function(v, i) {
+            stringed[i] = v ? String(v) : '';
+          }, param);
+          event.push(stringed);
+        } else {
+          event.push(param ? String(param) : '');
+        }
+    }
+
+    window._rsq.push(event);
+    return event;
+};
 
 }, {"analytics.js-integration":171,"each":67}],
 85: [function(require, module, exports) {

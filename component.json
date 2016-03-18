@@ -17,7 +17,7 @@
     "astronomerio/analytics.js-integration-doubleclick": "1.0.2",
     "astronomerio/analytics.js-integration-criteo": "1.0.7",
     "astronomerio/analytics.js-integration-retention-science": "1.0.13",
-    "astronomerio/analytics.js-integration-kenshoo-infinity": "1.0.1",
+    "astronomerio/analytics.js-integration-kenshoo-infinity": "1.0.2",
     "segment-integrations/analytics.js-integration-adroll": "1.0.0",
     "segment-integrations/analytics.js-integration-adwords": "1.0.0",
     "segment-integrations/analytics.js-integration-alexa": "1.0.0",

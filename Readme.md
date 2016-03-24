@@ -29,7 +29,7 @@ analytics.initialize({
 });
 ```
 
-##Identify -[ Learn More about this Method](http://docs.astronomer.io/v1.0/docs/event-type-guide#identity) 
+##Identify
 
 ```javascript
 analytics.identify('1234qwerty', {
@@ -39,7 +39,10 @@ analytics.identify('1234qwerty', {
 });
 ```
 
-##Track -[ Learn More about this Method](http://docs.astronomer.io/v1.0/docs/event-type-guide#track) 
+The Identity method is how you associate user behavior to the user themselves and all of the included traits that come with them. "Traits" is any custom field you set to help parse and analyze your data once it's been collected. Common examples of traits include: email address, name, age, gender, industry, role. Traits can be strings (*email address, name, role*) integers (*age, zip code, salary*), or booleans (*survey participation, want to learn more, need help getting set up*.)
+
+
+##Track
 
 ```javascript
 analytics.track("Added File", {
@@ -50,16 +53,22 @@ analytics.track("Added File", {
 });
 ```
 
-##Page -[ Learn More about this Method](http://docs.astronomer.io/v1.0/docs/event-type-guide#page) 
+Track is the meat of event tracking. Depending on how complex your app is, the bulk of your events will likely be of the 'track' type (second maybe only to 'page' calls.) When setting this event, you'll specify an 'event' field with a label relevant to it's location within your app. For example, if you were tracking whenever a user added a file, you would want to set 'event' equal to 'Added a File' or something of the like. You could also not do this, but then your events wouldn't make any sense. Ultimately your call though. 
+
+Track also uses custom properties which you set. For the file addition example, you might add properties like "fileType" : "PDF", "fileSize" : "123MB", and "fileName" : "Best_File_Ever".
+
+##Page
 
 ```javascript
 analytics.page('Library');
 ```
 
->> **Note: For Single Page Applications**
->> If you're using Astronomer for a Single Page Application, you will need to track page loads manually. The best practice for this is to hook into the router and call `page` after route changes.
+The Page method is the most standard of all the methods, the lizard brain buried at the heart of the modern user tracking paradigm. Like it's name would suggest it is used to identify the page a user is on and, thus, is helped by the addition of a 'name' field (although this is not required.) Like Track, Page also has the option to add 'properties' or a dictionary of custom fields with details about the page. 
 
-##Group -[ Learn More about this Method](http://docs.astronomer.io/v1.0/docs/event-type-guide#group) 
+> **Note: For Single Page Applications**
+> If you're using Astronomer for a Single Page Application, you will need to track page loads manually. The best practice for this is to hook into the router and call `page` after route changes.
+
+##Group
 
 ```javascript
 analytics.group('5678dvorak', {
@@ -69,11 +78,16 @@ analytics.group('5678dvorak', {
 });
 ```
 
-##Alias -[ Learn More about this Method](http://docs.astronomer.io/v1.0/docs/event-type-guide#group) 
+The Group method allows you to associate a user's behavior to that of a larger group. If the tool you're looking to instrument does not support behavior grouping, take some comfort in the knowledge that this functionality will be here if you ever explore one that does. This method is similar to 'Identity' in that it has a supported *traits* field for additional details about the group. 
+
+##Alias 
 
 ```javascript
 analytics.alias(userId,previousId);
 ```
+The Alias method is used when trying to link previously anonymous behavior (before a user has signed up, for example) to behavior after a user has been identified. This data requires the previous/anonymous id and the current id (both as strings) to be called, which would make sense as without those two fields you would have no reason to call the method in the first place.
+
+---
 
 Putting it all together, here's a sample HTML file that you can test with — you just need to replace `YOURAPPID` with a real appId that you get from the Astronomer service.
 
@@ -116,11 +130,6 @@ Putting it all together, here's a sample HTML file that you can test with — y
 <body></body>  
 </html>  
 ```
-
-
-
-
-
 
 ## License
 

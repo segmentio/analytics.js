@@ -23,7 +23,7 @@ node_modules: package.json $(wildcard node_modules/*/package.json)
 
 # Remove temporary/built files.
 clean:
-	rm -rf *.log analytics.js analytics.min.js
+	rm -rf *.log madkudu.js madkudu.min.js
 .PHONY: clean
 
 # Remove temporary/built files and vendor dependencies.
@@ -36,15 +36,15 @@ distclean: clean
 #
 
 # Build analytics.js.
-analytics.js: node_modules $(SRC) package.json
-	@$(DUO) --stdout --standalone analytics lib/index.js > $@
+madkudu.js: node_modules $(SRC) package.json
+	@$(DUO) --stdout --standalone madkudu lib/index.js > $@
 
 # Build minified analytics.js.
-analytics.min.js: analytics.js
+madkudu.min.js: madkudu.js
 	@$(UGLIFYJS) $< --output $@
 
 # Build shortcut.
-build: analytics.min.js
+build: madkudu.min.js
 .PHONY: build
 
 #

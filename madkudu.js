@@ -105,7 +105,7 @@
  * (C) 2015 Segment.io Inc.
  */
 
-var analytics = require('MadKudu/analytics.js-core@2.11.2');
+var analytics = require('MadKudu/analytics.js-core@2.11.3');
 var Integrations = {};
 var each = require('each');
 var predictive = require('./predictive');
@@ -168,9 +168,9 @@ while (mdkd && mdkd.length > 0) {
 
  // Add the madkudu predictions function
 
-analytics.user.predictions = function () {
-	var traits = this.traits();
-	return predictive(traits);
+analytics.user.predictions = function() {
+  var traits = this.traits();
+  return predictive(traits);
 };
 
 /**
@@ -181,7 +181,7 @@ window.madkudu = analytics;
 
 
 
-}, {"MadKudu/analytics.js-core@2.11.2":2,"each":3,"./predictive":4,"../bower.json":5}],
+}, {"MadKudu/analytics.js-core@2.11.3":2,"each":3,"./predictive":4,"../bower.json":5}],
 2: [function(require, module, exports) {
 
 /**
@@ -7258,7 +7258,7 @@ module.exports = function uuid(a){
  * Module Dependencies.
  */
 
-var debug = require('debug')('analytics.js:predictions');
+// var debug = require('debug')('analytics.js:predictions');
 
 /**
  * Expose `predictive`
@@ -7275,13 +7275,41 @@ module.exports = predictive;
  */
 
 function predictive(traits) {
-  debug(traits);
-  return {
-    mk_customer_fit: 'very good'
+  var IND_1 = ['Software', 'Diversified Financial Services', 'Hotels,  Restaurants & Leisure', 'Education Services', 'Food Products', 'Commercial Services & Supplies'];
+  var SECT_1 = ['Consumer Discretionary'];
+  var IND_2 = ['Software', 'Diversified Financial Services', 'Commercial Services & Supplies'];
+
+  var predictions = {
+    mk_customer_fit: undefined
   };
+
+  if (
+    traits.employees >= 180 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      IND_1.indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+      || SECT_1.indexOf(traits.sector) > -1 && traits.sector !== null && typeof traits.sector !== 'undefined'
+    )
+    && (
+      traits.alexaGlobalRank > 1944 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+      && traits.alexaGlobalRank <= 19131 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+    )
+  ) {
+    predictions.mk_customer_fit = 'very good';
+  }
+
+  if (
+      traits.employees > 55 && traits.employees !== null && typeof traits.employees !== 'undefined'
+      && IND_2.indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+      && traits.raised >= 3.785E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+  ) {
+    predictions.mk_customer_fit = 'very good';
+  }
+
+  return predictions;
 }
 
-}, {"debug":15}],
+
+}, {}],
 7: [function(require, module, exports) {
 module.exports = {
   "name": "analytics-core",

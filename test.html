@@ -49,7 +49,7 @@
 						var e = document.createElement("script");
 						e.type = "text/javascript";
 						e.async = !0;
-						e.src = "./madkudu.js";
+						e.src = "./madkudu.min.js";
 						// e.src = ("https:" === document.location.protocol ? "https://" : "http://") + "cdn.madkudu.com/madkudu.js/v1/" + t + "/madkudu.min.js";
 						var n = document.getElementsByTagName("script")[0];
 						n.parentNode.insertBefore(e, n);
@@ -75,12 +75,24 @@
 	// }, window.delay_run_identify);
 
 	madkudu.ready(function() {
-		console.log('ready callback');
-		madkudu.identify('dwewdew', { trait_a: 'a' });;
+		madkudu.identify('test_user', {
+			employees: 3000,
+			alexaGlobalRank: 3000,
+			raised: 0,
+			industry: 'Something Strange'
+		});
 		madkudu.user().id();
 		madkudu.user().traits();
-		var predictions = madkudu.user().predictions();
-		console.log(predictions);
+		console.log(madkudu.user().predictions());
+		madkudu.identify('test_user', {
+			employees: 200,
+			alexaGlobalRank: 3000,
+			raised: 0,
+			industry: 'Software'
+		});
+		madkudu.user().id();
+		madkudu.user().traits();
+		console.log(madkudu.user().predictions());
 	});
 </script>
 

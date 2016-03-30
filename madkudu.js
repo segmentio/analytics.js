@@ -105,7 +105,7 @@
  * (C) 2015 Segment.io Inc.
  */
 
-var analytics = require('MadKudu/analytics.js-core@2.11.3');
+var analytics = require('MadKudu/analytics.js-core@2.11.4');
 var Integrations = {};
 var each = require('each');
 var predictive = require('./predictive');
@@ -181,7 +181,7 @@ window.madkudu = analytics;
 
 
 
-}, {"MadKudu/analytics.js-core@2.11.3":2,"each":3,"./predictive":4,"../bower.json":5}],
+}, {"MadKudu/analytics.js-core@2.11.4":2,"each":3,"./predictive":4,"../bower.json":5}],
 2: [function(require, module, exports) {
 
 /**
@@ -7282,29 +7282,34 @@ function predictive(traits) {
   var predictions = {
     mk_customer_fit: undefined
   };
-
   if (
-    traits.employees >= 180 && traits.employees !== null && typeof traits.employees !== 'undefined'
-    && (
-      IND_1.indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
-      || SECT_1.indexOf(traits.sector) > -1 && traits.sector !== null && typeof traits.sector !== 'undefined'
-    )
-    && (
-      traits.alexaGlobalRank > 1944 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
-      && traits.alexaGlobalRank <= 19131 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
-    )
+  traits.employees >= 180 && traits.employees !== null && typeof traits.employees !== 'undefined'
+  && (
+    IND_1.indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+    || SECT_1.indexOf(traits.sector) > -1 && traits.sector !== null && typeof traits.sector !== 'undefined'
+  )
+  && (
+    traits.alexaGlobalRank > 1944 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+    && traits.alexaGlobalRank <= 19131 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+  )
+) {
+    predictions.mk_customer_fit = 'very good';
+  }
+  if (
+    traits.employees > 55 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && IND_2.indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+    && traits.raised >= 3.785E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
   ) {
     predictions.mk_customer_fit = 'very good';
   }
-
   if (
-      traits.employees > 55 && traits.employees !== null && typeof traits.employees !== 'undefined'
-      && IND_2.indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
-      && traits.raised >= 3.785E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+    traits.employees <= 55 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+    && traits.industry != null && typeof traits.industry !== 'undefined'
+    && traits.raised != null && typeof traits.raised !== 'undefined'
   ) {
-    predictions.mk_customer_fit = 'very good';
+    predictions.mk_customer_fit = 'low';
   }
-
   return predictions;
 }
 
@@ -7350,8 +7355,8 @@ function predictive(traits) {
 }, {}],
 5: [function(require, module, exports) {
 module.exports = {
-  "name": "analytics",
-  "version": "2.11.0",
+  "name": "madkuud.js",
+  "version": "0.3.0",
   "main": "analytics.js",
   "dependencies": {},
   "devDependencies": {}

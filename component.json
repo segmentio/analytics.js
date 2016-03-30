@@ -12,7 +12,6 @@
   ],
   "dependencies": {
     "component/each": "0.0.1",
-    "MadKudu/analytics.js-core": "2.11.3",
     "segment-integrations/analytics.js-integration-adroll": "1.0.0",
     "segment-integrations/analytics.js-integration-adwords": "1.0.0",
     "segment-integrations/analytics.js-integration-alexa": "1.0.0",

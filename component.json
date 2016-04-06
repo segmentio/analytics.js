@@ -47,7 +47,6 @@
     "segment-integrations/analytics.js-integration-facebook-pixel": "1.0.1",
     "segment-integrations/analytics.js-integration-foxmetrics": "1.0.0",
     "segment-integrations/analytics.js-integration-frontleaf": "1.0.0",
-    "segment-integrations/analytics.js-integration-fullstory": "1.0.1",
     "segment-integrations/analytics.js-integration-gauges": "1.0.0",
     "segment-integrations/analytics.js-integration-get-satisfaction": "1.0.0",
     "segment-integrations/analytics.js-integration-google-analytics": "1.0.0",

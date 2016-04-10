@@ -100,27 +100,26 @@
 1: [function(require, module, exports) {
 
 /**
- * Analytics.js
+ * madkudu.js
  *
  * (C) 2015 Segment.io Inc.
  */
 
-var analytics = require('MadKudu/analytics.js-core@2.11.5');
+var madkudu = require('MadKudu/analytics.js-core@2.11.5');
 var Integrations = {};
 var each = require('each');
-var predictive = require('./predictive');
 
 /**
- * Expose the `analytics` singleton.
+ * Expose the `madkudu` singleton.
  */
 
-module.exports = exports = analytics;
+module.exports = exports = madkudu;
 
 /**
  * Expose require.
  */
 
-analytics.require = require;
+madkudu.require = require;
 
 /**
  * Expose `VERSION`.
@@ -133,7 +132,7 @@ exports.VERSION = require('../bower.json').version;
  */
 
 each(Integrations, function(name, Integration) {
-  analytics.use(Integration);
+  madkudu.use(Integration);
 });
 
 
@@ -154,7 +153,7 @@ var snippet = mdkd && mdkd.SNIPPET_VERSION
  * Initialize.
  */
 
-analytics.initialize({});
+madkudu.initialize({});
 
 /**
  * Before swapping the global, replay an existing global `madkudu` queue.
@@ -163,12 +162,12 @@ analytics.initialize({});
 while (mdkd && mdkd.length > 0) {
   var args = mdkd.shift();
   var method = args.shift();
-  if (analytics[method]) analytics[method].apply(analytics, args);
+  if (madkudu[method]) madkudu[method].apply(madkudu, args);
 }
 
  // Add the madkudu predictions function
 
-analytics.user.predictions = function() {
+madkudu.user.predictions = function() {
   var traits = this.traits();
   return predictive(traits);
 };
@@ -177,11 +176,11 @@ analytics.user.predictions = function() {
  * Finally, replace the global queue with the real `madkudu` singleton.
  */
 
-window.madkudu = analytics;
+window.madkudu = madkudu;
 
 
 
-}, {"MadKudu/analytics.js-core@2.11.5":2,"each":3,"./predictive":4,"../bower.json":5}],
+}, {"MadKudu/analytics.js-core@2.11.5":2,"each":3,"../bower.json":4}],
 2: [function(require, module, exports) {
 
 /**
@@ -210,8 +209,8 @@ analytics.require = require;
 
 exports.VERSION = require('../bower.json').version;
 
-}, {"./analytics":6,"../bower.json":7}],
-6: [function(require, module, exports) {
+}, {"./analytics":5,"../bower.json":6}],
+5: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -902,8 +901,8 @@ Analytics.prototype.noConflict = function(){
   return this;
 };
 
-}, {"emitter":8,"facade":9,"after":10,"bind":11,"callback":12,"clone":13,"./cookie":14,"debug":15,"defaults":16,"each":3,"foldl":17,"./group":18,"is":19,"is-meta":20,"object":21,"./memory":22,"./normalize":23,"event":24,"./pageDefaults":25,"pick":26,"prevent":27,"querystring":28,"./store":29,"./user":30}],
-8: [function(require, module, exports) {
+}, {"emitter":7,"facade":8,"after":9,"bind":10,"callback":11,"clone":12,"./cookie":13,"debug":14,"defaults":15,"each":3,"foldl":16,"./group":17,"is":18,"is-meta":19,"object":20,"./memory":21,"./normalize":22,"event":23,"./pageDefaults":24,"pick":25,"prevent":26,"querystring":27,"./store":28,"./user":29}],
+7: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -1069,8 +1068,8 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-}, {"indexof":31}],
-31: [function(require, module, exports) {
+}, {"indexof":30}],
+30: [function(require, module, exports) {
 module.exports = function(arr, obj){
   if (arr.indexOf) return arr.indexOf(obj);
   for (var i = 0; i < arr.length; ++i) {
@@ -1079,7 +1078,7 @@ module.exports = function(arr, obj){
   return -1;
 };
 }, {}],
-9: [function(require, module, exports) {
+8: [function(require, module, exports) {
 
 var Facade = require('./facade');
 
@@ -1100,8 +1099,8 @@ Facade.Track = require('./track');
 Facade.Page = require('./page');
 Facade.Screen = require('./screen');
 
-}, {"./facade":32,"./alias":33,"./group":34,"./identify":35,"./track":36,"./page":37,"./screen":38}],
-32: [function(require, module, exports) {
+}, {"./facade":31,"./alias":32,"./group":33,"./identify":34,"./track":35,"./page":36,"./screen":37}],
+31: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var isEnabled = require('./is-enabled');
@@ -1412,8 +1411,8 @@ function transform(obj){
   return cloned;
 }
 
-}, {"isodate-traverse":39,"./is-enabled":40,"./utils":41,"./address":42,"obj-case":43,"new-date":44}],
-39: [function(require, module, exports) {
+}, {"isodate-traverse":38,"./is-enabled":39,"./utils":40,"./address":41,"obj-case":42,"new-date":43}],
+38: [function(require, module, exports) {
 
 var is = require('is');
 var isodate = require('isodate');
@@ -1485,8 +1484,8 @@ function array (arr, strict) {
   return arr;
 }
 
-}, {"is":45,"isodate":46,"each":3}],
-45: [function(require, module, exports) {
+}, {"is":44,"isodate":45,"each":3}],
+44: [function(require, module, exports) {
 
 var isEmpty = require('is-empty');
 
@@ -1562,8 +1561,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":47,"type":48,"component-type":48}],
-47: [function(require, module, exports) {
+}, {"is-empty":46,"type":47,"component-type":47}],
+46: [function(require, module, exports) {
 
 /**
  * Expose `isEmpty`.
@@ -1596,7 +1595,7 @@ function isEmpty (val) {
 }
 
 }, {}],
-48: [function(require, module, exports) {
+47: [function(require, module, exports) {
 /**
  * toString ref.
  */
@@ -1645,7 +1644,7 @@ function isBuffer(obj) {
 }
 
 }, {}],
-46: [function(require, module, exports) {
+45: [function(require, module, exports) {
 
 /**
  * Matcher, slightly modified from:
@@ -1794,8 +1793,8 @@ function array(obj, fn) {
     fn(obj[i], i);
   }
 }
-}, {"type":48}],
-40: [function(require, module, exports) {
+}, {"type":47}],
+39: [function(require, module, exports) {
 
 /**
  * A few integrations are disabled by default. They must be explicitly
@@ -1817,7 +1816,7 @@ module.exports = function (integration) {
   return ! disabled[integration];
 };
 }, {}],
-41: [function(require, module, exports) {
+40: [function(require, module, exports) {
 
 /**
  * TODO: use component symlink, everywhere ?
@@ -1833,8 +1832,8 @@ try {
   exports.type = require('type-component');
 }
 
-}, {"inherit":49,"clone":50,"type":48}],
-49: [function(require, module, exports) {
+}, {"inherit":48,"clone":49,"type":47}],
+48: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -1843,7 +1842,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-50: [function(require, module, exports) {
+49: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -1902,8 +1901,8 @@ function clone(obj){
   }
 }
 
-}, {"component-type":48,"type":48}],
-42: [function(require, module, exports) {
+}, {"component-type":47,"type":47}],
+41: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -1941,8 +1940,8 @@ module.exports = function(proto){
   }
 };
 
-}, {"obj-case":43}],
-43: [function(require, module, exports) {
+}, {"obj-case":42}],
+42: [function(require, module, exports) {
 
 var identity = function(_){ return _; };
 
@@ -2097,7 +2096,7 @@ function isFunction(val) {
 }
 
 }, {}],
-44: [function(require, module, exports) {
+43: [function(require, module, exports) {
 
 var is = require('is');
 var isodate = require('isodate');
@@ -2137,8 +2136,8 @@ function toMs (num) {
   if (num < 31557600000) return num * 1000;
   return num;
 }
-}, {"is":51,"isodate":46,"./milliseconds":52,"./seconds":53}],
-51: [function(require, module, exports) {
+}, {"is":50,"isodate":45,"./milliseconds":51,"./seconds":52}],
+50: [function(require, module, exports) {
 
 var isEmpty = require('is-empty')
   , typeOf = require('type');
@@ -2209,8 +2208,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":47,"type":48}],
-52: [function(require, module, exports) {
+}, {"is-empty":46,"type":47}],
+51: [function(require, module, exports) {
 
 /**
  * Matcher.
@@ -2243,7 +2242,7 @@ exports.parse = function (millis) {
   return new Date(millis);
 };
 }, {}],
-53: [function(require, module, exports) {
+52: [function(require, module, exports) {
 
 /**
  * Matcher.
@@ -2276,7 +2275,7 @@ exports.parse = function (seconds) {
   return new Date(millis);
 };
 }, {}],
-33: [function(require, module, exports) {
+32: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -2347,8 +2346,8 @@ Alias.prototype.userId = function(){
     || this.field('to');
 };
 
-}, {"./utils":41,"./facade":32}],
-34: [function(require, module, exports) {
+}, {"./utils":40,"./facade":31}],
+33: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -2477,8 +2476,8 @@ Group.prototype.properties = function(){
     || {};
 };
 
-}, {"./utils":41,"./address":42,"is-email":54,"new-date":44,"./facade":32}],
-54: [function(require, module, exports) {
+}, {"./utils":40,"./address":41,"is-email":53,"new-date":43,"./facade":31}],
+53: [function(require, module, exports) {
 
 /**
  * Expose `isEmail`.
@@ -2505,7 +2504,7 @@ function isEmail (string) {
   return matcher.test(string);
 }
 }, {}],
-35: [function(require, module, exports) {
+34: [function(require, module, exports) {
 
 var address = require('./address');
 var Facade = require('./facade');
@@ -2755,8 +2754,8 @@ Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.gender = Facade.proxy('traits.gender');
 Identify.prototype.birthday = Facade.proxy('traits.birthday');
 
-}, {"./address":42,"./facade":32,"is-email":54,"new-date":44,"./utils":41,"obj-case":43,"trim":55}],
-55: [function(require, module, exports) {
+}, {"./address":41,"./facade":31,"is-email":53,"new-date":43,"./utils":40,"obj-case":42,"trim":54}],
+54: [function(require, module, exports) {
 
 exports = module.exports = trim;
 
@@ -2776,7 +2775,7 @@ exports.right = function(str){
 };
 
 }, {}],
-36: [function(require, module, exports) {
+35: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var clone = require('./utils').clone;
@@ -3066,8 +3065,8 @@ function currency(val) {
   if (!isNaN(val)) return val;
 }
 
-}, {"./utils":41,"./facade":32,"./identify":35,"is-email":54,"obj-case":43}],
-37: [function(require, module, exports) {
+}, {"./utils":40,"./facade":31,"./identify":34,"is-email":53,"obj-case":42}],
+36: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Facade = require('./facade');
@@ -3205,8 +3204,8 @@ Page.prototype.track = function(name){
   });
 };
 
-}, {"./utils":41,"./facade":32,"./track":36}],
-38: [function(require, module, exports) {
+}, {"./utils":40,"./facade":31,"./track":35}],
+37: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Page = require('./page');
@@ -3282,8 +3281,8 @@ Screen.prototype.track = function(name){
   });
 };
 
-}, {"./utils":41,"./page":37,"./track":36}],
-10: [function(require, module, exports) {
+}, {"./utils":40,"./page":36,"./track":35}],
+9: [function(require, module, exports) {
 
 module.exports = function after (times, func) {
   // After 0, really?
@@ -3297,7 +3296,7 @@ module.exports = function after (times, func) {
   };
 };
 }, {}],
-11: [function(require, module, exports) {
+10: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -3343,8 +3342,8 @@ function bindMethods (obj, methods) {
   }
   return obj;
 }
-}, {"bind":56,"bind-all":57}],
-56: [function(require, module, exports) {
+}, {"bind":55,"bind-all":56}],
+55: [function(require, module, exports) {
 /**
  * Slice reference.
  */
@@ -3370,7 +3369,7 @@ module.exports = function(obj, fn){
 };
 
 }, {}],
-57: [function(require, module, exports) {
+56: [function(require, module, exports) {
 
 try {
   var bind = require('bind');
@@ -3387,8 +3386,8 @@ module.exports = function (obj) {
   }
   return obj;
 };
-}, {"bind":56,"type":48}],
-12: [function(require, module, exports) {
+}, {"bind":55,"type":47}],
+11: [function(require, module, exports) {
 var next = require('next-tick');
 
 
@@ -3431,8 +3430,8 @@ callback.async = function (fn, wait) {
 
 callback.sync = callback;
 
-}, {"next-tick":58}],
-58: [function(require, module, exports) {
+}, {"next-tick":57}],
+57: [function(require, module, exports) {
 "use strict"
 
 if (typeof setImmediate == 'function') {
@@ -3468,7 +3467,7 @@ else if (typeof window == 'undefined' || window.ActiveXObject || !window.postMes
 }
 
 }, {}],
-13: [function(require, module, exports) {
+12: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -3529,8 +3528,8 @@ function clone(obj){
   }
 }
 
-}, {"type":48}],
-14: [function(require, module, exports) {
+}, {"type":47}],
+13: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -3664,8 +3663,8 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"bind":11,"clone":13,"cookie":59,"debug":15,"defaults":16,"json":60,"top-domain":61}],
-59: [function(require, module, exports) {
+}, {"bind":10,"clone":12,"cookie":58,"debug":14,"defaults":15,"json":59,"top-domain":60}],
+58: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -3789,16 +3788,16 @@ function decode(value) {
   }
 }
 
-}, {"debug":15}],
-15: [function(require, module, exports) {
+}, {"debug":14}],
+14: [function(require, module, exports) {
 if ('undefined' == typeof window) {
   module.exports = require('./lib/debug');
 } else {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":62,"./debug":63}],
-62: [function(require, module, exports) {
+}, {"./lib/debug":61,"./debug":62}],
+61: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -3948,7 +3947,7 @@ function coerce(val) {
 }
 
 }, {}],
-63: [function(require, module, exports) {
+62: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -4088,7 +4087,7 @@ try {
 } catch(e){}
 
 }, {}],
-16: [function(require, module, exports) {
+15: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -4117,7 +4116,7 @@ var defaults = function (dest, src, recursive) {
 module.exports = defaults;
 
 }, {}],
-60: [function(require, module, exports) {
+59: [function(require, module, exports) {
 
 var json = window.JSON || {};
 var stringify = json.stringify;
@@ -4127,8 +4126,8 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":64}],
-64: [function(require, module, exports) {
+}, {"json-fallback":63}],
+63: [function(require, module, exports) {
 /*
     json2.js
     2014-02-04
@@ -4618,7 +4617,7 @@ module.exports = parse && stringify
 }());
 
 }, {}],
-61: [function(require, module, exports) {
+60: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4722,8 +4721,8 @@ domain.levels = function(url){
   return levels;
 };
 
-}, {"url":65,"cookie":66}],
-65: [function(require, module, exports) {
+}, {"url":64,"cookie":65}],
+64: [function(require, module, exports) {
 
 /**
  * Parse the given `url`.
@@ -4808,7 +4807,7 @@ function port (protocol){
 }
 
 }, {}],
-66: [function(require, module, exports) {
+65: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4941,8 +4940,8 @@ function decode(value) {
   }
 }
 
-}, {"debug":15}],
-17: [function(require, module, exports) {
+}, {"debug":14}],
+16: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -5000,8 +4999,8 @@ var foldl = function foldl(iterator, accumulator, collection) {
 
 module.exports = foldl;
 
-}, {"each":67}],
-67: [function(require, module, exports) {
+}, {"each":66}],
+66: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -5143,8 +5142,8 @@ var each = function each(iterator, collection) {
 
 module.exports = each;
 
-}, {"keys":68}],
-68: [function(require, module, exports) {
+}, {"keys":67}],
+67: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -5324,7 +5323,7 @@ module.exports = function keys(source) {
 };
 
 }, {}],
-18: [function(require, module, exports) {
+17: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -5383,8 +5382,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"./entity":69,"bind":11,"debug":15,"inherit":70}],
-69: [function(require, module, exports) {
+}, {"./entity":68,"bind":10,"debug":14,"inherit":69}],
+68: [function(require, module, exports) {
 
 var clone = require('clone');
 var cookie = require('./cookie');
@@ -5623,8 +5622,8 @@ Entity.prototype.load = function() {
 };
 
 
-}, {"clone":13,"./cookie":14,"debug":15,"defaults":16,"extend":71,"./memory":22,"./store":29,"isodate-traverse":39}],
-71: [function(require, module, exports) {
+}, {"clone":12,"./cookie":13,"debug":14,"defaults":15,"extend":70,"./memory":21,"./store":28,"isodate-traverse":38}],
+70: [function(require, module, exports) {
 
 module.exports = function extend (object) {
     // Takes an unlimited number of extenders.
@@ -5641,7 +5640,7 @@ module.exports = function extend (object) {
     return object;
 };
 }, {}],
-22: [function(require, module, exports) {
+21: [function(require, module, exports) {
 /* eslint consistent-return:1 */
 
 /**
@@ -5707,8 +5706,8 @@ Memory.prototype.remove = function(key){
   return true;
 };
 
-}, {"bind":11,"clone":13}],
-29: [function(require, module, exports) {
+}, {"bind":10,"clone":12}],
+28: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -5797,8 +5796,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":11,"defaults":16,"store.js":72}],
-72: [function(require, module, exports) {
+}, {"bind":10,"defaults":15,"store.js":71}],
+71: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -5950,8 +5949,8 @@ try {
 store.enabled = !store.disabled
 
 module.exports = store;
-}, {"json":60}],
-70: [function(require, module, exports) {
+}, {"json":59}],
+69: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -5960,7 +5959,7 @@ module.exports = function(a, b){
   a.prototype.constructor = a;
 };
 }, {}],
-19: [function(require, module, exports) {
+18: [function(require, module, exports) {
 
 var isEmpty = require('is-empty');
 
@@ -6036,8 +6035,8 @@ function generate (type) {
     return type === typeOf(value);
   };
 }
-}, {"is-empty":47,"type":48,"component-type":48}],
-20: [function(require, module, exports) {
+}, {"is-empty":46,"type":47,"component-type":47}],
+19: [function(require, module, exports) {
 module.exports = function isMeta (e) {
     if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return true;
 
@@ -6053,7 +6052,7 @@ module.exports = function isMeta (e) {
     return false;
 };
 }, {}],
-21: [function(require, module, exports) {
+20: [function(require, module, exports) {
 
 /**
  * HOP ref.
@@ -6139,7 +6138,7 @@ exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
 }, {}],
-23: [function(require, module, exports) {
+22: [function(require, module, exports) {
 
 /**
  * Module Dependencies.
@@ -6231,8 +6230,8 @@ function normalize(msg, list){
   }
 }
 
-}, {"debug":15,"defaults":16,"each":3,"includes":73,"is":19,"component/map":74}],
-73: [function(require, module, exports) {
+}, {"debug":14,"defaults":15,"each":3,"includes":72,"is":18,"component/map":73}],
+72: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -6322,8 +6321,8 @@ var includes = function includes(searchElement, collection) {
 
 module.exports = includes;
 
-}, {"each":67}],
-74: [function(require, module, exports) {
+}, {"each":66}],
+73: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6348,8 +6347,8 @@ module.exports = function(arr, fn){
   }
   return ret;
 };
-}, {"to-function":75}],
-75: [function(require, module, exports) {
+}, {"to-function":74}],
+74: [function(require, module, exports) {
 
 /**
  * Module Dependencies
@@ -6503,8 +6502,8 @@ function stripNested (prop, str, val) {
   });
 }
 
-}, {"props":76,"component-props":76}],
-76: [function(require, module, exports) {
+}, {"props":75,"component-props":75}],
+75: [function(require, module, exports) {
 /**
  * Global Names
  */
@@ -6592,7 +6591,7 @@ function prefixed(str) {
 }
 
 }, {}],
-24: [function(require, module, exports) {
+23: [function(require, module, exports) {
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -6635,7 +6634,7 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 }, {}],
-25: [function(require, module, exports) {
+24: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6698,8 +6697,8 @@ function canonicalUrl(search) {
 
 module.exports = pageDefaults;
 
-}, {"canonical":77,"includes":73,"url":78}],
-77: [function(require, module, exports) {
+}, {"canonical":76,"includes":72,"url":77}],
+76: [function(require, module, exports) {
 module.exports = function canonical () {
   var tags = document.getElementsByTagName('link');
   for (var i = 0, tag; tag = tags[i]; i++) {
@@ -6707,7 +6706,7 @@ module.exports = function canonical () {
   }
 };
 }, {}],
-78: [function(require, module, exports) {
+77: [function(require, module, exports) {
 
 /**
  * Parse the given `url`.
@@ -6792,7 +6791,7 @@ function port (protocol){
 }
 
 }, {}],
-26: [function(require, module, exports) {
+25: [function(require, module, exports) {
 'use strict';
 
 var objToString = Object.prototype.toString;
@@ -6868,7 +6867,7 @@ var pick = function pick(props, object) {
 module.exports = pick;
 
 }, {}],
-27: [function(require, module, exports) {
+26: [function(require, module, exports) {
 
 /**
  * prevent default on the given `e`.
@@ -6891,7 +6890,7 @@ module.exports = function(e){
 };
 
 }, {}],
-28: [function(require, module, exports) {
+27: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6998,8 +6997,8 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":55,"type":79}],
-79: [function(require, module, exports) {
+}, {"trim":54,"type":78}],
+78: [function(require, module, exports) {
 /**
  * toString ref.
  */
@@ -7036,7 +7035,7 @@ module.exports = function(val){
 };
 
 }, {}],
-30: [function(require, module, exports) {
+29: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -7225,8 +7224,8 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"./entity":69,"bind":11,"./cookie":14,"debug":15,"inherit":70,"cookie":59,"uuid":80,"./predictions":81}],
-80: [function(require, module, exports) {
+}, {"./entity":68,"bind":10,"./cookie":13,"debug":14,"inherit":69,"cookie":58,"uuid":79,"./predictions":80}],
+79: [function(require, module, exports) {
 
 /**
  * Taken straight from jed's gist: https://gist.github.com/982883
@@ -7256,7 +7255,7 @@ module.exports = function uuid(a){
       )
 };
 }, {}],
-81: [function(require, module, exports) {
+80: [function(require, module, exports) {
 /**
  * Module Dependencies.
  */
@@ -7318,7 +7317,7 @@ function predictive(traits) {
 
 
 }, {}],
-7: [function(require, module, exports) {
+6: [function(require, module, exports) {
 module.exports = {
   "name": "analytics-core",
   "version": "2.11.2",
@@ -7329,34 +7328,6 @@ module.exports = {
 ;
 }, {}],
 4: [function(require, module, exports) {
-/**
- * Module Dependencies.
- */
-
-// var debug = require('debug')('analytics.js:predicitve');
-
-/**
- * Expose `predictive`
- */
-
-module.exports = predictive;
-
-/**
- * Normalize `msg` based on integrations `list`.
- *
- * @param {Object} msg
- * @param {Array} list
- * @return {Function}
- */
-
-function predictive(traits) {
-  return {
-    mk_customer_fit: 'very good'
-  };
-}
-
-}, {}],
-5: [function(require, module, exports) {
 module.exports = {
   "name": "madkuud.js",
   "version": "0.3.0",

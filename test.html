@@ -83,7 +83,9 @@
 		});
 		madkudu.user().id();
 		madkudu.user().traits();
-		console.log(madkudu.user().predictions());
+		madkudu.user().predictions(function (err, results) {
+			console.log(results);
+		});
 		madkudu.identify('test_user', {
 			employees: 200,
 			alexaGlobalRank: 3000,
@@ -92,7 +94,9 @@
 		});
 		madkudu.user().id();
 		madkudu.user().traits();
-		console.log(madkudu.user().predictions());
+		madkudu.user().predictions(function (err, results) {
+			console.log(results);
+		});
 	});
 </script>
 

@@ -105,7 +105,7 @@
  * (C) 2015 Segment.io Inc.
  */
 
-var analytics = require('MadKudu/analytics.js-core@2.11.4');
+var analytics = require('MadKudu/analytics.js-core@2.11.5');
 var Integrations = {};
 var each = require('each');
 var predictive = require('./predictive');
@@ -181,7 +181,7 @@ window.madkudu = analytics;
 
 
 
-}, {"MadKudu/analytics.js-core@2.11.4":2,"each":3,"./predictive":4,"../bower.json":5}],
+}, {"MadKudu/analytics.js-core@2.11.5":2,"each":3,"./predictive":4,"../bower.json":5}],
 2: [function(require, module, exports) {
 
 /**
@@ -7203,9 +7203,12 @@ User.prototype._loadOldCookie = function() {
 
 // MadKudu predictive traits
 
-User.prototype.predictions = function() {
+User.prototype.predictions = function(callback) {
   var traits = this.traits();
-  return predictions(traits);
+  var results = predictions(traits);
+  if (callback) {
+    return callback(null, results);
+  }
 };
 
 

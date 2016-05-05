@@ -19,7 +19,7 @@
     "astronomerio/analytics.js-integration-acquisio": "1.0.9",
     "astronomerio/analytics.js-integration-bloomreach": "0.0.2",
     "astronomerio/analytics.js-integration-retention-science": "1.1.0",
-    "astronomerio/analytics.js-integration-kenshoo-infinity": "1.0.3",
+    "astronomerio/analytics.js-integration-kenshoo-infinity": "1.0.4",
     "segment-integrations/analytics.js-integration-adroll": "1.0.0",
     "segment-integrations/analytics.js-integration-adwords": "1.0.0",
     "segment-integrations/analytics.js-integration-alexa": "1.0.0",

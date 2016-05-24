@@ -1,9 +1,9 @@
 {
-  "name": "analytics.js",
+  "name": "madkudu.js",
   "author": "Segment.io <friends@segment.io>",
-  "version": "2.11.0",
+  "version": "0.3.0",
   "license": "MIT",
-  "description": "The hassle-free way to integrate analytics into any web application.",
+  "description": ".",
   "keywords": [
     "analytics",
     "analytics.js",
@@ -11,7 +11,7 @@
     "segment.io"
   ],
   "repository": {
-    "url": "https://github.com/segmentio/analytics.js.git",
+    "url": "https://github.com/MadKudu/madkudu.js.git",
     "type": "git"
   },
   "engines": {

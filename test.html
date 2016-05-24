@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>analytics.js</title>
+
+</head>
+<body>
+	<div>
+		<p> CMD + ALT + J to open Chrome Developer Tools</p>
+		<p> Then <code>madkudu.identify('abcd', { trait_a: 'a' });</code>
+		<p> Then <code>madkudu.user().predictions();</code>
+	</div>
+</body>
+
+
+<!-- <script type="text/javascript" src="./madkudu.js"></script> -->
+<!-- <script type="text/javascript" src="./madkudu.min.js"></script> -->
+<!-- <script type="text/javascript" src="http://cdn.madkudu.com/madkudu.js/v1/985ccd7664cec040468ba02ac8864151/madkudu.min.js"></script> -->
+
+<script type="text/javascript">
+	// window.localStorage.debug = '*';
+	window.delay_to_load_madkudu_js = 2000;
+	window.delay_run_identify = 100;
+</script>
+
+
+<script type="text/javascript">
+	! function() {
+		var madkudu = window.madkudu = window.madkudu || [];
+		if (!madkudu.initialize)
+			if (madkudu.invoked) window.console && console.error && console.error("MadKudu snippet included twice.");
+			else {
+				madkudu.invoked = !0;
+				madkudu.methods = ["identify", "reset", "group", "ready", "page", "track", "once", "on"];;
+				madkudu.factory = function(t) {
+					return function() {
+						var e = Array.prototype.slice.call(arguments);
+						e.unshift(t);
+						madkudu.push(e);
+						return madkudu
+					}
+				};
+				for (var t = 0; t < madkudu.methods.length; t++) {
+					var e = madkudu.methods[t];
+					madkudu[e] = madkudu.factory(e)
+				}
+				madkudu.load = function(t) {
+					setTimeout(function() {
+						var e = document.createElement("script");
+						e.type = "text/javascript";
+						e.async = !0;
+						e.src = "./madkudu.js";
+						// e.src = ("https:" === document.location.protocol ? "https://" : "http://") + "cdn.madkudu.com/madkudu.js/v1/" + t + "/madkudu.min.js";
+						var n = document.getElementsByTagName("script")[0];
+						n.parentNode.insertBefore(e, n);
+						console.log('Loaded madkudu.js with ' + window.delay_to_load_madkudu_js + ' ms delay.');
+					}, window.delay_to_load_madkudu_js);
+				};
+				madkudu.SNIPPET_VERSION = "0.1.0";
+				madkudu.load("985ccd7664cec040468ba02ac8864151");
+				madkudu.page();
+			}
+	}();
+</script>
+
+
+<script type="text/javascript">
+	console.log('Running code now');
+
+	// setTimeout(function () {
+	// 	console.log('Tring to do the identify after a ' + window.delay_run_identify + ' ms delay.');
+	// 	madkudu.identify('dwewdew', { trait_a: 'a' });;
+	// 	madkudu.user().predictions();
+	// 	console.log('Yay it\'s working now.');
+	// }, window.delay_run_identify);
+
+	madkudu.ready(function() {
+		madkudu.identify('test_user', {
+			employees: 3000,
+			alexaGlobalRank: 3000,
+			raised: 0,
+			industry: 'Something Strange'
+		});
+		madkudu.user().id();
+		madkudu.user().traits();
+		madkudu.user().predictions(function (err, results) {
+			console.log(results);
+		});
+		madkudu.identify('test_user', {
+			employees: 200,
+			alexaGlobalRank: 3000,
+			raised: 0,
+			industry: 'Software'
+		});
+		madkudu.user().id();
+		madkudu.user().traits();
+		madkudu.user().predictions(function (err, results) {
+			console.log(results);
+		});
+	});
+</script>
+
+
+
+</html>

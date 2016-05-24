@@ -105,7 +105,7 @@
  * (C) 2015 Segment.io Inc.
  */
 
-var madkudu = require('MadKudu/analytics.js-core@2.11.5');
+var madkudu = require('MadKudu/analytics.js-core@mk2.12.2');
 var Integrations = {};
 var each = require('each');
 
@@ -180,7 +180,7 @@ window.madkudu = madkudu;
 
 
 
-}, {"MadKudu/analytics.js-core@2.11.5":2,"each":3,"../bower.json":4}],
+}, {"MadKudu/analytics.js-core@mk2.12.2":2,"each":3,"../bower.json":4}],
 2: [function(require, module, exports) {
 
 /**
@@ -220,7 +220,7 @@ var _analytics = window.analytics;
 var Emitter = require('emitter');
 var Facade = require('facade');
 var after = require('after');
-var bind = require('bind');
+var bindAll = require('bind-all');
 var callback = require('callback');
 var clone = require('clone');
 var cookie = require('./cookie');
@@ -275,7 +275,7 @@ function Analytics() {
   // XXX: BACKWARDS COMPATIBILITY
   this._user = user;
   this.log = debug('analytics.js');
-  bind.all(this);
+  bindAll(this);
 
   var self = this;
   this.on('initialize', function(settings, options){
@@ -901,7 +901,7 @@ Analytics.prototype.noConflict = function(){
   return this;
 };
 
-}, {"emitter":7,"facade":8,"after":9,"bind":10,"callback":11,"clone":12,"./cookie":13,"debug":14,"defaults":15,"each":3,"foldl":16,"./group":17,"is":18,"is-meta":19,"object":20,"./memory":21,"./normalize":22,"event":23,"./pageDefaults":24,"pick":25,"prevent":26,"querystring":27,"./store":28,"./user":29}],
+}, {"emitter":7,"facade":8,"after":9,"bind-all":10,"callback":11,"clone":12,"./cookie":13,"debug":14,"defaults":15,"each":3,"foldl":16,"./group":17,"is":18,"is-meta":19,"object":20,"./memory":21,"./normalize":22,"event":23,"./pageDefaults":24,"pick":25,"prevent":26,"querystring":27,"./store":28,"./user":29}],
 7: [function(require, module, exports) {
 
 /**
@@ -1120,13 +1120,18 @@ module.exports = Facade;
  * Initialize a new `Facade` with an `obj` of arguments.
  *
  * @param {Object} obj
+ * @param {Object} opts
  */
 
-function Facade (obj) {
-  obj = clone(obj);
-  if (!obj.hasOwnProperty('timestamp')) obj.timestamp = new Date();
+function Facade(obj, opts) {
+  opts = opts || {};
+  if (!('clone' in opts)) opts.clone = true;
+  if (opts.clone) obj = clone(obj);
+  if (!('traverse' in opts)) opts.traverse = true;
+  if (!('timestamp' in obj)) obj.timestamp = new Date();
   else obj.timestamp = newDate(obj.timestamp);
-  traverse(obj);
+  if (opts.traverse) traverse(obj);
+  this.opts = opts;
   this.obj = obj;
 }
 
@@ -1146,7 +1151,7 @@ address(Facade.prototype);
  * @param {String} field
  */
 
-Facade.prototype.proxy = function (field) {
+Facade.prototype.proxy = function(field) {
   var fields = field.split('.');
   field = fields.shift();
 
@@ -1154,10 +1159,10 @@ Facade.prototype.proxy = function (field) {
   var obj = this[field] || this.field(field);
   if (!obj) return obj;
   if (typeof obj === 'function') obj = obj.call(this) || {};
-  if (fields.length === 0) return transform(obj);
+  if (fields.length === 0) return this.opts.clone ? transform(obj) : obj;
 
   obj = objCase(obj, fields.join('.'));
-  return transform(obj);
+  return this.opts.clone ? transform(obj) : obj;
 };
 
 /**
@@ -1168,9 +1173,9 @@ Facade.prototype.proxy = function (field) {
  * @return {Mixed}
  */
 
-Facade.prototype.field = function (field) {
+Facade.prototype.field = function(field) {
   var obj = this.obj[field];
-  return transform(obj);
+  return this.opts.clone ? transform(obj) : obj;
 };
 
 /**
@@ -1183,8 +1188,8 @@ Facade.prototype.field = function (field) {
  * @return {Function}
  */
 
-Facade.proxy = function (field) {
-  return function () {
+Facade.proxy = function(field) {
+  return function() {
     return this.proxy(field);
   };
 };
@@ -1196,8 +1201,8 @@ Facade.proxy = function (field) {
  * @return {Function}
  */
 
-Facade.field = function (field) {
-  return function () {
+Facade.field = function(field) {
+  return function() {
     return this.field(field);
   };
 };
@@ -1209,12 +1214,12 @@ Facade.field = function (field) {
  * @return {Array}
  */
 
-Facade.multi = function(path){
-  return function(){
+Facade.multi = function(path) {
+  return function() {
     var multi = this.proxy(path + 's');
-    if ('array' == type(multi)) return multi;
+    if (type(multi) === 'array') return multi;
     var one = this.proxy(path);
-    if (one) one = [clone(one)];
+    if (one) one = [this.opts.clone ? clone(one) : one];
     return one || [];
   };
 };
@@ -1226,12 +1231,12 @@ Facade.multi = function(path){
  * @return {Mixed}
  */
 
-Facade.one = function(path){
-  return function(){
+Facade.one = function(path) {
+  return function() {
     var one = this.proxy(path);
     if (one) return one;
     var multi = this.proxy(path + 's');
-    if ('array' == type(multi)) return multi[0];
+    if (type(multi) === 'array') return multi[0];
   };
 };
 
@@ -1241,8 +1246,8 @@ Facade.one = function(path){
  * @return {Object}
  */
 
-Facade.prototype.json = function () {
-  var ret = clone(this.obj);
+Facade.prototype.json = function() {
+  var ret = this.opts.clone ? clone(this.obj) : this.obj;
   if (this.type) ret.type = this.type();
   return ret;
 };
@@ -1256,16 +1261,18 @@ Facade.prototype.json = function () {
  * @return {Object or Null}
  */
 
-Facade.prototype.context =
-Facade.prototype.options = function (integration) {
-  var options = clone(this.obj.options || this.obj.context) || {};
-  if (!integration) return clone(options);
+Facade.prototype.options = function(integration) {
+  var obj = this.obj.options || this.obj.context || {};
+  var options = this.opts.clone ? clone(obj) : obj;
+  if (!integration) return options;
   if (!this.enabled(integration)) return;
   var integrations = this.integrations();
   var value = integrations[integration] || objCase(integrations, integration);
-  if ('boolean' == typeof value) value = {};
-  return value || {};
+  if (typeof value !== 'object') value = objCase(this.options(), integration);
+  return typeof value === 'object' ? value : {};
 };
+
+Facade.prototype.context = Facade.prototype.options;
 
 /**
  * Check whether an integration is enabled.
@@ -1274,7 +1281,7 @@ Facade.prototype.options = function (integration) {
  * @return {Boolean}
  */
 
-Facade.prototype.enabled = function (integration) {
+Facade.prototype.enabled = function(integration) {
   var allEnabled = this.proxy('options.providers.all');
   if (typeof allEnabled !== 'boolean') allEnabled = this.proxy('options.all');
   if (typeof allEnabled !== 'boolean') allEnabled = this.proxy('integrations.all');
@@ -1300,7 +1307,7 @@ Facade.prototype.enabled = function (integration) {
     }
   }
 
-  return enabled ? true : false;
+  return !!enabled;
 };
 
 /**
@@ -1311,7 +1318,7 @@ Facade.prototype.enabled = function (integration) {
  * @api private
  */
 
-Facade.prototype.integrations = function(){
+Facade.prototype.integrations = function() {
   return this.obj.integrations
     || this.proxy('options.providers')
     || this.options();
@@ -1323,7 +1330,7 @@ Facade.prototype.integrations = function(){
  * @return {Boolean}
  */
 
-Facade.prototype.active = function () {
+Facade.prototype.active = function() {
   var active = this.proxy('options.active');
   if (active === null || active === undefined) active = true;
   return active;
@@ -1336,11 +1343,12 @@ Facade.prototype.active = function () {
  * @api public
  */
 
-Facade.prototype.sessionId =
-Facade.prototype.anonymousId = function(){
+Facade.prototype.anonymousId = function() {
   return this.field('anonymousId')
     || this.field('sessionId');
 };
+
+Facade.prototype.sessionId = Facade.prototype.anonymousId;
 
 /**
  * Get `groupId` from `context.groupId`.
@@ -1359,7 +1367,7 @@ Facade.prototype.groupId = Facade.proxy('options.groupId');
  * @return {Object}
  */
 
-Facade.prototype.traits = function (aliases) {
+Facade.prototype.traits = function(aliases) {
   var ret = this.proxy('options.traits') || {};
   var id = this.userId();
   aliases = aliases || {};
@@ -1367,10 +1375,8 @@ Facade.prototype.traits = function (aliases) {
   if (id) ret.id = id;
 
   for (var alias in aliases) {
-    var value = null == this[alias]
-      ? this.proxy('options.traits.' + alias)
-      : this[alias]();
-    if (null == value) continue;
+    var value = this[alias] == null ? this.proxy('options.traits.' + alias) : this[alias]();
+    if (value == null) continue;
     ret[aliases[alias]] = value;
     delete ret[alias];
   }
@@ -1382,7 +1388,7 @@ Facade.prototype.traits = function (aliases) {
  * Add a convenient way to get the library name and version
  */
 
-Facade.prototype.library = function(){
+Facade.prototype.library = function() {
   var library = this.proxy('options.library');
   if (!library) return { name: 'unknown', version: null };
   if (typeof library === 'string') return { name: library, version: null };
@@ -1390,14 +1396,32 @@ Facade.prototype.library = function(){
 };
 
 /**
+ * Return the device information or an empty object
+ *
+ * @return {Object}
+ */
+
+Facade.prototype.device = function() {
+  var device = this.proxy('context.device');
+  if (type(device) !== 'object') device = {};
+  var library = this.library().name;
+  if (device.type) return device;
+
+  if (library.indexOf('ios') > -1) device.type = 'ios';
+  if (library.indexOf('android') > -1) device.type = 'android';
+  return device;
+};
+
+/**
  * Setup some basic proxies.
  */
 
-Facade.prototype.userId = Facade.field('userId');
-Facade.prototype.channel = Facade.field('channel');
+Facade.prototype.userAgent = Facade.proxy('context.userAgent');
+Facade.prototype.timezone = Facade.proxy('context.timezone');
 Facade.prototype.timestamp = Facade.field('timestamp');
-Facade.prototype.userAgent = Facade.proxy('options.userAgent');
-Facade.prototype.ip = Facade.proxy('options.ip');
+Facade.prototype.channel = Facade.field('channel');
+Facade.prototype.ip = Facade.proxy('context.ip');
+Facade.prototype.userId = Facade.field('userId');
 
 /**
  * Return the cloned and traversed object
@@ -1406,7 +1430,7 @@ Facade.prototype.ip = Facade.proxy('options.ip');
  * @return {Mixed}
  */
 
-function transform(obj){
+function transform(obj) {
   var cloned = clone(obj);
   return cloned;
 }
@@ -1808,13 +1832,14 @@ var disabled = {
 /**
  * Check whether an integration should be enabled by default.
  *
- * @param {String} integration
- * @return {Boolean}
+ * @param {string} integration
+ * @return {boolean}
  */
 
-module.exports = function (integration) {
-  return ! disabled[integration];
+module.exports = function(integration) {
+  return !disabled[integration];
 };
+
 }, {}],
 40: [function(require, module, exports) {
 
@@ -1916,15 +1941,16 @@ var get = require('obj-case');
  * @param {Function} proto
  */
 
-module.exports = function(proto){
+module.exports = function(proto) {
   proto.zip = trait('postalCode', 'zip');
   proto.country = trait('country');
   proto.street = trait('street');
   proto.state = trait('state');
   proto.city = trait('city');
+  proto.region = trait('region');
 
-  function trait(a, b){
-    return function(){
+  function trait(a, b) {
+    return function() {
       var traits = this.traits();
       var props = this.properties ? this.properties() : {};
 
@@ -2297,10 +2323,12 @@ module.exports = Alias;
  *   @property {String} from
  *   @property {String} to
  *   @property {Object} options
+ * @param {Object} opts
+ *   @property {Boolean|Undefined} clone
  */
 
-function Alias (dictionary) {
-  Facade.call(this, dictionary);
+function Alias(dictionary, opts) {
+  Facade.call(this, dictionary, opts);
 }
 
 /**
@@ -2315,10 +2343,11 @@ inherit(Alias, Facade);
  * @return {String}
  */
 
-Alias.prototype.type =
-Alias.prototype.action = function () {
+Alias.prototype.action = function() {
   return 'alias';
 };
+
+Alias.prototype.type = Alias.prototype.action;
 
 /**
  * Get `previousId`.
@@ -2327,11 +2356,12 @@ Alias.prototype.action = function () {
  * @api public
  */
 
-Alias.prototype.from =
-Alias.prototype.previousId = function(){
+Alias.prototype.previousId = function() {
   return this.field('previousId')
     || this.field('from');
 };
+
+Alias.prototype.from = Alias.prototype.previousId;
 
 /**
  * Get `userId`.
@@ -2340,11 +2370,12 @@ Alias.prototype.previousId = function(){
  * @api public
  */
 
-Alias.prototype.to =
-Alias.prototype.userId = function(){
+Alias.prototype.userId = function() {
   return this.field('userId')
     || this.field('to');
 };
+
+Alias.prototype.to = Alias.prototype.userId;
 
 }, {"./utils":40,"./facade":31}],
 33: [function(require, module, exports) {
@@ -2354,7 +2385,6 @@ Alias.prototype.userId = function(){
  */
 
 var inherit = require('./utils').inherit;
-var address = require('./address');
 var isEmail = require('is-email');
 var newDate = require('new-date');
 var Facade = require('./facade');
@@ -2373,10 +2403,12 @@ module.exports = Group;
  *   @param {String} groupId
  *   @param {Object} properties
  *   @param {Object} options
+ * @param {Object} opts
+ *   @property {Boolean|Undefined} clone
  */
 
-function Group (dictionary) {
-  Facade.call(this, dictionary);
+function Group(dictionary, opts) {
+  Facade.call(this, dictionary, opts);
 }
 
 /**
@@ -2389,10 +2421,11 @@ inherit(Group, Facade);
  * Get the facade's action.
  */
 
-Group.prototype.type =
-Group.prototype.action = function () {
+Group.prototype.action = function() {
   return 'group';
 };
+
+Group.prototype.type = Group.prototype.action;
 
 /**
  * Setup some basic proxies.
@@ -2406,7 +2439,7 @@ Group.prototype.groupId = Facade.field('groupId');
  * @return {Date}
  */
 
-Group.prototype.created = function(){
+Group.prototype.created = function() {
   var created = this.proxy('traits.createdAt')
     || this.proxy('traits.created')
     || this.proxy('properties.createdAt')
@@ -2421,7 +2454,7 @@ Group.prototype.created = function(){
  * @return {String}
  */
 
-Group.prototype.email = function () {
+Group.prototype.email = function() {
   var email = this.proxy('traits.email');
   if (email) return email;
   var groupId = this.groupId();
@@ -2435,7 +2468,7 @@ Group.prototype.email = function () {
  * @return {Object}
  */
 
-Group.prototype.traits = function (aliases) {
+Group.prototype.traits = function(aliases) {
   var ret = this.properties();
   var id = this.groupId();
   aliases = aliases || {};
@@ -2443,10 +2476,8 @@ Group.prototype.traits = function (aliases) {
   if (id) ret.id = id;
 
   for (var alias in aliases) {
-    var value = null == this[alias]
-      ? this.proxy('traits.' + alias)
-      : this[alias]();
-    if (null == value) continue;
+    var value = this[alias] == null ? this.proxy('traits.' + alias) : this[alias]();
+    if (value == null) continue;
     ret[aliases[alias]] = value;
     delete ret[alias];
   }
@@ -2470,13 +2501,11 @@ Group.prototype.employees = Facade.proxy('traits.employees');
  * @return {Object}
  */
 
-Group.prototype.properties = function(){
-  return this.field('traits')
-    || this.field('properties')
-    || {};
+Group.prototype.properties = function() {
+  return this.field('traits') || this.field('properties') || {};
 };
 
-}, {"./utils":40,"./address":41,"is-email":53,"new-date":43,"./facade":31}],
+}, {"./utils":40,"is-email":53,"new-date":43,"./facade":31}],
 53: [function(require, module, exports) {
 
 /**
@@ -2506,7 +2535,6 @@ function isEmail (string) {
 }, {}],
 34: [function(require, module, exports) {
 
-var address = require('./address');
 var Facade = require('./facade');
 var isEmail = require('is-email');
 var newDate = require('new-date');
@@ -2514,7 +2542,6 @@ var utils = require('./utils');
 var get = require('obj-case');
 var trim = require('trim');
 var inherit = utils.inherit;
-var clone = utils.clone;
 var type = utils.type;
 
 /**
@@ -2531,10 +2558,12 @@ module.exports = Identify;
  *   @param {String} sessionId
  *   @param {Object} traits
  *   @param {Object} options
+ * @param {Object} opts
+ *   @property {Boolean|Undefined} clone
  */
 
-function Identify (dictionary) {
-  Facade.call(this, dictionary);
+function Identify(dictionary, opts) {
+  Facade.call(this, dictionary, opts);
 }
 
 /**
@@ -2547,10 +2576,11 @@ inherit(Identify, Facade);
  * Get the facade's action.
  */
 
-Identify.prototype.type =
-Identify.prototype.action = function () {
+Identify.prototype.action = function() {
   return 'identify';
 };
+
+Identify.prototype.type = Identify.prototype.action;
 
 /**
  * Get the user's traits.
@@ -2559,7 +2589,7 @@ Identify.prototype.action = function () {
  * @return {Object}
  */
 
-Identify.prototype.traits = function (aliases) {
+Identify.prototype.traits = function(aliases) {
   var ret = this.field('traits') || {};
   var id = this.userId();
   aliases = aliases || {};
@@ -2567,10 +2597,8 @@ Identify.prototype.traits = function (aliases) {
   if (id) ret.id = id;
 
   for (var alias in aliases) {
-    var value = null == this[alias]
-      ? this.proxy('traits.' + alias)
-      : this[alias]();
-    if (null == value) continue;
+    var value = this[alias] == null ? this.proxy('traits.' + alias) : this[alias]();
+    if (value == null) continue;
     ret[aliases[alias]] = value;
     if (alias !== aliases[alias]) delete ret[alias];
   }
@@ -2584,7 +2612,7 @@ Identify.prototype.traits = function (aliases) {
  * @return {String}
  */
 
-Identify.prototype.email = function () {
+Identify.prototype.email = function() {
   var email = this.proxy('traits.email');
   if (email) return email;
 
@@ -2599,7 +2627,7 @@ Identify.prototype.email = function () {
  * @return {Date or Undefined}
  */
 
-Identify.prototype.created = function () {
+Identify.prototype.created = function() {
   var created = this.proxy('traits.created') || this.proxy('traits.createdAt');
   if (created) return newDate(created);
 };
@@ -2610,7 +2638,7 @@ Identify.prototype.created = function () {
  * @return {Date or undefined}
  */
 
-Identify.prototype.companyCreated = function(){
+Identify.prototype.companyCreated = function() {
   var created = this.proxy('traits.company.created')
     || this.proxy('traits.company.createdAt');
 
@@ -2621,10 +2649,10 @@ Identify.prototype.companyCreated = function(){
  * Get the user's name, optionally combining a first and last name if that's all
  * that was provided.
  *
- * @return {String or Undefined}
+ * @return {string|undefined}
  */
 
-Identify.prototype.name = function () {
+Identify.prototype.name = function() {
   var name = this.proxy('traits.name');
   if (typeof name === 'string') return trim(name);
 
@@ -2637,10 +2665,10 @@ Identify.prototype.name = function () {
  * Get the user's first name, optionally splitting it out of a single name if
  * that's all that was provided.
  *
- * @return {String or Undefined}
+ * @return {string|undefined}
  */
 
-Identify.prototype.firstName = function () {
+Identify.prototype.firstName = function() {
   var firstName = this.proxy('traits.firstName');
   if (typeof firstName === 'string') return trim(firstName);
 
@@ -2652,10 +2680,10 @@ Identify.prototype.firstName = function () {
  * Get the user's last name, optionally splitting it out of a single name if
  * that's all that was provided.
  *
- * @return {String or Undefined}
+ * @return {string|undefined}
  */
 
-Identify.prototype.lastName = function () {
+Identify.prototype.lastName = function() {
   var lastName = this.proxy('traits.lastName');
   if (typeof lastName === 'string') return trim(lastName);
 
@@ -2674,10 +2702,8 @@ Identify.prototype.lastName = function () {
  * @return {String or undefined}
  */
 
-Identify.prototype.uid = function(){
-  return this.userId()
-    || this.username()
-    || this.email();
+Identify.prototype.uid = function() {
+  return this.userId() || this.username() || this.email();
 };
 
 /**
@@ -2686,9 +2712,8 @@ Identify.prototype.uid = function(){
  * @return {String}
  */
 
-Identify.prototype.description = function(){
-  return this.proxy('traits.description')
-    || this.proxy('traits.background');
+Identify.prototype.description = function() {
+  return this.proxy('traits.description') || this.proxy('traits.background');
 };
 
 /**
@@ -2701,12 +2726,12 @@ Identify.prototype.description = function(){
  * @return {Number}
  */
 
-Identify.prototype.age = function(){
+Identify.prototype.age = function() {
   var date = this.birthday();
   var age = get(this.traits(), 'age');
-  if (null != age) return age;
-  if ('date' != type(date)) return;
-  var now = new Date;
+  if (age != null) return age;
+  if (type(date) !== 'date') return;
+  var now = new Date();
   return now.getFullYear() - date.getFullYear();
 };
 
@@ -2721,7 +2746,7 @@ Identify.prototype.age = function(){
  * @return {Mixed}
  */
 
-Identify.prototype.avatar = function(){
+Identify.prototype.avatar = function() {
   var traits = this.traits();
   return get(traits, 'avatar')
     || get(traits, 'photoUrl')
@@ -2736,7 +2761,7 @@ Identify.prototype.avatar = function(){
  * @return {Mixed}
  */
 
-Identify.prototype.position = function(){
+Identify.prototype.position = function() {
   var traits = this.traits();
   return get(traits, 'position') || get(traits, 'jobTitle');
 };
@@ -2754,7 +2779,7 @@ Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.gender = Facade.proxy('traits.gender');
 Identify.prototype.birthday = Facade.proxy('traits.birthday');
 
-}, {"./address":41,"./facade":31,"is-email":53,"new-date":43,"./utils":40,"obj-case":42,"trim":54}],
+}, {"./facade":31,"is-email":53,"new-date":43,"./utils":40,"obj-case":42,"trim":54}],
 54: [function(require, module, exports) {
 
 exports = module.exports = trim;
@@ -2778,7 +2803,6 @@ exports.right = function(str){
 35: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
-var clone = require('./utils').clone;
 var type = require('./utils').type;
 var Facade = require('./facade');
 var Identify = require('./identify');
@@ -2795,15 +2819,17 @@ module.exports = Track;
  * Initialize a new `Track` facade with a `dictionary` of arguments.
  *
  * @param {object} dictionary
- *   @property {String} event
- *   @property {String} userId
- *   @property {String} sessionId
+ *   @property {string} event
+ *   @property {string} userId
+ *   @property {string} sessionId
  *   @property {Object} properties
  *   @property {Object} options
+ * @param {Object} opts
+ *   @property {boolean|undefined} clone
  */
 
-function Track (dictionary) {
-  Facade.call(this, dictionary);
+function Track(dictionary, opts) {
+  Facade.call(this, dictionary, opts);
 }
 
 /**
@@ -2815,13 +2841,14 @@ inherit(Track, Facade);
 /**
  * Return the facade's action.
  *
- * @return {String}
+ * @return {string}
  */
 
-Track.prototype.type =
-Track.prototype.action = function () {
+Track.prototype.action = function() {
   return 'track';
 };
+
+Track.prototype.type = Track.prototype.action;
 
 /**
  * Setup some basic proxies.
@@ -2846,6 +2873,7 @@ Track.prototype.tax = Facade.proxy('properties.tax');
 Track.prototype.name = Facade.proxy('properties.name');
 Track.prototype.price = Facade.proxy('properties.price');
 Track.prototype.total = Facade.proxy('properties.total');
+Track.prototype.repeat = Facade.proxy('properties.repeat');
 Track.prototype.coupon = Facade.proxy('properties.coupon');
 Track.prototype.shipping = Facade.proxy('properties.shipping');
 Track.prototype.discount = Facade.proxy('properties.discount');
@@ -2865,11 +2893,10 @@ Track.prototype.plan = Facade.proxy('properties.plan');
 /**
  * Order id.
  *
- * @return {String}
- * @api public
+ * @return {string}
  */
 
-Track.prototype.orderId = function(){
+Track.prototype.orderId = function() {
   return this.proxy('properties.id')
     || this.proxy('properties.orderId');
 };
@@ -2877,19 +2904,22 @@ Track.prototype.orderId = function(){
 /**
  * Get subtotal.
  *
- * @return {Number}
+ * @return {number}
  */
 
-Track.prototype.subtotal = function(){
+Track.prototype.subtotal = function() {
   var subtotal = get(this.properties(), 'subtotal');
   var total = this.total();
-  var n;
 
   if (subtotal) return subtotal;
   if (!total) return 0;
-  if (n = this.tax()) total -= n;
-  if (n = this.shipping()) total -= n;
-  if (n = this.discount()) total += n;
+
+  var n = this.tax();
+  if (n) total -= n;
+  n = this.shipping();
+  if (n) total -= n;
+  n = this.discount();
+  if (n) total += n;
 
   return total;
 };
@@ -2900,21 +2930,19 @@ Track.prototype.subtotal = function(){
  * @return {Array}
  */
 
-Track.prototype.products = function(){
+Track.prototype.products = function() {
   var props = this.properties();
   var products = get(props, 'products');
-  return 'array' == type(products)
-    ? products
-    : [];
+  return type(products) === 'array' ? products : [];
 };
 
 /**
  * Get quantity.
  *
- * @return {Number}
+ * @return {number}
  */
 
-Track.prototype.quantity = function(){
+Track.prototype.quantity = function() {
   var props = this.obj.properties || {};
   return props.quantity || 1;
 };
@@ -2922,10 +2950,10 @@ Track.prototype.quantity = function(){
 /**
  * Get currency.
  *
- * @return {String}
+ * @return {string}
  */
 
-Track.prototype.currency = function(){
+Track.prototype.currency = function() {
   var props = this.obj.properties || {};
   return props.currency || 'USD';
 };
@@ -2934,7 +2962,12 @@ Track.prototype.currency = function(){
  * BACKWARDS COMPATIBILITY: should probably re-examine where these come from.
  */
 
-Track.prototype.referrer = Facade.proxy('properties.referrer');
+Track.prototype.referrer = function() {
+  return this.proxy('context.referrer.url')
+    || this.proxy('context.page.referrer')
+    || this.proxy('properties.referrer');
+};
+
 Track.prototype.query = Facade.proxy('options.query');
 
 /**
@@ -2944,15 +2977,13 @@ Track.prototype.query = Facade.proxy('options.query');
  * @return {Object}
  */
 
-Track.prototype.properties = function (aliases) {
+Track.prototype.properties = function(aliases) {
   var ret = this.field('properties') || {};
   aliases = aliases || {};
 
   for (var alias in aliases) {
-    var value = null == this[alias]
-      ? this.proxy('properties.' + alias)
-      : this[alias]();
-    if (null == value) continue;
+    var value = this[alias] == null ? this.proxy('properties.' + alias) : this[alias]();
+    if (value == null) continue;
     ret[aliases[alias]] = value;
     delete ret[alias];
   }
@@ -2963,25 +2994,26 @@ Track.prototype.properties = function (aliases) {
 /**
  * Get the call's username.
  *
- * @return {String or Undefined}
+ * @return {string|undefined}
  */
 
-Track.prototype.username = function () {
-  return this.proxy('traits.username') ||
-         this.proxy('properties.username') ||
-         this.userId() ||
-         this.sessionId();
+Track.prototype.username = function() {
+  return this.proxy('traits.username')
+    || this.proxy('properties.username')
+    || this.userId()
+    || this.sessionId();
 };
 
 /**
  * Get the call's email, using an the user ID if it's a valid email.
  *
- * @return {String or Undefined}
+ * @return {string|undefined}
  */
 
-Track.prototype.email = function () {
-  var email = this.proxy('traits.email');
-  email = email || this.proxy('properties.email');
+Track.prototype.email = function() {
+  var email = this.proxy('traits.email')
+  || this.proxy('properties.email')
+  || this.proxy('options.traits.email');
   if (email) return email;
 
   var userId = this.userId();
@@ -3004,10 +3036,10 @@ Track.prototype.email = function () {
  * because on their backend they assume tax and shipping has been applied to
  * the value, and so can get the revenue on their own.
  *
- * @return {Number}
+ * @return {number}
  */
 
-Track.prototype.revenue = function () {
+Track.prototype.revenue = function() {
   var revenue = this.proxy('properties.revenue');
   var event = this.event();
 
@@ -3022,14 +3054,12 @@ Track.prototype.revenue = function () {
 /**
  * Get cents.
  *
- * @return {Number}
+ * @return {number}
  */
 
-Track.prototype.cents = function(){
+Track.prototype.cents = function() {
   var revenue = this.revenue();
-  return 'number' != typeof revenue
-    ? this.value() || 0
-    : revenue * 100;
+  return typeof revenue !== 'number' ? this.value() || 0 : revenue * 100;
 };
 
 /**
@@ -3041,17 +3071,17 @@ Track.prototype.cents = function(){
  * @return {Facade}
  */
 
-Track.prototype.identify = function () {
+Track.prototype.identify = function() {
   var json = this.json();
   json.traits = this.traits();
-  return new Identify(json);
+  return new Identify(json, this.opts);
 };
 
 /**
  * Get float from currency value.
  *
  * @param {Mixed} val
- * @return {Number}
+ * @return {number}
  */
 
 function currency(val) {
@@ -3071,6 +3101,8 @@ function currency(val) {
 var inherit = require('./utils').inherit;
 var Facade = require('./facade');
 var Track = require('./track');
+var isEmail = require('is-email');
+
 
 /**
  * Expose `Page` facade
@@ -3086,10 +3118,12 @@ module.exports = Page;
  *   @param {String} name
  *   @param {Object} traits
  *   @param {Object} options
+ * @param {Object} opts
+ *   @property {Boolean|Undefined} clone
  */
 
-function Page(dictionary){
-  Facade.call(this, dictionary);
+function Page(dictionary, opts) {
+  Facade.call(this, dictionary, opts);
 }
 
 /**
@@ -3104,10 +3138,11 @@ inherit(Page, Facade);
  * @return {String}
  */
 
-Page.prototype.type =
-Page.prototype.action = function(){
+Page.prototype.action = function() {
   return 'page';
 };
+
+Page.prototype.type = Page.prototype.action;
 
 /**
  * Fields
@@ -3128,9 +3163,10 @@ Page.prototype.url = Facade.proxy('properties.url');
  * Referrer.
  */
 
-Page.prototype.referrer = function(){
-  return this.proxy('properties.referrer')
-    || this.proxy('context.referrer.url');
+Page.prototype.referrer = function() {
+  return this.proxy('context.referrer.url')
+    || this.proxy('context.page.referrer')
+    || this.proxy('properties.referrer');
 };
 
 /**
@@ -3162,12 +3198,26 @@ Page.prototype.properties = function(aliases) {
 };
 
 /**
+ * Get the user's email, falling back to their user ID if it's a valid email.
+ *
+ * @return {String}
+ */
+
+Page.prototype.email = function() {
+  var email = this.proxy('context.traits.email') || this.proxy('properties.email');
+  if (email) return email;
+
+  var userId = this.userId();
+  if (isEmail(userId)) return userId;
+};
+
+/**
  * Get the page fullName.
  *
  * @return {String}
  */
 
-Page.prototype.fullName = function(){
+Page.prototype.fullName = function() {
   var category = this.category();
   var name = this.name();
   return name && category
@@ -3181,7 +3231,7 @@ Page.prototype.fullName = function(){
  * @return {String}
  */
 
-Page.prototype.event = function(name){
+Page.prototype.event = function(name) {
   return name
     ? 'Viewed ' + name + ' Page'
     : 'Loaded a Page';
@@ -3194,17 +3244,15 @@ Page.prototype.event = function(name){
  * @return {Track}
  */
 
-Page.prototype.track = function(name){
-  var props = this.properties();
-  return new Track({
-    event: this.event(name),
-    timestamp: this.timestamp(),
-    context: this.context(),
-    properties: props
-  });
+Page.prototype.track = function(name) {
+  var json = this.json();
+  json.event = this.event(name);
+  json.timestamp = this.timestamp();
+  json.properties = this.properties();
+  return new Track(json, this.opts);
 };
 
-}, {"./utils":40,"./facade":31,"./track":35}],
+}, {"./utils":40,"./facade":31,"./track":35,"is-email":53}],
 37: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
@@ -3221,14 +3269,16 @@ module.exports = Screen;
  * Initialize new `Screen` facade with `dictionary`.
  *
  * @param {Object} dictionary
- *   @param {String} category
- *   @param {String} name
+ *   @param {string} category
+ *   @param {string} name
  *   @param {Object} traits
  *   @param {Object} options
+ * @param {Object} opts
+ *   @property {boolean|undefined} clone
  */
 
-function Screen(dictionary){
-  Page.call(this, dictionary);
+function Screen(dictionary, opts) {
+  Page.call(this, dictionary, opts);
 }
 
 /**
@@ -3240,45 +3290,42 @@ inherit(Screen, Page);
 /**
  * Get the facade's action.
  *
- * @return {String}
+ * @return {string}
  * @api public
  */
 
-Screen.prototype.type =
-Screen.prototype.action = function(){
+Screen.prototype.action = function() {
   return 'screen';
 };
+
+Screen.prototype.type = Screen.prototype.action;
 
 /**
  * Get event with `name`.
  *
- * @param {String} name
- * @return {String}
+ * @param {string} name
+ * @return {string}
  * @api public
  */
 
-Screen.prototype.event = function(name){
-  return name
-    ? 'Viewed ' + name + ' Screen'
-    : 'Loaded a Screen';
+Screen.prototype.event = function(name) {
+  return name ? 'Viewed ' + name + ' Screen' : 'Loaded a Screen';
 };
 
 /**
  * Convert this Screen.
  *
- * @param {String} name
+ * @param {string} name
  * @return {Track}
  * @api public
  */
 
-Screen.prototype.track = function(name){
-  var props = this.properties();
-  return new Track({
-    event: this.event(name),
-    timestamp: this.timestamp(),
-    context: this.context(),
-    properties: props
-  });
+Screen.prototype.track = function(name) {
+  var json = this.json();
+  json.event = this.event(name);
+  json.timestamp = this.timestamp();
+  json.properties = this.properties();
+  return new Track(json, this.opts);
 };
 
 }, {"./utils":40,"./page":36,"./track":35}],
@@ -3300,49 +3347,20 @@ module.exports = function after (times, func) {
 
 try {
   var bind = require('bind');
+  var type = require('type');
 } catch (e) {
   var bind = require('bind-component');
+  var type = require('type-component');
 }
 
-var bindAll = require('bind-all');
-
-
-/**
- * Expose `bind`.
- */
-
-module.exports = exports = bind;
-
-
-/**
- * Expose `bindAll`.
- */
-
-exports.all = bindAll;
-
-
-/**
- * Expose `bindMethods`.
- */
-
-exports.methods = bindMethods;
-
-
-/**
- * Bind `methods` on `obj` to always be called with the `obj` as context.
- *
- * @param {Object} obj
- * @param {String} methods...
- */
-
-function bindMethods (obj, methods) {
-  methods = [].slice.call(arguments, 1);
-  for (var i = 0, method; method = methods[i]; i++) {
-    obj[method] = bind(obj, obj[method]);
+module.exports = function (obj) {
+  for (var key in obj) {
+    var val = obj[key];
+    if (type(val) === 'function') obj[key] = bind(obj, obj[key]);
   }
   return obj;
-}
-}, {"bind":55,"bind-all":56}],
+};
+}, {"bind":55,"type":47}],
 55: [function(require, module, exports) {
 /**
  * Slice reference.
@@ -3369,24 +3387,6 @@ module.exports = function(obj, fn){
 };
 
 }, {}],
-56: [function(require, module, exports) {
-
-try {
-  var bind = require('bind');
-  var type = require('type');
-} catch (e) {
-  var bind = require('bind-component');
-  var type = require('type-component');
-}
-
-module.exports = function (obj) {
-  for (var key in obj) {
-    var val = obj[key];
-    if (type(val) === 'function') obj[key] = bind(obj, obj[key]);
-  }
-  return obj;
-};
-}, {"bind":55,"type":47}],
 11: [function(require, module, exports) {
 var next = require('next-tick');
 
@@ -3430,8 +3430,8 @@ callback.async = function (fn, wait) {
 
 callback.sync = callback;
 
-}, {"next-tick":57}],
-57: [function(require, module, exports) {
+}, {"next-tick":56}],
+56: [function(require, module, exports) {
 "use strict"
 
 if (typeof setImmediate == 'function') {
@@ -3535,7 +3535,7 @@ function clone(obj){
  * Module dependencies.
  */
 
-var bind = require('bind');
+var bindAll = require('bind-all');
 var clone = require('clone');
 var cookie = require('cookie');
 var debug = require('debug')('analytics.js:cookie');
@@ -3654,7 +3654,7 @@ Cookie.prototype.remove = function(key) {
  * Expose the cookie singleton.
  */
 
-module.exports = bind.all(new Cookie());
+module.exports = bindAll(new Cookie());
 
 
 /**
@@ -3663,8 +3663,8 @@ module.exports = bind.all(new Cookie());
 
 module.exports.Cookie = Cookie;
 
-}, {"bind":10,"clone":12,"cookie":58,"debug":14,"defaults":15,"json":59,"top-domain":60}],
-58: [function(require, module, exports) {
+}, {"bind-all":10,"clone":12,"cookie":57,"debug":14,"defaults":15,"json":58,"top-domain":59}],
+57: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -3796,8 +3796,8 @@ if ('undefined' == typeof window) {
   module.exports = require('./debug');
 }
 
-}, {"./lib/debug":61,"./debug":62}],
-61: [function(require, module, exports) {
+}, {"./lib/debug":60,"./debug":61}],
+60: [function(require, module, exports) {
 /**
  * Module dependencies.
  */
@@ -3947,7 +3947,7 @@ function coerce(val) {
 }
 
 }, {}],
-62: [function(require, module, exports) {
+61: [function(require, module, exports) {
 
 /**
  * Expose `debug()` as the module.
@@ -4116,7 +4116,7 @@ var defaults = function (dest, src, recursive) {
 module.exports = defaults;
 
 }, {}],
-59: [function(require, module, exports) {
+58: [function(require, module, exports) {
 
 var json = window.JSON || {};
 var stringify = json.stringify;
@@ -4126,8 +4126,8 @@ module.exports = parse && stringify
   ? JSON
   : require('json-fallback');
 
-}, {"json-fallback":63}],
-63: [function(require, module, exports) {
+}, {"json-fallback":62}],
+62: [function(require, module, exports) {
 /*
     json2.js
     2014-02-04
@@ -4617,7 +4617,7 @@ module.exports = parse && stringify
 }());
 
 }, {}],
-60: [function(require, module, exports) {
+59: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4721,8 +4721,8 @@ domain.levels = function(url){
   return levels;
 };
 
-}, {"url":64,"cookie":65}],
-64: [function(require, module, exports) {
+}, {"url":63,"cookie":64}],
+63: [function(require, module, exports) {
 
 /**
  * Parse the given `url`.
@@ -4807,7 +4807,7 @@ function port (protocol){
 }
 
 }, {}],
-65: [function(require, module, exports) {
+64: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -4999,8 +4999,8 @@ var foldl = function foldl(iterator, accumulator, collection) {
 
 module.exports = foldl;
 
-}, {"each":66}],
-66: [function(require, module, exports) {
+}, {"each":65}],
+65: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -5142,8 +5142,8 @@ var each = function each(iterator, collection) {
 
 module.exports = each;
 
-}, {"keys":67}],
-67: [function(require, module, exports) {
+}, {"keys":66}],
+66: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -5330,7 +5330,7 @@ module.exports = function keys(source) {
  */
 
 var Entity = require('./entity');
-var bind = require('bind');
+var bindAll = require('bind-all');
 var debug = require('debug')('analytics:group');
 var inherit = require('inherit');
 
@@ -5373,7 +5373,7 @@ inherit(Group, Entity);
  * Expose the group singleton.
  */
 
-module.exports = bind.all(new Group());
+module.exports = bindAll(new Group());
 
 
 /**
@@ -5382,8 +5382,8 @@ module.exports = bind.all(new Group());
 
 module.exports.Group = Group;
 
-}, {"./entity":68,"bind":10,"debug":14,"inherit":69}],
-68: [function(require, module, exports) {
+}, {"./entity":67,"bind-all":10,"debug":14,"inherit":68}],
+67: [function(require, module, exports) {
 
 var clone = require('clone');
 var cookie = require('./cookie');
@@ -5622,8 +5622,8 @@ Entity.prototype.load = function() {
 };
 
 
-}, {"clone":12,"./cookie":13,"debug":14,"defaults":15,"extend":70,"./memory":21,"./store":28,"isodate-traverse":38}],
-70: [function(require, module, exports) {
+}, {"clone":12,"./cookie":13,"debug":14,"defaults":15,"extend":69,"./memory":21,"./store":28,"isodate-traverse":38}],
+69: [function(require, module, exports) {
 
 module.exports = function extend (object) {
     // Takes an unlimited number of extenders.
@@ -5647,7 +5647,7 @@ module.exports = function extend (object) {
  * Module Dependencies.
  */
 
-var bind = require('bind');
+var bindAll = require('bind-all');
 var clone = require('clone');
 
 /**
@@ -5660,7 +5660,7 @@ var has = Object.prototype.hasOwnProperty;
  * Expose `Memory`
  */
 
-module.exports = bind.all(new Memory());
+module.exports = bindAll(new Memory());
 
 /**
  * Initialize `Memory` store
@@ -5706,14 +5706,14 @@ Memory.prototype.remove = function(key){
   return true;
 };
 
-}, {"bind":10,"clone":12}],
+}, {"bind-all":10,"clone":12}],
 28: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var bind = require('bind');
+var bindAll = require('bind-all');
 var defaults = require('defaults');
 var store = require('store.js');
 
@@ -5787,7 +5787,7 @@ Store.prototype.remove = function(key) {
  * Expose the store singleton.
  */
 
-module.exports = bind.all(new Store());
+module.exports = bindAll(new Store());
 
 
 /**
@@ -5796,8 +5796,8 @@ module.exports = bind.all(new Store());
 
 module.exports.Store = Store;
 
-}, {"bind":10,"defaults":15,"store.js":71}],
-71: [function(require, module, exports) {
+}, {"bind-all":10,"defaults":15,"store.js":70}],
+70: [function(require, module, exports) {
 var json             = require('json')
   , store            = {}
   , win              = window
@@ -5949,8 +5949,8 @@ try {
 store.enabled = !store.disabled
 
 module.exports = store;
-}, {"json":59}],
-69: [function(require, module, exports) {
+}, {"json":58}],
+68: [function(require, module, exports) {
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -6230,8 +6230,8 @@ function normalize(msg, list){
   }
 }
 
-}, {"debug":14,"defaults":15,"each":3,"includes":72,"is":18,"component/map":73}],
-72: [function(require, module, exports) {
+}, {"debug":14,"defaults":15,"each":3,"includes":71,"is":18,"component/map":72}],
+71: [function(require, module, exports) {
 'use strict';
 
 /**
@@ -6321,8 +6321,8 @@ var includes = function includes(searchElement, collection) {
 
 module.exports = includes;
 
-}, {"each":66}],
-73: [function(require, module, exports) {
+}, {"each":65}],
+72: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -6347,8 +6347,8 @@ module.exports = function(arr, fn){
   }
   return ret;
 };
-}, {"to-function":74}],
-74: [function(require, module, exports) {
+}, {"to-function":73}],
+73: [function(require, module, exports) {
 
 /**
  * Module Dependencies
@@ -6502,8 +6502,8 @@ function stripNested (prop, str, val) {
   });
 }
 
-}, {"props":75,"component-props":75}],
-75: [function(require, module, exports) {
+}, {"props":74,"component-props":74}],
+74: [function(require, module, exports) {
 /**
  * Global Names
  */
@@ -6697,8 +6697,8 @@ function canonicalUrl(search) {
 
 module.exports = pageDefaults;
 
-}, {"canonical":76,"includes":72,"url":77}],
-76: [function(require, module, exports) {
+}, {"canonical":75,"includes":71,"url":76}],
+75: [function(require, module, exports) {
 module.exports = function canonical () {
   var tags = document.getElementsByTagName('link');
   for (var i = 0, tag; tag = tags[i]; i++) {
@@ -6706,7 +6706,7 @@ module.exports = function canonical () {
   }
 };
 }, {}],
-77: [function(require, module, exports) {
+76: [function(require, module, exports) {
 
 /**
  * Parse the given `url`.
@@ -6997,8 +6997,8 @@ exports.stringify = function(obj){
   return pairs.join('&');
 };
 
-}, {"trim":54,"type":78}],
-78: [function(require, module, exports) {
+}, {"trim":54,"type":77}],
+77: [function(require, module, exports) {
 /**
  * toString ref.
  */
@@ -7042,7 +7042,7 @@ module.exports = function(val){
  */
 
 var Entity = require('./entity');
-var bind = require('bind');
+var bindAll = require('bind-all');
 var cookie = require('./cookie');
 var debug = require('debug')('analytics:user');
 var inherit = require('inherit');
@@ -7215,7 +7215,7 @@ User.prototype.predictions = function(callback) {
  * Expose the user singleton.
  */
 
-module.exports = bind.all(new User());
+module.exports = bindAll(new User());
 
 
 /**
@@ -7224,8 +7224,8 @@ module.exports = bind.all(new User());
 
 module.exports.User = User;
 
-}, {"./entity":68,"bind":10,"./cookie":13,"debug":14,"inherit":69,"cookie":58,"uuid":79,"./predictions":80}],
-79: [function(require, module, exports) {
+}, {"./entity":67,"bind-all":10,"./cookie":13,"debug":14,"inherit":68,"cookie":57,"uuid":78,"./predictions":79}],
+78: [function(require, module, exports) {
 
 /**
  * Taken straight from jed's gist: https://gist.github.com/982883
@@ -7255,7 +7255,7 @@ module.exports = function uuid(a){
       )
 };
 }, {}],
-80: [function(require, module, exports) {
+79: [function(require, module, exports) {
 /**
  * Module Dependencies.
  */
@@ -7276,42 +7276,474 @@ module.exports = predictive;
  * @return {Function}
  */
 
-function predictive(traits) {
-  var IND_1 = ['Software', 'Diversified Financial Services', 'Hotels,  Restaurants & Leisure', 'Education Services', 'Food Products', 'Commercial Services & Supplies'];
-  var SECT_1 = ['Consumer Discretionary'];
-  var IND_2 = ['Software', 'Diversified Financial Services', 'Commercial Services & Supplies'];
 
+function intersect(a, b) {
+  var t;
+  if (b.length > a.length) {
+    t = b;
+    b = a;
+    a = t;
+  } // indexOf to loop over shorter
+  return a.filter(function(e) {
+    if (b.indexOf(e) !== -1) return true;
+  });
+}
+
+
+function predictive(traits) {
   var predictions = {
-    mk_customer_fit: undefined
-  };
-  if (
-  traits.employees >= 180 && traits.employees !== null && typeof traits.employees !== 'undefined'
-  && (
-    IND_1.indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
-    || SECT_1.indexOf(traits.sector) > -1 && traits.sector !== null && typeof traits.sector !== 'undefined'
-  )
-  && (
-    traits.alexaGlobalRank > 1944 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
-    && traits.alexaGlobalRank <= 19131 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
-  )
-) {
-    predictions.mk_customer_fit = 'very good';
-  }
-  if (
-    traits.employees > 55 && traits.employees !== null && typeof traits.employees !== 'undefined'
-    && IND_2.indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
-    && traits.raised >= 3.785E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+      mk_customer_fit: 'not enough information'
+    };
+  try {
+    var IND = ['Internet Software & Services', 'Media', 'Diversified Financial Services', 'Hotels, Restaurants & Leisure', 'Professional Services', 'Textiles, Apparel & Luxury Goods', 'Commercial Services & Supplies', 'Capital Markets', 'Food Products', 'Education Services', 'Health Care Providers & Services', 'Real Estate', 'Wireless Telecommunication Services', 'Transportation', 'Leisure Products', 'Software', 'Pharmaceuticals', 'Automotive', 'Diversified Telecommunication Services', 'Air Freight & Logistics', 'Household Durables'];
+    var IND_1 = ['Software', 'Diversified Financial Services', 'Hotels,  Restaurants & Leisure', 'Education Services', 'Food Products', 'Commercial Services & Supplies'];
+    var SECT_1 = ['Consumer Discretionary'];
+    var IND_2 = ['Software', 'Diversified Financial Services', 'Commercial Services & Supplies'];
+    var TECH_1 = ['eloqua', 'salesforce', 'omniture', 'marketo', 'pardot', 'totango'];
+    var TECH_2 = ['crazy_egg', 'intercom', 'olark'];
+    var TECH_3 = ['bing_ads', 'zendesk', 'perfect_audience', 'mixpanel', 'hubspot', 'segment', 'drip', 'marketo', 'pardot', 'totango', 'google_analytics', 'adroll', 'salesforce', 'optimizely', 'crazy-egg'];
+    var COUNTR_1 = ['United States', 'United Kingdom', 'Canada', 'Australia', 'France', 'India', 'Netherlands', 'New Zealand', 'Germany', 'Brazil', 'Singapore', 'Sweden', 'Denmark'];
+    var COUNTR_2 = ['United Kingdom', 'Canada', 'France', 'Netherlands', 'Germany', 'Sweden', 'Denmark', 'Norway', 'Ireland', 'Span'];
+
+    traits.tech = typeof traits.tech !== 'undefined' && traits.tech instanceof Array ? traits.tech : [];
+    if (
+      traits.employees != null && traits.employees !== null && typeof traits.employees !== 'undefined'
+      || traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+      || traits.industry != null && typeof traits.industry !== 'undefined'
+      || traits.raised != null && typeof traits.raised !== 'undefined'
+    ) {
+      predictions.mk_customer_fit = 'not enough information';
+    }
+    if (
+      traits.employees != null && traits.employees !== null && typeof traits.employees !== 'undefined'
+    ) {
+      predictions.mk_customer_fit = 'low';
+    }
+    if (
+      traits.employees != null && traits.employees !== null && typeof traits.employees !== 'undefined'
+      && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+      && traits.industry != null && typeof traits.industry !== 'undefined'
+      && traits.raised != null && typeof traits.raised !== 'undefined'
+    ) {
+      predictions.mk_customer_fit = 'low';
+    }
+    if (
+    traits.employees <= 45 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.googleRank <= 5 && traits.googleRank !== null && typeof traits.googleRank !== 'undefined'
+    )
+    && (IND.slice(0, 17).indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+      && traits.country === null && typeof traits.country === 'undefined'
+    )
   ) {
-    predictions.mk_customer_fit = 'very good';
-  }
-  if (
-    traits.employees <= 55 && traits.employees !== null && typeof traits.employees !== 'undefined'
-    && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
-    && traits.industry != null && typeof traits.industry !== 'undefined'
-    && traits.raised != null && typeof traits.raised !== 'undefined'
+      predictions.mk_customer_fit = 'low'; // l_class_opp_01
+    }
+    if (
+    traits.employees <= 45 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.googleRank <= 3 && traits.googleRank !== null && typeof traits.googleRank !== 'undefined'
+    )
+    && (traits.alexaGlobalRank <= 422785 && traits.alexaGlobalRank !== null && typeof traits.alexaGlobalRank !== 'undefined'
+      && traits.country !== null && typeof traits.country !== 'undefined'
+    )
   ) {
-    predictions.mk_customer_fit = 'low';
+      predictions.mk_customer_fit = 'good'; // l_class_opp_02
+    }
+    if (
+    traits.employees <= 45 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.marketCap > 2.39E9 && traits.marketCap !== null && typeof traits.marketCap !== 'undefined'
+      || traits.marketCap === null && typeof traits.marketCap === 'undefined'
+    )
+    && (traits.alexaGlobalRank > 422785 && traits.alexaGlobalRank !== null && typeof traits.alexaGlobalRank !== 'undefined'
+      && traits.country !== null && typeof traits.country !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_class_opp_03
+    }
+    if (
+    traits.employees > 45 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.raised <= 1.2E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+    )
+    && (traits.marketCap <= 5.1284E8 && traits.marketCap !== null && typeof traits.marketCap !== 'undefined'
+      && intersect(traits.tech, TECH_3).length >= 3 && traits.tech !== null && typeof traits.tech !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_class_opp_04
+    }
+    if (
+    traits.employees > 45 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.raised > 1.2E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+    )
+    && (IND.indexOf(traits.industry) >= -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+      && traits.googleRank <= 10 && traits.googleRank !== null && typeof traits.googleRank !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_class_opp_05
+    }
+    if (
+    traits.employees > 45 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.raised > 1.2E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+    )
+    && (IND.indexOf(traits.industry) === -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'low'; // l_class_opp_06
+    }
+    if (
+      traits.employees <= 55 && traits.employees !== null && typeof traits.employees !== 'undefined'
+      && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+      && traits.industry != null && typeof traits.industry !== 'undefined'
+      && traits.raised != null && typeof traits.raised !== 'undefined'
+    ) {
+      predictions.mk_customer_fit = 'low'; // l_class_mrr_01_backconv
+    }
+    if (
+    traits.employees > 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (intersect(traits.tech, TECH_3).length >= 3 && traits.tech !== null && typeof traits.tech !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_rule_mk_01
+    }
+    if (
+    traits.employees >= 180 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      IND_1.indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+      || SECT_1.indexOf(traits.sector) > -1 && traits.sector !== null && typeof traits.sector !== 'undefined'
+    )
+    && (
+      traits.alexaGlobalRank > 1944 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+      && traits.alexaGlobalRank <= 19131 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_02_backconv
+    }
+    if (
+      traits.employees > 55 && traits.employees !== null && typeof traits.employees !== 'undefined'
+      && IND_2.indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+      && traits.raised >= 3.785E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+    ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_03_backconv
+    }
+    if (
+    ['United States'].indexOf(traits.country) !== -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    && (
+      traits.industry !== 'Professional Services' && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+    && (traits.raised >= 3E6 && traits.raised !== null && typeof traits.raised !== 'undefined'
+      && traits.employees > 30 && traits.employees !== null && typeof traits.employees !== 'undefined'
+      && traits.raised < 5E6 && traits.raised !== null && typeof traits.raised !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_rule_sdr_01
+    }
+    if (
+    ['United States'].indexOf(traits.country) !== -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    && (
+      traits.industry !== 'Professional Services' && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+    && (traits.raised >= 1E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+      && traits.employees > 10 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_rule_sdr_02
+    }
+    if (
+    ['United States'].indexOf(traits.country) !== -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    && (
+      traits.industry !== 'Professional Services' && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+    && (traits.raised >= 5E6 && traits.raised !== null && typeof traits.raised !== 'undefined'
+      && traits.employees > 25 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_rule_sdr_03
+    }
+    if (
+    ['United States'].indexOf(traits.country) !== -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    && (
+      traits.industry !== 'Professional Services' && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+    && (traits.type === 'public' && traits.type !== null && typeof traits.type !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_rule_sdr_04
+    }
+    if (
+    ['United States'].indexOf(traits.country) !== -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    && (
+      traits.industry !== 'Professional Services' && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+    && (traits.raised === null && typeof traits.raised === 'undefined'
+      && traits.employees > 50 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    )
+    && (traits.alexaGlobalRank < 1E5 && traits.alexaGlobalRank !== null && typeof traits.alexaGlobalRank !== 'undefined'// || intersect(traits.tech, TECH_3).length >= 3 && traits.tech !== null && typeof traits.tech !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_rule_sdr_05
+    }
+    if (
+    COUNTR_2.indexOf(traits.country) > -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    && (
+      traits.industry !== 'Professional Services' && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+    && (traits.raised >= 1E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+      && traits.employees > 20 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_rule_sdr_06
+    }
+    if (
+    COUNTR_2.indexOf(traits.country) > -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    && (
+      traits.industry !== 'Professional Services' && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+    && (traits.raised >= 5E6 && traits.raised !== null && typeof traits.raised !== 'undefined'
+      && traits.employees > 35 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_rule_sdr_07
+    }
+    if (
+    COUNTR_2.indexOf(traits.country) > -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    && (
+      traits.industry !== 'Professional Services' && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+    && (traits.raised < 5E6 && traits.raised !== null && typeof traits.raised !== 'undefined'
+      && traits.employees > 40 && traits.employees !== null && typeof traits.employees !== 'undefined'
+      && traits.raised >= 3E6 && traits.raised !== null && typeof traits.raised !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_rule_sdr_08
+    }
+    if (
+    COUNTR_2.indexOf(traits.country) > -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    && (
+      traits.industry !== 'Professional Services' && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+    && (traits.type === 'public' && traits.type !== null && typeof traits.type !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_rule_sdr_09
+    }
+    if (
+    COUNTR_2.indexOf(traits.country) !== -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    && (
+      traits.industry !== 'Professional Services' && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+    && (traits.raised === null && typeof traits.raised === 'undefined'
+      && traits.employees > 50 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    )
+    && (traits.alexaGlobalRank < 1E5 && traits.alexaGlobalRank !== null && typeof traits.alexaGlobalRank !== 'undefined'
+      || intersect(traits.tech, TECH_3).length >= 3 && traits.tech !== null && typeof traits.tech !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_rule_sdr_10
+    }
+    if (
+    traits.employees <= 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.raised <= 2.1E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+    )
+    && (traits.googleRank <= 4 && traits.googleRank !== null && typeof traits.googleRank !== 'undefined'
+    )
+    && (intersect(traits.tech, TECH_1).length > 0 && traits.tech !== null && typeof traits.tech !== 'undefined'
+      && traits.alexaGlobalRank <= 105967 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_class_mrr_01
+    }
+    if (
+    traits.employees <= 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.raised || 0 <= 2.1E7
+    )
+    && (traits.googleRank <= 4 && traits.googleRank !== null && typeof traits.googleRank !== 'undefined'
+    )
+    && (intersect(traits.tech, TECH_1).length === 0 && traits.tech !== null && typeof traits.tech !== 'undefined'
+      && traits.alexaGlobalRank > 1206671 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+      && traits.employees >= 45 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_02
+    }
+    if (
+    traits.employees <= 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.raised || 0 <= 2.1E7
+    )
+    && (traits.googleRank > 4 && traits.googleRank !== null && typeof traits.googleRank !== 'undefined'
+    )
+    && (IND.slice(0, 9).indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+      && traits.alexaGlobalRank <= 3251 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+      && traits.employees > 60 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_03
+    }
+    if (
+    traits.employees <= 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.raised || 0 <= 2.1E7
+    )
+    && (traits.googleRank > 4 && traits.googleRank !== null && typeof traits.googleRank !== 'undefined'
+    )
+    && (IND.slice(10, 12).indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+      && traits.alexaGlobalRank <= 14305 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_class_mrr_04
+    }
+    if (
+    traits.employees <= 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.raised || 0 <= 2.1E7
+    )
+    && (traits.googleRank > 4 && traits.googleRank !== null && typeof traits.googleRank !== 'undefined'
+    )
+    && (IND.slice(0, 9).indexOf(traits.industry) === 0 && traits.industry !== null && typeof traits.industry !== 'undefined'
+      && traits.alexaGlobalRank > 14305 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+      && intersect(traits.tech, TECH_1.merge(TECH_2)).length > 0 && traits.tech !== null && typeof traits.tech !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_class_mrr_06
+    }
+    if (
+    traits.employees <= 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.raised > 2.1E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+    )
+    && (COUNTR_1.indexOf(traits.country) > -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    )
+    && (traits.googleRank <= 6 && traits.googleRank !== null && typeof traits.googleRank !== 'undefined'
+      && traits.marketCap > 0 && traits.marketCap != null && typeof traits.marketCap !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_06
+    }
+    if (
+    traits.employees <= 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.raised > 2.1E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+    )
+    && (COUNTR_1.indexOf(traits.country) > -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    )
+    && (traits.googleRank > 6 && traits.googleRank !== null && typeof traits.googleRank !== 'undefined'
+      && traits.employees < 60 && traits.employees != null && typeof traits.employees !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_07
+    }
+    if (
+    traits.employees <= 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.raised > 2.1E7 && traits.raised !== null && typeof traits.raised !== 'undefined'
+    )
+    && (COUNTR_1.indexOf(traits.country) === -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_class_mrr_08
+    }
+    if (
+    traits.employees > 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+     traits.marketCap || 0 <= 5.1284E8
+    )
+    && (traits.alexaGlobalRank <= 2219 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+      && traits.country === 'United States' && traits.country !== null && typeof traits.country !== 'undefined'
+     && IND.slice(0, 2).indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_09
+    }
+    if (
+    traits.employees > 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.marketCap || 0 <= 5.1284E8
+    )
+    && (traits.alexaGlobalRank <= 2519 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+      && ['United States'].indexOf(traits.country) > -1 && traits.country !== null && typeof traits.country !== 'undefined'
+      && traits.employees > 700 && traits.employees !== null && typeof traits.employees !== 'undefined'
+      && IND.slice(0, 2).indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_10
+    }
+    if (
+    traits.employees > 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.marketCap || 0 <= 5.1284E8
+    )
+    && (traits.alexaGlobalRank > 2519 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+      && traits.employees <= 300 && traits.employees !== null && typeof traits.employees !== 'undefined'
+      && IND.slice(0, 2).indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_11
+    }
+    if (
+    traits.employees > 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.marketCap || 0 <= 5.1284E8
+    )
+    && (traits.alexaGlobalRank <= 67147 && traits.alexaGlobalRank != null && typeof traits.alexaGlobalRank !== 'undefined'
+      && IND.slice(0, 4).indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_12
+    }
+    if (
+    traits.employees > 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.marketCap || 0 <= 5.1284E8
+    )
+    && (traits.raised <= 1.05E8 && traits.raised != null && typeof traits.raised !== 'undefined'
+      && IND.slice(0, 20).indexOf(traits.industry) > -1 && traits.industry !== null && typeof traits.industry !== 'undefined'
+      && ['United States'].indexOf(traits.country) === -1 && traits.country !== null && typeof traits.country !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'good'; // l_class_mrr_13
+    }
+    if (
+    traits.employees > 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.marketCap || 0 <= 5.1284E8
+    )
+    && (traits.raised > 1.05E8 && traits.raised != null && typeof traits.raised !== 'undefined'
+     && intersect(traits.tech, TECH_3).length >= 1 && traits.tech !== null && typeof traits.tech !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_14
+    }
+    if (
+    traits.employees > 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.marketCap > 5.1284E8 && traits.marketCap !== null && typeof traits.marketCap !== 'undefined'
+    )
+    && (traits.raised || 0 <= 1.05E8
+      && traits.employees <= 804 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_15
+    }
+    if (
+    traits.employees > 200 && traits.employees !== null && typeof traits.employees !== 'undefined'
+    && (
+      traits.marketCap > 5.1284E8 && traits.marketCap !== null && typeof traits.marketCap !== 'undefined'
+    )
+    && (traits.raised > 1.05E8 && traits.raised != null && typeof traits.raised !== 'undefined'
+      && traits.alexaGlobalRank > 563 && traits.alexaGlobalRank !== null && typeof traits.alexaGlobalRank !== 'undefined'
+    )
+  ) {
+      predictions.mk_customer_fit = 'very good'; // l_class_mrr_16
+    }
+  } catch (e) {
+    predictions = e.toString();
   }
+
   return predictions;
 }
 

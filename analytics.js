@@ -10801,17 +10801,18 @@ Bloomreach.prototype.completedOrder = function(track) {
 
 }, {"analytics.js-integration":173}],
 88: [function(require, module, exports) {
+'use strict';
 
 /**
  * Module dependencies.
  */
 
+var each = require('each');
+var foldl = require('foldl');
 var integration = require('analytics.js-integration');
+var map = require('ndhoule/map');
 var snake = require('to-snake-case');
 var useHttps = require('use-https');
-var each = require('each');
-var is = require('is');
-var del = require('obj-case').del;
 
 /**
  * Expose `AdRoll` integration.
@@ -10823,9 +10824,11 @@ var AdRoll = module.exports = integration('AdRoll')
   .global('__adroll_loaded')
   .global('adroll_adv_id')
   .global('adroll_custom_data')
+  .global('adroll_email')
   .global('adroll_pix_id')
   .option('advId', '')
   .option('pixId', '')
+  .option('_version', 2)
   .tag('http', '<script src="http://a.adroll.com/j/roundtrip.js">')
   .tag('https', '<script src="https://s.adroll.com/j/roundtrip.js">')
   .mapping('events');
@@ -10868,8 +10871,21 @@ AdRoll.prototype.loaded = function() {
  */
 
 AdRoll.prototype.page = function(page) {
-  var name = page.fullName();
-  this.track(page.track(name));
+  this.track(page.track(page.fullName()));
+};
+
+/**
+ * Identify.
+ *
+ * @api public
+ * @param {Identify} identify
+ */
+
+AdRoll.prototype.identify = function(identify) {
+  if (identify.email()) {
+    window.adroll_email = identify.email();
+    window.__adroll.record_adroll_email('segment');
+  }
 };
 
 /**
@@ -10880,743 +10896,116 @@ AdRoll.prototype.page = function(page) {
  */
 
 AdRoll.prototype.track = function(track) {
-  var event = track.event();
-  var user = this.analytics.user();
-  var events = this.events(event);
-  var total = track.revenue() || track.total() || 0;
-  var orderId = track.orderId() || 0;
-  var productId = track.id();
-  var sku = track.sku();
-  var customProps = track.properties();
-
-  var data = {};
-  if (user.id()) data.user_id = user.id();
-  if (orderId) data.order_id = orderId;
-  if (productId) data.product_id = productId;
-  if (sku) data.sku = sku;
-  if (total) data.adroll_conversion_value_in_dollars = total;
-  del(customProps, 'revenue');
-  del(customProps, 'total');
-  del(customProps, 'orderId');
-  del(customProps, 'id');
-  del(customProps, 'sku');
-  if (!is.empty(customProps)) data.adroll_custom_data = customProps;
-
-  each(events, function(event) {
-    // the adroll interface only allows for
-    // segment names which are snake cased.
-    data.adroll_segments = snake(event);
-    window.__adroll.record_user(data);
-  });
-
-  // no events found
-  if (!events.length) {
-    data.adroll_segments = snake(event);
-    window.__adroll.record_user(data);
-  }
-};
-
-}, {"analytics.js-integration":206,"to-snake-case":207,"use-https":208,"each":4,"is":19,"obj-case":43}],
-206: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var bind = require('bind');
-var clone = require('clone');
-var debug = require('debug');
-var defaults = require('defaults');
-var extend = require('extend');
-var slug = require('slug');
-var protos = require('./protos');
-var statics = require('./statics');
-
-/**
- * Create a new `Integration` constructor.
- *
- * @constructs Integration
- * @param {string} name
- * @return {Function} Integration
- */
-
-function createIntegration(name){
-  /**
-   * Initialize a new `Integration`.
-   *
-   * @class
-   * @param {Object} options
-   */
-
-  function Integration(options){
-    if (options && options.addIntegration) {
-      // plugin
-      return options.addIntegration(Integration);
-    }
-    this.debug = debug('analytics:integration:' + slug(name));
-    this.options = defaults(clone(options) || {}, this.defaults);
-    this._queue = [];
-    this.once('ready', bind(this, this.flush));
-
-    Integration.emit('construct', this);
-    this.ready = bind(this, this.ready);
-    this._wrapInitialize();
-    this._wrapPage();
-    this._wrapTrack();
+  var events = this.events(track.event());
+  var userId = this.analytics.user().id();
+  var data = formulateData(track, { revenue: 'adroll_conversion_value' });
+  // As of April 2015, Adroll no longer accepts segments by name, instead
+  // segmenting exclusively by segment ID, which will be present in events map
+  // TODO: Deprecate and remove this behavior
+  if (this.options._version === 1) {
+    // If this is an unmapped event, fall back on a snakeized event name
+    if (!events.length) events = [track.event()];
+    // legacy (v1) behavior is to snakeize all mapped `events` values
+    events = map(snake, events);
   }
 
-  Integration.prototype.defaults = {};
-  Integration.prototype.globals = [];
-  Integration.prototype.templates = {};
-  Integration.prototype.name = name;
-  extend(Integration, statics);
-  extend(Integration.prototype, protos);
+  if (userId) data.user_id = userId;
 
-  return Integration;
-}
-
-/**
- * Exports.
- */
-
-module.exports = createIntegration;
-
-}, {"bind":209,"clone":13,"debug":179,"defaults":16,"extend":180,"slug":181,"./protos":210,"./statics":211}],
-209: [function(require, module, exports) {
-
-var bind = require('bind')
-  , bindAll = require('bind-all');
-
-
-/**
- * Expose `bind`.
- */
-
-module.exports = exports = bind;
-
-
-/**
- * Expose `bindAll`.
- */
-
-exports.all = bindAll;
-
-
-/**
- * Expose `bindMethods`.
- */
-
-exports.methods = bindMethods;
-
-
-/**
- * Bind `methods` on `obj` to always be called with the `obj` as context.
- *
- * @param {Object} obj
- * @param {String} methods...
- */
-
-function bindMethods (obj, methods) {
-  methods = [].slice.call(arguments, 1);
-  for (var i = 0, method; method = methods[i]; i++) {
-    obj[method] = bind(obj, obj[method]);
-  }
-  return obj;
-}
-}, {"bind":56}],
-210: [function(require, module, exports) {
-/* global setInterval:true setTimeout:true */
-
-/**
- * Module dependencies.
- */
-
-var Emitter = require('emitter');
-var after = require('after');
-var each = require('each');
-var events = require('analytics-events');
-var fmt = require('fmt');
-var foldl = require('foldl');
-var loadIframe = require('load-iframe');
-var loadScript = require('load-script');
-var normalize = require('to-no-case');
-var nextTick = require('next-tick');
-var type = require('type');
-
-/**
- * Noop.
- */
-
-function noop(){}
-
-/**
- * hasOwnProperty reference.
- */
-
-var has = Object.prototype.hasOwnProperty;
-
-/**
- * Window defaults.
- */
-
-var onerror = window.onerror;
-var onload = null;
-var setInterval = window.setInterval;
-var setTimeout = window.setTimeout;
-
-/**
- * Mixin emitter.
- */
-
-/* eslint-disable new-cap */
-Emitter(exports);
-/* eslint-enable new-cap */
-
-/**
- * Initialize.
- */
-
-exports.initialize = function(){
-  var ready = this.ready;
-  nextTick(ready);
+  sendConversion(events, data);
 };
 
 /**
- * Loaded?
- *
- * @api private
- * @return {boolean}
- */
-
-exports.loaded = function(){
-  return false;
-};
-
-/**
- * Page.
- *
- * @api public
- * @param {Page} page
- */
-
-/* eslint-disable no-unused-vars */
-exports.page = function(page){};
-/* eslint-enable no-unused-vars */
-
-/**
- * Track.
+ * Viewed/Added Product
  *
  * @api public
  * @param {Track} track
  */
 
-/* eslint-disable no-unused-vars */
-exports.track = function(track){};
-/* eslint-enable no-unused-vars */
+AdRoll.prototype.viewedProduct = AdRoll.prototype.addedProduct = function(track) {
+  var events = this.events(track.event());
+  var userId = this.analytics.user().id();
+  var data = formulateData(track, {
+    id: 'product_id',
+    price: 'adroll_conversion_value'
+  });
 
-/**
- * Get events that match `event`.
- *
- * @api public
- * @param {Object|Object[]} events An object or array of objects pulled from
- * settings.mapping.
- * @param {string} event The name of the event whose metdata we're looking for.
- * @return {Array} An array of settings that match the input `event` name.
- * @example
- * var events = { my_event: 'a4991b88' };
- * .map(events, 'My Event');
- * // => ["a4991b88"]
- * .map(events, 'whatever');
- * // => []
- *
- * var events = [{ key: 'my event', value: '9b5eb1fa' }];
- * .map(events, 'my_event');
- * // => ["9b5eb1fa"]
- * .map(events, 'whatever');
- * // => []
- */
+  if (this.options._version === 1) {
+    // If this is an unmapped event, fall back on a snakeized event name
+    if (!events.length) events = [track.event()];
+    // legacy (v1) behavior is to snakeize all mapped `events` values
+    events = map(snake, events);
+  }
 
-exports.map = function(events, event){
-  var normalizedEvent = normalize(event);
+  if (userId) data.user_id = userId;
 
-  return foldl(function(matchingEvents, val, key, events) {
-    // If true, this is a `mixed` value, which is structured like so:
-    //     { key: 'testEvent', value: { event: 'testEvent', someValue: 'xyz' } }
-    // We need to extract the key, which we use to match against
-    // `normalizedEvent`, and return `value` as part of `matchingEvents` if that
-    // match succeds.
-    if (type(events) === 'array') {
-      // If there's no key attached to this event mapping (unusual), skip this
-      // item.
-      if (!val.key) return matchingEvents;
-      // Extract the key and value from the `mixed` object.
-      key = val.key;
-      val = val.value;
-    }
-
-    if (normalize(key) === normalizedEvent) {
-      matchingEvents.push(val);
-    }
-
-    return matchingEvents;
-  }, [], events);
+  sendConversion(events, data);
 };
 
 /**
- * Invoke a `method` that may or may not exist on the prototype with `args`,
- * queueing or not depending on whether the integration is "ready". Don't
- * trust the method call, since it contains integration party code.
+ * Completed Order
  *
- * @api private
- * @param {string} method
- * @param {...*} args
+ * @api public
+ * @param {Track} track
  */
 
-exports.invoke = function(method){
-  if (!this[method]) return;
-  var args = Array.prototype.slice.call(arguments, 1);
-  if (!this._ready) return this.queue(method, args);
-  var ret;
+AdRoll.prototype.completedOrder = function(track) {
+  var events = this.events(track.event());
+  var userId = this.analytics.user().id();
+  var data = formulateData(track, {
+    orderId: 'order_id',
+    revenue: 'adroll_conversion_value'
+  });
 
-  try {
-    this.debug('%s with %o', method, args);
-    ret = this[method].apply(this, args);
-  } catch (e) {
-    this.debug('error %o calling %s with %o', e, method, args);
+  if (track.properties().currency) {
+    data.adroll_currency = track.properties().currency;
+    delete data.currency;
   }
+
+  if (this.options._version === 1) {
+    // If this is an unmapped event, fall back on a snakeized event name
+    if (!events.length) events = [track.event()];
+    // legacy (v1) behavior is to snakeize all mapped `events` values
+    events = map(snake, events);
+  }
+
+  if (userId) data.user_id = userId;
+
+  sendConversion(events, data);
+};
+
+/**
+ * Send conversion events
+ *
+ * @params {Object, Object} events, data
+ * @api private
+ */
+
+function sendConversion(events, data) {
+  each(events, function(segmentId) {
+    data.adroll_segments = segmentId;
+    window.__adroll.record_user(data);
+  });
+}
+
+/**
+ * Format data payload
+ *
+ * @params {Object, Object} track, alias
+ * @api private
+ */
+
+function formulateData(track, alias) {
+  var aliases = alias || {};
+  var ret = foldl(function(props, val, key) {
+    props[snake(key)] = val;
+    return props;
+  }, track.properties(aliases));
 
   return ret;
-};
-
-/**
- * Queue a `method` with `args`. If the integration assumes an initial
- * pageview, then let the first call to `page` pass through.
- *
- * @api private
- * @param {string} method
- * @param {Array} args
- */
-
-exports.queue = function(method, args){
-  if (method === 'page' && this._assumesPageview && !this._initialized) {
-    return this.page.apply(this, args);
-  }
-
-  this._queue.push({ method: method, args: args });
-};
-
-/**
- * Flush the internal queue.
- *
- * @api private
- */
-
-exports.flush = function(){
-  this._ready = true;
-  var self = this;
-
-  each(this._queue, function(call){
-    self[call.method].apply(self, call.args);
-  });
-
-  // Empty the queue.
-  this._queue.length = 0;
-};
-
-/**
- * Reset the integration, removing its global variables.
- *
- * @api private
- */
-
-exports.reset = function(){
-  for (var i = 0; i < this.globals.length; i++) {
-    window[this.globals[i]] = undefined;
-  }
-
-  window.setTimeout = setTimeout;
-  window.setInterval = setInterval;
-  window.onerror = onerror;
-  window.onload = onload;
-};
-
-/**
- * Load a tag by `name`.
- *
- * @param {string} name The name of the tag.
- * @param {Object} locals Locals used to populate the tag's template variables
- * (e.g. `userId` in '<img src="https://whatever.com/{{ userId }}">').
- * @param {Function} [callback=noop] A callback, invoked when the tag finishes
- * loading.
- */
-
-exports.load = function(name, locals, callback){
-  // Argument shuffling
-  if (typeof name === 'function') { callback = name; locals = null; name = null; }
-  if (name && typeof name === 'object') { callback = locals; locals = name; name = null; }
-  if (typeof locals === 'function') { callback = locals; locals = null; }
-
-  // Default arguments
-  name = name || 'library';
-  locals = locals || {};
-
-  locals = this.locals(locals);
-  var template = this.templates[name];
-  if (!template) throw new Error(fmt('template "%s" not defined.', name));
-  var attrs = render(template, locals);
-  callback = callback || noop;
-  var self = this;
-  var el;
-
-  switch (template.type) {
-    case 'img':
-      attrs.width = 1;
-      attrs.height = 1;
-      el = loadImage(attrs, callback);
-      break;
-    case 'script':
-      el = loadScript(attrs, function(err){
-        if (!err) return callback();
-        self.debug('error loading "%s" error="%s"', self.name, err);
-      });
-      // TODO: hack until refactoring load-script
-      delete attrs.src;
-      each(attrs, function(key, val){
-        el.setAttribute(key, val);
-      });
-      break;
-    case 'iframe':
-      el = loadIframe(attrs, callback);
-      break;
-    default:
-      // No default case
-  }
-
-  return el;
-};
-
-/**
- * Locals for tag templates.
- *
- * By default it includes a cache buster and all of the options.
- *
- * @param {Object} [locals]
- * @return {Object}
- */
-
-exports.locals = function(locals){
-  locals = locals || {};
-  var cache = Math.floor(new Date().getTime() / 3600000);
-  if (!locals.hasOwnProperty('cache')) locals.cache = cache;
-  each(this.options, function(key, val){
-    if (!locals.hasOwnProperty(key)) locals[key] = val;
-  });
-  return locals;
-};
-
-/**
- * Simple way to emit ready.
- *
- * @api public
- */
-
-exports.ready = function(){
-  this.emit('ready');
-};
-
-/**
- * Wrap the initialize method in an exists check, so we don't have to do it for
- * every single integration.
- *
- * @api private
- */
-
-exports._wrapInitialize = function(){
-  var initialize = this.initialize;
-  this.initialize = function(){
-    this.debug('initialize');
-    this._initialized = true;
-    var ret = initialize.apply(this, arguments);
-    this.emit('initialize');
-    return ret;
-  };
-
-  if (this._assumesPageview) this.initialize = after(2, this.initialize);
-};
-
-/**
- * Wrap the page method to call `initialize` instead if the integration assumes
- * a pageview.
- *
- * @api private
- */
-
-exports._wrapPage = function(){
-  var page = this.page;
-  this.page = function(){
-    if (this._assumesPageview && !this._initialized) {
-      return this.initialize.apply(this, arguments);
-    }
-
-    return page.apply(this, arguments);
-  };
-};
-
-/**
- * Wrap the track method to call other ecommerce methods if available depending
- * on the `track.event()`.
- *
- * @api private
- */
-
-exports._wrapTrack = function(){
-  var t = this.track;
-  this.track = function(track){
-    var event = track.event();
-    var called;
-    var ret;
-
-    for (var method in events) {
-      if (has.call(events, method)) {
-        var regexp = events[method];
-        if (!this[method]) continue;
-        if (!regexp.test(event)) continue;
-        ret = this[method].apply(this, arguments);
-        called = true;
-        break;
-      }
-    }
-
-    if (!called) ret = t.apply(this, arguments);
-    return ret;
-  };
-};
-
-/**
- * TODO: Document me
- *
- * @api private
- * @param {Object} attrs
- * @param {Function} fn
- * @return {undefined}
- */
-
-function loadImage(attrs, fn){
-  fn = fn || function(){};
-  var img = new Image();
-  img.onerror = error(fn, 'failed to load pixel', img);
-  img.onload = function(){ fn(); };
-  img.src = attrs.src;
-  img.width = 1;
-  img.height = 1;
-  return img;
 }
 
-/**
- * TODO: Document me
- *
- * @api private
- * @param {Function} fn
- * @param {string} message
- * @param {Element} img
- * @return {Function}
- */
-
-function error(fn, message, img){
-  return function(e){
-    e = e || window.event;
-    var err = new Error(message);
-    err.event = e;
-    err.source = img;
-    fn(err);
-  };
-}
-
-/**
- * Render template + locals into an `attrs` object.
- *
- * @api private
- * @param {Object} template
- * @param {Object} locals
- * @return {Object}
- */
-
-function render(template, locals){
-  return foldl(function(attrs, val, key) {
-    attrs[key] = val.replace(/\{\{\ *(\w+)\ *\}\}/g, function(_, $1){
-      return locals[$1];
-    });
-    return attrs;
-  }, {}, template.attrs);
-}
-
-}, {"emitter":8,"after":10,"each":186,"analytics-events":187,"fmt":188,"foldl":17,"load-iframe":189,"load-script":190,"to-no-case":191,"next-tick":58,"type":194}],
-211: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var Emitter = require('emitter');
-var domify = require('domify');
-var each = require('each');
-var includes = require('includes');
-
-/**
- * Mix in emitter.
- */
-
-/* eslint-disable new-cap */
-Emitter(exports);
-/* eslint-enable new-cap */
-
-/**
- * Add a new option to the integration by `key` with default `value`.
- *
- * @api public
- * @param {string} key
- * @param {*} value
- * @return {Integration}
- */
-
-exports.option = function(key, value){
-  this.prototype.defaults[key] = value;
-  return this;
-};
-
-/**
- * Add a new mapping option.
- *
- * This will create a method `name` that will return a mapping for you to use.
- *
- * @api public
- * @param {string} name
- * @return {Integration}
- * @example
- * Integration('My Integration')
- *   .mapping('events');
- *
- * new MyIntegration().track('My Event');
- *
- * .track = function(track){
- *   var events = this.events(track.event());
- *   each(events, send);
- *  };
- */
-
-exports.mapping = function(name){
-  this.option(name, []);
-  this.prototype[name] = function(str){
-    return this.map(this.options[name], str);
-  };
-  return this;
-};
-
-/**
- * Register a new global variable `key` owned by the integration, which will be
- * used to test whether the integration is already on the page.
- *
- * @api public
- * @param {string} key
- * @return {Integration}
- */
-
-exports.global = function(key){
-  this.prototype.globals.push(key);
-  return this;
-};
-
-/**
- * Mark the integration as assuming an initial pageview, so to defer loading
- * the script until the first `page` call, noop the first `initialize`.
- *
- * @api public
- * @return {Integration}
- */
-
-exports.assumesPageview = function(){
-  this.prototype._assumesPageview = true;
-  return this;
-};
-
-/**
- * Mark the integration as being "ready" once `load` is called.
- *
- * @api public
- * @return {Integration}
- */
-
-exports.readyOnLoad = function(){
-  this.prototype._readyOnLoad = true;
-  return this;
-};
-
-/**
- * Mark the integration as being "ready" once `initialize` is called.
- *
- * @api public
- * @return {Integration}
- */
-
-exports.readyOnInitialize = function(){
-  this.prototype._readyOnInitialize = true;
-  return this;
-};
-
-/**
- * Define a tag to be loaded.
- *
- * @api public
- * @param {string} [name='library'] A nicename for the tag, commonly used in
- * #load. Helpful when the integration has multiple tags and you need a way to
- * specify which of the tags you want to load at a given time.
- * @param {String} str DOM tag as string or URL.
- * @return {Integration}
- */
-
-exports.tag = function(name, tag){
-  if (tag == null) {
-    tag = name;
-    name = 'library';
-  }
-  this.prototype.templates[name] = objectify(tag);
-  return this;
-};
-
-/**
- * Given a string, give back DOM attributes.
- *
- * Do it in a way where the browser doesn't load images or iframes. It turns
- * out domify will load images/iframes because whenever you construct those
- * DOM elements, the browser immediately loads them.
- *
- * @api private
- * @param {string} str
- * @return {Object}
- */
-
-function objectify(str) {
-  // replace `src` with `data-src` to prevent image loading
-  str = str.replace(' src="', ' data-src="');
-
-  var el = domify(str);
-  var attrs = {};
-
-  each(el.attributes, function(attr){
-    // then replace it back
-    var name = attr.name === 'data-src' ? 'src' : attr.name;
-    if (!includes(attr.name + '=', str)) return;
-    attrs[name] = attr.value;
-  });
-
-  return {
-    type: el.tagName.toLowerCase(),
-    attrs: attrs
-  };
-}
-
-}, {"emitter":8,"domify":196,"each":186,"includes":73}],
-207: [function(require, module, exports) {
+}, {"each":4,"foldl":17,"analytics.js-integration":173,"ndhoule/map":203,"to-snake-case":206,"use-https":207}],
+206: [function(require, module, exports) {
 var toSpace = require('to-space-case');
 
 
@@ -11639,8 +11028,8 @@ function toSnakeCase (string) {
   return toSpace(string).replace(/\s/g, '_');
 }
 
-}, {"to-space-case":212}],
-212: [function(require, module, exports) {
+}, {"to-space-case":208}],
+208: [function(require, module, exports) {
 
 var clean = require('to-no-case');
 
@@ -11665,8 +11054,8 @@ function toSpaceCase (string) {
     return match ? ' ' + match : '';
   });
 }
-}, {"to-no-case":213}],
-213: [function(require, module, exports) {
+}, {"to-no-case":209}],
+209: [function(require, module, exports) {
 
 /**
  * Expose `toNoCase`.
@@ -11742,7 +11131,7 @@ function uncamelize (string) {
   });
 }
 }, {}],
-208: [function(require, module, exports) {
+207: [function(require, module, exports) {
 
 /**
  * Protocol.
@@ -11818,7 +11207,7 @@ AdWords.prototype.initialize = function() {
  */
 
 AdWords.prototype.loaded = function() {
-  return !!document.body;
+  return !!(document.body && window.google_trackConversion);
 };
 
 /**
@@ -11871,7 +11260,7 @@ AdWords.prototype.track = function(track) {
   });
 };
 
-}, {"each":4,"analytics.js-integration":206}],
+}, {"each":4,"analytics.js-integration":173}],
 90: [function(require, module, exports) {
 
 /**
@@ -11922,15 +11311,17 @@ Alexa.prototype.loaded = function() {
   return !!window.atrk;
 };
 
-}, {"analytics.js-integration":206}],
+}, {"analytics.js-integration":173}],
 91: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
+var bind = require('bind');
 var integration = require('analytics.js-integration');
 var topDomain = require('top-domain');
+var when = require('when');
 
 /**
  * UMD?
@@ -11942,7 +11333,7 @@ var umd = typeof window.define === 'function' && window.define.amd;
  * Source.
  */
 
-var src = '//d24n15hnbwhuhn.cloudfront.net/libs/amplitude-2.1.0-min.js';
+var src = '//d24n15hnbwhuhn.cloudfront.net/libs/amplitude-2.12.1-min.gz.js';
 
 /**
  * Expose `Amplitude` integration.
@@ -11955,6 +11346,10 @@ var Amplitude = module.exports = integration('Amplitude')
   .option('trackNamedPages', true)
   .option('trackCategorizedPages', true)
   .option('trackUtmProperties', true)
+  .option('trackReferrer', false)
+  .option('batchEvents', false)
+  .option('eventUploadThreshold', 30)
+  .option('eventUploadPeriodMillis', 30000)
   .tag('<script src="' + src + '">');
 
 /**
@@ -11967,25 +11362,37 @@ var Amplitude = module.exports = integration('Amplitude')
 
 Amplitude.prototype.initialize = function() {
   /* eslint-disable */
-  (function(e,t){var r=e.amplitude||{};r._q=[];function a(e){r[e]=function(){r._q.push([e].concat(Array.prototype.slice.call(arguments,0)))}}var i=["init","logEvent","logRevenue","setUserId","setUserProperties","setOptOut","setVersionName","setDomain","setDeviceId","setGlobalUserProperties"];for(var o=0;o<i.length;o++){a(i[o])}e.amplitude=r})(window,document);
+  (function(e,t){var r=e.amplitude||{_q:[]};function n(e,t){e.prototype[t]=function(){this._q.push([t].concat(Array.prototype.slice.call(arguments,0)));return this}}var s=function(){this._q=[];return this};var i=["add","append","clearAll","prepend","set","setOnce","unset"];for(var o=0;o<i.length;o++){n(s,i[o])}r.Identify=s;var a=function(){this._q=[];return this;};var u=["setProductId","setQuantity","setPrice","setRevenueType","setEventProperties"];for(var c=0;c<u.length;c++){n(a,u[c])}r.Revenue=a;var p=["init","logEvent","logRevenue","setUserId","setUserProperties","setOptOut","setVersionName","setDomain","setDeviceId","setGlobalUserProperties","identify","clearUserProperties","setGroup","logRevenueV2","regenerateDeviceId"];function l(e){function t(t){e[t]=function(){e._q.push([t].concat(Array.prototype.slice.call(arguments,0)));}}for(var r=0;r<p.length;r++){t(p[r])}}l(r);e.amplitude=r})(window,document);
   /* eslint-enable */
 
   this.setDomain(window.location.href);
   window.amplitude.init(this.options.apiKey, null, {
-    includeUtm: this.options.trackUtmProperties
+    includeUtm: this.options.trackUtmProperties,
+    includeReferrer: this.options.trackReferrer,
+    batchEvents: this.options.batchEvents,
+    eventUploadThreshold: this.options.eventUploadThreshold,
+    eventUploadPeriodMillis: this.options.eventUploadPeriodMillis
   });
 
-  var self = this;
+  var loaded = bind(this, this.loaded);
+  var ready = this.ready;
+
   if (umd) {
     window.require([src], function(amplitude) {
       window.amplitude = amplitude;
-      self.ready();
+      when(loaded, function() {
+        window.amplitude.runQueuedFunctions();
+        ready();
+      });
     });
     return;
   }
 
   this.load(function() {
-    self.ready();
+    when(loaded, function() {
+      window.amplitude.runQueuedFunctions();
+      ready();
+    });
   });
 };
 
@@ -12064,6 +11471,18 @@ Amplitude.prototype.track = function(track) {
 };
 
 /**
+ * Group.
+ *
+ * @api public
+ * @param {Group} group
+ */
+
+Amplitude.prototype.group = function(group) {
+  var groupId = group.groupId();
+  if (groupId) window.amplitude.setGroup('[Segment] Group', groupId);
+};
+
+/**
  * Set domain name to root domain in Amplitude.
  *
  * @api private
@@ -12086,7 +11505,37 @@ Amplitude.prototype.setDeviceId = function(deviceId) {
   if (deviceId) window.amplitude.setDeviceId(deviceId);
 };
 
-}, {"analytics.js-integration":206,"top-domain":177}],
+}, {"bind":56,"analytics.js-integration":173,"top-domain":177,"when":210}],
+210: [function(require, module, exports) {
+
+var callback = require('callback');
+
+
+/**
+ * Expose `when`.
+ */
+
+module.exports = when;
+
+
+/**
+ * Loop on a short interval until `condition()` is true, then call `fn`.
+ *
+ * @param {Function} condition
+ * @param {Function} fn
+ * @param {Number} interval (optional)
+ */
+
+function when (condition, fn, interval) {
+  if (condition()) return callback.async(fn);
+
+  var ref = setInterval(function () {
+    if (!condition()) return;
+    callback(fn);
+    clearInterval(ref);
+  }, interval || 10);
+}
+}, {"callback":12}],
 92: [function(require, module, exports) {
 
 /**
@@ -12113,7 +11562,7 @@ module.exports = exports = function(analytics) {
 var Appcues = exports.Integration = integration('Appcues')
   .assumesPageview()
   .global('Appcues')
-  .option('appcuesId', '');
+  .option('apiKey', '');
 
 /**
  * Initialize.
@@ -12146,8 +11595,20 @@ Appcues.prototype.loaded = function() {
  */
 
 Appcues.prototype.load = function(callback) {
-  var id = this.options.appcuesId || 'appcues';
+  var id = this.options.apiKey || 'appcues';
   load('//fast.appcues.com/' + id + '.js', callback);
+};
+
+/**
+ * Page.
+ *
+ * http://appcues.com/docs#start
+ *
+ * @api public
+ */
+
+Appcues.prototype.page = function() {
+  window.Appcues.start();
 };
 
 /**
@@ -12163,8 +11624,8 @@ Appcues.prototype.identify = function(identify) {
   window.Appcues.identify(identify.userId(), identify.traits());
 };
 
-}, {"analytics.js-integration":206,"is":19,"load-script":214}],
-214: [function(require, module, exports) {
+}, {"analytics.js-integration":173,"is":19,"load-script":211}],
+211: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -12242,7 +11703,9 @@ var is = require('is');
 var Atatus = module.exports = integration('Atatus')
   .global('atatus')
   .option('apiKey', '')
-  .tag('<script src="//www.atatus.com/atatus.js">');
+  .option('enableSourcemap', false)
+  .option('disableAjaxMonitoring', false)
+  .tag('<script src="//dmc1acwvwny3.cloudfront.net/atatus.js">');
 
 /**
  * Initialize.
@@ -12256,9 +11719,14 @@ Atatus.prototype.initialize = function() {
   var self = this;
 
   this.load(function() {
+    var configOptions = {
+      enableSourcemap: self.options.enableSourcemap,
+      disableAjaxMonitoring: self.options.disableAjaxMonitoring
+    };
+
     // Configure Atatus and install default handler to capture uncaught
     // exceptions
-    window.atatus.config(self.options.apiKey).install();
+    window.atatus.config(self.options.apiKey, configOptions).install();
     self.ready();
   });
 };
@@ -12285,7 +11753,7 @@ Atatus.prototype.identify = function(identify) {
   window.atatus.setCustomData({ person: identify.traits() });
 };
 
-}, {"analytics.js-integration":206,"is":19}],
+}, {"analytics.js-integration":173,"is":19}],
 94: [function(require, module, exports) {
 
 /**
@@ -12361,7 +11829,7 @@ Autosend.prototype.track = function(track) {
   window._autosend.track(track.event());
 };
 
-}, {"analytics.js-integration":206}],
+}, {"analytics.js-integration":173}],
 95: [function(require, module, exports) {
 
 /**
@@ -12421,7 +11889,7 @@ Awesm.prototype.track = function(track) {
   });
 };
 
-}, {"each":4,"analytics.js-integration":206}],
+}, {"each":4,"analytics.js-integration":173}],
 96: [function(require, module, exports) {
 
 /**
@@ -12509,8 +11977,9 @@ Bing.prototype.track = function(track) {
   window.uetq.push(event);
 };
 
-}, {"analytics.js-integration":206}],
+}, {"analytics.js-integration":173}],
 97: [function(require, module, exports) {
+'use strict';
 
 /**
  * Module dependencies.
@@ -12571,8 +12040,8 @@ Blueshift.prototype.page = function(page) {
 
   var properties = page.properties();
   properties._bsft_source = 'segment.com';
-  properties.customer_id = page.userId();
-  properties.anonymousId = page.anonymousId();
+  properties.customer_id = this.analytics.user().id();
+  properties.anonymousId = this.analytics.user().anonymousId();
   properties.category = page.category();
   properties.name = page.name();
 
@@ -12582,8 +12051,11 @@ Blueshift.prototype.page = function(page) {
 /**
  * Trait Aliases.
  */
+
 var traitAliases = {
-  created: 'created_at'
+  created: 'created_at',
+  firstName: 'firstname',
+  lastName: 'lastname'
 };
 
 /**
@@ -12615,8 +12087,8 @@ Blueshift.prototype.identify = function(identify) {
 Blueshift.prototype.track = function(track) {
   var properties = track.properties();
   properties._bsft_source = 'segment.com';
-  properties.customer_id = track.userId();
-  properties.anonymousId = track.anonymousId();
+  properties.customer_id = this.analytics.user().id();
+  properties.anonymousId = this.analytics.user().anonymousId();
 
   window.blueshift.track(track.event(), removeBlankAttributes(properties));
 };
@@ -12651,7 +12123,7 @@ function removeBlankAttributes(obj) {
   }, {}, obj);
 }
 
-}, {"analytics.js-integration":206,"foldl":17}],
+}, {"analytics.js-integration":173,"foldl":17}],
 98: [function(require, module, exports) {
 
 /**
@@ -12753,7 +12225,863 @@ Bronto.prototype.completedOrder = function(track) {
   });
 };
 
-}, {"facade":215,"each":4,"analytics.js-integration":206,"querystring":216}],
+}, {"facade":9,"each":4,"analytics.js-integration":173,"querystring":212}],
+212: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var encode = encodeURIComponent;
+var decode = decodeURIComponent;
+var trim = require('trim');
+var type = require('type');
+
+/**
+ * Parse the given query `str`.
+ *
+ * @param {String} str
+ * @return {Object}
+ * @api public
+ */
+
+exports.parse = function(str){
+  if ('string' != typeof str) return {};
+
+  str = trim(str);
+  if ('' == str) return {};
+  if ('?' == str.charAt(0)) str = str.slice(1);
+
+  var obj = {};
+  var pairs = str.split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var parts = pairs[i].split('=');
+    var key = decode(parts[0]);
+    var m;
+
+    if (m = /(\w+)\[(\d+)\]/.exec(key)) {
+      obj[m[1]] = obj[m[1]] || [];
+      obj[m[1]][m[2]] = decode(parts[1]);
+      continue;
+    }
+
+    obj[parts[0]] = null == parts[1]
+      ? ''
+      : decode(parts[1]);
+  }
+
+  return obj;
+};
+
+/**
+ * Stringify the given `obj`.
+ *
+ * @param {Object} obj
+ * @return {String}
+ * @api public
+ */
+
+exports.stringify = function(obj){
+  if (!obj) return '';
+  var pairs = [];
+
+  for (var key in obj) {
+    var value = obj[key];
+
+    if ('array' == type(value)) {
+      for (var i = 0; i < value.length; ++i) {
+        pairs.push(encode(key + '[' + i + ']') + '=' + encode(value[i]));
+      }
+      continue;
+    }
+
+    pairs.push(encode(key) + '=' + encode(obj[key]));
+  }
+
+  return pairs.join('&');
+};
+
+}, {"trim":55,"type":48}],
+99: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
+var tick = require('next-tick');
+
+/**
+ * Expose `BugHerd` integration.
+ */
+
+var BugHerd = module.exports = integration('BugHerd')
+  .assumesPageview()
+  .global('BugHerdConfig')
+  .global('_bugHerd')
+  .option('apiKey', '')
+  .option('showFeedbackTab', true)
+  .tag('<script src="//www.bugherd.com/sidebarv2.js?apikey={{ apiKey }}">');
+
+/**
+ * Initialize.
+ *
+ * http://support.bugherd.com/home
+ *
+ * @api public
+ */
+
+BugHerd.prototype.initialize = function() {
+  window.BugHerdConfig = { feedback: { hide: !this.options.showFeedbackTab } };
+  var ready = this.ready;
+  this.load(function() {
+    tick(ready);
+  });
+};
+
+/**
+ * Loaded?
+ *
+ * @api private
+ * @return {boolean}
+ */
+
+BugHerd.prototype.loaded = function() {
+  return !!window._bugHerd;
+};
+
+}, {"analytics.js-integration":173,"next-tick":58}],
+100: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
+var is = require('is');
+var extend = require('extend');
+
+/**
+ * UMD ?
+ */
+
+var umd = typeof window.define === 'function' && window.define.amd;
+
+/**
+ * Source.
+ */
+
+var src = '//d2wy8f7a9ursnm.cloudfront.net/bugsnag-2.min.js';
+
+/**
+ * Expose `Bugsnag` integration.
+ */
+
+var Bugsnag = module.exports = integration('Bugsnag')
+  .global('Bugsnag')
+  .option('apiKey', '')
+  .tag('<script src="' + src + '">');
+
+/**
+ * Initialize.
+ *
+ * https://bugsnag.com/docs/notifiers/js
+ *
+ * @api public
+ */
+
+Bugsnag.prototype.initialize = function() {
+  var self = this;
+
+  if (umd) {
+    window.require([src], function(bugsnag) {
+      bugsnag.apiKey = self.options.apiKey;
+      window.Bugsnag = bugsnag;
+      self.ready();
+    });
+    return;
+  }
+
+  this.load(function() {
+    window.Bugsnag.apiKey = self.options.apiKey;
+    self.ready();
+  });
+};
+
+/**
+ * Loaded?
+ *
+ * @api private
+ * @return {boolean}
+ */
+
+Bugsnag.prototype.loaded = function() {
+  return is.object(window.Bugsnag);
+};
+
+/**
+ * Identify.
+ *
+ * @api public
+ * @param {Identify} identify
+ */
+
+Bugsnag.prototype.identify = function(identify) {
+  window.Bugsnag.metaData = window.Bugsnag.metaData || {};
+  extend(window.Bugsnag.metaData, identify.traits());
+};
+
+}, {"analytics.js-integration":173,"is":19,"extend":71}],
+101: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
+var each = require('each');
+
+/**
+ * Expose `Chameleon` integration.
+ */
+
+var Chameleon = module.exports = integration('Chameleon')
+  .assumesPageview()
+  .readyOnInitialize()
+  .readyOnLoad()
+  .global('chmln')
+  .option('accountId', null)
+  .tag('<script src="//cdn.trychameleon.com/east/{{accountId}}.min.js"></script>');
+
+/**
+ * Initialize Chameleon.
+ *
+ * @api public
+ */
+
+Chameleon.prototype.initialize = function() {
+  /* eslint-disable */
+  (window.chmln={}),names='setup alias track set'.split(' ');for (var i=0;i<names.length;i++){(function(){var t=chmln[names[i]+'_a']=[];chmln[names[i]]=function(){t.push(arguments);};})() };
+  /* eslint-enable */
+
+  this.ready();
+  this.load();
+};
+
+/**
+ * Has the Chameleon library been loaded yet?
+ *
+ * @api private
+ * @return {boolean}
+ */
+
+Chameleon.prototype.loaded = function() {
+  return !!window.chmln;
+};
+
+/**
+ * Identify a user.
+ *
+ * @api public
+ * @param {Facade} identify
+ */
+
+Chameleon.prototype.identify = function(identify) {
+  var options = identify.traits();
+
+  options.uid = options.id || identify.userId() || identify.anonymousId();
+  delete options.id;
+
+  window.chmln.setup(options);
+};
+
+/**
+ * Associate the current user with a group of users.
+ *
+ * @api public
+ * @param {Facade} group
+ */
+
+Chameleon.prototype.group = function(group) {
+  var options = {};
+
+  each(group.traits(), function(key, value) {
+    options['group:' + key] = value;
+  });
+
+  options['group:id'] = group.groupId();
+
+  window.chmln.set(options);
+};
+
+/**
+ * Track an event.
+ *
+ * @param {Facade} track
+ */
+
+Chameleon.prototype.track = function(track) {
+  window.chmln.track(track.event(), track.properties());
+};
+
+/**
+ * Change the user identifier after we know who they are.
+ *
+ * @param {Facade} alias
+ */
+
+Chameleon.prototype.alias = function(alias) {
+  var fromId = alias.previousId() || alias.anonymousId();
+
+  window.chmln.alias({ from: fromId, to: alias.userId() });
+};
+
+}, {"analytics.js-integration":173,"each":4}],
+102: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var defaults = require('defaults');
+var integration = require('analytics.js-integration');
+var onBody = require('on-body');
+
+/**
+ * Expose `Chartbeat` integration.
+ */
+
+var Chartbeat = module.exports = integration('Chartbeat')
+  .assumesPageview()
+  .global('_sf_async_config')
+  .global('_sf_endpt')
+  .global('pSUPERFLY')
+  .option('domain', '')
+  .option('uid', null)
+  .option('video', false)
+  .tag('<script src="//static.chartbeat.com/js/{{ script }}">');
+
+/**
+ * Initialize.
+ *
+ * http://chartbeat.com/docs/configuration_variables/
+ *
+ * @api public
+ */
+
+Chartbeat.prototype.initialize = function() {
+  var self = this;
+  var script = this.options.video ? 'chartbeat_video.js' : 'chartbeat.js';
+
+  window._sf_async_config = window._sf_async_config || {};
+  window._sf_async_config.useCanonical = true;
+  defaults(window._sf_async_config, {
+    domain: this.options.domain,
+    uid: this.options.uid
+  });
+
+  onBody(function() {
+    window._sf_endpt = new Date().getTime();
+    // Note: Chartbeat depends on document.body existing so the script does
+    // not load until that is confirmed. Otherwise it may trigger errors.
+    self.load({ script: script }, self.ready);
+  });
+};
+
+/**
+ * Loaded?
+ *
+ * @api private
+ * @return {boolean}
+ */
+
+Chartbeat.prototype.loaded = function() {
+  return !!window.pSUPERFLY;
+};
+
+/**
+ * Page.
+ *
+ * http://chartbeat.com/docs/handling_virtual_page_changes/
+ *
+ * @api public
+ * @param {Page} page
+ */
+
+Chartbeat.prototype.page = function(page) {
+  var category = page.category();
+  if (category) window._sf_async_config.sections = category;
+  var author = page.proxy('properties.author');
+  if (author) window._sf_async_config.authors = author;
+  var props = page.properties();
+  var name = page.fullName();
+  window.pSUPERFLY.virtualPage(props.path, name || props.title);
+};
+
+}, {"defaults":213,"analytics.js-integration":173,"on-body":214}],
+213: [function(require, module, exports) {
+/**
+ * Expose `defaults`.
+ */
+module.exports = defaults;
+
+function defaults (dest, defaults) {
+  for (var prop in defaults) {
+    if (! (prop in dest)) {
+      dest[prop] = defaults[prop];
+    }
+  }
+
+  return dest;
+};
+
+}, {}],
+214: [function(require, module, exports) {
+var each = require('each');
+
+
+/**
+ * Cache whether `<body>` exists.
+ */
+
+var body = false;
+
+
+/**
+ * Callbacks to call when the body exists.
+ */
+
+var callbacks = [];
+
+
+/**
+ * Export a way to add handlers to be invoked once the body exists.
+ *
+ * @param {Function} callback  A function to call when the body exists.
+ */
+
+module.exports = function onBody (callback) {
+  if (body) {
+    call(callback);
+  } else {
+    callbacks.push(callback);
+  }
+};
+
+
+/**
+ * Set an interval to check for `document.body`.
+ */
+
+var interval = setInterval(function () {
+  if (!document.body) return;
+  body = true;
+  each(callbacks, call);
+  clearInterval(interval);
+}, 5);
+
+
+/**
+ * Call a callback, passing it the body.
+ *
+ * @param {Function} callback  The callback to call.
+ */
+
+function call (callback) {
+  callback(document.body);
+}
+}, {"each":186}],
+103: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var Identify = require('facade').Identify;
+var extend = require('extend');
+var integration = require('analytics.js-integration');
+var is = require('is');
+
+/**
+ * Expose `Clicky` integration.
+ */
+
+var Clicky = module.exports = integration('Clicky')
+  .assumesPageview()
+  .global('clicky')
+  .global('clicky_site_ids')
+  .global('clicky_custom')
+  .option('siteId', null)
+  .tag('<script src="//static.getclicky.com/js"></script>');
+
+/**
+ * Initialize.
+ *
+ * http://clicky.com/help/customization
+ *
+ * @api public
+ */
+
+Clicky.prototype.initialize = function() {
+  var user = this.analytics.user();
+  window.clicky_site_ids = window.clicky_site_ids || [this.options.siteId];
+  this.identify(new Identify({
+    userId: user.id(),
+    traits: user.traits()
+  }));
+  this.load(this.ready);
+};
+
+/**
+ * Loaded?
+ *
+ * @api private
+ * @return {boolean}
+ */
+
+Clicky.prototype.loaded = function() {
+  return is.object(window.clicky);
+};
+
+/**
+ * Page.
+ *
+ * http://clicky.com/help/customization#/help/custom/manual
+ *
+ * @api public
+ * @param {Page} page
+ */
+
+Clicky.prototype.page = function(page) {
+  var properties = page.properties();
+  var name = page.fullName();
+  window.clicky.log(properties.path, name || properties.title);
+};
+
+/**
+ * Identify.
+ *
+ * @api public
+ * @param {Identify} [id]
+ */
+
+Clicky.prototype.identify = function(identify) {
+  window.clicky_custom = window.clicky_custom || {};
+  window.clicky_custom.session = window.clicky_custom.session || {};
+  var traits = identify.traits();
+
+  var username = identify.username();
+  var email = identify.email();
+  var name = identify.name();
+
+  if (username || email || name) traits.username = username || email || name;
+
+  extend(window.clicky_custom.session, traits);
+};
+
+/**
+ * Track.
+ *
+ * http://clicky.com/help/customization#/help/custom/manual
+ *
+ * @api public
+ * @param {Track} event
+ */
+
+Clicky.prototype.track = function(track) {
+  window.clicky.goal(track.event(), track.revenue());
+};
+
+}, {"facade":9,"extend":71,"analytics.js-integration":173,"is":19}],
+104: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
+var useHttps = require('use-https');
+
+/**
+ * Expose `Comscore` integration.
+ */
+
+var Comscore = module.exports = integration('comScore')
+  .assumesPageview()
+  .global('_comscore')
+  .global('COMSCORE')
+  .option('c1', '2')
+  .option('c2', '')
+  .tag('http', '<script src="http://b.scorecardresearch.com/beacon.js">')
+  .tag('https', '<script src="https://sb.scorecardresearch.com/beacon.js">');
+
+/**
+ * Initialize.
+ *
+ * @api public
+ */
+
+Comscore.prototype.initialize = function() {
+  window._comscore = window._comscore || [this.options];
+  var tagName = useHttps() ? 'https' : 'http';
+  this.load(tagName, this.ready);
+};
+
+/**
+ * Loaded?
+ *
+ * @api private
+ * @return {boolean}
+ */
+
+Comscore.prototype.loaded = function() {
+  return !!window.COMSCORE;
+};
+
+/**
+ * Page.
+ *
+ * @api public
+ * @param {Object} page
+ */
+
+Comscore.prototype.page = function() {
+  window.COMSCORE.beacon(this.options);
+};
+
+}, {"analytics.js-integration":173,"use-https":207}],
+105: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var integration = require('analytics.js-integration');
+
+/**
+ * Expose `CrazyEgg` integration.
+ */
+
+var CrazyEgg = module.exports = integration('Crazy Egg')
+  .assumesPageview()
+  .global('CE2')
+  .option('accountNumber', '')
+  .tag('<script src="//dnn506yrbagrg.cloudfront.net/pages/scripts/{{ path }}.js?{{ cacheBuster }}">');
+
+/**
+ * Initialize.
+ *
+ * @api public
+ */
+
+CrazyEgg.prototype.initialize = function() {
+  var number = this.options.accountNumber;
+  var path = number.slice(0, 4) + '/' + number.slice(4);
+  var cacheBuster = Math.floor(new Date().getTime() / 3600000);
+  this.load({ path: path, cacheBuster: cacheBuster }, this.ready);
+};
+
+/**
+ * Loaded?
+ *
+ * @api private
+ * @return {boolean}
+ */
+
+CrazyEgg.prototype.loaded = function() {
+  return !!window.CE2;
+};
+
+}, {"analytics.js-integration":173}],
+106: [function(require, module, exports) {
+
+/**
+ * Module dependencies.
+ */
+
+var Identify = require('facade').Identify;
+var Track = require('facade').Track;
+var bind = require('bind');
+var each = require('each');
+var integration = require('analytics.js-integration');
+var iso = require('to-iso-string');
+var push = require('global-queue')('_curebitq');
+var throttle = require('throttle');
+var when = require('when');
+
+/**
+ * Expose `Curebit` integration.
+ */
+
+var Curebit = module.exports = integration('Curebit')
+  .global('_curebitq')
+  .global('curebit')
+  .option('campaigns', {})
+  .option('device', '')
+  .option('iframeBorder', 0)
+  .option('iframeHeight', '480')
+  .option('iframeId', 'curebit_integration')
+  .option('iframeWidth', '100%')
+  .option('insertIntoId', '')
+  .option('responsive', true)
+  .option('server', 'https://www.curebit.com')
+  .option('siteId', '')
+  .option('customUrl', '')
+  .tag('<script src="{{ src }}">');
+
+/**
+ * Initialize.
+ *
+ * @api public
+ */
+
+Curebit.prototype.initialize = function() {
+  var url = this.options.customUrl || '//d2jjzw81hqbuqv.cloudfront.net/integration/curebit-1.0.min.js';
+
+  push('init', { site_id: this.options.siteId, server: this.options.server });
+  this.load({ src: url }, this.ready);
+
+  // throttle the call to `page` since curebit needs to append an iframe
+  this.page = throttle(bind(this, this.page), 250);
+};
+
+/**
+ * Loaded?
+ *
+ * @api private
+ * @return {boolean}
+ */
+
+Curebit.prototype.loaded = function() {
+  return !!window.curebit;
+};
+
+/**
+ * Page.
+ *
+ * Call the `register_affiliate` method of the Curebit API that will load a
+ * custom iframe onto the page, only if this page's path is marked as a
+ * campaign.
+ *
+ * http://www.curebit.com/docs/affiliate/registration
+ *
+ * This is throttled to prevent accidentally drawing the iframe multiple times,
+ * from multiple `.page()` calls. The `250` is from the curebit script.
+ *
+ * @api private
+ * @param {String} url
+ * @param {String} id
+ * @param {Function} fn
+ */
+
+// FIXME: Is this deprecated? Seems unused
+Curebit.prototype.injectIntoId = function(url, id, fn) {
+  when(function() {
+    return document.getElementById(id);
+  }, function() {
+    var script = document.createElement('script');
+    script.src = url;
+    var parent = document.getElementById(id);
+    parent.appendChild(script);
+    onload(script, fn);
+  });
+};
+
+/**
+ * Campaign tags.
+ *
+ * @api public
+ * @param {Page} page
+ */
+
+Curebit.prototype.page = function() {
+  var user = this.analytics.user();
+  var campaigns = this.options.campaigns;
+  var path = window.location.pathname;
+  if (!campaigns[path]) return;
+
+  var tags = (campaigns[path] || '').split(',');
+  if (!tags.length) return;
+
+  var settings = {
+    responsive: this.options.responsive,
+    device: this.options.device,
+    campaign_tags: tags,
+    iframe: {
+      width: this.options.iframeWidth,
+      height: this.options.iframeHeight,
+      id: this.options.iframeId,
+      frameborder: this.options.iframeBorder,
+      container: this.options.insertIntoId
+    }
+  };
+
+  var identify = new Identify({
+    userId: user.id(),
+    traits: user.traits()
+  });
+
+  // if we have an email, add any information about the user
+  if (identify.email()) {
+    settings.affiliate_member = {
+      email: identify.email(),
+      first_name: identify.firstName(),
+      last_name: identify.lastName(),
+      customer_id: identify.userId()
+    };
+  }
+
+  push('register_affiliate', settings);
+};
+
+/**
+ * Completed order.
+ *
+ * Fire the Curebit `register_purchase` with the order details and items.
+ *
+ * https://www.curebit.com/docs/ecommerce/custom
+ *
+ * @api public
+ * @param {Track} track
+ */
+
+Curebit.prototype.completedOrder = function(track) {
+  var user = this.analytics.user();
+  var orderId = track.orderId();
+  var products = track.products();
+  var props = track.properties();
+  var items = [];
+  var identify = new Identify({
+    traits: user.traits(),
+    userId: user.id()
+  });
+
+  each(products, function(product) {
+    var track = new Track({ properties: product });
+    items.push({
+      product_id: track.id() || track.sku(),
+      quantity: track.quantity(),
+      image_url: product.image,
+      price: track.price(),
+      title: track.name(),
+      url: product.url
+    });
+  });
+
+  push('register_purchase', {
+    order_date: iso(props.date || new Date()),
+    order_number: orderId,
+    coupon_code: track.coupon(),
+    subtotal: track.total(),
+    customer_id: identify.userId(),
+    first_name: identify.firstName(),
+    last_name: identify.lastName(),
+    email: identify.email(),
+    items: items
+  });
+};
+
+}, {"facade":215,"bind":56,"each":4,"analytics.js-integration":173,"to-iso-string":216,"global-queue":217,"throttle":218,"when":210}],
 215: [function(require, module, exports) {
 
 var Facade = require('./facade');
@@ -12775,8 +13103,8 @@ Facade.Track = require('./track');
 Facade.Page = require('./page');
 Facade.Screen = require('./screen');
 
-}, {"./facade":217,"./alias":218,"./group":219,"./identify":220,"./track":221,"./page":222,"./screen":223}],
-217: [function(require, module, exports) {
+}, {"./facade":219,"./alias":220,"./group":221,"./identify":222,"./track":223,"./page":224,"./screen":225}],
+219: [function(require, module, exports) {
 
 var traverse = require('isodate-traverse');
 var isEnabled = require('./is-enabled');
@@ -13087,8 +13415,8 @@ function transform(obj){
   return cloned;
 }
 
-}, {"isodate-traverse":39,"./is-enabled":224,"./utils":225,"./address":226,"obj-case":43,"new-date":44}],
-224: [function(require, module, exports) {
+}, {"isodate-traverse":39,"./is-enabled":226,"./utils":227,"./address":228,"obj-case":43,"new-date":44}],
+226: [function(require, module, exports) {
 
 /**
  * A few integrations are disabled by default. They must be explicitly
@@ -13110,7 +13438,7 @@ module.exports = function (integration) {
   return ! disabled[integration];
 };
 }, {}],
-225: [function(require, module, exports) {
+227: [function(require, module, exports) {
 
 /**
  * TODO: use component symlink, everywhere ?
@@ -13127,7 +13455,7 @@ try {
 }
 
 }, {"inherit":49,"clone":50,"type":48}],
-226: [function(require, module, exports) {
+228: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13166,7 +13494,7 @@ module.exports = function(proto){
 };
 
 }, {"obj-case":43}],
-218: [function(require, module, exports) {
+220: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13237,8 +13565,8 @@ Alias.prototype.userId = function(){
     || this.field('to');
 };
 
-}, {"./utils":225,"./facade":217}],
-219: [function(require, module, exports) {
+}, {"./utils":227,"./facade":219}],
+221: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -13367,8 +13695,8 @@ Group.prototype.properties = function(){
     || {};
 };
 
-}, {"./utils":225,"./address":226,"is-email":54,"new-date":44,"./facade":217}],
-220: [function(require, module, exports) {
+}, {"./utils":227,"./address":228,"is-email":54,"new-date":44,"./facade":219}],
+222: [function(require, module, exports) {
 
 var address = require('./address');
 var Facade = require('./facade');
@@ -13618,8 +13946,8 @@ Identify.prototype.address = Facade.proxy('traits.address');
 Identify.prototype.gender = Facade.proxy('traits.gender');
 Identify.prototype.birthday = Facade.proxy('traits.birthday');
 
-}, {"./address":226,"./facade":217,"is-email":54,"new-date":44,"./utils":225,"obj-case":43,"trim":55}],
-221: [function(require, module, exports) {
+}, {"./address":228,"./facade":219,"is-email":54,"new-date":44,"./utils":227,"obj-case":43,"trim":55}],
+223: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var clone = require('./utils').clone;
@@ -13909,8 +14237,8 @@ function currency(val) {
   if (!isNaN(val)) return val;
 }
 
-}, {"./utils":225,"./facade":217,"./identify":220,"is-email":54,"obj-case":43}],
-222: [function(require, module, exports) {
+}, {"./utils":227,"./facade":219,"./identify":222,"is-email":54,"obj-case":43}],
+224: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Facade = require('./facade');
@@ -14048,8 +14376,8 @@ Page.prototype.track = function(name){
   });
 };
 
-}, {"./utils":225,"./facade":217,"./track":221}],
-223: [function(require, module, exports) {
+}, {"./utils":227,"./facade":219,"./track":223}],
+225: [function(require, module, exports) {
 
 var inherit = require('./utils').inherit;
 var Page = require('./page');
@@ -14125,856 +14453,8 @@ Screen.prototype.track = function(name){
   });
 };
 
-}, {"./utils":225,"./page":222,"./track":221}],
+}, {"./utils":227,"./page":224,"./track":223}],
 216: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var encode = encodeURIComponent;
-var decode = decodeURIComponent;
-var trim = require('trim');
-var type = require('type');
-
-/**
- * Parse the given query `str`.
- *
- * @param {String} str
- * @return {Object}
- * @api public
- */
-
-exports.parse = function(str){
-  if ('string' != typeof str) return {};
-
-  str = trim(str);
-  if ('' == str) return {};
-  if ('?' == str.charAt(0)) str = str.slice(1);
-
-  var obj = {};
-  var pairs = str.split('&');
-  for (var i = 0; i < pairs.length; i++) {
-    var parts = pairs[i].split('=');
-    var key = decode(parts[0]);
-    var m;
-
-    if (m = /(\w+)\[(\d+)\]/.exec(key)) {
-      obj[m[1]] = obj[m[1]] || [];
-      obj[m[1]][m[2]] = decode(parts[1]);
-      continue;
-    }
-
-    obj[parts[0]] = null == parts[1]
-      ? ''
-      : decode(parts[1]);
-  }
-
-  return obj;
-};
-
-/**
- * Stringify the given `obj`.
- *
- * @param {Object} obj
- * @return {String}
- * @api public
- */
-
-exports.stringify = function(obj){
-  if (!obj) return '';
-  var pairs = [];
-
-  for (var key in obj) {
-    var value = obj[key];
-
-    if ('array' == type(value)) {
-      for (var i = 0; i < value.length; ++i) {
-        pairs.push(encode(key + '[' + i + ']') + '=' + encode(value[i]));
-      }
-      continue;
-    }
-
-    pairs.push(encode(key) + '=' + encode(obj[key]));
-  }
-
-  return pairs.join('&');
-};
-
-}, {"trim":55,"type":48}],
-99: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var integration = require('analytics.js-integration');
-var tick = require('next-tick');
-
-/**
- * Expose `BugHerd` integration.
- */
-
-var BugHerd = module.exports = integration('BugHerd')
-  .assumesPageview()
-  .global('BugHerdConfig')
-  .global('_bugHerd')
-  .option('apiKey', '')
-  .option('showFeedbackTab', true)
-  .tag('<script src="//www.bugherd.com/sidebarv2.js?apikey={{ apiKey }}">');
-
-/**
- * Initialize.
- *
- * http://support.bugherd.com/home
- *
- * @api public
- */
-
-BugHerd.prototype.initialize = function() {
-  window.BugHerdConfig = { feedback: { hide: !this.options.showFeedbackTab } };
-  var ready = this.ready;
-  this.load(function() {
-    tick(ready);
-  });
-};
-
-/**
- * Loaded?
- *
- * @api private
- * @return {boolean}
- */
-
-BugHerd.prototype.loaded = function() {
-  return !!window._bugHerd;
-};
-
-}, {"analytics.js-integration":206,"next-tick":58}],
-100: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var integration = require('analytics.js-integration');
-var is = require('is');
-var extend = require('extend');
-
-/**
- * UMD ?
- */
-
-var umd = typeof window.define === 'function' && window.define.amd;
-
-/**
- * Source.
- */
-
-var src = '//d2wy8f7a9ursnm.cloudfront.net/bugsnag-2.min.js';
-
-/**
- * Expose `Bugsnag` integration.
- */
-
-var Bugsnag = module.exports = integration('Bugsnag')
-  .global('Bugsnag')
-  .option('apiKey', '')
-  .tag('<script src="' + src + '">');
-
-/**
- * Initialize.
- *
- * https://bugsnag.com/docs/notifiers/js
- *
- * @api public
- */
-
-Bugsnag.prototype.initialize = function() {
-  var self = this;
-
-  if (umd) {
-    window.require([src], function(bugsnag) {
-      bugsnag.apiKey = self.options.apiKey;
-      window.Bugsnag = bugsnag;
-      self.ready();
-    });
-    return;
-  }
-
-  this.load(function() {
-    window.Bugsnag.apiKey = self.options.apiKey;
-    self.ready();
-  });
-};
-
-/**
- * Loaded?
- *
- * @api private
- * @return {boolean}
- */
-
-Bugsnag.prototype.loaded = function() {
-  return is.object(window.Bugsnag);
-};
-
-/**
- * Identify.
- *
- * @api public
- * @param {Identify} identify
- */
-
-Bugsnag.prototype.identify = function(identify) {
-  window.Bugsnag.metaData = window.Bugsnag.metaData || {};
-  extend(window.Bugsnag.metaData, identify.traits());
-};
-
-}, {"analytics.js-integration":206,"is":19,"extend":71}],
-101: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var integration = require('analytics.js-integration');
-var each = require('each');
-
-/**
- * Expose `Chameleon` integration.
- */
-
-var Chameleon = module.exports = integration('Chameleon')
-  .assumesPageview()
-  .readyOnInitialize()
-  .readyOnLoad()
-  .global('chmln')
-  .option('accountId', null)
-  .tag('<script src="//cdn.trychameleon.com/east/{{accountId}}.min.js"></script>');
-
-/**
- * Initialize Chameleon.
- *
- * @api public
- */
-
-Chameleon.prototype.initialize = function() {
-  /* eslint-disable */
-  (window.chmln={}),names='setup alias track set'.split(' ');for (var i=0;i<names.length;i++){(function(){var t=chmln[names[i]+'_a']=[];chmln[names[i]]=function(){t.push(arguments);};})() };
-  /* eslint-enable */
-
-  this.ready();
-  this.load();
-};
-
-/**
- * Has the Chameleon library been loaded yet?
- *
- * @api private
- * @return {boolean}
- */
-
-Chameleon.prototype.loaded = function() {
-  return !!window.chmln;
-};
-
-/**
- * Identify a user.
- *
- * @api public
- * @param {Facade} identify
- */
-
-Chameleon.prototype.identify = function(identify) {
-  var options = identify.traits();
-
-  options.uid = options.id || identify.userId() || identify.anonymousId();
-  delete options.id;
-
-  window.chmln.setup(options);
-};
-
-/**
- * Associate the current user with a group of users.
- *
- * @api public
- * @param {Facade} group
- */
-
-Chameleon.prototype.group = function(group) {
-  var options = {};
-
-  each(group.traits(), function(key, value) {
-    options['group:' + key] = value;
-  });
-
-  options['group:id'] = group.groupId();
-
-  window.chmln.set(options);
-};
-
-/**
- * Track an event.
- *
- * @param {Facade} track
- */
-
-Chameleon.prototype.track = function(track) {
-  window.chmln.track(track.event(), track.properties());
-};
-
-/**
- * Change the user identifier after we know who they are.
- *
- * @param {Facade} alias
- */
-
-Chameleon.prototype.alias = function(alias) {
-  var fromId = alias.previousId() || alias.anonymousId();
-
-  window.chmln.alias({ from: fromId, to: alias.userId() });
-};
-
-}, {"analytics.js-integration":206,"each":4}],
-102: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var defaults = require('defaults');
-var integration = require('analytics.js-integration');
-var onBody = require('on-body');
-
-/**
- * Expose `Chartbeat` integration.
- */
-
-var Chartbeat = module.exports = integration('Chartbeat')
-  .assumesPageview()
-  .global('_sf_async_config')
-  .global('_sf_endpt')
-  .global('pSUPERFLY')
-  .option('domain', '')
-  .option('uid', null)
-  .tag('<script src="//static.chartbeat.com/js/chartbeat.js">');
-
-/**
- * Initialize.
- *
- * http://chartbeat.com/docs/configuration_variables/
- *
- * @api public
- */
-
-Chartbeat.prototype.initialize = function() {
-  var self = this;
-
-  window._sf_async_config = window._sf_async_config || {};
-  window._sf_async_config.useCanonical = true;
-  defaults(window._sf_async_config, this.options);
-
-  onBody(function() {
-    window._sf_endpt = new Date().getTime();
-    // Note: Chartbeat depends on document.body existing so the script does
-    // not load until that is confirmed. Otherwise it may trigger errors.
-    self.load(self.ready);
-  });
-};
-
-/**
- * Loaded?
- *
- * @api private
- * @return {boolean}
- */
-
-Chartbeat.prototype.loaded = function() {
-  return !!window.pSUPERFLY;
-};
-
-/**
- * Page.
- *
- * http://chartbeat.com/docs/handling_virtual_page_changes/
- *
- * @api public
- * @param {Page} page
- */
-
-Chartbeat.prototype.page = function(page) {
-  var category = page.category();
-  if (category) window._sf_async_config.sections = category;
-  var author = page.proxy('properties.author');
-  if (author) window._sf_async_config.authors = author;
-  var props = page.properties();
-  var name = page.fullName();
-  window.pSUPERFLY.virtualPage(props.path, name || props.title);
-};
-
-}, {"defaults":227,"analytics.js-integration":206,"on-body":228}],
-227: [function(require, module, exports) {
-/**
- * Expose `defaults`.
- */
-module.exports = defaults;
-
-function defaults (dest, defaults) {
-  for (var prop in defaults) {
-    if (! (prop in dest)) {
-      dest[prop] = defaults[prop];
-    }
-  }
-
-  return dest;
-};
-
-}, {}],
-228: [function(require, module, exports) {
-var each = require('each');
-
-
-/**
- * Cache whether `<body>` exists.
- */
-
-var body = false;
-
-
-/**
- * Callbacks to call when the body exists.
- */
-
-var callbacks = [];
-
-
-/**
- * Export a way to add handlers to be invoked once the body exists.
- *
- * @param {Function} callback  A function to call when the body exists.
- */
-
-module.exports = function onBody (callback) {
-  if (body) {
-    call(callback);
-  } else {
-    callbacks.push(callback);
-  }
-};
-
-
-/**
- * Set an interval to check for `document.body`.
- */
-
-var interval = setInterval(function () {
-  if (!document.body) return;
-  body = true;
-  each(callbacks, call);
-  clearInterval(interval);
-}, 5);
-
-
-/**
- * Call a callback, passing it the body.
- *
- * @param {Function} callback  The callback to call.
- */
-
-function call (callback) {
-  callback(document.body);
-}
-}, {"each":186}],
-103: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var Identify = require('facade').Identify;
-var extend = require('extend');
-var integration = require('analytics.js-integration');
-var is = require('is');
-
-/**
- * Expose `Clicky` integration.
- */
-
-var Clicky = module.exports = integration('Clicky')
-  .assumesPageview()
-  .global('clicky')
-  .global('clicky_site_ids')
-  .global('clicky_custom')
-  .option('siteId', null)
-  .tag('<script src="//static.getclicky.com/js"></script>');
-
-/**
- * Initialize.
- *
- * http://clicky.com/help/customization
- *
- * @api public
- */
-
-Clicky.prototype.initialize = function() {
-  var user = this.analytics.user();
-  window.clicky_site_ids = window.clicky_site_ids || [this.options.siteId];
-  this.identify(new Identify({
-    userId: user.id(),
-    traits: user.traits()
-  }));
-  this.load(this.ready);
-};
-
-/**
- * Loaded?
- *
- * @api private
- * @return {boolean}
- */
-
-Clicky.prototype.loaded = function() {
-  return is.object(window.clicky);
-};
-
-/**
- * Page.
- *
- * http://clicky.com/help/customization#/help/custom/manual
- *
- * @api public
- * @param {Page} page
- */
-
-Clicky.prototype.page = function(page) {
-  var properties = page.properties();
-  var name = page.fullName();
-  window.clicky.log(properties.path, name || properties.title);
-};
-
-/**
- * Identify.
- *
- * @api public
- * @param {Identify} [id]
- */
-
-Clicky.prototype.identify = function(identify) {
-  window.clicky_custom = window.clicky_custom || {};
-  window.clicky_custom.session = window.clicky_custom.session || {};
-  var traits = identify.traits();
-
-  var username = identify.username();
-  var email = identify.email();
-  var name = identify.name();
-
-  if (username || email || name) traits.username = username || email || name;
-
-  extend(window.clicky_custom.session, traits);
-};
-
-/**
- * Track.
- *
- * http://clicky.com/help/customization#/help/custom/manual
- *
- * @api public
- * @param {Track} event
- */
-
-Clicky.prototype.track = function(track) {
-  window.clicky.goal(track.event(), track.revenue());
-};
-
-}, {"facade":215,"extend":71,"analytics.js-integration":206,"is":19}],
-104: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var integration = require('analytics.js-integration');
-var useHttps = require('use-https');
-
-/**
- * Expose `Comscore` integration.
- */
-
-var Comscore = module.exports = integration('comScore')
-  .assumesPageview()
-  .global('_comscore')
-  .global('COMSCORE')
-  .option('c1', '2')
-  .option('c2', '')
-  .tag('http', '<script src="http://b.scorecardresearch.com/beacon.js">')
-  .tag('https', '<script src="https://sb.scorecardresearch.com/beacon.js">');
-
-/**
- * Initialize.
- *
- * @api public
- */
-
-Comscore.prototype.initialize = function() {
-  window._comscore = window._comscore || [this.options];
-  var tagName = useHttps() ? 'https' : 'http';
-  this.load(tagName, this.ready);
-};
-
-/**
- * Loaded?
- *
- * @api private
- * @return {boolean}
- */
-
-Comscore.prototype.loaded = function() {
-  return !!window.COMSCORE;
-};
-
-/**
- * Page.
- *
- * @api public
- * @param {Object} page
- */
-
-Comscore.prototype.page = function() {
-  window.COMSCORE.beacon(this.options);
-};
-
-}, {"analytics.js-integration":206,"use-https":208}],
-105: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var integration = require('analytics.js-integration');
-
-/**
- * Expose `CrazyEgg` integration.
- */
-
-var CrazyEgg = module.exports = integration('Crazy Egg')
-  .assumesPageview()
-  .global('CE2')
-  .option('accountNumber', '')
-  .tag('<script src="//dnn506yrbagrg.cloudfront.net/pages/scripts/{{ path }}.js?{{ cacheBuster }}">');
-
-/**
- * Initialize.
- *
- * @api public
- */
-
-CrazyEgg.prototype.initialize = function() {
-  var number = this.options.accountNumber;
-  var path = number.slice(0, 4) + '/' + number.slice(4);
-  var cacheBuster = Math.floor(new Date().getTime() / 3600000);
-  this.load({ path: path, cacheBuster: cacheBuster }, this.ready);
-};
-
-/**
- * Loaded?
- *
- * @api private
- * @return {boolean}
- */
-
-CrazyEgg.prototype.loaded = function() {
-  return !!window.CE2;
-};
-
-}, {"analytics.js-integration":206}],
-106: [function(require, module, exports) {
-
-/**
- * Module dependencies.
- */
-
-var Identify = require('facade').Identify;
-var Track = require('facade').Track;
-var bind = require('bind');
-var each = require('each');
-var integration = require('analytics.js-integration');
-var iso = require('to-iso-string');
-var push = require('global-queue')('_curebitq');
-var throttle = require('throttle');
-var when = require('when');
-
-/**
- * Expose `Curebit` integration.
- */
-
-var Curebit = module.exports = integration('Curebit')
-  .global('_curebitq')
-  .global('curebit')
-  .option('campaigns', {})
-  .option('device', '')
-  .option('iframeBorder', 0)
-  .option('iframeHeight', '480')
-  .option('iframeId', 'curebit_integration')
-  .option('iframeWidth', '100%')
-  .option('insertIntoId', '')
-  .option('responsive', true)
-  .option('server', 'https://www.curebit.com')
-  .option('siteId', '')
-  .tag('<script src="//d2jjzw81hqbuqv.cloudfront.net/integration/curebit-1.0.min.js">');
-
-/**
- * Initialize.
- *
- * @api public
- */
-
-Curebit.prototype.initialize = function() {
-  push('init', { site_id: this.options.siteId, server: this.options.server });
-  this.load(this.ready);
-
-  // throttle the call to `page` since curebit needs to append an iframe
-  this.page = throttle(bind(this, this.page), 250);
-};
-
-/**
- * Loaded?
- *
- * @api private
- * @return {boolean}
- */
-
-Curebit.prototype.loaded = function() {
-  return !!window.curebit;
-};
-
-/**
- * Page.
- *
- * Call the `register_affiliate` method of the Curebit API that will load a
- * custom iframe onto the page, only if this page's path is marked as a
- * campaign.
- *
- * http://www.curebit.com/docs/affiliate/registration
- *
- * This is throttled to prevent accidentally drawing the iframe multiple times,
- * from multiple `.page()` calls. The `250` is from the curebit script.
- *
- * @api private
- * @param {String} url
- * @param {String} id
- * @param {Function} fn
- */
-
-// FIXME: Is this deprecated? Seems unused
-Curebit.prototype.injectIntoId = function(url, id, fn) {
-  when(function() {
-    return document.getElementById(id);
-  }, function() {
-    var script = document.createElement('script');
-    script.src = url;
-    var parent = document.getElementById(id);
-    parent.appendChild(script);
-    onload(script, fn);
-  });
-};
-
-/**
- * Campaign tags.
- *
- * @api public
- * @param {Page} page
- */
-
-Curebit.prototype.page = function() {
-  var user = this.analytics.user();
-  var campaigns = this.options.campaigns;
-  var path = window.location.pathname;
-  if (!campaigns[path]) return;
-
-  var tags = (campaigns[path] || '').split(',');
-  if (!tags.length) return;
-
-  var settings = {
-    responsive: this.options.responsive,
-    device: this.options.device,
-    campaign_tags: tags,
-    iframe: {
-      width: this.options.iframeWidth,
-      height: this.options.iframeHeight,
-      id: this.options.iframeId,
-      frameborder: this.options.iframeBorder,
-      container: this.options.insertIntoId
-    }
-  };
-
-  var identify = new Identify({
-    userId: user.id(),
-    traits: user.traits()
-  });
-
-  // if we have an email, add any information about the user
-  if (identify.email()) {
-    settings.affiliate_member = {
-      email: identify.email(),
-      first_name: identify.firstName(),
-      last_name: identify.lastName(),
-      customer_id: identify.userId()
-    };
-  }
-
-  push('register_affiliate', settings);
-};
-
-/**
- * Completed order.
- *
- * Fire the Curebit `register_purchase` with the order details and items.
- *
- * https://www.curebit.com/docs/ecommerce/custom
- *
- * @api public
- * @param {Track} track
- */
-
-Curebit.prototype.completedOrder = function(track) {
-  var user = this.analytics.user();
-  var orderId = track.orderId();
-  var products = track.products();
-  var props = track.properties();
-  var items = [];
-  var identify = new Identify({
-    traits: user.traits(),
-    userId: user.id()
-  });
-
-  each(products, function(product) {
-    var track = new Track({ properties: product });
-    items.push({
-      product_id: track.id() || track.sku(),
-      quantity: track.quantity(),
-      image_url: product.image,
-      price: track.price(),
-      title: track.name(),
-      url: product.url
-    });
-  });
-
-  push('register_purchase', {
-    order_date: iso(props.date || new Date()),
-    order_number: orderId,
-    coupon_code: track.coupon(),
-    subtotal: track.total(),
-    customer_id: identify.userId(),
-    first_name: identify.firstName(),
-    last_name: identify.lastName(),
-    email: identify.email(),
-    items: items
-  });
-};
-
-}, {"facade":215,"bind":56,"each":4,"analytics.js-integration":206,"to-iso-string":229,"global-queue":230,"throttle":231,"when":232}],
-229: [function(require, module, exports) {
 
 /**
  * Expose `toIsoString`.
@@ -15016,7 +14496,7 @@ function pad (number) {
   return n.length === 1 ? '0' + n : n;
 }
 }, {}],
-230: [function(require, module, exports) {
+217: [function(require, module, exports) {
 
 /**
  * Expose `generate`.
@@ -15046,7 +14526,7 @@ function generate (name, options) {
   };
 }
 }, {}],
-231: [function(require, module, exports) {
+218: [function(require, module, exports) {
 
 /**
  * Module exports.
@@ -15079,36 +14559,6 @@ function throttle (func, wait) {
 }
 
 }, {}],
-232: [function(require, module, exports) {
-
-var callback = require('callback');
-
-
-/**
- * Expose `when`.
- */
-
-module.exports = when;
-
-
-/**
- * Loop on a short interval until `condition()` is true, then call `fn`.
- *
- * @param {Function} condition
- * @param {Function} fn
- * @param {Number} interval (optional)
- */
-
-function when (condition, fn, interval) {
-  if (condition()) return callback.async(fn);
-
-  var ref = setInterval(function () {
-    if (!condition()) return;
-    callback(fn);
-    clearInterval(ref);
-  }, interval || 10);
-}
-}, {"callback":12}],
 107: [function(require, module, exports) {
 
 /**
@@ -15221,8 +14671,8 @@ function convertDate(date) {
   return Math.floor(date.getTime() / 1000);
 }
 
-}, {"facade":215,"alias":233,"convert-dates":234,"analytics.js-integration":206}],
-233: [function(require, module, exports) {
+}, {"facade":9,"alias":229,"convert-dates":230,"analytics.js-integration":173}],
+229: [function(require, module, exports) {
 
 var type = require('type');
 
@@ -15286,7 +14736,7 @@ function aliasByFunction (obj, convert) {
   return output;
 }
 }, {"type":48,"clone":50}],
-234: [function(require, module, exports) {
+230: [function(require, module, exports) {
 
 var is = require('is');
 
@@ -15395,10 +14845,15 @@ Drip.prototype.identify = function(identify) {
   push('identify', identify.traits());
 };
 
-}, {"analytics.js-integration":206,"is":19,"global-queue":230}],
+}, {"analytics.js-integration":173,"is":19,"global-queue":217}],
 109: [function(require, module, exports) {
+'use strict';
+
 var integration = require('analytics.js-integration');
 var tick = require('next-tick');
+var objCase = require('segmentio-obj-case');
+var each = require('ndhoule-each');
+var objectKeys = require('ndhoule-keys');
 
 /**
  * Expose `Elevio` integration.
@@ -15444,17 +14899,26 @@ Elevio.prototype.identify = function(identify) {
   var name = identify.name();
   var email = identify.email();
   var plan = identify.proxy('traits.plan');
+  var traits = identify.traits();
+
+  var removeTraits = ['id', 'name', 'firstName', 'lastName', 'email'];
+
+  each(function(traitItem) {
+    if (traits.hasOwnProperty(traitItem)) {
+      objCase.del(traits, traitItem);
+    }
+  }, removeTraits);
 
   var user = {};
   user.via = 'segment';
   if (email) user.email = email;
   if (name) user.name = name;
   if (plan) user.plan = [plan];
-
+  if (objectKeys(traits).length > 0) user.traits = traits;
   window._elev.user = user;
 };
 
-}, {"analytics.js-integration":206,"next-tick":58}],
+}, {"analytics.js-integration":173,"next-tick":58,"segmentio-obj-case":43,"ndhoule-each":67,"ndhoule-keys":68}],
 110: [function(require, module, exports) {
 
 /**
@@ -15519,8 +14983,8 @@ Errorception.prototype.identify = function(identify) {
   extend(window._errs.meta, traits);
 };
 
-}, {"extend":71,"analytics.js-integration":206,"on-error":235,"global-queue":230}],
-235: [function(require, module, exports) {
+}, {"extend":71,"analytics.js-integration":173,"on-error":231,"global-queue":217}],
+231: [function(require, module, exports) {
 
 /**
  * Expose `onError`.
@@ -15694,7 +15158,7 @@ Evergage.prototype.track = function(track) {
   push('trackAction', track.event(), track.properties());
 };
 
-}, {"each":4,"analytics.js-integration":206,"global-queue":230}],
+}, {"each":4,"analytics.js-integration":173,"global-queue":217}],
 112: [function(require, module, exports) {
 'use strict';
 
@@ -15834,7 +15298,7 @@ Extole.prototype._createConversionTag = function(conversion) {
   return domify('<script type="extole/conversion">' + json.stringify(conversion) + '</script>');
 };
 
-}, {"bind":56,"domify":196,"each":4,"extend":71,"analytics.js-integration":206,"json":60}],
+}, {"bind":56,"domify":196,"each":4,"extend":71,"analytics.js-integration":173,"json":60}],
 113: [function(require, module, exports) {
 
 /**
@@ -15852,6 +15316,7 @@ var each = require('each');
 var FacebookPixel = module.exports = integration('Facebook Pixel')
   .global('fbq')
   .option('pixelId', '')
+  .option('agent', 'seg')
   .mapping('standardEvents')
   .mapping('legacyEvents')
   .tag('<script src="//connect.facebook.net/en_US/fbevents.js">');
@@ -15872,6 +15337,8 @@ FacebookPixel.prototype.initialize = function(){
   };
   window.fbq.push = window.fbq;
   window.fbq.loaded = true;
+  window.fbq.disablePushState = true; // disables automatic pageview tracking
+  window.fbq.agent = this.options.agent;
   window.fbq.version = '2.0';
   window.fbq.queue = [];
   this.load(this.ready);
@@ -16261,7 +15728,7 @@ function ecommerce(event, track, arr) {
   ].concat(arr || []));
 }
 
-}, {"facade":215,"each":4,"analytics.js-integration":206,"global-queue":230}],
+}, {"facade":9,"each":4,"analytics.js-integration":173,"global-queue":217}],
 115: [function(require, module, exports) {
 
 /**
@@ -16497,7 +15964,7 @@ function flatten(source) {
   return output;
 }
 
-}, {"bind":56,"each":4,"analytics.js-integration":206,"is":19}],
+}, {"bind":56,"each":4,"analytics.js-integration":173,"is":19}],
 116: [function(require, module, exports) {
 
 /**
@@ -16552,7 +16019,7 @@ Gauges.prototype.page = function() {
   push('track');
 };
 
-}, {"analytics.js-integration":206,"global-queue":230}],
+}, {"analytics.js-integration":173,"global-queue":217}],
 117: [function(require, module, exports) {
 
 /**
@@ -16605,7 +16072,7 @@ GetSatisfaction.prototype.loaded = function() {
   return !!window.GSFN;
 };
 
-}, {"analytics.js-integration":206,"on-body":228}],
+}, {"analytics.js-integration":173,"on-body":214}],
 118: [function(require, module, exports) {
 
 /**
@@ -16724,6 +16191,11 @@ GA.prototype.initialize = function() {
   // display advertising
   if (opts.doubleClick) {
     window.ga('require', 'displayfeatures');
+  }
+
+  // https://support.google.com/analytics/answer/2558867?hl=en
+  if (opts.enhancedLinkAttribution) {
+    window.ga('require', 'linkid', 'linkid.js');
   }
 
   // send global id
@@ -17157,7 +16629,15 @@ GA.prototype.loadEnhancedEcommerce = function(track) {
 GA.prototype.pushEnhancedEcommerce = function(track) {
   // Send a custom non-interaction event to ensure all EE data is pushed.
   // Without doing this we'd need to require page display after setting EE data.
-  window.ga('send', 'event', track.category() || 'EnhancedEcommerce', track.event(), { nonInteraction: 1 });
+  var args = select([
+    'send',
+    'event',
+    track.category() || 'EnhancedEcommerce',
+    track.event() || 'Action not defined',
+    track.properties().label,
+    { nonInteraction: 1 }
+    ], function(n){ return n !== undefined; });
+  window.ga.apply(window, args);
 };
 
 /**
@@ -17494,8 +16974,8 @@ function createProductTrack(track, properties) {
   return new Track({ properties: properties });
 }
 
-}, {"facade":215,"defaults":227,"obj-case":43,"each":4,"analytics.js-integration":206,"is":19,"object":21,"global-queue":230,"select":236,"use-https":208}],
-236: [function(require, module, exports) {
+}, {"facade":215,"defaults":213,"obj-case":43,"each":4,"analytics.js-integration":173,"is":19,"object":21,"global-queue":217,"select":232,"use-https":207}],
+232: [function(require, module, exports) {
 
 /**
  * Module dependencies.
@@ -17615,7 +17095,7 @@ GTM.prototype.track = function(track) {
   push(props);
 };
 
-}, {"analytics.js-integration":206,"global-queue":230}],
+}, {"analytics.js-integration":173,"global-queue":217}],
 120: [function(require, module, exports) {
 
 /**
@@ -17807,8 +17287,8 @@ function push() {
   window._gs.apply(null, arguments);
 }
 
-}, {"facade":215,"each":4,"analytics.js-integration":206,"omit":237,"pick":238}],
-237: [function(require, module, exports) {
+}, {"facade":9,"each":4,"analytics.js-integration":173,"omit":233,"pick":234}],
+233: [function(require, module, exports) {
 /**
  * Expose `omit`.
  */
@@ -17836,7 +17316,7 @@ function omit(keys, object){
   return ret;
 }
 }, {}],
-238: [function(require, module, exports) {
+234: [function(require, module, exports) {
 
 /**
  * Expose `pick`.
@@ -17871,6 +17351,8 @@ function pick(obj){
 
 var integration = require('analytics.js-integration');
 var each = require('each');
+var is = require('is');
+var extend = require('extend');
 
 /**
  * Expose `Heap` integration.
@@ -17935,7 +17417,7 @@ Heap.prototype.identify = function(identify) {
   var traits = identify.traits({ email: '_email' });
   var id = identify.userId();
   if (id) traits.handle = id;
-  window.heap.identify(traits);
+  window.heap.identify(clean(traits));
 };
 
 /**
@@ -17948,10 +17430,132 @@ Heap.prototype.identify = function(identify) {
  */
 
 Heap.prototype.track = function(track) {
-  window.heap.track(track.event(), track.properties());
+  window.heap.track(track.event(), clean(track.properties()));
 };
 
-}, {"analytics.js-integration":206,"each":4}],
+/**
+ * Clean all nested objects and arrays.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function clean(obj) {
+  var ret = {};
+
+  for (var k in obj) {
+    if (obj.hasOwnProperty(k)) {
+      var value = obj[k];
+      if (null == value) continue;
+
+      // date
+      if (is.date(value)) {
+        ret[k] = value.toISOString();
+        continue;
+      }
+
+      // leave boolean as is
+      if (is.boolean(value)) {
+        ret[k] = value;
+        continue;
+      }
+
+      // leave  numbers as is
+      if (is.number(value)) {
+        ret[k] = value;
+        continue;
+      }
+
+      // non objects
+      if (value.toString() !== '[object Object]') {
+        ret[k] = value.toString();
+        continue;
+      }
+
+      // json
+      // must flatten including the name of the original trait/property
+      var nestedObj = {};
+      nestedObj[k] = value;
+      var flattenedObj = flatten(nestedObj, { safe: true });
+
+      // stringify arrays inside nested object to be consistent with top level behavior of arrays
+      for (var key in flattenedObj) {
+        if (is.array(flattenedObj[key])) flattenedObj[key] = JSON.stringify(flattenedObj[key]);
+      }
+
+      ret = extend(ret, flattenedObj);
+      delete ret[k];
+    }
+  }
+
+  return ret;
+}
+
+/**
+ * Flatten nested objects
+ * taken from https://www.npmjs.com/package/flat
+ * @param {Object} obj
+ * @return {Object} obj
+ * @api public
+ */
+
+function flatten(target, opts) {
+  opts = opts || {};
+
+  var delimiter = opts.delimiter || '.';
+  var maxDepth = opts.maxDepth;
+  var currentDepth = 1;
+  var output = {};
+
+  function step(object, prev) {
+    Object.keys(object).forEach(function(key) {
+      var value = object[key];
+      var isarray = opts.safe && Array.isArray(value);
+      var type = Object.prototype.toString.call(value);
+      var isobject = type === '[object Object]' || type === '[object Array]';
+
+      var newKey = prev
+        ? prev + delimiter + key
+        : key;
+
+      if (!opts.maxDepth) {
+        maxDepth = currentDepth + 1;
+      }
+
+      if (!isarray && isobject && Object.keys(value).length && currentDepth < maxDepth) {
+        ++currentDepth;
+        return step(value, newKey);
+      }
+
+      output[newKey] = value;
+    });
+  }
+
+  step(target);
+
+  return output;
+}
+
+/**
+ * Polyfill Object.keys
+ * // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+ * Note: Had to do this because for some reason, the above will not work properly without using Object.keys
+ */
+
+if (!Object.keys) {
+  Object.keys = function(o) {
+    if (o !== Object(o)) {
+      throw new TypeError('Object.keys called on a non-object');
+    }
+    var k = [];
+    var p;
+    for (p in o) if (Object.prototype.hasOwnProperty.call(o, p)) k.push(p);
+    return k;
+  };
+}
+
+}, {"analytics.js-integration":173,"each":4,"is":19,"extend":202}],
 122: [function(require, module, exports) {
 
 /**
@@ -17994,7 +17598,7 @@ Hellobar.prototype.loaded = function() {
   return !!(window._hbq && window._hbq.push !== Array.prototype.push);
 };
 
-}, {"analytics.js-integration":206}],
+}, {"analytics.js-integration":173}],
 123: [function(require, module, exports) {
 
 /**
@@ -18035,7 +17639,7 @@ HitTail.prototype.loaded = function() {
   return is.fn(window.htk);
 };
 
-}, {"analytics.js-integration":206,"is":19}],
+}, {"analytics.js-integration":173,"is":19}],
 124: [function(require, module, exports) {
 
 /**
@@ -18099,7 +17703,7 @@ HubSpot.prototype.page = function() {
 
 HubSpot.prototype.identify = function(identify) {
   if (!identify.email()) return;
-  var traits = identify.traits();
+  var traits = identify.traits({firstName: 'firstname', lastName: 'lastname' });
   traits = convertDates(traits);
   push('identify', traits);
 };
@@ -18112,8 +17716,11 @@ HubSpot.prototype.identify = function(identify) {
  */
 
 HubSpot.prototype.track = function(track) {
-  var props = track.properties();
-  props = convertDates(props);
+  // Hubspot expects properties.id to be the name of the .track() event
+  // Ref: http://developers.hubspot.com/docs/methods/enterprise_events/javascript_api
+  var props = convertDates(track.properties({ id: '_id', revenue: 'value' }));
+  props.id = track.event();
+
   push('trackEvent', track.event(), props);
 };
 
@@ -18128,7 +17735,7 @@ function convertDates(properties) {
   return convert(properties, function(date) { return date.getTime(); });
 }
 
-}, {"convert-dates":234,"analytics.js-integration":206,"global-queue":230}],
+}, {"convert-dates":230,"analytics.js-integration":173,"global-queue":217}],
 125: [function(require, module, exports) {
 
 /**
@@ -18210,7 +17817,7 @@ Improvely.prototype.track = function(track) {
   window.improvely.goal(props);
 };
 
-}, {"analytics.js-integration":206}],
+}, {"analytics.js-integration":173}],
 126: [function(require, module, exports) {
 
 /**
@@ -18222,10 +17829,10 @@ var integration = require('analytics.js-integration');
 var push = require('global-queue')('_iva');
 
 /**
- * Expose `InsideVault` integration.
+ * Expose `QuanticMind` integration.
  */
 
-var InsideVault = module.exports = integration('InsideVault')
+var QuanticMind = module.exports = integration('QuanticMind')
   .global('_iva')
   .option('clientId', '')
   .option('domain', '')
@@ -18238,7 +17845,7 @@ var InsideVault = module.exports = integration('InsideVault')
  * @api public
  */
 
-InsideVault.prototype.initialize = function() {
+QuanticMind.prototype.initialize = function() {
   var domain = this.options.domain;
   window._iva = window._iva || [];
   push('setClientId', this.options.clientId);
@@ -18255,7 +17862,7 @@ InsideVault.prototype.initialize = function() {
  * @return {boolean}
  */
 
-InsideVault.prototype.loaded = function() {
+QuanticMind.prototype.loaded = function() {
   return !!(window._iva && window._iva.push !== Array.prototype.push);
 };
 
@@ -18266,7 +17873,7 @@ InsideVault.prototype.loaded = function() {
  * @param {Identify} identify
  */
 
-InsideVault.prototype.identify = function(identify) {
+QuanticMind.prototype.identify = function(identify) {
   push('setUserId', identify.anonymousId());
 };
 
@@ -18276,7 +17883,7 @@ InsideVault.prototype.identify = function(identify) {
  * @param {Page} page
  */
 
-InsideVault.prototype.page = function() {
+QuanticMind.prototype.page = function() {
   // they want every landing page to send a "click" event.
   push('trackEvent', 'click');
 };
@@ -18289,13 +17896,13 @@ InsideVault.prototype.page = function() {
  * @param {Track} track
  */
 
-InsideVault.prototype.track = function(track) {
+QuanticMind.prototype.track = function(track) {
   var user = this.analytics.user();
   var events = this.events(track.event());
   var value = track.revenue() || track.value() || 0;
   var eventId = track.orderId() || user.anonymousId() || '';
   each(events, function(event) {
-    // 'sale' is a special event that will be routed to a table that is deprecated on InsideVault's end.
+    // 'sale' is a special event that will be routed to a table that is deprecated on QuanticMind's end.
     // They don't want a generic 'sale' event to go to their deprecated table.
     if (event !== 'sale') {
       push('trackEvent', event, value, eventId);
@@ -18303,7 +17910,7 @@ InsideVault.prototype.track = function(track) {
   });
 };
 
-}, {"each":4,"analytics.js-integration":206,"global-queue":230}],
+}, {"each":4,"analytics.js-integration":173,"global-queue":217}],
 127: [function(require, module, exports) {
 
 /**
@@ -18374,7 +17981,7 @@ Inspectlet.prototype.identify = function(identify) {
  */
 
 Inspectlet.prototype.track = function(track) {
-  push('tagSession', track.event());
+  push('tagSession', track.event(), track.properties());
 };
 
 /**
@@ -18390,7 +17997,7 @@ Inspectlet.prototype.page = function() {
   push('virtualPage');
 };
 
-}, {"analytics.js-integration":206,"global-queue":230}],
+}, {"analytics.js-integration":173,"global-queue":217}],
 128: [function(require, module, exports) {
 
 /**
@@ -18507,7 +18114,6 @@ Intercom.prototype.identify = function(identify) {
   traits = convertDates(traits, formatDate);
 
   // handle options
-  if (opts.increments) traits.increments = opts.increments;
   if (opts.userHash) traits.user_hash = opts.userHash;
   if (opts.user_hash) traits.user_hash = opts.user_hash;
 
@@ -18587,7 +18193,7 @@ function api() {
   window.Intercom.apply(window.Intercom, arguments);
 }
 
-}, {"alias":233,"convert-dates":234,"defaults":227,"obj-case":43,"analytics.js-integration":206,"is":19}],
+}, {"alias":229,"convert-dates":230,"defaults":213,"obj-case":43,"analytics.js-integration":173,"is":19}],
 129: [function(require, module, exports) {
 
 /**
@@ -18785,7 +18391,7 @@ Keen.prototype.addons = function(obj, msg) {
   };
 };
 
-}, {"analytics.js-integration":206,"clone":13}],
+}, {"analytics.js-integration":173,"clone":13}],
 130: [function(require, module, exports) {
 
 /**
@@ -18866,7 +18472,7 @@ Kenshoo.prototype.track = function(track) {
   window.k_trackevent(params, this.options.subdomain);
 };
 
-}, {"includes":73,"analytics.js-integration":206,"is":19}],
+}, {"includes":73,"analytics.js-integration":173,"is":19}],
 131: [function(require, module, exports) {
 
 /**
@@ -18877,6 +18483,7 @@ var each = require('each');
 var integration = require('analytics.js-integration');
 var is = require('is');
 var push = require('global-queue')('_kmq');
+var extend = require('extend');
 
 /**
  * Expose `KISSmetrics` integration.
@@ -18957,15 +18564,23 @@ KISSmetrics.prototype.trackPage = function(page) {
   var name = page.fullName();
   var opts = this.options;
 
+  var e;
+  // categorized pages
+  if (opts.trackCategorizedPages && category) {
+    e = page.category();
+  }
   // named pages
-  if (name && opts.trackNamedPages) {
-    this.track(page.track(name));
+  if (opts.trackNamedPages && name) {
+    e = page.name();
+  }
+  if (!e) {
+    return;
   }
 
-  // categorized pages
-  if (category && opts.trackCategorizedPages) {
-    this.track(page.track(category));
-  }
+
+  var event = 'Viewed ' + e + ' Page';
+  var properties = prefix('Page', page.properties());
+  push('record', event, properties);
 };
 
 /**
@@ -18975,7 +18590,7 @@ KISSmetrics.prototype.trackPage = function(page) {
  */
 
 KISSmetrics.prototype.identify = function(identify) {
-  var traits = identify.traits();
+  var traits = clean(identify.traits());
   var id = identify.userId();
   if (id) push('identify', id);
   if (traits) push('set', traits);
@@ -18990,7 +18605,17 @@ KISSmetrics.prototype.identify = function(identify) {
 KISSmetrics.prototype.track = function(track) {
   var mapping = { revenue: 'Billing Amount' };
   var event = track.event();
-  var properties = track.properties(mapping);
+  var properties = clean(track.properties(mapping));
+  var revenue = track.revenue();
+  if (revenue) {
+    // legacy: client side integration used to only send 'Billing Amount', but
+    // our server side sent both 'revenue' and 'Billing Amount'. From the docs,
+    // http://support.kissmetrics.com/tools/revenue-report.html, ther is no
+    // reason to send it as 'Billing Amount', but we don't want to break reports
+    // so we send it as 'revenue' and 'Billing Amount' for consistency across
+    // platforms.
+    properties.revenue = revenue;
+  }
   if (this.options.prefixProperties) properties = prefix(event, properties);
   push('record', event, properties);
 };
@@ -19006,6 +18631,16 @@ KISSmetrics.prototype.alias = function(alias) {
 };
 
 /**
+ * Group.
+ *
+ * @param {Group} to
+ */
+
+KISSmetrics.prototype.group = function(group) {
+  push('set', prefix('Group', group.traits()));
+};
+
+/**
  * Completed order.
  *
  * @param {Track} track
@@ -19013,20 +18648,24 @@ KISSmetrics.prototype.alias = function(alias) {
  */
 
 KISSmetrics.prototype.completedOrder = function(track) {
-  var products = track.products();
+  var opts = this.options;
   var event = track.event();
+  var products = track.products();
+  var timestamp = toUnixTimestamp(track.timestamp() || new Date());
+  var properties = track.properties();
+  if (opts.prefixProperties) properties = prefix(event, properties);
 
   // transaction
-  push('record', event, prefix(event, track.properties()));
+  push('record', event, properties);
 
   // items
   window._kmq.push(function() {
-    var km = window.KM;
     each(products, function(product, i) {
-      var item = prefix(event, product);
-      item._t = km.ts() + i;
+      var item = product;
+      if (opts) item = prefix(event, item);
+      item._t = timestamp + i;
       item._d = 1;
-      km.set(item);
+      window.KM.set(item);
     });
   });
 };
@@ -19052,7 +18691,133 @@ function prefix(event, properties) {
   return prefixed;
 }
 
-}, {"each":4,"analytics.js-integration":206,"is":19,"global-queue":230}],
+function toUnixTimestamp(date) {
+  date = new Date(date);
+  return Math.floor(date.getTime() / 1000);
+}
+
+/**
+ * Clean all nested objects and arrays.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function clean(obj) {
+  var ret = {};
+
+  for (var k in obj) {
+    if (obj.hasOwnProperty(k)) {
+      var value = obj[k];
+      if (null == value) continue;
+
+      // convert date to unix
+      if (is.date(value)) {
+        ret[k] = toUnixTimestamp(value);
+        continue;
+      }
+
+      // leave boolean as is
+      if (is.boolean(value)) {
+        ret[k] = value;
+        continue;
+      }
+
+      // leave  numbers as is
+      if (is.number(value)) {
+        ret[k] = value;
+        continue;
+      }
+
+      // convert non objects to strings
+      if ('[object Object]' !== value.toString()) {
+        ret[k] = value.toString();
+        continue;
+      }
+
+      // json
+      // must flatten including the name of the original trait/property
+      var nestedObj = {};
+      nestedObj[k] = value;
+      var flattenedObj = flatten(nestedObj, { safe: true });
+
+      // stringify arrays inside nested object to be consistent with top level behavior of arrays
+      for (var key in flattenedObj) {
+        if (is.array(flattenedObj[key])) {
+          flattenedObj[key] = flattenedObj[key].toString();
+        }
+      }
+
+      ret = extend(ret, flattenedObj);
+      delete ret[k];
+    }
+  }
+  return ret;
+}
+
+/**
+ * Flatten nested objects
+ * taken from https://www.npmjs.com/package/flat
+ * @param {Object} obj
+ * @return {Object} obj
+ * @api public
+ */
+
+function flatten(target, opts) {
+  opts = opts || {};
+
+  var delimiter = opts.delimiter || '.';
+  var maxDepth = opts.maxDepth;
+  var currentDepth = 1;
+  var output = {};
+
+//   for (var key in p) {
+//   if (p.hasOwnProperty(key)) {
+//     alert(key + " -> " + p[key]);
+//   }
+// }
+
+
+  function step(object, prev) {
+    for (var key in object) {
+      if (object.hasOwnProperty(key)) {
+        var value = object[key];
+        var isarray = opts.safe && is.array(value);
+        var type = Object.prototype.toString.call(value);
+        var isobject = type === '[object Object]' || type === '[object Array]';
+        var arr = [];
+
+        var newKey = prev
+          ? prev + delimiter + key
+          : key;
+
+        if (!opts.maxDepth) {
+          maxDepth = currentDepth + 1;
+        }
+
+        for (var keys in value) {
+          if (value.hasOwnProperty(keys)) {
+            arr.push(keys);
+          }
+        }
+
+        if (!isarray && isobject && arr.length && currentDepth < maxDepth) {
+          ++currentDepth;
+          return step(value, newKey);
+        }
+
+        output[newKey] = value;
+      }
+    }
+  }
+
+  step(target);
+
+  return output;
+}
+
+}, {"each":4,"analytics.js-integration":173,"is":19,"global-queue":217,"extend":202}],
 132: [function(require, module, exports) {
 
 /**
@@ -19062,6 +18827,10 @@ function prefix(event, properties) {
 var integration = require('analytics.js-integration');
 var push = require('global-queue')('_learnq');
 var tick = require('next-tick');
+var Track = require('segmentio-facade').Track;
+var foldl = require('foldl');
+var remove = require('obj-case').del;
+var extend = require('extend');
 
 /**
  * Trait aliases.
@@ -19121,6 +18890,7 @@ Klaviyo.prototype.loaded = function() {
  */
 
 Klaviyo.prototype.identify = function(identify) {
+  // TODO: should map/alias the rest of the reserved props
   var traits = identify.traits(traitAliases);
   if (!traits.$id && !traits.$email) return;
   push('identify', traits);
@@ -19150,7 +18920,178 @@ Klaviyo.prototype.track = function(track) {
   }));
 };
 
-}, {"analytics.js-integration":206,"global-queue":230,"next-tick":58}],
+/**
+ * Completed Order
+ *
+ * http://learn.klaviyo.com/12887-Ecommerce:-Other-Integrations/product-activity-integrating-a-custom-ecommerce-cart-or-platform
+ * @param {Track} track
+ */
+
+Klaviyo.prototype.completedOrder = function(track) {
+  var products = formatProducts(track.products());
+  // Their docs for client side tells users to send these properties slightly
+  // different than server side, although they don't have to be.
+  var payload = {
+    $event_id: track.orderId(),
+    $value: track.revenue(),
+    Categories: products.categories,
+    ItemNames: products.names,
+    Items: products.items
+  };
+
+  var whitelist = [
+    '$event_id',
+    '$value',
+    'orderId',
+    'categories',
+    'itemNames',
+    'items',
+    'revenue',
+    'total',
+    'products'
+  ];
+  // strip standard props and leave custom props only
+  var topLevelCustomProps = filter(track, whitelist);
+
+  payload = extend(payload, topLevelCustomProps);
+
+  push('track', track.event(), payload);
+
+  // Formulate payload per product to send
+  var productProperties = formatItems(track);
+
+  // Send a separate event for each product
+  for (var x = 0; x < productProperties.length; x++) {
+    push('track', 'Ordered Product', productProperties[x]);
+  }
+};
+
+
+/**
+ * Return only custom properties
+ *
+ * @param {Object, Array} facade, list
+ * @return {Object}
+ * @api private
+ */
+
+function filter(facade, list){
+  var ret = facade.properties();
+  for (var x = 0; x < list.length; x++){
+    remove(ret, list[x]);
+  }
+  return ret;
+}
+
+/**
+ * Format payload for each product.
+ *
+ * @param {Track} track
+ * @return {Array}
+ * @api private
+ */
+
+function formatItems(track){
+  return foldl(function(payloads, props){
+    var product = new Track({ properties: props });
+    var itemWhitelist = [
+      '$event_id',
+      '$value',
+      'name',
+      'product categories',
+      'category',
+      'id',
+      'sku',
+      'quantity',
+      'price',
+      'productUrl',
+      'imageUrl'
+    ];
+
+    // filter standard item props so we can merge custom props later
+    var itemCustomProps = filter(product, itemWhitelist);
+
+    var item = reject({
+      $event_id: product.id() || track.orderId() + '_' + product.sku(),
+      $value: product.price(),
+      Name: product.name(),
+      Quantity: product.quantity(),
+      ProductCategories: [product.category()],
+      ProductURL: product.proxy('properties.productUrl'),
+      ImageURL: product.proxy('properties.imageUrl'),
+      SKU: product.sku()
+    });
+
+    item = extend(item, itemCustomProps);
+    payloads.push(item);
+
+    return payloads;
+  }, [], track.products());
+}
+
+/**
+ * Format products array.
+ *
+ * @param {Array} track
+ * @return {Array}
+ * @api private
+ */
+
+function formatProducts(products){
+  return foldl(function(payloads, props){
+    var product = new Track({ properties: props });
+    var whitelist = [
+      'sku',
+      'name',
+      'quantity',
+      'itemPrice',
+      'price',
+      'rowTotal',
+      'categories',
+      'category',
+      'productUrl',
+      'imageUrl'
+    ];
+    // filter standard traits to merge custom props later
+    var customProps = filter(product, whitelist);
+
+    var item = reject({
+      SKU: product.sku(),
+      Name: product.name(),
+      Quantity: product.quantity(),
+      ItemPrice: product.price(),
+      RowTotal: product.price(),
+      Categories: [product.category()],
+      ProductURL: product.proxy('properties.productUrl'),
+      ImageURL: product.proxy('properties.imageUrl')
+    });
+    item = extend(item, customProps);
+    payloads.items.push(item);
+    payloads.categories.push(product.category());
+    payloads.names.push(product.name());
+
+    return payloads;
+  }, { categories: [], names: [], items: [] }, products);
+}
+
+/**
+ * Return a copy of an object, less an  `undefined` values.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function reject(obj) {
+  return foldl(function(result, val, key) {
+    if (val !== undefined) {
+      result[key] = val;
+    }
+    return result;
+  }, {}, obj);
+}
+
+}, {"analytics.js-integration":173,"global-queue":217,"next-tick":58,"segmentio-facade":9,"foldl":17,"obj-case":43,"extend":180}],
 133: [function(require, module, exports) {
 
 /**
@@ -19299,7 +19240,7 @@ function convert(traits) {
   return arr;
 }
 
-}, {"facade":215,"clone":13,"each":4,"analytics.js-integration":206,"next-tick":58,"when":232}],
+}, {"facade":9,"clone":13,"each":4,"analytics.js-integration":173,"next-tick":58,"when":210}],
 134: [function(require, module, exports) {
 
 /**
@@ -19372,7 +19313,7 @@ LuckyOrange.prototype.identify = function(identify) {
   window.__wtw_custom_user_data = traits;
 };
 
-}, {"facade":215,"analytics.js-integration":206,"use-https":208}],
+}, {"facade":9,"analytics.js-integration":173,"use-https":207}],
 135: [function(require, module, exports) {
 
 /**
@@ -19466,7 +19407,7 @@ Lytics.prototype.track = function(track) {
   window.jstag.send(props);
 };
 
-}, {"alias":233,"analytics.js-integration":206}],
+}, {"alias":229,"analytics.js-integration":173}],
 136: [function(require, module, exports) {
 
 /**
@@ -19476,12 +19417,9 @@ Lytics.prototype.track = function(track) {
 var alias = require('alias');
 var dates = require('convert-dates');
 var del = require('obj-case').del;
-var each = require('each');
 var includes = require('includes');
 var integration = require('analytics.js-integration');
-var is = require('is');
 var iso = require('to-iso-string');
-var some = require('some');
 
 /**
  * Expose `Mixpanel` integration.
@@ -19641,11 +19579,6 @@ Mixpanel.prototype.track = function(track) {
   delete props.mp_note;
   delete props.token;
 
-  // convert arrays of objects to length, since mixpanel doesn't support object arrays
-  each(props, function(key, val) {
-    if (is.array(val) && some(val, is.object)) props[key] = val.length;
-  });
-
   // increment properties in mixpanel people
   if (people && includes(increment, increments)) {
     window.mixpanel.people.increment(track.event());
@@ -19700,42 +19633,9 @@ function lowercase(arr) {
   return ret;
 }
 
-}, {"alias":233,"convert-dates":234,"obj-case":43,"each":4,"includes":73,"analytics.js-integration":206,"is":19,"to-iso-string":229,"some":239}],
-239: [function(require, module, exports) {
-
-/**
- * some
- */
-
-var some = [].some;
-
-/**
- * test whether some elements in
- * the array pass the test implemented
- * by `fn`.
- *
- * example:
- *
- *          some([1, 'foo', 'bar'], function (el, i) {
- *            return 'string' == typeof el;
- *          });
- *          // > true
- *
- * @param {Array} arr
- * @param {Function} fn
- * @return {bool}
- */
-
-module.exports = function (arr, fn) {
-  if (some) return some.call(arr, fn);
-  for (var i = 0, l = arr.length; i < l; ++i) {
-    if (fn(arr[i], i)) return true;
-  }
-  return false;
-};
-
-}, {}],
+}, {"alias":229,"convert-dates":230,"obj-case":43,"includes":73,"analytics.js-integration":173,"to-iso-string":216}],
 137: [function(require, module, exports) {
+'use strict';
 
 /**
  * Module dependencies.
@@ -19753,7 +19653,12 @@ var when = require('when');
 var Mojn = module.exports = integration('Mojn')
   .global('_mojnTrack')
   .option('customerCode', '')
-  .tag('<script src="https://track.idtargeting.com/{{ customerCode }}/track.js">');
+  .option('region', 'eu')
+  .option('sync', false)
+  .tag('main', '<script src="https://cdn.idtargeting.com/track/{{region}}.js">')
+  .tag('custom', '<script src="https://cdn.idtargeting.com/track/{{customerCode}}.js">')
+  .tag('identify', '<img width="1" height="1" src="https://matcher.idtargeting.com/identify.gif?cid={{cid}}&_mjnctid={{mjnctid}}">')
+  .tag('sync', '<img width="1" height="1" src="http://ho.idtargeting.com/c/{{cid}}?u={{uid}}&_chk">');
 
 /**
  * Initialize.
@@ -19767,8 +19672,11 @@ Mojn.prototype.initialize = function() {
   window._mojnTrack.push({ cid: this.options.customerCode });
   var loaded = bind(this, this.loaded);
   var ready = this.ready;
-  this.load(function() {
-    when(loaded, ready);
+  var self = this;
+  this.load('main', function() {
+    self.load('custom', function() {
+      when(loaded, ready);
+    });
   });
 };
 
@@ -19793,13 +19701,8 @@ Mojn.prototype.loaded = function() {
 Mojn.prototype.identify = function(identify) {
   var email = identify.email();
   if (!email) return;
-  // TODO: Replace with a tag?
-  var img = new Image();
-  img.src = '//matcher.idtargeting.com/identify.gif?cid=' + this.options.customerCode + '&_mjnctid=' + email;
-  img.width = 1;
-  img.height = 1;
-  // FIXME: Why does this have a return value?
-  return img;
+
+  this.load('identify', { cid: this.options.customerCode, mjnctid: email });
 };
 
 /**
@@ -19817,11 +19720,21 @@ Mojn.prototype.track = function(track) {
   var currency = properties.currency || '';
   var conv = currency + revenue;
   window._mojnTrack.push({ conv: conv });
-  // FIXME: Why does this have a return value?
-  return conv;
 };
 
-}, {"bind":56,"analytics.js-integration":206,"is":19,"when":232}],
+/**
+ * Page.
+ *
+ * @api public
+ * @param {Page} page
+ */
+
+Mojn.prototype.page = function() {
+  if (!this.options.sync) return;
+  this.load('sync', { cid: this.options.customerCode, uid: this.analytics.user().anonymousId() });
+};
+
+}, {"bind":56,"analytics.js-integration":173,"is":19,"when":210}],
 138: [function(require, module, exports) {
 
 /**
@@ -19923,7 +19836,7 @@ function set(obj) {
   });
 }
 
-}, {"each":4,"analytics.js-integration":206,"global-queue":230}],
+}, {"each":4,"analytics.js-integration":173,"global-queue":217}],
 139: [function(require, module, exports) {
 
 /**
@@ -19989,7 +19902,7 @@ MouseStats.prototype.identify = function(identify) {
   });
 };
 
-}, {"each":4,"analytics.js-integration":206,"is":19,"use-https":208}],
+}, {"each":4,"analytics.js-integration":173,"is":19,"use-https":207}],
 140: [function(require, module, exports) {
 
 /**
@@ -20046,7 +19959,7 @@ Navilytics.prototype.track = function(track) {
   push('tagRecording', track.event());
 };
 
-}, {"analytics.js-integration":206,"global-queue":230}],
+}, {"analytics.js-integration":173,"global-queue":217}],
 141: [function(require, module, exports) {
 
 /**
@@ -20117,7 +20030,7 @@ Nudgespot.prototype.track = function(track) {
   window.nudgespot.track(track.event(), track.properties());
 };
 
-}, {"alias":233,"analytics.js-integration":206}],
+}, {"alias":229,"analytics.js-integration":173}],
 142: [function(require, module, exports) {
 
 /**
@@ -20140,7 +20053,8 @@ var Olark = module.exports = integration('Olark')
   .option('listen', false)
   .option('page', true)
   .option('siteId', '')
-  .option('track', false);
+  .option('track', false)
+  .option('inline', false);
 
 /**
  * The context for this integration.
@@ -20189,6 +20103,10 @@ Olark.prototype.load = function(callback) {
   /* eslint-disable */
   window.olark||(function(c){var f=window,d=document,l=https()?"https:":"http:",z=c.name,r="load";var nt=function(){f[z]=function(){(a.s=a.s||[]).push(arguments)};var a=f[z]._={},q=c.methods.length;while (q--) {(function(n){f[z][n]=function(){f[z]("call",n,arguments)}})(c.methods[q])}a.l=c.loader;a.i=nt;a.p={ 0:+new Date() };a.P=function(u){a.p[u]=new Date()-a.p[0]};function s(){a.P(r);f[z](r)}f.addEventListener?f.addEventListener(r,s,false):f.attachEvent("on"+r,s);var ld=function(){function p(hd){hd="head";return ["<",hd,"></",hd,"><",i,' onl' + 'oad="var d=',g,";d.getElementsByTagName('head')[0].",j,"(d.",h,"('script')).",k,"='",l,"//",a.l,"'",'"',"></",i,">"].join("")}var i="body",m=d[i];if (!m) {return setTimeout(ld,100)}a.P(1);var j="appendChild",h="createElement",k="src",n=d[h]("div"),v=n[j](d[h](z)),b=d[h]("iframe"),g="document",e="domain",o;n.style.display="none";m.insertBefore(n,m.firstChild).id=z;b.frameBorder="0";b.id=z+"-loader";if (/MSIE[ ]+6/.test(navigator.userAgent)) {b.src="javascript:false"}b.allowTransparency="true";v[j](b);try {b.contentWindow[g].open()}catch (w) {c[e]=d[e];o="javascript:var d="+g+".open();d.domain='"+d.domain+"';";b[k]=o+"void(0);"}try {var t=b.contentWindow[g];t.write(p());t.close()}catch (x) {b[k]=o+'d.write("'+p().replace(/"/g,String.fromCharCode(92)+'"')+'");d.close();'}a.P(2)};ld()};nt()})({ loader: "static.olark.com/jsclient/loader0.js", name:"olark", methods:["configure","extend","declare","identify"] });
   /* eslint-enable */
+
+  // check if chat should be loaded as `inline chat`
+  if (this.options.inline) configure('box.inline', true);
+
   window.olark.identify(this.options.siteId);
   callback();
 };
@@ -20327,7 +20245,11 @@ function api(action, value) {
   window.olark('api.' + action, value);
 }
 
-}, {"use-https":208,"analytics.js-integration":206,"next-tick":58}],
+function configure(action, value) {
+  window.olark.configure(action, value);
+}
+
+}, {"use-https":207,"analytics.js-integration":173,"next-tick":58}],
 143: [function(require, module, exports) {
 
 /**
@@ -20507,15 +20429,19 @@ function getExperiments(options) {
   }, [], options.activeExperimentIds);
 }
 
-}, {"each":4,"foldl":17,"analytics.js-integration":206,"global-queue":230,"next-tick":58}],
+}, {"each":4,"foldl":17,"analytics.js-integration":173,"global-queue":217,"next-tick":58}],
 144: [function(require, module, exports) {
+
+'use strict';
 
 /**
  * Module dependencies.
  */
 
 var integration = require('analytics.js-integration');
-var omit = require('omit');
+var uncase = require('to-no-case');
+var foldl = require('foldl');
+var Identify = require('facade').Identify;
 
 /**
  * Expose `Outbound` integration.
@@ -20540,7 +20466,8 @@ Outbound.prototype.initialize = function() {
     'registerApnsToken',
     'registerGcmToken',
     'disableApnsToken',
-    'disableGcmToken'
+    'disableGcmToken',
+    'hasIdentified'
   ];
 
   window.outbound.factory = function(method) {
@@ -20561,14 +20488,14 @@ Outbound.prototype.initialize = function() {
 };
 
 /**
- * Loaded?
- *
- * @api private
- * @return {boolean}
- */
+* Loaded
+*
+* @api private
+* @return {boolean}
+*/
 
 Outbound.prototype.loaded = function() {
-  return window.outbound;
+  return !!(window.outbound && window.outbound.reset);
 };
 
 /**
@@ -20579,22 +20506,28 @@ Outbound.prototype.loaded = function() {
  */
 
 Outbound.prototype.identify = function(identify) {
-  var traitsToOmit = [
-    'id',
-    'userId',
-    'email',
-    'phone',
-    'firstName',
-    'lastName'
-  ];
+  var specialTraits = {
+    id: true,
+    email: true,
+    phone: true,
+    'user id': true,
+    'last name': true,
+    'first name': true
+  };
+
   var userId = identify.userId() || identify.anonymousId();
-  var attributes = {
-    attributes: omit(traitsToOmit, identify.traits()),
+
+  var attributes = foldl(function(acc, val, key) {
+    if (!specialTraits.hasOwnProperty(uncase(key))) acc.attributes[key] = val;
+    return acc;
+  }, {
+    attributes: {},
     email: identify.email(),
     phoneNumber: identify.phone(),
     firstName: identify.firstName(),
     lastName: identify.lastName()
-  };
+  }, identify.traits());
+
   window.outbound.identify(userId, attributes);
 };
 
@@ -20606,6 +20539,10 @@ Outbound.prototype.identify = function(identify) {
  */
 
 Outbound.prototype.track = function(track) {
+  if (!window.outbound.hasIdentified()) {
+    var user = new Identify({ userId: track.userId() || track.anonymousId() });
+    this.identify(user);
+  }
   window.outbound.track(track.event(), track.properties(), track.timestamp());
 };
 
@@ -20620,7 +20557,81 @@ Outbound.prototype.alias = function(alias) {
   window.outbound.identify(alias.userId(), { previousId: alias.previousId() });
 };
 
-}, {"analytics.js-integration":206,"omit":237}],
+
+}, {"analytics.js-integration":173,"to-no-case":235,"foldl":17,"facade":9}],
+235: [function(require, module, exports) {
+
+/**
+ * Expose `toNoCase`.
+ */
+
+module.exports = toNoCase;
+
+
+/**
+ * Test whether a string is camel-case.
+ */
+
+var hasSpace = /\s/;
+var hasSeparator = /[\W_]/;
+
+
+/**
+ * Remove any starting case from a `string`, like camel or snake, but keep
+ * spaces and punctuation that may be important otherwise.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function toNoCase (string) {
+  if (hasSpace.test(string)) return string.toLowerCase();
+  if (hasSeparator.test(string)) return (unseparate(string) || string).toLowerCase();
+  return uncamelize(string).toLowerCase();
+}
+
+
+/**
+ * Separator splitter.
+ */
+
+var separatorSplitter = /[\W_]+(.|$)/g;
+
+
+/**
+ * Un-separate a `string`.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function unseparate (string) {
+  return string.replace(separatorSplitter, function (m, next) {
+    return next ? ' ' + next : '';
+  });
+}
+
+
+/**
+ * Camelcase splitter.
+ */
+
+var camelSplitter = /(.)([A-Z]+)/g;
+
+
+/**
+ * Un-camelcase a `string`.
+ *
+ * @param {String} string
+ * @return {String}
+ */
+
+function uncamelize (string) {
+  return string.replace(camelSplitter, function (m, previous, uppers) {
+    return previous + ' ' + uppers.toLowerCase().split('').join(' ');
+  });
+}
+}, {}],
 145: [function(require, module, exports) {
 
 /**
@@ -20724,7 +20735,7 @@ PerfectAudience.prototype.completedOrder = function(track) {
   push('track', track.event(), props);
 };
 
-}, {"analytics.js-integration":206,"global-queue":230}],
+}, {"analytics.js-integration":173,"global-queue":217}],
 146: [function(require, module, exports) {
 
 /**
@@ -20770,8 +20781,8 @@ Pingdom.prototype.loaded = function() {
   return !!(window._prum && window._prum.push !== Array.prototype.push);
 };
 
-}, {"load-date":240,"analytics.js-integration":206,"global-queue":230}],
-240: [function(require, module, exports) {
+}, {"load-date":236,"analytics.js-integration":173,"global-queue":217}],
+236: [function(require, module, exports) {
 
 
 /*
@@ -20850,6 +20861,19 @@ Piwik.prototype.page = function() {
 };
 
 /**
+ * Identify
+ *
+ * @api public
+ * @param {Identify} identify
+ */
+
+Piwik.prototype.identify = function(identify) {
+  if (!identify.userId()) return;
+  // Ref: http://developer.piwik.org/guides/tracking-javascript-guide#user-id
+  push('setUserId', identify.userId().toString());
+};
+
+/**
  * Track.
  *
  * @api public
@@ -20884,7 +20908,7 @@ Piwik.prototype.track = function(track) {
   push('trackEvent', category, action, name, value);
 };
 
-}, {"each":4,"analytics.js-integration":206,"is":19,"global-queue":230}],
+}, {"each":4,"analytics.js-integration":173,"is":19,"global-queue":217}],
 148: [function(require, module, exports) {
 
 /**
@@ -21001,7 +21025,7 @@ function convertDate(date) {
   return Math.floor(date / 1000);
 }
 
-}, {"convert-dates":234,"analytics.js-integration":206,"global-queue":230}],
+}, {"convert-dates":230,"analytics.js-integration":173,"global-queue":217}],
 149: [function(require, module, exports) {
 
 /**
@@ -21088,17 +21112,17 @@ Qualaroo.prototype.track = function(track) {
   this.identify(new Identify({ traits: traits }));
 };
 
-}, {"analytics.js-integration":206,"global-queue":230,"facade":215,"bind":56,"when":232}],
+}, {"analytics.js-integration":173,"global-queue":217,"facade":9,"bind":56,"when":210}],
 150: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var integration = require('analytics.js-integration');
 var push = require('global-queue')('_qevents', { wrap: false });
-var reduce = require('reduce');
+var integration = require('analytics.js-integration');
 var useHttps = require('use-https');
+var is = require('is');
 
 /**
  * Expose `Quantcast` integration.
@@ -21129,10 +21153,10 @@ Quantcast.prototype.initialize = function(page) {
   var opts = this.options;
   var settings = { qacct: opts.pCode };
   var user = this.analytics.user();
-  if (user.id()) settings.uid = user.id();
+  if (user.id()) settings.uid = user.id().toString();
 
   if (page) {
-    settings.labels = this._labels('page', page.category(), page.name());
+    settings.labels = this._labels(page);
   }
 
   push(settings);
@@ -21162,18 +21186,16 @@ Quantcast.prototype.loaded = function() {
  */
 
 Quantcast.prototype.page = function(page) {
-  var category = page.category();
-  var name = page.name();
-  var customLabels = page.proxy('properties.label');
-  var labels = this._labels('page', category, name, customLabels);
-
   var settings = {
     event: 'refresh',
-    labels: labels,
+    labels: this._labels(page),
     qacct: this.options.pCode
   };
   var user = this.analytics.user();
-  if (user.id()) settings.uid = user.id();
+
+  // For non-advertisers, blank labels are okay if no name/category is passed
+  if (!this.options.advertise && !page.name() && !page.category()) delete settings.labels;
+  if (user.id()) settings.uid = user.id().toString();
   push(settings);
 };
 
@@ -21187,12 +21209,9 @@ Quantcast.prototype.page = function(page) {
  */
 
 Quantcast.prototype.identify = function(identify) {
-  // edit the initial quantcast settings
-  // TODO: could be done in a cleaner way
-  var id = identify.userId();
-  if (id) {
+  if (identify.userId()) {
     window._qevents[0] = window._qevents[0] || {};
-    window._qevents[0].uid = id;
+    window._qevents[0].uid = identify.userId().toString();
   }
 };
 
@@ -21206,22 +21225,19 @@ Quantcast.prototype.identify = function(identify) {
  */
 
 Quantcast.prototype.track = function(track) {
-  var name = track.event();
   var revenue = track.revenue();
   var orderId = track.orderId();
-  var customLabels = track.proxy('properties.label');
-  var labels = this._labels('event', name, customLabels);
-
+  var user = this.analytics.user();
   var settings = {
     event: 'click',
-    labels: labels,
+    labels: this._labels(track),
     qacct: this.options.pCode
   };
 
-  var user = this.analytics.user();
-  if (revenue != null) settings.revenue = String(revenue);
-  if (orderId) settings.orderid = orderId;
-  if (user.id()) settings.uid = user.id();
+  if (revenue) settings.revenue = String(revenue);
+  if (orderId) settings.orderid = String(orderId);
+  if (user.id()) settings.uid = user.id().toString();
+
   push(settings);
 };
 
@@ -21233,18 +21249,15 @@ Quantcast.prototype.track = function(track) {
  */
 
 Quantcast.prototype.completedOrder = function(track) {
-  var name = track.event();
-  var revenue = track.total();
-  var customLabels = track.proxy('properties.label');
-  var labels = this._labels('event', name, customLabels);
-  var category = track.category();
-  var repeat = track.proxy('properties.repeat');
+  var labels = this._labels(track);
 
+  var category = safe(track.category());
   if (this.options.advertise && category) {
-    labels += ',' + this._labels('pcat', category);
+    labels += ',_fp.pcat.' + category;
   }
 
-  if (typeof repeat === 'boolean') {
+  var repeat = track.proxy('properties.repeat');
+  if (this.options.advertise && typeof repeat === 'boolean') {
     labels += ',_fp.customer.' + (repeat ? 'repeat' : 'new');
   }
 
@@ -21252,77 +21265,94 @@ Quantcast.prototype.completedOrder = function(track) {
     // the example Quantcast sent has completed order send refresh not click
     event: 'refresh',
     labels: labels,
-    revenue: String(revenue),
-    orderid: track.orderId(),
+    revenue: String(track.total()),
+    orderid: String(track.orderId()),
     qacct: this.options.pCode
   };
+
   push(settings);
 };
 
 /**
  * Generate quantcast labels.
  *
- * Example:
+ * @api private
+ * @param {Object} facade
+ * @return {string}
+ *
+ * @example:
  *
  *    options.advertise = false;
- *    labels('event', 'my event');
- *    // => "event.my event"
+ *    labels(track);
+ *    // => "my event"
+ *    labels(page);
+ *    // => "Category.Name"
  *
  *    options.advertise = true;
- *    labels('event', 'my event');
+ *    labels(track);
  *    // => "_fp.event.my event"
+ *    labels(page);
+ *    // => "_fp.event.Category.Name"
  *
- * @api private
- * @param {string} type
- * @param {...string} args
- * @return {string}
+ *  Return a string comprised of:
+ *
+ *  1) Prefix
+ *  2) Default Labels (dot delimited)
+ *     - page calls: (Category).(Name || 'Default')
+ *     - track calls: (Event Name)
+ *  3) Custom Labels (comma delimited)
+ *     - [properties.label, ...context.Quantcast.Labels]
  */
 
-Quantcast.prototype._labels = function(type) {
-  var args = Array.prototype.slice.call(arguments, 1);
-  var advertise = this.options.advertise;
+Quantcast.prototype._labels = function(facade) {
+  var action = facade.action();
+  var autoLabels = [];
+  var ret;
 
-  if (advertise && type === 'page') type = 'event';
-  if (advertise) type = '_fp.' + type;
+  if (action === 'page') {
+    // There is no default for category
+    if (facade.category()) autoLabels.push(safe(facade.category()));
+    // Fallback on default label if no page name is given
+    autoLabels.push(safe(facade.name() || 'Default'));
+    autoLabels = autoLabels.join('.');
+  } else if (action === 'track') {
+    autoLabels = safe(facade.event());
+  }
 
-  var separator = advertise ? ' ' : '.';
-  var ret = reduce(args, function(ret, arg) {
-    if (arg != null) {
-      ret.push(String(arg).replace(/, /g, ','));
-    }
-    return ret;
-  }, []).join(separator);
+  var label = safe(facade.proxy('properties.label'));
+  var customLabels = facade.options('Quantcast').labels || [];
 
-  return [type, ret].join('.');
+  if (is.string(customLabels)) customLabels = [customLabels];
+
+  customLabels = customLabels.map(function(label){
+    // strip special characters to prevent invalid labels
+    return safe(label);
+  });
+
+  if (is.string(label)) customLabels.unshift(label);
+  // Multiple labels need to be delimited by commas
+  customLabels = customLabels.join(',');
+
+  // Non-advertisers require no prefix
+  if (this.options.advertise) {
+    ret = '_fp.event.' + autoLabels;
+  } else {
+    ret = autoLabels;
+  }
+
+  if (customLabels) ret += ',' + customLabels;
+  return ret;
 };
-
-}, {"analytics.js-integration":206,"global-queue":230,"reduce":241,"use-https":208}],
-241: [function(require, module, exports) {
 
 /**
- * Reduce `arr` with `fn`.
- *
- * @param {Array} arr
- * @param {Function} fn
- * @param {Mixed} initial
- *
- * TODO: combatible error handling?
+ * Remove special characters so that user can't accidentally mis-delimit labels or create invalid labels
  */
 
-module.exports = function(arr, fn, initial){  
-  var idx = 0;
-  var len = arr.length;
-  var curr = arguments.length == 3
-    ? initial
-    : arr[idx++];
+function safe(str) {
+  if (str) return str.replace(/[^\w\s]|_/gi, '');
+}
 
-  while (idx < len) {
-    curr = fn.call(null, curr, arr[idx], ++idx, arr);
-  }
-  
-  return curr;
-};
-}, {}],
+}, {"global-queue":217,"analytics.js-integration":173,"use-https":207,"is":45}],
 151: [function(require, module, exports) {
 
 /**
@@ -21407,7 +21437,7 @@ RollbarIntegration.prototype.identify = function(identify) {
   rollbar.configure({ payload: { person: person } });
 };
 
-}, {"extend":71,"analytics.js-integration":206,"is":19}],
+}, {"extend":71,"analytics.js-integration":173,"is":19}],
 152: [function(require, module, exports) {
 
 var integration = require('analytics.js-integration');
@@ -21420,7 +21450,7 @@ var Route = module.exports = integration('Route')
   .global('_rq')
   .global('_route')
   .option('organizationId', '')
-  .tag('<script id="rtracker" data-organization-id="{{ organizationId }}" src="//www.routecdn.com/tracker/route-tracker-min.js">');
+  .tag('<script id="rtracker" data-organization-id="{{ organizationId }}" data-source="segment.com" src="//www.routecdn.com/tracker/route-tracker-min.js">');
 
 /**
  * Initialize Route.
@@ -21480,7 +21510,7 @@ Route.prototype.track = function(track) {
   window._route.track(track.event());
 };
 
-}, {"analytics.js-integration":206}],
+}, {"analytics.js-integration":173}],
 153: [function(require, module, exports) {
 
 /**
@@ -21507,6 +21537,9 @@ var SaaSquatch = module.exports = integration('SaaSquatch')
 
 SaaSquatch.prototype.initialize = function() {
   window._sqh = window._sqh || [];
+  window._sqh.push(['init', {
+    tenant_alias: this.options.tenantAlias
+  }]);
   this.load(this.ready);
 };
 
@@ -21593,7 +21626,7 @@ SaaSquatch.prototype.group = function(group) {
   this.load();
 };
 
-}, {"analytics.js-integration":206}],
+}, {"analytics.js-integration":173}],
 154: [function(require, module, exports) {
 
 /**
@@ -21669,7 +21702,22 @@ SatisMeter.prototype.identify = function(identify) {
   window.satismeter(traits);
 };
 
-}, {"analytics.js-integration":206,"when":232}],
+/**
+ * Page.
+ *
+ * @api public
+ * @param {Page} page
+ */
+
+SatisMeter.prototype.page = function() {
+  window.satismeter({
+    writeKey: this.options.token,
+    userId: this.analytics.user().id(),
+    type: 'page'
+  });
+};
+
+}, {"analytics.js-integration":173,"when":210}],
 155: [function(require, module, exports) {
 
 /**
@@ -21683,6 +21731,7 @@ var extend = require('extend');
 var integration = require('analytics.js-integration');
 var json = require('segmentio/json@1.0.0');
 var localstorage = require('store');
+var md5 = require('SparkMD5').hash;
 var protocol = require('protocol');
 var send = require('send-json');
 var topDomain = require('top-domain');
@@ -21833,16 +21882,19 @@ Segment.prototype.normalize = function(msg) {
   var global = exports.global;
   var query = global.location.search;
   var ctx = msg.context = msg.context || msg.options || {};
+  var traits = this.analytics.user().traits();
   delete msg.options;
   msg.writeKey = this.options.apiKey;
+  ctx.traits = ctx.traits || traits;
   ctx.userAgent = navigator.userAgent;
   if (!ctx.library) ctx.library = { name: 'analytics.js', version: this.analytics.VERSION };
   if (query) ctx.campaign = utm(query);
   this.referrerId(query, ctx);
   msg.userId = msg.userId || user.id();
   msg.anonymousId = user.anonymousId();
-  msg.messageId = uuid();
   msg.sentAt = new Date();
+  // add some randomness to the messageId checksum
+  msg.messageId = 'ajs-' + md5(json.stringify(msg) + uuid());
   this.debug('normalized %o', msg);
   return msg;
 };
@@ -21945,7 +21997,840 @@ function scheme() {
 
 function noop() {}
 
-}, {"ad-params":172,"clone":13,"cookie":59,"extend":71,"analytics.js-integration":206,"segmentio/json@1.0.0":60,"store":174,"protocol":175,"send-json":176,"top-domain":177,"utm-params":178,"uuid":80}],
+}, {"ad-params":172,"clone":13,"cookie":59,"extend":71,"analytics.js-integration":173,"segmentio/json@1.0.0":60,"store":174,"SparkMD5":237,"protocol":175,"send-json":238,"top-domain":177,"utm-params":178,"uuid":80}],
+237: [function(require, module, exports) {
+(function (factory) {
+    if (typeof exports === 'object') {
+        // Node/CommonJS
+        module.exports = factory();
+    } else if (typeof define === 'function' && define.amd) {
+        // AMD
+        define(factory);
+    } else {
+        // Browser globals (with support for web workers)
+        var glob;
+
+        try {
+            glob = window;
+        } catch (e) {
+            glob = self;
+        }
+
+        glob.SparkMD5 = factory();
+    }
+}(function (undefined) {
+
+    'use strict';
+
+    /*
+     * Fastest md5 implementation around (JKM md5)
+     * Credits: Joseph Myers
+     *
+     * @see http://www.myersdaily.org/joseph/javascript/md5-text.html
+     * @see http://jsperf.com/md5-shootout/7
+     */
+
+    /* this function is much faster,
+      so if possible we use it. Some IEs
+      are the only ones I know of that
+      need the idiotic second function,
+      generated by an if clause.  */
+    var add32 = function (a, b) {
+        return (a + b) & 0xFFFFFFFF;
+    },
+        hex_chr = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+
+
+    function cmn(q, a, b, x, s, t) {
+        a = add32(add32(a, q), add32(x, t));
+        return add32((a << s) | (a >>> (32 - s)), b);
+    }
+
+    function ff(a, b, c, d, x, s, t) {
+        return cmn((b & c) | ((~b) & d), a, b, x, s, t);
+    }
+
+    function gg(a, b, c, d, x, s, t) {
+        return cmn((b & d) | (c & (~d)), a, b, x, s, t);
+    }
+
+    function hh(a, b, c, d, x, s, t) {
+        return cmn(b ^ c ^ d, a, b, x, s, t);
+    }
+
+    function ii(a, b, c, d, x, s, t) {
+        return cmn(c ^ (b | (~d)), a, b, x, s, t);
+    }
+
+    function md5cycle(x, k) {
+        var a = x[0],
+            b = x[1],
+            c = x[2],
+            d = x[3];
+
+        a = ff(a, b, c, d, k[0], 7, -680876936);
+        d = ff(d, a, b, c, k[1], 12, -389564586);
+        c = ff(c, d, a, b, k[2], 17, 606105819);
+        b = ff(b, c, d, a, k[3], 22, -1044525330);
+        a = ff(a, b, c, d, k[4], 7, -176418897);
+        d = ff(d, a, b, c, k[5], 12, 1200080426);
+        c = ff(c, d, a, b, k[6], 17, -1473231341);
+        b = ff(b, c, d, a, k[7], 22, -45705983);
+        a = ff(a, b, c, d, k[8], 7, 1770035416);
+        d = ff(d, a, b, c, k[9], 12, -1958414417);
+        c = ff(c, d, a, b, k[10], 17, -42063);
+        b = ff(b, c, d, a, k[11], 22, -1990404162);
+        a = ff(a, b, c, d, k[12], 7, 1804603682);
+        d = ff(d, a, b, c, k[13], 12, -40341101);
+        c = ff(c, d, a, b, k[14], 17, -1502002290);
+        b = ff(b, c, d, a, k[15], 22, 1236535329);
+
+        a = gg(a, b, c, d, k[1], 5, -165796510);
+        d = gg(d, a, b, c, k[6], 9, -1069501632);
+        c = gg(c, d, a, b, k[11], 14, 643717713);
+        b = gg(b, c, d, a, k[0], 20, -373897302);
+        a = gg(a, b, c, d, k[5], 5, -701558691);
+        d = gg(d, a, b, c, k[10], 9, 38016083);
+        c = gg(c, d, a, b, k[15], 14, -660478335);
+        b = gg(b, c, d, a, k[4], 20, -405537848);
+        a = gg(a, b, c, d, k[9], 5, 568446438);
+        d = gg(d, a, b, c, k[14], 9, -1019803690);
+        c = gg(c, d, a, b, k[3], 14, -187363961);
+        b = gg(b, c, d, a, k[8], 20, 1163531501);
+        a = gg(a, b, c, d, k[13], 5, -1444681467);
+        d = gg(d, a, b, c, k[2], 9, -51403784);
+        c = gg(c, d, a, b, k[7], 14, 1735328473);
+        b = gg(b, c, d, a, k[12], 20, -1926607734);
+
+        a = hh(a, b, c, d, k[5], 4, -378558);
+        d = hh(d, a, b, c, k[8], 11, -2022574463);
+        c = hh(c, d, a, b, k[11], 16, 1839030562);
+        b = hh(b, c, d, a, k[14], 23, -35309556);
+        a = hh(a, b, c, d, k[1], 4, -1530992060);
+        d = hh(d, a, b, c, k[4], 11, 1272893353);
+        c = hh(c, d, a, b, k[7], 16, -155497632);
+        b = hh(b, c, d, a, k[10], 23, -1094730640);
+        a = hh(a, b, c, d, k[13], 4, 681279174);
+        d = hh(d, a, b, c, k[0], 11, -358537222);
+        c = hh(c, d, a, b, k[3], 16, -722521979);
+        b = hh(b, c, d, a, k[6], 23, 76029189);
+        a = hh(a, b, c, d, k[9], 4, -640364487);
+        d = hh(d, a, b, c, k[12], 11, -421815835);
+        c = hh(c, d, a, b, k[15], 16, 530742520);
+        b = hh(b, c, d, a, k[2], 23, -995338651);
+
+        a = ii(a, b, c, d, k[0], 6, -198630844);
+        d = ii(d, a, b, c, k[7], 10, 1126891415);
+        c = ii(c, d, a, b, k[14], 15, -1416354905);
+        b = ii(b, c, d, a, k[5], 21, -57434055);
+        a = ii(a, b, c, d, k[12], 6, 1700485571);
+        d = ii(d, a, b, c, k[3], 10, -1894986606);
+        c = ii(c, d, a, b, k[10], 15, -1051523);
+        b = ii(b, c, d, a, k[1], 21, -2054922799);
+        a = ii(a, b, c, d, k[8], 6, 1873313359);
+        d = ii(d, a, b, c, k[15], 10, -30611744);
+        c = ii(c, d, a, b, k[6], 15, -1560198380);
+        b = ii(b, c, d, a, k[13], 21, 1309151649);
+        a = ii(a, b, c, d, k[4], 6, -145523070);
+        d = ii(d, a, b, c, k[11], 10, -1120210379);
+        c = ii(c, d, a, b, k[2], 15, 718787259);
+        b = ii(b, c, d, a, k[9], 21, -343485551);
+
+        x[0] = add32(a, x[0]);
+        x[1] = add32(b, x[1]);
+        x[2] = add32(c, x[2]);
+        x[3] = add32(d, x[3]);
+    }
+
+    function md5blk(s) {
+        var md5blks = [],
+            i; /* Andy King said do it this way. */
+
+        for (i = 0; i < 64; i += 4) {
+            md5blks[i >> 2] = s.charCodeAt(i) + (s.charCodeAt(i + 1) << 8) + (s.charCodeAt(i + 2) << 16) + (s.charCodeAt(i + 3) << 24);
+        }
+        return md5blks;
+    }
+
+    function md5blk_array(a) {
+        var md5blks = [],
+            i; /* Andy King said do it this way. */
+
+        for (i = 0; i < 64; i += 4) {
+            md5blks[i >> 2] = a[i] + (a[i + 1] << 8) + (a[i + 2] << 16) + (a[i + 3] << 24);
+        }
+        return md5blks;
+    }
+
+    function md51(s) {
+        var n = s.length,
+            state = [1732584193, -271733879, -1732584194, 271733878],
+            i,
+            length,
+            tail,
+            tmp,
+            lo,
+            hi;
+
+        for (i = 64; i <= n; i += 64) {
+            md5cycle(state, md5blk(s.substring(i - 64, i)));
+        }
+        s = s.substring(i - 64);
+        length = s.length;
+        tail = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        for (i = 0; i < length; i += 1) {
+            tail[i >> 2] |= s.charCodeAt(i) << ((i % 4) << 3);
+        }
+        tail[i >> 2] |= 0x80 << ((i % 4) << 3);
+        if (i > 55) {
+            md5cycle(state, tail);
+            for (i = 0; i < 16; i += 1) {
+                tail[i] = 0;
+            }
+        }
+
+        // Beware that the final length might not fit in 32 bits so we take care of that
+        tmp = n * 8;
+        tmp = tmp.toString(16).match(/(.*?)(.{0,8})$/);
+        lo = parseInt(tmp[2], 16);
+        hi = parseInt(tmp[1], 16) || 0;
+
+        tail[14] = lo;
+        tail[15] = hi;
+
+        md5cycle(state, tail);
+        return state;
+    }
+
+    function md51_array(a) {
+        var n = a.length,
+            state = [1732584193, -271733879, -1732584194, 271733878],
+            i,
+            length,
+            tail,
+            tmp,
+            lo,
+            hi;
+
+        for (i = 64; i <= n; i += 64) {
+            md5cycle(state, md5blk_array(a.subarray(i - 64, i)));
+        }
+
+        // Not sure if it is a bug, however IE10 will always produce a sub array of length 1
+        // containing the last element of the parent array if the sub array specified starts
+        // beyond the length of the parent array - weird.
+        // https://connect.microsoft.com/IE/feedback/details/771452/typed-array-subarray-issue
+        a = (i - 64) < n ? a.subarray(i - 64) : new Uint8Array(0);
+
+        length = a.length;
+        tail = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        for (i = 0; i < length; i += 1) {
+            tail[i >> 2] |= a[i] << ((i % 4) << 3);
+        }
+
+        tail[i >> 2] |= 0x80 << ((i % 4) << 3);
+        if (i > 55) {
+            md5cycle(state, tail);
+            for (i = 0; i < 16; i += 1) {
+                tail[i] = 0;
+            }
+        }
+
+        // Beware that the final length might not fit in 32 bits so we take care of that
+        tmp = n * 8;
+        tmp = tmp.toString(16).match(/(.*?)(.{0,8})$/);
+        lo = parseInt(tmp[2], 16);
+        hi = parseInt(tmp[1], 16) || 0;
+
+        tail[14] = lo;
+        tail[15] = hi;
+
+        md5cycle(state, tail);
+
+        return state;
+    }
+
+    function rhex(n) {
+        var s = '',
+            j;
+        for (j = 0; j < 4; j += 1) {
+            s += hex_chr[(n >> (j * 8 + 4)) & 0x0F] + hex_chr[(n >> (j * 8)) & 0x0F];
+        }
+        return s;
+    }
+
+    function hex(x) {
+        var i;
+        for (i = 0; i < x.length; i += 1) {
+            x[i] = rhex(x[i]);
+        }
+        return x.join('');
+    }
+
+    // In some cases the fast add32 function cannot be used..
+    if (hex(md51('hello')) !== '5d41402abc4b2a76b9719d911017c592') {
+        add32 = function (x, y) {
+            var lsw = (x & 0xFFFF) + (y & 0xFFFF),
+                msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+            return (msw << 16) | (lsw & 0xFFFF);
+        };
+    }
+
+    // ---------------------------------------------------
+
+    function toUtf8(str) {
+        if (/[\u0080-\uFFFF]/.test(str)) {
+            str = unescape(encodeURIComponent(str));
+        }
+
+        return str;
+    }
+
+    function utf8Str2ArrayBuffer(str, returnUInt8Array) {
+        var length = str.length,
+           buff = new ArrayBuffer(length),
+           arr = new Uint8Array(buff),
+           i;
+
+        for (i = 0; i < length; i++) {
+            arr[i] = str.charCodeAt(i);
+        }
+
+        return returnUInt8Array ? arr : buff;
+    }
+
+    function arrayBuffer2Utf8Str(buff) {
+        return String.fromCharCode.apply(null, new Uint8Array(buff));
+    }
+
+    function concatenateArrayBuffers(first, second, returnUInt8Array) {
+        var result = new Uint8Array(first.byteLength + second.byteLength);
+
+        result.set(new Uint8Array(first));
+        result.set(new Uint8Array(second), first.byteLength);
+
+        return returnUInt8Array ? result : result.buffer;
+    }
+
+    // ---------------------------------------------------
+
+    /**
+     * SparkMD5 OOP implementation.
+     *
+     * Use this class to perform an incremental md5, otherwise use the
+     * static methods instead.
+     */
+    function SparkMD5() {
+        // call reset to init the instance
+        this.reset();
+    }
+
+    /**
+     * Appends a string.
+     * A conversion will be applied if an utf8 string is detected.
+     *
+     * @param {String} str The string to be appended
+     *
+     * @return {SparkMD5} The instance itself
+     */
+    SparkMD5.prototype.append = function (str) {
+        // Converts the string to utf8 bytes if necessary
+        // Then append as binary
+        this.appendBinary(toUtf8(str));
+
+        return this;
+    };
+
+    /**
+     * Appends a binary string.
+     *
+     * @param {String} contents The binary string to be appended
+     *
+     * @return {SparkMD5} The instance itself
+     */
+    SparkMD5.prototype.appendBinary = function (contents) {
+        this._buff += contents;
+        this._length += contents.length;
+
+        var length = this._buff.length,
+            i;
+
+        for (i = 64; i <= length; i += 64) {
+            md5cycle(this._hash, md5blk(this._buff.substring(i - 64, i)));
+        }
+
+        this._buff = this._buff.substring(i - 64);
+
+        return this;
+    };
+
+    /**
+     * Finishes the incremental computation, reseting the internal state and
+     * returning the result.
+     * Use the raw parameter to obtain the raw result instead of the hex one.
+     *
+     * @param {Boolean} raw True to get the raw result, false to get the hex result
+     *
+     * @return {String|Array} The result
+     */
+    SparkMD5.prototype.end = function (raw) {
+        var buff = this._buff,
+            length = buff.length,
+            i,
+            tail = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ret;
+
+        for (i = 0; i < length; i += 1) {
+            tail[i >> 2] |= buff.charCodeAt(i) << ((i % 4) << 3);
+        }
+
+        this._finish(tail, length);
+        ret = !!raw ? this._hash : hex(this._hash);
+
+        this.reset();
+
+        return ret;
+    };
+
+    /**
+     * Resets the internal state of the computation.
+     *
+     * @return {SparkMD5} The instance itself
+     */
+    SparkMD5.prototype.reset = function () {
+        this._buff = '';
+        this._length = 0;
+        this._hash = [1732584193, -271733879, -1732584194, 271733878];
+
+        return this;
+    };
+
+    /**
+     * Gets the internal state of the computation.
+     *
+     * @return {Object} The state
+     */
+    SparkMD5.prototype.getState = function () {
+        return {
+            buff: this._buff,
+            length: this._length,
+            hash: this._hash
+        };
+    };
+
+    /**
+     * Gets the internal state of the computation.
+     *
+     * @param {Object} state The state
+     *
+     * @return {SparkMD5} The instance itself
+     */
+    SparkMD5.prototype.setState = function (state) {
+        this._buff = state.buff;
+        this._length = state.length;
+        this._hash = state.hash;
+
+        return this;
+    };
+
+    /**
+     * Releases memory used by the incremental buffer and other additional
+     * resources. If you plan to use the instance again, use reset instead.
+     */
+    SparkMD5.prototype.destroy = function () {
+        delete this._hash;
+        delete this._buff;
+        delete this._length;
+    };
+
+    /**
+     * Finish the final calculation based on the tail.
+     *
+     * @param {Array}  tail   The tail (will be modified)
+     * @param {Number} length The length of the remaining buffer
+     */
+    SparkMD5.prototype._finish = function (tail, length) {
+        var i = length,
+            tmp,
+            lo,
+            hi;
+
+        tail[i >> 2] |= 0x80 << ((i % 4) << 3);
+        if (i > 55) {
+            md5cycle(this._hash, tail);
+            for (i = 0; i < 16; i += 1) {
+                tail[i] = 0;
+            }
+        }
+
+        // Do the final computation based on the tail and length
+        // Beware that the final length may not fit in 32 bits so we take care of that
+        tmp = this._length * 8;
+        tmp = tmp.toString(16).match(/(.*?)(.{0,8})$/);
+        lo = parseInt(tmp[2], 16);
+        hi = parseInt(tmp[1], 16) || 0;
+
+        tail[14] = lo;
+        tail[15] = hi;
+        md5cycle(this._hash, tail);
+    };
+
+    /**
+     * Performs the md5 hash on a string.
+     * A conversion will be applied if utf8 string is detected.
+     *
+     * @param {String}  str The string
+     * @param {Boolean} raw True to get the raw result, false to get the hex result
+     *
+     * @return {String|Array} The result
+     */
+    SparkMD5.hash = function (str, raw) {
+        // Converts the string to utf8 bytes if necessary
+        // Then compute it using the binary function
+        return SparkMD5.hashBinary(toUtf8(str), raw);
+    };
+
+    /**
+     * Performs the md5 hash on a binary string.
+     *
+     * @param {String}  content The binary string
+     * @param {Boolean} raw     True to get the raw result, false to get the hex result
+     *
+     * @return {String|Array} The result
+     */
+    SparkMD5.hashBinary = function (content, raw) {
+        var hash = md51(content);
+
+        return !!raw ? hash : hex(hash);
+    };
+
+    // ---------------------------------------------------
+
+    /**
+     * SparkMD5 OOP implementation for array buffers.
+     *
+     * Use this class to perform an incremental md5 ONLY for array buffers.
+     */
+    SparkMD5.ArrayBuffer = function () {
+        // call reset to init the instance
+        this.reset();
+    };
+
+    /**
+     * Appends an array buffer.
+     *
+     * @param {ArrayBuffer} arr The array to be appended
+     *
+     * @return {SparkMD5.ArrayBuffer} The instance itself
+     */
+    SparkMD5.ArrayBuffer.prototype.append = function (arr) {
+        var buff = concatenateArrayBuffers(this._buff.buffer, arr, true),
+            length = buff.length,
+            i;
+
+        this._length += arr.byteLength;
+
+        for (i = 64; i <= length; i += 64) {
+            md5cycle(this._hash, md5blk_array(buff.subarray(i - 64, i)));
+        }
+
+        // Avoids IE10 weirdness (documented above)
+        this._buff = (i - 64) < length ? buff.subarray(i - 64) : new Uint8Array(0);
+
+        return this;
+    };
+
+    /**
+     * Finishes the incremental computation, reseting the internal state and
+     * returning the result.
+     * Use the raw parameter to obtain the raw result instead of the hex one.
+     *
+     * @param {Boolean} raw True to get the raw result, false to get the hex result
+     *
+     * @return {String|Array} The result
+     */
+    SparkMD5.ArrayBuffer.prototype.end = function (raw) {
+        var buff = this._buff,
+            length = buff.length,
+            tail = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            i,
+            ret;
+
+        for (i = 0; i < length; i += 1) {
+            tail[i >> 2] |= buff[i] << ((i % 4) << 3);
+        }
+
+        this._finish(tail, length);
+        ret = !!raw ? this._hash : hex(this._hash);
+
+        this.reset();
+
+        return ret;
+    };
+
+    /**
+     * Resets the internal state of the computation.
+     *
+     * @return {SparkMD5.ArrayBuffer} The instance itself
+     */
+    SparkMD5.ArrayBuffer.prototype.reset = function () {
+        this._buff = new Uint8Array(0);
+        this._length = 0;
+        this._hash = [1732584193, -271733879, -1732584194, 271733878];
+
+        return this;
+    };
+
+    /**
+     * Gets the internal state of the computation.
+     *
+     * @return {Object} The state
+     */
+    SparkMD5.ArrayBuffer.prototype.getState = function () {
+        var state = SparkMD5.prototype.getState.call(this);
+
+        // Convert buffer to a string
+        state.buff = arrayBuffer2Utf8Str(state.buff);
+
+        return state;
+    };
+
+    /**
+     * Gets the internal state of the computation.
+     *
+     * @param {Object} state The state
+     *
+     * @return {SparkMD5.ArrayBuffer} The instance itself
+     */
+    SparkMD5.ArrayBuffer.prototype.setState = function (state) {
+        // Convert string to buffer
+        state.buff = utf8Str2ArrayBuffer(state.buff, true);
+
+        return SparkMD5.prototype.setState.call(this, state);
+    };
+
+    SparkMD5.ArrayBuffer.prototype.destroy = SparkMD5.prototype.destroy;
+
+    SparkMD5.ArrayBuffer.prototype._finish = SparkMD5.prototype._finish;
+
+    /**
+     * Performs the md5 hash on an array buffer.
+     *
+     * @param {ArrayBuffer} arr The array buffer
+     * @param {Boolean}     raw True to get the raw result, false to get the hex result
+     *
+     * @return {String|Array} The result
+     */
+    SparkMD5.ArrayBuffer.hash = function (arr, raw) {
+        var hash = md51_array(new Uint8Array(arr));
+
+        return !!raw ? hash : hex(hash);
+    };
+
+    return SparkMD5;
+}));
+
+}, {}],
+238: [function(require, module, exports) {
+/**
+ * Module dependencies.
+ */
+
+var base64encode = require('base64-encode');
+var cors = require('has-cors');
+var jsonp = require('jsonp');
+var JSON = require('json');
+
+/**
+ * Expose `send`
+ */
+
+exports = module.exports = cors
+  ? json
+  : base64;
+
+/**
+ * Expose `callback`
+ */
+
+exports.callback = 'callback';
+
+/**
+ * Expose `prefix`
+ */
+
+exports.prefix = 'data';
+
+/**
+ * Expose `json`.
+ */
+
+exports.json = json;
+
+/**
+ * Expose `base64`.
+ */
+
+exports.base64 = base64;
+
+/**
+ * Expose `type`
+ */
+
+exports.type = cors
+  ? 'xhr'
+  : 'jsonp';
+
+/**
+ * Send the given `obj` to `url` with `fn(err, req)`.
+ *
+ * @param {String} url
+ * @param {Object} obj
+ * @param {Object} headers
+ * @param {Function} fn
+ * @api private
+ */
+
+function json(url, obj, headers, fn){
+  if (3 == arguments.length) fn = headers, headers = {};
+
+  var req = new XMLHttpRequest;
+  req.onerror = fn;
+  req.onreadystatechange = done;
+  req.open('POST', url, true);
+  for (var k in headers) req.setRequestHeader(k, headers[k]);
+  req.send(JSON.stringify(obj));
+
+  function done(){
+    if (4 == req.readyState) return fn(null, req);
+  }
+}
+
+/**
+ * Send the given `obj` to `url` with `fn(err, req)`.
+ *
+ * @param {String} url
+ * @param {Object} obj
+ * @param {Function} fn
+ * @api private
+ */
+
+function base64(url, obj, _, fn){
+  if (3 == arguments.length) fn = _;
+  var prefix = exports.prefix;
+  var data = encode(obj);
+  url += '?' + prefix + '=' + data;
+  jsonp(url, { param: exports.callback }, function(err, obj){
+    if (err) return fn(err);
+    fn(null, {
+      url: url,
+      body: obj
+    });
+  });
+}
+
+/**
+ * Encodes `obj`.
+ *
+ * @param {Object} obj
+ */
+
+function encode(obj) {
+  var str = '';
+  str = JSON.stringify(obj);
+  str = base64encode(str);
+  str = str.replace(/\+/g, '-').replace(/\//g, '_');
+  return encodeURIComponent(str);
+}
+}, {"base64-encode":198,"has-cors":199,"jsonp":239,"json":60}],
+239: [function(require, module, exports) {
+/**
+ * Module dependencies
+ */
+
+var debug = require('debug')('jsonp');
+var indexof = require('indexof');
+
+/**
+ * Module exports.
+ */
+
+module.exports = jsonp;
+
+/**
+ * Callback index.
+ */
+
+var count = 0;
+
+/**
+ * Noop function.
+ */
+
+function noop(){};
+
+/**
+ * JSONP handler
+ *
+ * Options:
+ *  - param {String} qs parameter (`callback`)
+ *  - timeout {Number} how long after a timeout error is emitted (`60000`)
+ *
+ * @param {String} url
+ * @param {Object|Function} optional options / callback
+ * @param {Function} optional callback
+ */
+
+function jsonp(url, opts, fn){
+  if ('function' == typeof opts) {
+    fn = opts;
+    opts = {};
+  }
+  if (!opts) opts = {};
+
+  var param = opts.param || 'callback';
+  var timeout = null != opts.timeout ? opts.timeout : 60000;
+  var enc = encodeURIComponent;
+  var target = document.getElementsByTagName('script')[0] || document.head;
+  var script;
+  var timer;
+
+  // generate a unique id for this request
+  var id = count++;
+
+  if (timeout) {
+    timer = setTimeout(function(){
+      cleanup();
+      if (fn) fn(new Error('Timeout'));
+    }, timeout);
+  }
+
+  function cleanup(){
+    var node = script.parentNode;
+    if (node) node.removeChild(script);
+    window['__jp' + id] = noop;
+  }
+
+  window['__jp' + id] = function(data){
+    debug('jsonp got', data);
+    if (timer) clearTimeout(timer);
+    cleanup();
+    if (fn) fn(null, data);
+  };
+
+  // add qs component
+  url += (~indexof(url, '?') ? '&' : '?') + param + '=' + enc('__jp' + id + '');
+  url = url.replace('?&', '?');
+
+  debug('jsonp req "%s"', url);
+
+  // create script
+  script = document.createElement('script');
+  script.src = url;
+  target.parentNode.insertBefore(script, target);
+};
+
+}, {"debug":15,"indexof":31}],
 156: [function(require, module, exports) {
 
 /**
@@ -21953,6 +22838,7 @@ function noop() {}
  */
 
 var integration = require('analytics.js-integration');
+var defaults = require('defaults');
 var is = require('is');
 
 /**
@@ -21963,6 +22849,10 @@ var Sentry = module.exports = integration('Sentry')
   .global('Raven')
   .global('RavenConfig')
   .option('config', '')
+  .option('ignoreErrors', [])
+  .option('ignoreUrls', [])
+  .option('maxMessageLength', 100)
+  .option('logger', 'javascript')
   .tag('<script src="//cdn.ravenjs.com/1.1.16/native/raven.min.js">');
 
 /**
@@ -21975,8 +22865,24 @@ var Sentry = module.exports = integration('Sentry')
  */
 
 Sentry.prototype.initialize = function() {
+  var ignoreErrors = this.options.ignoreErrors;
+  var ignoreUrls = this.options.ignoreUrls;
+  var maxMessageLength = this.options.maxMessageLength;
+  var logger = this.options.logger;
+
   var dsn = this.options.config;
-  window.RavenConfig = { dsn: dsn };
+  var config = {};
+
+  if (ignoreErrors.length) config.ignoreErrors = ignoreErrors;
+  if (ignoreUrls.length) config.ignoreUrls = ignoreUrls;
+  if (maxMessageLength) config.maxMessageLength = maxMessageLength;
+  if (logger) config.logger = logger;
+
+  window.RavenConfig = defaults.deep(window.RavenConfig || {}, {
+    config: config,
+    dsn: dsn
+  });
+
   this.load(this.ready);
 };
 
@@ -22002,7 +22908,266 @@ Sentry.prototype.identify = function(identify) {
   window.Raven.setUser(identify.traits());
 };
 
-}, {"analytics.js-integration":206,"is":19}],
+}, {"analytics.js-integration":173,"defaults":240,"is":19}],
+240: [function(require, module, exports) {
+'use strict';
+
+/**
+ * Module dependencies.
+ */
+
+// XXX: Hacky fix for Duo not supporting scoped modules
+var drop; try { drop = require('@ndhoule/drop'); } catch(e) { drop = require('ndhoule/drop'); }
+var rest; try { rest = require('@ndhoule/rest'); } catch(e) { rest = require('ndhoule/rest'); }
+
+/**
+ * Object#hasOwnProperty reference.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Object#toString reference.
+ */
+
+var objToString = Object.prototype.toString;
+
+/**
+ * Returns `true` if a value is an object, otherwise `false`.
+ *
+ * @name isObject
+ * @api private
+ * @param {*} val The value to test.
+ * @return {boolean}
+ */
+// TODO: Move to a library
+var isObject = function isObject(value) {
+  return Boolean(value) && typeof value === 'object';
+};
+
+/**
+ * Returns `true` if a value is a plain object, otherwise `false`.
+ *
+ * @name isPlainObject
+ * @api private
+ * @param {*} val The value to test.
+ * @return {boolean}
+ */
+// TODO: Move to a library
+var isPlainObject = function isPlainObject(value) {
+  return Boolean(value) && objToString.call(value) === '[object Object]';
+};
+
+/**
+ * Assigns a key-value pair to a target object when the value assigned is owned,
+ * and where target[key] is undefined.
+ *
+ * @name shallowCombiner
+ * @api private
+ * @param {Object} target
+ * @param {Object} source
+ * @param {*} value
+ * @param {string} key
+ */
+var shallowCombiner = function shallowCombiner(target, source, value, key) {
+  if (has.call(source, key) && target[key] === undefined) {
+    target[key] = value;
+  }
+  return source;
+};
+
+/**
+ * Assigns a key-value pair to a target object when the value assigned is owned,
+ * and where target[key] is undefined; also merges objects recursively.
+ *
+ * @name deepCombiner
+ * @api private
+ * @param {Object} target
+ * @param {Object} source
+ * @param {*} value
+ * @param {string} key
+ * @return {Object}
+ */
+var deepCombiner = function(target, source, value, key) {
+  if (has.call(source, key)) {
+    if (isPlainObject(target[key]) && isPlainObject(value)) {
+        target[key] = defaultsDeep(target[key], value);
+    } else if (target[key] === undefined) {
+        target[key] = value;
+    }
+  }
+
+  return source;
+};
+
+/**
+ * TODO
+ *
+ * @name defaultsWith
+ * @api private
+ * @param {Function} combiner
+ * @param {Object} target
+ * @param {...Object} sources
+ * @return {Object} Return the input `target`.
+ */
+var defaultsWith = function(combiner, target /*, ...sources */) {
+  if (!isObject(target)) {
+    return target;
+  }
+
+  combiner = combiner || shallowCombiner;
+  var sources = drop(2, arguments);
+
+  for (var i = 0; i < sources.length; i += 1) {
+    for (var key in sources[i]) {
+      combiner(target, sources[i], sources[i][key], key);
+    }
+  }
+
+  return target;
+};
+
+/**
+ * Copies owned, enumerable properties from a source object(s) to a target
+ * object when the value of that property on the source object is `undefined`.
+ * Recurses on objects.
+ *
+ * @name defaultsDeep
+ * @api public
+ * @param {Object} target
+ * @param {...Object} sources
+ * @return {Object} The input `target`.
+ */
+var defaultsDeep = function defaultsDeep(target /*, sources */) {
+  // TODO: Replace with `partial` call?
+  return defaultsWith.apply(null, [deepCombiner, target].concat(rest(arguments)));
+};
+
+/**
+ * Copies owned, enumerable properties from a source object(s) to a target
+ * object when the value of that property on the source object is `undefined`.
+ *
+ * @name defaults
+ * @api public
+ * @param {Object} target
+ * @param {...Object} sources
+ * @return {Object}
+ * @example
+ * var a = { a: 1 };
+ * var b = { a: 2, b: 2 };
+ *
+ * defaults(a, b);
+ * console.log(a); //=> { a: 1, b: 2 }
+ */
+var defaults = function(target /*, ...sources */) {
+  // TODO: Replace with `partial` call?
+  return defaultsWith.apply(null, [null, target].concat(rest(arguments)));
+};
+
+/**
+ * Exports.
+ */
+
+module.exports = defaults;
+module.exports.deep = defaultsDeep;
+
+}, {"ndhoule/drop":241,"ndhoule/rest":242}],
+241: [function(require, module, exports) {
+'use strict';
+
+var max = Math.max;
+
+/**
+ * Produce a new array composed of all but the first `n` elements of an input `collection`.
+ *
+ * @name drop
+ * @api public
+ * @param {number} count The number of elements to drop.
+ * @param {Array} collection The collection to iterate over.
+ * @return {Array} A new array containing all but the first element from `collection`.
+ * @example
+ * drop(0, [1, 2, 3]); // => [1, 2, 3]
+ * drop(1, [1, 2, 3]); // => [2, 3]
+ * drop(2, [1, 2, 3]); // => [3]
+ * drop(3, [1, 2, 3]); // => []
+ * drop(4, [1, 2, 3]); // => []
+ */
+var drop = function drop(count, collection) {
+  var length = collection ? collection.length : 0;
+
+  if (!length) {
+    return [];
+  }
+
+  // Preallocating an array *significantly* boosts performance when dealing with
+  // `arguments` objects on v8. For a summary, see:
+  // https://github.com/petkaantonov/bluebird/wiki/Optimization-killers#32-leaking-arguments
+  var toDrop = max(Number(count) || 0, 0);
+  var resultsLength = max(length - toDrop, 0);
+  var results = new Array(resultsLength);
+
+  for (var i = 0; i < resultsLength; i += 1) {
+    results[i] = collection[i + toDrop];
+  }
+
+  return results;
+};
+
+/*
+ * Exports.
+ */
+
+module.exports = drop;
+
+}, {}],
+242: [function(require, module, exports) {
+'use strict';
+
+/**
+ * Cache `Math.max` reference.
+ *
+ * @api private
+ */
+
+var max = Math.max;
+
+/**
+ * Produce a new array by passing each value in the input `collection` through a transformative
+ * `iterator` function. The `iterator` function is passed three arguments:
+ * `(value, index, collection)`.
+ *
+ * @name rest
+ * @api public
+ * @param {Array} collection The collection to iterate over.
+ * @return {Array} A new array containing all but the first element from `collection`.
+ * @example
+ * rest([1, 2, 3]); // => [2, 3]
+ */
+
+var rest = function rest(collection) {
+  if (collection == null || !collection.length) {
+    return [];
+  }
+
+  // Preallocating an array *significantly* boosts performance when dealing with
+  // `arguments` objects on v8. For a summary, see:
+  // https://github.com/petkaantonov/bluebird/wiki/Optimization-killers#32-leaking-arguments
+  var results = new Array(max(collection.length - 2, 0));
+
+  for (var i = 1; i < collection.length; i += 1) {
+    results[i - 1] = collection[i];
+  }
+
+  return results;
+};
+
+/**
+ * Exports.
+ */
+
+module.exports = rest;
+
+}, {}],
 157: [function(require, module, exports) {
 
 /**
@@ -22118,7 +23283,7 @@ SnapEngage.prototype.attachListeners = function() {
   });
 };
 
-}, {"analytics.js-integration":206,"is":19,"next-tick":58}],
+}, {"analytics.js-integration":173,"is":19,"next-tick":58}],
 158: [function(require, module, exports) {
 
 /**
@@ -22166,7 +23331,7 @@ Spinnakr.prototype.loaded = function() {
   return !!window._spinnakr;
 };
 
-}, {"bind":56,"analytics.js-integration":206,"when":232}],
+}, {"bind":56,"analytics.js-integration":173,"when":210}],
 159: [function(require, module, exports) {
 /**
  * Module dependencies.
@@ -22227,7 +23392,7 @@ SupportHero.prototype.identify = function(identify) {
   }
 };
 
-}, {"analytics.js-integration":206}],
+}, {"analytics.js-integration":173}],
 160: [function(require, module, exports) {
 
 /**
@@ -22246,7 +23411,7 @@ var push = require('global-queue')('_tlq');
 var Taplytics = module.exports = integration('Taplytics')
   .global('_tlq')
   .global('Taplytics')
-  .option('token', '')
+  .option('apiKey', '')
   .option('options', {})
   .tag('<script id="taplytics" src="//cdn.taplytics.com/taplytics.min.js">')
   .assumesPageview();
@@ -22259,11 +23424,11 @@ var Taplytics = module.exports = integration('Taplytics')
 
 Taplytics.prototype.initialize = function() {
   var options = this.options.options;
-  var token = this.options.token;
+  var apiKey = this.options.apiKey;
 
   window._tlq = window._tlq || [];
 
-  push('init', token, options);
+  push('init', apiKey, options);
 
   this.load(this.ready);
 };
@@ -22357,7 +23522,7 @@ Taplytics.prototype.reset = function() {
   push('reset');
 };
 
-}, {"analytics.js-integration":206,"is":19,"keys":68,"global-queue":230}],
+}, {"analytics.js-integration":173,"is":19,"keys":68,"global-queue":217}],
 161: [function(require, module, exports) {
 
 /**
@@ -22445,7 +23610,7 @@ Tapstream.prototype.track = function(track) {
   push('fireHit', slug(track.event()), [props.url]);
 };
 
-}, {"analytics.js-integration":206,"global-queue":230,"slug":181}],
+}, {"analytics.js-integration":173,"global-queue":217,"slug":181}],
 162: [function(require, module, exports) {
 
 /**
@@ -22519,7 +23684,7 @@ Trakio.prototype.page = function(page) {
 
   window.trak.io.page_view(props.path, name || props.title);
 
-  if (category) window.trak.io.channel('category');
+  if (category) window.trak.io.channel(category);
 
   // named pages
   if (name && this.options.trackNamedPages) {
@@ -22566,11 +23731,17 @@ Trakio.prototype.identify = function(identify) {
  *
  * @param {String} id (optional)
  * @param {Object} properties (optional)
- * @param {Object} options (optional)
+ * http://docs.trak.io/company.html
  *
- * TODO: add group
- * TODO: add `trait.company/organization` from trak.io docs http://docs.trak.io/properties.html#special
  */
+
+Trakio.prototype.group = function(group) {
+  var traits = group.traits();
+  delete traits.id;
+  var id = group.groupId();
+  if (id) window.trak.io.company_id(id);
+  window.trak.io.company(traits);
+};
 
 /**
  * Track.
@@ -22609,15 +23780,18 @@ Trakio.prototype.alias = function(alias) {
   }
 };
 
-}, {"alias":233,"analytics.js-integration":206}],
+}, {"alias":229,"analytics.js-integration":173}],
 163: [function(require, module, exports) {
 
 /**
  * Module dependencies.
  */
 
-var each = require('each');
 var integration = require('analytics.js-integration');
+var defaults = require('defaults');
+var foldl = require('foldl');
+var each = require('each');
+var get = require('obj-case');
 
 /**
  * Expose `TwitterAds`.
@@ -22625,7 +23799,7 @@ var integration = require('analytics.js-integration');
 
 var TwitterAds = module.exports = integration('Twitter Ads')
   .option('page', '')
-  .tag('<img src="//analytics.twitter.com/i/adsct?txn_id={{ pixelId }}&p_id=Twitter"/>')
+  .tag('<img src="//analytics.twitter.com/i/adsct?txn_id={{ pixelId }}&p_id=Twitter&tw_sale_amount={{ revenue }}&tw_order_quantity={{ quantity }}"/>')
   .mapping('events');
 
 /**
@@ -22638,6 +23812,11 @@ TwitterAds.prototype.initialize = function() {
   this.ready();
 };
 
+var defaultQueryValues = {
+  revenue: 0,
+  quantity: 0
+};
+
 /**
  * Page.
  *
@@ -22647,7 +23826,7 @@ TwitterAds.prototype.initialize = function() {
 
 TwitterAds.prototype.page = function() {
   if (this.options.page) {
-    this.load({ pixelId: this.options.page });
+    this.load(defaults({ pixelId: this.options.page }, defaultQueryValues));
   }
 };
 
@@ -22662,11 +23841,104 @@ TwitterAds.prototype.track = function(track) {
   var events = this.events(track.event());
   var self = this;
   each(events, function(pixelId) {
-    self.load({ pixelId: pixelId });
+    self.load(defaults({
+      pixelId: pixelId,
+      quantity: track.proxy('properties.quantity'),
+      revenue: track.revenue()
+    }, defaultQueryValues));
   });
 };
 
-}, {"each":4,"analytics.js-integration":206}],
+/**
+ * Completed Order.
+ *
+ * @api public
+ * @param {Track} track
+ */
+
+TwitterAds.prototype.completedOrder = function(track) {
+  var events = this.events(track.event());
+  // add up all the quantities of each product
+  var quantity = foldl(function(cartQuantity, product) {
+    return cartQuantity + (get(product, 'quantity') || 0);
+  }, 0, track.products());
+
+  var self = this;
+  each(events, function(pixelId) {
+    self.load(defaults({
+      pixelId: pixelId,
+      quantity: quantity,
+      revenue: track.revenue()
+    }, defaultQueryValues));
+  });
+};
+
+}, {"analytics.js-integration":173,"defaults":243,"foldl":17,"each":4,"obj-case":43}],
+243: [function(require, module, exports) {
+'use strict';
+
+/**
+ * hasOwnProperty reference.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Returns `true` if a value is an object, otherwise `false`.
+ *
+ * @name isObject
+ * @api private
+ * @param {*} val The value to test.
+ * @return {boolean}
+ */
+
+// TODO: Move to a library
+var isObject = function(val) {
+  return Boolean(val) && typeof val === 'object';
+};
+
+/**
+ * Copies owned, enumerable properties from a source object(s) to a target
+ * object when the value of that property on the source object is `undefined`.
+ *
+ * @name defaults
+ * @api public
+ * @param {Object} target
+ * @param {...Object} sources
+ * @return {Object}
+ * @example
+ * var a = { a: 1 };
+ * var b = { a: 2, b: 2 };
+ *
+ * defaults(a, b);
+ * console.log(a); //=> { a: 1, b: 2 }
+ */
+
+var defaults = function(target /*, ...sources */) {
+  if (!isObject(target)) {
+    return target;
+  }
+
+  var sources = Array.prototype.slice.call(arguments, 1);
+
+  for (var i = 0; i < sources.length; i += 1) {
+    for (var key in sources[i]) {
+      if (has.call(sources[i], key) && target[key] === undefined) {
+        target[key] = sources[i][key];
+      }
+    }
+  }
+
+  return target;
+};
+
+/**
+ * Exports.
+ */
+
+module.exports = defaults;
+
+}, {}],
 164: [function(require, module, exports) {
 
 /**
@@ -22784,7 +24056,7 @@ Userlike.prototype.attachListeners = function() {
   };
 };
 
-}, {"facade":215,"clone":13,"analytics.js-integration":206}],
+}, {"facade":9,"clone":13,"analytics.js-integration":173}],
 165: [function(require, module, exports) {
 
 /**
@@ -22985,8 +24257,8 @@ function showClassicWidget(type, options) {
   push(type, 'classic_widget', options);
 }
 
-}, {"alias":233,"convert-dates":234,"analytics.js-integration":206,"global-queue":230,"to-unix-timestamp":242}],
-242: [function(require, module, exports) {
+}, {"alias":229,"convert-dates":230,"analytics.js-integration":173,"global-queue":217,"to-unix-timestamp":244}],
+244: [function(require, module, exports) {
 
 /**
  * Expose `toUnixTimestamp`.
@@ -23082,8 +24354,9 @@ Vero.prototype.identify = function(identify) {
   var traits = identify.traits();
   var email = identify.email();
   var id = identify.userId();
-  // Both userId and email address are required by Vero's API
-  if (!id || !email) return;
+  // userId OR email address are required by Vero's API. When userId isn't present,
+  // email will be used as the userId.
+  if (!id && !email) return;
   push('user', traits);
 };
 
@@ -23103,7 +24376,7 @@ Vero.prototype.track = function(track) {
   if (track.event().match(regex)) {
     push('unsubscribe', { id: track.properties().id });
   } else {
-    push('track', track.event(), track.properties());
+    push('track', track.event(), track.properties(), { source: 'segment' });
   }
 };
 
@@ -23127,7 +24400,7 @@ Vero.prototype.alias = function(alias) {
   }
 };
 
-}, {"component/cookie":59,"analytics.js-integration":206,"global-queue":230}],
+}, {"component/cookie":59,"analytics.js-integration":173,"global-queue":217}],
 167: [function(require, module, exports) {
 
 /**
@@ -23302,7 +24575,7 @@ function variation(id) {
   return variationId ? experiment.comb_n[variationId] : null;
 }
 
-}, {"each":4,"analytics.js-integration":206,"next-tick":58}],
+}, {"each":4,"analytics.js-integration":173,"next-tick":58}],
 168: [function(require, module, exports) {
 
 /**
@@ -23350,7 +24623,7 @@ WebEngage.prototype.loaded = function() {
   return !!window.webengage;
 };
 
-}, {"analytics.js-integration":206,"use-https":208}],
+}, {"analytics.js-integration":173,"use-https":207}],
 169: [function(require, module, exports) {
 
 /**
@@ -23360,6 +24633,11 @@ WebEngage.prototype.loaded = function() {
 var each = require('each');
 var integration = require('analytics.js-integration');
 var toSnakeCase = require('to-snake-case');
+var is = require('is');
+var reduce = require('reduce');
+var json = require('json');
+var isostring = require('isostring');
+var time = require('unix-time');
 
 /**
  * Expose `Woopra` integration.
@@ -23434,6 +24712,15 @@ Woopra.prototype.page = function(page) {
 
 Woopra.prototype.identify = function(identify) {
   var traits = identify.traits();
+
+  // Woopra likes timestamps in milliseconds
+  // Ref: https://www.woopra.com/docs/manual/configure-schema/
+  each(traits, function(key, val){
+    if (isostring(val) || is.date(val)) {
+      traits[key] = time(val) * 1000;
+    }
+  });
+
   if (identify.name()) traits.name = identify.name();
   // `push` sends it off async
   window.woopra.identify(traits).push();
@@ -23446,10 +24733,99 @@ Woopra.prototype.identify = function(identify) {
  */
 
 Woopra.prototype.track = function(track) {
-  window.woopra.track(track.event(), track.properties());
+  window.woopra.track(track.event(), stringifyNested(track.properties()));
 };
 
-}, {"each":4,"analytics.js-integration":206,"to-snake-case":207}],
+/**
+ * Stringify nested objects.
+ *
+ * Undocumented aspect of Woopra's API, but apparently required. Breaks
+ * on `Completed Order` `properties.products`.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function stringifyNested(obj){
+  var arr = [];
+  for (var key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      arr.push(key);
+    }
+  }
+  return reduce(arr, {}, function(ret, key){
+    if (is.array(obj[key])) ret[key] = json.stringify(obj[key]);
+    else ret[key] = obj[key];
+    return ret;
+  }, {});
+}
+
+}, {"each":4,"analytics.js-integration":173,"to-snake-case":206,"is":45,"reduce":245,"json":246,"isostring":247,"unix-time":248}],
+245: [function(require, module, exports) {
+
+var each = require('each');
+
+
+/**
+ * Reduce an array or object.
+ *
+ * @param {Array|Object} obj
+ * @param {Mixed} memo
+ * @param {Function} iterator
+ * @return {Mixed}
+ */
+
+module.exports = function reduce (obj, memo, iterator) {
+  each(obj, function (a, b) {
+    memo = iterator.call(null, memo, a, b, obj);
+  });
+  return memo;
+};
+}, {"each":186}],
+246: [function(require, module, exports) {
+
+module.exports = 'undefined' == typeof JSON
+  ? require('component-json-fallback')
+  : JSON;
+
+}, {}],
+247: [function(require, module, exports) {
+
+module.exports = isDate;
+
+
+/**
+ * Matching format per: http://www.w3.org/TR/NOTE-datetime
+ */
+
+var isoformat = '^\\d{4}-\\d{2}-\\d{2}' +        // Match YYYY-MM-DD
+                '((T\\d{2}:\\d{2}(:\\d{2})?)' +  // Match THH:mm:ss
+                '(\\.\\d{1,6})?' +               // Match .sssss
+                '(Z|(\\+|-)\\d{2}:\\d{2})?)?$';  // Time zone (Z or +hh:mm)
+
+
+var matcher = new RegExp(isoformat);
+
+
+function isDate (val) {
+  return typeof val === 'string' &&
+         matcher.test(val) &&
+         !isNaN(Date.parse(val));
+}
+}, {}],
+248: [function(require, module, exports) {
+
+
+/**
+ * Converts a date to a unix time stamp
+ */
+
+module.exports = function (date) {
+  date = new Date(date);
+  return Math.floor(date.getTime() / 1000);
+}
+}, {}],
 170: [function(require, module, exports) {
 
 /**
@@ -23516,7 +24892,7 @@ Wootric.prototype.identify = function(identify) {
   var createdAt = identify.created();
   var language = traits.language;
 
-  if (createdAt && createdAt.getTime) window.wootricSettings.created_at = createdAt.getTime();
+  if (createdAt && createdAt.getTime) window.wootricSettings.created_at = createdAt.getTime() / 1000;
   if (language) window.wootricSettings.language = language;
   window.wootricSettings.email = email;
   // Set the rest of the traits as properties
@@ -23551,7 +24927,7 @@ Wootric.prototype.page = function(page) {
   });
 };
 
-}, {"analytics.js-integration":206,"omit":237}],
+}, {"analytics.js-integration":173,"omit":233}],
 171: [function(require, module, exports) {
 
 /**
@@ -23630,7 +25006,7 @@ function push(callback) {
   window.yandex_metrika_callbacks.push(callback);
 }
 
-}, {"bind":56,"analytics.js-integration":206,"next-tick":58,"when":232}],
+}, {"bind":56,"analytics.js-integration":173,"next-tick":58,"when":210}],
 5: [function(require, module, exports) {
 module.exports = {
   "name": "analytics",

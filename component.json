@@ -13,6 +13,7 @@
   "dependencies": {
     "component/each": "0.0.1",
     "segmentio/analytics.js-core": "^2.12.2",
+    "astronomerio/analytics.js-integration-resonate": "1.0.0",
     "astronomerio/analytics.js-integration-astronomer": "2.0.0",
     "astronomerio/analytics.js-integration-doubleclick": "1.0.2",
     "astronomerio/analytics.js-integration-criteo": "1.0.8",

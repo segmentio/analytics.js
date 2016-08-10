@@ -1,4 +1,4 @@
-The Astronomer platform includes data ingestion, data processing, and data pipeline setup and monitoring.
+The [Astronomer platform](http://www.astronomer.io) includes data ingestion, data processing, and data pipeline setup and monitoring.
 
 For web applications, we have standardized on Analytics.js for data collection.
 

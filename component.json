@@ -22,6 +22,7 @@
     "astronomerio/analytics.js-integration-retention-science": "1.1.0",
     "astronomerio/analytics.js-integration-kenshoo-infinity": "1.0.6",
     "astronomerio/analytics.js-integration-taboola" : "1.0.0",
+    "astronomerio/analytics.js-integration-pinterest-conversions" : "1.0.0",
     "segment-integrations/analytics.js-integration-adroll": "~1.0.0",
     "segment-integrations/analytics.js-integration-adwords": "~1.0.0",
     "segment-integrations/analytics.js-integration-alexa": "~1.0.0",

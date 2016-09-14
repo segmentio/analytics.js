@@ -1,6 +1,6 @@
 {
     "name": "@astronomerio/analytics.js",
-    "author": "Segment.io <friends@segment.io>",
+    "author": "Astronomer, <info@astronomer.io>",
     "version": "2.11.0+ASTRONOMER",
     "license": "SEE LICENSE IN LICENSE",
     "description": "The hassle-free way to integrate analytics into any web application.",

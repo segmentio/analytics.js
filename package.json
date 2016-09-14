@@ -1,8 +1,8 @@
 {
-    "name": "analytics.js",
+    "name": "@astronomerio/analytics.js",
     "author": "Segment.io <friends@segment.io>",
     "version": "2.11.0+ASTRONOMER",
-    "license": "MIT",
+    "license": "SEE LICENSE IN LICENSE",
     "description": "The hassle-free way to integrate analytics into any web application.",
     "keywords": [
         "analytics",
@@ -10,7 +10,7 @@
         "segment",
         "segment.io"
     ],
-    "main": "analytics.js",
+    "main": "lib/index.js",
     "scripts": {
         "build": "make build",
         "clean": "make clean",
@@ -20,12 +20,12 @@
         "type": "git",
         "url": "https://github.com/segmentio/analytics.js.git"
     },
-    "license": "SEE LICENSE IN LICENSE",
     "bugs": {
         "url": "https://github.com/segmentio/analytics.js/issues"
     },
     "homepage": "https://github.com/segmentio/analytics.js#readme",
     "dependencies": {
+        "@astronomerio/analytics.js-integration-taboola": "github:astronomerio/analytics.js-integration-taboola#karma",
         "@segment/analytics.js-core": "^3.0.0",
         "@segment/analytics.js-integration": "^3.1.0",
         "@segment/analytics.js-integration-adroll": "git+https://github.com/segment-integrations/analytics.js-integration-adroll.git",
@@ -119,7 +119,14 @@
         "@segment/analytics.js-integration-webengage": "git+https://github.com/segment-integrations/analytics.js-integration-webengage.git",
         "@segment/analytics.js-integration-woopra": "git+https://github.com/segment-integrations/analytics.js-integration-woopra.git",
         "@segment/analytics.js-integration-wootric": "git+https://github.com/segment-integrations/analytics.js-integration-wootric.git",
-        "@segment/analytics.js-integration-yandex-metrica": "git+https://github.com/segment-integrations/analytics.js-integration-yandex-metrica.git"
+        "@segment/analytics.js-integration-yandex-metrica": "git+https://github.com/segment-integrations/analytics.js-integration-yandex-metrica.git",
+        "@astronomerio/analytics.js-integration-acquisio": "github:astronomerio/analytics.js-integration-acquisio#develop",
+        "@astronomerio/analytics.js-integration-bloomreach": "github:astronomerio/analytics.js-integration-bloomreach#develop",
+        "@astronomerio/analytics.js-integration-blueshift": "github:astronomerio/analytics.js-integration-kenshoo-infinity#develop",
+        "@astronomerio/analytics.js-integration-criteo": "github:astronomerio/analytics.js-integration-criteo#develop",
+        "@astronomerio/analytics.js-integration-doubleclick": "github:astronomerio/analytics.js-integration-doubleclick#develop",
+        "@astronomerio/analytics.js-integration-retention-science": "github:astronomerio/analytics.js-integration-retention-science#develop",
+        "@astronomerio/analytics.js-integration-rubicon": "github:astronomerio/analytics.js-integration-rubicon#develop"
     },
     "devDependencies": {
         "@segment/eslint-config": "^3.1.1",

@@ -122,7 +122,7 @@
     "@segment/analytics.js-integration-yandex-metrica": "git+https://github.com/segment-integrations/analytics.js-integration-yandex-metrica.git",
     "@astronomerio/analytics.js-integration-acquisio": "github:astronomerio/analytics.js-integration-acquisio#develop",
     "@astronomerio/analytics.js-integration-bloomreach": "github:astronomerio/analytics.js-integration-bloomreach#develop",
-    "@astronomerio/analytics.js-integration-blueshift": "github:astronomerio/analytics.js-integration-kenshoo-infinity#develop",
+    "@astronomerio/analytics.js-integration-kenshoo-infinity": "github:astronomerio/analytics.js-integration-kenshoo-infinity#develop",
     "@astronomerio/analytics.js-integration-criteo": "github:astronomerio/analytics.js-integration-criteo#develop",
     "@astronomerio/analytics.js-integration-doubleclick": "github:astronomerio/analytics.js-integration-doubleclick#develop",
     "@astronomerio/analytics.js-integration-retention-science": "github:astronomerio/analytics.js-integration-retention-science#develop",

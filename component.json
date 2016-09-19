@@ -28,7 +28,6 @@
     "segment-integrations/analytics.js-integration-bugsnag": "1.0.0",
     "segment-integrations/analytics.js-integration-chameleon": "1.0.0",
     "segment-integrations/analytics.js-integration-chartbeat": "1.0.0",
-    "segment-integrations/analytics.js-integration-clicktale": "1.0.0",
     "segment-integrations/analytics.js-integration-clicky": "1.0.0",
     "segment-integrations/analytics.js-integration-comscore": "1.0.0",
     "segment-integrations/analytics.js-integration-crazy-egg": "1.0.0",
@@ -43,7 +42,6 @@
     "segment-integrations/analytics.js-integration-facebook-custom-audiences": "1.0.0",
     "segment-integrations/analytics.js-integration-foxmetrics": "1.0.0",
     "segment-integrations/analytics.js-integration-frontleaf": "1.0.0",
-    "segment-integrations/analytics.js-integration-fullstory": "1.0.1",
     "segment-integrations/analytics.js-integration-gauges": "1.0.0",
     "segment-integrations/analytics.js-integration-get-satisfaction": "1.0.0",
     "segment-integrations/analytics.js-integration-google-analytics": "1.0.0",
@@ -99,6 +97,7 @@
     "segment-integrations/analytics.js-integration-webengage": "1.0.0",
     "segment-integrations/analytics.js-integration-woopra": "1.0.0",
     "segment-integrations/analytics.js-integration-wootric": "1.0.0",
-    "segment-integrations/analytics.js-integration-yandex-metrica": "1.0.0"
+    "segment-integrations/analytics.js-integration-yandex-metrica": "1.0.0",
+    "Driftt/analytics.js-integration-drift": "1.2.1"
   }
 }

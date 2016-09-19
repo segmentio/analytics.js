@@ -31,6 +31,7 @@
     "@astronomerio/analytics.js-integration-criteo": "github:astronomerio/analytics.js-integration-criteo#develop",
     "@astronomerio/analytics.js-integration-doubleclick": "github:astronomerio/analytics.js-integration-doubleclick#develop",
     "@astronomerio/analytics.js-integration-kenshoo-infinity": "github:astronomerio/analytics.js-integration-kenshoo-infinity#develop",
+    "@astronomerio/analytics.js-integration-marin": "github:astronomerio/analytics.js-integration-marin#develop",
     "@astronomerio/analytics.js-integration-retention-science": "github:astronomerio/analytics.js-integration-retention-science#develop",
     "@astronomerio/analytics.js-integration-rubicon": "github:astronomerio/analytics.js-integration-rubicon#develop",
     "@astronomerio/analytics.js-integration-taboola": "github:astronomerio/analytics.js-integration-taboola#karma",

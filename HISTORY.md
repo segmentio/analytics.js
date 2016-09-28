@@ -1,4 +1,10 @@
 
+Master / Not Released
+==================
+
+  * Removing Duojs dependancy
+  * Updating core libraries
+
 2.11.0 / 2015-08-17
 ==================
 

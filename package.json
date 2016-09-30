@@ -1,14 +1,13 @@
 {
   "name": "@astronomerio/analytics.js",
   "author": "Astronomer, <info@astronomer.io>",
-  "version": "2.11.0+ASTRONOMER",
+  "version": "3.0.0+ASTRONOMER",
   "license": "SEE LICENSE IN LICENSE",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "keywords": [
     "analytics",
     "analytics.js",
-    "segment",
-    "segment.io"
+    "astronomer"
   ],
   "main": "lib/index.js",
   "scripts": {
@@ -18,12 +17,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/segmentio/analytics.js.git"
+    "url": "https://github.com/astronomerio/analytics.js.git"
   },
   "bugs": {
-    "url": "https://github.com/segmentio/analytics.js/issues"
+    "url": "https://github.com/astronomerio/analytics.js/issues"
   },
-  "homepage": "https://github.com/segmentio/analytics.js#readme",
+  "homepage": "https://github.com/astronomerio/analytics.js#readme",
   "dependencies": {
     "@astronomerio/analytics.js-core": "github:astronomerio/analytics.js-core",
     "@astronomerio/analytics.js-integration-acquisio": "github:astronomerio/analytics.js-integration-acquisio#1.0.10",
@@ -62,14 +61,5 @@
     "@astronomerio/analytics.js-integration-woopra": "github:astronomer-integrations/analytics.js-integration-woopra#2.0.1"
   },
   "devDependencies": {
-    "@segment/eslint-config": "^3.1.1",
-    "browserify": "^13.0.1",
-    "eslint": "^2.9.0",
-    "eslint-plugin-mocha": "^2.2.0",
-    "eslint-plugin-react": "^6.2.2",
-    "eslint-plugin-require-path-exists": "^1.1.5",
-    "json-loader": "^0.5.4",
-    "uglify-js": "^2.7.3",
-    "webpack": "^1.13.2"
   }
 }

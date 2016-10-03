@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/astronomerio/analytics.js#readme",
   "dependencies": {
+    "@astronomerio/analytics.js-core": "github:astronomerio/analytics.js-core#3.0.0",
     "@astronomerio/analytics.js-integration-acquisio": "github:astronomerio/analytics.js-integration-acquisio#1.0.10",
     "@astronomerio/analytics.js-integration-adwords": "github:astronomer-integrations/analytics.js-integration-adwords#2.1.0",
     "@astronomerio/analytics.js-integration-amplitude": "github:astronomer-integrations/analytics.js-integration-amplitude#2.1.1",
@@ -58,8 +59,10 @@
     "@astronomerio/analytics.js-integration-twitter-ads": "github:astronomer-integrations/analytics.js-integration-twitter-ads#2.2.0",
     "@astronomerio/analytics.js-integration-vero": "github:astronomer-integrations/analytics.js-integration-vero#2.0.0",
     "@astronomerio/analytics.js-integration-visual-website-optimizer": "github:astronomer-integrations/analytics.js-integration-visual-website-optimizer#2.1.1",
-    "@astronomerio/analytics.js-integration-woopra": "github:astronomer-integrations/analytics.js-integration-woopra#2.0.1",
-    "@segment/analytics.js-core": "github:astronomerio/analytics.js-core#3.0.0"
+    "@astronomerio/analytics.js-integration-woopra": "github:astronomer-integrations/analytics.js-integration-woopra#2.0.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.1.0"
+  }
 }

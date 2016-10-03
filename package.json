@@ -49,6 +49,7 @@
     "@astronomerio/analytics.js-integration-marin": "github:astronomerio/analytics.js-integration-marin#1.0.0",
     "@astronomerio/analytics.js-integration-mixpanel": "github:astronomer-integrations/analytics.js-integration-mixpanel#2.2.0",
     "@astronomerio/analytics.js-integration-optimizely": "github:astronomer-integrations/analytics.js-integration-optimizely#2.0.0",
+    "@astronomerio/analytics.js-integration-pebble-post": "github:astronomer-integrations/analytics.js-integration-pebble-post#1.0.0",
     "@astronomerio/analytics.js-integration-pinterest-conversions": "github:astronomer-integrations/analytics.js-integration-pinterest-conversions#1.0.1",
     "@astronomerio/analytics.js-integration-resonate": "github:astronomer-integrations/analytics.js-integration-resonate#1.0.1",
     "@astronomerio/analytics.js-integration-retention-science": "github:astronomerio/analytics.js-integration-retention-science#1.1.1",
@@ -60,6 +61,5 @@
     "@astronomerio/analytics.js-integration-woopra": "github:astronomer-integrations/analytics.js-integration-woopra#2.0.1",
     "@segment/analytics.js-core": "github:astronomerio/analytics.js-core#3.0.0"
   },
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }

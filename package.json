@@ -1,7 +1,7 @@
 {
   "name": "@astronomerio/analytics.js",
   "author": "Astronomer, <info@astronomer.io>",
-  "version": "3.0.0+ASTRONOMER",
+  "version": "3.0.1+ASTRONOMER",
   "license": "SEE LICENSE IN LICENSE",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "keywords": [
@@ -57,11 +57,11 @@
     "@astronomerio/analytics.js-integration-twitter-ads": "github:astronomer-integrations/analytics.js-integration-twitter-ads#2.2.0",
     "@astronomerio/analytics.js-integration-vero": "github:astronomer-integrations/analytics.js-integration-vero#2.0.0",
     "@astronomerio/analytics.js-integration-visual-website-optimizer": "github:astronomer-integrations/analytics.js-integration-visual-website-optimizer#2.1.1",
-    "@astronomerio/analytics.js-integration-woopra": "github:astronomer-integrations/analytics.js-integration-woopra#2.0.1",
-    "browserify-istanbul": "^2.0.0"
+    "@astronomerio/analytics.js-integration-woopra": "github:astronomer-integrations/analytics.js-integration-woopra#2.0.1"
   },
   "devDependencies": {
     "browserify": "^13.1.0",
+    "browserify-istanbul": "^2.0.0",
     "chai": "^3.5.0",
     "istanbul": "^0.4.5",
     "karma": "^1.3.0",

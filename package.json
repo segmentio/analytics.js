@@ -11,8 +11,6 @@
   ],
   "main": "lib/index.js",
   "scripts": {
-    "build": "make build",
-    "clean": "make clean",
     "test": "karma start karma.conf.js"
   },
   "repository": {

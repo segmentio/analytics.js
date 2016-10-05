@@ -1,7 +1,7 @@
 {
   "name": "@astronomerio/analytics.js",
   "author": "Astronomer, <info@astronomer.io>",
-  "version": "3.0.0+ASTRONOMER",
+  "version": "3.0.2+ASTRONOMER",
   "license": "SEE LICENSE IN LICENSE",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "keywords": [
@@ -11,9 +11,7 @@
   ],
   "main": "lib/index.js",
   "scripts": {
-    "build": "make build",
-    "clean": "make clean",
-    "test": "make test"
+    "test": "karma start karma.conf.js"
   },
   "repository": {
     "type": "git",
@@ -24,6 +22,7 @@
   },
   "homepage": "https://github.com/astronomerio/analytics.js#readme",
   "dependencies": {
+    "@astronomerio/analytics.js-core": "github:astronomerio/analytics.js-core#3.0.0",
     "@astronomerio/analytics.js-integration-acquisio": "github:astronomerio/analytics.js-integration-acquisio#1.0.10",
     "@astronomerio/analytics.js-integration-adwords": "github:astronomer-integrations/analytics.js-integration-adwords#2.1.0",
     "@astronomerio/analytics.js-integration-amplitude": "github:astronomer-integrations/analytics.js-integration-amplitude#2.1.1",
@@ -51,15 +50,29 @@
     "@astronomerio/analytics.js-integration-optimizely": "github:astronomer-integrations/analytics.js-integration-optimizely#2.0.0",
     "@astronomerio/analytics.js-integration-pebble-post": "github:astronomer-integrations/analytics.js-integration-pebble-post#1.0.0",
     "@astronomerio/analytics.js-integration-pinterest-conversions": "github:astronomer-integrations/analytics.js-integration-pinterest-conversions#1.0.1",
-    "@astronomerio/analytics.js-integration-resonate": "github:astronomer-integrations/analytics.js-integration-resonate#1.0.1",
+    "@astronomerio/analytics.js-integration-resonate": "github:astronomer-integrations/analytics.js-integration-resonate#1.0.2",
     "@astronomerio/analytics.js-integration-retention-science": "github:astronomerio/analytics.js-integration-retention-science#1.1.1",
     "@astronomerio/analytics.js-integration-rubicon": "github:astronomerio/analytics.js-integration-rubicon#1.0.1",
     "@astronomerio/analytics.js-integration-taboola": "github:astronomerio/analytics.js-integration-taboola#1.0.1",
     "@astronomerio/analytics.js-integration-twitter-ads": "github:astronomer-integrations/analytics.js-integration-twitter-ads#2.2.0",
     "@astronomerio/analytics.js-integration-vero": "github:astronomer-integrations/analytics.js-integration-vero#2.0.0",
     "@astronomerio/analytics.js-integration-visual-website-optimizer": "github:astronomer-integrations/analytics.js-integration-visual-website-optimizer#2.1.1",
-    "@astronomerio/analytics.js-integration-woopra": "github:astronomer-integrations/analytics.js-integration-woopra#2.0.1",
-    "@segment/analytics.js-core": "github:astronomerio/analytics.js-core#3.0.0"
+    "@astronomerio/analytics.js-integration-woopra": "github:astronomer-integrations/analytics.js-integration-woopra#2.0.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "browserify": "^13.1.0",
+    "browserify-istanbul": "^2.0.0",
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.5",
+    "karma": "^1.3.0",
+    "karma-browserify": "^5.1.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-coverage": "^1.1.1",
+    "karma-mocha": "^1.2.0",
+    "karma-phantomjs-launcher": "^1.0.2",
+    "karma-spec-reporter": "0.0.26",
+    "lodash.intersection": "^4.4.0",
+    "mocha": "^3.1.0",
+    "watchify": "^3.7.0"
+  }
 }

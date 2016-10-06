@@ -41,13 +41,14 @@ describe('analytics.js', function () {
     'heap',
     'pinterest-conversions',
     'resonate',
-    'pebble-post'
+    'pebble-post',
+    'hotjar'
   ];
 
   it('should have all the expected integrations', function () {
-    var ints = Object.keys(integrations);
-    var length = intersection(expectedIntegrations, ints).length;
-    assert.equal(length, expectedIntegrations.length);
+    var allIntegrations = Object.keys(integrations);
+    var expectedLength = intersection(expectedIntegrations, allIntegrations).length;
+    assert.equal(expectedLength, allIntegrations.length);
   });
 
   it('should initialize', function () {

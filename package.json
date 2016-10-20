@@ -1,7 +1,7 @@
 {
   "name": "@astronomerio/analytics.js",
   "author": "Astronomer, <info@astronomer.io>",
-  "version": "3.0.2+ASTRONOMER",
+  "version": "3.0.3",
   "license": "SEE LICENSE IN LICENSE",
   "description": "The hassle-free way to integrate analytics into any web application.",
   "keywords": [
@@ -52,7 +52,7 @@
     "@astronomerio/analytics.js-integration-pebble-post": "github:astronomer-integrations/analytics.js-integration-pebble-post#1.0.0",
     "@astronomerio/analytics.js-integration-pinterest-conversions": "github:astronomer-integrations/analytics.js-integration-pinterest-conversions#1.0.1",
     "@astronomerio/analytics.js-integration-resonate": "github:astronomer-integrations/analytics.js-integration-resonate#1.0.2",
-    "@astronomerio/analytics.js-integration-retention-science": "github:astronomerio/analytics.js-integration-retention-science#1.1.1",
+    "@astronomerio/analytics.js-integration-retention-science": "github:astronomerio/analytics.js-integration-retention-science#2.0.0",
     "@astronomerio/analytics.js-integration-rubicon": "github:astronomerio/analytics.js-integration-rubicon#1.0.1",
     "@astronomerio/analytics.js-integration-taboola": "github:astronomerio/analytics.js-integration-taboola#1.0.1",
     "@astronomerio/analytics.js-integration-twitter-ads": "github:astronomer-integrations/analytics.js-integration-twitter-ads#2.2.0",

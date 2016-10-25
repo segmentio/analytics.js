@@ -46,6 +46,8 @@ module.exports = function(config) {
         { type: 'html' },
         { type: 'json' }
       ]
-    }
+    },
+
+    singleRun: true
   });
 };

@@ -1,4 +1,3 @@
-node_modules/
-test/server/pid.txt
-components
-build.js
+coverage
+node_modules
+npm-debug.log

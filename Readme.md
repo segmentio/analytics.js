@@ -19,7 +19,7 @@ This repository houses a pre-built, open-source version of analytics.js. The cor
 - To report an issue with analytics.js itself, head over to [analytics.js-core][], where the core analytics.js logic is maintained.
 - To report an issue with an integration. head over to the [analytics.js-integrations][] organization, where we keep each integration in its own repository.
 
-If you're not sure where to open an issue, feel free to open an issue against this repository or email <friends@segment.com> and we'll help point you in the right direction.
+If you're not sure where to open an issue, feel free to open an issue against this repository or [contact us](https://segment.com/contact) and we'll help point you in the right direction.
 
 ## License
 

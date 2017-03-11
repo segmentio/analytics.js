@@ -18,9 +18,6 @@
     "node": ">=0.12.0"
   },
   "main": "analytics.js",
-  "scripts": {
-    "test": "make test"
-  },
   "dependencies": {},
   "devDependencies": {
     "duo": "^0.12.0",

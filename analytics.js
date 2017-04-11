@@ -8646,6 +8646,7 @@ var camelSplitter = /(.)([A-Z]+)/g;
  */
 
 function uncamelize (string) {
+  if (!string) return '';
   return string.replace(camelSplitter, function (m, previous, uppers) {
     return previous + ' ' + uppers.toLowerCase().split('').join(' ');
   });

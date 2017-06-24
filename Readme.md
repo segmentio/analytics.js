@@ -1,4 +1,6 @@
 # Analytics.js
+[![npm](https://img.shields.io/npm/v/analytics.js.svg?style=flat-square)](https://www.npmjs.com/package/analytics.js)
+[![npm](https://img.shields.io/npm/dm/analytics.js.svg)](https://www.npmjs.com/package/analytics.js)
 
 Analytics.js makes it easy to collect customer data and send it to many different tools using a single, unified API.
 

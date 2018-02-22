@@ -2754,6 +2754,7 @@ Track.prototype.category = Facade.proxy('properties.category');
  * Ecommerce
  */
 
+Track.prototype.productId = Facade.proxy('properties.product_id') || Facade.proxy('properties.productId');
 Track.prototype.id = Facade.proxy('properties.id');
 Track.prototype.sku = Facade.proxy('properties.sku');
 Track.prototype.tax = Facade.proxy('properties.tax');

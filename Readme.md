@@ -32,7 +32,7 @@ Released under the [MIT license](License.md).
 
 
 [analytics.js library reference]: https://segment.com/docs/libraries/analytics.js
-[analytics.js quickstart]: https://segment.com/docs/tutorials/quickstart-analytics.js
+[analytics.js quickstart]: https://segment.com/docs/sources/website/analytics.js/quickstart
 [analytics.js-core]: https://github.com/segmentio/analytics.js-core
 [analytics.js-integrations]: https://github.com/segment-integrations?q=analytics.js-integration
 [ci-badge]: https://travis-ci.org/segmentio/analytics.js.png?branch=master

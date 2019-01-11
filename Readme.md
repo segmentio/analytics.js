@@ -4,7 +4,7 @@ Analytics.js makes it easy to collect customer data and send it to many differen
 
 Analytics.js is open source and is one of the libraries that powers [Segment](https://segment.com), the managed, hassle-free way to collect customer data in the browser and beyond.
 
-![](segment_ajs2x.png)
+![](segment-ajs2x.png)
 
 For our mobile and server-side data collection libraries, check out our [libraries][] page.
 

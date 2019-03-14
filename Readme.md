@@ -14,7 +14,8 @@ For our mobile and server-side data collection libraries, check out our [librari
 Analytics helps you measure your users, product, and business. It unlocks insights into your app's funnel, core business metrics, and whether you have product-market fit.
 
 ## How to get started
-1. **Collect analytics data** from your app(s).
+
+1. **Collect analytics data** from your app(s). Get started through Segment with our [Analytics.js Quickstart][].
     - The top 200 Segment companies collect data from 5+ source types (web, mobile, server, CRM, etc.).
 2. **Send the data to analytics tools** (for example, Google Analytics, Amplitude, Mixpanel).
     - Over 250+ Segment companies send data to eight categories of destinations such as analytics tools, warehouses, email marketing and remarketing systems, session recording, and more.
@@ -24,6 +25,7 @@ Analytics helps you measure your users, product, and business. It unlocks insigh
 [Segment](https://segment.com) collects analytics data and allows you to send it to more than 250 apps (such as Google Analytics, Mixpanel, Optimizely, Facebook Ads, Slack, Sentry) just by flipping a switch. You only need one Segment code snippet, and you can turn integrations on and off at will, with no additional code. [Sign up with Segment today](https://app.segment.com/signup).
 
 ### Why?
+
 1. **Power all your analytics apps with the same data**. Instead of writing code to integrate all of your tools individually, send data to Segment, once.
 
 2. **Install tracking for the last time**. We're the last integration you'll ever need to write. You only need to instrument Segment once. Reduce all of your tracking code and advertising tags into a single set of API calls.
@@ -43,9 +45,11 @@ Analytics helps you measure your users, product, and business. It unlocks insigh
     ```
 
 ### 🚀 Startup Program
+
 <div align="center">
   <a href="https://segment.com/startups"><img src="https://user-images.githubusercontent.com/16131737/53128952-08d3d400-351b-11e9-9730-7da35adda781.png" /></a>
 </div>
+
 If you are part of a new startup  (&lt;$5M raised, &lt;2 years since founding), we just launched a new startup program for you. You can get a Segment Team plan  (up to <b>$25,000 value</b> in Segment credits) for free up to 2 years — <a href="https://segment.com/startups/">apply here</a>!
 
 ## Documentation
@@ -58,20 +62,30 @@ For more detail on the Analytics.js API, check out the [Analytics.js Library Ref
 
 Analytics.js for Platforms is a version of analytics.js built specifically for website creation and e-commerce platforms to give their customers one-click enablement of Google Analytics, Facebook Pixel, Google Adwords, and Segment. For more information, you can check out the [docs for Analytics.js for Platforms](https://segment.com/docs/guides/partners/analyticsjs-for-platforms/). Segment hosts this version of the library for free use on its CDN.
 
-## Contributing
+## Using this Repo
 
-This repository houses a pre-built, open-source version of analytics.js. The core logic of analytics.js is broken out into individual repositories:
+This repository houses a pre-built, open-source version of analytics.js. If you'd like to use Analytics.js outside of Segment but don't need to customize your build, pre-built [unminified][] or [minified][] versions of analytics.js found in the root of this repository. Once you've done that, you'll want to mimic the Segment snippet on your website by stubbing out its methods on the `window` and downloading your built version of the script asynchronously. For an example of doing that and initializing your integrations with options, [see here](https://gist.github.com/cyberwombat/11008970).
+
+If you're looking to produce a custom build of Analytics.js with just the plugins you need, see [Building a Custom Distribution](Building-a-Custom-Distribution).
+
+## Contributing to Analytics.js and its Ecosystem of Integration Plugins
+
+The core logic of analytics.js is broken out into individual repositories:
 
 - To report an issue with analytics.js itself, head over to [analytics.js-core][], where the core analytics.js logic is maintained.
-- To report an issue with an integration. head over to the [analytics.js-integrations][] organization, where we keep each integration in its own repository.
+- To report an issue with an integration plugin. head over to the [analytics.js-integrations][] organization, where we keep each integration plugin in its own repository.
+- **To build a custom integration plugin for analytics.js, check out the [wiki][]. To distribute your plugin as a component of an integration in our [catalog][], check out our [partner docs].**
 
 If you're not sure where to open an issue, feel free to open an issue against this repository or [contact us](https://segment.com/contact) and we'll help point you in the right direction.
+
+[analytics.js]: https://github.com/segmentio/analytics.js
+[unminified]: https://github.com/segmentio/analytics.js/blob/master/analytics.js
+[minified]: https://github.com/segmentio/analytics.js/blob/master/analytics.min.js
+[analytics.js quickstart]: https://segment.com/docs/libraries/analytics.js/quickstart/
 
 ## License
 
 Released under the [MIT license](License.md).
-
-
 
 [analytics.js library reference]: https://segment.com/docs/libraries/analytics.js
 [analytics.js quickstart]: https://segment.com/docs/sources/website/analytics.js/quickstart
@@ -83,3 +97,6 @@ Released under the [MIT license](License.md).
 [libraries]: https://segment.com/libraries
 [nodejs.org]: https://nodejs.org/
 [spec]: https://segment.com/docs/spec/
+[catalog]: https://segment.com/catalog
+[partner docs]: https://segment.com/docs/partners
+[wiki]: https://github.com/segmentio/analytics.js/wiki/Writing-Integrations

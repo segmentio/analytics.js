@@ -66,7 +66,7 @@ Analytics.js for Platforms is a version of analytics.js built specifically for w
 
 This repository houses a pre-built, open-source version of analytics.js. If you'd like to use Analytics.js outside of Segment but don't need to customize your build, pre-built [unminified][] or [minified][] versions of analytics.js found in the root of this repository. Once you've done that, you'll want to mimic the Segment snippet on your website by stubbing out its methods on the `window` and downloading your built version of the script asynchronously. For an example of doing that and initializing your integrations with options, [see here](https://gist.github.com/cyberwombat/11008970).
 
-If you're looking to produce a custom build of Analytics.js with just the plugins you need, see [Building a Custom Distribution](Building-a-Custom-Distribution).
+If you're looking to produce a custom build of Analytics.js with just the plugins you need, see [the wiki page for building a custom distribution][].
 
 ## Contributing to Analytics.js and its Ecosystem of Integration Plugins
 
@@ -100,3 +100,4 @@ Released under the [MIT license](License.md).
 [catalog]: https://segment.com/catalog
 [partner docs]: https://segment.com/docs/partners
 [wiki]: https://github.com/segmentio/analytics.js/wiki/Writing-Integrations
+[the wiki page for building a custom distribution]: https://github.com/segmentio/analytics.js/wiki/Building-A-Custom-Distribution

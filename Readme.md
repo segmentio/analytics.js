@@ -81,7 +81,6 @@ If you're not sure where to open an issue, feel free to open an issue against th
 [analytics.js]: https://github.com/segmentio/analytics.js
 [unminified]: https://github.com/segmentio/analytics.js/blob/master/analytics.js
 [minified]: https://github.com/segmentio/analytics.js/blob/master/analytics.min.js
-[analytics.js quickstart]: https://segment.com/docs/libraries/analytics.js/quickstart/
 
 ## License
 

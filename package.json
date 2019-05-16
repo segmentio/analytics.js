@@ -19,11 +19,13 @@
   },
   "main": "analytics.js",
   "scripts": {
-    "test": "make test"
+    "test": "mocha"
   },
   "dependencies": {},
   "devDependencies": {
     "duo": "^0.12.0",
+    "jsdom-global": "2.1.1",
+    "mocha": "^3.2.0",
     "standard": "^8.6.0",
     "uglify-js": ">= 1.3.4"
   },

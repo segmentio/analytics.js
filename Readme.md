@@ -4,7 +4,7 @@ Analytics.js makes it easy to collect customer data and send it to many differen
 
 Analytics.js is open source and is one of the libraries that powers [Segment](https://segment.com), the managed, hassle-free way to collect customer data in the browser and beyond.
 
-For our mobile and server-side data collection libraries, check out our [libraries][] page.
+For our mobile and server-side data collection libraries, check out our [catalog](https://segment.com/catalog/) or our [libraries page](https://segment.com/docs/sources/).
 
 <div align="center">
   <img src="https://user-images.githubusercontent.com/16131737/53617064-61017a80-3b9a-11e9-9bfb-f5163aa85a7c.png"/>
@@ -15,7 +15,7 @@ Analytics helps you measure your users, product, and business. It unlocks insigh
 
 ## How to get started
 
-1. **Collect analytics data** from your app(s). Get started through Segment with our [Analytics.js Quickstart][].
+1. **Collect analytics data** from your app(s). Get started through Segment with our [Analytics.js Quickstart](https://segment.com/docs/sources/website/analytics.js/quickstart/).
     - The top 200 Segment companies collect data from 5+ source types (web, mobile, server, CRM, etc.).
 2. **Send the data to analytics tools** (for example, Google Analytics, Amplitude, Mixpanel).
     - Over 250+ Segment companies send data to eight categories of destinations such as analytics tools, warehouses, email marketing and remarketing systems, session recording, and more.
@@ -54,9 +54,9 @@ If you are part of a new startup  (&lt;$5M raised, &lt;2 years since founding), 
 
 ## Documentation
 
-First, read the [Analytics.js QuickStart][], which contains installation instructions and a brief overview of what Analytics.js does and how it works.
+First, read the [Analytics.js QuickStart](https://segment.com/docs/sources/website/analytics.js/quickstart/), which contains installation instructions and a brief overview of what Analytics.js does and how it works.
 
-For more detail on the Analytics.js API, check out the [Analytics.js Library Reference][].
+For more detail on the Analytics.js API, check out the [Analytics.js Library Reference](https://segment.com/docs/sources/website/analytics.js/).
 
 ## Analytics.js for Platforms
 
@@ -81,14 +81,14 @@ If you're not sure where to open an issue, feel free to open an issue against th
 [analytics.js]: https://github.com/segmentio/analytics.js
 [unminified]: https://github.com/segmentio/analytics.js/blob/master/analytics.js
 [minified]: https://github.com/segmentio/analytics.js/blob/master/analytics.min.js
-[analytics.js quickstart]: https://segment.com/docs/libraries/analytics.js/quickstart/
+[analytics.js quickstart]: https://segment.com/docs/sources/website/analytics.js/quickstart/
 
 ## License
 
 Released under the [MIT license](License.md).
 
 [analytics.js library reference]: https://segment.com/docs/libraries/analytics.js
-[analytics.js quickstart]: https://segment.com/docs/sources/website/analytics.js/quickstart
+[analytics.js quickstart]: https://segment.com/docs/sources/website/analytics.js/quickstart/
 [analytics.js-core]: https://github.com/segmentio/analytics.js-core
 [analytics.js-integrations]: https://github.com/segment-integrations?q=analytics.js-integration
 [ci-badge]: https://travis-ci.org/segmentio/analytics.js.png?branch=master

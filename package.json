@@ -19,10 +19,12 @@
   },
   "main": "analytics.js",
   "scripts": {
+    "build": "browserify /app/lib/index.js > analytics.js",
+    "mini": "browserify /app/lib/index.js | uglifyjs > analytics.min.js",
     "test": "make test"
   },
-  "dependencies": {},
   "devDependencies": {
+    "browserify": "^16.5.0",
     "duo": "^0.12.0",
     "standard": "^8.6.0",
     "uglify-js": ">= 1.3.4"

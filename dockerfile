@@ -8,6 +8,11 @@ ENV BROWSER chrome
 COPY package.json bower.json component.json ./
 RUN npm install
 
+WORKDIR /app/lib
+COPY lib/package.json .
+RUN npm install
+
+WORKDIR /app
 ADD lib lib
 
 RUN ls

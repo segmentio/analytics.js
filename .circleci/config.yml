@@ -1,0 +1,42 @@
+version: 2
+workflows:
+    version: 2
+    run:
+        jobs:
+            - build
+jobs:
+    build:
+        working_directory: ~/repo
+        environment:
+            BASH_ENV: ~/.nvm/nvm.sh
+        docker:
+            - image: google/cloud-sdk
+        steps:
+            - checkout
+            - run: 
+                name: Download nvm 
+                command: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.0/install.sh | bash
+            - run:
+                name: Install nvm v10.16.3
+                command: |
+                    nvm install v10.16.3
+                    nvm alias default v10.16.3
+            - run:
+                name: Install root dependencies
+                command:  npm install
+            - run:
+                name: Install lib dependencies
+                working_directory: lib
+                command: npm install
+            - run: 
+                name: Set gcloud key & project
+                command: |
+                    echo $GCLOUD_SERVICE_KEY > ${HOME}/gcp-key.json
+                    gcloud auth activate-service-account --key-file=${HOME}/gcp-key.json
+                    gcloud config set project analytics-js
+            - run: 
+                name: Build analytics.min.js
+                command: npm run build:prod
+            - run: 
+                name: Copy analytics.min.js to cdn bucket
+                command: gsutil mv analytics.min.js gs://dreamdata-analytics/analytics.min.js

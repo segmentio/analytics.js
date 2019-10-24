@@ -9,7 +9,7 @@
     "author": "Nikolaos Veneti <nikolaosveneti@gmail.com>",
     "license": "ISC",
     "devDependencies": {
-        "@segment/analytics.js-core": "https://github.com/dreamdata-io/analytics.js-core.git#v3.9.0",
+        "@segment/analytics.js-core": "https://github.com/dreamdata-io/analytics.js-core.git",
         "@segment/analytics.js-integration-segmentio": "https://github.com/segment-integrations/analytics.js-integration-segmentio.git#v4.2.1",
         "each": "^1.2.1"
     }

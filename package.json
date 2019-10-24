@@ -1,38 +1,44 @@
 {
-  "name": "analytics.js",
-  "author": "Segment.io <friends@segment.io>",
-  "version": "2.11.0",
-  "license": "MIT",
-  "description": "The hassle-free way to integrate analytics into any web application.",
-  "keywords": [
-    "analytics",
-    "analytics.js",
-    "segment",
-    "segment.io"
-  ],
-  "repository": {
-    "url": "https://github.com/segmentio/analytics.js.git",
-    "type": "git"
-  },
-  "engines": {
-    "node": ">=0.12.0"
-  },
-  "main": "analytics.js",
-  "scripts": {
-    "build": "browserify /app/lib/index.js > analytics.js",
-    "mini": "browserify /app/lib/index.js | uglifyjs > analytics.min.js",
-    "test": "make test"
-  },
-  "devDependencies": {
-    "browserify": "^16.5.0",
-    "duo": "^0.12.0",
-    "standard": "^8.6.0",
-    "uglify-js": ">= 1.3.4"
-  },
-  "standard": {
-    "ignore": [
-      "analytics.js",
-      "analytics.min.js"
-    ]
-  }
+    "name": "analytics.js",
+    "author": "Segment.io <friends@segment.io>",
+    "version": "2.11.0",
+    "license": "MIT",
+    "description": "The hassle-free way to integrate analytics into any web application.",
+    "keywords": [
+        "analytics",
+        "analytics.js",
+        "segment",
+        "segment.io"
+    ],
+    "repository": {
+        "url": "https://github.com/segmentio/analytics.js.git",
+        "type": "git"
+    },
+    "engines": {
+        "node": "10"
+    },
+    "scripts": {
+        "build:dev": "webpack --config webpack.dev.js",
+        "build:prod": "webpack --config webpack.prod.js"
+    },
+    "presets": [
+        "@babel/preset-env"
+    ],
+    "devDependencies": {
+        "webpack": "^4.41.2",
+        "webpack-cli": "^3.3.9",
+        "uglifyjs-webpack-plugin": "^2.2.0",
+        "@babel/core": "^7.6.4",
+        "@babel/preset-env": "^7.6.3",
+        "babel-loader": "^8.0.6",
+        "standard": "^8.6.0"
+        
+    },
+    "standard": {
+        "ignore": [
+            "analytics.js",
+            "analytics.min.js"
+        ]
+    },
+    "dependencies": {}
 }

@@ -1,24 +1,18 @@
 FROM node:10
 
-WORKDIR /app
-
-ENV BROWSER chrome
-
-# dependencies
-WORKDIR /app/lib/node_modules
+# clone integrations
+WORKDIR /app/lib/integrations
 RUN git clone --branch v4.2.1 https://github.com/segment-integrations/analytics.js-integration-segmentio.git
-WORKDIR /app
-COPY package.json bower.json component.json ./
-RUN npm install
 
+# setup lib
 WORKDIR /app/lib
-COPY lib/package.json .
+COPY lib/package.json lib/index.js lib/integrations.js ./
 RUN npm install
 
+# setup app
 WORKDIR /app
-ADD lib lib
+COPY package.json webpack.prod.js ./
+RUN npm install
 
-RUN ls
-RUN npm run build
-
-RUN ./node_modules/.bin/duo --stdout --standalone analytics lib/index.js
+# build
+RUN npm run build:prod

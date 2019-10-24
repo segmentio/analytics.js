@@ -1,15 +1,16 @@
 {
-  "name": "lib",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "analytics.js-integration-segmentio": "./node_modules/analytics.js-integration-segmentio",
-    "each": "^1.2.1"
-  }
+    "name": "lib",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Nikolaos Veneti <nikolaosveneti@gmail.com>",
+    "license": "ISC",
+    "devDependencies": {
+        "@segment/analytics.js-core": "^3.9.0",
+        "@segment/analytics.js-integration-segmentio": "file:integrations/analytics.js-integration-segmentio",
+        "each": "^1.2.1"
+    }
 }

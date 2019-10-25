@@ -39,4 +39,4 @@ jobs:
                 command: npm run build:prod
             - run: 
                 name: Copy analytics.min.js to cdn bucket
-                command: gsutil mv analytics.min.js gs://root-cdn/scripts/analytics/v1/dreamdata.min.js
+                command: gsutil mv dist/analytics.min.js gs://root-cdn/scripts/analytics/v1/dreamdata.min.js

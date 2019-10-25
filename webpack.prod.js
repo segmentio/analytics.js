@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = {
     mode: 'production',
-    entry: path.join(__dirname, '/lib/index.js'),
+    entry: path.join(__dirname, '/lib'),
     resolve: {
         extensions: ['.js']
     },
@@ -18,7 +18,8 @@ module.exports = {
         ]
     },
     output: {
-        path: path.resolve(__dirname),
+        library: 'analytics',
+        libraryTarget: 'umd',
         filename: 'analytics.min.js'
     }
 };

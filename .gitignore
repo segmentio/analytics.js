@@ -2,3 +2,5 @@ node_modules/
 test/server/pid.txt
 components
 build.js
+analytics.min.js
+analytics.js

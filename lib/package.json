@@ -11,7 +11,6 @@
   "license": "ISC",
   "dependencies": {
     "@dreamdata/analytics.js-integration-dreamdataio": "https://github.com/dreamdata-io/analytics.js-integration-dreamdataio.git",
-    "@segment/analytics.js-core": "^3.9.0",
-    "each": "^1.2.1"
+    "@segment/analytics.js-core": "^3.9.0"
   }
 }

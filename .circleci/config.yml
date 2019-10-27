@@ -32,11 +32,13 @@ jobs:
                 name: Set gcloud key & project
                 command: |
                     echo $GCLOUD_SERVICE_KEY > ${HOME}/gcp-key.json
-                    gcloud auth activate-service-account --key-file=${HOME}/gcp-key.json
-                    gcloud config set project cdn-dreamdata
+                    gcloud --quiet auth activate-service-account --key-file=${HOME}/gcp-key.json
+                    gcloud --quiet config set project cdn-dreamdata
             - run: 
                 name: Build analytics.min.js
                 command: npm run build:prod
             - run: 
-                name: Copy analytics.min.js to cdn bucket
-                command: gsutil mv dist/analytics.min.js gs://root-cdn/scripts/analytics/v1/dreamdata.min.js
+                name: Copy analytics.min.js to CDN bucket with 5min cache
+                command: |
+                    gsutil -h "Cache-Control:public,max-age=300" \
+                    cp  dist/analytics.min.js gs://root-cdn/scripts/analytics/v1/dreamdata.min.js

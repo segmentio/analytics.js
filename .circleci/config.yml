@@ -41,4 +41,6 @@ jobs:
                   name: Copy analytics.min.js to CDN bucket with 5min cache
                   command: |
                       gsutil -h "Cache-Control:public,max-age=300" \
-                      cp  dist/analytics.min.js gs://root-cdn/scripts/analytics/v1/dreamdata.min.js
+                             -h "Content-Type:text/javascript; charset=utf-8" \
+                             -h "Content-Encoding:gzip" \
+                             cp  dist/analytics.min.js.gz gs://root-cdn/scripts/analytics/v1/dreamdata.min.js

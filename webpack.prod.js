@@ -1,4 +1,5 @@
 const path = require('path');
+const CompressionPlugin = require('compression-webpack-plugin');
 
 module.exports = {
     mode: 'production',
@@ -17,6 +18,7 @@ module.exports = {
             }
         ]
     },
+    plugins: [new CompressionPlugin()],
     output: {
         library: 'analytics',
         libraryTarget: 'umd',

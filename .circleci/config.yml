@@ -13,32 +13,32 @@ jobs:
             - image: google/cloud-sdk
         steps:
             - checkout
-            - run: 
-                name: Download nvm 
-                command: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.0/install.sh | bash
             - run:
-                name: Install nvm v10.16.3
-                command: |
-                    nvm install v10.16.3
-                    nvm alias default v10.16.3
+                  name: Download nvm
+                  command: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.0/install.sh | bash
             - run:
-                name: Install root dependencies
-                command:  npm install
+                  name: Install nvm v10.16.3
+                  command: |
+                      nvm install v10.16.3
+                      nvm alias default v10.16.3
             - run:
-                name: Install lib dependencies
-                working_directory: lib
-                command: npm install
-            - run: 
-                name: Set gcloud key & project
-                command: |
-                    echo $GCLOUD_SERVICE_KEY > ${HOME}/gcp-key.json
-                    gcloud --quiet auth activate-service-account --key-file=${HOME}/gcp-key.json
-                    gcloud --quiet config set project cdn-dreamdata
-            - run: 
-                name: Build analytics.min.js
-                command: npm run build:prod
-            - run: 
-                name: Copy analytics.min.js to CDN bucket with 5min cache
-                command: |
-                    gsutil -h "Cache-Control:public,max-age=300" \
-                    cp  dist/analytics.min.js gs://root-cdn/scripts/analytics/v1/dreamdata.min.js
+                  name: Install root dependencies
+                  command: npm install
+            - run:
+                  name: Install lib dependencies
+                  working_directory: lib
+                  command: npm install
+            - run:
+                  name: Set gcloud key & project
+                  command: |
+                      echo $GCLOUD_SERVICE_KEY > ${HOME}/gcp-key.json
+                      gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+                      gcloud --quiet auth activate-service-account --key-file=${HOME}/gcp-key.json
+            - run:
+                  name: Build analytics.min.js
+                  command: npm run build:prod
+            - run:
+                  name: Copy analytics.min.js to CDN bucket with 5min cache
+                  command: |
+                      gsutil -h "Cache-Control:public,max-age=300" \
+                      cp  dist/analytics.min.js gs://root-cdn/scripts/analytics/v1/dreamdata.min.js

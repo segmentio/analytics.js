@@ -20,7 +20,7 @@ module.exports = {
                 options: {
                     multiple: [
                         { search: 'api.dreamdata.cloud/v1', replace: 'localhost:8080/v1' },
-                        { search: 'https://', replace: 'http://' }
+                        { search: `'https://'`, replace: `'https://'` }
                     ]
                 }
             }

@@ -43,4 +43,4 @@ jobs:
                       gsutil -h "Cache-Control:public,max-age=300" \
                              -h "Content-Type:text/javascript; charset=utf-8" \
                              -h "Content-Encoding:gzip" \
-                             cp  dist/analytics.min.js.gz gs://root-cdn/scripts/analytics/v1/dreamdata.min.js
+                             cp  dist/analytics.min.js.gz ${GSUTIL_BUCKET_PATH}

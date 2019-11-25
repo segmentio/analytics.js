@@ -4,7 +4,7 @@ Analytics.js makes it easy to collect customer data and send it to many differen
 
 Analytics.js is open source and is one of the libraries that powers [Segment](https://segment.com), the managed, hassle-free way to collect customer data in the browser and beyond.
 
-For our mobile and server-side data collection libraries, check out our [catalog](https://segment.com/catalog/) or our [libraries page](https://segment.com/docs/sources/).
+For our mobile and server-side data collection libraries, check out our [catalog](https://segment.com/catalog/) or our [libraries page](https://segment.com/docs/connections/sources/).
 
 <div align="center">
   <img src="https://user-images.githubusercontent.com/16131737/53617064-61017a80-3b9a-11e9-9bfb-f5163aa85a7c.png"/>
@@ -15,7 +15,7 @@ Analytics helps you measure your users, product, and business. It unlocks insigh
 
 ## How to get started
 
-1. **Collect analytics data** from your app(s). Get started through Segment with our [Analytics.js Quickstart](https://segment.com/docs/sources/website/analytics.js/quickstart/).
+1. **Collect analytics data** from your app(s). Get started through Segment with our [Analytics.js Quickstart](https://segment.com/docs/connections/sources/catalog/libraries/website/javascript/quickstart/).
     - The top 200 Segment companies collect data from 5+ source types (web, mobile, server, CRM, etc.).
 2. **Send the data to analytics tools** (for example, Google Analytics, Amplitude, Mixpanel).
     - Over 250+ Segment companies send data to eight categories of destinations such as analytics tools, warehouses, email marketing and remarketing systems, session recording, and more.
@@ -54,13 +54,9 @@ If you are part of a new startup  (&lt;$5M raised, &lt;2 years since founding), 
 
 ## Documentation
 
-First, read the [Analytics.js QuickStart](https://segment.com/docs/sources/website/analytics.js/quickstart/), which contains installation instructions and a brief overview of what Analytics.js does and how it works.
+First, read the [Analytics.js QuickStart](https://segment.com/docs/connections/sources/catalog/libraries/website/javascript/quickstart/), which contains installation instructions and a brief overview of what Analytics.js does and how it works.
 
-For more detail on the Analytics.js API, check out the [Analytics.js Library Reference](https://segment.com/docs/sources/website/analytics.js/).
-
-## Analytics.js for Platforms
-
-Analytics.js for Platforms is a version of analytics.js built specifically for website creation and e-commerce platforms to give their customers one-click enablement of Google Analytics, Facebook Pixel, Google Adwords, and Segment. For more information, you can check out the [docs for Analytics.js for Platforms](https://segment.com/docs/guides/partners/analyticsjs-for-platforms/). Segment hosts this version of the library for free use on its CDN.
+For more detail on the Analytics.js API, check out the [Analytics.js Library Reference](https://segment.com/docs/connections/sources/catalog/libraries/website/javascript/).
 
 ## Using this Repo
 
@@ -88,15 +84,15 @@ If you're not sure where to open an issue, feel free to open an issue against th
 Released under the [MIT license](License.md).
 
 [analytics.js library reference]: https://segment.com/docs/libraries/analytics.js
-[analytics.js quickstart]: https://segment.com/docs/sources/website/analytics.js/quickstart/
+[analytics.js quickstart]: https://segment.com/docs/connections/sources/catalog/libraries/website/javascript/quickstart/
 [analytics.js-core]: https://github.com/segmentio/analytics.js-core
 [analytics.js-integrations]: https://github.com/segment-integrations?q=analytics.js-integration
 [ci-badge]: https://travis-ci.org/segmentio/analytics.js.png?branch=master
 [ci-link]: https://travis-ci.org/segmentio/analytics.js
-[integrations]: https://segment.com/integrations
-[libraries]: https://segment.com/libraries
+[integrations]: https://segment.com/docs/connections/destinations/catalog/
+[libraries]: https://segment.com/docs/connections/sources/catalog/
 [nodejs.org]: https://nodejs.org/
-[spec]: https://segment.com/docs/spec/
+[spec]: https://segment.com/docs/connections/spec/
 [catalog]: https://segment.com/catalog
 [partner docs]: https://segment.com/docs/partners
 [wiki]: https://github.com/segmentio/analytics.js/wiki/Writing-Integrations

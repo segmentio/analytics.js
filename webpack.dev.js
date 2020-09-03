@@ -19,7 +19,7 @@ module.exports = {
                 loader: 'string-replace-loader',
                 options: {
                     multiple: [
-                        { search: 'api.dreamdata.cloud/v1', replace: 'localhost:8080/v1' },
+                        { search: 'cdn.dreamdata.cloud/api/v1', replace: 'localhost:8080/v1' },
                         { search: `'https://'`, replace: `'https://'` }
                     ]
                 }

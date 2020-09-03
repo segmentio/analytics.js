@@ -32,7 +32,7 @@ jobs:
                   name: Set gcloud key & project
                   command: |
                       echo $GCLOUD_SERVICE_KEY > ${HOME}/gcp-key.json
-                      gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+                      gcloud --quiet config set project api-dreamdata-cloud
                       gcloud --quiet auth activate-service-account --key-file=${HOME}/gcp-key.json
             - run:
                   name: Build analytics.min.js
@@ -43,4 +43,4 @@ jobs:
                       gsutil -h "Cache-Control:public,max-age=300" \
                              -h "Content-Type:text/javascript; charset=utf-8" \
                              -h "Content-Encoding:gzip" \
-                             cp  dist/analytics.min.js.gz ${GSUTIL_BUCKET_PATH}
+                             cp  dist/analytics.min.js.gz gs://cdn-dreamdata-cloud/scripts/analytics/v2/analytics.min.js

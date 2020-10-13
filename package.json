@@ -1,7 +1,7 @@
 {
     "name": "dreamdata-analytics",
     "author": "Segment.io <friends@segment.io>",
-    "version": "3.0.0c",
+    "version": "3.0.1",
     "license": "MIT",
     "description": "The hassle-free way to integrate analytics into any web application.",
     "keywords": [

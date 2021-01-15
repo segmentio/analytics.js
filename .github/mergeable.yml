@@ -1,0 +1,54 @@
+version: 2
+mergeable:
+  - when: pull_request.*, pull_request_review.*
+    name: Change Control Pre-Merge-Check
+    validate:
+      - do: or
+        validate:
+          - do: and
+            validate:
+              - do: approvals
+                min:
+                  count: 1
+              - do: description
+                or:
+                  - and:
+                      - must_exclude:
+                          regex: Testing completed successfully
+                      - must_include:
+                          regex: Testing not required
+                  - and:
+                      - must_include:
+                          regex: Testing completed successfully
+                      - must_exclude:
+                          regex: Testing not required
+                  - must_include:
+                      regex: 'CC-\d{4,5}'
+          - do: title
+            must_include:
+              regex: stage|staging|README|non-prod|docs
+    pass:
+      - do: checks
+        status: success
+        payload:
+          title: Mergeable Run has been Completed!
+          summary: All the validators are passing!
+    fail:
+      - do: checks
+        status: failure
+        payload:
+          title: Mergeable Run has been Completed!
+          summary: "### Status: {{toUpperCase validationStatus}}\
+            \nHere are some stats of the run:\
+            \n{{#with validationSuites.[0]}} {{ validations.length }} validations were ran. {{/with}}\n"
+          text: "{{#each validationSuites}}\n
+            ### {{{statusIcon status}}} Change-Control Pre-Merge Check \n
+            #### All PRs must follow bellow Change-Control rules: \n
+            * ##### {{#with validations.[0]}} {{{statusIcon status}}} Must have at least one approval.\n {{/with}}
+            * ##### {{#with validations.[1]}} {{{statusIcon status}}} Description includes a testing plan: \n
+            \t ##### \"Testing not required\" OR \"Testing completed successfully\" but NOT BOTH. \n
+            \t ##### OR \n
+            \t ##### Jira Change-Control ticket is included.\n {{/with}}\n\n
+            #### PRs that are exempt from Change-Control: \n
+            * ##### {{#with validations.[2]}} {{{statusIcon status}}} Title includes stage, staging, README, non-prod, docs.\n {{/with}}\n
+            {{/each}}"
